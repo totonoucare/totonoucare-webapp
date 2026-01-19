@@ -13,40 +13,48 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState({ state: "idle", message: "" });
 
-  async function handleSendLink(e) {
-    e.preventDefault();
-    setStatus({ state: "loading", message: "送信中…" });
+async function handleSendLink(e) {
+  e.preventDefault();
+  setStatus({ state: "loading", message: "送信中…" });
 
-    try {
-      const origin = window.location.origin;
-
-      // マジックリンクを踏んだ後に戻る先（ここが超重要）
-      const emailRedirectTo = resultId
-        ? `${origin}/auth/callback?result=${encodeURIComponent(resultId)}`
-        : `${origin}/auth/callback`;
-
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo
-        }
-      });
-
-      if (error) throw error;
-
-      setStatus({
-        state: "sent",
-        message:
-          "マジックリンクを送信しました。受信したメールのリンクを開いてください（迷惑メールも確認）。"
-      });
-    } catch (err) {
-      console.error(err);
-      setStatus({
-        state: "error",
-        message: "送信に失敗しました: " + (err?.message || JSON.stringify(err))
-      });
-    }
+  // ✅ ここが「ガード」
+  if (!supabase) {
+    setStatus({
+      state: "error",
+      message:
+        "Supabaseが初期化できていません（環境変数が反映されてない可能性）。Vercelで再デプロイしてください。"
+    });
+    return;
   }
+
+  try {
+    const origin = window.location.origin;
+
+    // マジックリンクを踏んだ後に戻る先（ここが超重要）
+    const emailRedirectTo = resultId
+      ? `${origin}/auth/callback?result=${encodeURIComponent(resultId)}`
+      : `${origin}/auth/callback`;
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo }
+    });
+
+    if (error) throw error;
+
+    setStatus({
+      state: "sent",
+      message:
+        "マジックリンクを送信しました。受信したメールのリンクを開いてください（迷惑メールも確認）。"
+    });
+  } catch (err) {
+    console.error(err);
+    setStatus({
+      state: "error",
+      message: "送信に失敗しました: " + (err?.message || JSON.stringify(err))
+    });
+  }
+}
 
   return (
     <div className="card">
