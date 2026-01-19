@@ -43,8 +43,7 @@ export default function SignupPage() {
       console.error(err);
       setStatus({
         state: "error",
-        message:
-          "送信に失敗しました。メールアドレスをご確認のうえ、もう一度お試しください。"
+        message: "送信に失敗しました: " + (err?.message || JSON.stringify(err))
       });
     }
   }
