@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function SignupPage() {
   const resultId = useMemo(() => {
@@ -10,117 +11,98 @@ export default function SignupPage() {
   }, []);
 
   const [email, setEmail] = useState("");
-  const [loaded, setLoaded] = useState(false);
-  const [resultPreview, setResultPreview] = useState(null);
-  const [done, setDone] = useState(false);
+  const [status, setStatus] = useState({ state: "idle", message: "" });
 
-  useEffect(() => {
-    if (!resultId) {
-      setLoaded(true);
-      return;
-    }
-    const raw = localStorage.getItem(`assessment:${resultId}`);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        setResultPreview(parsed);
-      } catch {}
-    }
-    setLoaded(true);
-  }, [resultId]);
-
-  function handleFakeSignup(e) {
+  async function handleSendLink(e) {
     e.preventDefault();
+    setStatus({ state: "loading", message: "送信中…" });
 
-    // いまは「登録の雰囲気」を作るだけ（後でSupabase Authに差し替える）
-    const user = {
-      id: crypto.randomUUID(),
-      email,
-      createdAt: new Date().toISOString()
-    };
-    localStorage.setItem("mockUser", JSON.stringify(user));
+    try {
+      const origin = window.location.origin;
 
-    // 結果IDをユーザーに紐づけた体にする（後でDBでやる処理）
-    if (resultId) {
-      localStorage.setItem("latestAssessmentId", resultId);
+      // マジックリンクを踏んだ後に戻る先（ここが超重要）
+      const emailRedirectTo = resultId
+        ? `${origin}/auth/callback?result=${encodeURIComponent(resultId)}`
+        : `${origin}/auth/callback`;
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo
+        }
+      });
+
+      if (error) throw error;
+
+      setStatus({
+        state: "sent",
+        message:
+          "マジックリンクを送信しました。受信したメールのリンクを開いてください（迷惑メールも確認）。"
+      });
+    } catch (err) {
+      console.error(err);
+      setStatus({
+        state: "error",
+        message:
+          "送信に失敗しました。メールアドレスをご確認のうえ、もう一度お試しください。"
+      });
     }
-
-    setDone(true);
-
-    // 次の画面（ケアガイド）を作ったらそこへ飛ばす。今はホームへ。
-setTimeout(() => {
-  window.location.href = "/guide";
-}, 900);
+  }
 
   return (
     <div className="card">
-      <h1>無料登録（仮）</h1>
+      <h1>無料登録（マジックリンク）</h1>
       <p className="small">
-        ※ ここは次のステップで Supabase の本物のメール認証に置き換えます。
-        まずは「結果を引き継いで登録できる」体験を作っています。
+        入力したメールアドレスにログイン用リンクを送ります。パスワード不要です。
       </p>
+
+      {resultId ? (
+        <div className="card" style={{ marginTop: 12 }}>
+          <div className="small">引き継ぐ結果ID</div>
+          <div style={{ fontWeight: 700 }}>{resultId}</div>
+        </div>
+      ) : (
+        <div className="small" style={{ marginTop: 12 }}>
+          ※ 結果IDなしの通常登録も可能です
+        </div>
+      )}
 
       <hr />
 
-      {!loaded ? (
-        <p>読み込み中…</p>
-      ) : (
-        <>
-          {resultId ? (
-            <div className="card" style={{ marginBottom: 12 }}>
-              <div className="small">引き継ぐ結果ID</div>
-              <div style={{ fontWeight: 700 }}>{resultId}</div>
+      <form onSubmit={handleSendLink}>
+        <div className="label">メールアドレス</div>
+        <input
+          className="input"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          disabled={status.state === "loading" || status.state === "sent"}
+        />
 
-              {resultPreview?.type ? (
-                <div style={{ marginTop: 8 }}>
-                  <div className="small">プレビュー</div>
-                  <div style={{ fontWeight: 700 }}>{resultPreview.type}</div>
-                  <div className="small" style={{ marginTop: 6 }}>
-                    困っている不調：{resultPreview.answers?.symptom}
-                  </div>
-                </div>
-              ) : (
-                <div className="small" style={{ marginTop: 8 }}>
-                  ※ この端末に結果データが見つからない場合は、登録後に再診断してもらう設計にします
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="small" style={{ marginBottom: 12 }}>
-              ※ 結果IDがない登録です（後で通常の登録導線として使えます）
-            </div>
-          )}
+        <div style={{ marginTop: 16 }}>
+          <button
+            className="btn primary"
+            type="submit"
+            disabled={status.state === "loading" || status.state === "sent"}
+          >
+            マジックリンクを送る
+          </button>
+        </div>
 
-          {done ? (
-            <div>
-              <h2>登録完了（仮）</h2>
-              <p className="small">ホームへ戻ります…</p>
-            </div>
-          ) : (
-            <form onSubmit={handleFakeSignup}>
-              <div className="label">メールアドレス</div>
-              <input
-                className="input"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+        {status.message ? (
+          <div className="small" style={{ marginTop: 10 }}>
+            {status.message}
+          </div>
+        ) : null}
+      </form>
 
-              <div style={{ marginTop: 16 }}>
-                <button className="btn primary" type="submit">
-                  この結果を引き継いで登録する
-                </button>
-              </div>
+      <hr />
 
-              <div className="small" style={{ marginTop: 10 }}>
-                自動課金はしません。トライアル期間の長さや導線は後で調整します。
-              </div>
-            </form>
-          )}
-        </>
-      )}
+      <div className="small">
+        受信したリンクを開くとログイン完了→ケアガイドへ移動します。
+      </div>
     </div>
   );
 }
