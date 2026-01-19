@@ -48,10 +48,9 @@ export default function SignupPage() {
     setDone(true);
 
     // 次の画面（ケアガイド）を作ったらそこへ飛ばす。今はホームへ。
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 900);
-  }
+setTimeout(() => {
+  window.location.href = "/guide";
+}, 900);
 
   return (
     <div className="card">
