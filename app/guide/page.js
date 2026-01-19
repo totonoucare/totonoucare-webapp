@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function GuidePage() {
-  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [assessment, setAssessment] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const assessmentId = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -12,31 +14,51 @@ export default function GuidePage() {
   }, []);
 
   useEffect(() => {
-    const rawUser = localStorage.getItem("mockUser");
-    if (rawUser) {
-      try {
-        setUser(JSON.parse(rawUser));
-      } catch {}
-    }
-    if (assessmentId) {
-      const raw = localStorage.getItem(`assessment:${assessmentId}`);
-      if (raw) {
-        try {
-          setAssessment(JSON.parse(raw));
-        } catch {}
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session || null);
+      setLoading(false);
+
+      if (assessmentId) {
+        const raw = localStorage.getItem(`assessment:${assessmentId}`);
+        if (raw) {
+          try {
+            setAssessment(JSON.parse(raw));
+          } catch {}
+        }
       }
-    }
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => {
+      sub?.subscription?.unsubscribe?.();
+    };
   }, [assessmentId]);
 
-  if (!user) {
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
+
+  if (loading) {
     return (
       <div className="card">
-        <h1>ととのうケアガイド（仮）</h1>
-        <p className="small">
-          このページは登録後に見られます（いまは仮の登録＝localStorageです）。
-        </p>
+        <h1>ととのうケアガイド</h1>
+        <p className="small">読み込み中…</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="card">
+        <h1>ととのうケアガイド</h1>
+        <p className="small">このページはログイン後に利用できます。</p>
         <div style={{ marginTop: 16 }}>
-          <a className="btn primary" href="/signup">登録して続ける</a>
+          <a className="btn primary" href="/signup">メールでログイン</a>
           <a className="btn" href="/check" style={{ marginLeft: 10 }}>体質チェックへ</a>
         </div>
       </div>
@@ -45,15 +67,12 @@ export default function GuidePage() {
 
   const type = assessment?.type || "（診断結果が未取得）";
   const symptom = assessment?.answers?.symptom || "（未選択）";
-
   const guide = buildGuide(type, symptom);
 
   return (
     <div className="card">
       <h1>ととのうケアガイド（仮）</h1>
-      <p className="small">
-        ログイン中（仮）：{user.email}
-      </p>
+      <p className="small">ログイン中：{session.user?.email}</p>
 
       <hr />
 
@@ -84,7 +103,7 @@ export default function GuidePage() {
 
         <h3>4) 市販漢方 “例”（※仮）</h3>
         <p className="small">
-          ※ これは現在ダミーです。実装時は、禁忌・受診推奨・服薬中の注意などを必ず含めます。
+          ※ ここはダミー。実装時は禁忌・受診推奨・服薬中/妊娠/持病の注意を必ず含めます。
         </p>
         <ul>
           {guide.otc.map((x) => <li key={x}>{x}</li>)}
@@ -95,26 +114,17 @@ export default function GuidePage() {
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         <a className="btn primary" href="/check">もう一度チェック</a>
-        <a className="btn" href="/" onClick={() => logout()}>
-          （仮）ログアウト
-        </a>
+        <button className="btn" onClick={logout}>ログアウト</button>
       </div>
     </div>
   );
 }
 
-function logout() {
-  localStorage.removeItem("mockUser");
-  // latestAssessmentId は残しておく（現実でも「前回結果」扱いにできる）
-  window.location.href = "/";
-}
-
 function buildGuide(type, symptom) {
-  // いまは仮。後で既存ロジックを移植して差し替える。
   if (type.includes("巡り停滞")) {
     return {
       today: [
-        "首〜胸の前をゆるめる（胸鎖乳突筋〜鎖骨まわりを軽く）",
+        "首〜胸の前をゆるめる（鎖骨まわりを軽く）",
         "呼吸：4秒吸って→6秒吐く×8回",
         "温め：首・みぞおちを3〜5分"
       ],
@@ -127,7 +137,7 @@ function buildGuide(type, symptom) {
         "夜遅い食事を避ける（消化の負担を減らす）"
       ],
       otc: [
-        "例：気の巡り系（※後で具体名は表現設計して出します）",
+        "例：気の巡り系（※後で具体名と表現設計）",
         "例：ストレス＋胃腸ケア系"
       ]
     };
@@ -161,16 +171,8 @@ function buildGuide(type, symptom) {
       "深呼吸（長く吐く）1分",
       "水分（温かいもの）を1杯"
     ],
-    optional: [
-      "散歩10分",
-      "入浴で温め"
-    ],
-    food: [
-      "冷たいものを控えめに",
-      "夜食を減らす"
-    ],
-    otc: [
-      "例：症状に応じたサポート（後で設計）"
-    ]
+    optional: ["散歩10分", "入浴で温め"],
+    food: ["冷たいものを控えめに", "夜食を減らす"],
+    otc: ["例：症状に応じたサポート（後で設計）"]
   };
 }
