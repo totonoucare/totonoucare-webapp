@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function CheckPage() {
   const [symptom, setSymptom] = useState("肩こり");
@@ -22,11 +23,18 @@ export default function CheckPage() {
     const type =
       score >= 5 ? "巡り停滞タイプ" : score >= 3 ? "気血バランス崩れタイプ" : "安定タイプ";
 
-    const payload = {
-      answers: { symptom, sleep, stress, cold, energy },
-      type,
-      explanation: buildExplanation(type, symptom),
-    };
+const payload = {
+  answers: { symptom, sleep, stress, cold, energy },
+  type,
+  explanation: buildExplanation(type, symptom),
+};
+
+// ✅ ログイン中なら user_id を payload に追加して送る
+if (supabase) {
+  const { data: s } = await supabase.auth.getSession();
+  const userId = s?.session?.user?.id;
+  if (userId) payload.user_id = userId;
+}
 
     // ✅ DBに保存して、Supabaseの assessments.id を受け取る
     const res = await fetch("/api/assessments", {
