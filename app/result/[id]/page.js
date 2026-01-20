@@ -1,36 +1,60 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function ResultPage({ params }) {
   const { id } = params;
-  const [data, setData] = useState(null);
 
+  const [data, setData] = useState(null);
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  // ① ログイン状態取得
+  useEffect(() => {
+    (async () => {
+      if (!supabase) {
+        setLoadingAuth(false);
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session || null);
+      setLoadingAuth(false);
+    })();
+
+    if (supabase) {
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+        setSession(newSession);
+      });
+      return () => sub?.subscription?.unsubscribe?.();
+    }
+  }, []);
+
+  // ② 結果データ取得（DB）
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch(`/api/assessments/${encodeURIComponent(id)}`);
         const json = await res.json().catch(() => ({}));
 
-        if (!res.ok) {
+        if (!res.ok || !json?.data) {
           setData({ notFound: true });
           return;
         }
 
-        // APIは { data: {...} } 形式を想定
-        const row = json?.data;
-        if (!row) {
-          setData({ notFound: true });
-          return;
-        }
-
-        setData(row);
+        setData(json.data);
       } catch (e) {
         console.error(e);
         setData({ notFound: true });
       }
     })();
   }, [id]);
+
+  async function logout() {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
 
   if (!data) {
     return (
@@ -45,24 +69,21 @@ export default function ResultPage({ params }) {
     return (
       <div className="card">
         <h1>結果が見つかりません</h1>
-        <p className="small">
-          期限切れ/削除、または保存に失敗した可能性があります。
-        </p>
+        <p className="small">期限切れ/削除、または保存に失敗した可能性があります。</p>
         <div style={{ marginTop: 16 }}>
-          <a className="btn primary" href="/check">
-            体質チェックをやり直す
-          </a>
+          <a className="btn primary" href="/check">体質チェックをやり直す</a>
         </div>
       </div>
     );
   }
 
-  // DB row: { id, created_at, user_id, result_type, symptom, payload }
   const createdAt = data.created_at;
   const payload = data.payload || {};
   const type = payload.type || data.result_type || "（不明）";
   const explanation = payload.explanation || "（説明なし）";
   const answers = payload.answers || {};
+
+  const isLoggedIn = !!session;
 
   return (
     <div className="card">
@@ -70,6 +91,12 @@ export default function ResultPage({ params }) {
       <p className="small">
         作成日時：{createdAt ? new Date(createdAt).toLocaleString("ja-JP") : "—"}
       </p>
+
+      {loadingAuth ? null : isLoggedIn ? (
+        <p className="small">ログイン中：{session.user?.email}</p>
+      ) : (
+        <p className="small">未ログイン（登録するとガイドが使えます）</p>
+      )}
 
       <hr />
 
@@ -91,14 +118,28 @@ export default function ResultPage({ params }) {
 
       <h3>次のステップ</h3>
       <p className="small">
-        ここから先（ケアガイド・記録・AI伴走）は登録後に解放する想定です。
+        ここから先（ケアガイド・記録・AI伴走）は登録/ログイン後に解放する想定です。
       </p>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-        <a className="btn primary" href={`/signup?result=${encodeURIComponent(id)}`}>
-          この結果を保存して登録する
-        </a>
-        <a className="btn" href="/check">別の条件でやり直す</a>
+        {isLoggedIn ? (
+          <>
+            <a className="btn primary" href={`/guide?result=${encodeURIComponent(id)}`}>
+              この結果でガイドを見る
+            </a>
+            <a className="btn" href="/guide">ガイドへ</a>
+            <a className="btn" href="/check">別の条件でやり直す</a>
+            <button className="btn" onClick={logout}>ログアウト</button>
+          </>
+        ) : (
+          <>
+            <a className="btn primary" href={`/signup?result=${encodeURIComponent(id)}`}>
+              この結果を保存して登録する
+            </a>
+            <a className="btn" href="/check">別の条件でやり直す</a>
+            <a className="btn" href="/signup">ログイン / 登録</a>
+          </>
+        )}
       </div>
     </div>
   );
