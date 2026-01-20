@@ -55,6 +55,9 @@ export default function HomePage() {
             <a className="btn" href="/check">
               体質チェック
             </a>
+            <a className="btn" href="/history">
+              履歴
+            </a>
             <button className="btn" onClick={logout}>
               ログアウト
             </button>
