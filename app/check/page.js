@@ -9,50 +9,50 @@ export default function CheckPage() {
   const [cold, setCold] = useState("冷えやすい");
   const [energy, setEnergy] = useState("波がある");
 
-async function handleSubmit(e) {
-  e.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
 
-  // いまは仮のロジック（後で既存診断ロジックに置き換える）
-  const score =
-    (cold === "冷えやすい" ? 2 : 0) +
-    (stress === "強い" ? 2 : stress === "普通" ? 1 : 0) +
-    (sleep === "〜5時間" ? 2 : sleep === "5〜6時間" ? 1 : 0) +
-    (energy === "波がある" ? 1 : 0);
+    // いまは仮のロジック（後で既存診断ロジックに置き換える）
+    const score =
+      (cold === "冷えやすい" ? 2 : 0) +
+      (stress === "強い" ? 2 : stress === "普通" ? 1 : 0) +
+      (sleep === "〜5時間" ? 2 : sleep === "5〜6時間" ? 1 : 0) +
+      (energy === "波がある" ? 1 : 0);
 
-  const type =
-    score >= 5 ? "巡り停滞タイプ" : score >= 3 ? "気血バランス崩れタイプ" : "安定タイプ";
+    const type =
+      score >= 5 ? "巡り停滞タイプ" : score >= 3 ? "気血バランス崩れタイプ" : "安定タイプ";
 
-  const resultPayload = {
-    answers: { symptom, sleep, stress, cold, energy },
-    type,
-    explanation: buildExplanation(type, symptom),
-  };
+    const payload = {
+      answers: { symptom, sleep, stress, cold, energy },
+      type,
+      explanation: buildExplanation(type, symptom),
+    };
 
-  // ✅ ここが最重要：DBに1行作って、そのidを resultId として使う
-  const res = await fetch("/api/assessments", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(resultPayload),
-  });
+    // ✅ DBに保存して、Supabaseの assessments.id を受け取る
+    const res = await fetch("/api/assessments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    console.error(json);
-    alert("保存に失敗しました。/api/assessments を確認してください。");
-    return;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error(json);
+      alert("保存に失敗しました。Vercelのログと /api/assessments を確認してください。");
+      return;
+    }
+
+    const id = json?.id;
+    if (!id) {
+      console.error(json);
+      alert("保存はできたが id が返ってきていません。/api/assessments の返却を確認してください。");
+      return;
+    }
+
+    // ✅ 結果ページへ（DBのID）
+    window.location.href = `/result/${id}`;
   }
 
-  const id = json?.id;
-  if (!id) {
-    console.error(json);
-    alert("保存はできたが id が返ってきていません。APIの返却を確認してください。");
-    return;
-  }
-
-  // ✅ 結果ページへ（Supabaseの assessments.id を使う）
-  window.location.href = `/result/${id}`;
-}
-  
   return (
     <div className="card">
       <h1>体質チェック（仮）</h1>
