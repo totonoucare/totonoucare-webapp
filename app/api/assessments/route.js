@@ -6,15 +6,21 @@ export async function POST(req) {
     const body = await req.json();
 
     // check/page.js から送られてくる想定：
-    // { answers: {...}, type: "...", explanation: "..." }
+    // { answers: {...}, type: "...", explanation: "...", user_id?: "uuid" }
     const payload = body || {};
 
     const result_type = payload.type || null;
     const symptom = payload?.answers?.symptom || null;
 
+    // ✅ ログイン中なら user_id が入ってくる（任意）
+    const user_id = payload.user_id || null;
+
+    const insertRow = { result_type, symptom, payload };
+    if (user_id) insertRow.user_id = user_id;
+
     const { data, error } = await supabaseServer
       .from("assessments")
-      .insert([{ result_type, symptom, payload }])
+      .insert([insertRow])
       .select("id")
       .single();
 
