@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get("user_id");
-
+    const user_id = req.nextUrl.searchParams.get("user_id");
     if (!user_id) {
       return NextResponse.json({ error: "user_id required" }, { status: 400 });
     }
@@ -20,7 +21,7 @@ export async function GET(req) {
 
     if (error) throw error;
 
-    return NextResponse.json({ data });
+    return NextResponse.json({ data }, { status: 200 });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
