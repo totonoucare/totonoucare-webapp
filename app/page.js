@@ -53,10 +53,10 @@ export default function HomePage() {
               ケアガイドへ
             </a>
             <a className="btn" href="/check">
-              体質チェック
+              体質チェック（再）
             </a>
             <a className="btn" href="/history">
-              履歴
+              履歴一覧
             </a>
             <button className="btn" onClick={logout}>
               ログアウト
