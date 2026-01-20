@@ -127,7 +127,6 @@ export default function ResultPage({ params }) {
             <a className="btn primary" href={`/guide?result=${encodeURIComponent(id)}`}>
               この結果でガイドを見る
             </a>
-            <a className="btn" href="/guide">ガイドへ</a>
             <a className="btn" href="/check">別の条件でやり直す</a>
             <button className="btn" onClick={logout}>ログアウト</button>
           </>
