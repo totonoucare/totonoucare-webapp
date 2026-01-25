@@ -5,12 +5,11 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function ResultPage({ params }) {
   const { id } = params;
-
   const [data, setData] = useState(null);
   const [session, setSession] = useState(null);
+  const [ent, setEnt] = useState([]);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
-  // ① ログイン状態取得
   useEffect(() => {
     (async () => {
       if (!supabase) {
@@ -30,18 +29,15 @@ export default function ResultPage({ params }) {
     }
   }, []);
 
-  // ② 結果データ取得（DB）
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch(`/api/assessments/${encodeURIComponent(id)}`);
         const json = await res.json().catch(() => ({}));
-
         if (!res.ok || !json?.data) {
           setData({ notFound: true });
           return;
         }
-
         setData(json.data);
       } catch (e) {
         console.error(e);
@@ -49,6 +45,36 @@ export default function ResultPage({ params }) {
       }
     })();
   }, [id]);
+
+  async function authedFetch(path, opts = {}) {
+    if (!supabase) throw new Error("supabase not ready");
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) throw new Error("not logged in");
+
+    const res = await fetch(path, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+    return json;
+  }
+
+  useEffect(() => {
+    (async () => {
+      if (!session) return;
+      try {
+        const entJson = await authedFetch("/api/entitlements/me");
+        setEnt(entJson.data || []);
+      } catch (e) {
+        // entitlements APIは新設なので、ここは黙ってOK
+      }
+    })();
+  }, [session]);
 
   async function logout() {
     if (!supabase) return;
@@ -58,22 +84,19 @@ export default function ResultPage({ params }) {
 
   if (!data) {
     return (
-      <div className="card">
+      <main style={{ padding: 16 }}>
         <h1>結果を読み込み中…</h1>
-        <p className="small">少し待ってください。</p>
-      </div>
+      </main>
     );
   }
 
   if (data.notFound) {
     return (
-      <div className="card">
+      <main style={{ padding: 16 }}>
         <h1>結果が見つかりません</h1>
-        <p className="small">期限切れ/削除、または保存に失敗した可能性があります。</p>
-        <div style={{ marginTop: 16 }}>
-          <a className="btn primary" href="/check">体質チェックをやり直す</a>
-        </div>
-      </div>
+        <p>期限切れ/削除、または保存に失敗した可能性があります。</p>
+        <p><a href="/check">体質チェックをやり直す</a></p>
+      </main>
     );
   }
 
@@ -82,64 +105,60 @@ export default function ResultPage({ params }) {
   const type = payload.type || data.result_type || "（不明）";
   const explanation = payload.explanation || "（説明なし）";
   const answers = payload.answers || {};
+  const symptomFocus = answers?.symptom_focus || data.symptom || "—";
 
   const isLoggedIn = !!session;
+  const hasGuide = ent.some((x) => x.product === "guide_all_access");
+  const hasSub = ent.some((x) => x.product === "radar_subscription");
 
   return (
-    <div className="card">
+    <main style={{ padding: 16, maxWidth: 720 }}>
       <h1>体質チェック結果（仮）</h1>
-      <p className="small">
+
+      <p>
         作成日時：{createdAt ? new Date(createdAt).toLocaleString("ja-JP") : "—"}
       </p>
 
       {loadingAuth ? null : isLoggedIn ? (
-        <p className="small">ログイン中：{session.user?.email}</p>
+        <p>ログイン中：{session.user?.email}</p>
       ) : (
-        <p className="small">未ログイン（登録するとガイドが使えます）</p>
+        <p>未ログイン（登録すると保存・レーダー・ガイドが使えます）</p>
       )}
 
       <hr />
 
-      <h2 style={{ margin: "8px 0" }}>あなたは：{type}</h2>
-      <p>{explanation}</p>
+      <h2>あなたは：{type}</h2>
+      <p style={{ whiteSpace: "pre-wrap" }}>{explanation}</p>
 
       <hr />
 
-      <h3>回答内容</h3>
-      <ul>
-        <li>困っている不調：{answers?.symptom || data.symptom || "—"}</li>
-        <li>睡眠時間：{answers?.sleep || "—"}</li>
-        <li>ストレス感：{answers?.stress || "—"}</li>
-        <li>冷え：{answers?.cold || "—"}</li>
-        <li>体力・気力の波：{answers?.energy || "—"}</li>
-      </ul>
+      <h3>主訴</h3>
+      <p>{symptomFocus}</p>
 
       <hr />
 
       <h3>次のステップ</h3>
-      <p className="small">
-        ここから先（ケアガイド・記録・AI伴走）は登録/ログイン後に解放する想定です。
-      </p>
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-        {isLoggedIn ? (
-          <>
-            <a className="btn primary" href={`/guide?result=${encodeURIComponent(id)}`}>
-              この結果でガイドを見る
-            </a>
-            <a className="btn" href="/check">別の条件でやり直す</a>
-            <button className="btn" onClick={logout}>ログアウト</button>
-          </>
-        ) : (
-          <>
-            <a className="btn primary" href={`/signup?result=${encodeURIComponent(id)}`}>
-              この結果を保存して登録する
-            </a>
-            <a className="btn" href="/check">別の条件でやり直す</a>
-            <a className="btn" href="/signup">ログイン / 登録</a>
-          </>
-        )}
-      </div>
-    </div>
+      {isLoggedIn ? (
+        <>
+          <p>
+            <a href="/radar">未病レーダー</a>（{hasSub ? "利用可能" : "サブスク未加入"}）
+            <br />
+            <a href="/guide">ケアガイド</a>（{hasGuide ? "全解放" : "サンプルのみ"}）
+          </p>
+          <button onClick={logout}>ログアウト</button>
+          <p><a href="/check">別の条件でやり直す</a></p>
+        </>
+      ) : (
+        <>
+          <p>
+            <a href={`/signup?result=${encodeURIComponent(id)}`}>この結果を保存して登録する</a>
+            <br />
+            <a href="/signup">ログイン / 登録</a>
+            <br />
+            <a href="/check">別の条件でやり直す</a>
+          </p>
+        </>
+      )}
+    </main>
   );
 }
