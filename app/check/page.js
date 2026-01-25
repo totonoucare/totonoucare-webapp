@@ -3,8 +3,17 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
+const SYMPTOMS = [
+  { value: "fatigue", label: "だるさ・疲労" },
+  { value: "sleep", label: "睡眠" },
+  { value: "neck_shoulder", label: "首肩の重さ" },
+  { value: "swelling", label: "むくみ" },
+  { value: "headache", label: "頭痛" },
+  { value: "low_back_pain", label: "腰の重さ" },
+];
+
 export default function CheckPage() {
-  const [symptom, setSymptom] = useState("肩こり");
+  const [symptom_focus, setSymptomFocus] = useState("fatigue");
   const [sleep, setSleep] = useState("6〜7時間");
   const [stress, setStress] = useState("普通");
   const [cold, setCold] = useState("冷えやすい");
@@ -20,23 +29,21 @@ export default function CheckPage() {
       (sleep === "〜5時間" ? 2 : sleep === "5〜6時間" ? 1 : 0) +
       (energy === "波がある" ? 1 : 0);
 
-    const type =
-      score >= 5 ? "巡り停滞タイプ" : score >= 3 ? "気血バランス崩れタイプ" : "安定タイプ";
+    const type = score >= 5 ? "巡り停滞タイプ" : score >= 3 ? "気血バランス崩れタイプ" : "安定タイプ";
 
-const payload = {
-  answers: { symptom, sleep, stress, cold, energy },
-  type,
-  explanation: buildExplanation(type, symptom),
-};
+    const payload = {
+      answers: { symptom_focus, sleep, stress, cold, energy },
+      type,
+      explanation: buildExplanation(type, symptom_focus),
+    };
 
-// ✅ ログイン中なら user_id を payload に追加して送る
-if (supabase) {
-  const { data: s } = await supabase.auth.getSession();
-  const userId = s?.session?.user?.id;
-  if (userId) payload.user_id = userId;
-}
+    // ログイン中なら user_id を付ける（現状のappと互換維持）
+    if (supabase) {
+      const { data: s } = await supabase.auth.getSession();
+      const userId = s?.session?.user?.id;
+      if (userId) payload.user_id = userId;
+    }
 
-    // ✅ DBに保存して、Supabaseの assessments.id を受け取る
     const res = await fetch("/api/assessments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -57,84 +64,89 @@ if (supabase) {
       return;
     }
 
-    // ✅ 結果ページへ（DBのID）
     window.location.href = `/result/${id}`;
   }
 
   return (
-    <div className="card">
+    <main style={{ padding: 16, maxWidth: 720 }}>
       <h1>体質チェック（仮）</h1>
-      <p className="small">
-        ※ これはWebアプリの骨組み用です。後で「ととのえタイプ分析」のロジックに差し替えます。
-      </p>
+      <p>※これは骨組みです。後で「ととのえタイプ分析」のロジックに差し替えます。</p>
 
-      <form onSubmit={handleSubmit} style={{ marginTop: 12 }}>
-        <div style={{ marginTop: 12 }}>
-          <div className="label">いま一番困っている不調</div>
-          <select className="select" value={symptom} onChange={(e) => setSymptom(e.target.value)}>
-            <option>肩こり</option>
-            <option>首こり</option>
-            <option>頭痛</option>
-            <option>胃腸の不調</option>
-            <option>睡眠の不調</option>
-            <option>メンタルの不調</option>
-            <option>疲れやすさ</option>
-          </select>
-        </div>
+      <form onSubmit={handleSubmit}>
+        <label>いま一番困っている不調（主訴）</label>
+        <br />
+        <select value={symptom_focus} onChange={(e) => setSymptomFocus(e.target.value)}>
+          {SYMPTOMS.map((x) => (
+            <option key={x.value} value={x.value}>
+              {x.label}
+            </option>
+          ))}
+        </select>
 
-        <div style={{ marginTop: 12 }}>
-          <div className="label">睡眠時間</div>
-          <select className="select" value={sleep} onChange={(e) => setSleep(e.target.value)}>
-            <option>〜5時間</option>
-            <option>5〜6時間</option>
-            <option>6〜7時間</option>
-            <option>7時間〜</option>
-          </select>
-        </div>
+        <br /><br />
 
-        <div style={{ marginTop: 12 }}>
-          <div className="label">ストレス感</div>
-          <select className="select" value={stress} onChange={(e) => setStress(e.target.value)}>
-            <option>弱い</option>
-            <option>普通</option>
-            <option>強い</option>
-          </select>
-        </div>
+        <label>睡眠時間</label>
+        <br />
+        <select value={sleep} onChange={(e) => setSleep(e.target.value)}>
+          <option>〜5時間</option>
+          <option>5〜6時間</option>
+          <option>6〜7時間</option>
+          <option>7時間〜</option>
+        </select>
 
-        <div style={{ marginTop: 12 }}>
-          <div className="label">冷え</div>
-          <select className="select" value={cold} onChange={(e) => setCold(e.target.value)}>
-            <option>冷えやすい</option>
-            <option>どちらでもない</option>
-            <option>熱がこもりやすい</option>
-          </select>
-        </div>
+        <br /><br />
 
-        <div style={{ marginTop: 12 }}>
-          <div className="label">体力・気力の波</div>
-          <select className="select" value={energy} onChange={(e) => setEnergy(e.target.value)}>
-            <option>安定</option>
-            <option>波がある</option>
-            <option>落ちやすい</option>
-          </select>
-        </div>
+        <label>ストレス感</label>
+        <br />
+        <select value={stress} onChange={(e) => setStress(e.target.value)}>
+          <option>弱い</option>
+          <option>普通</option>
+          <option>強い</option>
+        </select>
 
-        <div style={{ marginTop: 16 }}>
-          <button className="btn primary" type="submit">
-            結果を見る
-          </button>
-        </div>
+        <br /><br />
+
+        <label>冷え</label>
+        <br />
+        <select value={cold} onChange={(e) => setCold(e.target.value)}>
+          <option>冷えやすい</option>
+          <option>どちらでもない</option>
+          <option>熱がこもりやすい</option>
+        </select>
+
+        <br /><br />
+
+        <label>体力・気力の波</label>
+        <br />
+        <select value={energy} onChange={(e) => setEnergy(e.target.value)}>
+          <option>安定</option>
+          <option>波がある</option>
+          <option>落ちやすい</option>
+        </select>
+
+        <br /><br />
+
+        <button type="submit">結果を見る</button>
       </form>
-    </div>
+    </main>
   );
 }
 
-function buildExplanation(type, symptom) {
+function buildExplanation(type, symptom_focus) {
+  const symptomLabel = {
+    fatigue: "だるさ・疲労",
+    sleep: "睡眠",
+    neck_shoulder: "首肩の重さ",
+    swelling: "むくみ",
+    headache: "頭痛",
+    low_back_pain: "腰の重さ",
+  }[symptom_focus] || "不調";
+
   if (type === "巡り停滞タイプ") {
-    return `「${symptom}」は、ストレスや睡眠不足などで“巡り”が詰まると出やすくなります。まずは負担ラインを下げる（睡眠・緊張の抜け）を優先すると改善が早いです。`;
+    return `「${symptomLabel}」は、睡眠不足や緊張が続くと“巡り”が詰まることで出やすい傾向があります。まずは負担ラインを下げる（呼吸・温め・緩め）を優先します。`;
   }
   if (type === "気血バランス崩れタイプ") {
-    return `「${symptom}」は、回復と消耗のバランスが崩れると出やすい傾向があります。できる範囲で生活リズムを整えるのが最優先です。`;
+    return `「${symptomLabel}」は、回復と消耗のバランスが崩れると出やすい傾向があります。できる範囲で生活リズムを整えるのが最優先です。`;
   }
-  return `現状は比較的安定しています。「${symptom}」が出るときの“きっかけ”を観察して、悪化要因を減らすところから始めましょう。`;
+  return `現状は比較的安定しています。「${symptomLabel}」が出るときの“きっかけ”を観察して、悪化要因を減らすところから始めましょう。`;
 }
