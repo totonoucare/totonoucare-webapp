@@ -1,68 +1,56 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function GuidePage() {
   const [session, setSession] = useState(null);
-  const [assessment, setAssessment] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState("");
+  const [ent, setEnt] = useState([]);
+  const [cards, setCards] = useState([]);
+  const [msg, setMsg] = useState("読み込み中…");
 
-  const resultId = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    const url = new URL(window.location.href);
-    return url.searchParams.get("result") || "";
-  }, []);
+  async function authedFetch(path, opts = {}) {
+    if (!supabase) throw new Error("supabase not ready");
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) throw new Error("not logged in");
+
+    const res = await fetch(path, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+    return json;
+  }
 
   useEffect(() => {
     (async () => {
       try {
         if (!supabase) {
           setMsg("Supabaseが初期化できていません（環境変数未反映）。");
-          setLoading(false);
           return;
         }
-
         const { data } = await supabase.auth.getSession();
         const s = data.session || null;
         setSession(s);
-
         if (!s) {
-          setLoading(false);
+          setMsg("ログイン後に利用できます。");
           return;
         }
 
-        // ① resultId があるならその結果を取る
-        if (resultId) {
-          const res = await fetch(`/api/assessments/${encodeURIComponent(resultId)}`);
-          const json = await res.json().catch(() => ({}));
-          if (!res.ok || !json?.data) {
-            setMsg("結果の取得に失敗しました。");
-            setLoading(false);
-            return;
-          }
-          setAssessment(json.data);
-          setLoading(false);
-          return;
-        }
+        const entJson = await authedFetch("/api/entitlements/me");
+        setEnt(entJson.data || []);
 
-        // ② resultId がないなら「自分の最新結果」を取る
-        const userId = s.user?.id;
-        const res = await fetch(`/api/assessments/latest?user_id=${encodeURIComponent(userId)}`);
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || !json?.data) {
-          setMsg("保存された結果が見つかりません。");
-          setLoading(false);
-          return;
-        }
-
-        setAssessment(json.data);
-        setLoading(false);
+        const cardsJson = await authedFetch("/api/guide/cards");
+        setCards(cardsJson.data || []);
+        setMsg("");
       } catch (e) {
         console.error(e);
-        setMsg("読み込み中にエラーが発生しました。");
-        setLoading(false);
+        setMsg(e?.message || "読み込みに失敗しました。");
       }
     })();
 
@@ -72,136 +60,66 @@ export default function GuidePage() {
       });
       return () => sub?.subscription?.unsubscribe?.();
     }
-  }, [resultId]);
+  }, []);
+
+  const hasGuide = ent.some((x) => x.product === "guide_all_access");
 
   async function logout() {
     if (supabase) await supabase.auth.signOut();
     window.location.href = "/";
   }
 
-  if (loading) {
-    return (
-      <div className="card">
-        <h1>ととのうケアガイド</h1>
-        <p className="small">読み込み中…</p>
-      </div>
-    );
-  }
-
   if (!session) {
     return (
-      <div className="card">
+      <main style={{ padding: 16 }}>
         <h1>ととのうケアガイド</h1>
-        <p className="small">このページはログイン後に利用できます。</p>
-        <div style={{ marginTop: 16 }}>
-          <a className="btn primary" href="/signup">メールでログイン</a>
-          <a className="btn" href="/check" style={{ marginLeft: 10 }}>体質チェックへ</a>
-        </div>
-      </div>
+        <p>{msg}</p>
+        <p>
+          <a href="/signup">メールでログイン</a> ／ <a href="/check">体質チェックへ</a>
+        </p>
+      </main>
     );
   }
-
-  if (!assessment) {
-    return (
-      <div className="card">
-        <h1>ととのうケアガイド</h1>
-        <p className="small">{msg || "結果がありません。"}</p>
-        <div style={{ marginTop: 16 }}>
-          <a className="btn primary" href="/check">体質チェックへ</a>
-          <button className="btn" onClick={logout} style={{ marginLeft: 10 }}>ログアウト</button>
-        </div>
-      </div>
-    );
-  }
-
-  const payload = assessment.payload || {};
-  const type = payload.type || assessment.result_type || "（不明）";
-  const symptom = payload?.answers?.symptom || assessment.symptom || "（未選択）";
-
-  const guide = buildGuide(type, symptom);
 
   return (
-    <div className="card">
-      <h1>ととのうケアガイド（仮）</h1>
-      <p className="small">ログイン中：{session.user?.email}</p>
-      <p className="small">結果ID：{assessment.id}</p>
+    <main style={{ padding: 16, maxWidth: 900 }}>
+      <h1>ととのうケアガイド</h1>
+      <p style={{ opacity: 0.8 }}>ログイン中：{session.user?.email}</p>
+
+      <p>
+        <a href="/radar">未病レーダー</a> ／ <a href="/check">体質チェック</a> ／{" "}
+        <button onClick={logout}>ログアウト</button>
+      </p>
 
       <hr />
 
-      <h2>あなたの状態</h2>
-      <ul>
-        <li>体質タイプ：{type}</li>
-        <li>困っている不調：{symptom}</li>
-      </ul>
+      {!hasGuide ? (
+        <section style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
+          <h2>買い切りで全解放（300円想定）</h2>
+          <p>
+            いまは導線未実装です（後でStripe導線）。現在は「サンプルのみ」表示します。
+          </p>
+        </section>
+      ) : null}
 
-      <hr />
+      <h2>{hasGuide ? "全カード一覧" : "サンプルカード"}</h2>
 
-      <h2>優先ケア（仮）</h2>
-      <div className="card" style={{ marginTop: 10 }}>
-        <h3 style={{ marginTop: 0 }}>1) 今日やる（5〜8分）</h3>
-        <ul>{guide.today.map((x) => <li key={x}>{x}</li>)}</ul>
+      {msg ? <p>{msg}</p> : null}
 
-        <h3>2) できる日だけ（10分）</h3>
-        <ul>{guide.optional.map((x) => <li key={x}>{x}</li>)}</ul>
-
-        <h3>3) 食養生（ゆるく）</h3>
-        <ul>{guide.food.map((x) => <li key={x}>{x}</li>)}</ul>
-
-        <h3>4) 市販漢方 “例”（※仮）</h3>
-        <p className="small">
-          ※ ここはダミー。実装時は禁忌・受診推奨・服薬中/妊娠/持病の注意を必ず含めます。
-        </p>
-        <ul>{guide.otc.map((x) => <li key={x}>{x}</li>)}</ul>
+      <div style={{ display: "grid", gap: 12 }}>
+        {cards.map((c) => (
+          <div key={c.id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>{c.kind}</div>
+            <h3 style={{ marginTop: 6 }}>{c.title}</h3>
+            {c.illustration_url ? <img src={c.illustration_url} alt="" style={{ maxWidth: "100%" }} /> : null}
+            <ul>
+              {(c.body_steps || []).slice(0, 6).map((s, i) => (
+                <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
-
-      <hr />
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <a className="btn" href={`/result/${encodeURIComponent(assessment.id)}`}>結果を見る</a>
-        <a className="btn primary" href="/check">もう一度チェック</a>
-        <button className="btn" onClick={logout}>ログアウト</button>
-      </div>
-    </div>
+    </main>
   );
-}
-
-function buildGuide(type, symptom) {
-  if (type.includes("巡り停滞")) {
-    return {
-      today: [
-        "首〜胸の前をゆるめる（鎖骨まわりを軽く）",
-        "呼吸：4秒吸って→6秒吐く×8回",
-        "温め：首・みぞおちを3〜5分",
-      ],
-      optional: [
-        "背中を丸めて伸ばす（猫のポーズ）30秒×3",
-        "軽い散歩 10分（息が上がらない強度）",
-      ],
-      food: [
-        "温かい汁物を足す（冷たい飲み物は減らす）",
-        "夜遅い食事を避ける（消化の負担を減らす）",
-      ],
-      otc: ["例：気の巡り系（※後で具体名と表現設計）", "例：ストレス＋胃腸ケア系"],
-    };
-  }
-
-  if (type.includes("気血バランス")) {
-    return {
-      today: [
-        "起床後に日光を浴びる（3〜5分）",
-        "肩甲骨まわりを動かす（ぐるぐる10回×2）",
-        "入浴 or 足湯 5〜10分",
-      ],
-      optional: ["スクワット浅め10回×2（無理しない）", "就寝前ストレッチ（前もも・ふくらはぎ）"],
-      food: ["朝か昼にタンパク質を足す（卵/魚/豆）", "カフェインを午後に寄せない"],
-      otc: ["例：疲労感＋胃腸ケア系", "例：睡眠リズムサポート系"],
-    };
-  }
-
-  return {
-    today: ["軽いストレッチ（首・肩）2分", "深呼吸（長く吐く）1分", "水分（温かいもの）を1杯"],
-    optional: ["散歩10分", "入浴で温め"],
-    food: ["冷たいものを控えめに", "夜食を減らす"],
-    otc: ["例：症状に応じたサポート（後で設計）"],
-  };
 }
