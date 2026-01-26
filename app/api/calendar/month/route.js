@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabaseServer";
 
 export const runtime = "nodejs";
 
@@ -21,9 +21,7 @@ export async function GET(req) {
       });
     }
 
-    const supabase = createClient();
-
-    // Bearer tokenでユーザー特定（既存APIと同じ前提）
+    // Bearer tokenでユーザー特定（既存APIと同じ想定）
     const auth = req.headers.get("authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
     if (!token) {
@@ -33,14 +31,13 @@ export async function GET(req) {
       });
     }
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    const { data: userData, error: userErr } = await supabaseServer.auth.getUser(token);
     if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
     }
-
     const userId = userData.user.id;
 
     // 月の範囲（UTCで扱う簡易版）
@@ -48,7 +45,7 @@ export async function GET(req) {
     const end = new Date(Date.UTC(year, month, 0, 23, 59, 59));
 
     // carelogs: created_at を日付に丸めて集計
-    const { data: carelogs, error: careErr } = await supabase
+    const { data: carelogs, error: careErr } = await supabaseServer
       .from("carelogs")
       .select("created_at, kind, done_level")
       .eq("user_id", userId)
@@ -57,14 +54,15 @@ export async function GET(req) {
 
     if (careErr) throw careErr;
 
-    // checkins: date（または created_at）で集計
-    const { data: checkins, error: chkErr } = await supabase
+    // checkins: date列がある前提（無い場合は created_at で丸める）
+    const { data: checkins, error: chkErr } = await supabaseServer
       .from("checkins")
       .select("date, created_at, condition_am, condition_pm")
       .eq("user_id", userId)
-      .or(`date.gte.${ymd(start)},date.lte.${ymd(end)}`);
+      .gte("created_at", start.toISOString())
+      .lte("created_at", end.toISOString());
 
-    // checkins側が date列を持っていない場合があるので、失敗しても続行できるようにする
+    // checkins側が想定と違って失敗しても、carelogsだけは出す
     const checkinRows = chkErr ? [] : (checkins || []);
 
     // date => summary
@@ -72,21 +70,38 @@ export async function GET(req) {
 
     for (const r of carelogs || []) {
       const d = ymd(new Date(r.created_at));
-      const s = map.get(d) || { date: d, main_done: false, food_done_level: null, condition_am: null, condition_pm: null };
+      const s =
+        map.get(d) || {
+          date: d,
+          main_done: false,
+          food_done_level: null,
+          condition_am: null,
+          condition_pm: null,
+        };
+
       if (r.kind !== "food" && r.done_level >= 2) s.main_done = true;
       if (r.kind === "food") s.food_done_level = r.done_level;
+
       map.set(d, s);
     }
 
     for (const r of checkinRows) {
       const d = r.date ? String(r.date) : ymd(new Date(r.created_at));
-      const s = map.get(d) || { date: d, main_done: false, food_done_level: null, condition_am: null, condition_pm: null };
+      const s =
+        map.get(d) || {
+          date: d,
+          main_done: false,
+          food_done_level: null,
+          condition_am: null,
+          condition_pm: null,
+        };
+
       if (r.condition_am != null) s.condition_am = r.condition_am;
       if (r.condition_pm != null) s.condition_pm = r.condition_pm;
+
       map.set(d, s);
     }
 
-    // 配列化して日付順
     const out = Array.from(map.values()).sort((a, b) => (a.date < b.date ? -1 : 1));
 
     return new Response(JSON.stringify({ data: out }), {
