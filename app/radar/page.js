@@ -2,9 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 
 function levelLabel(level) {
   return ["安定", "注意", "警戒", "要対策"][level] ?? "—";
+}
+
+function levelBadgeClass(level) {
+  // 色指定しすぎると世界観が固まるので、まずは“濃淡”だけで運用
+  if (level === 0) return "bg-slate-100 text-slate-800 border-slate-200";
+  if (level === 1) return "bg-slate-200 text-slate-900 border-slate-300";
+  if (level === 2) return "bg-slate-800 text-white border-slate-800";
+  if (level === 3) return "bg-black text-white border-black";
+  return "bg-slate-100 text-slate-800 border-slate-200";
 }
 
 export default function RadarPage() {
@@ -65,12 +76,14 @@ export default function RadarPage() {
       if (!session) return;
 
       try {
+        setMsg("");
+
         // 1) entitlements取得
         const entJson = await authedFetch("/api/entitlements/me");
         const ents = entJson.data || [];
         setEnt(ents);
 
-        // 2) サブスク必須（いまはStripe導線まだなので、ここは表示ブロック）
+        // 2) サブスク必須（今は導線だけ後で実装）
         const hasSub = ents.some((x) => x.product === "radar_subscription");
         if (!hasSub) {
           setMsg("未病レーダーはサブスク加入後に利用できます（今は導線だけ後で実装）。");
@@ -89,13 +102,11 @@ export default function RadarPage() {
           const payload = {
             symptom_focus: radarJson?.symptom_focus || radarJson?.symptom || "fatigue",
             tcm_profile: {
-              // 今は仮でもOK。後で本診断(type/flow/organ)に差し替える
               flowType: radarJson?.flowType || null,
               organType: radarJson?.organType || null,
               assessment: radarJson?.assessment || null,
             },
             weather_summary: {
-              // externalに天気スコアが入ってるのでそれを渡す
               level: radarJson?.radar?.level ?? null,
               top_sixin: radarJson?.external?.top_sixin ?? radarJson?.radar?.top_sixin ?? [],
               d_pressure_24h: radarJson?.external?.d_pressure_24h ?? null,
@@ -205,43 +216,62 @@ export default function RadarPage() {
 
   if (loadingAuth) {
     return (
-      <main style={{ padding: 16 }}>
-        <h1>未病レーダー</h1>
-        <p>読み込み中…</p>
-      </main>
+      <div className="space-y-3">
+        <h1 className="text-xl font-semibold">未病レーダー</h1>
+        <p className="text-sm text-slate-600">読み込み中…</p>
+      </div>
     );
   }
 
   if (!session) {
     return (
-      <main style={{ padding: 16 }}>
-        <h1>未病レーダー</h1>
-        <p>ログイン後に利用できます。</p>
-        <p>
-          <a href="/signup">メールでログイン</a> ／ <a href="/check">体質チェックへ</a>
-        </p>
-      </main>
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">未病レーダー</h1>
+
+        <Card title="ログインが必要です">
+          <p className="text-slate-700">メールログイン後に利用できます。</p>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href="/signup">
+              <Button>メールでログイン</Button>
+            </a>
+            <a href="/check">
+              <Button variant="secondary">体質チェックへ</Button>
+            </a>
+          </div>
+        </Card>
+      </div>
     );
   }
 
   if (!isSubscribed) {
     return (
-      <main style={{ padding: 16 }}>
-        <h1>未病レーダー</h1>
-        <p>{msg || "サブスク加入が必要です（後でStripe導線を実装）。"}</p>
-        <p>
-          <a href="/result">結果へ</a> ／ <a href="/guide">ガイドを見る</a>
-        </p>
-      </main>
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">未病レーダー</h1>
+
+        <Card title="サブスクが必要です">
+          <p className="text-slate-700">
+            {msg || "未病レーダーはサブスク加入後に利用できます（Stripe導線は後で実装）。"}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href="/guide">
+              <Button>ガイドを見る</Button>
+            </a>
+            <a href="/check">
+              <Button variant="secondary">体質チェック</Button>
+            </a>
+          </div>
+        </Card>
+      </div>
     );
   }
 
   if (!data) {
     return (
-      <main style={{ padding: 16 }}>
-        <h1>未病レーダー</h1>
-        <p>{msg || "読み込み中…"}</p>
-      </main>
+      <div className="space-y-3">
+        <h1 className="text-xl font-semibold">未病レーダー</h1>
+        <p className="text-sm text-slate-600">{msg || "読み込み中…"}</p>
+      </div>
     );
   }
 
@@ -250,129 +280,192 @@ export default function RadarPage() {
   const food = data?.cards?.food;
 
   return (
-    <main style={{ padding: 16, maxWidth: 760 }}>
-      <h1>未病レーダー</h1>
-      <p style={{ opacity: 0.8 }}>ログイン中：{session.user?.email}</p>
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold">未病レーダー</h1>
+          <p className="text-xs text-slate-500">ログイン中：{session.user?.email}</p>
+        </div>
 
-      <hr />
-
-      <h2>今日の状態：{levelLabel(radar.level)}</h2>
-      <p style={{ whiteSpace: "pre-wrap" }}>{radar.reason_text}</p>
-
-      <hr />
-
-      <h2>今日の見立て（AI）</h2>
-      {loadingExplain ? (
-        <p>生成中…</p>
-      ) : explain ? (
-        <>
-          <h3 style={{ marginTop: 0 }}>{explain.headline}</h3>
-          <p style={{ whiteSpace: "pre-wrap" }}>{explain.assessment}</p>
-          <p style={{ whiteSpace: "pre-wrap" }}>{explain.why_alert}</p>
-          <p style={{ whiteSpace: "pre-wrap" }}>{explain.why_this_care}</p>
-          <p>
-            <b>今日のゴール：</b>
-            {explain.goal}
-          </p>
-          <p>
-            <b>記録のコツ：</b>
-            {explain.logging_tip}
-          </p>
-          <p style={{ opacity: 0.8 }}>
-            <b>注意：</b>
-            {explain.safety_note}
-          </p>
-        </>
-      ) : (
-        <p>（まだ生成情報がありません）</p>
-      )}
-
-      <hr />
-
-      <h2>今日の一手（メイン）</h2>
-      {main ? (
-        <section style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-          <h3 style={{ marginTop: 0 }}>{main.title}</h3>
-
-          {main.illustration_url ? (
-            <img src={main.illustration_url} alt="" style={{ maxWidth: "100%", borderRadius: 8 }} />
-          ) : null}
-
-          <ul>
-            {(main.body_steps || []).map((s, i) => (
-              <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
-            ))}
-          </ul>
-
-          {(main.cautions || []).length ? (
-            <>
-              <p>
-                <b>注意</b>
-              </p>
-              <ul>
-                {(main.cautions || []).map((s, i) => (
-                  <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button onClick={() => logMainDone(true)}>やった</button>
-            <button onClick={() => logMainDone(false)}>やってない</button>
-          </div>
-        </section>
-      ) : (
-        <p>カードがまだ登録されていません（care_cardsにseedを入れる必要があります）。</p>
-      )}
-
-      <hr />
-
-      <h2>今日の食養生（おまけ）</h2>
-      {food ? (
-        <section style={{ padding: 12, border: "1px solid #ddd", borderRadius: 8 }}>
-          <h3 style={{ marginTop: 0 }}>{food.title}</h3>
-
-          <ul>
-            {(food.body_steps || []).map((s, i) => (
-              <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
-            ))}
-          </ul>
-
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button onClick={() => logFoodDone(2)}>できた（◎）</button>
-            <button onClick={() => logFoodDone(1)}>少し（△）</button>
-            <button onClick={() => logFoodDone(0)}>できなかった（×）</button>
-          </div>
-        </section>
-      ) : (
-        <p>食養生カードがまだ登録されていません。</p>
-      )}
-
-      <hr />
-
-      <h2>体調記録</h2>
-      <p>朝（いま）</p>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => saveMorning(0)}>良い</button>
-        <button onClick={() => saveMorning(1)}>普通</button>
-        <button onClick={() => saveMorning(2)}>不調</button>
+        <a href="/guide" className="shrink-0">
+          <Button variant="secondary">ガイド</Button>
+        </a>
       </div>
 
-      <p style={{ marginTop: 16 }}>夜（1日を振り返って）</p>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={() => saveNight(0)}>良い</button>
-        <button onClick={() => saveNight(1)}>普通</button>
-        <button onClick={() => saveNight(2)}>不調</button>
+      {msg ? (
+        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+          {msg}
+        </div>
+      ) : null}
+
+      {/* 今日の状態 */}
+      <Card
+        title={
+          <div className="flex items-center justify-between gap-3">
+            <span>今日の状態</span>
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${levelBadgeClass(
+                radar.level
+              )}`}
+            >
+              {levelLabel(radar.level)}
+            </span>
+          </div>
+        }
+      >
+        <p className="whitespace-pre-wrap text-slate-700">
+          {radar.reason_text || "（まだ理由がありません）"}
+        </p>
+      </Card>
+
+      {/* 今日の見立て（AI） */}
+      <Card title="今日の見立て（AI）">
+        {loadingExplain ? (
+          <p className="text-sm text-slate-600">生成中…</p>
+        ) : explain?.error ? (
+          <p className="text-sm text-red-600">AIエラー: {explain.error}</p>
+        ) : explain ? (
+          <div className="space-y-2">
+            <div className="text-base font-semibold">{explain.headline}</div>
+            <p className="whitespace-pre-wrap text-slate-700">{explain.assessment}</p>
+            <p className="whitespace-pre-wrap text-slate-700">{explain.why_alert}</p>
+            <p className="whitespace-pre-wrap text-slate-700">{explain.why_this_care}</p>
+
+            <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800">
+              <div>
+                <span className="font-semibold">今日のゴール：</span>
+                {explain.goal}
+              </div>
+              <div className="mt-1">
+                <span className="font-semibold">記録のコツ：</span>
+                {explain.logging_tip}
+              </div>
+              <div className="mt-1 text-slate-600">
+                <span className="font-semibold">注意：</span>
+                {explain.safety_note}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-600">（まだ生成情報がありません）</p>
+        )}
+      </Card>
+
+      {/* 今日の一手 */}
+      <Card title="今日の一手（メイン）">
+        {main ? (
+          <div className="space-y-3">
+            <div className="text-base font-semibold">{main.title}</div>
+
+            {main.illustration_url ? (
+              <img
+                src={main.illustration_url}
+                alt=""
+                className="w-full rounded-lg border border-slate-200"
+              />
+            ) : null}
+
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {(main.body_steps || []).map((s, i) => (
+                <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+              ))}
+            </ul>
+
+            {(main.cautions || []).length ? (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                <div className="font-semibold">注意</div>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {(main.cautions || []).map((s, i) => (
+                    <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => logMainDone(true)}>やった</Button>
+              <Button variant="secondary" onClick={() => logMainDone(false)}>
+                やってない
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-600">
+            カードがまだ登録されていません（care_cardsにseedを入れる必要があります）。
+          </p>
+        )}
+      </Card>
+
+      {/* 食養生 */}
+      <Card title="今日の食養生（おまけ）">
+        {food ? (
+          <div className="space-y-3">
+            <div className="text-base font-semibold">{food.title}</div>
+
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {(food.body_steps || []).map((s, i) => (
+                <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+              ))}
+            </ul>
+
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => logFoodDone(2)}>できた（◎）</Button>
+              <Button variant="secondary" onClick={() => logFoodDone(1)}>
+                少し（△）
+              </Button>
+              <Button variant="ghost" onClick={() => logFoodDone(0)}>
+                できなかった（×）
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-600">食養生カードがまだ登録されていません。</p>
+        )}
+      </Card>
+
+      {/* 体調記録 */}
+      <Card title="体調記録（朝・夜）">
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm font-semibold text-slate-800">朝（いま）</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button onClick={() => saveMorning(0)}>良い</Button>
+              <Button variant="secondary" onClick={() => saveMorning(1)}>
+                普通
+              </Button>
+              <Button variant="ghost" onClick={() => saveMorning(2)}>
+                不調
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-sm font-semibold text-slate-800">夜（1日を振り返って）</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Button onClick={() => saveNight(0)}>良い</Button>
+              <Button variant="secondary" onClick={() => saveNight(1)}>
+                普通
+              </Button>
+              <Button variant="ghost" onClick={() => saveNight(2)}>
+                不調
+              </Button>
+            </div>
+          </div>
+
+          <div className="text-xs text-slate-500">
+            ※ 朝・夜の記録が溜まるほど、あなたの崩れパターンが見えやすくなります。
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex flex-wrap gap-2">
+        <a href="/check">
+          <Button variant="secondary">体質チェック</Button>
+        </a>
+        <a href="/history">
+          <Button variant="secondary">履歴</Button>
+        </a>
       </div>
-
-      {msg ? <p style={{ marginTop: 16 }}>{msg}</p> : null}
-
-      <hr />
-
-      <p>
-        <a href="/guide">ガイド</a> ／ <a href="/check">体質チェック</a>
-      </p>
-    </main>
+    </div>
   );
 }
