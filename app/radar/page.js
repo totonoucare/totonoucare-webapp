@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Toast from "@/components/ui/Toast";
 
 function levelLabel(level) {
   return ["安定", "注意", "警戒", "要対策"][level] ?? "—";
 }
 
 function levelBadgeClass(level) {
-  // 色指定しすぎると世界観が固まるので、まずは“濃淡”だけで運用
   if (level === 0) return "bg-slate-100 text-slate-800 border-slate-200";
   if (level === 1) return "bg-slate-200 text-slate-900 border-slate-300";
   if (level === 2) return "bg-slate-800 text-white border-slate-800";
@@ -28,7 +28,16 @@ export default function RadarPage() {
   const [explain, setExplain] = useState(null);
   const [loadingExplain, setLoadingExplain] = useState(false);
 
-  const [msg, setMsg] = useState("");
+  // トースト
+  const [toast, setToast] = useState({ open: false, message: "", variant: "info" });
+  const [toastTimer, setToastTimer] = useState(null);
+
+  const notify = (message, variant = "success") => {
+    if (toastTimer) clearTimeout(toastTimer);
+    setToast({ open: true, message, variant });
+    const t = setTimeout(() => setToast((p) => ({ ...p, open: false })), 2500);
+    setToastTimer(t);
+  };
 
   const isSubscribed = useMemo(() => {
     return ent.some((x) => x.product === "radar_subscription");
@@ -37,7 +46,7 @@ export default function RadarPage() {
   useEffect(() => {
     (async () => {
       if (!supabase) {
-        setMsg("Supabaseが初期化できていません（環境変数未反映）。");
+        notify("Supabaseが初期化できていません（環境変数未反映）。", "error");
         setLoadingAuth(false);
         return;
       }
@@ -49,6 +58,7 @@ export default function RadarPage() {
 
       supabase.auth.onAuthStateChange((_e, newSession) => setSession(newSession));
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function authedFetch(path, opts = {}) {
@@ -76,8 +86,6 @@ export default function RadarPage() {
       if (!session) return;
 
       try {
-        setMsg("");
-
         // 1) entitlements取得
         const entJson = await authedFetch("/api/entitlements/me");
         const ents = entJson.data || [];
@@ -86,7 +94,6 @@ export default function RadarPage() {
         // 2) サブスク必須（今は導線だけ後で実装）
         const hasSub = ents.some((x) => x.product === "radar_subscription");
         if (!hasSub) {
-          setMsg("未病レーダーはサブスク加入後に利用できます（今は導線だけ後で実装）。");
           setData(null);
           setExplain(null);
           return;
@@ -135,9 +142,10 @@ export default function RadarPage() {
         }
       } catch (e) {
         console.error(e);
-        setMsg(e?.message || "読み込みに失敗しました。");
+        notify(e?.message || "読み込みに失敗しました。", "error");
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   async function saveMorning(cond) {
@@ -147,10 +155,10 @@ export default function RadarPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ condition_am: cond }),
       });
-      setMsg("朝の体調を記録しました。");
       setData((prev) => ({ ...prev, checkin: json.data }));
+      notify("朝の体調を記録しました");
     } catch (e) {
-      setMsg(e?.message || "記録に失敗しました。");
+      notify(e?.message || "記録に失敗しました", "error");
     }
   }
 
@@ -161,10 +169,10 @@ export default function RadarPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ condition_pm: condPm }),
       });
-      setMsg("夜の体調を記録しました。");
       setData((prev) => ({ ...prev, checkin: json.data }));
+      notify("夜の体調を記録しました");
     } catch (e) {
-      setMsg(e?.message || "記録に失敗しました。");
+      notify(e?.message || "記録に失敗しました", "error");
     }
   }
 
@@ -185,9 +193,9 @@ export default function RadarPage() {
         }),
       });
 
-      setMsg(done ? "今日の一手を記録しました。" : "未実施として記録しました。");
+      notify(done ? "今日の一手を記録しました" : "未実施として記録しました");
     } catch (e) {
-      setMsg(e?.message || "記録に失敗しました。");
+      notify(e?.message || "記録に失敗しました", "error");
     }
   }
 
@@ -202,76 +210,86 @@ export default function RadarPage() {
         body: JSON.stringify({
           card_id: card.id,
           kind: "food",
-          done_level: level, // 2/1/0
+          done_level: level,
         }),
       });
 
-      setMsg("食養生の記録を保存しました。");
+      notify("食養生の記録を保存しました");
     } catch (e) {
-      setMsg(e?.message || "記録に失敗しました。");
+      notify(e?.message || "記録に失敗しました", "error");
     }
   }
 
-  // ---- Render ----
-
   if (loadingAuth) {
     return (
-      <div className="space-y-3">
-        <h1 className="text-xl font-semibold">未病レーダー</h1>
-        <p className="text-sm text-slate-600">読み込み中…</p>
-      </div>
+      <>
+        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
+        <div className="space-y-3">
+          <h1 className="text-xl font-semibold">未病レーダー</h1>
+          <p className="text-sm text-slate-600">読み込み中…</p>
+        </div>
+      </>
     );
   }
 
   if (!session) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold">未病レーダー</h1>
+      <>
+        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
+        <div className="space-y-4">
+          <h1 className="text-xl font-semibold">未病レーダー</h1>
 
-        <Card title="ログインが必要です">
-          <p className="text-slate-700">メールログイン後に利用できます。</p>
+          <Card title="ログインが必要です">
+            <p className="text-slate-700">メールログイン後に利用できます。</p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <a href="/signup">
-              <Button>メールでログイン</Button>
-            </a>
-            <a href="/check">
-              <Button variant="secondary">体質チェックへ</Button>
-            </a>
-          </div>
-        </Card>
-      </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a href="/signup">
+                <Button>メールでログイン</Button>
+              </a>
+              <a href="/check">
+                <Button variant="secondary">体質チェックへ</Button>
+              </a>
+            </div>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (!isSubscribed) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold">未病レーダー</h1>
+      <>
+        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
+        <div className="space-y-4">
+          <h1 className="text-xl font-semibold">未病レーダー</h1>
 
-        <Card title="サブスクが必要です">
-          <p className="text-slate-700">
-            {msg || "未病レーダーはサブスク加入後に利用できます（Stripe導線は後で実装）。"}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <a href="/guide">
-              <Button>ガイドを見る</Button>
-            </a>
-            <a href="/check">
-              <Button variant="secondary">体質チェック</Button>
-            </a>
-          </div>
-        </Card>
-      </div>
+          <Card title="サブスクが必要です">
+            <p className="text-slate-700">
+              未病レーダーはサブスク加入後に利用できます（Stripe導線は後で実装）。
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a href="/guide">
+                <Button>ガイドを見る</Button>
+              </a>
+              <a href="/check">
+                <Button variant="secondary">体質チェック</Button>
+              </a>
+            </div>
+          </Card>
+        </div>
+      </>
     );
   }
 
   if (!data) {
     return (
-      <div className="space-y-3">
-        <h1 className="text-xl font-semibold">未病レーダー</h1>
-        <p className="text-sm text-slate-600">{msg || "読み込み中…"}</p>
-      </div>
+      <>
+        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
+        <div className="space-y-3">
+          <h1 className="text-xl font-semibold">未病レーダー</h1>
+          <p className="text-sm text-slate-600">読み込み中…</p>
+        </div>
+      </>
     );
   }
 
@@ -280,192 +298,170 @@ export default function RadarPage() {
   const food = data?.cards?.food;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold">未病レーダー</h1>
-          <p className="text-xs text-slate-500">ログイン中：{session.user?.email}</p>
+    <>
+      <Toast open={toast.open} message={toast.message} variant={toast.variant} />
+
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold">未病レーダー</h1>
+            <p className="text-xs text-slate-500">ログイン中：{session.user?.email}</p>
+          </div>
+
+          <div className="flex gap-2">
+            <a href="/calendar" className="shrink-0">
+              <Button variant="secondary">カレンダー</Button>
+            </a>
+            <a href="/guide" className="shrink-0">
+              <Button variant="secondary">ガイド</Button>
+            </a>
+          </div>
         </div>
 
-        <a href="/guide" className="shrink-0">
-          <Button variant="secondary">ガイド</Button>
-        </a>
-      </div>
-
-      {msg ? (
-        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-          {msg}
-        </div>
-      ) : null}
-
-      {/* 今日の状態 */}
-      <Card
-        title={
-          <div className="flex items-center justify-between gap-3">
-            <span>今日の状態</span>
-            <span
-              className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${levelBadgeClass(
-                radar.level
-              )}`}
-            >
-              {levelLabel(radar.level)}
-            </span>
-          </div>
-        }
-      >
-        <p className="whitespace-pre-wrap text-slate-700">
-          {radar.reason_text || "（まだ理由がありません）"}
-        </p>
-      </Card>
-
-      {/* 今日の見立て（AI） */}
-      <Card title="今日の見立て（AI）">
-        {loadingExplain ? (
-          <p className="text-sm text-slate-600">生成中…</p>
-        ) : explain?.error ? (
-          <p className="text-sm text-red-600">AIエラー: {explain.error}</p>
-        ) : explain ? (
-          <div className="space-y-2">
-            <div className="text-base font-semibold">{explain.headline}</div>
-            <p className="whitespace-pre-wrap text-slate-700">{explain.assessment}</p>
-            <p className="whitespace-pre-wrap text-slate-700">{explain.why_alert}</p>
-            <p className="whitespace-pre-wrap text-slate-700">{explain.why_this_care}</p>
-
-            <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800">
-              <div>
-                <span className="font-semibold">今日のゴール：</span>
-                {explain.goal}
-              </div>
-              <div className="mt-1">
-                <span className="font-semibold">記録のコツ：</span>
-                {explain.logging_tip}
-              </div>
-              <div className="mt-1 text-slate-600">
-                <span className="font-semibold">注意：</span>
-                {explain.safety_note}
-              </div>
+        <Card
+          title={
+            <div className="flex items-center justify-between gap-3">
+              <span>今日の状態</span>
+              <span
+                className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${levelBadgeClass(
+                  radar.level
+                )}`}
+              >
+                {levelLabel(radar.level)}
+              </span>
             </div>
-          </div>
-        ) : (
-          <p className="text-sm text-slate-600">（まだ生成情報がありません）</p>
-        )}
-      </Card>
-
-      {/* 今日の一手 */}
-      <Card title="今日の一手（メイン）">
-        {main ? (
-          <div className="space-y-3">
-            <div className="text-base font-semibold">{main.title}</div>
-
-            {main.illustration_url ? (
-              <img
-                src={main.illustration_url}
-                alt=""
-                className="w-full rounded-lg border border-slate-200"
-              />
-            ) : null}
-
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(main.body_steps || []).map((s, i) => (
-                <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
-              ))}
-            </ul>
-
-            {(main.cautions || []).length ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-                <div className="font-semibold">注意</div>
-                <ul className="mt-1 list-disc space-y-1 pl-5">
-                  {(main.cautions || []).map((s, i) => (
-                    <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => logMainDone(true)}>やった</Button>
-              <Button variant="secondary" onClick={() => logMainDone(false)}>
-                やってない
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <p className="text-sm text-slate-600">
-            カードがまだ登録されていません（care_cardsにseedを入れる必要があります）。
+          }
+        >
+          <p className="whitespace-pre-wrap text-slate-700">
+            {radar.reason_text || "（まだ理由がありません）"}
           </p>
-        )}
-      </Card>
+        </Card>
 
-      {/* 食養生 */}
-      <Card title="今日の食養生（おまけ）">
-        {food ? (
-          <div className="space-y-3">
-            <div className="text-base font-semibold">{food.title}</div>
+        <Card title="今日の見立て（AI）">
+          {loadingExplain ? (
+            <p className="text-sm text-slate-600">生成中…</p>
+          ) : explain?.error ? (
+            <p className="text-sm text-red-600">AIエラー: {explain.error}</p>
+          ) : explain ? (
+            <div className="space-y-2">
+              <div className="text-base font-semibold">{explain.headline}</div>
+              <p className="whitespace-pre-wrap text-slate-700">{explain.assessment}</p>
+              <p className="whitespace-pre-wrap text-slate-700">{explain.why_alert}</p>
+              <p className="whitespace-pre-wrap text-slate-700">{explain.why_this_care}</p>
 
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(food.body_steps || []).map((s, i) => (
-                <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
-              ))}
-            </ul>
+              <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-800">
+                <div>
+                  <span className="font-semibold">今日のゴール：</span>
+                  {explain.goal}
+                </div>
+                <div className="mt-1">
+                  <span className="font-semibold">記録のコツ：</span>
+                  {explain.logging_tip}
+                </div>
+                <div className="mt-1 text-slate-600">
+                  <span className="font-semibold">注意：</span>
+                  {explain.safety_note}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">（まだ生成情報がありません）</p>
+          )}
+        </Card>
 
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => logFoodDone(2)}>できた（◎）</Button>
-              <Button variant="secondary" onClick={() => logFoodDone(1)}>
-                少し（△）
-              </Button>
-              <Button variant="ghost" onClick={() => logFoodDone(0)}>
-                できなかった（×）
-              </Button>
+        <Card title="今日の一手（メイン）">
+          {main ? (
+            <div className="space-y-3">
+              <div className="text-base font-semibold">{main.title}</div>
+
+              <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                {(main.body_steps || []).map((s, i) => (
+                  <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+                ))}
+              </ul>
+
+              {(main.cautions || []).length ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                  <div className="font-semibold">注意</div>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    {(main.cautions || []).map((s, i) => (
+                      <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => logMainDone(true)}>やった</Button>
+                <Button variant="secondary" onClick={() => logMainDone(false)}>
+                  やってない
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">カードがまだ登録されていません。</p>
+          )}
+        </Card>
+
+        <Card title="今日の食養生（おまけ）">
+          {food ? (
+            <div className="space-y-3">
+              <div className="text-base font-semibold">{food.title}</div>
+              <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                {(food.body_steps || []).map((s, i) => (
+                  <li key={i}>{typeof s === "string" ? s : JSON.stringify(s)}</li>
+                ))}
+              </ul>
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => logFoodDone(2)}>できた（◎）</Button>
+                <Button variant="secondary" onClick={() => logFoodDone(1)}>
+                  少し（△）
+                </Button>
+                <Button variant="ghost" onClick={() => logFoodDone(0)}>
+                  できなかった（×）
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-600">食養生カードがまだ登録されていません。</p>
+          )}
+        </Card>
+
+        <Card title="体調記録（朝・夜）">
+          <div className="space-y-4">
+            <div>
+              <div className="text-sm font-semibold text-slate-800">朝（いま）</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button onClick={() => saveMorning(0)}>良い</Button>
+                <Button variant="secondary" onClick={() => saveMorning(1)}>
+                  普通
+                </Button>
+                <Button variant="ghost" onClick={() => saveMorning(2)}>
+                  不調
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-sm font-semibold text-slate-800">夜（1日を振り返って）</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button onClick={() => saveNight(0)}>良い</Button>
+                <Button variant="secondary" onClick={() => saveNight(1)}>
+                  普通
+                </Button>
+                <Button variant="ghost" onClick={() => saveNight(2)}>
+                  不調
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-500">
+              ※ 記録はカレンダーで確認できます。
             </div>
           </div>
-        ) : (
-          <p className="text-sm text-slate-600">食養生カードがまだ登録されていません。</p>
-        )}
-      </Card>
-
-      {/* 体調記録 */}
-      <Card title="体調記録（朝・夜）">
-        <div className="space-y-4">
-          <div>
-            <div className="text-sm font-semibold text-slate-800">朝（いま）</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Button onClick={() => saveMorning(0)}>良い</Button>
-              <Button variant="secondary" onClick={() => saveMorning(1)}>
-                普通
-              </Button>
-              <Button variant="ghost" onClick={() => saveMorning(2)}>
-                不調
-              </Button>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sm font-semibold text-slate-800">夜（1日を振り返って）</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Button onClick={() => saveNight(0)}>良い</Button>
-              <Button variant="secondary" onClick={() => saveNight(1)}>
-                普通
-              </Button>
-              <Button variant="ghost" onClick={() => saveNight(2)}>
-                不調
-              </Button>
-            </div>
-          </div>
-
-          <div className="text-xs text-slate-500">
-            ※ 朝・夜の記録が溜まるほど、あなたの崩れパターンが見えやすくなります。
-          </div>
-        </div>
-      </Card>
-
-      <div className="flex flex-wrap gap-2">
-        <a href="/check">
-          <Button variant="secondary">体質チェック</Button>
-        </a>
-        <a href="/history">
-          <Button variant="secondary">履歴</Button>
-        </a>
+        </Card>
       </div>
-    </div>
+    </>
   );
 }
