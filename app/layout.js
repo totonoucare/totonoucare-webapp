@@ -1,30 +1,44 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "ととのうケアナビ（Web）",
-  description: "体質チェックから未病習慣まで。Webアプリ版プロトタイプ。"
+  title: "未病レーダー",
+  description: "体質チェック×天気で、今日を崩しにくくする。",
 };
 
-export default function RootLayout({ children }) {
+exportault function RootLayout({ children }) {
   return (
     <html lang="ja">
-      <body>
-        <div className="container">
-          <header className="nav">
-            <a href="/" className="btn ghost">ととのうケアナビ</a>
-            <span className="badge">Web app prototype</span>
-            <div style={{ marginLeft: "auto" }} className="row">
-              <a className="btn" href="/check">体質チェック</a>
-              <a className="btn" href="/signup">登録</a>
-            </div>
-          </header>
+      <body className="min-h-screen bg-slate-50 text-slate-900">
+        <header className="border-b bg-white">
+          <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
+            <div className="font-semibold">未病レーダー</div>
+            <nav className="flex items-center gap-3 text-sm">
+              <a className="hover:underline" href="/">
+                ホーム
+              </a>
+              <a className="hover:underline" href="/check">
+                体質チェック
+              </a>
+              <a className="hover:underline" href="/guide">
+                ガイド
+              </a>
+              <a className="hover:underline" href="/radar">
+                レーダー
+              </a>
+              <a className="hover:underline" href="/signup">
+                登録
+              </a>
+            </nav>
+          </div>
+        </header>
 
-          <main>{children}</main>
+        <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
 
-          <footer className="small" style={{ padding: "28px 0" }}>
+        <footer className="border-t bg-white">
+          <div className="mx-auto max-w-3xl px-4 py-4 text-xs text-slate-500">
             ※ 水面下で開発中のWebアプリです
-          </footer>
-        </div>
+          </div>
+        </footer>
       </body>
     </html>
   );
