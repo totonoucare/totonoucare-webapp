@@ -2,18 +2,12 @@ import { supabaseServer } from "@/lib/supabaseServer";
 
 export const runtime = "nodejs";
 
-function ymd(d) {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 export async function GET(req) {
   try {
     const url = new URL(req.url);
     const year = Number(url.searchParams.get("year"));
     const month = Number(url.searchParams.get("month"));
+
     if (!year || !month || month < 1 || month > 12) {
       return new Response(JSON.stringify({ error: "invalid year/month" }), {
         status: 400,
@@ -21,7 +15,7 @@ export async function GET(req) {
       });
     }
 
-    // Bearer tokenでユーザー特定（既存APIと同じ想定）
+    // Bearer tokenでユーザー特定
     const auth = req.headers.get("authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
     if (!token) {
@@ -40,53 +34,51 @@ export async function GET(req) {
     }
     const userId = userData.user.id;
 
-    // 月の範囲（UTCで扱う簡易版）
-    const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
-    const end = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+    // date列で範囲指定（YYYY-MM-DD）
+    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+    const endDateObj = new Date(year, month, 0); // monthは1-based
+    const endDate = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, "0")}-${String(
+      endDateObj.getDate()
+    ).padStart(2, "0")}`;
 
-    // carelogs: created_at を日付に丸めて集計
-    const { data: carelogs, error: careErr } = await supabaseServer
-      .from("carelogs")
-      .select("created_at, kind, done_level")
+    // daily_checkins
+    const { data: checkins, error: chkErr } = await supabaseServer
+      .from("daily_checkins")
+      .select("date, condition_am, condition_pm")
       .eq("user_id", userId)
-      .gte("created_at", start.toISOString())
-      .lte("created_at", end.toISOString());
+      .gte("date", startDate)
+      .lte("date", endDate);
+
+    if (chkErr) throw chkErr;
+
+    // daily_care_logs
+    const { data: carelogs, error: careErr } = await supabaseServer
+      .from("daily_care_logs")
+      .select("date, kind, done_level")
+      .eq("user_id", userId)
+      .gte("date", startDate)
+      .lte("date", endDate);
 
     if (careErr) throw careErr;
-
-    // checkins: date列がある前提（無い場合は created_at で丸める）
-    const { data: checkins, error: chkErr } = await supabaseServer
-      .from("checkins")
-      .select("date, created_at, condition_am, condition_pm")
-      .eq("user_id", userId)
-      .gte("created_at", start.toISOString())
-      .lte("created_at", end.toISOString());
-
-    // checkins側が想定と違って失敗しても、carelogsだけは出す
-    const checkinRows = chkErr ? [] : (checkins || []);
 
     // date => summary
     const map = new Map();
 
-    for (const r of carelogs || []) {
-      const d = ymd(new Date(r.created_at));
-      const s =
-        map.get(d) || {
-          date: d,
-          main_done: false,
-          food_done_level: null,
-          condition_am: null,
-          condition_pm: null,
-        };
-
-      if (r.kind !== "food" && r.done_level >= 2) s.main_done = true;
-      if (r.kind === "food") s.food_done_level = r.done_level;
-
-      map.set(d, s);
+    // checkins（1日1行想定）
+    for (const r of checkins || []) {
+      const d = String(r.date);
+      map.set(d, {
+        date: d,
+        main_done: false,
+        food_done_level: null,
+        condition_am: r.condition_am ?? null,
+        condition_pm: r.condition_pm ?? null,
+      });
     }
 
-    for (const r of checkinRows) {
-      const d = r.date ? String(r.date) : ymd(new Date(r.created_at));
+    // carelogs（同日複数あり得るので集約）
+    for (const r of carelogs || []) {
+      const d = String(r.date);
       const s =
         map.get(d) || {
           date: d,
@@ -96,8 +88,13 @@ export async function GET(req) {
           condition_pm: null,
         };
 
-      if (r.condition_am != null) s.condition_am = r.condition_am;
-      if (r.condition_pm != null) s.condition_pm = r.condition_pm;
+      if (r.kind === "food") {
+        const cur = s.food_done_level;
+        const next = r.done_level;
+        s.food_done_level = cur == null ? next : Math.max(cur, next); // ◎優先
+      } else {
+        if (r.done_level >= 2) s.main_done = true;
+      }
 
       map.set(d, s);
     }
