@@ -5,7 +5,7 @@ export const metadata = {
   description: "体質チェック×天気で、今日を崩しにくくする。",
 };
 
-exportault function RootLayout({ children }) {
+export default function RootLayout({ children }) {
   return (
     <html lang="ja">
       <body className="min-h-screen bg-slate-50 text-slate-900">
