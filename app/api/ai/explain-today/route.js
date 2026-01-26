@@ -73,7 +73,7 @@ ${JSON.stringify(food_card ?? null, null, 2)}
 `;
 
     const resp = await openai.responses.parse({
-      model: "gpt-5.2-mini",
+      model: "gpt-5-mini",
       reasoning: { effort: "low" },
       input: [
         { role: "system", content: system },
