@@ -1,167 +1,221 @@
-import OpenAI from "openai";
-import { z } from "zod";
-import { zodTextFormat } from "openai/helpers/zod";
+// app/api/ai/explain-today/route.js
+import { NextResponse } from "next/server";
+import { supabaseServer } from "@/lib/supabaseServer";
+import { requireUser } from "@/lib/requireUser";
 
-export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const ExplainTodaySchema = z.object({
-  headline: z.string(),        // 1行
-  assessment: z.string(),      // 2〜4行
-  why_alert: z.string(),       // 1〜2行
-  why_this_care: z.string(),   // 1〜2行
-  goal: z.string(),            // 1行
-  logging_tip: z.string(),     // 1行
-  safety_note: z.string(),     // 1行
-});
-
-function round0(n) {
-  if (typeof n !== "number" || !Number.isFinite(n)) return null;
-  return Math.round(n);
+function tokyoDateISO() {
+  // "YYYY-MM-DD" (Tokyo local)
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
 
-function sixinJa(x) {
-  const map = { wind: "風（変化）", cold: "冷え", heat: "暑さ", damp: "湿", dry: "乾燥" };
-  return map[x] || x;
+function levelLabel(level) {
+  // あくまで自社表現（頭痛ーるの「注意/警戒」そのままは避ける）
+  // 0=安定 1=注意 2=警戒 3=要対策
+  if (level === 0) return "安定";
+  if (level === 1) return "注意";
+  if (level === 2) return "警戒";
+  if (level === 3) return "要対策";
+  return "不明";
 }
 
-function symptomJa(x) {
+function safeArray(v) {
+  return Array.isArray(v) ? v : [];
+}
+
+function pickSymptomJa(symptom_focus) {
   const map = {
     fatigue: "だるさ・疲労",
     sleep: "睡眠",
-    neck_shoulder: "首肩の重さ",
+    mood: "気分の浮き沈み",
+    neck_shoulder: "首肩のつらさ",
+    low_back_pain: "腰のつらさ",
     swelling: "むくみ",
     headache: "頭痛",
-    low_back_pain: "腰の重さ",
+    dizziness: "めまい・ふらつき",
   };
-  return map[x] || x;
+  return map[symptom_focus] || "なんとなく不調";
 }
 
-function buildSafeInput({ symptom_focus, tcm_profile, weather_summary, main_card, food_card }) {
-  const top = Array.isArray(weather_summary?.top_sixin) ? weather_summary.top_sixin : [];
-  const topJa = top.map(sixinJa);
-
-  // 内因：ここは現状仮でもOK。将来 type/flow/organ を日本語に置換して渡す
-  const flowType = tcm_profile?.flowType || null;
-  const organType = tcm_profile?.organType || null;
-
-  const safe = {
-    symptom: symptomJa(symptom_focus),
-    // 体質（現状は仮。将来あなたのtype/flow/organを日本語で入れる）
-    constitution: {
-      flow: flowType,
-      organ: organType,
-    },
-    // 外因（ユーザー向けに整形）
-    today_weather: {
-      level: weather_summary?.level ?? null,
-      tendency: topJa, // 例: ["冷え","湿"]
-      temp_c: round0(weather_summary?.temp),
-      humidity_pct: round0(weather_summary?.humidity),
-      pressure_change_24h_hpa: round0(weather_summary?.d_pressure_24h),
-    },
-    // カード（ユーザーに見せて良い部分だけ）
-    care_today: {
-      main: {
-        title: main_card?.title,
-        kind: main_card?.kind,
-        steps: main_card?.body_steps || [],
-        cautions: main_card?.cautions || [],
-      },
-      food: food_card
-        ? {
-            title: food_card?.title,
-            steps: food_card?.body_steps || [],
-          }
-        : null,
-    },
+function mapSixinJa(code) {
+  const map = {
+    wind: "変化（風）",
+    cold: "冷え",
+    heat: "暑さ",
+    damp: "湿気",
+    dry: "乾燥",
   };
+  return map[code] || code;
+}
 
-  return safe;
+async function openaiExplain({ profile, radar, def, mainCard, foodCard }) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
+
+  const symptomJa = pickSymptomJa(profile?.symptom_focus);
+
+  const topSixin = safeArray(radar?.top_sixin).slice(0, 2);
+  const topSixinJa = topSixin.map(mapSixinJa);
+
+  const prompt = `
+あなたは「未病レーダー」の解説AI。日本語で、短く、読みやすく、冗長にしない。
+ユーザーを不安に煽らない。医療行為ではなくセルフケア支援。専門用語（脾・湿・気虚など）は基本使わない。必要なら括弧で一言説明する程度。
+構成は必ずこの順番：
+
+1) 今日のひとこと（1行）
+2) なぜそう言える？（2〜3行：天気の要点＋体質の要点）
+3) 今日の一手（メインケア：1行／食の一手：1行）
+4) 今日のゴール（1行）
+5) 記録のコツ（1行）
+6) 注意（1行：強い症状は無理しない／必要なら医療機関相談）
+
+【ユーザーの固定情報（体質）】
+- 主訴レンズ：${symptomJa}
+- 体質ベクトル：qi=${profile?.qi}, blood=${profile?.blood}, fluid=${profile?.fluid}
+- 寒熱：cold_heat=${profile?.cold_heat}
+- 回復：resilience=${profile?.resilience}
+- 体の張りやすいライン：${profile?.primary_meridian || "未設定"}
+
+※数値は説明にそのまま出さず、日本語の言い換えで。
+
+【今日の状態（レーダー）】
+- レベル：${levelLabel(radar?.level)}
+- 上位の影響：${topSixinJa.join("・") || "不明"}
+
+【気象（今日）】
+- 現在：気温 ${def?.temp ?? "?"}℃、湿度 ${def?.humidity ?? "?"}%、気圧 ${def?.pressure ?? "?"}hPa
+- 24h変化：気圧 ${def?.d_pressure_24h ?? "?"}hPa、気温 ${def?.d_temp_24h ?? "?"}℃、湿度 ${def?.d_humidity_24h ?? "?"}%
+
+【今日のカード（中身は短く使う）】
+- メイン：${mainCard?.title || "未設定"}
+  steps: ${JSON.stringify(mainCard?.body_steps || [])}
+  cautions: ${JSON.stringify(mainCard?.cautions || [])}
+- 食の一手：${foodCard?.title || "未設定"}
+  steps: ${JSON.stringify(foodCard?.body_steps || [])}
+  cautions: ${JSON.stringify(foodCard?.cautions || [])}
+
+出力はプレーンテキスト。見出し記号は「今日の見立て（AI）」など自然な日本語でOK。
+`.trim();
+
+  const resp = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-5.2",
+      reasoning: { effort: "low" },
+      input: prompt,
+      max_output_tokens: 500,
+    }),
+  });
+
+  if (!resp.ok) {
+    const t = await resp.text();
+    throw new Error(`OpenAI error: ${resp.status} ${t}`);
+  }
+
+  const json = await resp.json();
+  // Responses API: output_text がある場合が多い
+  const text =
+    json.output_text ||
+    (Array.isArray(json.output)
+      ? json.output
+          .flatMap((o) => o.content || [])
+          .filter((c) => c.type === "output_text")
+          .map((c) => c.text)
+          .join("\n")
+      : "");
+
+  return (text || "").trim();
 }
 
 export async function POST(req) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "OPENAI_API_KEY is not set" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
+    const { user, error } = await requireUser(req);
+    if (!user) return NextResponse.json({ error }, { status: 401 });
+
+    const date = tokyoDateISO();
+
+    // 1) latest constitution
+    const { data: profile, error: e0 } = await supabaseServer
+      .from("constitution_profiles")
+      .select("user_id, symptom_focus, qi, blood, fluid, cold_heat, resilience, primary_meridian, secondary_meridian, version, updated_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (e0) throw e0;
+
+    if (!profile) {
+      return NextResponse.json({
+        data: {
+          text: "体質情報はまだ未設定です（体質チェックで精度が上がります）。",
+          date,
+        },
       });
     }
 
-    const body = await req.json();
-    const {
-      symptom_focus,
-      tcm_profile,
-      weather_summary,
-      main_card,
-      food_card,
-      locale = "ja-JP",
-      // モデル切替したい時だけ指定（例: "gpt-5.2"）
-      model = "gpt-5-mini",
-    } = body || {};
+    // 2) today radar + external factors
+    const { data: radar, error: e1 } = await supabaseServer
+      .from("daily_radar")
+      .select("level, top_sixin, recommended_main_card_id, recommended_food_card_id, reason_text")
+      .eq("user_id", user.id)
+      .eq("date", date)
+      .maybeSingle();
+    if (e1) throw e1;
 
-    if (!symptom_focus || !main_card) {
-      return new Response(JSON.stringify({ error: "symptom_focus and main_card are required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    const { data: def, error: e2 } = await supabaseServer
+      .from("daily_external_factors")
+      .select("pressure,temp,humidity,wind,precip,d_pressure_24h,d_temp_24h,d_humidity_24h,top_sixin")
+      .eq("user_id", user.id)
+      .eq("date", date)
+      .maybeSingle();
+    if (e2) throw e2;
+
+    // 3) cards (service role想定。RLSでcare_cardsは直接select不可なので、supabaseServerがservice-roleである必要あり)
+    let mainCard = null;
+    let foodCard = null;
+
+    if (radar?.recommended_main_card_id) {
+      const { data, error } = await supabaseServer
+        .from("care_cards")
+        .select("id,title,kind,body_steps,cautions")
+        .eq("id", radar.recommended_main_card_id)
+        .maybeSingle();
+      if (error) throw error;
+      mainCard = data || null;
     }
 
-    const safeInput = buildSafeInput({
-      symptom_focus,
-      tcm_profile,
-      weather_summary,
-      main_card,
-      food_card,
-    });
+    if (radar?.recommended_food_card_id) {
+      const { data, error } = await supabaseServer
+        .from("care_cards")
+        .select("id,title,kind,body_steps,cautions")
+        .eq("id", radar.recommended_food_card_id)
+        .maybeSingle();
+      if (error) throw error;
+      foodCard = data || null;
+    }
 
-    const system = `
-あなたは「未病レーダー」の編集者。
-目的は「症状×体質×今日の外因」から、今日の状態と今日の一手に“納得感”を出す短い橋渡し文を作ること。
+    // 4) generate
+    const text = await openaiExplain({ profile, radar, def, mainCard, foodCard });
 
-厳守:
-- 新しい医学知識を作らない。入力にある事実だけで書く。
-- 断定しない（治療・診断ワード禁止）。セルフケアの範囲。
-- 専門用語・英語タグ（cold/damp/spleen等）を使わない。必ず自然な日本語に言い換える。
-- 冗長禁止。短く。
-
-文章量:
-- headline: 1行
-- assessment: 2〜4行
-- why_alert: 1〜2行
-- why_this_care: 1〜2行
-- goal/logging_tip/safety_note: 各1行
-
-言語: ${locale}
-`;
-
-    const user = `
-入力（ユーザー表示用に整形済み）:
-${JSON.stringify(safeInput, null, 2)}
-
-出力は、ユーザーが「なるほど、だから今日はこれなんだ」と思えるように。
-`;
-
-    const resp = await openai.responses.parse({
-      model,
-      reasoning: { effort: "low" },
-      input: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      text: { format: zodTextFormat(ExplainTodaySchema, "explain_today") },
-    });
-
-    return new Response(JSON.stringify(resp.output_parsed), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    return NextResponse.json({
+      data: {
+        date,
+        text,
+        used: {
+          has_profile: true,
+          has_radar: Boolean(radar),
+          has_def: Boolean(def),
+          has_main_card: Boolean(mainCard),
+          has_food_card: Boolean(foodCard),
+        },
+      },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e?.message || "unknown error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error(e);
+    return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
   }
 }
