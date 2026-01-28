@@ -1,35 +1,39 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-
 import { getQuestions, getTotalQuestions } from "@/lib/diagnosis/v2/questions";
-import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
 
 function ProgressBar({ current, total }) {
   const pct = Math.round((current / total) * 100);
   return (
-    <div className="flex items-center justify-between text-sm text-slate-600">
-      <div>
-        Q{current} / {total}
+    <div className="mb-4">
+      <div className="flex items-center justify-between text-xs text-slate-500">
+        <div>
+          Q{current} / {total}
+        </div>
+        <div>{pct}%</div>
       </div>
-      <div className="tabular-nums">{pct}%</div>
+      <div className="mt-2 h-2 w-full rounded-full bg-slate-200">
+        <div
+          className="h-2 rounded-full bg-slate-900 transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }
 
-const STORAGE_KEY = "mibyo_v2_preview";
+const PENDING_KEY = "pending_diagnosis_v2_answers";
 
 export default function CheckPage() {
   const router = useRouter();
-
   const questions = useMemo(() => getQuestions(), []);
   const total = useMemo(() => getTotalQuestions(), []);
 
-  const [step, setStep] = useState(0); // 0..total-1
+  const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -39,9 +43,31 @@ export default function CheckPage() {
   const canGoNext = Boolean(selected);
   const isLast = step === total - 1;
 
+  // 途中保存があれば復元（主に「戻ってきた時」用）
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved && typeof saved === "object") {
+        setAnswers(saved);
+        const idx = questions.findIndex((qq) => !saved?.[qq.id]);
+        setStep(idx === -1 ? total - 1 : Math.max(0, idx));
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function pick(value) {
-    if (!q?.id) return;
-    setAnswers((prev) => ({ ...prev, [q.id]: value }));
+    setAnswers((prev) => {
+      const next = { ...prev, [q.id]: value };
+      try {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     setError("");
   }
 
@@ -55,60 +81,33 @@ export default function CheckPage() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  function savePreviewToSession({ answers, computed }) {
-    try {
-      const payload = {
-        answers,
-        computed,
-        savedAt: new Date().toISOString(),
-        version: "v2",
-      };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch {
-      // sessionStorageが使えない環境はレアだが、落とさず続行
-    }
-  }
-
   async function submit() {
     setSubmitting(true);
     setError("");
 
-    // 1) まず「保存あり」を試す（ログイン済みならここで成功する）
     try {
+      // ✅ ログイン不要：匿名で diagnosis_events を作って eventId を返す
       const res = await fetch("/api/diagnosis/v2/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ answers }),
       });
 
-      // 未ログイン/セッション無し → 保存はせず preview に切り替え
-      if (res.status === 401) {
-        const computed = scoreDiagnosis(answers);
-        savePreviewToSession({ answers, computed });
-        router.push("/result?preview=1");
-        return;
-      }
-
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "診断の保存に失敗しました");
 
-      // 保存できた場合も、result側が取りやすいように一応previewも置いておく（安全策）
-      const computed = json?.data?.computed || scoreDiagnosis(answers);
-      savePreviewToSession({ answers, computed });
+      const eventId = json?.data?.eventId;
+      if (!eventId) throw new Error("eventId が返りませんでした");
 
-      // ここは /result で「保存済みデータ優先で表示」する想定
-      router.push("/result");
-    } catch (e) {
-      // 2) 失敗したら preview にフォールバック（ネットワーク障害や一時的なAPI不調も拾う）
+      // pending を消す
       try {
-        const computed = scoreDiagnosis(answers);
-        savePreviewToSession({ answers, computed });
-        router.push("/result?preview=1");
-        return;
-      } catch {
-        setError(e?.message || String(e));
-      }
+        sessionStorage.removeItem(PENDING_KEY);
+      } catch {}
+
+      // ✅ /result/[id] へ
+      router.push(`/result/${encodeURIComponent(eventId)}`);
+    } catch (e) {
+      setError(e?.message || String(e));
     } finally {
       setSubmitting(false);
     }
@@ -116,35 +115,25 @@ export default function CheckPage() {
 
   if (!q) {
     return (
-      <Card>
-        <div className="space-y-2">
-          <div className="text-lg font-semibold">質問が見つかりません</div>
-          <div className="text-sm text-slate-600">
-            questions 定義を確認してください。
-          </div>
-          <div>
-            <Button onClick={() => router.push("/")}>ホームへ</Button>
-          </div>
-        </div>
-      </Card>
+      <div className="space-y-3">
+        <h1 className="text-xl font-semibold">質問が見つかりません。</h1>
+        <Button onClick={() => router.push("/")}>トップへ</Button>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <ProgressBar current={step + 1} total={total} />
+
       <Card>
         <div className="space-y-3">
-          <ProgressBar current={step + 1} total={total} />
-
-          <div className="text-xl font-semibold">{q.title}</div>
-
+          <div className="text-lg font-semibold">{q.title}</div>
           {q.description ? (
-            <div className="text-sm leading-relaxed text-slate-600 whitespace-pre-wrap">
-              {q.description}
-            </div>
+            <div className="text-sm text-slate-600">{q.description}</div>
           ) : null}
 
-          <div className="space-y-2">
+          <div className="space-y-2 pt-2">
             {q.options.map((opt) => {
               const isSel = selected === opt.value;
               return (
@@ -162,8 +151,8 @@ export default function CheckPage() {
                   {opt.hint ? (
                     <div
                       className={[
-                        "mt-1 text-sm",
-                        isSel ? "text-slate-200" : "text-slate-600",
+                        "mt-1 text-xs",
+                        isSel ? "text-white/80" : "text-slate-500",
                       ].join(" ")}
                     >
                       {opt.hint}
@@ -175,23 +164,23 @@ export default function CheckPage() {
           </div>
 
           {error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </div>
           ) : null}
 
           <div className="flex items-center justify-between pt-2">
-            <Button variant="ghost" onClick={back} disabled={step === 0 || submitting}>
+            <Button variant="ghost" onClick={back} disabled={step === 0}>
               戻る
             </Button>
 
             {!isLast ? (
-              <Button onClick={next} disabled={!canGoNext || submitting}>
+              <Button onClick={next} disabled={!canGoNext}>
                 次へ
               </Button>
             ) : (
               <Button onClick={submit} disabled={!canGoNext || submitting}>
-                {submitting ? "生成中…" : "結果を見る"}
+                {submitting ? "作成中…" : "診断を確定"}
               </Button>
             )}
           </div>
