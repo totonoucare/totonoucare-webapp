@@ -1,164 +1,195 @@
+// app/result/[id]/page.js
 "use client";
 
 import { useEffect, useState } from "react";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Toast from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  SYMPTOM_LABELS,
+  getCoreLabel,
+  getSubLabels,
+  getMeridianLine,
+} from "@/lib/diagnosis/v2/labels";
 
-export default function ResultPage({ params }) {
-  const { id } = params;
-  const [data, setData] = useState(null);
+export default function ResultByIdPage({ params }) {
+  const id = params?.id;
+
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState("");
+  const [error, setError] = useState("");
+
+  const [event, setEvent] = useState(null);
   const [session, setSession] = useState(null);
-  const [ent, setEnt] = useState([]);
-  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [attaching, setAttaching] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      if (!supabase) {
-        setLoadingAuth(false);
-        return;
-      }
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session || null);
-      setLoadingAuth(false);
-    })();
+    let alive = true;
 
-    if (supabase) {
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-        setSession(newSession);
-      });
-      return () => sub?.subscription?.unsubscribe?.();
-    }
-  }, []);
-
-  useEffect(() => {
-    (async () => {
+    async function run() {
       try {
-        const res = await fetch(`/api/assessments/${encodeURIComponent(id)}`);
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || !json?.data) {
-          setData({ notFound: true });
-          return;
-        }
-        setData(json.data);
+        setLoading(true);
+        setError("");
+
+        // 1) event fetch (anonymous)
+        const res = await fetch(`/api/diagnosis/v2/events/${id}`, { cache: "no-store" });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || "結果の取得に失敗しました");
+        if (!alive) return;
+        setEvent(json?.data || null);
+
+        // 2) session (optional)
+        const { data } = await supabase.auth.getSession();
+        if (!alive) return;
+        setSession(data?.session || null);
       } catch (e) {
-        console.error(e);
-        setData({ notFound: true });
+        if (!alive) return;
+        setError(e?.message || String(e));
+      } finally {
+        if (!alive) return;
+        setLoading(false);
       }
-    })();
+    }
+
+    if (id) run();
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
-  async function authedFetch(path, opts = {}) {
-    if (!supabase) throw new Error("supabase not ready");
-    const { data } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-    if (!token) throw new Error("not logged in");
+  const symptomLabel = event?.symptom_focus
+    ? SYMPTOM_LABELS[event.symptom_focus] || event.symptom_focus
+    : "未設定";
 
-    const res = await fetch(path, {
-      ...opts,
-      headers: {
-        ...(opts.headers || {}),
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
-    return json;
-  }
+  const coreCode = event?.computed?.core_code || null;
+  const core = coreCode ? getCoreLabel(coreCode) : null;
 
-  useEffect(() => {
-    (async () => {
-      if (!session) return;
-      try {
-        const entJson = await authedFetch("/api/entitlements/me");
-        setEnt(entJson.data || []);
-      } catch (e) {
-        // entitlements APIは新設なので、ここは黙ってOK
+  const subCodes = event?.computed?.sub_labels || [];
+  const subs = getSubLabels(subCodes);
+
+  const meridian = getMeridianLine(event?.computed?.primary_meridian);
+
+  async function onAttach() {
+    try {
+      setAttaching(true);
+      const token = session?.access_token;
+      if (!token) {
+        // 未ログインなら signup へ（戻り先はこの結果）
+        window.location.href = `/signup?next=/result/${id}`;
+        return;
       }
-    })();
-  }, [session]);
 
-  async function logout() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-    window.location.href = "/";
+      const res = await fetch(`/api/diagnosis/v2/events/${id}/attach`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
+
+      setToast("この結果を保存しました。レーダーへ移動します。");
+      setTimeout(() => {
+        window.location.href = "/radar";
+      }, 700);
+    } catch (e) {
+      setToast(e?.message || String(e));
+    } finally {
+      setAttaching(false);
+    }
   }
-
-  if (!data) {
-    return (
-      <main style={{ padding: 16 }}>
-        <h1>結果を読み込み中…</h1>
-      </main>
-    );
-  }
-
-  if (data.notFound) {
-    return (
-      <main style={{ padding: 16 }}>
-        <h1>結果が見つかりません</h1>
-        <p>期限切れ/削除、または保存に失敗した可能性があります。</p>
-        <p><a href="/check">体質チェックをやり直す</a></p>
-      </main>
-    );
-  }
-
-  const createdAt = data.created_at;
-  const payload = data.payload || {};
-  const type = payload.type || data.result_type || "（不明）";
-  const explanation = payload.explanation || "（説明なし）";
-  const answers = payload.answers || {};
-  const symptomFocus = answers?.symptom_focus || data.symptom || "—";
-
-  const isLoggedIn = !!session;
-  const hasGuide = ent.some((x) => x.product === "guide_all_access");
-  const hasSub = ent.some((x) => x.product === "radar_subscription");
 
   return (
-    <main style={{ padding: 16, maxWidth: 720 }}>
-      <h1>体質チェック結果（仮）</h1>
+    <div className="space-y-4">
+      {toast ? <Toast message={toast} onClose={() => setToast("")} /> : null}
 
-      <p>
-        作成日時：{createdAt ? new Date(createdAt).toLocaleString("ja-JP") : "—"}
-      </p>
+      <Card className="p-4">
+        <div className="text-lg font-semibold">診断結果（無料）</div>
+        <div className="mt-1 text-sm text-slate-600">
+          まずは登録なしで結果を確認できます。続けたい場合だけ保存（メール）してください。
+        </div>
 
-      {loadingAuth ? null : isLoggedIn ? (
-        <p>ログイン中：{session.user?.email}</p>
-      ) : (
-        <p>未ログイン（登録すると保存・レーダー・ガイドが使えます）</p>
-      )}
+        {loading ? <div className="mt-4 text-slate-600">読み込み中…</div> : null}
 
-      <hr />
+        {!loading && error ? (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {error}
+          </div>
+        ) : null}
 
-      <h2>あなたは：{type}</h2>
-      <p style={{ whiteSpace: "pre-wrap" }}>{explanation}</p>
+        {!loading && !error && event ? (
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl border bg-white p-3">
+              <div className="text-xs text-slate-500">主訴</div>
+              <div className="mt-1 font-medium">{symptomLabel}</div>
+            </div>
 
-      <hr />
+            <div className="rounded-xl border bg-white p-3">
+              <div className="text-xs text-slate-500">メインタイプ</div>
+              <div className="mt-1 text-base font-semibold">{core?.title || "（判定中）"}</div>
+              {core?.short ? <div className="mt-1 text-sm text-slate-600">{core.short}</div> : null}
+              {core?.tcm_hint ? <div className="mt-2 text-sm text-slate-600">{core.tcm_hint}</div> : null}
+            </div>
 
-      <h3>主訴</h3>
-      <p>{symptomFocus}</p>
+            <div className="rounded-xl border bg-white p-3">
+              <div className="text-xs text-slate-500">今の偏り（サブ）</div>
+              {subs.length ? (
+                <div className="mt-2 space-y-2">
+                  {subs.map((s) => (
+                    <div key={s.title} className="rounded-lg bg-slate-50 p-2">
+                      <div className="font-medium">{s.title}</div>
+                      <div className="mt-1 text-sm text-slate-600">{s.action_hint}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 text-sm text-slate-600">（サブ判定は未設定）</div>
+              )}
+            </div>
 
-      <hr />
+            <div className="rounded-xl border bg-white p-3">
+              <div className="text-xs text-slate-500">負荷が出やすいライン</div>
+              {meridian ? (
+                <>
+                  <div className="mt-1 font-medium">{meridian.title}</div>
+                  <div className="mt-1 text-sm text-slate-600">{meridian.body_area}</div>
+                  <div className="mt-1 text-sm text-slate-600">
+                    {meridian.meridians?.join(" / ")}
+                  </div>
+                </>
+              ) : (
+                <div className="mt-2 text-sm text-slate-600">（未設定）</div>
+              )}
+            </div>
 
-      <h3>次のステップ</h3>
-      {isLoggedIn ? (
-        <>
-          <p>
-            <a href="/radar">未病レーダー</a>（{hasSub ? "利用可能" : "サブスク未加入"}）
-            <br />
-            <a href="/guide">ケアガイド</a>（{hasGuide ? "全解放" : "サンプルのみ"}）
-          </p>
-          <button onClick={logout}>ログアウト</button>
-          <p><a href="/check">別の条件でやり直す</a></p>
-        </>
-      ) : (
-        <>
-          <p>
-            <a href={`/signup?result=${encodeURIComponent(id)}`}>この結果を保存して登録する</a>
-            <br />
-            <a href="/signup">ログイン / 登録</a>
-            <br />
-            <a href="/check">別の条件でやり直す</a>
-          </p>
-        </>
-      )}
-    </main>
+            {/* CTA */}
+            <div className="grid gap-3">
+              <Card className="p-4">
+                <div className="font-semibold">続けるなら：結果を保存（無料）</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  保存すると、レーダーや記録（履歴）が使えるようになります。
+                </div>
+                <div className="mt-3">
+                  <Button onClick={onAttach} disabled={attaching}>
+                    {session?.user ? (attaching ? "保存中…" : "この結果を保存してレーダーへ") : "メールで保存して続ける"}
+                  </Button>
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <div className="font-semibold">ケアガイド（買い切り）</div>
+                <div className="mt-1 text-sm text-slate-600">
+                  体質に合わせたケア辞書をまとめて見返す「教科書」。
+                </div>
+                <div className="mt-3">
+                  <Button variant="secondary" onClick={() => (window.location.href = "/guide")}>
+                    ガイドを見る（後で購入導線を接続）
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </div>
+        ) : null}
+      </Card>
+    </div>
   );
 }
