@@ -1,10 +1,9 @@
-// app/result/[id]/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Toast from "@/components/ui/Toast";
 import { supabase } from "@/lib/supabaseClient";
 import {
   SYMPTOM_LABELS,
@@ -13,183 +12,261 @@ import {
   getMeridianLine,
 } from "@/lib/diagnosis/v2/labels";
 
-export default function ResultByIdPage({ params }) {
-  const id = params?.id;
-
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState("");
-  const [error, setError] = useState("");
+export default function ResultPage({ params }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { id } = params;
 
   const [event, setEvent] = useState(null);
+  const [loadingEvent, setLoadingEvent] = useState(true);
+
   const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
   const [attaching, setAttaching] = useState(false);
+  const [toast, setToast] = useState("");
 
+  const attachAfterLogin = searchParams?.get("attach") === "1";
+
+  // auth
   useEffect(() => {
-    let alive = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session || null);
+      setLoadingAuth(false);
+    })();
 
-    async function run() {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setLoadingAuth(false);
+    });
+
+    return () => sub?.subscription?.unsubscribe?.();
+  }, []);
+
+  // fetch event
+  useEffect(() => {
+    (async () => {
       try {
-        setLoading(true);
-        setError("");
-
-        // 1) event fetch (anonymous)
-        const res = await fetch(`/api/diagnosis/v2/events/${id}`, { cache: "no-store" });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "結果の取得に失敗しました");
-        if (!alive) return;
-        setEvent(json?.data || null);
-
-        // 2) session (optional)
-        const { data } = await supabase.auth.getSession();
-        if (!alive) return;
-        setSession(data?.session || null);
+        setLoadingEvent(true);
+        const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json?.data) {
+          setEvent({ notFound: true });
+          return;
+        }
+        setEvent(json.data);
       } catch (e) {
-        if (!alive) return;
-        setError(e?.message || String(e));
+        console.error(e);
+        setEvent({ notFound: true });
       } finally {
-        if (!alive) return;
-        setLoading(false);
+        setLoadingEvent(false);
       }
-    }
-
-    if (id) run();
-    return () => {
-      alive = false;
-    };
+    })();
   }, [id]);
 
-  const symptomLabel = event?.symptom_focus
-    ? SYMPTOM_LABELS[event.symptom_focus] || event.symptom_focus
-    : "未設定";
+  // optional: auto-attach after login (if user came back from signup)
+  useEffect(() => {
+    if (!attachAfterLogin) return;
+    if (loadingAuth) return;
+    if (!session) return;
+    if (!event || event?.notFound) return;
+    if (event?.is_attached) return;
 
-  const coreCode = event?.computed?.core_code || null;
-  const core = coreCode ? getCoreLabel(coreCode) : null;
+    // auto attach once
+    attachToAccount(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
-  const subCodes = event?.computed?.sub_labels || [];
-  const subs = getSubLabels(subCodes);
+  const computed = event?.computed || {};
+  const answers = event?.answers || {};
 
-  const meridian = getMeridianLine(event?.computed?.primary_meridian);
+  const symptomLabel = useMemo(() => {
+    const k = answers?.symptom_focus || event?.symptom_focus || "fatigue";
+    return SYMPTOM_LABELS[k] || "だるさ・疲労";
+  }, [answers?.symptom_focus, event?.symptom_focus]);
 
-  async function onAttach() {
+  const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
+  const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
+  const meridian = useMemo(
+    () => getMeridianLine(computed?.primary_meridian),
+    [computed?.primary_meridian]
+  );
+
+  async function attachToAccount(silent = false) {
+    setAttaching(true);
     try {
-      setAttaching(true);
-      const token = session?.access_token;
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
       if (!token) {
-        // 未ログインなら signup へ（戻り先はこの結果）
-        window.location.href = `/signup?next=/result/${id}`;
+        if (!silent) setToast("先にログインが必要です");
         return;
       }
 
-      const res = await fetch(`/api/diagnosis/v2/events/${id}/attach`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
+      const res = await fetch(
+        `/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
 
-      setToast("この結果を保存しました。レーダーへ移動します。");
-      setTimeout(() => {
-        window.location.href = "/radar";
-      }, 700);
+      // refresh event
+      const r2 = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
+      const j2 = await r2.json().catch(() => ({}));
+      if (r2.ok && j2?.data) setEvent(j2.data);
+
+      setToast("結果を保存しました ✅");
     } catch (e) {
       setToast(e?.message || String(e));
     } finally {
       setAttaching(false);
+      setTimeout(() => setToast(""), 2500);
     }
   }
 
+  function goSignupToAttach() {
+    // signup後に /result/{id}?attach=1 に戻す
+    router.push(`/signup?redirect=/result/${encodeURIComponent(id)}%3Fattach%3D1`);
+  }
+
+  if (loadingEvent) {
+    return (
+      <div className="space-y-3">
+        <h1 className="text-xl font-semibold">結果を読み込み中…</h1>
+        <div className="text-sm text-slate-600">少し待ってください。</div>
+      </div>
+    );
+  }
+
+  if (!event || event?.notFound) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">結果が見つかりません</h1>
+        <div className="text-sm text-slate-600">
+          期限切れ/削除、または保存に失敗した可能性があります。
+        </div>
+        <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
+      </div>
+    );
+  }
+
+  const isLoggedIn = !!session;
+  const isAttached = !!event?.is_attached;
+
   return (
     <div className="space-y-4">
-      {toast ? <Toast message={toast} onClose={() => setToast("")} /> : null}
-
-      <Card className="p-4">
-        <div className="text-lg font-semibold">診断結果（無料）</div>
-        <div className="mt-1 text-sm text-slate-600">
-          まずは登録なしで結果を確認できます。続けたい場合だけ保存（メール）してください。
+      {toast ? (
+        <div className="fixed left-1/2 top-4 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-xl border bg-white px-4 py-3 text-sm shadow">
+          {toast}
         </div>
+      ) : null}
 
-        {loading ? <div className="mt-4 text-slate-600">読み込み中…</div> : null}
-
-        {!loading && error ? (
-          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </div>
-        ) : null}
-
-        {!loading && !error && event ? (
-          <div className="mt-4 space-y-4">
-            <div className="rounded-xl border bg-white p-3">
-              <div className="text-xs text-slate-500">主訴</div>
-              <div className="mt-1 font-medium">{symptomLabel}</div>
-            </div>
-
-            <div className="rounded-xl border bg-white p-3">
-              <div className="text-xs text-slate-500">メインタイプ</div>
-              <div className="mt-1 text-base font-semibold">{core?.title || "（判定中）"}</div>
-              {core?.short ? <div className="mt-1 text-sm text-slate-600">{core.short}</div> : null}
-              {core?.tcm_hint ? <div className="mt-2 text-sm text-slate-600">{core.tcm_hint}</div> : null}
-            </div>
-
-            <div className="rounded-xl border bg-white p-3">
-              <div className="text-xs text-slate-500">今の偏り（サブ）</div>
-              {subs.length ? (
-                <div className="mt-2 space-y-2">
-                  {subs.map((s) => (
-                    <div key={s.title} className="rounded-lg bg-slate-50 p-2">
-                      <div className="font-medium">{s.title}</div>
-                      <div className="mt-1 text-sm text-slate-600">{s.action_hint}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-2 text-sm text-slate-600">（サブ判定は未設定）</div>
-              )}
-            </div>
-
-            <div className="rounded-xl border bg-white p-3">
-              <div className="text-xs text-slate-500">負荷が出やすいライン</div>
-              {meridian ? (
-                <>
-                  <div className="mt-1 font-medium">{meridian.title}</div>
-                  <div className="mt-1 text-sm text-slate-600">{meridian.body_area}</div>
-                  <div className="mt-1 text-sm text-slate-600">
-                    {meridian.meridians?.join(" / ")}
-                  </div>
-                </>
-              ) : (
-                <div className="mt-2 text-sm text-slate-600">（未設定）</div>
-              )}
-            </div>
-
-            {/* CTA */}
-            <div className="grid gap-3">
-              <Card className="p-4">
-                <div className="font-semibold">続けるなら：結果を保存（無料）</div>
-                <div className="mt-1 text-sm text-slate-600">
-                  保存すると、レーダーや記録（履歴）が使えるようになります。
-                </div>
-                <div className="mt-3">
-                  <Button onClick={onAttach} disabled={attaching}>
-                    {session?.user ? (attaching ? "保存中…" : "この結果を保存してレーダーへ") : "メールで保存して続ける"}
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <div className="font-semibold">ケアガイド（買い切り）</div>
-                <div className="mt-1 text-sm text-slate-600">
-                  体質に合わせたケア辞書をまとめて見返す「教科書」。
-                </div>
-                <div className="mt-3">
-                  <Button variant="secondary" onClick={() => (window.location.href = "/guide")}>
-                    ガイドを見る（後で購入導線を接続）
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          </div>
-        ) : null}
+      <Card>
+        <div className="space-y-2">
+          <div className="text-xs text-slate-500">あなたの主訴</div>
+          <div className="text-lg font-semibold">{symptomLabel}</div>
+        </div>
       </Card>
+
+      <Card>
+        <div className="space-y-3">
+          <div className="text-xl font-semibold">体質の見立て（v2）</div>
+
+          <div className="rounded-xl border bg-slate-50 px-4 py-3">
+            <div className="text-sm text-slate-600">メイン</div>
+            <div className="mt-1 text-lg font-semibold">{core.title}</div>
+            <div className="mt-1 text-sm text-slate-600">{core.tcm_hint}</div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-sm font-semibold">サブラベル（最大2つ）</div>
+            {subLabels?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {subLabels.map((s) => (
+                  <span
+                    key={s.title}
+                    className="rounded-full border bg-white px-3 py-1 text-xs"
+                    title={s.action_hint}
+                  >
+                    {s.title}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-500">（今回は該当なし）</div>
+            )}
+          </div>
+
+          {meridian ? (
+            <div className="rounded-xl border bg-white px-4 py-3">
+              <div className="text-sm font-semibold">{meridian.title}</div>
+              <div className="mt-1 text-xs text-slate-600">
+                {meridian.body_area}（{meridian.meridians.join("・")}）
+              </div>
+              <div className="mt-2 text-xs text-slate-500">{meridian.organs_hint}</div>
+            </div>
+          ) : null}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="space-y-3">
+          <div className="text-sm font-semibold">次のステップ</div>
+
+          {loadingAuth ? (
+            <div className="text-sm text-slate-500">ログイン状態を確認中…</div>
+          ) : isLoggedIn ? (
+            <>
+              <div className="text-sm text-slate-600">
+                ログイン中：{session.user?.email}
+              </div>
+
+              {isAttached ? (
+                <div className="rounded-xl border bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  この結果は保存済みです ✅
+                </div>
+              ) : (
+                <Button onClick={() => attachToAccount(false)} disabled={attaching}>
+                  {attaching ? "保存中…" : "この結果をアカウントに保存する"}
+                </Button>
+              )}
+
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => router.push("/radar")}>
+                  レーダーを見る
+                </Button>
+                <Button variant="ghost" onClick={() => router.push("/check")}>
+                  別の条件でやり直す
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-slate-600">
+                未ログイン（結果は無料で見られます。保存・ガイド・記録は登録後）
+              </div>
+
+              <Button onClick={goSignupToAttach}>この結果を保存して登録する</Button>
+
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => router.push("/check")}>
+                  別の条件でやり直す
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Card>
+
+      <div className="text-xs text-slate-500">
+        作成日時：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
+      </div>
     </div>
   );
 }
