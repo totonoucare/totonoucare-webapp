@@ -1,8 +1,7 @@
 // app/api/diagnosis/v2/submit/route.js
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
-import { requireUser } from "@/lib/requireUser";
-import { buildConstitutionProfilePayload, scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
+import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -42,7 +41,7 @@ function validateAnswers(answers) {
   const allowedFluid = new Set(["deficiency", "balanced", "damp"]);
   if (!allowedFluid.has(answers.fluid_state)) return "Invalid fluid_state";
 
-  const allowedColdHeat = new Set(["cold", "neutral", "heat"]);
+  const allowedColdHeat = new Set(["cold", "neutral", "heat", "mixed"]);
   if (!allowedColdHeat.has(answers.cold_heat)) return "Invalid cold_heat";
 
   const allowedRes = new Set(["low", "medium", "high"]);
@@ -56,51 +55,36 @@ function validateAnswers(answers) {
 
 export async function POST(req) {
   try {
-    const { user, error } = await requireUser(req);
-    if (!user) return NextResponse.json({ error }, { status: 401 });
-
     const body = await req.json();
-    const answers = body?.answers || body; // どちらでも受ける
+    const answers = body?.answers || body;
 
     const vErr = validateAnswers(answers);
     if (vErr) return NextResponse.json({ error: vErr }, { status: 400 });
 
-    // 1) compute
     const computed = scoreDiagnosis(answers);
 
-    // 2) store history event
-    const { data: eventRow, error: e1 } = await supabaseServer
+    // 匿名で diagnosis_events を作る（user_id = null）
+    const { data: row, error: e1 } = await supabaseServer
       .from("diagnosis_events")
       .insert([
         {
-          user_id: user.id,
+          user_id: null,
           symptom_focus: computed.symptom_focus,
           answers,
           computed,
           version: "v2",
         },
       ])
-      .select("id, user_id, created_at, symptom_focus, version")
+      .select("id, created_at, symptom_focus, version")
       .single();
+
     if (e1) throw e1;
-
-    // 3) upsert latest profile
-    const profilePayload = buildConstitutionProfilePayload(user.id, answers);
-
-    const { data: profileRow, error: e2 } = await supabaseServer
-      .from("constitution_profiles")
-      .upsert([profilePayload], { onConflict: "user_id" })
-      .select(
-        "user_id, symptom_focus, qi, blood, fluid, cold_heat, resilience, primary_meridian, secondary_meridian, version, updated_at"
-      )
-      .single();
-    if (e2) throw e2;
 
     return NextResponse.json({
       data: {
-        event: eventRow,
-        profile: profileRow,
-        computed, // UI/AIがすぐ使えるように返す
+        eventId: row.id,
+        event: row,
+        computed,
       },
     });
   } catch (e) {
