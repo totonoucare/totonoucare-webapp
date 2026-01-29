@@ -16,67 +16,64 @@ export default function AuthCallbackPage() {
 
         const url = new URL(window.location.href);
 
-        // 1) PKCEフロー： ?code=XXXX
+        // 1) PKCE: ?code=
         const code = url.searchParams.get("code");
 
-        // 2) Implicitフロー： #access_token=...&refresh_token=...
+        // 2) Implicit: #access_token=...&refresh_token=...
         const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
         const hashParams = new URLSearchParams(hash);
         const access_token = hashParams.get("access_token");
         const refresh_token = hashParams.get("refresh_token");
 
-        // --- ✅ ここでセッション確立 ---
+        // --- セッション確立 ---
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
         } else if (access_token && refresh_token) {
-          const { error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
           if (error) throw error;
         } else {
-          throw new Error(
-            "認証情報がURLに見つかりませんでした。リンク期限切れか設定ミスの可能性があります。"
-          );
+          throw new Error("認証情報がURLに見つかりませんでした（リンク期限切れ等）。");
         }
 
-        // ✅ ここからが「診断結果とユーザーを紐付ける処理」
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData?.session?.user?.id;
-
         const resultId = url.searchParams.get("result");
+        const nextPath = url.searchParams.get("next") || "";
 
-        if (resultId && userId) {
-          await fetch(`/api/assessments/${resultId}/attach`, {
+        // session取得
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+
+        // ✅ 結果があるなら v2 attach
+        if (resultId && token) {
+          await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: userId }),
+            headers: { Authorization: `Bearer ${token}` },
           });
         }
 
-        // ✅ 最後にガイドへ移動
         setMsg("ログイン成功。移動します…");
-        window.location.href = resultId
-          ? `/guide?result=${encodeURIComponent(resultId)}`
-          : "/guide";
+
+        if (nextPath) {
+          window.location.href = nextPath;
+        } else if (resultId) {
+          window.location.href = `/result/${encodeURIComponent(resultId)}`;
+        } else {
+          window.location.href = "/radar";
+        }
       } catch (e) {
         console.error(e);
-        setMsg(`ログインに失敗しました。もう一度やり直してください。`);
+        setMsg("ログインに失敗しました。もう一度やり直してください。");
       }
     })();
   }, []);
 
   return (
-    <div className="card">
-      <h1>認証中</h1>
-      <p className="small">{msg}</p>
-
-      <div style={{ marginTop: 12 }}>
-        <a className="btn" href="/signup">
-          登録画面へ戻る
-        </a>
-      </div>
+    <div className="space-y-3">
+      <h1 className="text-lg font-semibold">認証中</h1>
+      <p className="text-sm text-slate-600">{msg}</p>
+      <a className="text-sm underline" href="/signup">
+        登録画面へ戻る
+      </a>
     </div>
   );
 }
