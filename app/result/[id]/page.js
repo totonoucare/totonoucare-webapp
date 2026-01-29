@@ -130,10 +130,14 @@ export default function ResultPage({ params }) {
     }
   }
 
-  function goSignupToAttach() {
-    // signup後に /result/{id}?attach=1 に戻す
-    router.push(`/signup?redirect=/result/${encodeURIComponent(id)}%3Fattach%3D1`);
-  }
+function goSignupToAttach() {
+  // signup後に /auth/callback 経由で戻すため、result と next を渡す
+  router.push(
+    `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
+      `/result/${id}?attach=1`
+    )}`
+  );
+}
 
   if (loadingEvent) {
     return (
