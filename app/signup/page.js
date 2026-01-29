@@ -2,12 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 
 export default function SignupPage() {
-  const resultId = useMemo(() => {
-    if (typeof window === "undefined") return "";
+  const params = useMemo(() => {
+    if (typeof window === "undefined") return { resultId: "", nextPath: "" };
     const url = new URL(window.location.href);
-    return url.searchParams.get("result") || "";
+    return {
+      resultId: url.searchParams.get("result") || "",
+      nextPath: url.searchParams.get("next") || "",
+    };
   }, []);
 
   const [email, setEmail] = useState("");
@@ -29,8 +34,7 @@ export default function SignupPage() {
     if (!supabase) {
       setStatus({
         state: "error",
-        message:
-          "Supabaseが初期化できていません（環境変数が反映されてない可能性）。",
+        message: "Supabaseが初期化できていません（環境変数が反映されてない可能性）。",
       });
       return;
     }
@@ -38,15 +42,15 @@ export default function SignupPage() {
     try {
       const origin = window.location.origin;
 
-      const emailRedirectTo = resultId
-        ? `${origin}/auth/callback?result=${encodeURIComponent(resultId)}`
-        : `${origin}/auth/callback`;
+      // callback へ result/next を引き継ぐ
+      const cb = new URL(`${origin}/auth/callback`);
+      if (params.resultId) cb.searchParams.set("result", params.resultId);
+      if (params.nextPath) cb.searchParams.set("next", params.nextPath);
 
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo },
+        options: { emailRedirectTo: cb.toString() },
       });
-
       if (error) throw error;
 
       setStatus({
@@ -70,88 +74,77 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="card">
-      <h1>ログイン / 登録（マジックリンク）</h1>
-      <p className="small">
-        パスワード不要。メールに届くリンクを開くだけでログインできます。
-      </p>
+    <div className="space-y-4">
+      <Card>
+        <h1 className="text-lg font-semibold">ログイン / 登録（マジックリンク）</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          パスワード不要。メールに届くリンクを開くだけでログインできます。
+        </p>
+      </Card>
 
       {session ? (
-        <>
-          <hr />
-          <div className="card">
-            <div className="small">すでにログイン中</div>
-            <div style={{ fontWeight: 700 }}>{session.user?.email}</div>
+        <Card>
+          <div className="text-sm text-slate-600">すでにログイン中</div>
+          <div className="mt-1 font-medium">{session.user?.email}</div>
 
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-              <a className="btn primary" href={resultId ? `/guide?result=${encodeURIComponent(resultId)}` : "/guide"}>
-                ケアガイドへ
-              </a>
-              <button className="btn" onClick={logout}>
-                ログアウト
-              </button>
-            </div>
+          <div className="mt-4 flex gap-2">
+            <Button
+              onClick={() => (window.location.href = params.nextPath || "/radar")}
+            >
+              続きを開く
+            </Button>
+            <Button variant="secondary" onClick={logout}>
+              ログアウト
+            </Button>
           </div>
-          <hr />
-          <a className="btn" href="/">
-            トップへ戻る
-          </a>
-        </>
+
+          <div className="mt-3 text-xs text-slate-500">
+            ※ ログイン済みならこの画面は閉じてOKです。
+          </div>
+        </Card>
       ) : (
-        <>
-          {resultId ? (
-            <div className="card" style={{ marginTop: 12 }}>
-              <div className="small">引き継ぐ結果ID</div>
-              <div style={{ fontWeight: 700 }}>{resultId}</div>
+        <Card>
+          {params.resultId ? (
+            <div className="text-sm">
+              <div className="text-slate-600">引き継ぐ結果ID</div>
+              <div className="mt-1 font-mono text-xs break-all">{params.resultId}</div>
             </div>
           ) : (
-            <div className="small" style={{ marginTop: 12 }}>
+            <div className="text-sm text-slate-600">
               ※ 結果IDなしの通常ログインも可能です
             </div>
           )}
 
-          <hr />
-
-          <form onSubmit={handleSendLink}>
-            <div className="label">メールアドレス</div>
-            <input
-              className="input"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={status.state === "loading" || status.state === "sent"}
-            />
-
-            <div style={{ marginTop: 16 }}>
-              <button
-                className="btn primary"
-                type="submit"
+          <form onSubmit={handleSendLink} className="mt-4 space-y-3">
+            <div>
+              <div className="text-sm text-slate-600">メールアドレス</div>
+              <input
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 disabled={status.state === "loading" || status.state === "sent"}
-              >
-                マジックリンクを送る
-              </button>
+              />
             </div>
 
+            <Button type="submit" disabled={status.state === "loading" || status.state === "sent"}>
+              マジックリンクを送る
+            </Button>
+
             {status.message ? (
-              <div className="small" style={{ marginTop: 10 }}>
-                {status.message}
-              </div>
+              <div className="text-sm text-slate-600">{status.message}</div>
             ) : null}
           </form>
 
-          <hr />
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <a className="btn" href="/">
-              トップへ戻る
-            </a>
-            <a className="btn" href="/check">
+          <div className="mt-4 flex gap-2">
+            <Button variant="secondary" onClick={() => (window.location.href = "/")}>
+              トップへ
+            </Button>
+            <Button variant="secondary" onClick={() => (window.location.href = "/check")}>
               体質チェックへ
-            </a>
+            </Button>
           </div>
-        </>
+        </Card>
       )}
     </div>
   );
