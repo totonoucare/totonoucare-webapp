@@ -1,108 +1,93 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function AuthCallbackPage() {
-  const [msg, setMsg] = useState("認証中…");
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const next = sp?.get("next") || "/";
+  const result = sp?.get("result") || ""; // diagnosis_events.id（未ログイン作成のやつ）
+
+  const [status, setStatus] = useState("ログイン処理中…");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     (async () => {
       try {
-        if (!supabase) {
-          setMsg("Supabaseが初期化できていません（環境変数未反映の可能性）。");
-          return;
+        setError("");
+
+        // 1) code → session 交換（これが成功しないと「ログイン失敗」に見える）
+        const { data, error: e1 } = await supabase.auth.exchangeCodeForSession(
+          window.location.href
+        );
+        if (e1) throw e1;
+
+        const session = data?.session;
+        if (!session?.access_token) {
+          throw new Error("セッションを取得できませんでした");
         }
 
-        const url = new URL(window.location.href);
-        const resultId = url.searchParams.get("result");
-        const nextPath = url.searchParams.get("next") || "";
+        // 2) ✅ 結果IDがあれば attach を確実に実行（ここが今回の肝）
+        if (result) {
+          setStatus("結果を保存しています…");
 
-        // PKCE: ?code=...
-        const code = url.searchParams.get("code");
-
-        // Hash: #access_token=...&refresh_token=...
-        const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
-        const hashParams = new URLSearchParams(hash);
-        const access_token = hashParams.get("access_token");
-        const refresh_token = hashParams.get("refresh_token");
-
-        let session = null;
-
-        // 1) まず既存セッションがあるか確認
-        const { data: s0 } = await supabase.auth.getSession();
-        session = s0?.session || null;
-
-        // 2) 無ければ URL からセッション確立（detectSessionInUrl=false 前提）
-        if (!session) {
-          if (code) {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw new Error(`exchangeCodeForSession: ${error.message}`);
-            session = data?.session || null;
-          } else if (access_token && refresh_token) {
-            const { data, error } = await supabase.auth.setSession({
-              access_token,
-              refresh_token,
-            });
-            if (error) throw new Error(`setSession: ${error.message}`);
-            session = data?.session || null;
-          }
-        }
-
-        // 3) まだ無ければ最後にもう一回 getSession（反映待ち対策）
-        if (!session) {
-          const { data: s1 } = await supabase.auth.getSession();
-          session = s1?.session || null;
-        }
-
-        if (!session) {
-          setMsg("ログインに失敗しました（リンク期限切れ/認証情報なし）。もう一度お試しください。");
-          return;
-        }
-
-        // 4) 結果があるなら attach（guest診断 → ログイン後に紐付け）
-        if (resultId) {
-          setMsg("ログイン成功。結果を保存中…");
           const res = await fetch(
-            `/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`,
+            `/api/diagnosis/v2/events/${encodeURIComponent(result)}/attach`,
             {
               method: "POST",
               headers: {
+                "Content-Type": "application/json",
                 Authorization: `Bearer ${session.access_token}`,
               },
             }
           );
 
-          // attach失敗でもログイン自体は成功してるので、画面へ戻す
+          const json = await res.json().catch(() => ({}));
           if (!res.ok) {
-            const j = await res.json().catch(() => ({}));
-            console.warn("attach failed:", j);
+            // ここで止めるかどうかは好みだが、まずは失敗を見える化
+            throw new Error(json?.error || "結果の保存に失敗しました");
           }
         }
 
-        setMsg("完了。移動します…");
-
-        if (nextPath) {
-          window.location.href = nextPath;
-        } else if (resultId) {
-          window.location.href = `/result/${encodeURIComponent(resultId)}?attach=1`;
-        } else {
-          window.location.href = "/radar";
-        }
+        // 3) next に戻す（基本は /result/[id]?attach=1 を渡してる想定）
+        setStatus("完了。画面を戻します…");
+        router.replace(next);
       } catch (e) {
         console.error(e);
-        setMsg(`ログインに失敗しました：${e?.message || String(e)}`);
+        setError(e?.message || String(e));
+        setStatus("処理に失敗しました");
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="space-y-3">
-      <h1 className="text-lg font-semibold">認証中</h1>
-      <p className="text-sm text-slate-700">{msg}</p>
-      <a className="text-sm underline" href="/signup">
-        登録画面へ戻る
-      </a>
+    <div className="space-y-4">
+      <Card>
+        <div className="space-y-2">
+          <div className="text-xl font-semibold">ログイン処理</div>
+          <div className="text-sm text-slate-600">{status}</div>
+          {error ? (
+            <div className="rounded-xl border bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {error}
+            </div>
+          ) : null}
+        </div>
+      </Card>
+
+      {error ? (
+        <div className="flex gap-2">
+          <Button onClick={() => router.replace("/signup")}>もう一度</Button>
+          <Button variant="ghost" onClick={() => router.replace("/")}>
+            トップへ
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
