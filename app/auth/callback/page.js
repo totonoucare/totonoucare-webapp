@@ -15,48 +15,50 @@ export default function AuthCallbackPage() {
         }
 
         const url = new URL(window.location.href);
-
-        // 1) PKCE: ?code=
-        const code = url.searchParams.get("code");
-
-        // 2) Implicit: #access_token=...&refresh_token=...
-        const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
-        const hashParams = new URLSearchParams(hash);
-        const access_token = hashParams.get("access_token");
-        const refresh_token = hashParams.get("refresh_token");
-
-        // --- セッション確立 ---
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        } else if (access_token && refresh_token) {
-          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-          if (error) throw error;
-        } else {
-          throw new Error("認証情報がURLに見つかりませんでした（リンク期限切れ等）。");
-        }
-
         const resultId = url.searchParams.get("result");
         const nextPath = url.searchParams.get("next") || "";
 
-        // session取得
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
+        // ✅ 1) まずは「すでにセッションがあるか」を確認（ここが重要）
+        let { data: s1 } = await supabase.auth.getSession();
+        let session = s1?.session || null;
 
-        // ✅ 結果があるなら v2 attach
-        if (resultId && token) {
-          await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-          });
+        // ✅ 2) まだ無ければ code 交換を試す（“必要な時だけ”）
+        if (!session) {
+          const code = url.searchParams.get("code");
+          if (code) {
+            // 交換が失敗しても「すでに確立済み」のケースがあるので例外にしない
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              // ここで即失敗にせず、再度 getSession() を見る
+              console.warn("exchangeCodeForSession error:", error.message);
+            }
+            const { data: s2 } = await supabase.auth.getSession();
+            session = s2?.session || null;
+          }
         }
 
-        setMsg("ログイン成功。移動します…");
+        // ✅ 3) 最終的に session がなければ失敗
+        if (!session) {
+          setMsg("ログインに失敗しました（リンク期限切れの可能性）。もう一度お試しください。");
+          return;
+        }
 
+        // ✅ 4) 結果があるなら attach（Bearer token）
+        if (resultId) {
+          setMsg("ログイン成功。結果を保存中…");
+          await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }).catch((e) => console.warn("attach failed:", e));
+        }
+
+        setMsg("完了。移動します…");
+
+        // ✅ 5) 遷移
         if (nextPath) {
           window.location.href = nextPath;
         } else if (resultId) {
-          window.location.href = `/result/${encodeURIComponent(resultId)}`;
+          window.location.href = `/result/${encodeURIComponent(resultId)}?attach=1`;
         } else {
           window.location.href = "/radar";
         }
