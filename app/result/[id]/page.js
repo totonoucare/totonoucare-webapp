@@ -28,10 +28,15 @@ export default function ResultPage({ params }) {
 
   const attachAfterLogin = searchParams?.get("attach") === "1";
 
-  // auth
+  // ---------------------------
+  // Auth state
+  // ---------------------------
   useEffect(() => {
+    let mounted = true;
+
     (async () => {
       const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
       setSession(data.session || null);
       setLoadingAuth(false);
     })();
@@ -41,16 +46,25 @@ export default function ResultPage({ params }) {
       setLoadingAuth(false);
     });
 
-    return () => sub?.subscription?.unsubscribe?.();
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
   }, []);
 
-  // fetch event
+  // ---------------------------
+  // Fetch event
+  // ---------------------------
   useEffect(() => {
+    let mounted = true;
+
     (async () => {
       try {
         setLoadingEvent(true);
         const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
         const json = await res.json().catch(() => ({}));
+        if (!mounted) return;
+
         if (!res.ok || !json?.data) {
           setEvent({ notFound: true });
           return;
@@ -58,22 +72,32 @@ export default function ResultPage({ params }) {
         setEvent(json.data);
       } catch (e) {
         console.error(e);
+        if (!mounted) return;
         setEvent({ notFound: true });
       } finally {
+        if (!mounted) return;
         setLoadingEvent(false);
       }
     })();
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
-  // optional: auto-attach after login (if user came back from signup)
+  // ---------------------------
+  // Auto-attach after login
+  // IMPORTANT:
+  // - attach=1 が付いているなら、is_attached を信用せず「必ず1回」attachを試す
+  // - attach 成功後に URL から attach=1 を消して再実行ループを防ぐ
+  // ---------------------------
   useEffect(() => {
     if (!attachAfterLogin) return;
     if (loadingAuth) return;
     if (!session) return;
     if (!event || event?.notFound) return;
-    if (event?.is_attached) return;
 
-    // auto attach once
+    // attach=1 の時点では event.is_attached の真偽が不安定なことがあるため見ない
     attachToAccount(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
@@ -94,25 +118,25 @@ export default function ResultPage({ params }) {
   );
 
   async function attachToAccount(silent = false) {
+    if (attaching) return; // 多重防止
     setAttaching(true);
+
     try {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
+
       if (!token) {
         if (!silent) setToast("先にログインが必要です");
         return;
       }
 
-      const res = await fetch(
-        `/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
 
@@ -122,6 +146,11 @@ export default function ResultPage({ params }) {
       if (r2.ok && j2?.data) setEvent(j2.data);
 
       setToast("結果を保存しました ✅");
+
+      // ✅ attach=1 を消す（これがないと戻るたびにattach試行し続ける）
+      if (attachAfterLogin) {
+        router.replace(`/result/${id}`);
+      }
     } catch (e) {
       setToast(e?.message || String(e));
     } finally {
@@ -130,15 +159,17 @@ export default function ResultPage({ params }) {
     }
   }
 
-function goSignupToAttach() {
-  // signup後に /auth/callback 経由で戻すため、result と next を渡す
-  router.push(
-    `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-      `/result/${id}?attach=1`
-    )}`
-  );
-}
+  function goSignupToAttach() {
+    router.push(
+      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
+        `/result/${id}?attach=1`
+      )}`
+    );
+  }
 
+  // ---------------------------
+  // UI
+  // ---------------------------
   if (loadingEvent) {
     return (
       <div className="space-y-3">
@@ -227,9 +258,7 @@ function goSignupToAttach() {
             <div className="text-sm text-slate-500">ログイン状態を確認中…</div>
           ) : isLoggedIn ? (
             <>
-              <div className="text-sm text-slate-600">
-                ログイン中：{session.user?.email}
-              </div>
+              <div className="text-sm text-slate-600">ログイン中：{session.user?.email}</div>
 
               {isAttached ? (
                 <div className="rounded-xl border bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
