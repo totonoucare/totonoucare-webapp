@@ -1,163 +1,199 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { SYMPTOM_LABELS, getCoreLabel } from "@/lib/diagnosis/v2/labels";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  SYMPTOM_LABELS,
+  getCoreLabel,
+  getSubLabels,
+  getMeridianLine,
+} from "@/lib/diagnosis/v2/labels";
 
 export default function HistoryPage() {
+  const router = useRouter();
+
   const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
 
+  // auth state
   useEffect(() => {
     (async () => {
-      try {
-        if (!supabase) {
-          setMsg("Supabaseが初期化できていません（環境変数未反映）。");
-          setLoading(false);
-          return;
-        }
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session || null);
+      setLoadingAuth(false);
+    })();
 
-        const { data } = await supabase.auth.getSession();
-        const s = data.session || null;
-        setSession(s);
+    const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
+      setSession(s || null);
+      setLoadingAuth(false);
+    });
 
-        if (!s) {
-          setLoading(false);
-          return;
-        }
+    return () => sub?.subscription?.unsubscribe?.();
+  }, []);
 
-        const token = s.access_token;
-        const res = await fetch(`/api/diagnosis/v2/events/list?limit=50`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          setMsg(json?.error || "履歴の取得に失敗しました。");
-          setLoading(false);
-          return;
-        }
-
-        setRows(Array.isArray(json?.data) ? json.data : []);
+  // fetch history
+  useEffect(() => {
+    (async () => {
+      setErr("");
+      setRows([]);
+      if (!session) {
         setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const token = session.access_token;
+
+        const res = await fetch("/api/diagnosis/v2/events/list?limit=50", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || "履歴の取得に失敗しました");
+        setRows(json?.data || []);
       } catch (e) {
-        console.error(e);
-        setMsg("読み込み中にエラーが発生しました。");
+        setErr(e?.message || String(e));
+      } finally {
         setLoading(false);
       }
     })();
+  }, [session?.access_token]);
 
-    if (supabase) {
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-        setSession(newSession);
-      });
-      return () => sub?.subscription?.unsubscribe?.();
-    }
-  }, []);
+  const isLoggedIn = !!session;
 
-  async function logout() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  }
-
-  if (loading) {
-    return (
-      <Card>
-        <h1 className="text-lg font-semibold">履歴</h1>
-        <p className="text-sm text-slate-600 mt-1">読み込み中…</p>
-      </Card>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className="space-y-3">
+  const content = useMemo(() => {
+    if (loadingAuth || loading) {
+      return (
         <Card>
-          <h1 className="text-lg font-semibold">履歴</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            履歴はログイン後に利用できます。
-          </p>
+          <div className="text-sm text-slate-600">読み込み中…</div>
         </Card>
-        <div className="flex gap-2">
-          <Button onClick={() => (window.location.href = "/signup")}>ログイン / 登録</Button>
-          <Button variant="secondary" onClick={() => (window.location.href = "/check")}>
-            体質チェックへ
-          </Button>
-          <Button variant="secondary" onClick={() => (window.location.href = "/")}>
-            トップへ
-          </Button>
-        </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="space-y-3">
-      <Card>
-        <h1 className="text-lg font-semibold">履歴</h1>
-        <div className="mt-1 text-sm text-slate-600">
-          ログイン中：{session.user?.email}
-        </div>
-
-        <div className="mt-3 flex gap-2 flex-wrap">
-          <Button onClick={() => (window.location.href = "/check")}>新しくチェックする</Button>
-          <Button variant="secondary" onClick={() => (window.location.href = "/radar")}>
-            レーダー
-          </Button>
-          <Button variant="secondary" onClick={() => (window.location.href = "/guide")}>
-            ケアガイド
-          </Button>
-          <Button variant="secondary" onClick={logout}>
-            ログアウト
-          </Button>
-        </div>
-      </Card>
-
-      {msg ? <Card>{msg}</Card> : null}
-
-      {rows.length === 0 ? (
+    if (!isLoggedIn) {
+      return (
         <Card>
-          <h2 className="font-semibold">まだ履歴がありません</h2>
-          <p className="text-sm text-slate-600 mt-1">
-            体質チェックを行うと、ここに記録が残ります。
-          </p>
-          <div className="mt-3">
-            <Button onClick={() => (window.location.href = "/check")}>体質チェックへ</Button>
+          <div className="space-y-3">
+            <div className="text-lg font-semibold">履歴を見るにはログインが必要です</div>
+            <div className="text-sm text-slate-600">
+              未ログインの結果は、結果画面から「保存して登録する」を押すと履歴に残せます。
+            </div>
+            <Button onClick={() => router.push("/signup")}>ログイン / 登録へ</Button>
           </div>
         </Card>
-      ) : (
-        <div className="space-y-2">
-          {rows.map((r) => {
-            const created = r.created_at
-              ? new Date(r.created_at).toLocaleString("ja-JP")
-              : "—";
-            const symptom = r.symptom_focus
-              ? SYMPTOM_LABELS[r.symptom_focus] || r.symptom_focus
-              : "未設定";
-            const coreCode = r?.computed?.core_code;
-            const coreTitle = coreCode ? getCoreLabel(coreCode)?.title : "（判定中）";
+      );
+    }
 
-            return (
-              <Card key={r.id}>
-                <div className="text-xs text-slate-500">{created}</div>
-                <div className="mt-1 font-medium">
-                  {symptom} / {coreTitle}
+    if (err) {
+      return (
+        <Card>
+          <div className="space-y-3">
+            <div className="text-lg font-semibold">履歴の取得に失敗しました</div>
+            <div className="text-sm text-slate-600">{err}</div>
+            <Button onClick={() => router.refresh()}>再読み込み</Button>
+          </div>
+        </Card>
+      );
+    }
+
+    if (!rows.length) {
+      return (
+        <Card>
+          <div className="space-y-3">
+            <div className="text-lg font-semibold">まだ履歴がありません</div>
+            <div className="text-sm text-slate-600">
+              体質チェックを行い、結果画面で「保存」を押すとここに残ります。
+            </div>
+            <Button onClick={() => router.push("/check")}>体質チェックへ</Button>
+          </div>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {rows.map((r) => {
+          const symptom = SYMPTOM_LABELS[r.symptom_focus] || "だるさ・疲労";
+          const core = getCoreLabel(r.core_code);
+          const subs = getSubLabels(r.sub_labels);
+          const mer = getMeridianLine(r.primary_meridian);
+          const when = r.created_at
+            ? new Date(r.created_at).toLocaleString("ja-JP")
+            : "—";
+
+          // ✅ ここが超重要：resultに戻すリンク
+          // - constitution_events.notes.source_event_id (= diagnosis_events.id) があればそれで /result/[id]
+          // - 無ければフォールバックで constitution_events.id を使う（将来互換）
+          const resultId = r.source_event_id || (r.notes?.source_event_id ?? null);
+          const href = resultId ? `/result/${encodeURIComponent(resultId)}` : null;
+
+          return (
+            <Card key={r.id}>
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-xs text-slate-500">{when}</div>
+                    <div className="mt-1 text-sm font-semibold">{symptom}</div>
+                  </div>
+                  {href ? (
+                    <Button variant="ghost" onClick={() => router.push(href)}>
+                      詳細
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-slate-400">詳細なし</span>
+                  )}
                 </div>
-                <div className="mt-3">
-                  <Button onClick={() => (window.location.href = `/result/${r.id}`)}>
-                    結果を見る
-                  </Button>
+
+                <div className="rounded-xl border bg-slate-50 px-3 py-2">
+                  <div className="text-xs text-slate-500">メイン</div>
+                  <div className="text-sm font-semibold">{core.title}</div>
+                  <div className="mt-1 text-xs text-slate-600">{core.short}</div>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+
+                {subs?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {subs.map((s) => (
+                      <span
+                        key={s.title}
+                        className="rounded-full border bg-white px-3 py-1 text-xs"
+                        title={s.action_hint}
+                      >
+                        {s.title}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {mer ? (
+                  <div className="text-xs text-slate-600">
+                    経絡ライン：{mer.title}
+                  </div>
+                ) : null}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  }, [loadingAuth, loading, isLoggedIn, err, rows, router]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold">チェック履歴</h1>
+        <Button variant="ghost" onClick={() => router.push("/check")}>
+          新しくチェック
+        </Button>
+      </div>
+
+      {content}
     </div>
   );
 }
