@@ -11,21 +11,35 @@ export async function GET(req) {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
 
-    const limitRaw = req.nextUrl.searchParams.get("limit") || "30";
-    const limit = Math.min(parseInt(limitRaw, 10) || 30, 100);
+    const url = new URL(req.url);
+    const limit = Math.min(Number(url.searchParams.get("limit") || 30), 100);
 
+    // ✅ 履歴は constitution_events を唯一のソースにする
     const { data, error: e1 } = await supabaseServer
-      .from("diagnosis_events")
-      .select("id, created_at, symptom_focus, computed, version")
+      .from("constitution_events")
+      .select(
+        "id, created_at, symptom_focus, core_code, sub_labels, primary_meridian, secondary_meridian, notes, engine_version"
+      )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(limit);
 
     if (e1) throw e1;
 
-    return NextResponse.json({ data: data || [] }, { status: 200 });
+    // resultへ戻る用の source_event_id（diagnosis_events.id）を抽出して返す
+    const rows =
+      (data || []).map((r) => ({
+        ...r,
+        source_event_id:
+          r?.notes && typeof r.notes === "object" ? r.notes.source_event_id : null,
+      })) || [];
+
+    return NextResponse.json({ data: rows });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
+    return NextResponse.json(
+      { error: e?.message || String(e) },
+      { status: 500 }
+    );
   }
 }
