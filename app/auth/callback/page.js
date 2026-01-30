@@ -1,10 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function AuthCallbackPage() {
+  const router = useRouter();
+  const sp = useSearchParams();
   const [msg, setMsg] = useState("認証中…");
+
+  const params = useMemo(() => {
+    const resultId = sp?.get("result") || "";
+    const nextRaw = sp?.get("next") || "";
+
+    // open redirect 対策：サイト内パスのみ許可
+    const nextPath =
+      nextRaw && nextRaw.startsWith("/") ? nextRaw : "";
+
+    return { resultId, nextPath };
+  }, [sp]);
 
   useEffect(() => {
     (async () => {
@@ -15,8 +29,6 @@ export default function AuthCallbackPage() {
         }
 
         const url = new URL(window.location.href);
-        const resultId = url.searchParams.get("result");
-        const nextPath = url.searchParams.get("next") || "";
 
         // PKCE: ?code=...
         const code = url.searchParams.get("code");
@@ -29,11 +41,11 @@ export default function AuthCallbackPage() {
 
         let session = null;
 
-        // 1) まず既存セッションがあるか確認
+        // 1) 既存セッション
         const { data: s0 } = await supabase.auth.getSession();
         session = s0?.session || null;
 
-        // 2) 無ければ URL からセッション確立（detectSessionInUrl=false 前提）
+        // 2) 無ければ URL からセッション確立
         if (!session) {
           if (code) {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -49,7 +61,7 @@ export default function AuthCallbackPage() {
           }
         }
 
-        // 3) まだ無ければ最後にもう一回 getSession（反映待ち対策）
+        // 3) まだ無ければ再取得（反映待ち対策）
         if (!session) {
           const { data: s1 } = await supabase.auth.getSession();
           session = s1?.session || null;
@@ -60,11 +72,11 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // 4) 結果があるなら attach（guest診断 → ログイン後に紐付け）
-        if (resultId) {
+        // 4) result があるなら attach を必ず試行
+        if (params.resultId) {
           setMsg("ログイン成功。結果を保存中…");
           const res = await fetch(
-            `/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`,
+            `/api/diagnosis/v2/events/${encodeURIComponent(params.resultId)}/attach`,
             {
               method: "POST",
               headers: {
@@ -73,7 +85,7 @@ export default function AuthCallbackPage() {
             }
           );
 
-          // attach失敗でもログイン自体は成功してるので、画面へ戻す
+          // attach失敗でもログイン自体は成功なので、警告して続行
           if (!res.ok) {
             const j = await res.json().catch(() => ({}));
             console.warn("attach failed:", j);
@@ -82,19 +94,21 @@ export default function AuthCallbackPage() {
 
         setMsg("完了。移動します…");
 
-        if (nextPath) {
-          window.location.href = nextPath;
-        } else if (resultId) {
-          window.location.href = `/result/${encodeURIComponent(resultId)}?attach=1`;
+        // 5) 戻り先決定（next 優先 → result → radar）
+        if (params.nextPath) {
+          router.replace(params.nextPath);
+        } else if (params.resultId) {
+          router.replace(`/result/${encodeURIComponent(params.resultId)}?attach=1`);
         } else {
-          window.location.href = "/radar";
+          router.replace("/radar");
         }
       } catch (e) {
         console.error(e);
         setMsg(`ログインに失敗しました：${e?.message || String(e)}`);
       }
     })();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.resultId, params.nextPath]);
 
   return (
     <div className="space-y-3">
