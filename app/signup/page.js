@@ -1,19 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const sp = useSearchParams();
+
   const params = useMemo(() => {
-    if (typeof window === "undefined") return { resultId: "", nextPath: "" };
-    const url = new URL(window.location.href);
-    return {
-      resultId: url.searchParams.get("result") || "",
-      nextPath: url.searchParams.get("next") || "",
-    };
-  }, []);
+    const resultId = sp?.get("result") || "";
+    const nextRaw = sp?.get("next") || "";
+
+    // next が無い場合は result があれば result に戻す（attach=1付き）
+    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
+
+    // open redirect 対策：サイト内パスだけ許可
+    const nextPath =
+      nextRaw && nextRaw.startsWith("/") ? nextRaw : fallbackNext;
+
+    return { resultId, nextPath };
+  }, [sp]);
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState({ state: "idle", message: "" });
@@ -24,6 +33,12 @@ export default function SignupPage() {
       if (!supabase) return;
       const { data } = await supabase.auth.getSession();
       setSession(data.session || null);
+
+      const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
+        setSession(s || null);
+      });
+
+      return () => sub?.subscription?.unsubscribe?.();
     })();
   }, []);
 
@@ -42,14 +57,16 @@ export default function SignupPage() {
     try {
       const origin = window.location.origin;
 
-      // callback へ result/next を引き継ぐ
+      // ✅ 必ず callback に next/result を渡す（ここが肝）
       const cb = new URL(`${origin}/auth/callback`);
+      cb.searchParams.set("next", params.nextPath);
       if (params.resultId) cb.searchParams.set("result", params.resultId);
-      if (params.nextPath) cb.searchParams.set("next", params.nextPath);
 
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: cb.toString() },
+        options: {
+          emailRedirectTo: cb.toString(),
+        },
       });
       if (error) throw error;
 
@@ -65,6 +82,47 @@ export default function SignupPage() {
         message: "送信に失敗しました: " + (err?.message || JSON.stringify(err)),
       });
     }
+  }
+
+  async function attachNowIfNeeded() {
+    if (!params.resultId) return true; // そもそも attach 不要
+    try {
+      setStatus({ state: "loading", message: "結果を保存中…" });
+
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error("ログイン情報が取得できませんでした");
+
+      const res = await fetch(
+        `/api/diagnosis/v2/events/${encodeURIComponent(params.resultId)}/attach`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
+
+      setStatus({ state: "idle", message: "" });
+      return true;
+    } catch (e) {
+      console.error(e);
+      setStatus({
+        state: "error",
+        message: "保存に失敗しました: " + (e?.message || String(e)),
+      });
+      return false;
+    }
+  }
+
+  async function goNext() {
+    // ✅ ログイン済みなら、result がある場合はここで attach してから進む
+    const ok = await attachNowIfNeeded();
+    if (!ok) return;
+
+    router.push(params.nextPath || "/radar");
   }
 
   async function logout() {
@@ -87,16 +145,24 @@ export default function SignupPage() {
           <div className="text-sm text-slate-600">すでにログイン中</div>
           <div className="mt-1 font-medium">{session.user?.email}</div>
 
+          {params.resultId ? (
+            <div className="mt-3 rounded-xl border bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              引き継ぐ結果ID：<span className="font-mono break-all">{params.resultId}</span>
+            </div>
+          ) : null}
+
           <div className="mt-4 flex gap-2">
-            <Button
-              onClick={() => (window.location.href = params.nextPath || "/radar")}
-            >
-              続きを開く
+            <Button onClick={goNext} disabled={status.state === "loading"}>
+              {status.state === "loading" ? "処理中…" : "続きへ"}
             </Button>
             <Button variant="secondary" onClick={logout}>
               ログアウト
             </Button>
           </div>
+
+          {status.message ? (
+            <div className="mt-3 text-sm text-slate-600">{status.message}</div>
+          ) : null}
 
           <div className="mt-3 text-xs text-slate-500">
             ※ ログイン済みならこの画面は閉じてOKです。
@@ -110,9 +176,7 @@ export default function SignupPage() {
               <div className="mt-1 font-mono text-xs break-all">{params.resultId}</div>
             </div>
           ) : (
-            <div className="text-sm text-slate-600">
-              ※ 結果IDなしの通常ログインも可能です
-            </div>
+            <div className="text-sm text-slate-600">※ 結果IDなしの通常ログインも可能です</div>
           )}
 
           <form onSubmit={handleSendLink} className="mt-4 space-y-3">
@@ -124,10 +188,15 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={status.state === "loading" || status.state === "sent"}
+                inputMode="email"
+                autoComplete="email"
               />
             </div>
 
-            <Button type="submit" disabled={status.state === "loading" || status.state === "sent"}>
+            <Button
+              type="submit"
+              disabled={status.state === "loading" || status.state === "sent"}
+            >
               マジックリンクを送る
             </Button>
 
