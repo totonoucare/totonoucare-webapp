@@ -14,16 +14,36 @@ export async function GET(req) {
     const { data, error: e1 } = await supabaseServer
       .from("constitution_profiles")
       .select(
-        "user_id, symptom_focus, qi, blood, fluid, cold_heat, resilience, primary_meridian, secondary_meridian, organs, answers, computed, version, updated_at, created_at"
+        [
+          "user_id",
+          "symptom_focus",
+          "qi",
+          "blood",
+          "fluid",
+          "cold_heat",
+          "resilience",
+          "thermo",
+          "is_mixed",
+          "core_code",
+          "sub_labels",
+          "engine_version",
+          "primary_meridian",
+          "secondary_meridian",
+          "organs",
+          "answers",
+          "computed",
+          "latest_event_id",
+          "version",
+          "updated_at",
+          "created_at",
+        ].join(",")
       )
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (e1) throw e1;
 
-    return NextResponse.json({
-      data: data || null,
-    });
+    return NextResponse.json({ data: data || null });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
