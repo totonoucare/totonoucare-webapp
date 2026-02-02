@@ -40,13 +40,22 @@ export default function CheckPage() {
 
   const q = questions[step];
 
-  // ---- single/multi 対応 ----
-  const rawSelected = answers?.[q?.id];
+  // ★ answers は q.key で保持する（スコア側と一致させる）
+  const ansKey = q?.key;
+
+  // single/multi 対応
+  const rawSelected = ansKey ? answers?.[ansKey] : undefined;
   const isMulti = q?.type === "multi";
   const selected = isMulti ? (Array.isArray(rawSelected) ? rawSelected : []) : rawSelected;
 
   const canGoNext = isMulti ? selected.length > 0 : Boolean(selected);
   const isLast = step === total - 1;
+
+  function persist(next) {
+    try {
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify(next));
+    } catch {}
+  }
 
   // 途中保存があれば復元（主に「戻ってきた時」用）
   useEffect(() => {
@@ -56,7 +65,15 @@ export default function CheckPage() {
       const saved = JSON.parse(raw);
       if (saved && typeof saved === "object") {
         setAnswers(saved);
-        const idx = questions.findIndex((qq) => !saved?.[qq.id] || (Array.isArray(saved?.[qq.id]) && saved?.[qq.id].length === 0));
+
+        // ★ 未回答判定も q.key で
+        const idx = questions.findIndex((qq) => {
+          const k = qq.key;
+          const v = saved?.[k];
+          if (qq.type === "multi") return !Array.isArray(v) || v.length === 0;
+          return !v;
+        });
+
         setStep(idx === -1 ? total - 1 : Math.max(0, idx));
       }
     } catch {
@@ -65,27 +82,23 @@ export default function CheckPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function persist(next) {
-    try {
-      sessionStorage.setItem(PENDING_KEY, JSON.stringify(next));
-    } catch {}
-  }
-
   function pick(value) {
+    if (!ansKey) return;
+
     setAnswers((prev) => {
-      // ---- MULTI ----
+      // MULTI
       if (q.type === "multi") {
         const max = Number(q.max || 2);
-        const cur = Array.isArray(prev?.[q.id]) ? prev[q.id] : [];
+        const cur = Array.isArray(prev?.[ansKey]) ? prev[ansKey] : [];
 
         // "none" は単独扱い
         if (value === "none") {
-          const next = { ...prev, [q.id]: ["none"] };
+          const next = { ...prev, [ansKey]: ["none"] };
           persist(next);
           return next;
         }
 
-        // 既に "none" が入ってたら除去してから
+        // 既に "none" が入ってたら除去
         const base = cur.filter((v) => v !== "none");
 
         let updated;
@@ -97,13 +110,13 @@ export default function CheckPage() {
           updated = base.length >= max ? [...base.slice(1), value] : [...base, value];
         }
 
-        const next = { ...prev, [q.id]: updated };
+        const next = { ...prev, [ansKey]: updated };
         persist(next);
         return next;
       }
 
-      // ---- SINGLE / FREQ ----
-      const next = { ...prev, [q.id]: value };
+      // SINGLE / FREQ
+      const next = { ...prev, [ansKey]: value };
       persist(next);
       return next;
     });
@@ -126,7 +139,6 @@ export default function CheckPage() {
     setError("");
 
     try {
-      // ✅ ログイン不要：匿名で diagnosis_events を作って eventId を返す
       const res = await fetch("/api/diagnosis/v2/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,16 +148,14 @@ export default function CheckPage() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "診断の保存に失敗しました");
 
-      // ✅ eventId / id 両対応
+      // eventId / id 両対応
       const eventId = json?.data?.eventId || json?.data?.id;
       if (!eventId) throw new Error("eventId が返りませんでした");
 
-      // pending を消す
       try {
         sessionStorage.removeItem(PENDING_KEY);
       } catch {}
 
-      // ✅ /result/[id] へ
       router.push(`/result/${encodeURIComponent(eventId)}`);
     } catch (e) {
       setError(e?.message || String(e));
@@ -170,9 +180,6 @@ export default function CheckPage() {
       <Card>
         <div className="space-y-3">
           <div className="text-lg font-semibold whitespace-pre-wrap">{q.title}</div>
-          {q.description ? (
-            <div className="text-sm text-slate-600 whitespace-pre-wrap">{q.description}</div>
-          ) : null}
 
           <div className="space-y-2 pt-2">
             {q.options.map((opt) => {
@@ -191,12 +198,7 @@ export default function CheckPage() {
                 >
                   <div className="font-medium">{opt.label}</div>
                   {opt.hint ? (
-                    <div
-                      className={[
-                        "mt-1 text-xs",
-                        isSel ? "text-white/80" : "text-slate-500",
-                      ].join(" ")}
-                    >
+                    <div className={["mt-1 text-xs", isSel ? "text-white/80" : "text-slate-500"].join(" ")}>
                       {opt.hint}
                     </div>
                   ) : null}
