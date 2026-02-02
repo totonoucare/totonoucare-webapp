@@ -29,7 +29,13 @@ export async function POST(req) {
 
     if (error) throw error;
 
-    return NextResponse.json({ data: { id: data.id } });
+    // ✅ 互換のために eventId も返す
+    return NextResponse.json({
+      data: {
+        id: data.id,
+        eventId: data.id,
+      },
+    });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
