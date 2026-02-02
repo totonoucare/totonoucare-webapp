@@ -1,18 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
-import {
-  SYMPTOM_LABELS,
-  getCoreLabel,
-  getSubLabels,
-  getMeridianLine,
-} from "@/lib/diagnosis/v2/labels";
+import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
-export default function ResultPage({ params }) {
+// ✅ Next.js の useSearchParams 対策：中身を Suspense 内に移す
+export default function ResultPageWrapper({ params }) {
+  return (
+    <Suspense fallback={<div className="space-y-3"><h1 className="text-xl font-semibold">結果を読み込み中…</h1></div>}>
+      <ResultPage params={params} />
+    </Suspense>
+  );
+}
+
+function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { id } = params;
@@ -87,9 +91,6 @@ export default function ResultPage({ params }) {
 
   // ---------------------------
   // Auto-attach after login
-  // IMPORTANT:
-  // - attach=1 が付いているなら、is_attached を信用せず「必ず1回」attachを試す
-  // - attach 成功後に URL から attach=1 を消して再実行ループを防ぐ
   // ---------------------------
   useEffect(() => {
     if (!attachAfterLogin) return;
@@ -97,7 +98,6 @@ export default function ResultPage({ params }) {
     if (!session) return;
     if (!event || event?.notFound) return;
 
-    // attach=1 の時点では event.is_attached の真偽が不安定なことがあるため見ない
     attachToAccount(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
@@ -112,13 +112,20 @@ export default function ResultPage({ params }) {
 
   const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
   const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
-  const meridian = useMemo(
+
+  const meridianPrimary = useMemo(
     () => getMeridianLine(computed?.primary_meridian),
     [computed?.primary_meridian]
   );
 
+  // ✅ secondary も拾う
+  const meridianSecondary = useMemo(
+    () => getMeridianLine(computed?.secondary_meridian),
+    [computed?.secondary_meridian]
+  );
+
   async function attachToAccount(silent = false) {
-    if (attaching) return; // 多重防止
+    if (attaching) return;
     setAttaching(true);
 
     try {
@@ -132,9 +139,7 @@ export default function ResultPage({ params }) {
 
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const json = await res.json().catch(() => ({}));
@@ -147,7 +152,6 @@ export default function ResultPage({ params }) {
 
       setToast("結果を保存しました ✅");
 
-      // ✅ attach=1 を消す（これがないと戻るたびにattach試行し続ける）
       if (attachAfterLogin) {
         router.replace(`/result/${id}`);
       }
@@ -161,15 +165,10 @@ export default function ResultPage({ params }) {
 
   function goSignupToAttach() {
     router.push(
-      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-        `/result/${id}?attach=1`
-      )}`
+      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/result/${id}?attach=1`)}`
     );
   }
 
-  // ---------------------------
-  // UI
-  // ---------------------------
   if (loadingEvent) {
     return (
       <div className="space-y-3">
@@ -238,13 +237,25 @@ export default function ResultPage({ params }) {
             )}
           </div>
 
-          {meridian ? (
+          {/* ✅ primary */}
+          {meridianPrimary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">{meridian.title}</div>
+              <div className="text-sm font-semibold">主ライン：{meridianPrimary.title}</div>
               <div className="mt-1 text-xs text-slate-600">
-                {meridian.body_area}（{meridian.meridians.join("・")}）
+                {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
               </div>
-              <div className="mt-2 text-xs text-slate-500">{meridian.organs_hint}</div>
+              <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
+            </div>
+          ) : null}
+
+          {/* ✅ secondary */}
+          {meridianSecondary ? (
+            <div className="rounded-xl border bg-white px-4 py-3">
+              <div className="text-sm font-semibold">副ライン：{meridianSecondary.title}</div>
+              <div className="mt-1 text-xs text-slate-600">
+                {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
+              </div>
+              <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
             </div>
           ) : null}
         </div>
