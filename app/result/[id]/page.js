@@ -306,14 +306,14 @@ function ResultPage({ params }) {
 
       <Card>
         <div className="space-y-2">
-          <div className="text-xs text-slate-500">あなたの主訴</div>
+          <div className="text-xs text-slate-500">あなたのお悩み</div>
           <div className="text-lg font-semibold">{symptomLabel}</div>
         </div>
       </Card>
 
       <Card>
         <div className="space-y-3">
-          <div className="text-xl font-semibold">体質の見立て（v2）</div>
+          <div className="text-xl font-semibold">体質の見立て</div>
 
           <div className="rounded-xl border bg-slate-50 px-4 py-3">
             <div className="text-sm text-slate-600">メイン</div>
@@ -370,10 +370,10 @@ function ResultPage({ params }) {
       {/* ✅ AI読み物（初回だけ生成→保存→以後キャッシュ表示） */}
       <Card>
         <div className="space-y-3">
-          <div className="text-xl font-semibold">今日の見立て（AI）</div>
+          <div className="text-xl font-semibold">あなたの体質解説</div>
 
           {loadingExplain ? (
-            <div className="text-sm text-slate-600">文章を生成中…</div>
+            <div className="text-sm text-slate-600">AIが解説文を生成中…</div>
           ) : explainText ? (
             <>
               <div className="whitespace-pre-wrap text-sm text-slate-700">{explainText}</div>
