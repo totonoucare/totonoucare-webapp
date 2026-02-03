@@ -13,7 +13,21 @@ export async function GET(_req, { params }) {
 
     const { data, error } = await supabaseServer
       .from("diagnosis_events")
-      .select("id, created_at, symptom_focus, answers, computed, version, user_id")
+      .select(
+        [
+          "id",
+          "created_at",
+          "symptom_focus",
+          "answers",
+          "computed",
+          "version",
+          "user_id",
+          // ✅ AI explain cache fields
+          "ai_explain_text",
+          "ai_explain_model",
+          "ai_explain_created_at",
+        ].join(",")
+      )
       .eq("id", id)
       .single();
 
@@ -22,8 +36,7 @@ export async function GET(_req, { params }) {
 
     const answers = data.answers || {};
 
-    // computed が古い/欠けてるケースに備えて、常に answers から再計算して返す
-    // （DBのcomputedは保持していても、返却は最新v2のshapeに寄せる）
+    // ✅ computed が古い/欠けてるケースに備えて、常に answers から再計算して返す
     const computed = scoreDiagnosis(answers);
 
     const safe = {
@@ -34,6 +47,11 @@ export async function GET(_req, { params }) {
       computed,
       version: data.version || "v2",
       is_attached: !!data.user_id,
+
+      // ✅ AI explain cache (may be null)
+      ai_explain_text: data.ai_explain_text || null,
+      ai_explain_model: data.ai_explain_model || null,
+      ai_explain_created_at: data.ai_explain_created_at || null,
     };
 
     return NextResponse.json({ data: safe });
