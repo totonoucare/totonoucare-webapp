@@ -2,27 +2,34 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { supabaseServer } from "@/lib/supabaseServer";
+import {
+  SYMPTOM_LABELS,
+  getCoreLabel,
+  getSubLabels,
+  getMeridianLine,
+} from "@/lib/diagnosis/v2/labels";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
+/** ---- helpers ---- */
 function safeArr(v) {
   return Array.isArray(v) ? v : [];
 }
 
-function symptomJa(code) {
-  const map = {
-    fatigue: "だるさ・疲労",
-    sleep: "睡眠",
-    neck_shoulder: "首肩のつらさ",
-    low_back_pain: "腰のつらさ",
-    swelling: "むくみ",
-    headache: "頭痛",
-    dizziness: "めまい",
-    mood: "気分の浮き沈み",
-  };
-  return map[code] || "不調";
+function clampInt(v, min, max) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function envSensitivityJa(level) {
+  // 0..3
+  if (level <= 0) return "ほとんど影響なし";
+  if (level === 1) return "たまに影響を受ける";
+  if (level === 2) return "わりと影響を受ける";
+  return "かなり影響を受ける";
 }
 
 function envVectorJa(v) {
@@ -33,60 +40,166 @@ function envVectorJa(v) {
     dry_shift: "乾燥方向の変化",
     season_shift: "季節の切り替わり",
   };
-  return map[v] || v;
+  return map[v] || "特になし";
 }
 
+/**
+ * “コード漏れ”や“指示文漏れ”をざっくり検知して軽く修正要求をかける用
+ */
+function looksBad(text) {
+  if (!text) return true;
+
+  // snake_case / 英コードっぽいもの
+  const hasSnake = /[a-z]+_[a-z]+/.test(text);
+
+  // core_code のコード直出しっぽい
+  const hasCoreCode = /(cold|heat|neutral|mixed)_(low|high)/.test(text);
+
+  // 指示文の混入（各◯行、1)〜 等）
+  const hasInstructionLeak =
+    /各\d+行/.test(text) ||
+    /必ずこの構成/.test(text) ||
+    /^\s*\d+\)/m.test(text);
+
+  return hasSnake || hasCoreCode || hasInstructionLeak;
+}
+
+/** ---- main generation ---- */
 async function generateExplainText({ event }) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
+
+  // モデルは環境変数で差し替え可能（なければ固定）
+  const model = process.env.OPENAI_DIAG_EXPLAIN_MODEL || "gpt-5.2";
 
   const client = new OpenAI({ apiKey });
 
   const answers = event?.answers || {};
   const computed = event?.computed || {};
 
-  const sf = answers.symptom_focus || event.symptom_focus || "fatigue";
-  const envSens = Number(answers.env_sensitivity ?? 0) || 0;
-  const envVec = safeArr(answers.env_vectors).filter((x) => x && x !== "none").slice(0, 2);
+  // ---- UIに出したい日本語へ“先に”変換（重要） ----
+  const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
+  const symptomJa = SYMPTOM_LABELS?.[symptomKey] || "だるさ・疲労";
 
+  const core = getCoreLabel(computed?.core_code);
+  const sub = getSubLabels(safeArr(computed?.sub_labels)).slice(0, 2);
+
+  const meridianPrimary = getMeridianLine(computed?.primary_meridian);
+  const meridianSecondary = getMeridianLine(computed?.secondary_meridian);
+
+  const envSens = clampInt(answers?.env_sensitivity ?? 0, 0, 3);
+  const envVecRaw = safeArr(answers?.env_vectors).filter((x) => x && x !== "none").slice(0, 2);
+  const envVecJa = envVecRaw.length ? envVecRaw.map(envVectorJa).join("・") : "特になし";
+
+  // ---- “入力素材”を日本語で整形 ----
+  const subJa =
+    sub.length > 0
+      ? sub
+          .map((s) => `- ${s.title}${s.action_hint ? `：${s.action_hint}` : ""}`)
+          .join("\n")
+      : "- なし";
+
+  const meridianJa = [
+    meridianPrimary
+      ? `主：${meridianPrimary.title}\n  体の範囲：${meridianPrimary.body_area}（${meridianPrimary.meridians.join("・")}）\n  ヒント：${meridianPrimary.organs_hint}`
+      : `主：なし`,
+    meridianSecondary
+      ? `副：${meridianSecondary.title}\n  体の範囲：${meridianSecondary.body_area}（${meridianSecondary.meridians.join("・")}）\n  ヒント：${meridianSecondary.organs_hint}`
+      : `副：なし`,
+  ].join("\n");
+
+  // ---- prompt（指示文漏れ・コード漏れを防ぐ）----
+  // 行数指定はしない。代わりに“章ごとの最大文字数”で制御する。
   const prompt = `
-あなたは「未病レーダー」の結果解説AI。日本語で、読み物として満足度が高いが冗長すぎない。
-不安を煽らない。医療行為ではなくセルフケア支援。断定しない（〜の傾向）。
-専門用語は必要最小限。出す場合は括弧で一言訳す（例：気滞＝ストレスで詰まりやすい）。
-数値（-1/0/1など）は出さない。ユーザーが理解できる言葉に変換する。
+あなたは未病レーダーの案内役「トトノウくん」🤖。
+ユーザーに寄り添うが、煽らず、断定せず、「〜の傾向」「〜しやすい」で説明する。
+医療行為ではなくセルフケア支援。
 
-必ずこの構成で出力：
-1) この結果の要約（2〜3行）
-2) 主訴レンズから見るポイント（2〜4行）
-3) 体質のコア（寒熱×回復）の読み方（2〜4行）
-4) サブラベル（最大2）の意味（各1〜2行）
-5) 経絡ライン（主・副）の読み方（各1〜2行）
-6) 環境変化への反応性（1〜3行：強さ＋方向。ない場合は一言）
-7) 今日から3日で効く「小さい一手」3つ（運動/休息/食・飲みのバランスで）
-8) 注意（1行：強い症状は無理せず必要なら相談）
+【絶対ルール】
+- 英語のコード、snake_case、core_code（例：neutral_high）を出力に一切出さない。
+- 指示文（例：「各◯行」「必ずこの構成」など）を本文に混ぜない。
+- 数値（-1/0/1 等）を出さない。
+- 不安を煽る表現（危険/重大/病気など）を避ける。
+
+【出力フォーマット】
+見出しは次の7つだけ。番号は付けない。
+「まとめ」
+「お悩み（今の見え方）」
+「今の体質の軸」
+「整えポイント」
+「体の張りやすい場所」
+「環境変化との相性」
+「3日で効く小さな一手」
+最後に1行だけ「※強い症状がある時は無理せず相談を。」を付ける。
+
+各見出しは最大400文字程度で、全体は長すぎない読み物にする。
 
 【入力（この結果）】
-- 主訴：${symptomJa(sf)}
-- コア：${computed.core_code || "unknown"}
-- サブラベル：${safeArr(computed.sub_labels).join(",") || "none"}
-- 気血津液（要約に使う）：qi=${computed.qi}, blood=${computed.blood}, fluid=${computed.fluid}
-- 寒熱：thermo=${computed.thermo}, mixed=${computed.is_mixed ? "yes" : "no"}
-- 回復：resilience=${computed.resilience}
-- 経絡：primary=${computed.primary_meridian || "none"}, secondary=${computed.secondary_meridian || "none"}
-- 環境感受性：強さ=${envSens}（0=ほぼない〜3=かなりある）
-- 反応方向：${envVec.map(envVectorJa).join("・") || "特になし"}
+- お悩み：${symptomJa}
 
-出力はプレーンテキスト。箇条書きOK。過剰な注意書きを増やさない。
-`.trim();
+- 今の体質の軸：
+  タイトル：${core?.title || "未設定"}
+  説明：${core?.tcm_hint || "未設定"}
 
-  const resp = await client.responses.create({
-    model: "gpt-5.2",
+- 整えポイント（最大2つ）：
+${subJa}
+
+- 体の張りやすい場所：
+${meridianJa}
+
+- 環境変化：
+  影響の受けやすさ：${envSensitivityJa(envSens)}
+  影響の出やすい方向：${envVecJa}
+
+文章は自然な日本語。箇条書きOK。`.trim();
+
+  // 1st try
+  const resp1 = await client.responses.create({
+    model,
     reasoning: { effort: "low" },
     input: prompt,
-    max_output_tokens: 900,
+    // 途中切れを減らす（結果ページ初回だけ生成＆保存なので少し余裕を持たせる）
+    max_output_tokens: 1400,
   });
 
-  return (resp.output_text || "").trim();
+  let text = (resp1.output_text || "").trim();
+
+  // light retry if leaks detected / empty
+  if (looksBad(text) || text.length < 200) {
+    const repairPrompt = `
+次の文章は「英語コード漏れ」や「指示文混入」の可能性があります。
+以下のルールで“書き直し”してください。
+
+- 英語のコード、snake_case、core_code を絶対に出さない
+- 見出しは指定の7つだけ（番号なし）
+- 全体は読みやすく、長すぎず
+- 内容は勝手に増やしすぎず、入力に沿う
+
+【元の文章】
+${text}
+
+【入力（再掲）】
+${prompt}
+`.trim();
+
+    const resp2 = await client.responses.create({
+      model,
+      reasoning: { effort: "low" },
+      input: repairPrompt,
+      max_output_tokens: 1400,
+    });
+
+    const t2 = (resp2.output_text || "").trim();
+    if (t2) text = t2;
+  }
+
+  // 最低限の保険：空なら簡易文
+  if (!text) {
+    text =
+      "まとめ\n今の結果からは、整え方の「型」を作ると安定しやすい傾向です。\n\n3日で効く小さな一手\n・睡眠前の深呼吸（ゆっくり5回）\n・軽い散歩（5〜10分）\n・冷たい飲食を控えめに\n\n※強い症状がある時は無理せず相談を。";
+  }
+
+  return { text, model };
 }
 
 export async function POST(_req, { params }) {
@@ -97,12 +210,25 @@ export async function POST(_req, { params }) {
     // 1) diagnosis_events を取得（保存済みならそれを返す）
     const { data: ev, error: e0 } = await supabaseServer
       .from("diagnosis_events")
-      .select("id, user_id, symptom_focus, answers, computed, version, created_at, ai_explain_text, ai_explain_model, ai_explain_created_at")
+      .select(
+        [
+          "id",
+          "user_id",
+          "symptom_focus",
+          "answers",
+          "computed",
+          "version",
+          "created_at",
+          "ai_explain_text",
+          "ai_explain_model",
+          "ai_explain_created_at",
+        ].join(",")
+      )
       .eq("id", id)
       .single();
     if (e0) throw e0;
 
-    if (ev.ai_explain_text) {
+    if (ev?.ai_explain_text) {
       return NextResponse.json({
         data: {
           id: ev.id,
@@ -115,8 +241,7 @@ export async function POST(_req, { params }) {
     }
 
     // 2) 生成
-    const text = await generateExplainText({ event: ev });
-    const model = "gpt-5.2";
+    const { text, model } = await generateExplainText({ event: ev });
     const now = new Date().toISOString();
 
     // 3) diagnosis_events に保存（idempotent：nullのときだけ更新）
@@ -129,10 +254,29 @@ export async function POST(_req, { params }) {
       })
       .eq("id", id)
       .is("ai_explain_text", null);
-    if (e1) throw e1;
+    if (e1) {
+      // 競合で先に誰かが保存した可能性があるので、再取得して返す
+      const { data: ev2 } = await supabaseServer
+        .from("diagnosis_events")
+        .select("id, ai_explain_text, ai_explain_model, ai_explain_created_at")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (ev2?.ai_explain_text) {
+        return NextResponse.json({
+          data: {
+            id: ev2.id,
+            text: ev2.ai_explain_text,
+            model: ev2.ai_explain_model || null,
+            created_at: ev2.ai_explain_created_at || null,
+            cached: true,
+          },
+        });
+      }
+      throw e1;
+    }
 
     // 4) attach済みなら constitution_events にもコピー（あれば）
-    // source_event_id が入っている設計前提
     const { error: e2 } = await supabaseServer
       .from("constitution_events")
       .update({
@@ -142,10 +286,9 @@ export async function POST(_req, { params }) {
       })
       .eq("source_event_id", id)
       .is("ai_explain_text", null);
-    // ここは失敗しても致命ではない（rowが無いこともある）
-    if (e2) {
-      console.warn("constitution_events update skipped:", e2?.message || e2);
-    }
+
+    // rowがないこともあるので警告だけ
+    if (e2) console.warn("constitution_events update skipped:", e2?.message || e2);
 
     return NextResponse.json({
       data: {
