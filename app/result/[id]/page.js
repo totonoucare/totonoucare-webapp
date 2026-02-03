@@ -218,24 +218,29 @@ function ResultPage({ params }) {
             <div className="mt-1 text-sm text-slate-600">{core.tcm_hint}</div>
           </div>
 
-          <div className="space-y-2">
-            <div className="text-sm font-semibold">サブラベル（最大2つ）</div>
-            {subLabels?.length ? (
-              <div className="flex flex-wrap gap-2">
-                {subLabels.map((s) => (
-                  <span
-                    key={s.title}
-                    className="rounded-full border bg-white px-3 py-1 text-xs"
-                    title={s.action_hint}
-                  >
-                    {s.title}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-slate-500">（今回は該当なし）</div>
-            )}
+<div className="space-y-2">
+  <div className="text-sm font-semibold">サブラベル（最大2つ）</div>
+
+  {subLabels?.length ? (
+    <div className="space-y-2">
+      {subLabels.map((s) => (
+        <div key={s.title} className="rounded-xl border bg-white px-3 py-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="rounded-full border bg-white px-3 py-1 text-xs">
+              {s.title}
+            </span>
+            <span className="text-xs text-slate-500">{s.short}</span>
           </div>
+          {s.action_hint ? (
+            <div className="mt-2 text-xs text-slate-600">{s.action_hint}</div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-sm text-slate-500">（今回は該当なし）</div>
+  )}
+</div>
 
           {/* ✅ primary */}
           {meridianPrimary ? (
