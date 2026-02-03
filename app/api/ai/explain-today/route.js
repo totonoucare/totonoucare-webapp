@@ -1,10 +1,13 @@
 // app/api/ai/explain-today/route.js
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireUser } from "@/lib/requireUser";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+// 念のため Node 実行を明示（SDKはNode前提で安定）
+export const runtime = "nodejs";
 
 function tokyoDateISO() {
   // "YYYY-MM-DD" (Tokyo local)
@@ -12,7 +15,6 @@ function tokyoDateISO() {
 }
 
 function levelLabel(level) {
-  // あくまで自社表現（頭痛ーるの「注意/警戒」そのままは避ける）
   // 0=安定 1=注意 2=警戒 3=要対策
   if (level === 0) return "安定";
   if (level === 1) return "注意";
@@ -53,6 +55,8 @@ function mapSixinJa(code) {
 async function openaiExplain({ profile, radar, def, mainCard, foodCard }) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
+
+  const client = new OpenAI({ apiKey });
 
   const symptomJa = pickSymptomJa(profile?.symptom_focus);
 
@@ -96,41 +100,19 @@ async function openaiExplain({ profile, radar, def, mainCard, foodCard }) {
   steps: ${JSON.stringify(foodCard?.body_steps || [])}
   cautions: ${JSON.stringify(foodCard?.cautions || [])}
 
-出力はプレーンテキスト。見出し記号は「今日の見立て（AI）」など自然な日本語でOK。
+出力はプレーンテキスト。
 `.trim();
 
-  const resp = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-5.2",
-      reasoning: { effort: "low" },
-      input: prompt,
-      max_output_tokens: 500,
-    }),
+  // SDK: Responses API
+  const response = await client.responses.create({
+    model: "gpt-5.2",
+    reasoning: { effort: "low" },
+    input: prompt,
+    max_output_tokens: 500,
   });
 
-  if (!resp.ok) {
-    const t = await resp.text();
-    throw new Error(`OpenAI error: ${resp.status} ${t}`);
-  }
-
-  const json = await resp.json();
-  // Responses API: output_text がある場合が多い
-  const text =
-    json.output_text ||
-    (Array.isArray(json.output)
-      ? json.output
-          .flatMap((o) => o.content || [])
-          .filter((c) => c.type === "output_text")
-          .map((c) => c.text)
-          .join("\n")
-      : "");
-
-  return (text || "").trim();
+  // 公式ガイド通り output_text を優先して読む  [oai_citation:1‡OpenAI Platform](https://platform.openai.com/docs/guides/text?utm_source=chatgpt.com)
+  return (response.output_text || "").trim();
 }
 
 export async function POST(req) {
@@ -143,7 +125,9 @@ export async function POST(req) {
     // 1) latest constitution
     const { data: profile, error: e0 } = await supabaseServer
       .from("constitution_profiles")
-      .select("user_id, symptom_focus, qi, blood, fluid, cold_heat, resilience, primary_meridian, secondary_meridian, version, updated_at")
+      .select(
+        "user_id, symptom_focus, qi, blood, fluid, cold_heat, resilience, primary_meridian, secondary_meridian, version, updated_at"
+      )
       .eq("user_id", user.id)
       .maybeSingle();
     if (e0) throw e0;
@@ -174,7 +158,7 @@ export async function POST(req) {
       .maybeSingle();
     if (e2) throw e2;
 
-    // 3) cards (service role想定。RLSでcare_cardsは直接select不可なので、supabaseServerがservice-roleである必要あり)
+    // 3) cards
     let mainCard = null;
     let foodCard = null;
 
