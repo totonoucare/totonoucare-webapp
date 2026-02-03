@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -10,7 +10,13 @@ import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/l
 // ✅ Next.js の useSearchParams 対策：中身を Suspense 内に移す
 export default function ResultPageWrapper({ params }) {
   return (
-    <Suspense fallback={<div className="space-y-3"><h1 className="text-xl font-semibold">結果を読み込み中…</h1></div>}>
+    <Suspense
+      fallback={
+        <div className="space-y-3">
+          <h1 className="text-xl font-semibold">結果を読み込み中…</h1>
+        </div>
+      }
+    >
       <ResultPage params={params} />
     </Suspense>
   );
@@ -29,6 +35,16 @@ function ResultPage({ params }) {
 
   const [attaching, setAttaching] = useState(false);
   const [toast, setToast] = useState("");
+
+  // --- AI explain state ---
+  const [explainText, setExplainText] = useState("");
+  const [explainModel, setExplainModel] = useState("");
+  const [explainCreatedAt, setExplainCreatedAt] = useState("");
+  const [loadingExplain, setLoadingExplain] = useState(false);
+  const [explainError, setExplainError] = useState("");
+
+  // 多重生成防止（React Strict Mode / re-render対策）
+  const explainRequestedRef = useRef(false);
 
   const attachAfterLogin = searchParams?.get("attach") === "1";
 
@@ -73,7 +89,16 @@ function ResultPage({ params }) {
           setEvent({ notFound: true });
           return;
         }
+
         setEvent(json.data);
+
+        // ✅ もし /events/[id] が ai_explain_* を返すようになっていたら、そのまま表示
+        const t = json.data?.ai_explain_text || "";
+        if (t) {
+          setExplainText(t);
+          setExplainModel(json.data?.ai_explain_model || "");
+          setExplainCreatedAt(json.data?.ai_explain_created_at || "");
+        }
       } catch (e) {
         console.error(e);
         if (!mounted) return;
@@ -102,6 +127,83 @@ function ResultPage({ params }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
+  // ---------------------------
+  // Auto-generate / load AI explain (first view only)
+  // - If explain already present in event -> show it
+  // - Else call POST /explain once (server caches in DB)
+  // ---------------------------
+  useEffect(() => {
+    if (!event || event?.notFound) return;
+    if (loadingEvent) return;
+
+    // すでに表示できるものがあるなら、APIを叩かない
+    if (explainText) return;
+
+    // 多重防止（マウント/再レンダリングで二重に叩かない）
+    if (explainRequestedRef.current) return;
+    explainRequestedRef.current = true;
+
+    const ac = new AbortController();
+
+    (async () => {
+      try {
+        setExplainError("");
+        setLoadingExplain(true);
+
+        const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: ac.signal,
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || "AI解説の生成に失敗しました");
+
+        const text = json?.data?.text || json?.data?.ai_explain_text || "";
+        if (!text) throw new Error("AI解説が空でした");
+
+        setExplainText(text);
+        setExplainModel(json?.data?.model || json?.data?.ai_explain_model || "");
+        setExplainCreatedAt(json?.data?.created_at || json?.data?.ai_explain_created_at || "");
+      } catch (e) {
+        if (ac.signal.aborted) return;
+        setExplainError(e?.message || String(e));
+      } finally {
+        if (ac.signal.aborted) return;
+        setLoadingExplain(false);
+      }
+    })();
+
+    return () => ac.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event?.id, loadingEvent]);
+
+  async function retryExplain() {
+    // もう一度生成/取得（キャッシュがあればそれが返る想定）
+    setExplainError("");
+    setLoadingExplain(true);
+
+    try {
+      const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "AI解説の生成に失敗しました");
+
+      const text = json?.data?.text || json?.data?.ai_explain_text || "";
+      if (!text) throw new Error("AI解説が空でした");
+
+      setExplainText(text);
+      setExplainModel(json?.data?.model || json?.data?.ai_explain_model || "");
+      setExplainCreatedAt(json?.data?.created_at || json?.data?.ai_explain_created_at || "");
+    } catch (e) {
+      setExplainError(e?.message || String(e));
+    } finally {
+      setLoadingExplain(false);
+    }
+  }
+
   const computed = event?.computed || {};
   const answers = event?.answers || {};
 
@@ -118,7 +220,6 @@ function ResultPage({ params }) {
     [computed?.primary_meridian]
   );
 
-  // ✅ secondary も拾う
   const meridianSecondary = useMemo(
     () => getMeridianLine(computed?.secondary_meridian),
     [computed?.secondary_meridian]
@@ -165,7 +266,9 @@ function ResultPage({ params }) {
 
   function goSignupToAttach() {
     router.push(
-      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/result/${id}?attach=1`)}`
+      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
+        `/result/${id}?attach=1`
+      )}`
     );
   }
 
@@ -218,31 +321,30 @@ function ResultPage({ params }) {
             <div className="mt-1 text-sm text-slate-600">{core.tcm_hint}</div>
           </div>
 
-<div className="space-y-2">
-  <div className="text-sm font-semibold">サブラベル（最大2つ）</div>
+          <div className="space-y-2">
+            <div className="text-sm font-semibold">サブラベル（最大2つ）</div>
 
-  {subLabels?.length ? (
-    <div className="space-y-2">
-      {subLabels.map((s) => (
-        <div key={s.title} className="rounded-xl border bg-white px-3 py-2">
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="rounded-full border bg-white px-3 py-1 text-xs">
-              {s.title}
-            </span>
-            <span className="text-xs text-slate-500">{s.short}</span>
+            {subLabels?.length ? (
+              <div className="space-y-2">
+                {subLabels.map((s) => (
+                  <div key={s.title} className="rounded-xl border bg-white px-3 py-2">
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="rounded-full border bg-white px-3 py-1 text-xs">
+                        {s.title}
+                      </span>
+                      <span className="text-xs text-slate-500">{s.short}</span>
+                    </div>
+                    {s.action_hint ? (
+                      <div className="mt-2 text-xs text-slate-600">{s.action_hint}</div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-slate-500">（今回は該当なし）</div>
+            )}
           </div>
-          {s.action_hint ? (
-            <div className="mt-2 text-xs text-slate-600">{s.action_hint}</div>
-          ) : null}
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="text-sm text-slate-500">（今回は該当なし）</div>
-  )}
-</div>
 
-          {/* ✅ primary */}
           {meridianPrimary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
               <div className="text-sm font-semibold">主ライン：{meridianPrimary.title}</div>
@@ -253,7 +355,6 @@ function ResultPage({ params }) {
             </div>
           ) : null}
 
-          {/* ✅ secondary */}
           {meridianSecondary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
               <div className="text-sm font-semibold">副ライン：{meridianSecondary.title}</div>
@@ -263,6 +364,36 @@ function ResultPage({ params }) {
               <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
             </div>
           ) : null}
+        </div>
+      </Card>
+
+      {/* ✅ AI読み物（初回だけ生成→保存→以後キャッシュ表示） */}
+      <Card>
+        <div className="space-y-3">
+          <div className="text-xl font-semibold">今日の見立て（AI）</div>
+
+          {loadingExplain ? (
+            <div className="text-sm text-slate-600">文章を生成中…</div>
+          ) : explainText ? (
+            <>
+              <div className="whitespace-pre-wrap text-sm text-slate-700">{explainText}</div>
+              <div className="text-xs text-slate-400">
+                {explainCreatedAt
+                  ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}`
+                  : ""}
+                {explainModel ? `　/　model: ${explainModel}` : ""}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-slate-600">
+                {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
+              </div>
+              <Button onClick={retryExplain} disabled={loadingExplain}>
+                {loadingExplain ? "生成中…" : "もう一度生成する"}
+              </Button>
+            </>
+          )}
         </div>
       </Card>
 
