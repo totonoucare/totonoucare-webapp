@@ -316,13 +316,13 @@ function ResultPage({ params }) {
           <div className="text-xl font-semibold">体質の見立て</div>
 
           <div className="rounded-xl border bg-slate-50 px-4 py-3">
-            <div className="text-sm text-slate-600">メイン</div>
+            <div className="text-sm text-slate-600">今の体質の軸</div>
             <div className="mt-1 text-lg font-semibold">{core.title}</div>
             <div className="mt-1 text-sm text-slate-600">{core.tcm_hint}</div>
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-semibold">サブラベル（最大2つ）</div>
+            <div className="text-sm font-semibold">整えポイント（最大2つ）</div>
 
             {subLabels?.length ? (
               <div className="space-y-2">
@@ -347,7 +347,7 @@ function ResultPage({ params }) {
 
           {meridianPrimary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">主ライン：{meridianPrimary.title}</div>
+              <div className="text-sm font-semibold">体の張りやすい場所（主）：{meridianPrimary.title}</div>
               <div className="mt-1 text-xs text-slate-600">
                 {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
               </div>
@@ -357,7 +357,7 @@ function ResultPage({ params }) {
 
           {meridianSecondary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">副ライン：{meridianSecondary.title}</div>
+              <div className="text-sm font-semibold">体の張りやすい場所（副）：{meridianSecondary.title}</div>
               <div className="mt-1 text-xs text-slate-600">
                 {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
               </div>
