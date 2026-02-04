@@ -22,6 +22,69 @@ export default function ResultPageWrapper({ params }) {
   );
 }
 
+/**
+ * AI本文（プレーンテキスト）を
+ * 「見出し」単位に軽く分割して読みやすく表示する。
+ *
+ * 期待する見出し（route.jsで固定させている）：
+ * 「まとめ」
+ * 「お悩み（今の見え方）」
+ * 「今の体質の軸」
+ * 「整えポイント」
+ * 「体の張りやすい場所」
+ * 「環境変化との相性」
+ * 「3日で効く小さな一手」
+ */
+function splitExplainSections(text) {
+  if (!text) return [];
+
+  const headings = [
+    "「まとめ」",
+    "「お悩み（今の見え方）」",
+    "「今の体質の軸」",
+    "「整えポイント」",
+    "「体の張りやすい場所」",
+    "「環境変化との相性」",
+    "「3日で効く小さな一手」",
+  ];
+
+  const lines = String(text).replace(/\r\n/g, "\n").split("\n");
+
+  const sections = [];
+  let current = { title: "", body: "" };
+
+  function pushCurrent() {
+    if (!current.title && !current.body.trim()) return;
+    sections.push({
+      title: current.title || "（補足）",
+      body: current.body.trim(),
+    });
+  }
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // 見出し行：完全一致で拾う（余計な混入を減らす）
+    if (headings.includes(trimmed)) {
+      pushCurrent();
+      current = { title: trimmed, body: "" };
+      continue;
+    }
+
+    current.body += (current.body ? "\n" : "") + line;
+  }
+
+  pushCurrent();
+
+  // 見出しが1つも取れない場合は全文を1セクションで返す
+  const hasKnownHeading = sections.some((s) => headings.includes(s.title));
+  if (!hasKnownHeading) {
+    return [{ title: "あなたの体質解説", body: String(text).trim() }];
+  }
+
+  return sections;
+}
+
 function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -179,7 +242,6 @@ function ResultPage({ params }) {
   }, [event?.id, loadingEvent]);
 
   async function retryExplain() {
-    // もう一度生成/取得（キャッシュがあればそれが返る想定）
     setExplainError("");
     setLoadingExplain(true);
 
@@ -225,6 +287,8 @@ function ResultPage({ params }) {
     [computed?.secondary_meridian]
   );
 
+  const explainSections = useMemo(() => splitExplainSections(explainText), [explainText]);
+
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
@@ -266,9 +330,7 @@ function ResultPage({ params }) {
 
   function goSignupToAttach() {
     router.push(
-      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-        `/result/${id}?attach=1`
-      )}`
+      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/result/${id}?attach=1`)}`
     );
   }
 
@@ -285,9 +347,7 @@ function ResultPage({ params }) {
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">結果が見つかりません</h1>
-        <div className="text-sm text-slate-600">
-          期限切れ/削除、または保存に失敗した可能性があります。
-        </div>
+        <div className="text-sm text-slate-600">期限切れ/削除、または保存に失敗した可能性があります。</div>
         <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
       </div>
     );
@@ -312,7 +372,7 @@ function ResultPage({ params }) {
       </Card>
 
       <Card>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="text-xl font-semibold">体質の見立て</div>
 
           <div className="rounded-xl border bg-slate-50 px-4 py-3">
@@ -322,20 +382,18 @@ function ResultPage({ params }) {
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-semibold">整えポイント（最大2つ）</div>
+            <div className="text-sm font-semibold text-slate-800">整えポイント（最大2つ）</div>
 
             {subLabels?.length ? (
               <div className="space-y-2">
                 {subLabels.map((s) => (
                   <div key={s.title} className="rounded-xl border bg-white px-3 py-2">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="rounded-full border bg-white px-3 py-1 text-xs">
-                        {s.title}
-                      </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full border bg-white px-3 py-1 text-xs">{s.title}</span>
                       <span className="text-xs text-slate-500">{s.short}</span>
                     </div>
                     {s.action_hint ? (
-                      <div className="mt-2 text-xs text-slate-600">{s.action_hint}</div>
+                      <div className="mt-2 text-xs leading-6 text-slate-700">{s.action_hint}</div>
                     ) : null}
                   </div>
                 ))}
@@ -347,21 +405,25 @@ function ResultPage({ params }) {
 
           {meridianPrimary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">体の張りやすい場所（主）：{meridianPrimary.title}</div>
-              <div className="mt-1 text-xs text-slate-600">
+              <div className="text-sm font-semibold text-slate-800">
+                体の張りやすい場所（主）：{meridianPrimary.title}
+              </div>
+              <div className="mt-1 text-xs text-slate-700">
                 {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
               </div>
-              <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
+              <div className="mt-2 text-xs leading-6 text-slate-500">{meridianPrimary.organs_hint}</div>
             </div>
           ) : null}
 
           {meridianSecondary ? (
             <div className="rounded-xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">体の張りやすい場所（副）：{meridianSecondary.title}</div>
-              <div className="mt-1 text-xs text-slate-600">
+              <div className="text-sm font-semibold text-slate-800">
+                体の張りやすい場所（副）：{meridianSecondary.title}
+              </div>
+              <div className="mt-1 text-xs text-slate-700">
                 {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
               </div>
-              <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
+              <div className="mt-2 text-xs leading-6 text-slate-500">{meridianSecondary.organs_hint}</div>
             </div>
           ) : null}
         </div>
@@ -369,14 +431,43 @@ function ResultPage({ params }) {
 
       {/* ✅ AI読み物（初回だけ生成→保存→以後キャッシュ表示） */}
       <Card>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="text-xl font-semibold">あなたの体質解説</div>
 
           {loadingExplain ? (
-            <div className="text-sm text-slate-600">AIが解説文を生成中…</div>
+            <div className="rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              AIが解説文を作成中… 🤖
+              <div className="mt-1 text-xs text-slate-500">初回だけ生成して保存します。</div>
+            </div>
           ) : explainText ? (
             <>
-              <div className="whitespace-pre-wrap text-sm text-slate-700">{explainText}</div>
+              <div className="space-y-3">
+                {explainSections.map((sec, idx) => (
+                  <div key={`${sec.title}-${idx}`} className="rounded-xl border bg-white px-4 py-3">
+                    <div className="text-sm font-semibold text-slate-800">{sec.title}</div>
+                    <div className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                      {sec.body}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA（仮置き：売り込み強すぎない） */}
+              <div className="rounded-xl border bg-slate-50 px-4 py-3">
+                <div className="text-sm font-semibold text-slate-800">次の一歩（おすすめ）</div>
+                <div className="mt-1 text-xs leading-6 text-slate-600">
+                  ここから先は「具体的なケア（ツボ・ストレッチ・食）」や「毎日の波の予報」で精度が上がります。
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button variant="ghost" onClick={() => router.push("/check")}>
+                    もう一度チェック
+                  </Button>
+                  <Button variant="ghost" onClick={() => router.push("/radar")}>
+                    未病レーダーを見る
+                  </Button>
+                </div>
+              </div>
+
               <div className="text-xs text-slate-400">
                 {explainCreatedAt
                   ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}`
@@ -386,7 +477,7 @@ function ResultPage({ params }) {
             </>
           ) : (
             <>
-              <div className="text-sm text-slate-600">
+              <div className="rounded-xl border bg-red-50 px-4 py-3 text-sm text-red-800">
                 {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
               </div>
               <Button onClick={retryExplain} disabled={loadingExplain}>
