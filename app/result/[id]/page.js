@@ -487,33 +487,43 @@ const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
           </div>
         </Card>
 
-        {/* Part 1 */}
-        {explainParts.p1 ? (
-          <Card>
-            <div className="space-y-2">
-              <div className="text-sm font-semibold">いまの体のクセ（今回のまとめ）</div>
-              <div className="rounded-2xl border bg-white px-4 py-4">
-                <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
-                  {explainParts.p1}
-                </div>
-              </div>
-            </div>
-          </Card>
-        ) : null}
+{/* Part 1 */}
+{explainParts.p1 ? (
+  <Card>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+          🧠 いまの体のクセ（今回のまとめ）
+        </span>
+      </div>
 
-        {/* Part 2 */}
-        {explainParts.p2 ? (
-          <Card>
-            <div className="space-y-2">
-              <div className="text-sm font-semibold">体調の揺れを予報で先回り（未病レーダー）</div>
-              <div className="rounded-2xl border bg-white px-4 py-4">
-                <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
-                  {explainParts.p2}
-                </div>
-              </div>
-            </div>
-          </Card>
-        ) : null}
+      <div className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300">
+        <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+          {explainParts.p1}
+        </div>
+      </div>
+    </div>
+  </Card>
+) : null}
+
+{/* Part 2 */}
+{explainParts.p2 ? (
+  <Card>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+          📡 体調の揺れを予報で先回り（未病レーダー）
+        </span>
+      </div>
+
+      <div className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300">
+        <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+          {explainParts.p2}
+        </div>
+      </div>
+    </div>
+  </Card>
+) : null}
 
         {/* fallback: if split failed, show whole text once */}
         {explainText && !explainParts.p2 && !explainParts.p1 ? (
