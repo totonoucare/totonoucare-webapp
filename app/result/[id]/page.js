@@ -386,108 +386,85 @@ const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
 
 {/* --- Constitution: one card with clear sections --- */}
 <Card>
-  <div className="space-y-4">
+  <div className="space-y-3">
     <div className="text-xl font-semibold">体質の見立て</div>
 
-    {/* Section: core */}
-    <section className="space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-          🧭 今の体質の軸
-        </span>
+    <div className="overflow-hidden rounded-2xl border bg-white">
+      {/* row: core */}
+      <div className="px-4 py-4">
+        <div className="text-xs font-semibold text-slate-600">今の体質の軸</div>
+        <div className="mt-1 text-lg font-semibold text-slate-900">{core.title}</div>
+        <div className="mt-1 text-sm leading-6 text-slate-600">{core.tcm_hint}</div>
       </div>
 
-      <div className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300">
-        <div className="text-lg font-semibold text-slate-900">{core.title}</div>
-        <div className="mt-2 text-sm leading-7 text-slate-700">{core.tcm_hint}</div>
-      </div>
-    </section>
+      <div className="h-px bg-slate-100" />
 
-    {/* Section: sub labels */}
-    <section className="space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-          🛠️ 整えポイント（最大2つ）
-        </span>
-      </div>
+      {/* row: sub labels */}
+      <div className="px-4 py-4">
+        <div className="text-sm font-semibold text-slate-900">整えポイント（最大2つ）</div>
 
-      {subLabels?.length ? (
-        <div className="grid gap-2">
-          {subLabels.map((s) => (
-            <div
-              key={s.title}
-              className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-                  {s.title}
-                </span>
-                <span className="text-xs text-slate-500">{s.short}</span>
+        {subLabels?.length ? (
+          <div className="mt-3 grid gap-2">
+            {subLabels.map((s) => (
+              <div key={s.title} className="rounded-2xl border bg-slate-50 px-4 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border bg-white px-3 py-1 text-xs font-semibold">
+                    {s.title}
+                  </span>
+                  <span className="text-xs text-slate-500">{s.short}</span>
+                </div>
+                {s.action_hint ? (
+                  <div className="mt-2 text-sm leading-6 text-slate-800">{s.action_hint}</div>
+                ) : null}
               </div>
-
-              {s.action_hint ? (
-                <div className="mt-3 text-sm leading-7 text-slate-800">{s.action_hint}</div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-2xl border bg-white px-4 py-4 text-sm text-slate-500 border-l-4 border-l-slate-300">
-          今回は該当なし
-        </div>
-      )}
-    </section>
-
-    {/* Section: meridian areas */}
-    <section className="space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
-          📍 体の張りやすい場所
-        </span>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-2 text-sm text-slate-500">（今回は該当なし）</div>
+        )}
       </div>
 
-      <div className="grid gap-2">
-        {/* primary */}
-        <div className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300">
-          <div className="text-sm font-semibold text-slate-900">
-            （主）{meridianPrimary ? meridianPrimary.title : "今回は強い偏りなし"}
+      <div className="h-px bg-slate-100" />
+
+      {/* row: meridian areas */}
+      <div className="px-4 py-4">
+        <div className="text-sm font-semibold text-slate-900">体の張りやすい場所</div>
+
+        <div className="mt-3 grid gap-2">
+          {/* primary */}
+          <div className="rounded-2xl border bg-white px-4 py-3">
+            <div className="text-xs font-semibold text-slate-600">主</div>
+            {meridianPrimary ? (
+              <>
+                <div className="mt-1 text-sm font-semibold text-slate-900">{meridianPrimary.title}</div>
+                <div className="mt-1 text-xs text-slate-600">
+                  {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
+                </div>
+                <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
+              </>
+            ) : (
+              <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
+            )}
           </div>
 
-          {meridianPrimary ? (
-            <>
-              <div className="mt-2 text-xs text-slate-600">
-                {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
-              </div>
-              <div className="mt-3 text-xs leading-6 text-slate-500">
-                {meridianPrimary.organs_hint}
-              </div>
-            </>
-          ) : (
-            <div className="mt-2 text-xs text-slate-500">気になる場所ベースで整えてOKです。</div>
-          )}
-        </div>
-
-        {/* secondary */}
-        <div className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300">
-          <div className="text-sm font-semibold text-slate-900">
-            （副）{meridianSecondary ? meridianSecondary.title : "今回は強い偏りなし"}
+          {/* secondary */}
+          <div className="rounded-2xl border bg-white px-4 py-3">
+            <div className="text-xs font-semibold text-slate-600">副</div>
+            {meridianSecondary ? (
+              <>
+                <div className="mt-1 text-sm font-semibold text-slate-900">{meridianSecondary.title}</div>
+                <div className="mt-1 text-xs text-slate-600">
+                  {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
+                </div>
+                <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
+              </>
+            ) : (
+              <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
+            )}
           </div>
-
-          {meridianSecondary ? (
-            <>
-              <div className="mt-2 text-xs text-slate-600">
-                {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
-              </div>
-              <div className="mt-3 text-xs leading-6 text-slate-500">
-                {meridianSecondary.organs_hint}
-              </div>
-            </>
-          ) : (
-            <div className="mt-2 text-xs text-slate-500">気になる場所ベースで整えてOKです。</div>
-          )}
         </div>
       </div>
-    </section>
+    </div>
   </div>
 </Card>
 
