@@ -233,8 +233,8 @@ function ResultPage({ params }) {
     const t = (text || "").trim();
     if (!t) return { p1: "", p2: "" };
 
-    const h1 = "「いまの体のクセ（今回のまとめ）」";
-    const h2 = "「体調の揺れを予報で先回り（未病レーダー）」";
+    const h1 = "いまの体のクセ（今回のまとめ）";
+    const h2 = "体調の揺れを予報で先回り（未病レーダー）";
 
     const i1 = t.indexOf(h1);
     const i2 = t.indexOf(h2);
