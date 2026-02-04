@@ -1,13 +1,8 @@
 // app/api/diagnosis/v2/events/[id]/explain/route.js
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 import { supabaseServer } from "@/lib/supabaseServer";
-import {
-  SYMPTOM_LABELS,
-  getCoreLabel,
-  getSubLabels,
-  getMeridianLine,
-} from "@/lib/diagnosis/v2/labels";
+import { generateText } from "@/lib/openai/server";
+import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -40,175 +35,167 @@ function envVectorJa(v) {
     dry_shift: "乾燥方向の変化",
     season_shift: "季節の切り替わり",
   };
-  return map[v] || "特になし";
+  return map[v] || v;
 }
 
 /**
- * “コード漏れ”や“指示文漏れ”をざっくり検知して軽く修正要求をかける用
+ * 出力品質の最低限チェック
+ * - 英コード漏れ / 指示文漏れ / 具体対策や医療っぽい断定をざっくり検知
  */
 function looksBad(text) {
   if (!text) return true;
 
-  // snake_case / 英コードっぽいもの
+  // snake_case / 英コードっぽいもの（診断ラベルや経絡コード漏れ）
   const hasSnake = /[a-z]+_[a-z]+/.test(text);
 
-  // core_code のコード直出しっぽい
-  const hasCoreCode = /(cold|heat|neutral|mixed)_(low|high)/.test(text);
-
-  // 指示文の混入（各◯行、必ずこの構成、番号見出しなど）
+  // 箇条書きの指示文っぽい残骸
   const hasInstructionLeak =
-    /各\d+行/.test(text) ||
-    /必ずこの構成/.test(text) ||
-    /【絶対ルール】/.test(text) ||
-    /^\s*\d+\)/m.test(text);
+    /必ず|ルール|見出し|出力フォーマット|禁止/.test(text);
 
-  // 見出しが増えすぎてる（指定2つ以外が濃厚）
-  const hasOtherHeadings =
-    /「まとめ」|「整えポイント」|「体の張りやすい場所」|「環境変化との相性」|「3日で効く/.test(text);
+  // 具体対策っぽい単語（強すぎる禁止語は避け、最低限だけ）
+  const hasConcreteCare =
+    /ツボ|経穴|レシピ|食材|ストレッチ|筋トレ|何回|秒|分|セット|mg|サプリ/.test(text);
 
-  return hasSnake || hasCoreCode || hasInstructionLeak || hasOtherHeadings;
+  // 見出しが2つ以外に増えてそう（「」が3つ以上）
+  const quoteHeads = (text.match(/「/g) || []).length;
+  const tooManyHeads = quoteHeads >= 3;
+
+  return hasSnake || hasInstructionLeak || hasConcreteCare || tooManyHeads;
 }
 
-/** ---- main generation ---- */
 async function generateExplainText({ event }) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
-
-  // モデルは環境変数で差し替え可能（なければ固定）
   const model = process.env.OPENAI_DIAG_EXPLAIN_MODEL || "gpt-5.2";
-
-  const client = new OpenAI({ apiKey });
 
   const answers = event?.answers || {};
   const computed = event?.computed || {};
 
-  // ---- UIに出したい日本語へ“先に”変換（重要） ----
+  // ---- UIに出したい日本語へ“先に”変換 ----
   const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
   const symptomJa = SYMPTOM_LABELS?.[symptomKey] || "だるさ・疲労";
 
   const core = getCoreLabel(computed?.core_code);
+
   const sub = getSubLabels(safeArr(computed?.sub_labels)).slice(0, 2);
+  const subJa =
+    sub.length > 0
+      ? sub
+          .map((s) => `- ${s.title}${s.short ? `（${s.short}）` : ""}${s.action_hint ? `：${s.action_hint}` : ""}`)
+          .join("\n")
+      : "- なし";
 
   const meridianPrimary = getMeridianLine(computed?.primary_meridian);
   const meridianSecondary = getMeridianLine(computed?.secondary_meridian);
+
+  const meridianJa = [
+    meridianPrimary
+      ? `主：${meridianPrimary.title}／範囲：${meridianPrimary.body_area}（${meridianPrimary.meridians.join("・")}）／ヒント：${meridianPrimary.organs_hint}`
+      : `主：なし`,
+    meridianSecondary
+      ? `副：${meridianSecondary.title}／範囲：${meridianSecondary.body_area}（${meridianSecondary.meridians.join("・")}）／ヒント：${meridianSecondary.organs_hint}`
+      : `副：なし`,
+  ].join("\n");
 
   const envSens = clampInt(answers?.env_sensitivity ?? 0, 0, 3);
   const envVecRaw = safeArr(answers?.env_vectors).filter((x) => x && x !== "none").slice(0, 2);
   const envVecJa = envVecRaw.length ? envVecRaw.map(envVectorJa).join("・") : "特になし";
 
-  // ---- “入力素材”を日本語で整形 ----
-  const subJa =
-    sub.length > 0
-      ? sub
-          .map((s) => `- ${s.title}${s.action_hint ? `：${s.action_hint}` : ""}`)
-          .join("\n")
-      : "- なし";
-
-  const meridianJa = [
-    meridianPrimary
-      ? `主：${meridianPrimary.title}\n  範囲：${meridianPrimary.body_area}（${meridianPrimary.meridians.join(
-          "・"
-        )}）\n  ヒント：${meridianPrimary.organs_hint}`
-      : `主：なし`,
-    meridianSecondary
-      ? `副：${meridianSecondary.title}\n  範囲：${meridianSecondary.body_area}（${meridianSecondary.meridians.join(
-          "・"
-        )}）\n  ヒント：${meridianSecondary.organs_hint}`
-      : `副：なし`,
-  ].join("\n");
-
-  // ---- prompt ----
-  // 例文は入れない（口調/内容の引っ張りを防ぐ）
+  // ---- prompt（今回の要件：4要素を統合して因果っぽく）----
   const prompt = `
 あなたは未病レーダーの案内役「トトノウくん」🤖。
-親しみのある口調だが、煽らず、断定せず、「〜の傾向」「〜しやすい」で説明する。
-医療行為ではなくセルフケア支援。
+優しいが媚びない。煽らない。断定しない（〜の傾向／〜しやすい）。
+医療ではなくセルフケア支援。
 
-【絶対ルール】
-- 英語のコード、snake_case、内部コード名を出力に一切出さない。
-- 指示文（例：「各◯行」「必ずこの構成」など）を本文に混ぜない。
-- 数値（-1/0/1、0〜3など）をそのまま出さない。日本語に言い換える。
-- 病名推定・診断・危険の断定をしない（不安を煽らない）。
-- 対策の「具体例」はここでは書かない（ツボ名/ストレッチ名/食材名/手順/回数などは出さない）。
-  ※未病レーダーに進むと、予報に合わせた対策として表示される、と案内するだけ。
+【最重要要件（ここは絶対）】
+- 「体質の軸」「整えポイント」「張りやすい場所」「環境変化」を“別々に解説しない”。
+  → 4つをつなげて、お悩みが起きやすい流れを「因果っぽく」1本の説明に統合する。
+  → 例：A（体質の軸）＋B（整えポイント）＋C（張りやすい場所）＋D（環境） が重なると、お悩みが出やすい…という“つながり”を必ず作る。
+- 同じ内容の言い換えで水増ししない。読み物として気持ちよく。
 
-【未病レーダーでできること（事実）】
-- 日々の気象（気圧/湿度/気温など）をもとに「揺れやすさ」を予報する
-- その予報に合わせて「今日の対策」を提示する
-- 対策は2枠：
-  1) 生活のコツ（食を含む）
-  2) 【鍼灸師監修】体質専用のツボケア＆ストレッチ
-- この文章では“対策の中身”は書かず、未病レーダーに進むと見られる、と伝える
+【絶対禁止】
+- 英語コード・snake_case・内部ラベル名を一切出さない。
+- 具体的な対策の提示（食材名/レシピ/ツボ名/ストレッチ手順/回数分量/運動メニュー）を一切書かない。
+  ※対策は「レーダーで提案される」と“存在”だけ触れてOK。中身は書かない。
+- 価格/課金/支払いの話はしない（UIが案内する）。
+- 指示文やメタ説明（ルール、構成、〜行で等）を本文に混ぜない。
 
-【出力フォーマット】
-見出しは次の2つだけ。必ずカギ括弧つきで見出しを書く：
+【出力】
+見出しは次の2つだけ。必ず「」付き。番号は付けない。
 「いまの体のクセ（今回のまとめ）」
 「体調の揺れを予報で先回り（未病レーダー）」
-最後に1行だけ「※強い症状がある時は無理せず相談を。」を付ける。
+最後に1行だけ：※強い症状がある時は無理せず相談を。
 
-全体は読み物として気持ちよく読める長さ（長すぎない）。
-箇条書きOK。
+文章量：各見出し 250〜500文字くらい。長すぎない。
 
-【入力（この結果）】
+【入力（今回の結果）】
 - お悩み：${symptomJa}
 
-- 今の体質の軸：
+- 体質の軸：
   タイトル：${core?.title || "未設定"}
   説明：${core?.tcm_hint || "未設定"}
 
 - 整えポイント（最大2つ）：
 ${subJa}
 
-- 体の張りやすい場所：
+- 張りやすい場所：
 ${meridianJa}
 
 - 環境変化：
   影響の受けやすさ：${envSensitivityJa(envSens)}
   影響の出やすい方向：${envVecJa}
-`.trim();
+
+【未病レーダーでできること（本文で触れてよい範囲）】
+- 日々の気象（気圧/気温/湿度など）の変化と、あなたの体質の組み合わせから、
+  “どんな日に揺れやすいか”を予報として先回りできる。
+- さらに、予報に合わせて「生活のコツ＋食養生（同じ枠）」や「鍼灸師監修のツボケア＆ストレッチ」などの対策提案に繋がる。
+  ※ただし本文では具体策の中身は出さない（存在と価値だけ）。
+
+自然な日本語で。`.trim();
 
   // 1st try
-  const resp1 = await client.responses.create({
+  const text1 = await generateText({
     model,
-    reasoning: { effort: "low" },
     input: prompt,
-    max_output_tokens: 1200,
+    max_output_tokens: 1100,
+    reasoning: { effort: "low" },
   });
 
-  let text = (resp1.output_text || "").trim();
+  let text = (text1 || "").trim();
 
   // light retry if leaks detected / too short
-  if (looksBad(text) || text.length < 180) {
+  if (looksBad(text) || text.length < 250) {
     const repairPrompt = `
-次の文章を「ルール違反がない形」に書き直してください。
+次の文章は、禁止事項（英コード/指示文/具体対策）が混ざっているか、統合が弱い可能性があります。
+同じ入力に基づいて「全文を書き直して」ください。
 
 【守ること】
-- 見出しは2つだけ（指定のカギ括弧つき）
-- 英語のコード/内部コード名/snake_case を絶対に出さない
-- 指示文を混ぜない
-- 数値をそのまま出さない（日本語に言い換える）
-- 対策の具体例は書かない（未病レーダーに進むと見られる、まで）
-- 全体は長すぎない読み物
+- 見出しは2つだけ（指定の「」付き）
+- 4要素を統合して因果っぽく1本の説明にする（別々に解説しない）
+- 具体的な対策（食材/レシピ/ツボ/ストレッチ/回数分量）を書かない
+- 英語コード/メタ指示を書かない
+- 長すぎない
 
-【元の文章】
+【入力】
+${prompt}
+
+【ダメだった文章（参考：直さないでよい）】
 ${text}
 `.trim();
 
-    const resp2 = await client.responses.create({
+    const text2 = await generateText({
       model,
-      reasoning: { effort: "low" },
       input: repairPrompt,
-      max_output_tokens: 1200,
+      max_output_tokens: 1100,
+      reasoning: { effort: "low" },
     });
 
-    const t2 = (resp2.output_text || "").trim();
+    const t2 = (text2 || "").trim();
     if (t2) text = t2;
   }
 
-  // 最低限の保険：空なら簡易文（例文っぽくならないように最小限）
+  // 最低限の保険（空の場合）
   if (!text) {
     text =
-      "「いまの体のクセ（今回のまとめ）」\nいまは体の負担が特定のパターンで出やすい傾向があります。まずは“どこに出やすいか”と“何で揺れやすいか”を押さえるのが近道です。\n\n「体調の揺れを予報で先回り（未病レーダー）」\n未病レーダーでは、気象の変化から揺れやすさを予報し、予報に合わせた対策を提示して先回りしやすくします。\n\n※強い症状がある時は無理せず相談を。";
+      "「いまの体のクセ（今回のまとめ）」\n今の結果からは、お悩みが出るときに“体の土台”と“切り替え”と“張りやすい場所”と“環境の揺れ”が重なりやすい傾向が見えます。いくつかの条件が同時に重なるほど、同じ負担でも症状として表に出やすくなるタイプかもしれません。\n\n「体調の揺れを予報で先回り（未病レーダー）」\n未病レーダーでは、日々の気象変化とあなたの体質の組み合わせから、揺れやすいタイミングを予報として捉えて先回りできます。調子が落ちてから頑張るのではなく、前ぶれに気づける形にしていくのが強みです。\n\n※強い症状がある時は無理せず相談を。";
   }
 
   return { text, model };
@@ -300,7 +287,6 @@ export async function POST(_req, { params }) {
       .eq("source_event_id", id)
       .is("ai_explain_text", null);
 
-    // rowがないこともあるので警告だけ
     if (e2) console.warn("constitution_events update skipped:", e2?.message || e2);
 
     return NextResponse.json({
