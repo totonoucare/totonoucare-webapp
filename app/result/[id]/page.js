@@ -438,13 +438,13 @@ function ResultPage({ params }) {
             <div className="flex items-center gap-2">
               <div className="text-xl font-semibold">あなたの体質解説</div>
               <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
-                🤖 トトノウくん
+                トトノウくん（AI）
               </span>
             </div>
 
             {loadingExplain ? (
               <div className="rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                AIが解説文を生成中…
+                トトノウくん（AI）が解説文を生成中…
               </div>
             ) : explainText ? (
               <div className="text-xs text-slate-500">
