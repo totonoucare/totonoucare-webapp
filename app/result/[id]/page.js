@@ -6,7 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
-import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
+import {
+  SYMPTOM_LABELS,
+  getCoreLabel,
+  getSubLabels,
+  getMeridianLine,
+} from "@/lib/diagnosis/v2/labels";
 
 // ✅ Next.js の useSearchParams 対策：中身を Suspense 内に移す
 export default function ResultPageWrapper({ params }) {
@@ -21,69 +26,6 @@ export default function ResultPageWrapper({ params }) {
       <ResultPage params={params} />
     </Suspense>
   );
-}
-
-/** -----------------------------
- * UI helpers (app-like panels)
- * ----------------------------- */
-function Panel({ icon, title, right, children }) {
-  return (
-    <Card>
-      <div className="overflow-hidden rounded-2xl border bg-white">
-        <div className="flex items-center justify-between gap-3 bg-slate-50 px-4 py-3">
-          <div className="flex items-center gap-2 min-w-0">
-            {icon ? (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border bg-white text-sm">
-                {icon}
-              </div>
-            ) : null}
-            <div className="min-w-0 truncate text-sm font-semibold text-slate-900">{title}</div>
-          </div>
-          {right ? <div className="shrink-0">{right}</div> : null}
-        </div>
-        <div className="px-4 py-4">{children}</div>
-      </div>
-    </Card>
-  );
-}
-
-function StackBox({ children }) {
-  return <div className="overflow-hidden rounded-2xl border bg-white">{children}</div>;
-}
-
-function StackRow({ children, divider = true }) {
-  return (
-    <>
-      <div className="px-4 py-4">{children}</div>
-      {divider ? <div className="h-px bg-slate-100" /> : null}
-    </>
-  );
-}
-
-// ---------------------------
-// AI text split into 2 parts
-// ---------------------------
-function splitExplain(text) {
-  const t = (text || "").trim();
-  if (!t) return { p1: "", p2: "" };
-
-  const h1 = "いまの体のクセ（今回のまとめ）";
-  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
-
-  const i1 = t.indexOf(h1);
-  const i2 = t.indexOf(h2);
-
-  if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
-  if (i1 !== -1 && i2 === -1) return { p1: t.slice(i1 + h1.length).trim() || t, p2: "" };
-  if (i1 === -1 && i2 !== -1) return { p1: t, p2: t.slice(i2 + h2.length).trim() || "" };
-
-  const part1 = t.slice(i1 + h1.length, i2).trim();
-  const part2 = t.slice(i2 + h2.length).trim();
-
-  const p1 = part1 || t.slice(0, i2).trim();
-  const p2 = part2 || t.slice(i2 + h2.length).trim();
-
-  return { p1, p2 };
 }
 
 function ResultPage({ params }) {
@@ -286,10 +228,72 @@ function ResultPage({ params }) {
     [computed?.secondary_meridian]
   );
 
-  const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
-
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
+
+  // ---------------------------
+  // AI text split into 2 parts (robust)
+  // - Handles:
+  //   - headings with/without quotes
+  //   - markdown "## " prefix
+  //   - accidental whitespace
+  // ---------------------------
+  function splitExplain(text) {
+    const raw = (text || "").replace(/\r/g, "").trim();
+    if (!raw) return { p1: "", p2: "" };
+
+    // normalize: remove leading markdown heading tokens in-line (only affects matching)
+    const normalized = raw.replace(/^\s*#{1,6}\s*/gm, "").trim();
+
+    const variants = {
+      h1: [
+        "いまの体のクセ（今回のまとめ）",
+        "いまの体のクセ（今回のまとめ） ",
+        "「いまの体のクセ（今回のまとめ）」",
+      ],
+      h2: [
+        "体調の揺れを予報で先回り（未病レーダー）",
+        "体調の揺れを予報で先回り（未病レーダー） ",
+        "「体調の揺れを予報で先回り（未病レーダー）」",
+      ],
+    };
+
+    const findIndex = (t, list) => {
+      for (const h of list) {
+        const i = t.indexOf(h);
+        if (i !== -1) return { i, h };
+      }
+      return { i: -1, h: "" };
+    };
+
+    const a = findIndex(normalized, variants.h1);
+    const b = findIndex(normalized, variants.h2);
+
+    // can't split -> show all as part1
+    if (a.i === -1 && b.i === -1) return { p1: raw, p2: "" };
+    if (a.i !== -1 && b.i === -1) {
+      const t = normalized.slice(a.i + a.h.length).trim();
+      return { p1: t || raw, p2: "" };
+    }
+    if (a.i === -1 && b.i !== -1) {
+      const t2 = normalized.slice(b.i + b.h.length).trim();
+      return { p1: raw, p2: t2 || "" };
+    }
+
+    // both exist
+    const start1 = a.i + a.h.length;
+    const start2 = b.i + b.h.length;
+
+    const part1 = normalized.slice(start1, b.i).trim();
+    const part2 = normalized.slice(start2).trim();
+
+    return {
+      p1: part1 || normalized.slice(0, b.i).trim(),
+      p2: part2 || normalized.slice(b.i).trim(),
+    };
+  }
+
+  const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
 
   // ---------------------------
   // Actions
@@ -315,6 +319,7 @@ function ResultPage({ params }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
 
+      // ✅ 保存後は /radar へ（/radar 側で saved toast を出す想定）
       router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
     } catch (e) {
       setToast(e?.message || String(e));
@@ -356,12 +361,34 @@ function ResultPage({ params }) {
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">結果が見つかりません</h1>
-        <div className="text-sm text-slate-600">
-          期限切れ/削除、または保存に失敗した可能性があります。
-        </div>
+        <div className="text-sm text-slate-600">期限切れ/削除、または保存に失敗した可能性があります。</div>
         <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
       </div>
     );
+  }
+
+  // ---------------------------
+  // Small UI atoms
+  // ---------------------------
+  function SectionChip({ emoji, title }) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-full border bg-emerald-50 text-sm">
+          {emoji}
+        </span>
+        <div className="text-sm font-semibold text-slate-900">{title}</div>
+      </div>
+    );
+  }
+
+  function Panel({ children, tone = "base" }) {
+    const toneClass =
+      tone === "mint"
+        ? "bg-emerald-50/40 border-emerald-100"
+        : tone === "slate"
+          ? "bg-slate-50 border-slate-200"
+          : "bg-white border-slate-200";
+    return <div className={`rounded-2xl border px-4 py-4 ${toneClass}`}>{children}</div>;
   }
 
   // ---------------------------
@@ -376,57 +403,71 @@ function ResultPage({ params }) {
       ) : null}
 
       {/* --- Hero --- */}
-      <Panel
-        icon="🧾"
-        title="あなたのお悩み"
-        right={
-          <span className="rounded-full border bg-white px-2 py-0.5 text-[11px] text-slate-600">
-            結果は無料で閲覧OK
-          </span>
-        }
-      >
-        <div className="text-lg font-semibold text-slate-900">{symptomLabel}</div>
-      </Panel>
+      <Card>
+        <div className="space-y-2">
+          <div className="text-xs text-slate-500">あなたのお悩み</div>
+          <div className="text-lg font-semibold text-slate-900">{symptomLabel}</div>
+        </div>
+      </Card>
 
-      {/* --- Constitution (stack) --- */}
-      <Panel icon="🧭" title="体質の見立て">
-        <StackBox>
-          <StackRow>
-            <div className="text-xs font-semibold text-slate-600">今の体質の軸</div>
-            <div className="mt-1 text-lg font-semibold text-slate-900">{core.title}</div>
-            <div className="mt-1 text-sm leading-6 text-slate-600">{core.tcm_hint}</div>
-          </StackRow>
+      {/* --- Constitution --- */}
+      <Card>
+        <div className="space-y-4">
+          <div className="text-xl font-semibold text-slate-900">体質の見立て</div>
 
-          <StackRow>
+          {/* Core (axis) */}
+          <Panel tone="mint">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold text-emerald-800/80">今の体質の軸</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{core.title}</div>
+                <div className="mt-1 text-sm leading-6 text-slate-700">{core.tcm_hint}</div>
+              </div>
+              <div className="hidden sm:block">
+                <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-semibold text-emerald-800">
+                  レーダーの“基礎データ”
+                </span>
+              </div>
+            </div>
+          </Panel>
+
+          {/* Sub labels */}
+          <div className="space-y-2">
             <div className="text-sm font-semibold text-slate-900">整えポイント（最大2つ）</div>
 
             {subLabels?.length ? (
-              <div className="mt-3 grid gap-2">
+              <div className="grid gap-2">
                 {subLabels.map((s) => (
-                  <div key={s.title} className="rounded-2xl border bg-slate-50 px-4 py-3">
+                  <div
+                    key={s.title}
+                    className="rounded-2xl border bg-white px-4 py-3 shadow-[0_1px_0_0_rgba(15,23,42,0.03)]"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border bg-white px-3 py-1 text-xs font-semibold text-slate-800">
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">
                         {s.title}
                       </span>
                       <span className="text-xs text-slate-500">{s.short}</span>
                     </div>
                     {s.action_hint ? (
-                      <div className="mt-2 text-sm leading-6 text-slate-800">{s.action_hint}</div>
+                      <div className="mt-2 text-sm leading-7 text-slate-800">{s.action_hint}</div>
                     ) : null}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="mt-2 text-sm text-slate-500">（今回は該当なし）</div>
+              <div className="rounded-2xl border bg-white px-4 py-3 text-sm text-slate-500">
+                今回は強い偏りは出ていません
+              </div>
             )}
-          </StackRow>
+          </div>
 
-          <StackRow divider={false}>
+          {/* Meridians */}
+          <div className="space-y-2">
             <div className="text-sm font-semibold text-slate-900">体の張りやすい場所</div>
 
-            <div className="mt-3 grid gap-2">
+            <div className="grid gap-2">
               <div className="rounded-2xl border bg-white px-4 py-3">
-                <div className="text-xs font-semibold text-slate-600">主</div>
+                <div className="text-sm font-semibold text-slate-900">（主）</div>
                 {meridianPrimary ? (
                   <>
                     <div className="mt-1 text-sm font-semibold text-slate-900">
@@ -443,7 +484,7 @@ function ResultPage({ params }) {
               </div>
 
               <div className="rounded-2xl border bg-white px-4 py-3">
-                <div className="text-xs font-semibold text-slate-600">副</div>
+                <div className="text-sm font-semibold text-slate-900">（副）</div>
                 {meridianSecondary ? (
                   <>
                     <div className="mt-1 text-sm font-semibold text-slate-900">
@@ -459,132 +500,178 @@ function ResultPage({ params }) {
                 )}
               </div>
             </div>
-          </StackRow>
-        </StackBox>
-      </Panel>
-
-      {/* --- AI Explain --- */}
-      <Panel
-        icon="🤖"
-        title="あなたの体質解説"
-        right={
-          <span className="rounded-full border bg-white px-2 py-0.5 text-[11px] text-slate-600">
-            トトノウくん（AI）
-          </span>
-        }
-      >
-        {loadingExplain ? (
-          <div className="rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            トトノウくん（AI）が解説文を生成中…
           </div>
-        ) : explainText ? (
-          <div className="text-xs text-slate-500">※この解説は初回だけ生成して保存されます</div>
-        ) : (
-          <div className="rounded-2xl border bg-white px-4 py-3">
-            <div className="text-sm text-slate-700">
-              {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
-            </div>
-            <div className="mt-3">
-              <Button onClick={retryExplain} disabled={loadingExplain}>
-                {loadingExplain ? "生成中…" : "もう一度生成する"}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Panel>
-
-      {/* AI Part 1 */}
-      {explainParts.p1 ? (
-        <Panel icon="🧠" title="いまの体のクセ（今回のまとめ）">
-          <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{explainParts.p1}</div>
-        </Panel>
-      ) : null}
-
-      {/* AI Part 2 */}
-      {explainParts.p2 ? (
-        <Panel icon="📡" title="体調の揺れを予報で先回り（未病レーダー）">
-          <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{explainParts.p2}</div>
-        </Panel>
-      ) : null}
-
-      {/* fallback: if split failed, show whole text once */}
-      {explainText && !explainParts.p1 && !explainParts.p2 ? (
-        <Panel icon="📝" title="解説（全文）">
-          <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{explainText}</div>
-        </Panel>
-      ) : null}
-
-      {/* metadata */}
-      {(explainCreatedAt || explainModel) ? (
-        <div className="text-xs text-slate-400">
-          {explainCreatedAt ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
-          {explainModel ? `　/　model: ${explainModel}` : ""}
         </div>
-      ) : null}
+      </Card>
+
+      {/* --- AI explain (single card that CONTAINS both parts) --- */}
+      <Card>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl border bg-emerald-50 text-lg">
+                🤖
+              </span>
+              <div>
+                <div className="text-xl font-semibold text-slate-900">あなたの体質解説</div>
+                <div className="mt-0.5 text-xs text-slate-500">トトノウくん（AI）</div>
+              </div>
+            </div>
+
+            {/* small pill */}
+            <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
+              読み物モード
+            </span>
+          </div>
+
+          {loadingExplain ? (
+            <Panel tone="slate">
+              <div className="text-sm text-slate-700">トトノウくんが解説文を生成中です…</div>
+              <div className="mt-1 text-xs text-slate-500">（初回のみ。少しだけお待ちください）</div>
+            </Panel>
+          ) : explainText ? (
+            <div className="space-y-3">
+              {/* Part 1 */}
+              {explainParts.p1 ? (
+                <div className="rounded-2xl border bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b bg-emerald-50/40 px-4 py-3">
+                    <SectionChip emoji="🧠" title="いまの体のクセ（今回のまとめ）" />
+                    <span className="text-[11px] font-semibold text-emerald-800/80">まとめ</span>
+                  </div>
+
+                  <div className="px-4 py-4">
+                    <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-4 border-l-4 border-l-emerald-300">
+                      <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+                        {explainParts.p1}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Part 2 */}
+              {explainParts.p2 ? (
+                <div className="rounded-2xl border bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b bg-emerald-50/40 px-4 py-3">
+                    <SectionChip emoji="📡" title="体調の揺れを予報で先回り（未病レーダー）" />
+                    <span className="text-[11px] font-semibold text-emerald-800/80">次へ</span>
+                  </div>
+
+                  <div className="px-4 py-4">
+                    <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-4 border-l-4 border-l-emerald-300">
+                      <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+                        {explainParts.p2}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {/* fallback: if split failed */}
+              {!explainParts.p1 && !explainParts.p2 ? (
+                <Panel>
+                  <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+                    {explainText}
+                  </div>
+                </Panel>
+              ) : null}
+
+              {/* metadata (quiet) */}
+              {(explainCreatedAt || explainModel) && (
+                <div className="text-xs text-slate-400">
+                  {explainCreatedAt
+                    ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}`
+                    : ""}
+                  {explainModel ? `　/　model: ${explainModel}` : ""}
+                </div>
+              )}
+            </div>
+          ) : (
+            <Panel>
+              <div className="text-sm text-slate-800">
+                {explainError ? `生成に失敗しました：${explainError}` : "解説文の準備ができていません。"}
+              </div>
+              <div className="mt-3">
+                <Button onClick={retryExplain} disabled={loadingExplain}>
+                  {loadingExplain ? "生成中…" : "もう一度生成する"}
+                </Button>
+              </div>
+            </Panel>
+          )}
+        </div>
+      </Card>
 
       {/* --- CTA --- */}
-      <Panel icon="🚀" title="次の一歩（おすすめ）">
-        {loadingAuth ? (
-          <div className="text-sm text-slate-500">ログイン状態を確認中…</div>
-        ) : isLoggedIn ? (
-          <div className="space-y-3">
-            <div className="rounded-2xl border bg-slate-50 px-4 py-3">
-              <div className="text-sm text-slate-700">
-                ログイン中：<span className="font-medium">{session.user?.email}</span>
-              </div>
-              <div className="mt-1 text-xs text-slate-500">今日の「予報と対策」は無料で見られます。</div>
-            </div>
+      <Card>
+        <div className="space-y-3">
+          <div className="text-sm font-semibold text-slate-900">次の一歩</div>
 
-            {isAttached ? (
-              <div className="rounded-2xl border bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                この結果は保存済みです ✅
-              </div>
-            ) : (
-              <div className="rounded-2xl border bg-white px-4 py-3">
-                <div className="text-sm text-slate-700">
-                  この結果を保存して、今日の未病レーダーへ進みましょう。
+          {loadingAuth ? (
+            <div className="text-sm text-slate-500">ログイン状態を確認中…</div>
+          ) : isLoggedIn ? (
+            <>
+              <Panel tone="slate">
+                <div className="text-sm text-slate-800">
+                  ログイン中：<span className="font-medium">{session.user?.email}</span>
                 </div>
-                <div className="mt-3">
-                  <Button onClick={() => attachToAccount(false)} disabled={attaching}>
-                    {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
-                  </Button>
+                <div className="mt-1 text-xs text-slate-500">
+                  次は「今日の予報と対策」をレーダーで確認できます。
                 </div>
+              </Panel>
+
+              {isAttached ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                  この結果は保存済みです ✅
+                </div>
+              ) : (
+                <div className="rounded-2xl border bg-white px-4 py-3">
+                  <div className="text-sm text-slate-800">
+                    この結果を保存して、未病レーダーへ進みましょう。
+                  </div>
+                  <div className="mt-3">
+                    <Button onClick={() => attachToAccount(false)} disabled={attaching}>
+                      {attaching ? "保存して移動中…" : "結果を保存して、レーダーへ進む"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                <Button variant="ghost" onClick={() => router.push("/radar")}>
+                  レーダーを見る
+                </Button>
+                <Button variant="ghost" onClick={() => router.push("/check")}>
+                  もう一度チェックする
+                </Button>
               </div>
-            )}
+            </>
+          ) : (
+            <>
+              <Panel tone="slate">
+                <div className="text-sm text-slate-800">
+                  登録して結果を保存すると、未病レーダーで「今日の予報と対策」へ進めます。
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  登録のみで課金は発生しません（無料の範囲で利用できます）
+                </div>
+              </Panel>
 
-            <div className="flex flex-wrap gap-2">
-              <Button variant="ghost" onClick={() => router.push("/radar")}>
-                今日の予報と対策へ
-              </Button>
-              <Button variant="ghost" onClick={() => router.push("/check")}>
-                もう一度チェックする
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="rounded-2xl border bg-slate-50 px-4 py-3">
-              <div className="text-sm text-slate-800">無料で結果を保存して、今日の「予報と対策」へ進めます。</div>
-              <div className="mt-1 text-xs text-slate-500">
-                ※登録だけでは課金されません（無料の範囲で使えます）
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button onClick={goSignupToRadar}>登録して、レーダーへ進む</Button>
+                <Button variant="ghost" onClick={goLoginToRadar}>
+                  すでに登録済みの方はこちら（ログイン）
+                </Button>
               </div>
-            </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button onClick={goSignupToRadar}>無料で保存して、今日の予報と対策を見る</Button>
-              <Button variant="ghost" onClick={goLoginToRadar}>
-                すでに登録済みの方はこちら（ログイン）
-              </Button>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="ghost" onClick={() => router.push("/check")}>
-                もう一度チェックする
-              </Button>
-            </div>
-          </div>
-        )}
-      </Panel>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => router.push("/check")}>
+                  もう一度チェックする
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Card>
 
       <div className="text-xs text-slate-500">
         作成日時：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
