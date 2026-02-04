@@ -470,7 +470,7 @@ const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
         {explainParts.p1 ? (
           <Card>
             <div className="space-y-2">
-              <div className="text-sm font-semibold">「いまの体のクセ（今回のまとめ）」</div>
+              <div className="text-sm font-semibold">いまの体のクセ（今回のまとめ）</div>
               <div className="rounded-2xl border bg-white px-4 py-4">
                 <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
                   {explainParts.p1}
@@ -484,7 +484,7 @@ const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
         {explainParts.p2 ? (
           <Card>
             <div className="space-y-2">
-              <div className="text-sm font-semibold">「体調の揺れを予報で先回り（未病レーダー）」</div>
+              <div className="text-sm font-semibold">体調の揺れを予報で先回り（未病レーダー）</div>
               <div className="rounded-2xl border bg-white px-4 py-4">
                 <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
                   {explainParts.p2}
