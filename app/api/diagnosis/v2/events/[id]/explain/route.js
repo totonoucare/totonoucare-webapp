@@ -20,7 +20,6 @@ function clampInt(v, min, max) {
 }
 
 function envSensitivityJa(level) {
-  // 0..3
   if (level <= 0) return "ほとんど影響なし";
   if (level === 1) return "たまに影響を受ける";
   if (level === 2) return "わりと影響を受ける";
@@ -39,28 +38,27 @@ function envVectorJa(v) {
 }
 
 /**
- * 出力品質の最低限チェック
- * - 英コード漏れ / 指示文漏れ / 具体対策や医療っぽい断定をざっくり検知
+ * ざっくり品質検知（強すぎる検閲はやめる）
+ * - 英コード漏れ、見出し逸脱、プロンプト文言漏れ、過度な箇条書き命令の残骸などを軽く検知
  */
 function looksBad(text) {
   if (!text) return true;
 
-  // snake_case / 英コードっぽいもの（診断ラベルや経絡コード漏れ）
+  // 英語コード / snake_case
   const hasSnake = /[a-z]+_[a-z]+/.test(text);
 
-  // 箇条書きの指示文っぽい残骸
-  const hasInstructionLeak =
-    /必ず|ルール|見出し|出力フォーマット|禁止/.test(text);
+  // 見出しが2つあるか（両方の「」が存在するか）
+  const hasHead1 = text.includes("「いまの体のクセ（今回のまとめ）」");
+  const hasHead2 = text.includes("「体調の揺れを予報で先回り（未病レーダー）」");
+  const missingHeads = !(hasHead1 && hasHead2);
 
-  // 具体対策っぽい単語（強すぎる禁止語は避け、最低限だけ）
-  const hasConcreteCare =
-    /ツボ|経穴|レシピ|食材|ストレッチ|筋トレ|何回|秒|分|セット|mg|サプリ/.test(text);
+  // メタ漏れ（ルールや禁止など）
+  const hasMetaLeak = /絶対|禁止|出力|プロンプト|モデル|トークン|max_output/i.test(text);
 
-  // 見出しが2つ以外に増えてそう（「」が3つ以上）
-  const quoteHeads = (text.match(/「/g) || []).length;
-  const tooManyHeads = quoteHeads >= 3;
+  // 露骨な箇条書き命令の残骸
+  const hasInstructionLeak = /必ずこの|見出しは|番号は付けない/.test(text);
 
-  return hasSnake || hasInstructionLeak || hasConcreteCare || tooManyHeads;
+  return hasSnake || missingHeads || hasMetaLeak || hasInstructionLeak;
 }
 
 async function generateExplainText({ event }) {
@@ -69,22 +67,41 @@ async function generateExplainText({ event }) {
   const answers = event?.answers || {};
   const computed = event?.computed || {};
 
-  // ---- UIに出したい日本語へ“先に”変換 ----
+  // ---- 日本語素材に整形 ----
   const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
   const symptomJa = SYMPTOM_LABELS?.[symptomKey] || "だるさ・疲労";
 
   const core = getCoreLabel(computed?.core_code);
 
   const sub = getSubLabels(safeArr(computed?.sub_labels)).slice(0, 2);
-  const subJa =
+  const subItems =
     sub.length > 0
-      ? sub
-          .map((s) => `- ${s.title}${s.short ? `（${s.short}）` : ""}${s.action_hint ? `：${s.action_hint}` : ""}`)
-          .join("\n")
-      : "- なし";
+      ? sub.map((s) => ({
+          title: s.title,
+          short: s.short || "",
+          action: s.action_hint || "",
+        }))
+      : [];
 
   const meridianPrimary = getMeridianLine(computed?.primary_meridian);
   const meridianSecondary = getMeridianLine(computed?.secondary_meridian);
+
+  const envSens = clampInt(answers?.env_sensitivity ?? 0, 0, 3);
+  const envVecRaw = safeArr(answers?.env_vectors).filter((x) => x && x !== "none").slice(0, 2);
+  const envVecJa = envVecRaw.length ? envVecRaw.map(envVectorJa).join("・") : "特になし";
+
+  // 「素材」を“説明しやすい形”で渡す（英コードは渡さない）
+  const subJa =
+    subItems.length > 0
+      ? subItems
+          .map((s) => {
+            const parts = [s.title];
+            if (s.short) parts.push(`（${s.short}）`);
+            const head = parts.join("");
+            return s.action ? `- ${head}：${s.action}` : `- ${head}`;
+          })
+          .join("\n")
+      : "- なし";
 
   const meridianJa = [
     meridianPrimary
@@ -95,36 +112,33 @@ async function generateExplainText({ event }) {
       : `副：なし`,
   ].join("\n");
 
-  const envSens = clampInt(answers?.env_sensitivity ?? 0, 0, 3);
-  const envVecRaw = safeArr(answers?.env_vectors).filter((x) => x && x !== "none").slice(0, 2);
-  const envVecJa = envVecRaw.length ? envVecRaw.map(envVectorJa).join("・") : "特になし";
-
-  // ---- prompt（今回の要件：4要素を統合して因果っぽく）----
+  // ---- prompt（縛りは最小限、品質要件を強める）----
   const prompt = `
-あなたは未病レーダーの案内役「トトノウくん」🤖。
-優しいが媚びない。煽らない。断定しない（〜の傾向／〜しやすい）。
-医療ではなくセルフケア支援。
+あなたは未病レーダーの案内役「トトノウくん」🤖として、日本語で文章を書きます。
+口調は丁寧な「です・ます調」で統一し、語尾のブレ（〜だ／〜である）は混ぜません。
+読み物として自然で、途中で雑に感じない文章にします（接続が滑らかで、読了感がある）。
 
-【最重要要件（ここは絶対）】
-- 「体質の軸」「整えポイント」「張りやすい場所」「環境変化」を“別々に解説しない”。
-  → 4つをつなげて、お悩みが起きやすい流れを「因果っぽく」1本の説明に統合する。
-  → 例：A（体質の軸）＋B（整えポイント）＋C（張りやすい場所）＋D（環境） が重なると、お悩みが出やすい…という“つながり”を必ず作る。
-- 同じ内容の言い換えで水増ししない。読み物として気持ちよく。
+【今回の目的】
+次の4要素（体質の軸／整えポイント／張りやすい場所／環境変化）を、お悩みと絡めて“統合”し、
+「どういう流れで揺れやすいか」を因果っぽく説明してください。
+※4要素を別々に順番解説するのは禁止です。必ず「つながり」を作って一本の説明にしてください。
 
-【絶対禁止】
-- 英語コード・snake_case・内部ラベル名を一切出さない。
-- 具体的な対策の提示（食材名/レシピ/ツボ名/ストレッチ手順/回数分量/運動メニュー）を一切書かない。
-  ※対策は「レーダーで提案される」と“存在”だけ触れてOK。中身は書かない。
-- 価格/課金/支払いの話はしない（UIが案内する）。
-- 指示文やメタ説明（ルール、構成、〜行で等）を本文に混ぜない。
+【書き方のコツ（重要）】
+- 「AがあるのでBになりやすく、そこにCが重なるとDとして出やすい」など、過不足なく繋げます。
+- 飛躍しすぎず、断定もしません（〜の傾向／〜しやすい）。
+- 具体的な対策（食材名、レシピ、ツボ名、ストレッチ手順、回数分量、運動メニュー）は書きません。
+  ただし未病レーダーで「生活のコツ＋食養生（同じ枠）」や「鍼灸師監修のツボケア＆ストレッチ」の提案が“受けられる”ことは触れてOKです（中身は書かない）。
 
-【出力】
-見出しは次の2つだけ。必ず「」付き。番号は付けない。
+【禁止】
+- 英語コード・snake_case・内部ラベルを出さない
+- 価格/課金/支払いの話をしない
+- ルールやプロンプトなどのメタな話を本文に混ぜない
+
+【出力形式】
+見出しは次の2つだけ。必ず「」付き。番号は付けません。
 「いまの体のクセ（今回のまとめ）」
 「体調の揺れを予報で先回り（未病レーダー）」
-最後に1行だけ：※強い症状がある時は無理せず相談を。
-
-文章量：各見出し 250〜500文字くらい。長すぎない。
+最後の注意文は付けません（出力しない）。
 
 【入力（今回の結果）】
 - お悩み：${symptomJa}
@@ -144,47 +158,38 @@ ${meridianJa}
   影響の出やすい方向：${envVecJa}
 
 【未病レーダーでできること（本文で触れてよい範囲）】
-- 日々の気象（気圧/気温/湿度など）の変化と、あなたの体質の組み合わせから、
-  “どんな日に揺れやすいか”を予報として先回りできる。
-- さらに、予報に合わせて「生活のコツ＋食養生（同じ枠）」や「鍼灸師監修のツボケア＆ストレッチ」などの対策提案に繋がる。
-  ※ただし本文では具体策の中身は出さない（存在と価値だけ）。
+- 日々の気象の変化とあなたの体質の組み合わせから「揺れやすい日」を予報として先回りできる
+- 予報に合わせて「生活のコツ＋食養生（同じ枠）」や「鍼灸師監修のツボケア＆ストレッチ」などの対策提案につながる
+`.trim();
 
-自然な日本語で。`.trim();
-
-  // 1st try
   const text1 = await generateText({
     model,
     input: prompt,
-    max_output_tokens: 1100,
+    max_output_tokens: 1400,
     reasoning: { effort: "low" },
   });
 
   let text = (text1 || "").trim();
 
-  // light retry if leaks detected / too short
-  if (looksBad(text) || text.length < 250) {
-    const repairPrompt = `
-次の文章は、禁止事項（英コード/指示文/具体対策）が混ざっているか、統合が弱い可能性があります。
-同じ入力に基づいて「全文を書き直して」ください。
+  // ざっくり再生成（“修正指示”ではなく“書き直し”で質を上げる）
+  if (looksBad(text) || text.length < 350) {
+    const rewritePrompt = `
+同じ入力に基づいて、文章を「全文書き直し」してください。
 
-【守ること】
-- 見出しは2つだけ（指定の「」付き）
-- 4要素を統合して因果っぽく1本の説明にする（別々に解説しない）
-- 具体的な対策（食材/レシピ/ツボ/ストレッチ/回数分量）を書かない
-- 英語コード/メタ指示を書かない
-- 長すぎない
+改善したい点：
+- です・ます調の統一（混ざらない）
+- 2つの見出しの文章に読了感を出す（雑に繋げた印象をなくす）
+- 4要素を統合して因果っぽく説明（別々に並べない）
+- 具体対策は書かない（提案が“ある”ことだけ触れる）
 
-【入力】
+【入力（再掲）】
 ${prompt}
-
-【ダメだった文章（参考：直さないでよい）】
-${text}
 `.trim();
 
     const text2 = await generateText({
       model,
-      input: repairPrompt,
-      max_output_tokens: 1100,
+      input: rewritePrompt,
+      max_output_tokens: 1400,
       reasoning: { effort: "low" },
     });
 
@@ -192,10 +197,10 @@ ${text}
     if (t2) text = t2;
   }
 
-  // 最低限の保険（空の場合）
+  // 最低限の保険
   if (!text) {
     text =
-      "「いまの体のクセ（今回のまとめ）」\n今の結果からは、お悩みが出るときに“体の土台”と“切り替え”と“張りやすい場所”と“環境の揺れ”が重なりやすい傾向が見えます。いくつかの条件が同時に重なるほど、同じ負担でも症状として表に出やすくなるタイプかもしれません。\n\n「体調の揺れを予報で先回り（未病レーダー）」\n未病レーダーでは、日々の気象変化とあなたの体質の組み合わせから、揺れやすいタイミングを予報として捉えて先回りできます。調子が落ちてから頑張るのではなく、前ぶれに気づける形にしていくのが強みです。\n\n※強い症状がある時は無理せず相談を。";
+      "「いまの体のクセ（今回のまとめ）」\n今の結果からは、お悩みが出るときに「体の土台」「整えの方向」「張りやすい場所」「環境の揺れ」が重なりやすい傾向が見えます。いくつかの条件が同時に重なるほど、同じ負担でも体調の揺れとして表に出やすいタイプかもしれません。\n\n「体調の揺れを予報で先回り（未病レーダー）」\n未病レーダーでは、日々の気象変化とあなたの体質の組み合わせから、揺れやすいタイミングを予報として捉えて先回りできます。さらに予報に合わせて、生活のコツ＋食養生や、鍼灸師監修のツボケア＆ストレッチなどの提案につなげられます。";
   }
 
   return { text, model };
@@ -243,7 +248,7 @@ export async function POST(_req, { params }) {
     const { text, model } = await generateExplainText({ event: ev });
     const now = new Date().toISOString();
 
-    // 3) diagnosis_events に保存（idempotent：nullのときだけ更新）
+    // 3) diagnosis_events に保存（idempotent）
     const { error: e1 } = await supabaseServer
       .from("diagnosis_events")
       .update({
