@@ -230,28 +230,49 @@ function ResultPage({ params }) {
 // AI text split into 2 parts
 // ---------------------------
 function splitExplain(text) {
-  const t = (text || "").trim();
-  if (!t) return { p1: "", p2: "" };
+  const t0 = (text || "").trim();
+  if (!t0) return { p1: "", p2: "" };
 
-  // ✅ 見出しから「」を除去した版に合わせる
-  const h1 = "いまの体のクセ（今回のまとめ）";
-  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
+  // 見出し候補（「」なしを正とする）
+  const H1 = "いまの体のクセ（今回のまとめ）";
+  const H2 = "体調の揺れを予報で先回り（未病レーダー）";
 
-  const i1 = t.indexOf(h1);
-  const i2 = t.indexOf(h2);
+  // 「」や Markdown 見出し混入を吸収するための正規表現
+  // - 行頭の # を許容
+  // - 「」や "" を許容
+  const reH1 = new RegExp(
+    String.raw`^\s*(?:#{1,6}\s*)?(?:[「"]\s*)?${escapeRegExp(H1)}(?:\s*[」"])?\s*$`,
+    "m"
+  );
+  const reH2 = new RegExp(
+    String.raw`^\s*(?:#{1,6}\s*)?(?:[「"]\s*)?${escapeRegExp(H2)}(?:\s*[」"])?\s*$`,
+    "m"
+  );
 
-  if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
-  if (i1 !== -1 && i2 === -1) return { p1: t.slice(i1 + h1.length).trim() || t, p2: "" };
-  if (i1 === -1 && i2 !== -1) return { p1: t, p2: t.slice(i2 + h2.length).trim() || "" };
+  const m1 = reH1.exec(t0);
+  const m2 = reH2.exec(t0);
 
-  const part1 = t.slice(i1 + h1.length, i2).trim();
-  const part2 = t.slice(i2 + h2.length).trim();
+  // 見出しが見つからないなら全文をpart1に
+  if (!m1 && !m2) return { p1: t0, p2: "" };
 
-  // 見出しが本文に混ざったりしても破綻しない保険
-  const p1 = part1 || t.slice(0, i2).trim();
-  const p2 = part2 || t.slice(i2 + h2.length).trim();
+  // 見出し1がない/見出し2がないケースは、分割せず全文をpart1に寄せる
+  if (!m1 || !m2) return { p1: t0, p2: "" };
 
-  return { p1, p2 };
+  // 見出し位置
+  const start1 = m1.index + m1[0].length;
+  const start2 = m2.index;
+
+  // 逆転してたら壊れてるので全文返す
+  if (start2 <= start1) return { p1: t0, p2: "" };
+
+  const part1 = t0.slice(start1, start2).trim();
+  const part2 = t0.slice(start2 + m2[0].length).trim();
+
+  return { p1: part1, p2: part2 };
+}
+
+function escapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
