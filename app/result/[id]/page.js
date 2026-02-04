@@ -226,34 +226,35 @@ function ResultPage({ params }) {
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
 
-  // ---------------------------
-  // AI text split into 2 parts
-  // ---------------------------
-  function splitExplain(text) {
-    const t = (text || "").trim();
-    if (!t) return { p1: "", p2: "" };
+// ---------------------------
+// AI text split into 2 parts
+// ---------------------------
+function splitExplain(text) {
+  const t = (text || "").trim();
+  if (!t) return { p1: "", p2: "" };
 
-    const h1 = "いまの体のクセ（今回のまとめ）";
-    const h2 = "体調の揺れを予報で先回り（未病レーダー）";
+  // ✅ 見出しから「」を除去した版に合わせる
+  const h1 = "いまの体のクセ（今回のまとめ）";
+  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
 
-    const i1 = t.indexOf(h1);
-    const i2 = t.indexOf(h2);
+  const i1 = t.indexOf(h1);
+  const i2 = t.indexOf(h2);
 
-    if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
-    if (i1 !== -1 && i2 === -1) return { p1: t, p2: "" };
-    if (i1 === -1 && i2 !== -1) return { p1: t, p2: "" };
+  if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
+  if (i1 !== -1 && i2 === -1) return { p1: t.slice(i1 + h1.length).trim() || t, p2: "" };
+  if (i1 === -1 && i2 !== -1) return { p1: t, p2: t.slice(i2 + h2.length).trim() || "" };
 
-    const part1 = t.slice(i1 + h1.length, i2).trim();
-    const part2 = t.slice(i2 + h2.length).trim();
+  const part1 = t.slice(i1 + h1.length, i2).trim();
+  const part2 = t.slice(i2 + h2.length).trim();
 
-    // 見出しが本文に混ざったりしても破綻しない保険
-    const p1 = part1 || t.slice(0, i2).trim();
-    const p2 = part2 || t.slice(i2).trim();
+  // 見出しが本文に混ざったりしても破綻しない保険
+  const p1 = part1 || t.slice(0, i2).trim();
+  const p2 = part2 || t.slice(i2 + h2.length).trim();
 
-    return { p1, p2 };
-  }
+  return { p1, p2 };
+}
 
-  const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
+const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
 
   // ---------------------------
   // Actions
