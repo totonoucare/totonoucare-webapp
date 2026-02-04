@@ -47,7 +47,7 @@ function ResultPage({ params }) {
   // 多重生成防止（React Strict Mode / re-render対策）
   const explainRequestedRef = useRef(false);
 
-  // 旧仕様互換（attach=1 で戻ってきた場合など）
+  // legacy support
   const attachAfterLogin = searchParams?.get("attach") === "1";
 
   // ---------------------------
@@ -94,7 +94,7 @@ function ResultPage({ params }) {
 
         setEvent(json.data);
 
-        // ✅ /events/[id] が ai_explain_* を返すようになっていれば、そのまま表示
+        // if /events/[id] returns ai_explain_*, set it directly
         const t = json.data?.ai_explain_text || "";
         if (t) {
           setExplainText(t);
@@ -117,7 +117,7 @@ function ResultPage({ params }) {
   }, [id]);
 
   // ---------------------------
-  // Auto-attach after login (legacy support)
+  // Auto-attach after login (legacy)
   // ---------------------------
   useEffect(() => {
     if (!attachAfterLogin) return;
@@ -200,6 +200,9 @@ function ResultPage({ params }) {
     }
   }
 
+  // ---------------------------
+  // Derived labels
+  // ---------------------------
   const computed = event?.computed || {};
   const answers = event?.answers || {};
 
@@ -215,7 +218,6 @@ function ResultPage({ params }) {
     () => getMeridianLine(computed?.primary_meridian),
     [computed?.primary_meridian]
   );
-
   const meridianSecondary = useMemo(
     () => getMeridianLine(computed?.secondary_meridian),
     [computed?.secondary_meridian]
@@ -224,6 +226,38 @@ function ResultPage({ params }) {
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
 
+  // ---------------------------
+  // AI text split into 2 parts
+  // ---------------------------
+  function splitExplain(text) {
+    const t = (text || "").trim();
+    if (!t) return { p1: "", p2: "" };
+
+    const h1 = "「いまの体のクセ（今回のまとめ）」";
+    const h2 = "「体調の揺れを予報で先回り（未病レーダー）」";
+
+    const i1 = t.indexOf(h1);
+    const i2 = t.indexOf(h2);
+
+    if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
+    if (i1 !== -1 && i2 === -1) return { p1: t, p2: "" };
+    if (i1 === -1 && i2 !== -1) return { p1: t, p2: "" };
+
+    const part1 = t.slice(i1 + h1.length, i2).trim();
+    const part2 = t.slice(i2 + h2.length).trim();
+
+    // 見出しが本文に混ざったりしても破綻しない保険
+    const p1 = part1 || t.slice(0, i2).trim();
+    const p2 = part2 || t.slice(i2).trim();
+
+    return { p1, p2 };
+  }
+
+  const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
+
+  // ---------------------------
+  // Actions
+  // ---------------------------
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
@@ -245,13 +279,8 @@ function ResultPage({ params }) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
 
-      // refresh event
-      const r2 = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
-      const j2 = await r2.json().catch(() => ({}));
-      if (r2.ok && j2?.data) setEvent(j2.data);
-
-      // ✅ 保存後は /radar 直行（/radar 側で「保存完了」を出す想定）
-      router.push(`/radar?saved=1&from_result=1`);
+      // ✅ 保存後は /radar へ（/radar 側で saved toast を出す想定）
+      router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
     } catch (e) {
       setToast(e?.message || String(e));
       setTimeout(() => setToast(""), 2500);
@@ -261,7 +290,6 @@ function ResultPage({ params }) {
   }
 
   function goSignupToRadar() {
-    // ✅ 登録完了後に /radar へ直行（/radar 上で保存完了表示）
     router.push(
       `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
         `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
@@ -277,6 +305,9 @@ function ResultPage({ params }) {
     );
   }
 
+  // ---------------------------
+  // UI states
+  // ---------------------------
   if (loadingEvent) {
     return (
       <div className="space-y-3">
@@ -298,6 +329,9 @@ function ResultPage({ params }) {
     );
   }
 
+  // ---------------------------
+  // UI
+  // ---------------------------
   return (
     <div className="space-y-4">
       {toast ? (
@@ -306,7 +340,7 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
-      {/* --- Hero: symptom --- */}
+      {/* --- Hero --- */}
       <Card>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -319,24 +353,26 @@ function ResultPage({ params }) {
         </div>
       </Card>
 
-      {/* --- Constitution summary --- */}
+      {/* --- Constitution: one card with clear sections --- */}
       <Card>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="text-xl font-semibold">体質の見立て</div>
 
-          <div className="rounded-2xl border bg-gradient-to-b from-slate-50 to-white px-4 py-3">
-            <div className="text-sm text-slate-600">今の体質の軸</div>
+          {/* Section: core */}
+          <section className="rounded-2xl border bg-gradient-to-b from-slate-50 to-white px-4 py-4">
+            <div className="text-xs font-semibold text-slate-600">今の体質の軸</div>
             <div className="mt-1 text-lg font-semibold">{core.title}</div>
             <div className="mt-1 text-sm text-slate-600">{core.tcm_hint}</div>
-          </div>
+          </section>
 
-          <div className="space-y-2">
+          {/* Section: sub labels */}
+          <section className="space-y-2">
             <div className="text-sm font-semibold">整えポイント（最大2つ）</div>
 
             {subLabels?.length ? (
-              <div className="space-y-2">
+              <div className="grid gap-2">
                 {subLabels.map((s) => (
-                  <div key={s.title} className="rounded-2xl border bg-white px-3 py-3">
+                  <div key={s.title} className="rounded-2xl border bg-white px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs">
                         {s.title}
@@ -344,7 +380,7 @@ function ResultPage({ params }) {
                       <span className="text-xs text-slate-500">{s.short}</span>
                     </div>
                     {s.action_hint ? (
-                      <div className="mt-2 text-sm text-slate-700">{s.action_hint}</div>
+                      <div className="mt-2 text-sm leading-6 text-slate-800">{s.action_hint}</div>
                     ) : null}
                   </div>
                 ))}
@@ -352,82 +388,132 @@ function ResultPage({ params }) {
             ) : (
               <div className="text-sm text-slate-500">（今回は該当なし）</div>
             )}
-          </div>
+          </section>
 
-          {meridianPrimary ? (
-            <div className="rounded-2xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">
-                体の張りやすい場所（主）：{meridianPrimary.title}
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
-              </div>
-              <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
-            </div>
-          ) : null}
+          {/* Section: meridian areas (primary + secondary together) */}
+          <section className="space-y-2">
+            <div className="text-sm font-semibold">体の張りやすい場所</div>
 
-          {meridianSecondary ? (
-            <div className="rounded-2xl border bg-white px-4 py-3">
-              <div className="text-sm font-semibold">
-                体の張りやすい場所（副）：{meridianSecondary.title}
-              </div>
-              <div className="mt-1 text-xs text-slate-600">
-                {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
-              </div>
-              <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
-            </div>
-          ) : null}
-        </div>
-      </Card>
-
-      {/* --- AI explain --- */}
-      <Card>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="text-xl font-semibold">あなたの体質解説</div>
-            <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
-              🤖 トトノウくん
-            </span>
-          </div>
-
-          {loadingExplain ? (
-            <div className="rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              AIが解説文を生成中…
-            </div>
-          ) : explainText ? (
-            <>
-              <div className="rounded-2xl border bg-white px-4 py-4">
-                <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
-                  {explainText}
+            <div className="grid gap-2">
+              {meridianPrimary ? (
+                <div className="rounded-2xl border bg-white px-4 py-3">
+                  <div className="text-sm font-semibold">
+                    （主）{meridianPrimary.title}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
                 </div>
-              </div>
-
-              {/* ※生成日時/model はUIフッターで固定表示にしたいなら、この行ごと消してOK */}
-              {(explainCreatedAt || explainModel) && (
-                <div className="text-xs text-slate-400">
-                  {explainCreatedAt
-                    ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}`
-                    : ""}
-                  {explainModel ? `　/　model: ${explainModel}` : ""}
+              ) : (
+                <div className="rounded-2xl border bg-white px-4 py-3 text-sm text-slate-500">
+                  （主）今回は強い偏りなし
                 </div>
               )}
-            </>
-          ) : (
-            <div className="rounded-2xl border bg-white px-4 py-3">
-              <div className="text-sm text-slate-700">
-                {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
-              </div>
-              <div className="mt-3">
-                <Button onClick={retryExplain} disabled={loadingExplain}>
-                  {loadingExplain ? "生成中…" : "もう一度生成する"}
-                </Button>
-              </div>
+
+              {meridianSecondary ? (
+                <div className="rounded-2xl border bg-white px-4 py-3">
+                  <div className="text-sm font-semibold">
+                    （副）{meridianSecondary.title}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-600">
+                    {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border bg-white px-4 py-3 text-sm text-slate-500">
+                  （副）今回は強い偏りなし
+                </div>
+              )}
             </div>
-          )}
+          </section>
         </div>
       </Card>
 
-      {/* --- Single CTA card (no duplicates) --- */}
+      {/* --- AI explain (split into two cards) --- */}
+      <div className="space-y-4">
+        <Card>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="text-xl font-semibold">あなたの体質解説</div>
+              <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
+                🤖 トトノウくん
+              </span>
+            </div>
+
+            {loadingExplain ? (
+              <div className="rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                AIが解説文を生成中…
+              </div>
+            ) : explainText ? (
+              <div className="text-xs text-slate-500">
+                ※この解説は初回だけ生成して保存されます
+              </div>
+            ) : (
+              <div className="rounded-2xl border bg-white px-4 py-3">
+                <div className="text-sm text-slate-700">
+                  {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
+                </div>
+                <div className="mt-3">
+                  <Button onClick={retryExplain} disabled={loadingExplain}>
+                    {loadingExplain ? "生成中…" : "もう一度生成する"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Part 1 */}
+        {explainParts.p1 ? (
+          <Card>
+            <div className="space-y-2">
+              <div className="text-sm font-semibold">「いまの体のクセ（今回のまとめ）」</div>
+              <div className="rounded-2xl border bg-white px-4 py-4">
+                <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                  {explainParts.p1}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+
+        {/* Part 2 */}
+        {explainParts.p2 ? (
+          <Card>
+            <div className="space-y-2">
+              <div className="text-sm font-semibold">「体調の揺れを予報で先回り（未病レーダー）」</div>
+              <div className="rounded-2xl border bg-white px-4 py-4">
+                <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                  {explainParts.p2}
+                </div>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+
+        {/* fallback: if split failed, show whole text once */}
+        {explainText && !explainParts.p2 && !explainParts.p1 ? (
+          <Card>
+            <div className="rounded-2xl border bg-white px-4 py-4">
+              <div className="whitespace-pre-wrap text-sm leading-6 text-slate-800">{explainText}</div>
+            </div>
+          </Card>
+        ) : null}
+
+        {/* metadata (optional) */}
+        {(explainCreatedAt || explainModel) && (
+          <div className="text-xs text-slate-400">
+            {explainCreatedAt
+              ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}`
+              : ""}
+            {explainModel ? `　/　model: ${explainModel}` : ""}
+          </div>
+        )}
+      </div>
+
+      {/* --- Single CTA card --- */}
       <Card>
         <div className="space-y-3">
           <div className="text-sm font-semibold">次の一歩（おすすめ）</div>
@@ -441,7 +527,7 @@ function ResultPage({ params }) {
                   ログイン中：<span className="font-medium">{session.user?.email}</span>
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  今日の「予報と対策」は無料で見られます。結果は保存しておくのがおすすめ。
+                  今日の「予報と対策」は無料で見られます。
                 </div>
               </div>
 
@@ -452,7 +538,7 @@ function ResultPage({ params }) {
               ) : (
                 <div className="rounded-2xl border bg-white px-4 py-3">
                   <div className="text-sm text-slate-700">
-                    まずはこの結果を保存して、今日の未病レーダーへ。
+                    この結果を保存して、今日の未病レーダーへ進みましょう。
                   </div>
                   <div className="mt-3">
                     <Button onClick={() => attachToAccount(false)} disabled={attaching}>
@@ -474,19 +560,18 @@ function ResultPage({ params }) {
           ) : (
             <>
               <div className="rounded-2xl border bg-slate-50 px-4 py-3">
-                <div className="text-sm text-slate-700">
-                  <span className="font-medium">無料で</span>結果を保存して、
-                  <span className="font-medium">今日の「予報と対策」</span>を見られます。
+                <div className="text-sm text-slate-800">
+                  無料で結果を保存して、今日の「予報と対策」へ進めます。
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  ※ 登録だけでは課金されません。無料の範囲で使えます。
+                  ※登録だけでは課金されません（無料の範囲で使えます）
                 </div>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Button onClick={goSignupToRadar}>無料で保存して、今日の予報と対策を見る</Button>
                 <Button variant="ghost" onClick={goLoginToRadar}>
-                  ログインして続きへ
+                  すでに登録済みの方はこちら（ログイン）
                 </Button>
               </div>
 
