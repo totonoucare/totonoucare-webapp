@@ -362,18 +362,27 @@ const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
         </div>
       ) : null}
 
-      {/* --- Hero --- */}
-      <Card>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-slate-500">あなたのお悩み</div>
-            <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
-              結果は無料で閲覧OK
-            </span>
-          </div>
-          <div className="text-lg font-semibold">{symptomLabel}</div>
-        </div>
-      </Card>
+{/* --- Hero --- */}
+<Card>
+  <div className="space-y-3">
+    <div className="flex items-center justify-between">
+      <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">
+        🩺 あなたのお悩み
+      </span>
+
+      <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
+        結果は無料で閲覧OK
+      </span>
+    </div>
+
+    <div className="rounded-2xl border bg-white px-4 py-4 border-l-4 border-l-slate-300">
+      <div className="text-xl font-semibold text-slate-900">{symptomLabel}</div>
+      <div className="mt-2 text-xs text-slate-500">
+        この結果を保存すると、今日の「予報と対策」（無料）へ進めます。
+      </div>
+    </div>
+  </div>
+</Card>
 
 {/* --- Constitution: one card with clear sections --- */}
 <Card>
