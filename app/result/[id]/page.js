@@ -2,35 +2,41 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image"; // ✅ next/image を導入
 import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
-// --- 開発用ダミー画像URL ---
-// 本番画像に差し替える際は、publicフォルダに置いて import staticImage from '...' がベストです
-const DUMMY_IMAGES = {
-  memo: "https://placehold.co/96x96/f1f5f9/475569?text=Memo&font=roboto", // Slate
-  compass: "https://placehold.co/96x96/ecfdf5/047857?text=Compass&font=roboto", // Emerald
-  robot: "https://placehold.co/96x96/f0fdf4/15803d?text=AI&font=roboto", // Green
-  lightning: "https://placehold.co/96x96/fffbeb/b45309?text=Action&font=roboto", // Amber
-  corePlaceholder: "https://placehold.co/320x320/f8fafc/94a3b8?text=Core+Image",
-  pointIcon: "https://placehold.co/64x64/fff7ed/ea580c?text=!", 
-  bodyIconMain: "https://placehold.co/64x64/f0fdfa/0d9488?text=Main",
-  bodyIconSub: "https://placehold.co/64x64/f8fafc/64748b?text=Sub",
-  brainSmall: "https://placehold.co/48x48/f0fdf4/166534?text=Brain",
-  radarSmall: "https://placehold.co/48x48/f0f9ff/0369a1?text=Radar",
+/** ---------------------------
+ * Dummy assets (replace later)
+ * -------------------------- */
+const ASSETS = {
+  // header / section icons (SVGでも画像でもOK)
+  iconMemo: "/assets/ui/memo.png",
+  iconCompass: "/assets/ui/compass.png",
+  iconAI: "/assets/ui/ai.png",
+  iconBolt: "/assets/ui/bolt.png",
+  iconBrain: "/assets/ui/brain.png",
+  iconRadar: "/assets/ui/radar.png",
+
+  // illustration placeholders (later: core_code / meridian etcで差し替え)
+  illusCore: "/assets/illus/core.png",
+  illusMeridianMain: "/assets/illus/body-main.png",
+  illusMeridianSub: "/assets/illus/body-sub.png",
+  illusPoint: "/assets/illus/point.png",
 };
 
+// ✅ Next.js の useSearchParams 対策
 export default function ResultPageWrapper({ params }) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-slate-50">
-          <div className="space-y-3 text-center">
-             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-200 border-r-emerald-600 align-[-0.125em]"></div>
-            <h1 className="text-xl font-bold text-slate-700">結果を読み込み中…</h1>
+        <div className="min-h-screen bg-slate-50 grid place-items-center">
+          <div className="text-center space-y-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-r-emerald-500 inline-block" />
+            <div className="text-slate-700 font-semibold">結果を読み込み中…</div>
           </div>
         </div>
       }
@@ -41,52 +47,102 @@ export default function ResultPageWrapper({ params }) {
 }
 
 /** ---------------------------
- * UI Components (Green Brand Unified)
+ * SVG icons (emoji禁止)
  * -------------------------- */
-
-// 配色を「ブランドカラー(Green)」中心に再定義
-function Pill({ children, tone = "default", className = "" }) {
-  const tones = {
-    default: "bg-slate-100 text-slate-600 border border-slate-200", // 通常
-    brand: "bg-emerald-50 text-emerald-700 border border-emerald-100", // 推奨・メイン
-    accent: "bg-amber-50 text-amber-700 border border-amber-100", // 注意・強調
-  };
+function IconChevronLeft(props) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${tones[tone] || tones.default} ${className}`}>
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        d="M12.78 15.53a.75.75 0 0 1-1.06 0l-5-5a.75.75 0 0 1 0-1.06l5-5a.75.75 0 1 1 1.06 1.06L8.31 10l4.47 4.47a.75.75 0 0 1 0 1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+function IconSpark(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
+      <path d="M10 1.5 12 7l5.5 2-5.5 2L10 16.5 8 11 2.5 9 8 7 10 1.5Z" />
+    </svg>
+  );
+}
+function IconShield(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>
+      <path
+        fillRule="evenodd"
+        d="M10 1.5c2.2 1.9 4.9 2.7 7 3v6.2c0 4.6-3.4 7.2-7 8.8-3.6-1.6-7-4.2-7-8.8V4.5c2.1-.3 4.8-1.1 7-3Zm3.2 7.1a.75.75 0 0 1 .1 1.06l-3.6 4.4a.75.75 0 0 1-1.1.07L6.8 12.5a.75.75 0 1 1 1-1.1l1.2 1.1 3-3.9a.75.75 0 0 1 1.06-.1Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+/** ---------------------------
+ * UI primitives for Bento
+ * -------------------------- */
+function BentoCard({ children, className = "" }) {
+  return (
+    <div
+      className={[
+        "relative overflow-hidden rounded-[28px] border border-slate-100 bg-white",
+        "shadow-[0_12px_30px_-18px_rgba(15,23,42,0.35)]",
+        "backdrop-blur supports-[backdrop-filter]:bg-white/90",
+        className,
+      ].join(" ")}
+    >
+      {children}
+    </div>
+  );
+}
+
+function BentoHeader({ icon, title, sub, right }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-11 w-11 rounded-2xl border border-slate-100 bg-slate-50 grid place-items-center shrink-0">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <div className="text-[15px] font-extrabold tracking-tight text-slate-900 truncate">{title}</div>
+          {sub ? <div className="text-xs font-medium text-slate-500">{sub}</div> : null}
+        </div>
+      </div>
+      {right ? <div className="shrink-0">{right}</div> : null}
+    </div>
+  );
+}
+
+function Badge({ tone = "emerald", children }) {
+  const toneCls = {
+    emerald: "bg-emerald-50 text-emerald-800 ring-emerald-100",
+    slate: "bg-slate-100 text-slate-700 ring-slate-200",
+    amber: "bg-amber-50 text-amber-800 ring-amber-100",
+    indigo: "bg-indigo-50 text-indigo-800 ring-indigo-100",
+  }[tone];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ${toneCls}`}>
       {children}
     </span>
   );
 }
 
-function SectionHeader({ iconUrl, title, sub }) {
+function SoftPanel({ tone = "emerald", children, className = "" }) {
+  const toneCls = {
+    emerald: "bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 border-emerald-100",
+    indigo: "bg-gradient-to-br from-indigo-50/70 via-white to-indigo-50/30 border-indigo-100",
+    amber: "bg-gradient-to-br from-amber-50/70 via-white to-amber-50/30 border-amber-100",
+    slate: "bg-gradient-to-br from-slate-50 via-white to-slate-50 border-slate-100",
+    rose: "bg-gradient-to-br from-rose-50/70 via-white to-rose-50/30 border-rose-100",
+  }[tone];
   return (
-    <div className="flex items-center gap-4">
-      <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-        {/* ✅ next/image の使用 */}
-        <Image src={iconUrl} alt={title} width={48} height={48} className="object-contain p-1" />
-      </div>
-      <div className="min-w-0">
-        <div className="text-lg font-bold text-slate-800 tracking-tight">{title}</div>
-        {sub ? <div className="text-xs font-medium text-slate-500">{sub}</div> : null}
-      </div>
-    </div>
+    <div className={`rounded-[22px] border p-4 ${toneCls} ${className}`}>{children}</div>
   );
-}
-
-function Module({ children, className = "", noPadding = false }) {
-  return (
-    <div className={`rounded-[1.5rem] border border-slate-100 bg-white shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] ${className}`}>
-      <div className={noPadding ? "" : "p-5 sm:p-6"}>{children}</div>
-    </div>
-  );
-}
-
-function Divider() {
-  return <div className="my-5 h-px w-full bg-slate-100" />;
 }
 
 // ---------------------------
-// AI Logic (Keep as is)
+// AI text split
 // ---------------------------
 function splitExplain(text) {
   const t = (text || "").trim();
@@ -95,67 +151,83 @@ function splitExplain(text) {
   const h2 = "体調の揺れを予報で先回り（未病レーダー）";
   const normalize = (s) => s.replace(/^#+\s*/gm, "").trim();
   const n = normalize(t);
+
   const i1 = n.indexOf(h1);
   const i2 = n.indexOf(h2);
+
   if (i1 === -1 && i2 === -1) return { p1: n, p2: "" };
   if (i1 !== -1 && i2 === -1) return { p1: n.slice(i1 + h1.length).trim() || n, p2: "" };
   if (i1 === -1 && i2 !== -1) return { p1: n, p2: n.slice(i2 + h2.length).trim() || "" };
-  const part1 = n.slice(i1 + h1.length, i2).trim();
-  const part2 = n.slice(i2 + h2.length).trim();
-  const p1 = part1 || n.slice(0, i2).trim();
-  const p2 = part2 || n.slice(i2 + h2.length).trim();
+
+  const p1 = n.slice(i1 + h1.length, i2).trim();
+  const p2 = n.slice(i2 + h2.length).trim();
   return { p1, p2 };
 }
 
-// ---------------------------
-// Main Component
-// ---------------------------
 function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { id } = params;
 
-  // --- States ---
   const [event, setEvent] = useState(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
+
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+
   const [attaching, setAttaching] = useState(false);
   const [toast, setToast] = useState("");
+
+  // AI
   const [explainText, setExplainText] = useState("");
   const [explainModel, setExplainModel] = useState("");
   const [explainCreatedAt, setExplainCreatedAt] = useState("");
   const [loadingExplain, setLoadingExplain] = useState(false);
   const [explainError, setExplainError] = useState("");
   const explainRequestedRef = useRef(false);
+
   const attachAfterLogin = searchParams?.get("attach") === "1";
 
-  // --- Effects (Logic unchanged) ---
+  // Auth
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(data.session || null);
       setLoadingAuth(false);
     })();
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setLoadingAuth(false);
     });
-    return () => { mounted = false; sub?.subscription?.unsubscribe?.(); };
+
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
   }, []);
 
+  // Fetch event
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
         setLoadingEvent(true);
         const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
         const json = await res.json().catch(() => ({}));
         if (!mounted) return;
-        if (!res.ok || !json?.data) { setEvent({ notFound: true }); return; }
+
+        if (!res.ok || !json?.data) {
+          setEvent({ notFound: true });
+          return;
+        }
+
         setEvent(json.data);
+
         const t = json.data?.ai_explain_text || "";
         if (t) {
           setExplainText(t);
@@ -163,6 +235,7 @@ function ResultPage({ params }) {
           setExplainCreatedAt(json.data?.ai_explain_created_at || "");
         }
       } catch (e) {
+        console.error(e);
         if (!mounted) return;
         setEvent({ notFound: true });
       } finally {
@@ -170,32 +243,50 @@ function ResultPage({ params }) {
         setLoadingEvent(false);
       }
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
+  // legacy auto attach
   useEffect(() => {
-    if (!attachAfterLogin || loadingAuth || !session || !event || event?.notFound) return;
+    if (!attachAfterLogin) return;
+    if (loadingAuth) return;
+    if (!session) return;
+    if (!event || event?.notFound) return;
+
     attachToAccount(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
+  // auto generate explain
   useEffect(() => {
-    if (!event || event?.notFound || loadingEvent || explainText || explainRequestedRef.current) return;
+    if (!event || event?.notFound) return;
+    if (loadingEvent) return;
+    if (explainText) return;
+    if (explainRequestedRef.current) return;
+
     explainRequestedRef.current = true;
     const ac = new AbortController();
+
     (async () => {
       try {
         setExplainError("");
         setLoadingExplain(true);
+
         const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: ac.signal,
         });
+
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json?.error || "AI解説の生成に失敗しました");
+
         const text = json?.data?.text || json?.data?.ai_explain_text || "";
         if (!text) throw new Error("AI解説が空でした");
+
         setExplainText(text);
         setExplainModel(json?.data?.model || json?.data?.ai_explain_model || "");
         setExplainCreatedAt(json?.data?.created_at || json?.data?.ai_explain_created_at || "");
@@ -207,6 +298,7 @@ function ResultPage({ params }) {
         setLoadingExplain(false);
       }
     })();
+
     return () => ac.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id, loadingEvent]);
@@ -214,15 +306,19 @@ function ResultPage({ params }) {
   async function retryExplain() {
     setExplainError("");
     setLoadingExplain(true);
+
     try {
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
+
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "AI解説の生成に失敗しました");
+
       const text = json?.data?.text || json?.data?.ai_explain_text || "";
       if (!text) throw new Error("AI解説が空でした");
+
       setExplainText(text);
       setExplainModel(json?.data?.model || json?.data?.ai_explain_model || "");
       setExplainCreatedAt(json?.data?.created_at || json?.data?.ai_explain_created_at || "");
@@ -233,35 +329,54 @@ function ResultPage({ params }) {
     }
   }
 
-  // --- Computed ---
+  // Derived
   const computed = event?.computed || {};
   const answers = event?.answers || {};
+
   const symptomLabel = useMemo(() => {
     const k = answers?.symptom_focus || event?.symptom_focus || "fatigue";
     return SYMPTOM_LABELS[k] || "だるさ・疲労";
   }, [answers?.symptom_focus, event?.symptom_focus]);
+
   const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
   const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
-  const meridianPrimary = useMemo(() => getMeridianLine(computed?.primary_meridian), [computed?.primary_meridian]);
-  const meridianSecondary = useMemo(() => getMeridianLine(computed?.secondary_meridian), [computed?.secondary_meridian]);
+
+  const meridianPrimary = useMemo(
+    () => getMeridianLine(computed?.primary_meridian),
+    [computed?.primary_meridian]
+  );
+  const meridianSecondary = useMemo(
+    () => getMeridianLine(computed?.secondary_meridian),
+    [computed?.secondary_meridian]
+  );
+
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
+
   const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
 
-  // --- Actions ---
+  // Actions
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
+
     try {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) { if (!silent) setToast("先にログインが必要です"); return; }
+
+      if (!token) {
+        if (!silent) setToast("先にログインが必要です");
+        return;
+      }
+
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
+
       router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
     } catch (e) {
       setToast(e?.message || String(e));
@@ -270,255 +385,412 @@ function ResultPage({ params }) {
       setAttaching(false);
     }
   }
+
   function goSignupToRadar() {
-    router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
-  }
-  function goLoginToRadar() {
-    router.push(`/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
+    router.push(
+      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
+        `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
+      )}`
+    );
   }
 
-  // --- Loading / Not Found ---
+  function goLoginToRadar() {
+    router.push(
+      `/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
+        `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
+      )}`
+    );
+  }
+
+  // UI states
   if (loadingEvent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="space-y-3 text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-emerald-200 border-r-emerald-500 align-[-0.125em]"></div>
-          <h1 className="text-xl font-bold text-slate-700">結果を読み込み中…</h1>
+      <div className="min-h-screen bg-slate-50 grid place-items-center">
+        <div className="text-center space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-r-emerald-500 inline-block" />
+          <div className="text-slate-700 font-semibold">結果を読み込み中…</div>
         </div>
       </div>
     );
   }
+
   if (!event || event?.notFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md space-y-4 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">結果が見つかりません</h1>
+      <div className="min-h-screen bg-slate-50 grid place-items-center p-6">
+        <div className="max-w-md w-full space-y-4 text-center">
+          <div className="text-xl font-extrabold text-slate-900">結果が見つかりません</div>
+          <div className="text-sm text-slate-600">
+            期限切れ/削除、または保存に失敗した可能性があります。
+          </div>
           <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
         </div>
       </div>
     );
   }
 
-  // --- Main UI (Green Brand Optimized) ---
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
-      {toast && (
-        <div className="fixed left-1/2 top-4 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-medium shadow-lg text-slate-700 flex items-center gap-2">
-          <span className="text-lg">ℹ️</span> {toast}
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-white to-slate-50 pb-14">
+      {toast ? (
+        <div className="fixed left-1/2 top-4 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm font-medium shadow-lg">
+          {toast}
         </div>
-      )}
+      ) : null}
 
-      <div className="mx-auto w-full max-w-[440px] px-4 pt-6">
-        {/* Nav */}
-        <div className="mb-6 flex items-center justify-between relative z-10">
+      <div className="mx-auto w-full max-w-[980px] px-4 pt-6">
+        {/* App header */}
+        <div className="mb-5 flex items-center justify-between">
           <button
+            type="button"
             onClick={() => router.push("/check")}
-            className="group inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 pl-3 pr-4 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-100"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
           >
-            ← もどる
+            <IconChevronLeft className="h-4 w-4 text-slate-500" />
+            もどる
           </button>
-          <div className="text-sm font-bold text-slate-500 tracking-wider">UNBYO RADAR</div>
-          <div className="w-[76px]" />
+
+          <div className="text-sm font-extrabold tracking-tight text-slate-700">診断結果</div>
+
+          <div className="hidden sm:flex items-center gap-2">
+            <Badge tone="emerald">
+              <IconShield className="h-3.5 w-3.5" />
+              結果は無料で閲覧OK
+            </Badge>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          
-          {/* 1. Hero: お悩み (Neutral/Slate) */}
-          <Module>
-            <SectionHeader iconUrl={DUMMY_IMAGES.memo} title="あなたのお悩み" sub="チェック時の記録" />
-            <Divider />
-            <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-5 border border-slate-100">
-              <div className="text-xl font-bold text-slate-800 tracking-tight">{symptomLabel}</div>
-              <Pill tone="default">閲覧中</Pill>
-            </div>
-          </Module>
-
-          {/* 2. Core: 体質 (Brand Green/Emerald) */}
-          <Module className="relative overflow-hidden border-emerald-100/50">
-             {/* 背景に薄いグリーンのグラデーション */}
-             <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 opacity-60 pointer-events-none" />
-            
-            <div className="relative z-10">
-              <SectionHeader iconUrl={DUMMY_IMAGES.compass} title="体質の見立て" sub="あなたの身体の「軸」" />
-              <Divider />
-
-              {/* Core Result */}
-              <div className="relative rounded-3xl border border-emerald-100 bg-white/80 p-6 shadow-sm overflow-hidden">
-                {/* 背景画像 (Next/Imageで薄く配置) */}
-                <div className="absolute right-[-20px] bottom-[-20px] w-40 h-40 opacity-10 pointer-events-none">
-                  <Image src={DUMMY_IMAGES.corePlaceholder} alt="" width={160} height={160} className="object-contain" />
-                </div>
-
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <Pill tone="brand">今の体質タイプ</Pill>
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
+          {/* Hero (span 7) */}
+          <BentoCard className="sm:col-span-7">
+            <div className="p-5">
+              <BentoHeader
+                icon={
+                  <div className="relative h-8 w-8">
+                    <Image src={ASSETS.iconMemo} alt="" fill className="object-contain" />
                   </div>
-                  <div className="text-3xl font-extrabold text-emerald-950 tracking-tight leading-tight mb-3">
-                    {core.title}
+                }
+                title="あなたのお悩み"
+                sub="チェック時の記録"
+                right={<Badge tone="indigo">無料閲覧</Badge>}
+              />
+
+              <div className="mt-4">
+                <SoftPanel tone="indigo" className="flex items-center justify-between gap-3">
+                  <div className="text-[20px] sm:text-[22px] font-extrabold tracking-tight text-indigo-950">
+                    {symptomLabel}
                   </div>
-                  <div className="text-sm leading-7 text-slate-700 font-medium">
-                    {core.tcm_hint}
+                  <div className="hidden sm:flex items-center gap-2 text-xs text-indigo-800 font-semibold">
+                    <IconSpark className="h-4 w-4" />
+                    保存するとレーダーに連携
                   </div>
-                </div>
+                </SoftPanel>
               </div>
+            </div>
+          </BentoCard>
 
-              {/* Sub Points (Tone down colors) */}
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4 px-1">
-                  <div className="text-base font-bold text-slate-800">整えポイント</div>
-                  <Pill tone="accent">優先度高</Pill>
+          {/* CTA (span 5) */}
+          <BentoCard className="sm:col-span-5">
+            <div className="p-5">
+              <BentoHeader
+                icon={
+                  <div className="relative h-8 w-8">
+                    <Image src={ASSETS.iconBolt} alt="" fill className="object-contain" />
+                  </div>
+                }
+                title="次の一歩"
+                sub="保存 → 今日の予報と対策へ"
+                right={<Badge tone="emerald">おすすめ</Badge>}
+              />
+
+              <div className="mt-4 space-y-3">
+                {loadingAuth ? (
+                  <SoftPanel tone="slate">
+                    <div className="text-sm text-slate-600">ログイン状態を確認中…</div>
+                  </SoftPanel>
+                ) : isLoggedIn ? (
+                  <>
+                    <SoftPanel tone="slate">
+                      <div className="text-sm text-slate-800">
+                        ログイン中：<span className="font-bold">{session.user?.email}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">今日の「予報と対策」は無料で見られます。</div>
+                    </SoftPanel>
+
+                    {isAttached ? (
+                      <SoftPanel tone="emerald">
+                        <div className="text-sm font-bold text-emerald-900">この結果は保存済みです ✅</div>
+                      </SoftPanel>
+                    ) : (
+                      <div className="space-y-2">
+                        <Button onClick={() => attachToAccount(false)} disabled={attaching} className="w-full">
+                          {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
+                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" onClick={() => router.push("/radar")} className="flex-1">
+                            /radarへ
+                          </Button>
+                          <Button variant="ghost" onClick={() => router.push("/check")} className="flex-1">
+                            やり直す
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <SoftPanel tone="emerald">
+                      <div className="text-sm font-extrabold text-emerald-950">
+                        無料で結果を保存して、今日の「予報と対策」へ進めます。
+                      </div>
+                      <div className="mt-1 text-xs text-emerald-800/80">
+                        ※登録だけでは課金されません（無料の範囲で使えます）
+                      </div>
+                    </SoftPanel>
+
+                    <Button onClick={goSignupToRadar} className="w-full">
+                      無料で保存して、今日の予報と対策を見る
+                    </Button>
+                    <Button variant="ghost" onClick={goLoginToRadar} className="w-full">
+                      すでに登録済みの方はこちら（ログイン）
+                    </Button>
+                    <Button variant="ghost" onClick={() => router.push("/check")} className="w-full">
+                      保存せずにもう一度チェックする
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </BentoCard>
+
+          {/* Constitution BIG (span 12) */}
+          <BentoCard className="sm:col-span-12">
+            <div className="p-5">
+              <BentoHeader
+                icon={
+                  <div className="relative h-8 w-8">
+                    <Image src={ASSETS.iconCompass} alt="" fill className="object-contain" />
+                  </div>
+                }
+                title="体質の見立て"
+                sub="軸 / 整えポイント / 張りやすい場所"
+                right={<Badge tone="slate">診断ベース</Badge>}
+              />
+
+              {/* bento inner grid */}
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-12">
+                {/* core (span 6) */}
+                <div className="sm:col-span-6">
+                  <SoftPanel tone="emerald" className="relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-6 opacity-20 pointer-events-none">
+                      <Image src={ASSETS.illusCore} alt="" width={160} height={160} className="object-contain" />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Badge tone="emerald">今の体質の軸</Badge>
+                      <span className="text-xs font-semibold text-emerald-900/70">安定度の目安</span>
+                    </div>
+                    <div className="mt-3 text-[22px] sm:text-[26px] font-extrabold tracking-tight text-slate-900">
+                      {core.title}
+                    </div>
+                    <div className="mt-2 text-sm leading-7 font-medium text-slate-700">{core.tcm_hint}</div>
+                  </SoftPanel>
                 </div>
 
-                <div className="grid gap-3">
-                  {subLabels?.length ? (
-                    subLabels.map((s) => (
-                      <div key={s.title} className="flex gap-4 rounded-2xl border border-amber-100 bg-amber-50/30 p-5">
-                        <div className="shrink-0 pt-1">
-                          <Image src={DUMMY_IMAGES.pointIcon} alt="" width={32} height={32} className="object-contain opacity-80" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg font-bold text-slate-800">{s.title}</span>
+                {/* points (span 6) */}
+                <div className="sm:col-span-6">
+                  <SoftPanel tone="amber">
+                    <div className="flex items-center justify-between">
+                      <Badge tone="amber">整えポイント</Badge>
+                      <span className="text-xs font-semibold text-amber-900/70">最大2つ</span>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                      {subLabels?.length ? (
+                        subLabels.slice(0, 2).map((s) => (
+                          <div key={s.title} className="rounded-[18px] border border-amber-100 bg-white/70 p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="relative h-10 w-10 shrink-0">
+                                <Image src={ASSETS.illusPoint} alt="" fill className="object-contain" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-extrabold text-slate-900">{s.title}</div>
+                                <div className="text-xs font-medium text-slate-500">{s.short}</div>
+                              </div>
+                            </div>
+                            {s.action_hint ? (
+                              <div className="mt-2 text-sm leading-7 text-slate-700">{s.action_hint}</div>
+                            ) : null}
                           </div>
-                          {s.action_hint && (
-                            <div className="text-sm leading-6 text-slate-600">{s.action_hint}</div>
-                          )}
+                        ))
+                      ) : (
+                        <div className="rounded-[18px] border border-dashed border-amber-200 bg-white/60 p-4 text-sm text-slate-600">
+                          今回は強い偏りは出ませんでした。
+                        </div>
+                      )}
+                    </div>
+                  </SoftPanel>
+                </div>
+
+                {/* meridian main (span 6) */}
+                <div className="sm:col-span-6">
+                  <SoftPanel tone="rose">
+                    <div className="flex items-center justify-between">
+                      <Badge tone="slate">張りやすい場所（主）</Badge>
+                      <span className="text-xs font-semibold text-slate-600">出やすいサイン</span>
+                    </div>
+
+                    <div className="mt-3 flex gap-3">
+                      <div className="relative h-14 w-14 shrink-0">
+                        <Image src={ASSETS.illusMeridianMain} alt="" fill className="object-contain" />
+                      </div>
+                      <div className="min-w-0">
+                        {meridianPrimary ? (
+                          <>
+                            <div className="text-base font-extrabold text-slate-900">{meridianPrimary.title}</div>
+                            <div className="mt-1 text-xs font-semibold text-slate-500">
+                              {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
+                            </div>
+                            <div className="mt-2 text-sm leading-7 text-slate-700">{meridianPrimary.organs_hint}</div>
+                          </>
+                        ) : (
+                          <div className="text-sm text-slate-600">今回は強い偏りなし</div>
+                        )}
+                      </div>
+                    </div>
+                  </SoftPanel>
+                </div>
+
+                {/* meridian sub (span 6) */}
+                <div className="sm:col-span-6">
+                  <SoftPanel tone="slate">
+                    <div className="flex items-center justify-between">
+                      <Badge tone="slate">張りやすい場所（副）</Badge>
+                      <span className="text-xs font-semibold text-slate-600">補助ライン</span>
+                    </div>
+
+                    <div className="mt-3 flex gap-3">
+                      <div className="relative h-14 w-14 shrink-0">
+                        <Image src={ASSETS.illusMeridianSub} alt="" fill className="object-contain" />
+                      </div>
+                      <div className="min-w-0">
+                        {meridianSecondary ? (
+                          <>
+                            <div className="text-base font-extrabold text-slate-900">{meridianSecondary.title}</div>
+                            <div className="mt-1 text-xs font-semibold text-slate-500">
+                              {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
+                            </div>
+                            <div className="mt-2 text-sm leading-7 text-slate-700">{meridianSecondary.organs_hint}</div>
+                          </>
+                        ) : (
+                          <div className="text-sm text-slate-600">今回は強い偏りなし</div>
+                        )}
+                      </div>
+                    </div>
+                  </SoftPanel>
+                </div>
+              </div>
+            </div>
+          </BentoCard>
+
+          {/* AI explain (two bento cards) */}
+          <BentoCard className="sm:col-span-12">
+            <div className="p-5">
+              <BentoHeader
+                icon={
+                  <div className="relative h-8 w-8">
+                    <Image src={ASSETS.iconAI} alt="" fill className="object-contain" />
+                  </div>
+                }
+                title="あなたの体質解説（AI）"
+                sub="文章は初回だけ生成して保存されます"
+                right={<Badge tone="emerald">トトノウくん</Badge>}
+              />
+
+              <div className="mt-4">
+                {loadingExplain ? (
+                  <SoftPanel tone="slate" className="text-sm text-slate-600">
+                    生成中…
+                  </SoftPanel>
+                ) : explainText ? null : (
+                  <SoftPanel tone="slate">
+                    <div className="text-sm text-slate-700">
+                      {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
+                    </div>
+                    <div className="mt-3">
+                      <Button onClick={retryExplain} disabled={loadingExplain}>
+                        {loadingExplain ? "生成中…" : "もう一度生成する"}
+                      </Button>
+                    </div>
+                  </SoftPanel>
+                )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-12">
+                {explainParts.p1 ? (
+                  <div className="sm:col-span-6">
+                    <SoftPanel tone="indigo">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="relative h-6 w-6">
+                            <Image src={ASSETS.iconBrain} alt="" fill className="object-contain" />
+                          </div>
+                          <div className="text-sm font-extrabold text-indigo-950">いまの体のクセ（まとめ）</div>
+                        </div>
+                        <Badge tone="indigo">Summary</Badge>
+                      </div>
+
+                      <div className="mt-3 rounded-[18px] bg-white/70 p-4 border border-indigo-100">
+                        <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+                          {explainParts.p1}
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-                      特筆すべき偏りはありません。
-                    </div>
-                  )}
-                </div>
-              </div>
+                    </SoftPanel>
+                  </div>
+                ) : null}
 
-              {/* Meridians (Simple Cards) */}
-              <div className="mt-8">
-                <div className="text-base font-bold text-slate-800 mb-4 px-1">サインが出やすい場所</div>
-                <div className="grid gap-3">
-                  {[meridianPrimary, meridianSecondary].map((m, idx) => {
-                    if (!m) return null;
-                    const isMain = idx === 0;
-                    return (
-                      <div key={m.title} className={`rounded-2xl border p-5 flex gap-4 ${isMain ? "bg-teal-50/30 border-teal-100" : "bg-slate-50/50 border-slate-100"}`}>
-                         <div className="shrink-0 pt-1">
-                           <Image 
-                             src={isMain ? DUMMY_IMAGES.bodyIconMain : DUMMY_IMAGES.bodyIconSub} 
-                             alt="" width={40} height={40} className="object-contain" 
-                           />
-                         </div>
-                         <div className="min-w-0 flex-1">
-                           <div className="text-xs font-bold text-slate-400 mb-1">{isMain ? "MAIN" : "SUB"}</div>
-                           <div className="text-lg font-bold text-slate-800">{m.title}</div>
-                           <div className="mt-1 text-sm text-slate-600">{m.body_area}</div>
-                         </div>
+                {explainParts.p2 ? (
+                  <div className="sm:col-span-6">
+                    <SoftPanel tone="emerald">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="relative h-6 w-6">
+                            <Image src={ASSETS.iconRadar} alt="" fill className="object-contain" />
+                          </div>
+                          <div className="text-sm font-extrabold text-emerald-950">体調の揺れを予報で先回り</div>
+                        </div>
+                        <Badge tone="emerald">Radar</Badge>
                       </div>
-                    );
-                  })}
+
+                      <div className="mt-3 rounded-[18px] bg-white/70 p-4 border border-emerald-100">
+                        <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
+                          {explainParts.p2}
+                        </div>
+                      </div>
+                    </SoftPanel>
+                  </div>
+                ) : null}
+
+                {explainText && !explainParts.p1 && !explainParts.p2 ? (
+                  <div className="sm:col-span-12">
+                    <SoftPanel tone="slate">
+                      <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{explainText}</div>
+                    </SoftPanel>
+                  </div>
+                ) : null}
+              </div>
+
+              {(explainCreatedAt || explainModel) ? (
+                <div className="mt-3 text-right text-xs font-semibold text-slate-400">
+                  {explainCreatedAt ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
+                  {explainModel ? `　/　model: ${explainModel}` : ""}
                 </div>
-              </div>
+              ) : null}
             </div>
-          </Module>
+          </BentoCard>
+        </div>
 
-          {/* 3. AI Analysis (Smart/Neutral Green) */}
-          <Module>
-            <div className="flex items-center justify-between gap-2">
-              <SectionHeader iconUrl={DUMMY_IMAGES.robot} title="AI分析レポート" sub="トトノウくんの解説" />
-              <Pill tone="brand">保存対象</Pill>
-            </div>
-            <Divider />
-
-            {loadingExplain ? (
-              <div className="rounded-2xl bg-slate-50 p-8 text-center border border-slate-100">
-                <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-emerald-600 mb-2" />
-                <div className="text-sm text-slate-500">解説を生成しています...</div>
-              </div>
-            ) : explainText ? (
-              <div className="space-y-4">
-                {explainParts.p1 && (
-                  <div className="rounded-2xl bg-slate-50 p-6 border border-slate-100">
-                    <div className="flex items-center gap-2 mb-4 text-emerald-800 font-bold text-sm uppercase tracking-wider">
-                      <Image src={DUMMY_IMAGES.brainSmall} alt="" width={20} height={20} />
-                      Summary
-                    </div>
-                    <div className="text-sm leading-8 text-slate-700 whitespace-pre-wrap">
-                      {explainParts.p1}
-                    </div>
-                  </div>
-                )}
-                {explainParts.p2 && (
-                  <div className="rounded-2xl bg-emerald-50/40 p-6 border border-emerald-100">
-                     <div className="flex items-center gap-2 mb-4 text-teal-800 font-bold text-sm uppercase tracking-wider">
-                      <Image src={DUMMY_IMAGES.radarSmall} alt="" width={20} height={20} />
-                      Forecast
-                    </div>
-                    <div className="text-sm leading-8 text-slate-800 whitespace-pre-wrap">
-                      {explainParts.p2}
-                    </div>
-                  </div>
-                )}
-                {(!explainParts.p1 && !explainParts.p2) && (
-                   <div className="text-sm leading-8 text-slate-700 whitespace-pre-wrap">{explainText}</div>
-                )}
-              </div>
-            ) : (
-               <div className="text-center py-6">
-                 <div className="text-sm text-slate-500 mb-4">{explainError || "解説がありません"}</div>
-                 <Button onClick={retryExplain} variant="secondary">再生成する</Button>
-               </div>
-            )}
-          </Module>
-
-          {/* 4. Action (Strong Green Gradient) */}
-          <Module className="relative overflow-hidden ring-1 ring-emerald-100">
-            <SectionHeader iconUrl={DUMMY_IMAGES.lightning} title="次のアクション" sub="対策を保存してスタート" />
-            <Divider />
-            
-            {loadingAuth ? (
-               <div className="py-4 text-center text-sm text-slate-400">Loading...</div>
-            ) : isLoggedIn ? (
-              <>
-                 <div className="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                    ログイン中: <span className="font-bold text-slate-800">{session.user?.email}</span>
-                 </div>
-                 {isAttached ? (
-                   <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4 text-center text-emerald-800 font-bold mb-4">
-                     ✅ 保存済みです
-                   </div>
-                 ) : (
-                   <Button onClick={() => attachToAccount(false)} disabled={attaching} className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200">
-                     {attaching ? "保存中..." : "結果を保存して対策を見る"}
-                   </Button>
-                 )}
-                 <div className="grid grid-cols-2 gap-3">
-                    <Button variant="secondary" onClick={() => router.push("/radar")}>今日の予報</Button>
-                    <Button variant="ghost" onClick={() => router.push("/check")}>再チェック</Button>
-                 </div>
-              </>
-            ) : (
-              <div className="text-center">
-                 <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-5 mb-5">
-                   <p className="font-bold text-emerald-900 mb-1">無料で結果を保存できます</p>
-                   <p className="text-xs text-emerald-700">毎日の予報機能もずっと無料です</p>
-                 </div>
-                 <Button onClick={goSignupToRadar} className="w-full mb-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg shadow-emerald-200 border-0">
-                   無料で保存して始める
-                 </Button>
-                 <Button variant="ghost" onClick={goLoginToRadar} className="w-full text-slate-500">
-                   ログインはこちら
-                 </Button>
-              </div>
-            )}
-          </Module>
-          
-          <div className="mt-8 text-center pb-8">
-             <button onClick={() => router.push("/check")} className="text-xs font-bold text-slate-400 hover:text-slate-600 transition">
-               トップに戻る
-             </button>
-          </div>
-
+        <div className="mt-6 text-center text-xs font-medium text-slate-400">
+          作成日時：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
         </div>
       </div>
     </div>
