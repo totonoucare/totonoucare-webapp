@@ -3,18 +3,24 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";     // ※既存コンポーネントがあれば使用、なければ下部のスタイルが適用されます
+import Button from "@/components/ui/Button"; // ※既存コンポーネントを使用
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
-// ✅ Next.js の useSearchParams 対策：中身を Suspense 内に移す
+// ------------------------------------------------------------------
+// Main Export & Suspense Wrapper
+// ------------------------------------------------------------------
 export default function ResultPageWrapper({ params }) {
   return (
     <Suspense
       fallback={
-        <div className="space-y-3">
-          <h1 className="text-xl font-semibold">結果を読み込み中…</h1>
+        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+          <div className="text-center">
+            <div className="mb-4 text-3xl animate-pulse">📡</div>
+            <h1 className="text-lg font-semibold text-slate-700">結果を分析中...</h1>
+            <p className="text-sm text-slate-500 mt-2">AIがあなたの体質を読み解いています</p>
+          </div>
         </div>
       }
     >
@@ -23,63 +29,55 @@ export default function ResultPageWrapper({ params }) {
   );
 }
 
-/** ---------------------------
- * UI helpers (inline)
- * -------------------------- */
-function Pill({ children, tone = "slate" }) {
+// ------------------------------------------------------------------
+// UI Components (Local for luxurious styling)
+// ------------------------------------------------------------------
+
+function Pill({ children, tone = "slate", className = "" }) {
   const tones = {
-    slate: "border-slate-200 bg-slate-50 text-slate-700",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    amber: "border-amber-200 bg-amber-50 text-amber-800",
+    slate: "bg-slate-100 text-slate-600 border-slate-200",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    blue: "bg-blue-50 text-blue-700 border-blue-100",
+    rose: "bg-rose-50 text-rose-700 border-rose-100",
   };
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] ${tones[tone]}`}>
+    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium tracking-wide ${tones[tone]} ${className}`}>
       {children}
     </span>
   );
 }
 
-function SectionHeader({ icon, title, sub }) {
+function SectionIcon({ icon, color = "bg-slate-100" }) {
   return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex items-center gap-2">
-        <div className="grid h-8 w-8 place-items-center rounded-2xl border bg-white text-base shadow-sm">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-semibold text-slate-900">{title}</div>
-          {sub ? <div className="text-xs text-slate-500">{sub}</div> : null}
-        </div>
-      </div>
+    <div className={`grid h-10 w-10 place-items-center rounded-2xl ${color} text-lg shadow-sm border border-white/50`}>
+      {icon}
     </div>
   );
 }
 
-function Module({ children }) {
-  // “アプリの面”っぽいコンテナ
+function Module({ children, className = "" }) {
   return (
-    <div className="rounded-3xl border bg-white shadow-sm">
-      <div className="p-4">{children}</div>
+    <div className={`relative overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${className}`}>
+      <div className="p-5 md:p-6">{children}</div>
     </div>
   );
 }
 
 function Divider() {
-  return <div className="my-3 h-px w-full bg-slate-100" />;
+  return <div className="my-5 h-px w-full bg-slate-100" />;
 }
 
-// ---------------------------
-// AI text split into 2 parts
-// ---------------------------
+// ------------------------------------------------------------------
+// Logic Helper: Split AI Text
+// ------------------------------------------------------------------
 function splitExplain(text) {
   const t = (text || "").trim();
   if (!t) return { p1: "", p2: "" };
 
-  // ✅ 見出し（「」なし / ##なし）で切る
   const h1 = "いまの体のクセ（今回のまとめ）";
   const h2 = "体調の揺れを予報で先回り（未病レーダー）";
 
-  // 先頭の "## " などの混入も吸収
   const normalize = (s) => s.replace(/^#+\s*/gm, "").trim();
   const n = normalize(t);
 
@@ -93,69 +91,59 @@ function splitExplain(text) {
   const part1 = n.slice(i1 + h1.length, i2).trim();
   const part2 = n.slice(i2 + h2.length).trim();
 
-  const p1 = part1 || n.slice(0, i2).trim();
-  const p2 = part2 || n.slice(i2 + h2.length).trim();
-
-  return { p1, p2 };
+  return { 
+    p1: part1 || n.slice(0, i2).trim(), 
+    p2: part2 || n.slice(i2 + h2.length).trim() 
+  };
 }
 
+// ------------------------------------------------------------------
+// Main Page Component
+// ------------------------------------------------------------------
 function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { id } = params;
 
+  // --- States ---
   const [event, setEvent] = useState(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
-
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
-
   const [attaching, setAttaching] = useState(false);
   const [toast, setToast] = useState("");
 
-  // --- AI explain state ---
+  // --- AI States ---
   const [explainText, setExplainText] = useState("");
   const [explainModel, setExplainModel] = useState("");
   const [explainCreatedAt, setExplainCreatedAt] = useState("");
   const [loadingExplain, setLoadingExplain] = useState(false);
   const [explainError, setExplainError] = useState("");
-
-  // 多重生成防止（React Strict Mode / re-render対策）
   const explainRequestedRef = useRef(false);
 
-  // legacy support
   const attachAfterLogin = searchParams?.get("attach") === "1";
 
-  // ---------------------------
-  // Auth state
-  // ---------------------------
+  // --- Auth & Data Fetching ---
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(data.session || null);
       setLoadingAuth(false);
     })();
-
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setLoadingAuth(false);
     });
-
     return () => {
       mounted = false;
       sub?.subscription?.unsubscribe?.();
     };
   }, []);
 
-  // ---------------------------
-  // Fetch event
-  // ---------------------------
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       try {
         setLoadingEvent(true);
@@ -170,7 +158,7 @@ function ResultPage({ params }) {
 
         setEvent(json.data);
 
-        // if /events/[id] returns ai_explain_*, set it directly
+        // Load existing explanation
         const t = json.data?.ai_explain_text || "";
         if (t) {
           setExplainText(t);
@@ -186,52 +174,37 @@ function ResultPage({ params }) {
         setLoadingEvent(false);
       }
     })();
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [id]);
 
-  // ---------------------------
-  // Auto-attach after login (legacy)
-  // ---------------------------
   useEffect(() => {
     if (!attachAfterLogin) return;
     if (loadingAuth) return;
     if (!session) return;
     if (!event || event?.notFound) return;
-
     attachToAccount(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
-  // ---------------------------
-  // Auto-generate / load AI explain (first view only)
-  // ---------------------------
+  // --- Auto Generate AI Explain ---
   useEffect(() => {
     if (!event || event?.notFound) return;
     if (loadingEvent) return;
-
     if (explainText) return;
     if (explainRequestedRef.current) return;
     explainRequestedRef.current = true;
 
     const ac = new AbortController();
-
     (async () => {
       try {
         setExplainError("");
         setLoadingExplain(true);
-
         const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: ac.signal,
         });
-
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json?.error || "AI解説の生成に失敗しました");
-
         const text = json?.data?.text || json?.data?.ai_explain_text || "";
         if (!text) throw new Error("AI解説が空でした");
 
@@ -246,15 +219,12 @@ function ResultPage({ params }) {
         setLoadingExplain(false);
       }
     })();
-
     return () => ac.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event?.id, loadingEvent]);
 
   async function retryExplain() {
     setExplainError("");
     setLoadingExplain(true);
-
     try {
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
         method: "POST",
@@ -262,10 +232,8 @@ function ResultPage({ params }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "AI解説の生成に失敗しました");
-
       const text = json?.data?.text || json?.data?.ai_explain_text || "";
       if (!text) throw new Error("AI解説が空でした");
-
       setExplainText(text);
       setExplainModel(json?.data?.model || json?.data?.ai_explain_model || "");
       setExplainCreatedAt(json?.data?.created_at || json?.data?.ai_explain_created_at || "");
@@ -276,9 +244,7 @@ function ResultPage({ params }) {
     }
   }
 
-  // ---------------------------
-  // Derived labels
-  // ---------------------------
+  // --- Computed Values ---
   const computed = event?.computed || {};
   const answers = event?.answers || {};
 
@@ -289,46 +255,30 @@ function ResultPage({ params }) {
 
   const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
   const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
-
-  const meridianPrimary = useMemo(
-    () => getMeridianLine(computed?.primary_meridian),
-    [computed?.primary_meridian]
-  );
-  const meridianSecondary = useMemo(
-    () => getMeridianLine(computed?.secondary_meridian),
-    [computed?.secondary_meridian]
-  );
+  const meridianPrimary = useMemo(() => getMeridianLine(computed?.primary_meridian), [computed?.primary_meridian]);
+  const meridianSecondary = useMemo(() => getMeridianLine(computed?.secondary_meridian), [computed?.secondary_meridian]);
 
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
-
   const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
 
-  // ---------------------------
-  // Actions
-  // ---------------------------
+  // --- Actions ---
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
-
     try {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-
       if (!token) {
         if (!silent) setToast("先にログインが必要です");
         return;
       }
-
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
-
-      // ✅ 保存後は /radar へ（/radar 側で saved toast を出す想定）
       router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
     } catch (e) {
       setToast(e?.message || String(e));
@@ -339,341 +289,310 @@ function ResultPage({ params }) {
   }
 
   function goSignupToRadar() {
-    router.push(
-      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-        `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
-      )}`
-    );
+    router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
-
   function goLoginToRadar() {
-    router.push(
-      `/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-        `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
-      )}`
-    );
+    router.push(`/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
-  // ---------------------------
-  // UI states
-  // ---------------------------
+  // ------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------
+  
   if (loadingEvent) {
     return (
-      <div className="space-y-3">
-        <h1 className="text-xl font-semibold">結果を読み込み中…</h1>
-        <div className="text-sm text-slate-600">少し待ってください。</div>
+      <div className="flex min-h-screen flex-col items-center justify-center space-y-4 bg-slate-50">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-500"></div>
+        <div className="text-sm font-medium text-slate-600">結果を読み込んでいます...</div>
       </div>
     );
   }
 
   if (!event || event?.notFound) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-semibold">結果が見つかりません</h1>
-        <div className="text-sm text-slate-600">
-          期限切れ/削除、または保存に失敗した可能性があります。
+      <div className="flex min-h-screen flex-col items-center justify-center p-6 text-center bg-slate-50">
+        <div className="rounded-3xl bg-white p-8 shadow-xl">
+          <h1 className="mb-2 text-xl font-bold text-slate-800">結果が見つかりません 😢</h1>
+          <p className="mb-6 text-sm text-slate-500">期限切れ、または削除された可能性があります。</p>
+          <Button onClick={() => router.push("/check")}>もう一度診断する</Button>
         </div>
-        <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
       </div>
     );
   }
 
-  // ---------------------------
-  // UI
-  // ---------------------------
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-slate-50 to-white">
-      {/* toast */}
-      {toast ? (
-        <div className="fixed left-1/2 top-4 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-2xl border bg-white px-4 py-3 text-sm shadow">
+    <div className="min-h-screen bg-[#F6F9FC] pb-24">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed left-1/2 top-6 z-50 w-[90%] max-w-sm -translate-x-1/2 transform rounded-2xl bg-slate-900/90 px-6 py-3 text-center text-sm font-medium text-white shadow-2xl backdrop-blur-md transition-all">
           {toast}
         </div>
-      ) : null}
+      )}
 
-      {/* app-like container */}
-      <div className="mx-auto w-full max-w-md px-3 pb-10 pt-4">
-        {/* Top mini app-bar */}
-        <div className="mb-3 flex items-center justify-between">
+      <div className="mx-auto max-w-md px-4 pt-6">
+        
+        {/* Header Navigation */}
+        <nav className="mb-6 flex items-center justify-between">
           <button
-            type="button"
             onClick={() => router.push("/check")}
-            className="inline-flex items-center gap-2 rounded-2xl border bg-white px-3 py-2 text-xs text-slate-700 shadow-sm"
+            className="group flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-all active:scale-95"
           >
-            ← もどる
+            <span className="transition-transform group-hover:-translate-x-0.5">←</span>
+            戻る
           </button>
-          <div className="text-xs text-slate-500">未病レーダー</div>
-          <div className="w-[72px]" />
-        </div>
+          <span className="text-xs font-bold tracking-widest text-slate-400 uppercase">UNBYO RADAR</span>
+        </nav>
 
-        {/* Hero module */}
-        <Module>
-          <SectionHeader icon="📝" title="あなたのお悩み" sub="結果は無料で閲覧できます" />
-          <Divider />
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-lg font-semibold text-slate-900">{symptomLabel}</div>
-            <Pill>無料で閲覧OK</Pill>
-          </div>
-        </Module>
-
-        {/* Constitution module */}
-        <div className="mt-3">
-          <Module>
-            <SectionHeader icon="🧭" title="体質の見立て" sub="今回の結果から見える“軸”とポイント" />
+        {/* 1. Hero / Core Result Section */}
+        <section className="space-y-4">
+          <Module className="bg-gradient-to-br from-white to-slate-50">
+            <div className="flex items-start justify-between">
+              <div>
+                <Pill tone="blue" className="mb-3">今回のお悩み</Pill>
+                <h2 className="text-2xl font-bold text-slate-900 leading-tight">
+                  {symptomLabel}
+                </h2>
+              </div>
+              <div className="text-4xl">🤔</div>
+            </div>
+            
             <Divider />
 
-            {/* Core panel */}
-            <div className="rounded-3xl border bg-gradient-to-b from-slate-50 to-white p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs font-semibold text-slate-600">今の体質の軸</div>
-                <Pill tone="slate">安定度の目安</Pill>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">DIAGNOSIS RESULT</span>
               </div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{core.title}</div>
-              <div className="mt-1 text-sm leading-6 text-slate-600">{core.tcm_hint}</div>
+              
+              {/* Core Type Card */}
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-lg transition-transform hover:scale-[1.01]">
+                <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
+                
+                <div className="relative z-10">
+                  <div className="text-xs font-medium text-slate-300 mb-1">あなたの体質の「軸」</div>
+                  <div className="text-3xl font-bold tracking-tight mb-3 text-white">
+                    {core.title}
+                  </div>
+                  <p className="text-sm text-slate-300 leading-relaxed opacity-90">
+                    {core.tcm_hint}
+                  </p>
+                </div>
+              </div>
             </div>
+          </Module>
 
-            {/* Sub labels */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold text-slate-900">整えポイント（最大2つ）</div>
-                <Pill tone="amber">優先度</Pill>
-              </div>
+          {/* 2. Sub Labels & Action Points */}
+          <div className="grid grid-cols-1 gap-3">
+             <div className="flex items-center justify-between px-2">
+                <h3 className="text-sm font-bold text-slate-900">整えるポイント</h3>
+                <span className="text-xs text-slate-500">優先度順</span>
+             </div>
 
-              <div className="mt-2 grid gap-2">
-                {subLabels?.length ? (
-                  subLabels.map((s) => (
-                    <div key={s.title} className="rounded-3xl border bg-white p-4 shadow-[0_1px_0_rgba(15,23,42,0.02)]">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-800">
-                          {s.title}
+             {subLabels?.length > 0 ? (
+               subLabels.map((s, i) => (
+                <div key={s.title} className="flex flex-col gap-2 rounded-3xl bg-white p-5 shadow-sm border border-slate-100">
+                   <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-700">
+                          {i + 1}
                         </span>
-                        <span className="text-xs text-slate-500">{s.short}</span>
+                        <h4 className="font-bold text-slate-800">{s.title}</h4>
                       </div>
-                      {s.action_hint ? (
-                        <div className="mt-2 text-sm leading-7 text-slate-800">{s.action_hint}</div>
-                      ) : null}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-3xl border bg-white p-4 text-sm text-slate-500">
-                    今回は強い偏りは出ませんでした。
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Meridians */}
-            <div className="mt-4">
-              <div className="text-sm font-semibold text-slate-900">体の張りやすい場所</div>
-
-              <div className="mt-2 grid gap-2">
-                {/* Primary */}
-                <div className="rounded-3xl border bg-white p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-slate-900">（主）</div>
-                    <Pill tone="slate">出やすいサイン</Pill>
-                  </div>
-                  {meridianPrimary ? (
-                    <>
-                      <div className="mt-1 text-sm font-semibold text-slate-900">{meridianPrimary.title}</div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
-                      </div>
-                      <div className="mt-2 text-xs leading-6 text-slate-500">{meridianPrimary.organs_hint}</div>
-                    </>
-                  ) : (
-                    <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
-                  )}
+                      <span className="text-xs font-medium text-slate-400">{s.short}</span>
+                   </div>
+                   {s.action_hint && (
+                     <div className="mt-1 ml-8 rounded-xl bg-amber-50/50 p-3 text-sm leading-relaxed text-amber-900">
+                       {s.action_hint}
+                     </div>
+                   )}
                 </div>
-
-                {/* Secondary */}
-                <div className="rounded-3xl border bg-white p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-slate-900">（副）</div>
-                    <Pill tone="slate">補助ライン</Pill>
-                  </div>
-                  {meridianSecondary ? (
-                    <>
-                      <div className="mt-1 text-sm font-semibold text-slate-900">{meridianSecondary.title}</div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
-                      </div>
-                      <div className="mt-2 text-xs leading-6 text-slate-500">{meridianSecondary.organs_hint}</div>
-                    </>
-                  ) : (
-                    <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
-                  )}
+               ))
+             ) : (
+                <div className="rounded-3xl bg-white p-6 text-center text-sm text-slate-500 border border-slate-100 border-dashed">
+                  今回は特筆すべき偏りはありませんでした ✨
                 </div>
-              </div>
-            </div>
-          </Module>
-        </div>
+             )}
+          </div>
+        </section>
 
-        {/* AI explain module */}
-        <div className="mt-3">
-          <Module>
-            <div className="flex items-center justify-between gap-2">
-              <SectionHeader icon="🤖" title="あなたの体質解説" sub="トトノウくん（AI）が文章で整理します" />
-              <Pill>初回だけ生成して保存</Pill>
-            </div>
+        {/* 3. AI Analysis Section (Bento Grid style) */}
+        <section className="mt-8 space-y-4">
+          <div className="flex items-center gap-2 px-2">
+             <div className="h-1 w-1 rounded-full bg-emerald-500"></div>
+             <h3 className="text-sm font-bold text-slate-900">AI トトノウくんの分析</h3>
+          </div>
 
-            <Divider />
-
+          <div className="space-y-3">
             {loadingExplain ? (
-              <div className="rounded-3xl border bg-slate-50 p-4 text-sm text-slate-700">
-                トトノウくん（AI）が解説文を生成中…
-              </div>
-            ) : explainText ? (
-              <div className="text-xs text-slate-500">
-                文章は結果に紐づいて保存され、次回以降はキャッシュが表示されます。
-              </div>
-            ) : (
-              <div className="rounded-3xl border bg-white p-4">
-                <div className="text-sm text-slate-700">
-                  {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
-                </div>
-                <div className="mt-3">
-                  <Button onClick={retryExplain} disabled={loadingExplain}>
-                    {loadingExplain ? "生成中…" : "もう一度生成する"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Module>
-
-          {/* Part cards (more app-like) */}
-          {explainParts.p1 ? (
-            <div className="mt-3 rounded-3xl border bg-white shadow-sm">
-              <div className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="grid h-7 w-7 place-items-center rounded-2xl border bg-slate-50 text-sm">
-                    🧠
-                  </div>
-                  <div className="text-sm font-semibold text-slate-900">いまの体のクセ（今回のまとめ）</div>
-                </div>
-                <Pill tone="slate">まとめ</Pill>
-              </div>
-              <div className="px-4 pb-4">
-                <div className="rounded-3xl bg-slate-50/60 p-4">
-                  <div className="whitespace-pre-wrap text-sm leading-7 text-slate-900">
-                    {explainParts.p1}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {explainParts.p2 ? (
-            <div className="mt-3 rounded-3xl border bg-white shadow-sm">
-              <div className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <div className="grid h-7 w-7 place-items-center rounded-2xl border bg-slate-50 text-sm">
-                    📡
-                  </div>
-                  <div className="text-sm font-semibold text-slate-900">体調の揺れを予報で先回り（未病レーダー）</div>
-                </div>
-                <Pill tone="emerald">予報</Pill>
-              </div>
-              <div className="px-4 pb-4">
-                <div className="rounded-3xl bg-slate-50/60 p-4">
-                  <div className="whitespace-pre-wrap text-sm leading-7 text-slate-900">
-                    {explainParts.p2}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {/* fallback */}
-          {explainText && !explainParts.p2 && !explainParts.p1 ? (
-            <div className="mt-3 rounded-3xl border bg-white p-4 shadow-sm">
-              <div className="whitespace-pre-wrap text-sm leading-7 text-slate-900">{explainText}</div>
-            </div>
-          ) : null}
-
-          {(explainCreatedAt || explainModel) ? (
-            <div className="mt-2 text-xs text-slate-400">
-              {explainCreatedAt ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
-              {explainModel ? `　/　model: ${explainModel}` : ""}
-            </div>
-          ) : null}
-        </div>
-
-        {/* CTA module (single, app-like) */}
-        <div className="mt-3">
-          <Module>
-            <SectionHeader icon="⚡️" title="次の一歩（おすすめ）" sub="結果を保存して、今日の予報と対策へ" />
-            <Divider />
-
-            {loadingAuth ? (
-              <div className="text-sm text-slate-500">ログイン状態を確認中…</div>
-            ) : isLoggedIn ? (
-              <>
-                <div className="rounded-3xl border bg-slate-50 p-4">
-                  <div className="text-sm text-slate-800">
-                    ログイン中：<span className="font-medium">{session.user?.email}</span>
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">今日の「予報と対策」は無料で見られます。</div>
-                </div>
-
-                <div className="mt-3">
-                  {isAttached ? (
-                    <div className="rounded-3xl border bg-emerald-50 p-4 text-sm text-emerald-900">
-                      この結果は保存済みです ✅
-                    </div>
-                  ) : (
-                    <div className="rounded-3xl border bg-white p-4">
-                      <div className="text-sm text-slate-800">
-                        この結果を保存して、今日の未病レーダーへ進みましょう。
-                      </div>
-                      <div className="mt-3">
-                        <Button onClick={() => attachToAccount(false)} disabled={attaching}>
-                          {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button variant="ghost" onClick={() => router.push("/radar")}>
-                    今日の予報と対策へ
-                  </Button>
-                  <Button variant="ghost" onClick={() => router.push("/check")}>
-                    もう一度チェックする
-                  </Button>
-                </div>
-              </>
+              <Module className="animate-pulse">
+                <div className="h-4 w-3/4 rounded bg-slate-100 mb-3"></div>
+                <div className="h-4 w-full rounded bg-slate-100 mb-2"></div>
+                <div className="h-4 w-5/6 rounded bg-slate-100"></div>
+              </Module>
+            ) : explainError ? (
+               <Module className="border-red-100 bg-red-50">
+                 <p className="text-red-600 text-sm mb-3">解説の生成に失敗しました。</p>
+                 <Button size="sm" onClick={retryExplain} variant="outline" className="bg-white">再試行する</Button>
+               </Module>
             ) : (
               <>
-                <div className="rounded-3xl border bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">
-                    無料で結果を保存して、今日の「予報と対策」へ進めます。
-                  </div>
-                  <div className="mt-1 text-xs text-slate-500">
-                    ※登録だけでは課金されません（無料の範囲で使えます）
-                  </div>
-                </div>
+                 {/* Part 1: Current State */}
+                 {explainParts.p1 && (
+                   <div className="rounded-[2rem] bg-white p-6 shadow-sm border border-slate-100">
+                     <div className="mb-4 flex items-center gap-3">
+                        <SectionIcon icon="🧠" color="bg-indigo-50 text-indigo-600" />
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm">今の体のクセ</h4>
+                          <p className="text-[10px] text-slate-400">今回の診断まとめ</p>
+                        </div>
+                     </div>
+                     <div className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+                       {explainParts.p1}
+                     </div>
+                   </div>
+                 )}
 
-                <div className="mt-3 flex flex-col gap-2">
-                  <Button onClick={goSignupToRadar}>無料で保存して、今日の予報と対策を見る</Button>
-                  <Button variant="ghost" onClick={goLoginToRadar}>
-                    すでに登録済みの方はこちら（ログイン）
-                  </Button>
-                </div>
-
-                <div className="mt-3">
-                  <Button variant="ghost" onClick={() => router.push("/check")}>
-                    もう一度チェックする
-                  </Button>
-                </div>
+                 {/* Part 2: Future Forecast */}
+                 {explainParts.p2 && (
+                   <div className="rounded-[2rem] bg-white p-6 shadow-sm border border-emerald-100 ring-4 ring-emerald-50/50">
+                     <div className="mb-4 flex items-center gap-3">
+                        <SectionIcon icon="🔮" color="bg-emerald-100 text-emerald-600" />
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm">未病予報</h4>
+                          <p className="text-[10px] text-slate-400">これからの対策</p>
+                        </div>
+                     </div>
+                     <div className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+                       {explainParts.p2}
+                     </div>
+                   </div>
+                 )}
+                 
+                 {/* Fallback for unstructured text */}
+                 {(!explainParts.p1 && !explainParts.p2 && explainText) && (
+                    <div className="rounded-[2rem] bg-white p-6 shadow-sm">
+                      <div className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+                        {explainText}
+                      </div>
+                    </div>
+                 )}
               </>
             )}
-          </Module>
+          </div>
+        </section>
+
+        {/* 4. Body Map / Meridians (Grid Layout) */}
+        <section className="mt-8">
+           <div className="flex items-center gap-2 px-2 mb-3">
+             <h3 className="text-sm font-bold text-slate-900">体のサインが出やすい場所</h3>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+             {/* Primary */}
+             <div className="col-span-1 rounded-3xl bg-white p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                  <div className="mb-2 text-[10px] font-bold text-slate-400 uppercase">PRIMARY</div>
+                  <div className="text-lg font-bold text-slate-800 leading-tight">
+                    {meridianPrimary ? meridianPrimary.title : "特になし"}
+                  </div>
+                </div>
+                {meridianPrimary && (
+                   <div className="mt-3 text-xs text-slate-500 bg-slate-50 rounded-lg p-2">
+                     {meridianPrimary.body_area}
+                   </div>
+                )}
+             </div>
+             
+             {/* Secondary */}
+             <div className="col-span-1 rounded-3xl bg-white p-5 shadow-sm border border-slate-100 flex flex-col justify-between opacity-80">
+                <div>
+                  <div className="mb-2 text-[10px] font-bold text-slate-400 uppercase">SECONDARY</div>
+                  <div className="text-sm font-bold text-slate-700 leading-tight">
+                    {meridianSecondary ? meridianSecondary.title : "なし"}
+                  </div>
+                </div>
+                {meridianSecondary && (
+                   <div className="mt-3 text-xs text-slate-500 bg-slate-50 rounded-lg p-2">
+                     {meridianSecondary.body_area}
+                   </div>
+                )}
+             </div>
+          </div>
+        </section>
+
+        {/* 5. CTA Section (Sticky Bottom friendly design) */}
+        <section className="mt-10 mb-6">
+           <Module className="bg-gradient-to-b from-slate-900 to-slate-800 text-white border-none ring-4 ring-slate-200 shadow-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                 <div className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl backdrop-blur-sm">⚡️</div>
+                 <div>
+                   <h3 className="font-bold text-white">次の一歩（おすすめ）</h3>
+                   <p className="text-xs text-slate-300">結果を保存して継続ケア</p>
+                 </div>
+              </div>
+
+              {loadingAuth ? (
+                 <div className="h-10 w-full animate-pulse rounded-xl bg-white/10"></div>
+              ) : isLoggedIn ? (
+                 <div className="space-y-4">
+                    <p className="text-sm text-slate-300">
+                       ログイン中：<span className="text-white font-medium">{session.user?.email}</span>
+                    </p>
+                    
+                    {isAttached ? (
+                       <div className="rounded-xl bg-emerald-500/20 border border-emerald-500/50 p-3 text-center text-sm font-bold text-emerald-300">
+                          保存済みです ✅
+                       </div>
+                    ) : (
+                       <Button 
+                         onClick={() => attachToAccount(false)} 
+                         disabled={attaching}
+                         className="w-full bg-white text-slate-900 hover:bg-slate-100 border-none font-bold"
+                       >
+                         {attaching ? "保存中..." : "結果を保存する（無料）"}
+                       </Button>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                       <button onClick={() => router.push("/radar")} className="rounded-xl bg-white/10 py-3 text-xs font-bold text-white hover:bg-white/20 transition-colors">
+                          今日の予報を見る
+                       </button>
+                       <button onClick={() => router.push("/check")} className="rounded-xl bg-transparent border border-white/20 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 transition-colors">
+                          再チェック
+                       </button>
+                    </div>
+                 </div>
+              ) : (
+                 <div className="space-y-4">
+                    <p className="text-sm leading-relaxed text-slate-300">
+                       今の状態を保存して、日々の変化を記録しませんか？<br/>
+                       <span className="text-xs opacity-70">※無料でご利用いただけます</span>
+                    </p>
+                    
+                    <Button 
+                      onClick={goSignupToRadar}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-white border-none font-bold shadow-lg shadow-emerald-900/20"
+                    >
+                      保存してスタート（無料）
+                    </Button>
+                    
+                    <button 
+                       onClick={goLoginToRadar} 
+                       className="w-full text-center text-xs text-slate-400 hover:text-white transition-colors"
+                    >
+                       すでにアカウントをお持ちの方はこちら
+                    </button>
+                 </div>
+              )}
+           </Module>
+        </section>
+
+        <div className="text-center pb-8">
+           <p className="text-[10px] text-slate-400">
+             Diagnosis ID: {id?.slice(0, 8)}... <br/>
+             {event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : ""}
+           </p>
         </div>
 
-        <div className="mt-4 text-center text-xs text-slate-400">
-          作成日時：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
-        </div>
       </div>
     </div>
   );
