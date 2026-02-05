@@ -227,29 +227,68 @@ function ResultPage({ params }) {
   const isAttached = !!event?.is_attached;
 
   // ---------------------------
-  // AI text split into 2 parts
+  // Explain: normalize & split
   // ---------------------------
+  function normalizeExplain(text) {
+    let t = (text || "").replace(/\r\n/g, "\n").trim();
+    if (!t) return "";
+
+    // もし過去の保存文に Markdown 見出しが混入しても UI を壊さない
+    // （## 見出しだけ除去。本文の # は基本出ない前提）
+    t = t.replace(/^\s*#{2,}\s*/gm, "");
+
+    // 全角カギ括弧の残骸が入っても壊れないように、見出し行の前後に空行を作る
+    t = t.replace(/\n{3,}/g, "\n\n").trim();
+    return t;
+  }
+
   function splitExplain(text) {
-    const t = (text || "").trim();
+    const t = normalizeExplain(text);
     if (!t) return { p1: "", p2: "" };
 
     const h1 = "いまの体のクセ（今回のまとめ）";
     const h2 = "体調の揺れを予報で先回り（未病レーダー）";
 
-    const i1 = t.indexOf(h1);
-    const i2 = t.indexOf(h2);
+    // 見出し行として現れた位置を探す（先頭/改行後のみマッチ）
+    const re1 = new RegExp(`(^|\\n)\\s*${escapeRegExp(h1)}\\s*(\\n|$)`);
+    const re2 = new RegExp(`(^|\\n)\\s*${escapeRegExp(h2)}\\s*(\\n|$)`);
 
-    if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
-    if (i1 !== -1 && i2 === -1) return { p1: t.slice(i1 + h1.length).trim() || t, p2: "" };
-    if (i1 === -1 && i2 !== -1) return { p1: t, p2: t.slice(i2 + h2.length).trim() || "" };
+    const m1 = re1.exec(t);
+    const m2 = re2.exec(t);
 
-    const part1 = t.slice(i1 + h1.length, i2).trim();
-    const part2 = t.slice(i2 + h2.length).trim();
+    // 見出しが無い場合は全体を p1 として表示
+    if (!m1 && !m2) return { p1: t, p2: "" };
 
-    const p1 = part1 || t.slice(0, i2).trim();
-    const p2 = part2 || t.slice(i2 + h2.length).trim();
+    // h1無し/h2あり：h2以降をp2、それ以前をp1
+    if (!m1 && m2) {
+      const i2 = m2.index + (m2[1] ? m2[1].length : 0);
+      const before = t.slice(0, i2).trim();
+      const after = t.slice(i2).replace(h2, "").trim();
+      return { p1: before, p2: after };
+    }
 
-    return { p1, p2 };
+    // h1あり/h2無し：h1以降をp1
+    if (m1 && !m2) {
+      const i1 = m1.index + (m1[1] ? m1[1].length : 0);
+      const after = t.slice(i1).replace(h1, "").trim();
+      return { p1: after || t, p2: "" };
+    }
+
+    // 両方あり
+    const i1 = m1.index + (m1[1] ? m1[1].length : 0);
+    const i2 = m2.index + (m2[1] ? m2[1].length : 0);
+
+    // 順序が逆転してたら（稀）フォールバック
+    if (i2 <= i1) return { p1: t, p2: "" };
+
+    const part1 = t.slice(i1, i2).replace(h1, "").trim();
+    const part2 = t.slice(i2).replace(h2, "").trim();
+
+    return { p1: part1, p2: part2 };
+  }
+
+  function escapeRegExp(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   const explainParts = useMemo(() => splitExplain(explainText), [explainText]);
@@ -339,97 +378,107 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
-      {/* --- Hero --- */}
+      {/* --- Hero (header + body) --- */}
       <Card>
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <div className="bg-slate-50 px-4 py-3">
-            <div className="text-xs font-semibold text-slate-600">あなたのお悩み</div>
+        <div className="overflow-hidden rounded-2xl border">
+          <div className="flex items-center gap-2 bg-slate-50 px-4 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-white text-sm">
+              🩺
+            </div>
+            <div className="text-sm font-semibold text-slate-800">あなたのお悩み</div>
           </div>
-          <div className="px-4 py-4">
+          <div className="bg-white px-4 py-4">
             <div className="text-lg font-semibold text-slate-900">{symptomLabel}</div>
           </div>
         </div>
       </Card>
 
-      {/* --- Constitution (stack panel) --- */}
+      {/* --- Constitution (stack card inside) --- */}
       <Card>
         <div className="space-y-3">
-          <div className="text-xl font-semibold">体質の見立て</div>
-
-          <div className="overflow-hidden rounded-2xl border bg-white">
-            {/* row: core */}
-            <div className="px-4 py-4">
-              <div className="text-xs font-semibold text-slate-600">今の体質の軸</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{core.title}</div>
-              <div className="mt-1 text-sm leading-6 text-slate-600">{core.tcm_hint}</div>
+          <div className="overflow-hidden rounded-2xl border">
+            {/* header */}
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-white text-sm">
+                🧭
+              </div>
+              <div className="text-sm font-semibold text-slate-800">体質の見立て</div>
             </div>
 
-            <div className="h-px bg-slate-100" />
+            {/* body (stack) */}
+            <div className="bg-white">
+              {/* core */}
+              <div className="px-4 py-4">
+                <div className="text-xs font-semibold text-slate-600">今の体質の軸</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{core.title}</div>
+                <div className="mt-1 text-sm leading-6 text-slate-600">{core.tcm_hint}</div>
+              </div>
 
-            {/* row: sub labels */}
-            <div className="px-4 py-4">
-              <div className="text-sm font-semibold text-slate-900">整えポイント（最大2つ）</div>
+              <div className="h-px bg-slate-100" />
 
-              {subLabels?.length ? (
+              {/* sub labels */}
+              <div className="px-4 py-4">
+                <div className="text-sm font-semibold text-slate-900">整えポイント（最大2つ）</div>
+
+                {subLabels?.length ? (
+                  <div className="mt-3 grid gap-2">
+                    {subLabels.map((s) => (
+                      <div key={s.title} className="rounded-2xl border bg-slate-50 px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border bg-white px-3 py-1 text-xs font-semibold">
+                            {s.title}
+                          </span>
+                          <span className="text-xs text-slate-500">{s.short}</span>
+                        </div>
+                        {s.action_hint ? (
+                          <div className="mt-2 text-sm leading-6 text-slate-800">{s.action_hint}</div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-sm text-slate-500">（今回は該当なし）</div>
+                )}
+              </div>
+
+              <div className="h-px bg-slate-100" />
+
+              {/* meridian areas */}
+              <div className="px-4 py-4">
+                <div className="text-sm font-semibold text-slate-900">体の張りやすい場所</div>
+
                 <div className="mt-3 grid gap-2">
-                  {subLabels.map((s) => (
-                    <div key={s.title} className="rounded-2xl border bg-slate-50 px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border bg-white px-3 py-1 text-xs font-semibold">
-                          {s.title}
-                        </span>
-                        <span className="text-xs text-slate-500">{s.short}</span>
-                      </div>
-                      {s.action_hint ? (
-                        <div className="mt-2 text-sm leading-6 text-slate-800">{s.action_hint}</div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-2 text-sm text-slate-500">（今回は該当なし）</div>
-              )}
-            </div>
+                  {/* primary */}
+                  <div className="rounded-2xl border bg-white px-4 py-3">
+                    <div className="text-xs font-semibold text-slate-600">主</div>
+                    {meridianPrimary ? (
+                      <>
+                        <div className="mt-1 text-sm font-semibold text-slate-900">{meridianPrimary.title}</div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
+                        </div>
+                        <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
+                      </>
+                    ) : (
+                      <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
+                    )}
+                  </div>
 
-            <div className="h-px bg-slate-100" />
-
-            {/* row: meridian areas */}
-            <div className="px-4 py-4">
-              <div className="text-sm font-semibold text-slate-900">体の張りやすい場所</div>
-
-              <div className="mt-3 grid gap-2">
-                <div className="rounded-2xl border bg-white px-4 py-3">
-                  <div className="text-xs font-semibold text-slate-600">主</div>
-                  {meridianPrimary ? (
-                    <>
-                      <div className="mt-1 text-sm font-semibold text-slate-900">
-                        {meridianPrimary.title}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
-                      </div>
-                      <div className="mt-2 text-xs text-slate-500">{meridianPrimary.organs_hint}</div>
-                    </>
-                  ) : (
-                    <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
-                  )}
-                </div>
-
-                <div className="rounded-2xl border bg-white px-4 py-3">
-                  <div className="text-xs font-semibold text-slate-600">副</div>
-                  {meridianSecondary ? (
-                    <>
-                      <div className="mt-1 text-sm font-semibold text-slate-900">
-                        {meridianSecondary.title}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
-                      </div>
-                      <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
-                    </>
-                  ) : (
-                    <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
-                  )}
+                  {/* secondary */}
+                  <div className="rounded-2xl border bg-white px-4 py-3">
+                    <div className="text-xs font-semibold text-slate-600">副</div>
+                    {meridianSecondary ? (
+                      <>
+                        <div className="mt-1 text-sm font-semibold text-slate-900">{meridianSecondary.title}</div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
+                        </div>
+                        <div className="mt-2 text-xs text-slate-500">{meridianSecondary.organs_hint}</div>
+                      </>
+                    ) : (
+                      <div className="mt-1 text-sm text-slate-500">今回は強い偏りなし</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -437,49 +486,53 @@ function ResultPage({ params }) {
         </div>
       </Card>
 
-      {/* --- AI explain (one panel that contains 2 sub-panels) --- */}
+      {/* --- AI explain (single panel contains Part1/Part2) --- */}
       <Card>
-        <div className="overflow-hidden rounded-2xl border bg-white">
+        <div className="overflow-hidden rounded-2xl border">
           {/* header */}
-          <div className="flex items-center justify-between gap-2 bg-slate-50 px-4 py-3">
+          <div className="flex items-center justify-between bg-slate-50 px-4 py-3">
             <div className="flex items-center gap-2">
-              <div className="text-sm font-semibold text-slate-900">あなたの体質解説</div>
-              <span className="rounded-full border bg-white px-2 py-0.5 text-[11px] text-slate-600">
-                トトノウくん（AI）
-              </span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-white text-sm">
+                🤖
+              </div>
+              <div className="text-sm font-semibold text-slate-800">あなたの体質解説</div>
             </div>
+            <span className="rounded-full border bg-white px-2 py-0.5 text-[11px] text-slate-600">
+              トトノウくん（AI）
+            </span>
           </div>
 
           {/* body */}
-          <div className="px-4 py-4">
+          <div className="bg-white px-4 py-4">
             {loadingExplain ? (
               <div className="rounded-2xl border bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                生成中…
+                解説を生成中…
               </div>
             ) : explainText ? (
-              <div className="space-y-3">
-                {/* sub panel 1 */}
+              <div className="overflow-hidden rounded-2xl border">
+                {/* Part 1 */}
                 {explainParts.p1 ? (
-                  <div className="overflow-hidden rounded-2xl border bg-white">
+                  <>
                     <div className="flex items-center gap-2 bg-slate-50 px-4 py-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-white text-sm">
                         🧠
                       </div>
-                      <div className="text-sm font-semibold text-slate-800">
-                        いまの体のクセ（今回のまとめ）
-                      </div>
+                      <div className="text-sm font-semibold text-slate-800">いまの体のクセ（今回のまとめ）</div>
                     </div>
-                    <div className="px-4 py-4">
+                    <div className="bg-white px-4 py-4">
                       <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
                         {explainParts.p1}
                       </div>
                     </div>
-                  </div>
+                  </>
                 ) : null}
 
-                {/* sub panel 2 */}
+                {/* divider */}
+                {explainParts.p1 && explainParts.p2 ? <div className="h-px bg-slate-100" /> : null}
+
+                {/* Part 2 */}
                 {explainParts.p2 ? (
-                  <div className="overflow-hidden rounded-2xl border bg-white">
+                  <>
                     <div className="flex items-center gap-2 bg-slate-50 px-4 py-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-white text-sm">
                         📡
@@ -488,31 +541,20 @@ function ResultPage({ params }) {
                         体調の揺れを予報で先回り（未病レーダー）
                       </div>
                     </div>
-                    <div className="px-4 py-4">
+                    <div className="bg-white px-4 py-4">
                       <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
                         {explainParts.p2}
                       </div>
                     </div>
-                  </div>
+                  </>
                 ) : null}
 
-                {/* fallback */}
+                {/* fallback: splitが効かなかったら全文 */}
                 {!explainParts.p1 && !explainParts.p2 ? (
-                  <div className="rounded-2xl border bg-white px-4 py-4">
-                    <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">
-                      {explainText}
-                    </div>
+                  <div className="bg-white px-4 py-4">
+                    <div className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{explainText}</div>
                   </div>
                 ) : null}
-
-                {(explainCreatedAt || explainModel) && (
-                  <div className="pt-1 text-xs text-slate-400">
-                    {explainCreatedAt
-                      ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}`
-                      : ""}
-                    {explainModel ? `　/　model: ${explainModel}` : ""}
-                  </div>
-                )}
               </div>
             ) : (
               <div className="rounded-2xl border bg-white px-4 py-3">
@@ -526,78 +568,92 @@ function ResultPage({ params }) {
                 </div>
               </div>
             )}
+
+            {(explainCreatedAt || explainModel) && (
+              <div className="mt-3 text-xs text-slate-400">
+                {explainCreatedAt ? `生成日時：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
+                {explainModel ? `　/　model: ${explainModel}` : ""}
+              </div>
+            )}
           </div>
         </div>
       </Card>
 
-      {/* --- CTA (single panel) --- */}
+      {/* --- CTA (single, less “free” spam) --- */}
       <Card>
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <div className="bg-slate-50 px-4 py-3">
-            <div className="text-sm font-semibold text-slate-900">次の一歩</div>
+        <div className="overflow-hidden rounded-2xl border">
+          {/* header */}
+          <div className="flex items-center gap-2 bg-slate-50 px-4 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl border bg-white text-sm">
+              ➡️
+            </div>
+            <div className="text-sm font-semibold text-slate-800">次の一歩</div>
           </div>
 
-          <div className="px-4 py-4">
+          {/* body */}
+          <div className="bg-white px-4 py-4">
             {loadingAuth ? (
-              <div className="text-sm text-slate-600">ログイン状態を確認中…</div>
+              <div className="text-sm text-slate-500">ログイン状態を確認中…</div>
             ) : isLoggedIn ? (
-              <div className="space-y-3">
+              <>
                 <div className="rounded-2xl border bg-slate-50 px-4 py-3">
-                  <div className="text-sm text-slate-800">
+                  <div className="text-sm text-slate-700">
                     ログイン中：<span className="font-medium">{session.user?.email}</span>
                   </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    レーダーで「今日の予報と対策」を確認できます。
+                  </div>
                 </div>
 
-                {isAttached ? (
-                  <div className="rounded-2xl border bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                    この結果は保存済みです ✅
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border bg-white px-4 py-3">
-                    <div className="text-sm text-slate-800">
-                      この結果を保存して、未病レーダーへ進みましょう。
-                    </div>
-                    <div className="mt-3">
-                      <Button onClick={() => attachToAccount(false)} disabled={attaching}>
-                        {attaching ? "保存して移動中…" : "結果を保存して未病レーダーへ"}
+                <div className="mt-3">
+                  {isAttached ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={() => router.push("/radar")}>レーダーへ進む</Button>
+                      <Button variant="ghost" onClick={() => router.push("/check")}>
+                        もう一度チェックする
                       </Button>
                     </div>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="ghost" onClick={() => router.push("/radar")}>
-                    未病レーダーへ
-                  </Button>
-                  <Button variant="ghost" onClick={() => router.push("/check")}>
-                    もう一度チェックする
-                  </Button>
+                  ) : (
+                    <div className="rounded-2xl border bg-white px-4 py-3">
+                      <div className="text-sm text-slate-700">
+                        この結果を保存して、レーダーへ進みましょう。
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button onClick={() => attachToAccount(false)} disabled={attaching}>
+                          {attaching ? "保存して移動中…" : "保存してレーダーへ"}
+                        </Button>
+                        <Button variant="ghost" onClick={() => router.push("/check")}>
+                          もう一度チェックする
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </>
             ) : (
-              <div className="space-y-3">
+              <>
                 <div className="rounded-2xl border bg-slate-50 px-4 py-3">
                   <div className="text-sm text-slate-800">
-                    登録して結果を保存すると、未病レーダーへ進めます。
+                    アカウントを作成して結果を保存すると、レーダーで「今日の予報と対策」を見られます。
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    ※登録時点で料金が発生することはありません
+                    ※登録だけで自動的に料金が発生することはありません
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={goSignupToRadar}>登録して結果を保存し、未病レーダーへ</Button>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Button onClick={goSignupToRadar}>結果を保存してレーダーへ</Button>
                   <Button variant="ghost" onClick={goLoginToRadar}>
-                    登録済みの方はログイン
+                    ログインして続きへ
                   </Button>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="mt-2">
                   <Button variant="ghost" onClick={() => router.push("/check")}>
                     もう一度チェックする
                   </Button>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
