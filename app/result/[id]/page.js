@@ -8,203 +8,43 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
-/** ---------------------------
- * dummy images (swap later)
- * -------------------------- */
-const IMG = {
-  hero: "https://placehold.co/560x240/e9eddd/6a9770?text=TOTONOUCARE&font=roboto",
-  core: "https://placehold.co/240x240/e0e4e0/6a9770?text=Core&font=roboto",
-  point: "https://placehold.co/96x96/e9eddd/6a9770?text=Point&font=roboto",
-  bodyMain: "https://placehold.co/96x96/e9eddd/C1A875?text=Main&font=roboto",
-  bodySub: "https://placehold.co/96x96/e0e4e0/6a9770?text=Sub&font=roboto",
+/**
+ * ------------------------------------------------------------
+ *  Assets (仮)
+ *  - 本番は /public に置いて置換推奨（remotePatterns不要になる）
+ * ------------------------------------------------------------
+ */
+const ASSETS = {
+  // Section icons
+  memo: "https://placehold.co/96x96/E9EDDD/31543a?text=LOG&font=roboto",
+  compass: "https://placehold.co/96x96/E9EDDD/31543a?text=TCM&font=roboto",
+  robot: "https://placehold.co/96x96/E9EDDD/31543a?text=AI&font=roboto",
+  bolt: "https://placehold.co/96x96/E9EDDD/31543a?text=GO&font=roboto",
+
+  // Panel icons
+  brain: "https://placehold.co/48x48/E9EDDD/31543a?text=1&font=roboto",
+  radar: "https://placehold.co/48x48/E9EDDD/31543a?text=2&font=roboto",
+  point: "https://placehold.co/48x48/E9EDDD/31543a?text=P&font=roboto",
+  main: "https://placehold.co/48x48/E9EDDD/31543a?text=M&font=roboto",
+  sub: "https://placehold.co/48x48/E9EDDD/31543a?text=S&font=roboto",
 };
 
-/** ---------------------------
- * SVG icons (inline)
- * - 絵文字じゃなく“アプリっぽい”線画
- * -------------------------- */
-function Icon({ children, tone = "mint" }) {
-  const toneClass =
-    tone === "mint"
-      ? "bg-[color:var(--tc-surface)] text-[color:var(--tc-ink)]"
-      : tone === "gold"
-        ? "bg-[color:var(--tc-gold-soft)] text-[color:var(--tc-gold-ink)]"
-        : "bg-[color:var(--tc-surface)] text-[color:var(--tc-ink)]";
-
-  return (
-    <div
-      className={`grid h-10 w-10 place-items-center rounded-2xl border border-white/40 ${toneClass}
-                  shadow-[0_8px_22px_-14px_rgba(0,0,0,0.25)] backdrop-blur-md`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function SvgMemo() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M8 4h10a2 2 0 0 1 2 2v12l-4-2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path d="M9 8h8M9 11h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SvgCompass() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M14.6 9.4 13 13l-3.6 1.6L11 11l3.6-1.6Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path d="M12 7v1.2M12 15.8V17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SvgRobot() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M9 3h6M12 3v3"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7 10a5 5 0 0 1 5-5h0a5 5 0 0 1 5 5v6a3 3 0 0 1-3 3H10a3 3 0 0 1-3-3v-6Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path d="M10 13h.01M14 13h.01" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M10 16h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SvgBolt() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M13 2 4 14h7l-1 8 10-14h-7l0-6Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function Header({ icon, title, sub, right }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex items-start gap-3">
-        {icon}
-        <div className="min-w-0">
-          <div className="text-[15px] font-bold tracking-tight text-[color:var(--tc-ink)]">{title}</div>
-          {sub ? <div className="mt-0.5 text-xs text-[color:var(--tc-ink-soft)]">{sub}</div> : null}
-        </div>
-      </div>
-      {right ? <div className="shrink-0">{right}</div> : null}
-    </div>
-  );
-}
-
-function Chip({ children, tone = "mint" }) {
-  const cls =
-    tone === "mint"
-      ? "bg-[color:var(--tc-mint-soft)] text-[color:var(--tc-mint-ink)]"
-      : tone === "gold"
-        ? "bg-[color:var(--tc-gold-soft)] text-[color:var(--tc-gold-ink)]"
-        : "bg-white/60 text-[color:var(--tc-ink)]";
-  return (
-    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${cls} backdrop-blur-md`}>
-      {children}
-    </span>
-  );
-}
-
-function GlassCard({ children, className = "" }) {
-  return (
-    <div
-      className={`rounded-[28px] border border-white/45 bg-white/55 backdrop-blur-xl
-                  shadow-[0_14px_40px_-28px_rgba(0,0,0,0.35)] ${className}`}
-    >
-      <div className="p-5">{children}</div>
-    </div>
-  );
-}
-
-function SoftPanel({ children, tone = "mint" }) {
-  const bg =
-    tone === "mint"
-      ? "bg-[color:var(--tc-surface)]"
-      : tone === "gold"
-        ? "bg-[color:var(--tc-gold-soft)]"
-        : "bg-white/60";
-  const br =
-    tone === "mint"
-      ? "border-[color:var(--tc-mint-line)]"
-      : tone === "gold"
-        ? "border-[color:var(--tc-gold-line)]"
-        : "border-white/40";
-  return (
-    <div className={`rounded-3xl border ${br} ${bg} p-5`}>
-      {children}
-    </div>
-  );
-}
-
-// ---------------------------
-// AI text split into 2 parts
-// ---------------------------
-function splitExplain(text) {
-  const t = (text || "").trim();
-  if (!t) return { p1: "", p2: "" };
-
-  const h1 = "いまの体のクセ（今回のまとめ）";
-  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
-
-  const normalize = (s) => s.replace(/^#+\s*/gm, "").trim();
-  const n = normalize(t);
-
-  const i1 = n.indexOf(h1);
-  const i2 = n.indexOf(h2);
-
-  if (i1 === -1 && i2 === -1) return { p1: n, p2: "" };
-  if (i1 !== -1 && i2 === -1) return { p1: n.slice(i1 + h1.length).trim() || n, p2: "" };
-  if (i1 === -1 && i2 !== -1) return { p1: n, p2: n.slice(i2 + h2.length).trim() || "" };
-
-  const part1 = n.slice(i1 + h1.length, i2).trim();
-  const part2 = n.slice(i2 + h2.length).trim();
-
-  return {
-    p1: part1 || n.slice(0, i2).trim(),
-    p2: part2 || n.slice(i2 + h2.length).trim(),
-  };
-}
-
-// ✅ Next.js の useSearchParams 対策
+// ✅ Next.js の useSearchParams 対策：中身を Suspense 内に移す
 export default function ResultPageWrapper({ params }) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen grid place-items-center bg-[#E9EDDD]">
-          <div className="text-center space-y-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/70 border-r-[#6a9770]" />
-            <div className="text-sm font-bold text-[#334]">結果を読み込み中…</div>
+        <div className="min-h-screen bg-app">
+          <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
+            <div className="rounded-[22px] bg-[var(--panel)] p-5 shadow-sm ring-1 ring-black/5">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
+                <div>
+                  <div className="text-base font-bold text-slate-900">結果を読み込み中…</div>
+                  <div className="mt-1 text-xs text-slate-500">少し待ってください。</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       }
@@ -213,6 +53,181 @@ export default function ResultPageWrapper({ params }) {
     </Suspense>
   );
 }
+
+/* ------------------------------------------------------------
+ *  Small UI primitives (このページ内で完結)
+ * ------------------------------------------------------------ */
+
+function AppBar({ title, onBack }) {
+  return (
+    <div className="sticky top-0 z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
+      <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+          >
+            <span className="text-slate-400">←</span>
+            もどる
+          </button>
+
+          <div className="text-sm font-extrabold tracking-tight text-slate-800">{title}</div>
+
+          <div className="w-[88px]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Module({ children, className = "" }) {
+  return (
+    <section
+      className={[
+        "rounded-[26px] bg-[var(--panel)] shadow-sm ring-1 ring-black/5",
+        "overflow-hidden",
+        className,
+      ].join(" ")}
+    >
+      {children}
+    </section>
+  );
+}
+
+function ModuleHeader({ icon, title, sub, right }) {
+  return (
+    <div className="px-5 pt-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[var(--mint)] ring-1 ring-black/5">
+            <Image src={icon} alt="" width={32} height={32} className="h-8 w-8" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[17px] font-extrabold tracking-tight text-slate-900">{title}</div>
+            {sub ? <div className="mt-1 text-xs font-medium text-slate-500">{sub}</div> : null}
+          </div>
+        </div>
+        {right ? <div className="shrink-0">{right}</div> : null}
+      </div>
+      <div className="mt-4 h-px w-full bg-black/5" />
+    </div>
+  );
+}
+
+function Tag({ children, tone = "mint" }) {
+  const map = {
+    mint: "bg-[var(--mint)] text-[var(--accent-ink)]",
+    plain: "bg-slate-100 text-slate-700",
+    ok: "bg-emerald-100 text-emerald-800",
+    warn: "bg-amber-100 text-amber-800",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold ${map[tone]}`}>
+      {children}
+    </span>
+  );
+}
+
+/**
+ * “アプリっぽい”パネル
+ * - 小見出し＋左アクセント
+ * - 背景をほんのり色分け
+ */
+function Panel({ icon, title, tone = "mint", children }) {
+  const tones = {
+    mint: {
+      wrap: "bg-[color-mix(in_srgb,var(--mint),white_55%)]",
+      bar: "bg-[var(--accent)]",
+      title: "text-[var(--accent-ink)]",
+    },
+    violet: {
+      wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]",
+      bar: "bg-[#6d5bd0]",
+      title: "text-[#3b2f86]",
+    },
+    teal: {
+      wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]",
+      bar: "bg-[#0f766e]",
+      title: "text-[#115e59]",
+    },
+    amber: {
+      wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]",
+      bar: "bg-[#b45309]",
+      title: "text-[#7c2d12]",
+    },
+  };
+
+  const t = tones[tone] || tones.mint;
+
+  return (
+    <div className={`relative rounded-[20px] ${t.wrap} ring-1 ring-black/5`}>
+      <div className={`absolute left-0 top-0 h-full w-1.5 rounded-l-[20px] ${t.bar}`} />
+      <div className="px-4 py-4 pl-5">
+        <div className="flex items-center gap-3">
+          {icon ? (
+            <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-white/70 ring-1 ring-black/5">
+              <Image src={icon} alt="" width={22} height={22} className="h-[22px] w-[22px]" />
+            </div>
+          ) : null}
+          <div className={`text-sm font-extrabold tracking-tight ${t.title}`}>{title}</div>
+        </div>
+        <div className="mt-3 text-sm leading-7 text-slate-800">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------
+ *  AI split: 見出し「」/ ## / 余計な装飾に強くする
+ * ------------------------------------------------------------ */
+function splitExplain(text) {
+  const raw = (text || "").trim();
+  if (!raw) return { p1: "", p2: "" };
+
+  // normalize:
+  // - markdown heading '##' を除去
+  // - 全角引用「」が混じっても一致できるように見出し検出を柔らかく
+  const normalize = (s) =>
+    s
+      .replace(/^#+\s*/gm, "") // markdown ##
+      .replace(/\r\n/g, "\n")
+      .trim();
+
+  const t = normalize(raw);
+
+  const h1 = "いまの体のクセ（今回のまとめ）";
+  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
+
+  const idx1 = t.indexOf(h1);
+  const idx2 = t.indexOf(h2);
+
+  // 両方見つからない → 全文をp1扱い
+  if (idx1 === -1 && idx2 === -1) return { p1: t, p2: "" };
+
+  // 片方だけ → それ以外は全文扱い（破綻回避）
+  if (idx1 !== -1 && idx2 === -1) {
+    const p1 = t.slice(idx1 + h1.length).trim() || t;
+    return { p1, p2: "" };
+  }
+  if (idx1 === -1 && idx2 !== -1) {
+    const p2 = t.slice(idx2 + h2.length).trim() || "";
+    return { p1: t, p2 };
+  }
+
+  // 両方ある
+  const part1 = t.slice(idx1 + h1.length, idx2).trim();
+  const part2 = t.slice(idx2 + h2.length).trim();
+
+  return {
+    p1: part1 || t.slice(0, idx2).trim(),
+    p2: part2 || t.slice(idx2).trim(),
+  };
+}
+
+/* ------------------------------------------------------------
+ *  Page
+ * ------------------------------------------------------------ */
 
 function ResultPage({ params }) {
   const router = useRouter();
@@ -228,13 +243,17 @@ function ResultPage({ params }) {
   const [attaching, setAttaching] = useState(false);
   const [toast, setToast] = useState("");
 
+  // --- AI explain state ---
   const [explainText, setExplainText] = useState("");
   const [explainModel, setExplainModel] = useState("");
   const [explainCreatedAt, setExplainCreatedAt] = useState("");
   const [loadingExplain, setLoadingExplain] = useState(false);
   const [explainError, setExplainError] = useState("");
 
+  // 多重生成防止
   const explainRequestedRef = useRef(false);
+
+  // legacy support
   const attachAfterLogin = searchParams?.get("attach") === "1";
 
   // ---------------------------
@@ -281,6 +300,7 @@ function ResultPage({ params }) {
 
         setEvent(json.data);
 
+        // if /events/[id] returns ai_explain_*, set it directly
         const t = json.data?.ai_explain_text || "";
         if (t) {
           setExplainText(t);
@@ -316,7 +336,7 @@ function ResultPage({ params }) {
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
   // ---------------------------
-  // Auto-generate / load AI explain
+  // Auto-generate / load AI explain (first view only)
   // ---------------------------
   useEffect(() => {
     if (!event || event?.notFound) return;
@@ -468,10 +488,17 @@ function ResultPage({ params }) {
   // ---------------------------
   if (loadingEvent) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[#E9EDDD]">
-        <div className="text-center space-y-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/70 border-r-[#6a9770]" />
-          <div className="text-sm font-bold text-[#334]">結果を読み込み中…</div>
+      <div className="min-h-screen bg-app">
+        <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
+          <div className="rounded-[22px] bg-[var(--panel)] p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
+              <div>
+                <div className="text-base font-bold text-slate-900">結果を読み込み中…</div>
+                <div className="mt-1 text-xs text-slate-500">少し待ってください。</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -479,442 +506,279 @@ function ResultPage({ params }) {
 
   if (!event || event?.notFound) {
     return (
-      <div className="min-h-screen grid place-items-center bg-[#E9EDDD] p-6">
-        <div className="w-full max-w-sm space-y-4 text-center">
-          <div className="text-xl font-extrabold text-[#223]">結果が見つかりません</div>
-          <div className="text-sm text-[#556]">
-            期限切れ/削除、または保存に失敗した可能性があります。
-          </div>
-          <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
+      <div className="min-h-screen bg-app">
+        <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
+          <Module>
+            <div className="px-5 py-6">
+              <div className="text-lg font-extrabold text-slate-900">結果が見つかりません</div>
+              <div className="mt-2 text-sm leading-7 text-slate-600">
+                期限切れ/削除、または保存に失敗した可能性があります。
+              </div>
+              <div className="mt-5">
+                <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
+              </div>
+            </div>
+          </Module>
         </div>
       </div>
     );
   }
 
   // ---------------------------
-  // Theming (CSS vars) + font class
+  // UI
   // ---------------------------
-  const themeStyle = {
-    "--tc-bg": "#E9EDDD",
-    "--tc-mint": "#6a9770",
-    "--tc-silver": "#e0e4e0",
-    "--tc-gold": "#C1A875",
-
-    "--tc-ink": "#1f2a24",
-    "--tc-ink-soft": "#4a5a50",
-
-    "--tc-surface": "rgba(224,228,224,0.55)", // e0e4e0 glass
-    "--tc-mint-soft": "rgba(106,151,112,0.16)",
-    "--tc-mint-ink": "#2f5a3b",
-    "--tc-mint-line": "rgba(106,151,112,0.22)",
-
-    "--tc-gold-soft": "rgba(193,168,117,0.20)",
-    "--tc-gold-ink": "#5f4b1d",
-    "--tc-gold-line": "rgba(193,168,117,0.28)",
-  };
-
   return (
-    <div
-      style={themeStyle}
-      className="min-h-screen bg-[color:var(--tc-bg)] font-zenkaku"
-    >
-      {/* toast */}
+    <div className="min-h-screen bg-app pb-14">
+      <AppBar title="診断結果" onBack={() => router.push("/check")} />
+
       {toast ? (
-        <div className="fixed left-1/2 top-4 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-2xl border border-white/50 bg-white/70 px-4 py-3 text-sm font-semibold text-[color:var(--tc-ink)] backdrop-blur-xl shadow-lg">
+        <div className="fixed left-1/2 top-3 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-[18px] bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-lg ring-1 ring-black/5">
           {toast}
         </div>
       ) : null}
 
-      {/* iOS widget-like background ornaments */}
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[color:var(--tc-mint)]/20 blur-3xl" />
-        <div className="absolute -right-24 top-24 h-72 w-72 rounded-full bg-[color:var(--tc-gold)]/18 blur-3xl" />
-        <div className="absolute left-1/2 bottom-[-140px] h-80 w-80 -translate-x-1/2 rounded-full bg-white/35 blur-3xl" />
-      </div>
-
-      <div className="relative mx-auto w-full max-w-[440px] px-4 pb-20 pt-6">
-        {/* top bar */}
-        <div className="mb-4 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => router.push("/check")}
-            className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/55 px-4 py-2 text-xs font-bold text-[color:var(--tc-ink)] backdrop-blur-xl shadow-sm"
-          >
-            ← もどる
-          </button>
-          <div className="text-xs font-extrabold tracking-tight text-[color:var(--tc-ink-soft)]">
-            診断結果
-          </div>
-          <div className="w-[78px]" />
-        </div>
-
-        {/* HERO (image + symptom) */}
-        <GlassCard className="overflow-hidden">
-          <div className="relative -mx-5 -mt-5 mb-4 h-[140px] overflow-hidden">
-            <Image
-              src={IMG.hero}
-              alt="header"
-              fill
-              className="object-cover"
-              priority
+      <div className="mx-auto w-full max-w-[440px] px-4">
+        <div className="space-y-5 pb-3">
+          {/* 1) Hero */}
+          <Module className="relative">
+            <ModuleHeader
+              icon={ASSETS.memo}
+              title="あなたのお悩み"
+              sub="チェック時の記録"
+              right={<Tag tone="mint">無料で閲覧OK</Tag>}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-white/70 via-white/10 to-transparent" />
-          </div>
-
-          <Header
-            icon={
-              <Icon>
-                <SvgMemo />
-              </Icon>
-            }
-            title="あなたのお悩み"
-            sub="チェック時の記録"
-            right={<Chip tone="mint">無料で閲覧OK</Chip>}
-          />
-
-          <div className="mt-4">
-            <SoftPanel tone="mint">
-              <div className="text-[20px] font-extrabold tracking-tight text-[color:var(--tc-ink)]">
-                {symptomLabel}
+            <div className="px-5 pb-5 pt-4">
+              <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-black/5">
+                <div className="text-xs font-bold text-[var(--accent-ink)]/80">フォーカス</div>
+                <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{symptomLabel}</div>
               </div>
-              <div className="mt-1 text-xs font-semibold text-[color:var(--tc-ink-soft)]">
-                このページはログイン不要で見られます（保存はログイン後）
-              </div>
-            </SoftPanel>
-          </div>
-        </GlassCard>
-
-        {/* Constitution */}
-        <div className="mt-4">
-          <GlassCard>
-            <Header
-              icon={
-                <Icon tone="gold">
-                  <SvgCompass />
-                </Icon>
-              }
-              title="体質の見立て"
-              sub="今回の結果から見える“軸”とポイント"
-              right={<Chip tone="gold">Bento</Chip>}
-            />
-
-            {/* Core */}
-            <div className="mt-4">
-              <SoftPanel tone="mint">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-xs font-extrabold text-[color:var(--tc-mint-ink)]">
-                      今の体質の軸
-                    </div>
-                    <div className="mt-1 text-[22px] font-extrabold tracking-tight text-[color:var(--tc-ink)]">
-                      {core.title}
-                    </div>
-                  </div>
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/45 bg-white/55 backdrop-blur-xl">
-                    <Image src={IMG.core} alt="core" fill className="object-cover opacity-90" />
-                  </div>
-                </div>
-
-                <div className="mt-3 text-sm leading-7 text-[color:var(--tc-ink)]/90">
-                  {core.tcm_hint}
-                </div>
-              </SoftPanel>
             </div>
+          </Module>
 
-            {/* Points */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-extrabold text-[color:var(--tc-ink)]">
-                  整えポイント（最大2つ）
+          {/* 2) Constitution */}
+          <Module>
+            <ModuleHeader icon={ASSETS.compass} title="体質の見立て" sub="軸・整えポイント・張りやすい場所" />
+
+            <div className="px-5 pb-5 pt-4 space-y-4">
+              <Panel title="今の体質の軸" tone="mint">
+                <div className="text-base font-extrabold tracking-tight text-slate-900">{core.title}</div>
+                <div className="mt-2 text-sm leading-7 text-slate-700">{core.tcm_hint}</div>
+              </Panel>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-extrabold text-slate-900">整えポイント（最大2つ）</div>
+                  <Tag tone="plain">優先</Tag>
                 </div>
-                <Chip tone="gold">優先</Chip>
-              </div>
 
-              <div className="mt-2 space-y-3">
                 {subLabels?.length ? (
-                  subLabels.slice(0, 2).map((s) => (
-                    <SoftPanel key={s.title} tone="gold">
-                      <div className="flex gap-3">
-                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white/45 bg-white/55 backdrop-blur-xl">
-                          <Image src={IMG.point} alt="point" fill className="object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-[16px] font-extrabold text-[color:var(--tc-ink)]">
-                            {s.title}
-                          </div>
-                          {s.short ? (
-                            <div className="text-xs font-semibold text-[color:var(--tc-ink-soft)]">
-                              {s.short}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                      {s.action_hint ? (
-                        <div className="mt-3 text-sm leading-7 text-[color:var(--tc-ink)]/90">
-                          {s.action_hint}
-                        </div>
-                      ) : null}
-                    </SoftPanel>
-                  ))
+                  <div className="space-y-3">
+                    {subLabels.map((s) => (
+                      <Panel
+                        key={s.title}
+                        icon={ASSETS.point}
+                        title={`${s.title}${s.short ? `（${s.short}）` : ""}`}
+                        tone="amber"
+                      >
+                        {s.action_hint ? (
+                          <div className="text-sm leading-7 text-slate-800">{s.action_hint}</div>
+                        ) : (
+                          <div className="text-sm text-slate-600">（ヒントなし）</div>
+                        )}
+                      </Panel>
+                    ))}
+                  </div>
                 ) : (
-                  <SoftPanel>
-                    <div className="text-sm font-semibold text-[color:var(--tc-ink-soft)]">
-                      今回は該当なし（バランスが良い状態です）
-                    </div>
-                  </SoftPanel>
+                  <div className="rounded-[18px] bg-white p-4 text-sm text-slate-600 ring-1 ring-black/5">
+                    今回は強い偏りは見られませんでした（バランス良好）。
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Body areas */}
-            <div className="mt-4">
-              <div className="text-sm font-extrabold text-[color:var(--tc-ink)]">体の張りやすい場所</div>
-              <div className="mt-2 space-y-3">
-                <SoftPanel tone="mint">
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white/45 bg-white/55 backdrop-blur-xl">
-                      <Image src={IMG.bodyMain} alt="main" fill className="object-cover" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-extrabold text-[color:var(--tc-mint-ink)]">（主）</div>
-                      {meridianPrimary ? (
-                        <>
-                          <div className="text-[16px] font-extrabold text-[color:var(--tc-ink)]">
-                            {meridianPrimary.title}
-                          </div>
-                          <div className="mt-1 text-xs font-semibold text-[color:var(--tc-ink-soft)]">
-                            {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
-                          </div>
-                          <div className="mt-2 text-sm leading-7 text-[color:var(--tc-ink)]/90">
-                            {meridianPrimary.organs_hint}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-sm font-semibold text-[color:var(--tc-ink-soft)]">
-                          今回は強い偏りなし
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </SoftPanel>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-extrabold text-slate-900">体の張りやすい場所</div>
+                  <Tag tone="plain">サイン</Tag>
+                </div>
 
-                <SoftPanel tone="gold">
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-white/45 bg-white/55 backdrop-blur-xl">
-                      <Image src={IMG.bodySub} alt="sub" fill className="object-cover" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-extrabold text-[color:var(--tc-gold-ink)]">（副）</div>
-                      {meridianSecondary ? (
-                        <>
-                          <div className="text-[16px] font-extrabold text-[color:var(--tc-ink)]">
-                            {meridianSecondary.title}
-                          </div>
-                          <div className="mt-1 text-xs font-semibold text-[color:var(--tc-ink-soft)]">
-                            {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
-                          </div>
-                          <div className="mt-2 text-sm leading-7 text-[color:var(--tc-ink)]/90">
-                            {meridianSecondary.organs_hint}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-sm font-semibold text-[color:var(--tc-ink-soft)]">
-                          今回は強い偏りなし
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </SoftPanel>
+                <Panel icon={ASSETS.main} title="（主）出やすいライン" tone="violet">
+                  {meridianPrimary ? (
+                    <>
+                      <div className="text-base font-extrabold text-slate-900">{meridianPrimary.title}</div>
+                      <div className="mt-1 text-xs font-bold text-slate-500">
+                        {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
+                      </div>
+                      <div className="mt-2 text-sm leading-7 text-slate-700">{meridianPrimary.organs_hint}</div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-700">今回は強い偏りなし</div>
+                  )}
+                </Panel>
+
+                <Panel icon={ASSETS.sub} title="（副）補助ライン" tone="teal">
+                  {meridianSecondary ? (
+                    <>
+                      <div className="text-base font-extrabold text-slate-900">{meridianSecondary.title}</div>
+                      <div className="mt-1 text-xs font-bold text-slate-500">
+                        {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
+                      </div>
+                      <div className="mt-2 text-sm leading-7 text-slate-700">{meridianSecondary.organs_hint}</div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-700">今回は強い偏りなし</div>
+                  )}
+                </Panel>
               </div>
             </div>
-          </GlassCard>
-        </div>
+          </Module>
 
-        {/* AI explain */}
-        <div className="mt-4">
-          <GlassCard>
-            <Header
-              icon={
-                <Icon>
-                  <SvgRobot />
-                </Icon>
-              }
+          {/* 3) AI Explain (1 module, 2 panels) */}
+          <Module>
+            <ModuleHeader
+              icon={ASSETS.robot}
               title="あなたの体質解説"
-              sub="トトノウくん（AI）が文章で整理します"
-              right={<Chip tone="mint">初回のみ生成</Chip>}
+              sub="トトノウくん（AI）が、今回の結果を“つなげて”解説します"
+              right={<Tag tone="mint">初回生成</Tag>}
             />
 
-            <div className="mt-4">
+            <div className="px-5 pb-5 pt-4 space-y-4">
               {loadingExplain ? (
-                <SoftPanel>
+                <div className="rounded-[20px] bg-white p-5 ring-1 ring-black/5">
                   <div className="flex items-center gap-3">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/70 border-r-[color:var(--tc-mint)]" />
-                    <div className="text-sm font-semibold text-[color:var(--tc-ink-soft)]">
-                      解説文を生成中…
+                    <div className="h-7 w-7 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-800">解説文を生成中…</div>
+                      <div className="mt-1 text-xs text-slate-500">初回のみ生成して保存します。</div>
                     </div>
                   </div>
-                </SoftPanel>
+                </div>
               ) : explainText ? (
-                <div className="text-xs font-semibold text-[color:var(--tc-ink-soft)]">
+                <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-4 text-xs font-bold text-[var(--accent-ink)] ring-1 ring-black/5">
                   ※この解説は初回だけ生成して保存されます
                 </div>
               ) : (
-                <SoftPanel>
-                  <div className="text-sm font-semibold text-[color:var(--tc-ink)]">
+                <div className="rounded-[20px] bg-white p-5 ring-1 ring-black/5">
+                  <div className="text-sm font-bold text-slate-800">
                     {explainError ? `生成に失敗しました：${explainError}` : "まだ文章がありません。"}
                   </div>
-                  <div className="mt-3">
+                  <div className="mt-4">
                     <Button onClick={retryExplain} disabled={loadingExplain}>
                       {loadingExplain ? "生成中…" : "もう一度生成する"}
                     </Button>
                   </div>
-                </SoftPanel>
+                </div>
               )}
+
+              {/* AI panels */}
+              {explainText ? (
+                <div className="space-y-3">
+                  {explainParts.p1 ? (
+                    <Panel icon={ASSETS.brain} title="いまの体のクセ（今回のまとめ）" tone="violet">
+                      <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{explainParts.p1}</div>
+                    </Panel>
+                  ) : null}
+
+                  {explainParts.p2 ? (
+                    <Panel icon={ASSETS.radar} title="体調の揺れを予報で先回り（未病レーダー）" tone="teal">
+                      <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{explainParts.p2}</div>
+                    </Panel>
+                  ) : null}
+
+                  {/* split失敗時 */}
+                  {!explainParts.p1 && !explainParts.p2 ? (
+                    <Panel title="AI解説" tone="mint">
+                      <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{explainText}</div>
+                    </Panel>
+                  ) : null}
+
+                  {(explainCreatedAt || explainModel) ? (
+                    <div className="text-right text-[11px] font-bold text-slate-400">
+                      {explainCreatedAt ? `生成：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
+                      {explainModel ? ` / model: ${explainModel}` : ""}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
+          </Module>
 
-            {/* Part 1 */}
-            {explainParts.p1 ? (
-              <div className="mt-4">
-                <SoftPanel tone="mint">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-extrabold text-[color:var(--tc-ink)]">
-                      いまの体のクセ（今回のまとめ）
-                    </div>
-                    <Chip tone="mint">まとめ</Chip>
-                  </div>
+          {/* 4) CTA */}
+          <Module>
+            <ModuleHeader icon={ASSETS.bolt} title="次の一歩（おすすめ）" sub="保存 → 今日の予報と対策（無料）へ" />
 
-                  <div className="mt-3 rounded-2xl bg-white/55 p-4 backdrop-blur-xl border border-white/45">
-                    <div className="border-l-4 border-[color:var(--tc-mint-line)] pl-4">
-                      <div className="whitespace-pre-wrap text-sm leading-8 text-[color:var(--tc-ink)]/95">
-                        {explainParts.p1}
-                      </div>
-                    </div>
-                  </div>
-                </SoftPanel>
-              </div>
-            ) : null}
-
-            {/* Part 2 */}
-            {explainParts.p2 ? (
-              <div className="mt-3">
-                <SoftPanel tone="gold">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-extrabold text-[color:var(--tc-ink)]">
-                      体調の揺れを予報で先回り（未病レーダー）
-                    </div>
-                    <Chip tone="gold">予報</Chip>
-                  </div>
-
-                  <div className="mt-3 rounded-2xl bg-white/55 p-4 backdrop-blur-xl border border-white/45">
-                    <div className="border-l-4 border-[color:var(--tc-gold-line)] pl-4">
-                      <div className="whitespace-pre-wrap text-sm leading-8 text-[color:var(--tc-ink)]/95">
-                        {explainParts.p2}
-                      </div>
-                    </div>
-                  </div>
-                </SoftPanel>
-              </div>
-            ) : null}
-
-            {(explainCreatedAt || explainModel) ? (
-              <div className="mt-3 text-right text-xs font-semibold text-[color:var(--tc-ink-soft)]">
-                {explainCreatedAt ? `生成：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
-                {explainModel ? ` / model: ${explainModel}` : ""}
-              </div>
-            ) : null}
-          </GlassCard>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-4">
-          <GlassCard>
-            <Header
-              icon={
-                <Icon tone="gold">
-                  <SvgBolt />
-                </Icon>
-              }
-              title="次の一歩（おすすめ）"
-              sub="結果を保存して、今日の予報と対策へ"
-              right={<Chip tone="mint">無料あり</Chip>}
-            />
-
-            <div className="mt-4">
+            <div className="px-5 pb-6 pt-4 space-y-4">
               {loadingAuth ? (
-                <SoftPanel>
-                  <div className="text-sm font-semibold text-[color:var(--tc-ink-soft)]">
-                    ログイン状態を確認中…
-                  </div>
-                </SoftPanel>
+                <div className="rounded-[20px] bg-white p-5 ring-1 ring-black/5">
+                  <div className="text-sm font-bold text-slate-700">ログイン状態を確認中…</div>
+                </div>
               ) : isLoggedIn ? (
                 <>
-                  <SoftPanel>
-                    <div className="text-sm font-semibold text-[color:var(--tc-ink)]">
+                  <div className="rounded-[20px] bg-white p-5 ring-1 ring-black/5">
+                    <div className="text-sm font-bold text-slate-800">
                       ログイン中：<span className="font-extrabold">{session.user?.email}</span>
                     </div>
-                    <div className="mt-1 text-xs font-semibold text-[color:var(--tc-ink-soft)]">
+                    <div className="mt-2 text-xs font-bold text-slate-500">
                       今日の「予報と対策」は無料で見られます。
                     </div>
-                  </SoftPanel>
-
-                  <div className="mt-3">
-                    {isAttached ? (
-                      <SoftPanel tone="mint">
-                        <div className="text-sm font-extrabold text-[color:var(--tc-mint-ink)]">
-                          この結果は保存済みです ✅
-                        </div>
-                      </SoftPanel>
-                    ) : (
-                      <SoftPanel tone="gold">
-                        <div className="text-sm font-extrabold text-[color:var(--tc-ink)]">
-                          この結果を保存して、今日の未病レーダーへ進みましょう。
-                        </div>
-                        <div className="mt-3">
-                          <Button onClick={() => attachToAccount(false)} disabled={attaching}>
-                            {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
-                          </Button>
-                        </div>
-                      </SoftPanel>
-                    )}
                   </div>
 
-                  <div className="mt-3 flex gap-2">
-                    <Button variant="ghost" onClick={() => router.push("/radar")}>
-                      今日の予報と対策へ
-                    </Button>
+                  {isAttached ? (
+                    <div className="rounded-[20px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-black/5">
+                      <div className="text-sm font-extrabold text-emerald-800">この結果は保存済みです ✅</div>
+                      <div className="mt-3">
+                        <Button onClick={() => router.push("/radar")}>今日の予報と対策へ</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-black/5">
+                      <div className="text-sm font-extrabold text-slate-900">
+                        この結果を保存して、今日の未病レーダーへ進みましょう。
+                      </div>
+                      <div className="mt-2 text-xs font-bold text-slate-600">
+                        まずは「今日だけ」無料で予報と基本対策が見られます。
+                      </div>
+                      <div className="mt-4">
+                        <Button onClick={() => attachToAccount(false)} disabled={attaching}>
+                          {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
                     <Button variant="ghost" onClick={() => router.push("/check")}>
-                      もう一度チェック
+                      もう一度チェックする
                     </Button>
                   </div>
                 </>
               ) : (
                 <>
-                  <SoftPanel tone="mint">
-                    <div className="text-sm font-extrabold text-[color:var(--tc-ink)]">
-                      無料で結果を保存して、今日の「予報と対策」へ進めます。
+                  <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-black/5">
+                    <div className="text-base font-extrabold tracking-tight text-slate-900">
+                      無料で結果を保存して、今日の「予報と対策」へ。
                     </div>
-                    <div className="mt-1 text-xs font-semibold text-[color:var(--tc-ink-soft)]">
+                    <div className="mt-2 text-xs font-bold text-slate-600">
                       ※登録だけでは課金されません（無料の範囲で使えます）
                     </div>
-                  </SoftPanel>
+                  </div>
 
-                  <div className="mt-3 flex flex-col gap-2">
+                  <div className="space-y-2">
                     <Button onClick={goSignupToRadar}>無料で保存して、今日の予報と対策を見る</Button>
                     <Button variant="ghost" onClick={goLoginToRadar}>
                       すでに登録済みの方はこちら（ログイン）
                     </Button>
                     <Button variant="ghost" onClick={() => router.push("/check")}>
-                      保存せずにもう一度チェック
+                      もう一度チェックする
                     </Button>
                   </div>
                 </>
               )}
             </div>
-          </GlassCard>
-        </div>
+          </Module>
 
-        <div className="mt-6 text-center text-xs font-semibold text-[color:var(--tc-ink-soft)]">
-          作成日時：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
+          <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
+            診断作成日時：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
+          </div>
         </div>
       </div>
     </div>
