@@ -1,3 +1,4 @@
+/* app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,6 +12,8 @@ html, body { height: 100%; }
   --mint: #E9EDDD;
   --accent: #6a9770;
   --accent-ink: #31543a;
+  --ring: rgba(15, 23, 42, 0.06);
+  --shadow: 0 8px 30px -18px rgba(0,0,0,0.28);
 }
 
 @layer base {
@@ -22,4 +25,10 @@ html, body { height: 100%; }
 @layer utilities {
   .bg-app { background: var(--bg); }
   .font-app { font-family: var(--font-zenkaku), ui-sans-serif, system-ui, sans-serif; }
+
+  .app-panel {
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    ring-color: var(--ring);
+  }
 }
