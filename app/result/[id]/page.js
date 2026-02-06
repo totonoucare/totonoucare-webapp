@@ -35,11 +35,11 @@ export default function ResultPageWrapper({ params }) {
 /* -----------------------------
  * Inline SVG Icons（本番前提）
  * ---------------------------- */
-function IconChevron({ open }) {
+function IconChevron() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`}
+      className="h-5 w-5 transition-transform group-open:rotate-180"
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"
@@ -714,7 +714,7 @@ function ResultPage({ params }) {
                   {/* Accordion 1 */}
                   {explainParts.p1 ? (
                     <details className="group rounded-[20px] ring-1 ring-[var(--ring)] bg-white overflow-hidden">
-                      <summary className="cursor-pointer select-none px-4 py-4">
+                      <summary className="cursor-pointer select-none px-4 py-4 list-none [&::-webkit-details-marker]:hidden">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-[color-mix(in_srgb,#ede9fe,white_35%)] text-[#3b2f86] ring-1 ring-[var(--ring)]">
@@ -728,7 +728,7 @@ function ResultPage({ params }) {
                             </div>
                           </div>
                           <div className="text-slate-500">
-                            <IconChevron open={false} />
+                            <IconChevron />
                           </div>
                         </div>
                       </summary>
@@ -745,7 +745,7 @@ function ResultPage({ params }) {
                   {/* Accordion 2 */}
                   {explainParts.p2 ? (
                     <details className="group rounded-[20px] ring-1 ring-[var(--ring)] bg-white overflow-hidden">
-                      <summary className="cursor-pointer select-none px-4 py-4">
+                      <summary className="cursor-pointer select-none px-4 py-4 list-none [&::-webkit-details-marker]:hidden">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] text-[#115e59] ring-1 ring-[var(--ring)]">
@@ -759,7 +759,7 @@ function ResultPage({ params }) {
                             </div>
                           </div>
                           <div className="text-slate-500">
-                            <IconChevron open={false} />
+                            <IconChevron />
                           </div>
                         </div>
                       </summary>
