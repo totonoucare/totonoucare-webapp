@@ -1,4 +1,13 @@
+// app/layout.js
 import "./globals.css";
+import { Zen_Kaku_Gothic_New } from "next/font/google";
+
+const zen = Zen_Kaku_Gothic_New({
+  weight: ["400", "500", "700", "900"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-zenkaku",
+});
 
 export const metadata = {
   title: "未病レーダー",
@@ -7,39 +16,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ja">
-      <body className="min-h-screen bg-slate-50 text-slate-900">
-        <header className="border-b bg-white">
-          <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-            <div className="font-semibold">未病レーダー</div>
-            <nav className="flex items-center gap-3 text-sm">
-              <a className="hover:underline" href="/">
-                ホーム
-              </a>
-              <a className="hover:underline" href="/check">
-                体質チェック
-              </a>
-              <a className="hover:underline" href="/guide">
-                ガイド
-              </a>
-              <a className="hover:underline" href="/radar">
-                レーダー
-              </a>
-              <a className="hover:underline" href="/signup">
-                登録
-              </a>
-            </nav>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
-
-        <footer className="border-t bg-white">
-          <div className="mx-auto max-w-3xl px-4 py-4 text-xs text-slate-500">
-            ※ 水面下で開発中のWebアプリです
-          </div>
-        </footer>
-      </body>
+    <html lang="ja" className={zen.variable}>
+      <body className="min-h-screen bg-app text-slate-900 font-app">{children}</body>
     </html>
   );
 }
