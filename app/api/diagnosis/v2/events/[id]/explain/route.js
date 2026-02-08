@@ -28,11 +28,11 @@ function envSensitivityJa(level) {
 
 function envVectorJa(v) {
   const map = {
-    cold_shift: "冷え方向の変化",
-    heat_shift: "暑さ方向の変化",
-    damp_shift: "湿気方向の変化",
-    dry_shift: "乾燥方向の変化",
-    season_shift: "季節の切り替わり",
+    pressure_shift: "気圧の変化",
+    temp_swing: "寒暖差",
+    humidity_up: "湿度が上がる変化",
+    dryness_up: "乾燥が強まる変化",
+    wind_strong: "強風・冷風",
   };
   return map[v] || v;
 }
