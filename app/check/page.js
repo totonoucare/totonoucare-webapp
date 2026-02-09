@@ -1,3 +1,4 @@
+// app/check/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -48,14 +49,38 @@ export default function CheckPage() {
   const isMulti = q?.type === "multi";
   const selected = isMulti ? (Array.isArray(rawSelected) ? rawSelected : []) : rawSelected;
 
-  const canGoNext = isMulti ? selected.length > 0 : Boolean(selected);
-  const isLast = step === total - 1;
+  // ---------------------------
+  // ENV2 スキップ（ENV1=0 のとき）
+  // - env_sensitivity は "0".."3" の string 想定
+  // - env_vectors は multi
+  // ---------------------------
+  const envSensitivity = answers?.env_sensitivity; // "0".."3" or 0..3
+  const isEnv2 = q?.key === "env_vectors";
+  const shouldSkipEnv2 = isEnv2 && (envSensitivity === "0" || envSensitivity === 0);
 
   function persist(next) {
     try {
       sessionStorage.setItem(PENDING_KEY, JSON.stringify(next));
     } catch {}
   }
+
+  // ENV1=0 なら ENV2 を自動で ["none"] にして 1ステップ進める
+  useEffect(() => {
+    if (!shouldSkipEnv2) return;
+
+    setAnswers((prev) => {
+      const next = { ...prev, env_vectors: ["none"] };
+      persist(next);
+      return next;
+    });
+
+    setError("");
+    setStep((s) => Math.min(s + 1, total - 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldSkipEnv2]);
+
+  const canGoNext = shouldSkipEnv2 ? true : isMulti ? selected.length > 0 : Boolean(selected);
+  const isLast = step === total - 1;
 
   // 途中保存があれば復元（主に「戻ってきた時」用）
   useEffect(() => {
@@ -117,6 +142,12 @@ export default function CheckPage() {
 
       // SINGLE / FREQ
       const next = { ...prev, [ansKey]: value };
+
+      // ✅ ENV1（env_sensitivity）を 0 にした瞬間に env_vectors が残ってたら消す/寄せる（保険）
+      if (ansKey === "env_sensitivity" && (value === "0" || value === 0)) {
+        next.env_vectors = ["none"];
+      }
+
       persist(next);
       return next;
     });
@@ -173,6 +204,16 @@ export default function CheckPage() {
     );
   }
 
+  // ENV2 は shouldSkipEnv2 の useEffect で自動送ってるので、ここに来る前に次へ進む想定。
+  // ただし保険として、描画側でも隠しておく。
+  if (shouldSkipEnv2) {
+    return (
+      <div className="space-y-3">
+        <div className="text-sm text-slate-500">環境の追加質問をスキップ中…</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <ProgressBar current={step + 1} total={total} />
@@ -198,7 +239,12 @@ export default function CheckPage() {
                 >
                   <div className="font-medium">{opt.label}</div>
                   {opt.hint ? (
-                    <div className={["mt-1 text-xs", isSel ? "text-white/80" : "text-slate-500"].join(" ")}>
+                    <div
+                      className={[
+                        "mt-1 text-xs",
+                        isSel ? "text-white/80" : "text-slate-500",
+                      ].join(" ")}
+                    >
                       {opt.hint}
                     </div>
                   ) : null}
@@ -209,7 +255,7 @@ export default function CheckPage() {
 
           {isMulti ? (
             <div className="pt-1 text-xs text-slate-500">
-              ※ 最大{q.max || 2}つまで選べます（「特にない」は単独になります）
+              ※ 最大{q.max || 2}つまで選べます（「特にない・わからない」は単独になります）
             </div>
           ) : null}
 
