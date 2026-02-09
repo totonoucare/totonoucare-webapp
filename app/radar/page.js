@@ -1,479 +1,335 @@
 // app/radar/page.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation"; // 修正: 次画面遷移用
+import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Toast from "@/components/ui/Toast";
+import { 
+  CloudSun, Droplets, Gauge, AlertTriangle, 
+  ShieldCheck, RefreshCw, ChevronRight, Activity 
+} from "lucide-react"; // アイコン用
 
-function levelLabel3(level) {
-  return ["安定", "注意", "要警戒"][level] ?? "—";
-}
-function levelBadgeClass3(level) {
-  if (level === 0) return "bg-slate-100 text-slate-800 border-slate-200";
-  if (level === 1) return "bg-amber-100 text-amber-900 border-amber-200";
-  if (level === 2) return "bg-red-600 text-white border-red-600";
-  return "bg-slate-100 text-slate-800 border-slate-200";
-}
-
-const SIXIN_JA = {
-  wind: "ゆらぎ",
-  cold: "冷え",
-  heat: "暑さ",
-  damp: "湿気",
-  dry: "乾燥",
+// --- 開発用ダミー画像 (本番ではpublicフォルダの画像へ) ---
+const DUMMY_IMAGES = {
+  weatherSun: "https://placehold.co/128x128/fef3c7/d97706?text=Sunny", // 晴れイメージ
+  robotFace: "https://placehold.co/64x64/f0fdf4/15803d?text=AI", // AI顔
+  radarHero: "https://placehold.co/600x300/ecfdf5/047857?text=Radar+Chart", // レーダーチャートのプレースホルダー
 };
 
-const CHIP_JA = (s) => {
-  if (!s) return "";
-  // ここは “今出てる謎チップ” をユーザー向けに丸める（必要に応じて追加）
-  const map = {
-    "cold strong": "冷えが強い",
-    "heat strong": "暑さが強い",
-    "damp strong": "湿気が強い",
-    "dry strong": "乾燥が強い",
-    "wind strong": "変化が大きい",
+// --- UI Components ---
+function Pill({ children, variant = "default", className = "" }) {
+  const variants = {
+    default: "bg-slate-100 text-slate-600",
+    safe: "bg-emerald-100 text-emerald-800",
+    warning: "bg-amber-100 text-amber-800",
+    danger: "bg-red-100 text-red-800",
   };
-
-  // 既に日本語ならそのまま
-  if (/[\u3040-\u30FF\u4E00-\u9FFF]/.test(s)) return s;
-
-  // よくある英字トークンを潰す
-  if (map[s]) return map[s];
-
-  // fallback：英字は出さず「要因」扱いに落とす
-  return "影響要因";
-};
-
-function fmtNow(external) {
-  const t = typeof external?.temp === "number" ? `${external.temp.toFixed(1)}℃` : "—";
-  const h = typeof external?.humidity === "number" ? `${external.humidity.toFixed(0)}%` : "—";
-  const p = typeof external?.pressure === "number" ? `${external.pressure.toFixed(1)}hPa` : "—";
-  return `現在：気温 ${t} / 湿度 ${h} / 気圧 ${p}`;
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  );
 }
 
-function safeArr(v) {
-  return Array.isArray(v) ? v : [];
+function WeatherBadge({ icon: Icon, label, value, unit }) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 p-3 min-w-[80px]">
+      <Icon className="h-5 w-5 text-slate-400 mb-1" />
+      <span className="text-sm font-bold text-slate-700">{value}<span className="text-xs font-normal text-slate-500">{unit}</span></span>
+      <span className="text-[10px] text-slate-400">{label}</span>
+    </div>
+  );
 }
 
-function hhmm(t) {
-  if (!t) return "";
-  return String(t).slice(11, 16);
-}
-
-function formatRange(start, end) {
-  if (!start) return "";
-  if (!end) return `${hhmm(start)}頃`;
-  return `${hhmm(start)}〜${hhmm(end)}頃`;
-}
-
-/**
- * 1時間ごとの windows を「連続区間」に圧縮する
- * - level3 が同じ & top_sixin が同じ ならつなぐ
- * - さらに同じ区間が多い問題に対処：表示は “上位N区間” に絞る
- */
-function groupWindows(windows) {
-  const ws = safeArr(windows)
-    .filter((w) => (w?.level3 ?? 0) >= 1)
-    .slice()
-    .sort((a, b) => String(a.time).localeCompare(String(b.time)));
-
-  if (!ws.length) return [];
-
-  const normKey = (w) => {
-    const lv = w.level3 ?? 0;
-    const six = safeArr(w.top_sixin).join("|");
-    return `${lv}::${six}`;
+// タイムライン風の危険度表示
+function TimeRiskRow({ time, level, riskFactors }) {
+  const levelConfig = {
+    0: { color: "bg-emerald-500", label: "安定", bg: "bg-emerald-50" },
+    1: { color: "bg-amber-400", label: "注意", bg: "bg-amber-50" },
+    2: { color: "bg-red-500", label: "警戒", bg: "bg-red-50" },
   };
-
-  const groups = [];
-  let cur = { ...ws[0], start: ws[0].time, end: ws[0].time, count: 1 };
-
-  for (let i = 1; i < ws.length; i++) {
-    const w = ws[i];
-    if (normKey(w) === normKey(cur)) {
-      cur.end = w.time;
-      cur.count += 1;
-    } else {
-      groups.push(cur);
-      cur = { ...w, start: w.time, end: w.time, count: 1 };
-    }
-  }
-  groups.push(cur);
-
-  // “山”の優先度：risk > level3 > 長さ
-  return groups
-    .slice()
-    .sort((a, b) => {
-      const ra = a.risk ?? 0;
-      const rb = b.risk ?? 0;
-      if (rb !== ra) return rb - ra;
-      const la = a.level3 ?? 0;
-      const lb = b.level3 ?? 0;
-      if (lb !== la) return lb - la;
-      return (b.count ?? 0) - (a.count ?? 0);
-    });
-}
-
-/**
- * explain.text を見出しで分割してカード化する（最速のUX改善）
- * 見出し：今日の予報（3段階） / 注意が必要な時間帯 / 基本対策（無料版）
- */
-function splitExplain(text) {
-  const t = (text || "").trim();
-  if (!t) return null;
-
-  const headings = ["今日の予報（3段階）", "注意が必要な時間帯", "基本対策（無料版）"];
-
-  // どれも含まれないなら “そのまま” を一つの塊で返す
-  const hasAny = headings.some((h) => t.includes(h));
-  if (!hasAny) return { blocks: [{ title: "AIの提案", body: t }] };
-
-  const blocks = [];
-  for (let i = 0; i < headings.length; i++) {
-    const h = headings[i];
-    const nextH = headings[i + 1];
-
-    const start = t.indexOf(h);
-    if (start < 0) continue;
-
-    const bodyStart = start + h.length;
-    const end = nextH ? t.indexOf(nextH, bodyStart) : t.length;
-    const body = t.slice(bodyStart, end).trim();
-
-    blocks.push({ title: h, body });
-  }
-
-  return { blocks };
-}
-
-export default function RadarPage() {
-  const [session, setSession] = useState(null);
-  const [loadingAuth, setLoadingAuth] = useState(true);
-
-  const [toast, setToast] = useState({ open: false, message: "", variant: "info" });
-  const [toastTimer, setToastTimer] = useState(null);
-
-  const [data, setData] = useState(null);
-  const [loadingData, setLoadingData] = useState(true);
-
-  const [explain, setExplain] = useState(null);
-  const [loadingExplain, setLoadingExplain] = useState(false);
-
-  const notify = (message, variant = "success") => {
-    if (toastTimer) clearTimeout(toastTimer);
-    setToast({ open: true, message, variant });
-    const t = setTimeout(() => setToast((p) => ({ ...p, open: false })), 2500);
-    setToastTimer(t);
-  };
-
-  useEffect(() => {
-    let unsub = null;
-
-    (async () => {
-      try {
-        if (!supabase) {
-          setSession(null);
-          setLoadingAuth(false);
-          return;
-        }
-        const { data } = await supabase.auth.getSession();
-        setSession(data.session || null);
-        setLoadingAuth(false);
-
-        const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s || null));
-        unsub = sub?.subscription;
-      } catch (e) {
-        console.error(e);
-        setSession(null);
-        setLoadingAuth(false);
-      }
-    })();
-
-    return () => {
-      try {
-        unsub?.unsubscribe?.();
-      } catch {}
-    };
-  }, []);
-
-  async function authedFetch(path, opts = {}) {
-    if (!supabase) throw new Error("supabase not ready");
-    const { data } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-    if (!token) throw new Error("not logged in");
-
-    const res = await fetch(path, {
-      ...opts,
-      headers: {
-        ...(opts.headers || {}),
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
-
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
-    return json;
-  }
-
-  async function loadAll() {
-    if (!session) return;
-
-    setLoadingData(true);
-    setLoadingExplain(true);
-    setExplain(null);
-
-    try {
-      const r1 = await authedFetch("/api/radar/today");
-      setData(r1?.data || null);
-
-      const r2 = await authedFetch("/api/radar/today/explain");
-      setExplain(r2?.data || null);
-    } catch (e) {
-      console.error(e);
-      notify(e?.message || "読み込みに失敗しました", "error");
-      setData(null);
-      setExplain(null);
-    } finally {
-      setLoadingData(false);
-      setLoadingExplain(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!session) return;
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.access_token]);
-
-  const radar = data?.radar || {};
-  const external = data?.external || {};
-
-  const topSixinJa = useMemo(() => {
-    const top = safeArr(radar?.top_sixin);
-    if (!top.length) return "—";
-    return top.map((c) => SIXIN_JA[c] || "影響").join("・");
-  }, [radar?.top_sixin]);
-
-  const chipsJa = useMemo(() => {
-    return safeArr(radar?.chips).map(CHIP_JA).filter(Boolean).slice(0, 6);
-  }, [radar?.chips]);
-
-  const grouped = useMemo(() => groupWindows(data?.time_windows), [data?.time_windows]);
-  const topGroups = grouped.slice(0, 3); // “重要な山”だけ見せる（多すぎ問題をUIでまず解消）
-
-  const explainBlocks = useMemo(() => splitExplain(explain?.text), [explain?.text]);
-
-  if (loadingAuth) {
-    return (
-      <>
-        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
-        <div className="space-y-3">
-          <h1 className="text-xl font-semibold">未病レーダー</h1>
-          <p className="text-sm text-slate-600">読み込み中…</p>
-        </div>
-      </>
-    );
-  }
-
-  if (!session) {
-    return (
-      <>
-        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
-        <div className="space-y-4">
-          <h1 className="text-xl font-semibold">未病レーダー</h1>
-          <Card title="ログインが必要です">
-            <p className="text-slate-700">レーダーはログイン後に利用できます。</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a href="/signup">
-                <Button>ログイン / 登録</Button>
-              </a>
-              <a href="/check">
-                <Button variant="secondary">体質チェック</Button>
-              </a>
-            </div>
-          </Card>
-        </div>
-      </>
-    );
-  }
-
-  if (loadingData) {
-    return (
-      <>
-        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
-        <div className="space-y-3">
-          <h1 className="text-xl font-semibold">未病レーダー</h1>
-          <p className="text-sm text-slate-600">読み込み中…</p>
-        </div>
-      </>
-    );
-  }
-
-  if (!data) {
-    return (
-      <>
-        <Toast open={toast.open} message={toast.message} variant={toast.variant} />
-        <div className="space-y-4">
-          <h1 className="text-xl font-semibold">未病レーダー</h1>
-          <Card title="読み込みに失敗しました">
-            <p className="text-slate-600">再読み込みしてください。</p>
-            <div className="mt-3">
-              <Button onClick={loadAll}>再読み込み</Button>
-            </div>
-          </Card>
-        </div>
-      </>
-    );
-  }
+  const conf = levelConfig[level] || levelConfig[0];
 
   return (
-    <>
-      <Toast open={toast.open} message={toast.message} variant={toast.variant} />
-
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-semibold">未病レーダー</h1>
-            <p className="text-xs text-slate-500">今日の予報と対策を、短く分かりやすく。</p>
-          </div>
-          <div className="flex gap-2">
-            <a href="/history" className="shrink-0">
-              <Button variant="secondary">履歴</Button>
-            </a>
-            <a href="/check" className="shrink-0">
-              <Button variant="secondary">体質チェック</Button>
-            </a>
-          </div>
-        </div>
-
-        {/* ✅ 結論カード */}
-        <Card
-          title={
-            <div className="flex items-center justify-between gap-3">
-              <span>今日の予報</span>
-              <span
-                className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${levelBadgeClass3(
-                  radar.level
-                )}`}
-              >
-                {levelLabel3(radar.level)}
-              </span>
-            </div>
-          }
-        >
-          <div className="space-y-2">
-            <div className="text-sm text-slate-700">
-              影響の中心：<span className="font-semibold">{topSixinJa}</span>
-            </div>
-
-            {/* reason_text は短くしないと死ぬので、UIでは“要点表示”に寄せる */}
-            <div className="rounded-xl border bg-slate-50 px-3 py-2 text-sm text-slate-800">
-              {radar.reason_text || "—"}
-            </div>
-
-            {/* ✅ 根拠バッジ（日本語に丸める） */}
-            {chipsJa.length ? (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {chipsJa.map((c) => (
-                  <span key={c} className="rounded-full border bg-white px-3 py-1 text-xs text-slate-700">
-                    {c}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="pt-2 text-xs text-slate-500">{fmtNow(external)}</div>
-          </div>
-        </Card>
-
-        {/* ✅ 時間帯：区間で出す */}
-        <Card title="注意が出やすい時間帯（次の24時間）">
-          {!topGroups.length ? (
-            <p className="text-sm text-slate-600">目立つ山は小さめです。</p>
-          ) : (
-            <div className="space-y-2">
-              {topGroups.map((g) => {
-                const six = safeArr(g.top_sixin).map((c) => SIXIN_JA[c] || "影響").join("・");
-                return (
-                  <div key={`${g.start}-${six}-${g.level3}`} className="rounded-xl border bg-white px-3 py-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold">{formatRange(g.start, g.end)}</div>
-                        <div className="mt-1 text-xs text-slate-600">要因：{six || "—"}</div>
-                      </div>
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-semibold ${levelBadgeClass3(
-                          g.level3
-                        )}`}
-                      >
-                        {levelLabel3(g.level3)}
-                      </span>
-                    </div>
-
-                    {/* “この時間にやること”はAIに頼る前に固定でOK（無料版） */}
-                    <div className="mt-2 text-sm text-slate-800">
-                      この時間は「冷やさない・詰め込みすぎない」が効きます。
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="pt-1 text-xs text-slate-500">
-                ※ 1時間ごとの表示はやめて、連続する時間帯をまとめています。
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* ✅ AI：カード分割表示 */}
-        <Card title="基本対策（AI）">
-          {loadingExplain ? (
-            <p className="text-sm text-slate-600">生成中…</p>
-          ) : explainBlocks?.blocks?.length ? (
-            <div className="space-y-3">
-              {explainBlocks.blocks.map((b) => (
-                <div key={b.title} className="rounded-xl border bg-white px-3 py-3">
-                  <div className="text-sm font-semibold">{b.title}</div>
-                  <div className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-800">
-                    {/* 画面に内部コードが出ないよう最低限の置換 */}
-                    {(b.body || "")
-                      .replaceAll("cold_low", "冷えがベース寄り")
-                      .replaceAll("cold_high", "冷え寄り（回復は比較的早め）")
-                      .replaceAll("heat_low", "熱がこもりやすい寄り")
-                      .replaceAll("heat_high", "熱寄り（回復は比較的早め）")
-                      .replaceAll("mixed_low", "寒暖差に振れやすい寄り")
-                      .replaceAll("mixed_high", "寒暖差に振れやすい（回復は比較的早め）")
-                      .replaceAll("neutral_low", "偏りは少ないが引きずりやすい寄り")
-                      .replaceAll("neutral_high", "偏りは少なく回復は比較的早め")
-                      .replaceAll("blood_stasis", "めぐりが滞りやすい")
-                      .replaceAll("fluid_damp", "余分な水分がたまりやすい")
-                      .replaceAll("recovery_score", "回復余力")}
-                  </div>
-                </div>
-              ))}
-              <div className="text-xs text-slate-500">
-                ※ 無料版は「基本対策」に限定（食材提案や手順は控えめに表示）。
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-slate-600">（まだ生成情報がありません）</p>
-              <Button onClick={loadAll}>もう一度読み込む</Button>
-            </div>
-          )}
-        </Card>
-
-        <div className="flex gap-2">
-          <Button onClick={loadAll}>更新</Button>
-          <a href="/radar/settings">
-            <Button variant="secondary">地域設定</Button>
-          </a>
-        </div>
-
-        <div className="text-center text-[11px] font-bold text-slate-400">date: {data?.date || "—"}</div>
+    <div className={`flex items-center gap-3 rounded-xl p-3 ${conf.bg} mb-2`}>
+      <div className="flex flex-col items-center min-w-[48px]">
+        <span className="text-sm font-bold text-slate-700">{time}</span>
       </div>
-    </>
+      <div className={`h-10 w-1 ${conf.color} rounded-full`}></div>
+      <div className="flex-1 min-w-0">
+         <div className="flex items-center gap-2 mb-0.5">
+           <span className={`text-xs font-bold px-2 py-0.5 rounded text-white ${conf.color}`}>{conf.label}</span>
+           <span className="text-xs text-slate-500 truncate">{riskFactors}</span>
+         </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Main Page ---
+export default function RadarPage() {
+  const router = useRouter();
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [data, setData] = useState(null);
+  const [loadingData, setLoadingData] = useState(true);
+  const [explain, setExplain] = useState(null);
+  const [loadingExplain, setLoadingExplain] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Auth check
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(data.session || null);
+      setLoadingAuth(false);
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Fetch Data
+  const loadAll = async () => {
+    if (!session) return;
+    try {
+      setRefreshing(true);
+      if (!data) setLoadingData(true); // 初回のみローディング表示
+      
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("No token");
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // 並列取得
+      const [resData, resExplain] = await Promise.all([
+        fetch("/api/radar/today", { headers }).then(r => r.json()),
+        fetch("/api/radar/today/explain", { headers }).then(r => r.json())
+      ]);
+
+      setData(resData?.data || null);
+      setExplain(resExplain?.data || null);
+
+    } catch (e) {
+      console.error(e);
+      // エラーハンドリング（本番ではToastなどで通知）
+    } finally {
+      setLoadingData(false);
+      setRefreshing(false);
+      setLoadingExplain(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session) loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  // --- Helper Logic ---
+  const levelLabel = (lv) => ["安定", "注意", "要警戒"][lv] ?? "—";
+  const getLevelVariant = (lv) => (lv === 2 ? "danger" : lv === 1 ? "warning" : "safe");
+  
+  const windows = Array.isArray(data?.time_windows) ? data.time_windows : [];
+  // 警戒度が高い順にソートしつつ、直近の時間を優先するなど、表示ロジックを調整
+  const warnWindows = windows
+    .filter((w) => (w.level3 ?? 0) >= 1)
+    .sort((a, b) => new Date(a.time) - new Date(b.time)) // 時間順
+    .slice(0, 5); // 多すぎると圧迫するので5件に絞る
+
+  // --- Render ---
+
+  // 1. Loading State (Skeleton)
+  if (loadingAuth || (loadingData && !data)) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 pt-8 max-w-[440px] mx-auto space-y-6">
+        <div className="h-8 w-32 bg-slate-200 rounded-full animate-pulse"></div>
+        <div className="h-48 w-full bg-slate-200 rounded-3xl animate-pulse"></div>
+        <div className="h-24 w-full bg-slate-200 rounded-3xl animate-pulse"></div>
+      </div>
+    );
+  }
+
+  // 2. Not Logged In
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 flex flex-col items-center justify-center max-w-[440px] mx-auto">
+        <div className="text-center space-y-4 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+          <div className="bg-emerald-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-2">
+            <ShieldCheck className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h1 className="text-xl font-bold text-slate-800">ログインが必要です</h1>
+          <p className="text-sm text-slate-600 leading-6">
+            未病レーダーは、あなたの体質に合わせて<br/>毎日の体調を予報する機能です。
+          </p>
+          <div className="pt-4 space-y-3 w-full">
+             <Button onClick={() => router.push("/signup")} className="w-full bg-emerald-600">無料で登録・ログイン</Button>
+             <Button onClick={() => router.push("/check")} variant="ghost" className="w-full">体質チェックのみ利用する</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. No Constitution Data
+  if (!data && explain?.text?.includes("体質情報が未設定")) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 max-w-[440px] mx-auto pt-8">
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 text-center">
+          <h2 className="text-lg font-bold text-slate-800 mb-2">体質データがありません</h2>
+          <p className="text-sm text-slate-600 mb-6">レーダー予報を出すには、まず体質チェックが必要です。</p>
+          <Button onClick={() => router.push("/check")} className="w-full bg-emerald-600">体質チェックを始める</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // 4. Main Dashboard
+  const { radar, external } = data || {};
+  const currentLevel = radar?.level ?? 0;
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md border-b border-slate-100 px-4 py-3">
+        <div className="max-w-[440px] mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-emerald-600" />
+              未病レーダー
+            </h1>
+            <p className="text-[10px] text-slate-500 font-medium">{new Date().toLocaleDateString('ja-JP')} の予報</p>
+          </div>
+          <button 
+             onClick={loadAll} 
+             disabled={refreshing}
+             className="p-2 bg-white border border-slate-200 rounded-full shadow-sm active:scale-95 transition"
+          >
+            <RefreshCw className={`w-4 h-4 text-slate-600 ${refreshing ? "animate-spin" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-[440px] mx-auto px-4 py-6 space-y-6">
+
+        {/* Hero Section: 今日のステータス */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6">
+          {/* 背景装飾 */}
+          <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-[4rem] opacity-20 pointer-events-none ${
+             currentLevel === 2 ? "bg-red-500" : currentLevel === 1 ? "bg-amber-400" : "bg-emerald-400"
+          }`} />
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+               <span className="text-sm font-bold text-slate-500">現在のコンディション</span>
+               <Pill variant={getLevelVariant(currentLevel)}>{levelLabel(currentLevel)}</Pill>
+            </div>
+            
+            <div className="mb-6">
+              <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-snug">
+                {radar?.reason_text?.split("。")[0] || "今日は穏やかです"}
+              </h2>
+              <p className="mt-2 text-sm text-slate-600 leading-6">
+                 {radar?.reason_text?.split("。")[1]}。
+              </p>
+            </div>
+
+            {/* Environmental Data Grid */}
+            <div className="grid grid-cols-3 gap-2">
+              <WeatherBadge icon={CloudSun} label="気温" value={external?.temp ?? "—"} unit="℃" />
+              <WeatherBadge icon={Droplets} label="湿度" value={external?.humidity ?? "—"} unit="%" />
+              <WeatherBadge icon={Gauge} label="気圧" value={external?.pressure ?? "—"} unit="hPa" />
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline: 注意すべき時間帯 */}
+        <div>
+          <div className="flex items-center justify-between px-2 mb-3">
+             <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+               <AlertTriangle className="w-4 h-4 text-amber-500" />
+               気をつける時間帯
+             </h3>
+             <span className="text-xs text-slate-400">今後24時間</span>
+          </div>
+
+          <div className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm p-4">
+             {warnWindows.length > 0 ? (
+               <div className="space-y-1">
+                 {warnWindows.map((w, i) => (
+                   <TimeRiskRow 
+                     key={i} 
+                     time={new Date(w.time).getHours() + ":00"} 
+                     level={w.level3} 
+                     riskFactors={Array.isArray(w.top_sixin) ? w.top_sixin.join("・") : ""}
+                   />
+                 ))}
+               </div>
+             ) : (
+               <div className="text-center py-6">
+                 <div className="inline-block p-3 bg-emerald-50 rounded-full mb-2">
+                   <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                 </div>
+                 <p className="text-sm font-bold text-slate-700">特に心配な時間はありません</p>
+                 <p className="text-xs text-slate-500 mt-1">今日は穏やかに過ごせそうです。</p>
+               </div>
+             )}
+          </div>
+        </div>
+
+        {/* AI Advice: チャット風UI */}
+        <div>
+           <h3 className="text-base font-bold text-slate-800 px-2 mb-3">AIアドバイス</h3>
+           <div className="flex gap-4 items-start">
+              <div className="shrink-0">
+                 <div className="w-12 h-12 rounded-full border border-slate-100 bg-white shadow-sm overflow-hidden p-1">
+                   <Image src={DUMMY_IMAGES.robotFace} alt="AI" width={48} height={48} className="object-contain" />
+                 </div>
+              </div>
+              <div className="flex-1 bg-white rounded-2xl rounded-tl-none border border-slate-100 shadow-sm p-5 relative">
+                 {/* 吹き出しの三角 */}
+                 <div className="absolute top-4 -left-2 w-4 h-4 bg-white border-l border-b border-slate-100 transform rotate-45"></div>
+                 
+                 {loadingExplain ? (
+                   <div className="flex space-x-2 h-6 items-center">
+                      <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce delay-75"></div>
+                      <div className="w-2 h-2 bg-slate-300 rounded-full animate-bounce delay-150"></div>
+                   </div>
+                 ) : explain?.text ? (
+                   <div className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">
+                     {explain.text}
+                   </div>
+                 ) : (
+                   <div className="text-sm text-slate-400">データがありません</div>
+                 )}
+              </div>
+           </div>
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="pt-4 pb-8 flex flex-col gap-3">
+           <button 
+             onClick={() => router.push("/history")}
+             className="flex items-center justify-between w-full p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:bg-slate-50 transition"
+           >
+              <div className="flex items-center gap-3">
+                 <div className="p-2 bg-slate-100 rounded-full"><Activity className="w-4 h-4 text-slate-600"/></div>
+                 <span className="text-sm font-bold text-slate-700">過去のコンディション履歴</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+           </button>
+           
+           <button 
+             onClick={() => router.push("/check")}
+             className="w-full py-3 text-sm font-bold text-slate-400 hover:text-emerald-600 transition"
+           >
+             体質チェックをやり直す
+           </button>
+        </div>
+
+      </div>
+    </div>
   );
 }
