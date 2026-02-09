@@ -2,20 +2,58 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation"; // 修正: 次画面遷移用
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
-import { 
-  CloudSun, Droplets, Gauge, AlertTriangle, 
-  ShieldCheck, RefreshCw, ChevronRight, Activity 
-} from "lucide-react"; // アイコン用
 
 // --- 開発用ダミー画像 (本番ではpublicフォルダの画像へ) ---
 const DUMMY_IMAGES = {
-  weatherSun: "https://placehold.co/128x128/fef3c7/d97706?text=Sunny", // 晴れイメージ
-  robotFace: "https://placehold.co/64x64/f0fdf4/15803d?text=AI", // AI顔
-  radarHero: "https://placehold.co/600x300/ecfdf5/047857?text=Radar+Chart", // レーダーチャートのプレースホルダー
+  weatherSun: "https://placehold.co/128x128/fef3c7/d97706?text=Sunny",
+  robotFace: "https://placehold.co/64x64/f0fdf4/15803d?text=AI",
+  radarHero: "https://placehold.co/600x300/ecfdf5/047857?text=Radar",
 };
+
+// --- Inline SVG Icons (ライブラリ不要) ---
+const IconCloudSun = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/>
+  </svg>
+);
+const IconDroplets = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/>
+  </svg>
+);
+const IconGauge = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>
+  </svg>
+);
+const IconAlertTriangle = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>
+  </svg>
+);
+const IconShieldCheck = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+  </svg>
+);
+const IconRefreshCw = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+  </svg>
+);
+const IconChevronRight = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m9 18 6-6-6-6"/>
+  </svg>
+);
+const IconActivity = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+  </svg>
+);
 
 // --- UI Components ---
 function Pill({ children, variant = "default", className = "" }) {
@@ -29,6 +67,20 @@ function Pill({ children, variant = "default", className = "" }) {
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${variants[variant]} ${className}`}>
       {children}
     </span>
+  );
+}
+
+function Button({ children, onClick, variant = "primary", className = "", ...props }) {
+  const baseStyle = "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-bold transition focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none";
+  const variants = {
+    primary: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-200 focus:ring-emerald-500",
+    secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm focus:ring-slate-300",
+    ghost: "bg-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50",
+  };
+  return (
+    <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
+      {children}
+    </button>
   );
 }
 
@@ -95,7 +147,7 @@ export default function RadarPage() {
     if (!session) return;
     try {
       setRefreshing(true);
-      if (!data) setLoadingData(true); // 初回のみローディング表示
+      if (!data) setLoadingData(true); 
       
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token;
@@ -114,7 +166,6 @@ export default function RadarPage() {
 
     } catch (e) {
       console.error(e);
-      // エラーハンドリング（本番ではToastなどで通知）
     } finally {
       setLoadingData(false);
       setRefreshing(false);
@@ -132,11 +183,10 @@ export default function RadarPage() {
   const getLevelVariant = (lv) => (lv === 2 ? "danger" : lv === 1 ? "warning" : "safe");
   
   const windows = Array.isArray(data?.time_windows) ? data.time_windows : [];
-  // 警戒度が高い順にソートしつつ、直近の時間を優先するなど、表示ロジックを調整
   const warnWindows = windows
     .filter((w) => (w.level3 ?? 0) >= 1)
-    .sort((a, b) => new Date(a.time) - new Date(b.time)) // 時間順
-    .slice(0, 5); // 多すぎると圧迫するので5件に絞る
+    .sort((a, b) => new Date(a.time) - new Date(b.time))
+    .slice(0, 5);
 
   // --- Render ---
 
@@ -157,7 +207,7 @@ export default function RadarPage() {
       <div className="min-h-screen bg-slate-50 p-4 flex flex-col items-center justify-center max-w-[440px] mx-auto">
         <div className="text-center space-y-4 bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
           <div className="bg-emerald-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-2">
-            <ShieldCheck className="w-8 h-8 text-emerald-600" />
+            <IconShieldCheck className="w-8 h-8 text-emerald-600" />
           </div>
           <h1 className="text-xl font-bold text-slate-800">ログインが必要です</h1>
           <p className="text-sm text-slate-600 leading-6">
@@ -196,7 +246,7 @@ export default function RadarPage() {
         <div className="max-w-[440px] mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-600" />
+              <IconActivity className="w-5 h-5 text-emerald-600" />
               未病レーダー
             </h1>
             <p className="text-[10px] text-slate-500 font-medium">{new Date().toLocaleDateString('ja-JP')} の予報</p>
@@ -206,7 +256,7 @@ export default function RadarPage() {
              disabled={refreshing}
              className="p-2 bg-white border border-slate-200 rounded-full shadow-sm active:scale-95 transition"
           >
-            <RefreshCw className={`w-4 h-4 text-slate-600 ${refreshing ? "animate-spin" : ""}`} />
+            <IconRefreshCw className={`w-4 h-4 text-slate-600 ${refreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
@@ -237,9 +287,9 @@ export default function RadarPage() {
 
             {/* Environmental Data Grid */}
             <div className="grid grid-cols-3 gap-2">
-              <WeatherBadge icon={CloudSun} label="気温" value={external?.temp ?? "—"} unit="℃" />
-              <WeatherBadge icon={Droplets} label="湿度" value={external?.humidity ?? "—"} unit="%" />
-              <WeatherBadge icon={Gauge} label="気圧" value={external?.pressure ?? "—"} unit="hPa" />
+              <WeatherBadge icon={IconCloudSun} label="気温" value={external?.temp ?? "—"} unit="℃" />
+              <WeatherBadge icon={IconDroplets} label="湿度" value={external?.humidity ?? "—"} unit="%" />
+              <WeatherBadge icon={IconGauge} label="気圧" value={external?.pressure ?? "—"} unit="hPa" />
             </div>
           </div>
         </div>
@@ -248,7 +298,7 @@ export default function RadarPage() {
         <div>
           <div className="flex items-center justify-between px-2 mb-3">
              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-               <AlertTriangle className="w-4 h-4 text-amber-500" />
+               <IconAlertTriangle className="w-4 h-4 text-amber-500" />
                気をつける時間帯
              </h3>
              <span className="text-xs text-slate-400">今後24時間</span>
@@ -269,7 +319,7 @@ export default function RadarPage() {
              ) : (
                <div className="text-center py-6">
                  <div className="inline-block p-3 bg-emerald-50 rounded-full mb-2">
-                   <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                   <IconShieldCheck className="w-6 h-6 text-emerald-500" />
                  </div>
                  <p className="text-sm font-bold text-slate-700">特に心配な時間はありません</p>
                  <p className="text-xs text-slate-500 mt-1">今日は穏やかに過ごせそうです。</p>
@@ -283,8 +333,8 @@ export default function RadarPage() {
            <h3 className="text-base font-bold text-slate-800 px-2 mb-3">AIアドバイス</h3>
            <div className="flex gap-4 items-start">
               <div className="shrink-0">
-                 <div className="w-12 h-12 rounded-full border border-slate-100 bg-white shadow-sm overflow-hidden p-1">
-                   <Image src={DUMMY_IMAGES.robotFace} alt="AI" width={48} height={48} className="object-contain" />
+                 <div className="w-12 h-12 rounded-full border border-slate-100 bg-white shadow-sm overflow-hidden p-1 relative">
+                   <Image src={DUMMY_IMAGES.robotFace} alt="AI" fill className="object-contain" />
                  </div>
               </div>
               <div className="flex-1 bg-white rounded-2xl rounded-tl-none border border-slate-100 shadow-sm p-5 relative">
@@ -315,10 +365,10 @@ export default function RadarPage() {
              className="flex items-center justify-between w-full p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:bg-slate-50 transition"
            >
               <div className="flex items-center gap-3">
-                 <div className="p-2 bg-slate-100 rounded-full"><Activity className="w-4 h-4 text-slate-600"/></div>
+                 <div className="p-2 bg-slate-100 rounded-full"><IconActivity className="w-4 h-4 text-slate-600"/></div>
                  <span className="text-sm font-bold text-slate-700">過去のコンディション履歴</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <IconChevronRight className="w-4 h-4 text-slate-400" />
            </button>
            
            <button 
