@@ -69,12 +69,16 @@ function fmtSigned(v, digits = 1) {
   return `${s}${n.toFixed(digits)}`;
 }
 
+function fmtNum(v, digits = 1) {
+  if (v == null || !Number.isFinite(Number(v))) return "—";
+  return Number(v).toFixed(digits);
+}
+
 function levelLabel(lv) {
   return ["安定", "注意", "要警戒"][lv] ?? "—";
 }
 
 function levelColor(lv) {
-  // 色は「背景ベタ塗り」ではなく、アイコン/下線にだけ使う
   if (lv === 2) return "text-rose-600";
   if (lv === 1) return "text-amber-600";
   return "text-emerald-600";
@@ -98,22 +102,23 @@ function triggerJa(trigger) {
   return "気圧の変化";
 }
 
-function buildHeadline({ today, vulnerability }) {
-  const lv = today?.level3 ?? 0;
-  const main = triggerJa(today?.mainTrigger || "pressure");
+function hourText(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const h = d.getHours();
+  return `${h}:00`;
+}
 
-  // “風＝変化”は使わない。ユーザー語彙にする。
-  if (lv === 2) return `今日は「${main}」が強め。無理は避けて。`;
-  if (lv === 1) return `今日は「${main}」が出やすい日。ペース配分を。`;
-
-  // 安定でも「体質が影響されやすい」なら一言だけ含める（うるさくしない）
-  if ((vulnerability ?? 0) >= 2) return `今日は概ね安定。ただし変化には影響を受けやすい傾向。`;
-  return `今日は概ね安定。`;
+function pickShortReason(reasonText) {
+  if (!reasonText || typeof reasonText !== "string") return null;
+  // "｜" で区切っている想定なので、先頭の塊を採用
+  const head = reasonText.split("｜")[0]?.trim();
+  return head || reasonText;
 }
 
 /** ---------- UI bits ---------- */
-function MetricCard({ icon: Icon, label, value, unit, delta1h }) {
-  const d = delta1h;
+function MetricCard({ icon: Icon, label, value, unit, deltaRecent, deltaDigits = 1 }) {
+  const d = deltaRecent;
   const up = d != null && Number(d) > 0;
   const down = d != null && Number(d) < 0;
   const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
@@ -123,52 +128,59 @@ function MetricCard({ icon: Icon, label, value, unit, delta1h }) {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-slate-400" />
-          <div className="text-xs font-bold text-slate-600">{label}</div>
+          <div className="text-xs font-extrabold text-slate-600">{label}</div>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+        {/* “1h”と断言しない：APIは直近Δ（基本3h）を返している */}
+        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-bold">
           {Arrow ? <Arrow className="w-4 h-4" /> : <span className="w-4 h-4 inline-block" />}
-          <span>{fmtSigned(d, label === "湿度" ? 0 : 1)}</span>
+          <span>{fmtSigned(d, deltaDigits)}</span>
+          <span className="text-[10px] text-slate-400">直近</span>
         </div>
       </div>
 
       <div className="mt-2 flex items-end gap-1">
         <div className="text-2xl font-extrabold text-slate-900">{value ?? "—"}</div>
-        <div className="text-xs font-bold text-slate-500 pb-1">{unit}</div>
+        <div className="text-xs font-extrabold text-slate-500 pb-1">{unit}</div>
       </div>
-      <div className="text-[10px] text-slate-400 mt-1">現在</div>
+      <div className="text-[10px] text-slate-400 mt-1 font-bold">現在</div>
     </div>
   );
 }
 
-function TimelineItem({ w, selected, onClick }) {
-  const Icon = w?.level3 === 0 ? IconSparkle : triggerIcon(w?.trigger);
-  const time = w?.time ? `${new Date(w.time).getHours()}:00` : "—";
+function TimelinePill({ w, selected, onClick }) {
+  const time = hourText(w?.time);
   const lv = w?.level3 ?? 0;
 
+  const Icon = lv === 0 ? IconSparkle : triggerIcon(w?.trigger);
+
+  // “ボタンの羅列”に見えないよう、背景は薄く・枠も控えめに
   return (
     <button
       onClick={onClick}
       className={[
-        "shrink-0 w-[72px] rounded-2xl border bg-white px-2 py-2 text-left transition",
-        selected ? "border-slate-300 shadow-sm" : "border-slate-100 hover:border-slate-200",
+        "shrink-0 w-[64px] rounded-[18px] px-2 py-2 text-left transition",
+        selected
+          ? "bg-white border border-slate-200 shadow-sm"
+          : "bg-slate-50 border border-slate-100 hover:border-slate-200",
       ].join(" ")}
     >
-      <div className="text-[11px] font-bold text-slate-600">{time}</div>
+      <div className="text-[11px] font-extrabold text-slate-600">{time}</div>
 
       <div className="mt-2 flex items-center justify-center">
         <Icon className={["w-6 h-6", levelColor(lv)].join(" ")} />
       </div>
 
-      <div className="mt-2 flex items-center justify-between">
-        <div className={["text-[11px] font-bold", levelColor(lv)].join(" ")}>
-          {levelLabel(lv)}
-        </div>
+      <div className={["mt-2 text-[11px] font-extrabold", levelColor(lv)].join(" ")}>
+        {levelLabel(lv)}
       </div>
 
-      {/* 下線バー（背景ベタ塗りはしない） */}
-      <div className="mt-2 h-1 w-full rounded-full bg-slate-100 overflow-hidden">
-        <div className={["h-full rounded-full", levelBarClass(lv)].join(" ")} style={{ width: lv === 2 ? "100%" : lv === 1 ? "66%" : "33%" }} />
+      {/* 下線バー（iPhone天気っぽい帯） */}
+      <div className="mt-2 h-[3px] w-full rounded-full bg-slate-200/70 overflow-hidden">
+        <div
+          className={["h-full rounded-full", levelBarClass(lv)].join(" ")}
+          style={{ width: lv === 2 ? "100%" : lv === 1 ? "66%" : "33%" }}
+        />
       </div>
     </button>
   );
@@ -183,12 +195,61 @@ function DeltaPill({ label, value, unit, digits = 1 }) {
   return (
     <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
       <div className="flex items-center justify-between">
-        <div className="text-xs font-bold text-slate-600">{label}</div>
+        <div className="text-xs font-extrabold text-slate-600">{label}</div>
         {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
       </div>
       <div className="mt-1 flex items-end gap-1">
         <div className="text-lg font-extrabold text-slate-900">{fmtSigned(value, digits)}</div>
-        <div className="text-[11px] font-bold text-slate-500 pb-0.5">{unit}</div>
+        <div className="text-[11px] font-extrabold text-slate-500 pb-0.5">{unit}</div>
+      </div>
+    </div>
+  );
+}
+
+function BasePressureHint({ ext, windows }) {
+  const baseline = ext?.pressure_baseline;
+  const now = ext?.pressure;
+
+  if (baseline == null || now == null) return null;
+
+  const anomaly = Number(now) - Number(baseline);
+  if (!Number.isFinite(anomaly)) return null;
+
+  // “高め/低め”だけ軽く。内部語は出さない
+  const A = 4.0;
+  let state = "normal";
+  if (anomaly >= A) state = "high";
+  else if (anomaly <= -A) state = "low";
+
+  const Arrow = anomaly > 0 ? IconArrowUp : anomaly < 0 ? IconArrowDown : null;
+
+  // 体質に刺さっている時だけ windows[0].base.reason が入る
+  const reason = windows?.[0]?.base?.reason || null;
+
+  return (
+    <div className="mt-4 rounded-2xl bg-white border border-slate-100 px-4 py-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-extrabold text-slate-600">気圧のベース感</div>
+        <div className="text-[11px] font-extrabold text-slate-500 flex items-center gap-1">
+          {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
+          <span>{fmtSigned(anomaly, 1)} hPa</span>
+        </div>
+      </div>
+
+      <div className="mt-2 text-sm font-extrabold text-slate-900">
+        {state === "high" ? "今日は気圧が高め" : state === "low" ? "今日は気圧が低め" : "今日は気圧は平常域"}
+      </div>
+
+      {reason ? (
+        <div className="mt-1 text-[12px] font-bold text-slate-600 leading-6">{reason}</div>
+      ) : (
+        <div className="mt-1 text-[12px] font-bold text-slate-500 leading-6">
+          体質によって「高め/低め」の負担感が変わります。
+        </div>
+      )}
+
+      <div className="mt-2 text-[11px] text-slate-400 font-bold">
+        直近平均との差（{fmtNum(baseline, 1)} hPa 付近が基準）
       </div>
     </div>
   );
@@ -233,9 +294,8 @@ export default function RadarPage() {
       });
       const json = await res.json();
       const payload = json?.data || null;
-      setData(payload);
 
-      // 初期選択：いちばん左（現在）に寄せる
+      setData(payload);
       setSelectedIdx(0);
     } catch (e) {
       console.error(e);
@@ -250,7 +310,11 @@ export default function RadarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  const windows = useMemo(() => (Array.isArray(data?.time_windows) ? data.time_windows : []), [data]);
+  const windows = useMemo(
+    () => (Array.isArray(data?.time_windows) ? data.time_windows : []),
+    [data]
+  );
+
   const selected = windows[selectedIdx] || windows[0] || null;
 
   // states
@@ -273,13 +337,13 @@ export default function RadarPage() {
           <div className="mt-5 flex flex-col gap-3">
             <button
               onClick={() => router.push("/signup")}
-              className="rounded-xl bg-emerald-600 text-white font-bold py-3"
+              className="rounded-xl bg-emerald-600 text-white font-extrabold py-3"
             >
               無料で登録・ログイン
             </button>
             <button
               onClick={() => router.push("/check")}
-              className="rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold py-3"
+              className="rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-extrabold py-3"
             >
               体質チェックへ
             </button>
@@ -289,7 +353,8 @@ export default function RadarPage() {
     );
   }
 
-  if (data && data?.has_profile === false) {
+  // APIは needs_profile を返す
+  if (data?.needs_profile) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 pt-10">
         <div className="max-w-[440px] mx-auto bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 text-center">
@@ -297,7 +362,7 @@ export default function RadarPage() {
           <div className="text-sm text-slate-600 mt-2">{data?.message || "体質チェックを先に完了してください。"}</div>
           <button
             onClick={() => router.push("/check")}
-            className="mt-6 w-full rounded-xl bg-emerald-600 text-white font-bold py-3"
+            className="mt-6 w-full rounded-xl bg-emerald-600 text-white font-extrabold py-3"
           >
             体質チェックを始める
           </button>
@@ -306,13 +371,26 @@ export default function RadarPage() {
     );
   }
 
-  const today = data?.today || {};
   const ext = data?.external || {};
-  const cur = ext?.current || {};
-  const d1 = ext?.delta1h || {};
-  const d24 = ext?.delta24h || {};
+  const summary = data?.summary || {};
+  const radar = data?.radar || {};
 
-  const headline = buildHeadline({ today, vulnerability: data?.vulnerability });
+  const todayLevel = summary?.level3 ?? radar?.level ?? 0;
+  const peakText = summary?.peak?.range_text || null;
+
+  // 見出し：APIの reason_text を短く採用（余計な造語をUI側で作らない）
+  const headline = pickShortReason(radar?.reason_text) || (() => {
+    const main = triggerJa(summary?.main_trigger || "pressure");
+    if (todayLevel === 2) return `今日は「${main}」が強め。無理は避けて。`;
+    if (todayLevel === 1) return `今日は「${main}」が出やすい日。ペース配分を。`;
+    return "今日は概ね安定。";
+  })();
+
+  // メーター右上の「直近Δ」：windows[0].deltas を使う（計算と一致）
+  const recent = windows?.[0]?.deltas || {};
+  const dpRecent = recent?.dp ?? null;
+  const dtRecent = recent?.dt ?? null;
+  const dhRecent = recent?.dh ?? null;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -321,7 +399,9 @@ export default function RadarPage() {
         <div className="max-w-[440px] mx-auto flex items-center justify-between">
           <div>
             <div className="text-lg font-extrabold text-slate-900">未病レーダー</div>
-            <div className="text-[11px] text-slate-500 font-bold">{new Date().toLocaleDateString("ja-JP")} の予報</div>
+            <div className="text-[11px] text-slate-500 font-extrabold">
+              {new Date().toLocaleDateString("ja-JP")} の予報
+            </div>
           </div>
           <button
             onClick={load}
@@ -340,15 +420,25 @@ export default function RadarPage() {
           <div
             className={[
               "absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-15 pointer-events-none",
-              today?.level3 === 2 ? "bg-rose-500" : today?.level3 === 1 ? "bg-amber-400" : "bg-emerald-400",
+              todayLevel === 2 ? "bg-rose-500" : todayLevel === 1 ? "bg-amber-400" : "bg-emerald-400",
             ].join(" ")}
           />
 
           <div className="relative">
             <div className="flex items-center justify-between">
               <div className="text-sm font-extrabold text-slate-700">今日の変化ストレス</div>
-              <div className={["text-xs font-extrabold px-3 py-1 rounded-full", today?.level3 === 2 ? "bg-rose-50 text-rose-700" : today?.level3 === 1 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"].join(" ")}>
-                {levelLabel(today?.level3 ?? 0)}
+              <div
+                className={[
+                  "text-xs font-extrabold px-3 py-1 rounded-full",
+                  todayLevel === 2
+                    ? "bg-rose-50 text-rose-700"
+                    : todayLevel === 1
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-emerald-50 text-emerald-700",
+                ].join(" ")}
+              >
+                {levelLabel(todayLevel)}
+                {peakText ? <span className="ml-1 font-extrabold text-[11px] opacity-80">（ピーク {peakText}）</span> : null}
               </div>
             </div>
 
@@ -357,20 +447,34 @@ export default function RadarPage() {
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <MetricCard icon={IconThermo} label="気温" value={cur?.temp ?? "—"} unit="℃" delta1h={d1?.dt} />
-              <MetricCard icon={IconDroplet} label="湿度" value={cur?.humidity ?? "—"} unit="%" delta1h={d1?.dh} />
-              <MetricCard icon={IconGauge} label="気圧" value={cur?.pressure ?? "—"} unit="hPa" delta1h={d1?.dp} />
+              <MetricCard
+                icon={IconThermo}
+                label="気温"
+                value={ext?.temp ?? "—"}
+                unit="℃"
+                deltaRecent={dtRecent}
+                deltaDigits={1}
+              />
+              <MetricCard
+                icon={IconDroplet}
+                label="湿度"
+                value={ext?.humidity ?? "—"}
+                unit="%"
+                deltaRecent={dhRecent}
+                deltaDigits={0}
+              />
+              <MetricCard
+                icon={IconGauge}
+                label="気圧"
+                value={ext?.pressure ?? "—"}
+                unit="hPa"
+                deltaRecent={dpRecent}
+                deltaDigits={1}
+              />
             </div>
 
-            {/* 昨日比（カードの中で“控えめ”に） */}
-            <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-bold">
-              <div>昨日比</div>
-              <div className="flex gap-3">
-                <span>気温 {fmtSigned(d24?.dt, 1)}℃</span>
-                <span>湿度 {fmtSigned(d24?.dh, 0)}%</span>
-                <span>気圧 {fmtSigned(d24?.dp, 1)}hPa</span>
-              </div>
-            </div>
+            {/* ベース気圧 × 体質の一言（当たる時だけ刺す） */}
+            <BasePressureHint ext={ext} windows={windows} />
           </div>
         </div>
 
@@ -378,14 +482,14 @@ export default function RadarPage() {
         <div>
           <div className="flex items-end justify-between px-1 mb-3">
             <div className="text-base font-extrabold text-slate-900">1時間ごとの波</div>
-            <div className="text-[11px] text-slate-400 font-bold">横にスクロール</div>
+            <div className="text-[11px] text-slate-400 font-extrabold">横にスクロール</div>
           </div>
 
           <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-4">
             <div className="overflow-x-auto">
               <div className="flex gap-2 pb-2">
                 {windows.map((w, i) => (
-                  <TimelineItem
+                  <TimelinePill
                     key={w.time || i}
                     w={w}
                     selected={i === selectedIdx}
@@ -399,9 +503,18 @@ export default function RadarPage() {
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-extrabold text-slate-900">
-                  {selected?.time ? `${new Date(selected.time).getHours()}:00` : "—"} の変化
+                  {hourText(selected?.time)} の変化
                 </div>
-                <div className={["text-xs font-extrabold px-3 py-1 rounded-full", selected?.level3 === 2 ? "bg-rose-50 text-rose-700" : selected?.level3 === 1 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"].join(" ")}>
+                <div
+                  className={[
+                    "text-xs font-extrabold px-3 py-1 rounded-full",
+                    (selected?.level3 ?? 0) === 2
+                      ? "bg-rose-50 text-rose-700"
+                      : (selected?.level3 ?? 0) === 1
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-emerald-50 text-emerald-700",
+                  ].join(" ")}
+                >
                   {levelLabel(selected?.level3 ?? 0)}
                 </div>
               </div>
@@ -412,16 +525,20 @@ export default function RadarPage() {
                 <DeltaPill label="湿度" value={selected?.deltas?.dh} unit="%" digits={0} />
               </div>
 
-              <div className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-600">
+              <div className="mt-3 flex items-center gap-2 text-xs font-extrabold text-slate-600">
                 <span className={["inline-flex items-center gap-1", levelColor(selected?.level3 ?? 0)].join(" ")}>
-                  {selected?.level3 === 0 ? <IconSparkle className="w-4 h-4" /> : (() => {
-                    const I = triggerIcon(selected?.trigger);
-                    return <I className="w-4 h-4" />;
-                  })()}
-                  {selected?.level3 === 0 ? "安定" : triggerJa(selected?.trigger)}
+                  {(selected?.level3 ?? 0) === 0 ? (
+                    <IconSparkle className="w-4 h-4" />
+                  ) : (
+                    (() => {
+                      const I = triggerIcon(selected?.trigger);
+                      return <I className="w-4 h-4" />;
+                    })()
+                  )}
+                  {(selected?.level3 ?? 0) === 0 ? "安定" : triggerJa(selected?.trigger)}
                 </span>
-                <span className="text-slate-400 font-bold">/</span>
-                <span className="text-slate-500 font-bold">（変化の向きは ± で表示）</span>
+                <span className="text-slate-400 font-extrabold">/</span>
+                <span className="text-slate-500 font-extrabold">（符号つきで表示：＋/−）</span>
               </div>
             </div>
           </div>
@@ -434,7 +551,7 @@ export default function RadarPage() {
             className="w-full bg-white border border-slate-100 shadow-sm rounded-2xl px-4 py-4 text-left"
           >
             <div className="text-sm font-extrabold text-slate-900">過去のコンディション履歴</div>
-            <div className="text-[12px] text-slate-500 font-bold mt-1">振り返り・傾向の確認</div>
+            <div className="text-[12px] text-slate-500 font-extrabold mt-1">振り返り・傾向の確認</div>
           </button>
 
           <button
@@ -445,7 +562,7 @@ export default function RadarPage() {
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-400 font-bold leading-5 pb-6">
+        <div className="text-[11px] text-slate-400 font-extrabold leading-5 pb-6">
           ※ 本機能は医療行為ではなくセルフケア支援です。強い症状がある場合は無理をせず、必要に応じて医療機関へ。
         </div>
       </div>
