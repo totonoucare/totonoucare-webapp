@@ -1,306 +1,409 @@
+// app/radar/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-// --- Icons (SVG) ---
-const IconCloudSun = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="M20 12h2" /><path d="m19.07 4.93-1.41 1.41" /><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128" /><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z" /></svg>
-);
-const IconDroplets = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" /><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" /></svg>
-);
-const IconGauge = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 14 4-4" /><path d="M3.34 19a10 10 0 1 1 17.32 0" /></svg>
-);
-const IconWind = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" /><path d="M9.6 4.6A2 2 0 1 1 11 8H2" /><path d="M12.6 19.4A2 2 0 1 0 14 16H2" /></svg>
-);
-const IconActivity = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
-);
-const IconChevronRight = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6" /></svg>
-);
-const IconRefreshCw = ({ className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>
-);
+/** -------- helpers -------- */
 
-// --- 辞書 & ヘルパー ---
-const JA_MAP = {
-  cold: "冷え込み",
-  heat: "暑さ",
-  damp: "湿気",
-  dry: "乾燥",
-  wind: "強風",
-  pressure: "気圧低下",
-  "pressure-up": "気圧上昇",
-  change: "急変動",
-};
-
-// 英語データを日本語に変換（なければそのまま）
-function t(key) {
-  if (!key) return "";
-  const k = key.toLowerCase();
-  return JA_MAP[k] || k;
-}
-
-// ユーザー希望の「スマートな短文」生成ロジック
-function generateSummary(external, level) {
-  if (!external) return "データ取得中...";
-  
-  // 変化量を取得（APIレスポンスの構造に依存、なければ0扱い）
-  // ※ diff_temp, diff_pressure がAPIから返ってきている前提
-  const dp = external.diff_pressure ?? 0;
-  const dt = external.diff_temp ?? 0;
-  const dh = external.diff_humidity ?? 0;
-
-  // メッセージ構築
-  let msg = "";
-  
-  // 優先度1: 気圧変化（頭痛などに直結するため）
-  if (Math.abs(dp) >= 2) {
-    msg = `気圧の変化が ${Math.abs(dp)}hPa です。`;
-  } 
-  // 優先度2: 気温変化
-  else if (Math.abs(dt) >= 4) {
-    msg = `気温差が ${Math.abs(dt)}℃ あります。`;
-  }
-  // 優先度3: 湿度変化
-  else if (Math.abs(dh) >= 15) {
-    msg = `湿度が ${Math.abs(dh)}% 変化しています。`;
-  }
-  else {
-    msg = "気象条件は比較的安定しています。";
-  }
-
-  // レベルに応じた結び
-  if (level >= 2) msg += " 体調の変化に警戒してください。";
-  else if (level === 1) msg += " 無理せず過ごしましょう。";
-  else msg += " 穏やかに過ごせそうです。";
-
-  return msg;
-}
-
-// --- Components ---
-function Pill({ children, variant = "default" }) {
-  const styles = {
-    default: "bg-slate-100 text-slate-600",
-    safe: "bg-emerald-100 text-emerald-800",
-    warning: "bg-amber-100 text-amber-800",
-    danger: "bg-red-100 text-red-800",
+function jpSixin(code) {
+  const map = {
+    wind: "変化（風）",
+    cold: "冷え",
+    heat: "暑さ",
+    damp: "湿気",
+    dry: "乾燥",
+    pressure_shift: "気圧変化",
+    temp_swing: "寒暖差",
+    humidity_up: "湿度↑",
+    dryness_up: "乾燥↑",
   };
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${styles[variant]}`}>
-      {children}
-    </span>
-  );
+  return map[code] || String(code || "");
 }
 
-function WeatherBadge({ icon: Icon, label, value, unit }) {
+function levelLabel3(lv) {
+  // 0/1/2 を想定（安定/注意/要警戒）
+  return ["安定", "注意", "要警戒"][lv] ?? "—";
+}
+function levelStyle3(lv) {
+  // 色は tailwind のニュートラル寄り（派手すぎない）
+  if (lv === 2) return { pill: "bg-red-600 text-white", card: "bg-red-50 border-red-100" };
+  if (lv === 1) return { pill: "bg-amber-500 text-white", card: "bg-amber-50 border-amber-100" };
+  return { pill: "bg-emerald-600 text-white", card: "bg-emerald-50 border-emerald-100" };
+}
+
+function fmt1(n) {
+  return Number.isFinite(n) ? n.toFixed(1) : "—";
+}
+function fmt0(n) {
+  return Number.isFinite(n) ? Math.round(n) : "—";
+}
+
+function hourLabelJST(iso) {
+  try {
+    const d = new Date(iso);
+    const h = d.toLocaleString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" });
+    return h;
+  } catch {
+    return "—";
+  }
+}
+
+// 24h変化の「ユーザーに伝わる短文化」
+// ※ “根拠”の内部語は出さない
+function heroSummary({ radar, external, profileHint }) {
+  const lv = radar?.level3 ?? radar?.level ?? 0;
+  const top = Array.isArray(radar?.top_sixin) ? radar.top_sixin : [];
+  const topJa = top.map(jpSixin).join("・");
+
+  const dp = external?.d_pressure_24h;
+  const dt = external?.d_temp_24h;
+  const dh = external?.d_humidity_24h;
+
+  // 変化ストレスとして見せるので「絶対値」はここでは書かない
+  const parts = [];
+  if (Number.isFinite(dp)) parts.push(`気圧 ${fmt1(dp)}hPa`);
+  if (Number.isFinite(dt)) parts.push(`気温 ${fmt1(dt)}℃`);
+  if (Number.isFinite(dh)) parts.push(`湿度 ${fmt0(dh)}%`);
+
+  const changeText = parts.length ? `24hの変化：${parts.join(" / ")}` : "24hの変化：—";
+
+  const head =
+    lv === 2 ? "今日は“要警戒”。変化が強めです。" :
+    lv === 1 ? "今日は“注意”。変化が出ています。" :
+               "今日は“安定”。大きな変化は少なめです。";
+
+  const hint = profileHint ? `（あなたの傾向：${profileHint}）` : "";
+
+  // top_sixin が英語でも日本語でも崩れない
+  const tags = topJa ? `影響：${topJa}` : "";
+
+  return { head, sub: [changeText, tags, hint].filter(Boolean).join("｜") };
+}
+
+function AiIcon() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl bg-white border border-slate-100 shadow-sm p-3 min-w-[88px]">
-      <Icon className="h-5 w-5 text-slate-400 mb-1" />
-      <span className="text-base font-bold text-slate-800">
-        {value}<span className="text-xs font-normal text-slate-500">{unit}</span>
-      </span>
-      <span className="text-[10px] text-slate-400">{label}</span>
+    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+      <svg viewBox="0 0 24 24" className="h-5 w-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2a4 4 0 0 0-4 4v1H7a3 3 0 0 0-3 3v3a3 3 0 0 0 3 3h1v1a4 4 0 0 0 8 0v-1h1a3 3 0 0 0 3-3v-3a3 3 0 0 0-3-3h-1V6a4 4 0 0 0-4-4Z" />
+        <path d="M9 12h.01M15 12h.01" />
+        <path d="M9 16c1.5 1 4.5 1 6 0" />
+      </svg>
     </div>
   );
 }
 
-// 横スクロール用のカード
-function TimeRiskCard({ time, level, riskFactors }) {
-  const conf = {
-    0: { border: "border-emerald-200", bg: "bg-emerald-50", text: "text-emerald-700", label: "安定" },
-    1: { border: "border-amber-200", bg: "bg-amber-50", text: "text-amber-800", label: "注意" },
-    2: { border: "border-red-200", bg: "bg-red-50", text: "text-red-800", label: "警戒" },
-  }[level] || {};
+/** -------- page -------- */
 
-  // リスク要因を日本語化して結合
-  const factorsJa = Array.isArray(riskFactors) 
-    ? riskFactors.map(t).join("・") 
-    : "";
-
-  return (
-    <div className={`flex flex-col items-center justify-between shrink-0 w-[84px] h-[100px] rounded-2xl border ${conf.border} ${conf.bg} p-2 snap-center`}>
-      <span className="text-xs font-bold text-slate-600">{time}</span>
-      
-      <div className="flex flex-col items-center gap-1">
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded bg-white/60 ${conf.text}`}>
-          {conf.label}
-        </span>
-        {/* 要因があれば表示 */}
-        {factorsJa && (
-          <span className="text-[10px] font-medium text-slate-600 text-center leading-tight line-clamp-2">
-            {factorsJa}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// --- Main ---
 export default function RadarPage() {
   const router = useRouter();
+
   const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
   const [data, setData] = useState(null);
   const [explain, setExplain] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Auth & Data Load
+  // auth
   useEffect(() => {
-    let mounted = true;
+    let unsub = null;
     (async () => {
-      const { data: auth } = await supabase.auth.getSession();
-      setSession(auth.session || null);
-      if (auth.session) {
-        loadData(auth.session.access_token);
-      } else {
-        setLoading(false);
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session || null);
+      } finally {
+        setLoadingAuth(false);
       }
+
+      const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s || null));
+      unsub = sub?.subscription;
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      try { unsub?.unsubscribe?.(); } catch {}
+    };
   }, []);
 
-  const loadData = async (token) => {
+  async function loadAll({ soft = false } = {}) {
+    if (!session) return;
     try {
-      if (!data) setLoading(true);
-      setRefreshing(true);
+      soft ? setRefreshing(true) : setLoading(true);
+
+      const { data: sdata } = await supabase.auth.getSession();
+      const token = sdata?.session?.access_token;
+      if (!token) throw new Error("No token");
+
       const headers = { Authorization: `Bearer ${token}` };
+
+      // ✅ あなたの現状に合わせて：/api/radar/today と /api/radar/today/explain 前提
+      // （もし explain が /api/ai/explain-today のままなら、下のURLを差し替えてOK）
       const [r1, r2] = await Promise.all([
-        fetch("/api/radar/today", { headers }).then(r => r.json()),
-        fetch("/api/radar/today/explain", { headers }).then(r => r.json()),
+        fetch("/api/radar/today", { headers, cache: "no-store" }).then((r) => r.json()),
+        fetch("/api/radar/today/explain", { headers, cache: "no-store" }).then((r) => r.json()),
       ]);
-      setData(r1?.data || null);
-      setExplain(r2?.data || null);
+
+      setData(r1?.data ?? r1 ?? null);
+      setExplain(r2?.data ?? r2 ?? null);
     } catch (e) {
       console.error(e);
+      // ここは雑に落とさずUI残す（プロトタイプ段階の体験優先）
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }
 
-  // --- Display Logic ---
+  useEffect(() => {
+    if (session) loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.access_token]);
+
+  // state
+  if (loadingAuth || (loading && !data)) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 pt-8">
+        <div className="mx-auto max-w-[440px] space-y-4">
+          <div className="h-7 w-40 rounded-full bg-slate-200 animate-pulse" />
+          <div className="h-44 rounded-3xl bg-slate-200 animate-pulse" />
+          <div className="h-28 rounded-3xl bg-slate-200 animate-pulse" />
+          <div className="h-44 rounded-3xl bg-slate-200 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 pt-10">
+        <div className="mx-auto max-w-[440px] rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div className="text-lg font-bold text-slate-900">ログインが必要です</div>
+          <div className="mt-2 text-sm text-slate-600 leading-6">
+            未病レーダーは、体質と天気の「変化」から、今日の注意点を先回りで出します。
+          </div>
+
+          <div className="mt-5 space-y-2">
+            <button
+              onClick={() => router.push("/signup")}
+              className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+            >
+              ログイン / 登録
+            </button>
+            <button
+              onClick={() => router.push("/check")}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+            >
+              体質チェックへ
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const radar = data?.radar || {};
   const external = data?.external || {};
-  const windows = Array.isArray(data?.time_windows) ? data.time_windows : [];
 
-  // 未来24時間のデータを抽出 & ソート
-  const sortedWindows = windows
-    .slice()
+  // 3段階(0/1/2) の想定。もしAPIが 0..3 ならここで丸めてもいい
+  const level3 = Number.isFinite(radar?.level3) ? radar.level3 : Math.min(2, radar?.level ?? 0);
+  const lvStyle = levelStyle3(level3);
+
+  // ✅ “風だけ見たい”をUI側で強制
+  // - time_windows がある前提
+  // - top_sixin に wind が入ってる窓だけ候補
+  const windows = Array.isArray(data?.time_windows) ? data.time_windows : [];
+  const windWindows = windows
+    .filter((w) => {
+      const ts = Array.isArray(w?.top_sixin) ? w.top_sixin : [];
+      // wind / pressure_shift / temp_swing あたりを「変化系」として通す
+      return ts.includes("wind") || ts.includes("pressure_shift") || ts.includes("temp_swing");
+    })
     .sort((a, b) => new Date(a.time) - new Date(b.time));
 
-  // 「根拠：〜」などのダサいテキストを無視し、数値から要約文を生成
-  const summaryText = generateSummary(external, radar.level || 0);
+  // 横スクロールで見せるのは「注意以上」だけ（安定窓は情報量ノイズ）
+  const alertWindows = windWindows.filter((w) => (w.level3 ?? w.level ?? 0) >= 1).slice(0, 24);
 
-  // 読み込み中
-  if (loading && !data) return <div className="min-h-screen bg-slate-50 p-6 flex justify-center pt-20"><div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full"/></div>;
+  // 体質ヒント（簡単でOK）
+  const profileHint = (() => {
+    const p = data?.profile || null; // APIが将来 profile を返すなら拾う
+    // いま無ければ空でOK（UIの要件優先）
+    if (!p) return "";
+    // 例：引きずりやすい/立て直しやすい の抽象だけ
+    if (p?.core_code?.includes("low")) return "引きずりやすい";
+    if (p?.core_code?.includes("high")) return "立て直しやすい";
+    return "";
+  })();
 
-  // 未ログイン
-  if (!session) return (
-    <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center justify-center text-center">
-      <div className="mb-4 text-emerald-600"><IconActivity className="w-10 h-10" /></div>
-      <h2 className="text-lg font-bold text-slate-800">未病レーダーへようこそ</h2>
-      <p className="text-sm text-slate-500 mb-6">ログインすると予報が見られます</p>
-      <button onClick={() => router.push("/login")} className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold">ログイン</button>
-    </div>
-  );
+  const hero = heroSummary({ radar: { ...radar, level3 }, external, profileHint });
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex justify-between items-center">
-        <div>
-          <h1 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-            <IconActivity className="w-5 h-5 text-emerald-600" /> 未病レーダー
-          </h1>
-          <p className="text-[10px] text-slate-400 font-bold">{new Date().toLocaleDateString('ja-JP')} の予報</p>
+    <div className="min-h-screen bg-slate-50 pb-16">
+      {/* header */}
+      <div className="sticky top-0 z-30 border-b border-slate-100 bg-slate-50/90 backdrop-blur px-4 py-3">
+        <div className="mx-auto flex max-w-[440px] items-center justify-between">
+          <div>
+            <div className="text-base font-extrabold text-slate-900">未病レーダー</div>
+            <div className="text-[11px] font-medium text-slate-500">
+              {new Date().toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })} の予報
+            </div>
+          </div>
+
+          <button
+            onClick={() => loadAll({ soft: true })}
+            disabled={refreshing}
+            className="rounded-full border border-slate-200 bg-white p-2 shadow-sm active:scale-95 disabled:opacity-60"
+            title="更新"
+          >
+            <svg viewBox="0 0 24 24" className={`h-4 w-4 text-slate-700 ${refreshing ? "animate-spin" : ""}`} fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12a9 9 0 1 1-2.64-6.36L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+          </button>
         </div>
-        <button onClick={() => loadData(session.access_token)} disabled={refreshing} className="p-2 bg-slate-100 rounded-full">
-          <IconRefreshCw className={`w-4 h-4 text-slate-600 ${refreshing ? "animate-spin" : ""}`} />
-        </button>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        
-        {/* 1. Main Status Card */}
-        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 relative overflow-hidden">
-          {/* 背景の装飾（レベルに応じて色変化） */}
-          <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-[4rem] opacity-10 pointer-events-none ${
-            radar.level === 2 ? "bg-red-500" : radar.level === 1 ? "bg-amber-500" : "bg-emerald-500"
-          }`} />
-
-          <div className="relative z-10">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-xs font-bold text-slate-400">今日のコンディション</span>
-              <Pill variant={radar.level === 2 ? "danger" : radar.level === 1 ? "warning" : "safe"}>
-                {radar.level === 2 ? "要警戒" : radar.level === 1 ? "注意" : "安定"}
-              </Pill>
+      <div className="mx-auto max-w-[440px] space-y-6 px-4 py-6">
+        {/* hero */}
+        <div className={`relative overflow-hidden rounded-[28px] border bg-white p-6 shadow-sm`}>
+          <div className={`absolute right-0 top-0 h-28 w-28 rounded-bl-[56px] opacity-15 ${level3 === 2 ? "bg-red-500" : level3 === 1 ? "bg-amber-400" : "bg-emerald-500"}`} />
+          <div className="relative space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-bold text-slate-600">今日の注意度</div>
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-extrabold ${lvStyle.pill}`}>
+                {levelLabel3(level3)}
+              </span>
             </div>
 
-            {/* 自動生成したシンプルなサマリーを表示（元のAPIテキストは無視） */}
-            <h2 className="text-xl font-bold text-slate-800 leading-snug mb-6">
-              {summaryText}
-            </h2>
+            <div>
+              <div className="text-2xl font-extrabold tracking-tight text-slate-900">
+                {hero.head}
+              </div>
+              <div className="mt-2 text-sm leading-6 text-slate-600">
+                {hero.sub}
+              </div>
+            </div>
 
-            {/* メーター表示 */}
+            {/* meters: 現在値は “計器” で見せる（文章には出さない） */}
             <div className="grid grid-cols-3 gap-2">
-              <WeatherBadge icon={IconCloudSun} label="気温" value={external?.temp ?? "-"} unit="℃" />
-              <WeatherBadge icon={IconDroplets} label="湿度" value={external?.humidity ?? "-"} unit="%" />
-              <WeatherBadge icon={IconGauge} label="気圧" value={external?.pressure ?? "-"} unit="hPa" />
+              <div className="rounded-2xl bg-slate-50 p-3 text-center">
+                <div className="text-[10px] font-bold text-slate-500">気温</div>
+                <div className="mt-1 text-lg font-extrabold text-slate-900">
+                  {Number.isFinite(external?.temp) ? fmt1(external.temp) : "—"}
+                  <span className="ml-0.5 text-xs font-semibold text-slate-500">℃</span>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-3 text-center">
+                <div className="text-[10px] font-bold text-slate-500">湿度</div>
+                <div className="mt-1 text-lg font-extrabold text-slate-900">
+                  {Number.isFinite(external?.humidity) ? fmt0(external.humidity) : "—"}
+                  <span className="ml-0.5 text-xs font-semibold text-slate-500">%</span>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-3 text-center">
+                <div className="text-[10px] font-bold text-slate-500">気圧</div>
+                <div className="mt-1 text-lg font-extrabold text-slate-900">
+                  {Number.isFinite(external?.pressure) ? fmt1(external.pressure) : "—"}
+                  <span className="ml-0.5 text-xs font-semibold text-slate-500">hPa</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 2. Timeline (横スクロール化) */}
-        <div>
-          <div className="flex items-center gap-2 px-1 mb-3">
-            <IconWind className="w-4 h-4 text-slate-400" />
-            <h3 className="text-sm font-bold text-slate-700">時間ごとの予報</h3>
+        {/* time windows: 横スクロール */}
+        <div className="space-y-2">
+          <div className="flex items-end justify-between px-1">
+            <div className="text-sm font-extrabold text-slate-900">気をつける時間帯</div>
+            <div className="text-[11px] font-medium text-slate-500">今後24時間</div>
           </div>
-          
-          {/* 横スクロールコンテナ */}
-          <div className="flex overflow-x-auto gap-3 pb-4 px-1 snap-x scrollbar-hide">
-            {sortedWindows.map((w, i) => (
-              <TimeRiskCard 
-                key={i}
-                // 時刻フォーマット "14:00"
-                time={new Date(w.time).getHours() + ":00"}
-                level={w.level3 ?? 0}
-                riskFactors={w.top_sixin} // 生データ(配列)を渡して中で変換
-              />
-            ))}
+
+          <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm">
+            {alertWindows.length ? (
+              <div className="-mx-4 overflow-x-auto px-4">
+                <div className="flex gap-3">
+                  {alertWindows.map((w, idx) => {
+                    const lv = Math.min(2, w.level3 ?? w.level ?? 0);
+                    const st = levelStyle3(lv);
+                    const ts = Array.isArray(w.top_sixin) ? w.top_sixin : [];
+                    const tags = ts
+                      .filter((x) => x === "wind" || x === "pressure_shift" || x === "temp_swing")
+                      .map(jpSixin)
+                      .join("・");
+
+                    return (
+                      <div
+                        key={`${w.time || idx}`}
+                        className={`min-w-[140px] max-w-[160px] rounded-2xl border p-3 ${st.card}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm font-extrabold text-slate-900">{hourLabelJST(w.time)}</div>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${st.pill}`}>
+                            {levelLabel3(lv)}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-[12px] font-semibold text-slate-700">
+                          {tags || "変化あり"}
+                        </div>
+                        <div className="mt-1 text-[11px] text-slate-600">
+                          {w?.hint_ja || "" /* APIが将来 hint_ja を返したらここに出せる */}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-emerald-50 p-4 text-center">
+                <div className="text-sm font-extrabold text-slate-900">特に警戒時間はありません</div>
+                <div className="mt-1 text-xs text-slate-600">大きな変化が少ない日です。</div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 3. AI Advice */}
-        <div>
-          <h3 className="text-sm font-bold text-slate-700 px-1 mb-3">AIアドバイス</h3>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm relative">
-             <div className="absolute -top-3 left-6 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-100">
-               To You
-             </div>
-             {explain?.text ? (
-               <p className="text-sm leading-7 text-slate-700 whitespace-pre-wrap">{explain.text}</p>
-             ) : (
-               <p className="text-sm text-slate-400">アドバイスを生成中...</p>
-             )}
+        {/* AI advice: 吹き出し */}
+        <div className="space-y-2">
+          <div className="px-1 text-sm font-extrabold text-slate-900">AIアドバイス</div>
+
+          <div className="flex gap-3">
+            <AiIcon />
+            <div className="relative flex-1 rounded-2xl rounded-tl-none border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="absolute left-[-8px] top-4 h-4 w-4 rotate-45 border-b border-l border-slate-100 bg-white" />
+              {explain?.text ? (
+                <div className="whitespace-pre-wrap text-sm leading-7 text-slate-700">{explain.text}</div>
+              ) : (
+                <div className="text-sm text-slate-500">（まだ生成データがありません）</div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Footer Link */}
-        <button onClick={() => router.push("/history")} className="w-full flex justify-between items-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-          <span className="text-sm font-bold text-slate-700">過去の履歴を見る</span>
-          <IconChevronRight className="w-4 h-4 text-slate-400" />
-        </button>
+        {/* footer nav */}
+        <div className="space-y-2 pt-2">
+          <button
+            onClick={() => router.push("/history")}
+            className="flex w-full items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-4 text-left shadow-sm hover:bg-slate-50"
+          >
+            <div>
+              <div className="text-sm font-extrabold text-slate-900">体質チェック履歴</div>
+              <div className="mt-0.5 text-xs text-slate-500">過去の結果を確認</div>
+            </div>
+            <svg viewBox="0 0 24 24" className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
 
+          <button
+            onClick={() => router.push("/check")}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-50"
+          >
+            体質チェックをやり直す
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-
