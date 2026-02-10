@@ -32,7 +32,7 @@ const IconGauge = ({ className = "" }) => (
   </svg>
 );
 
-// 主因アイコン（TimeLine用）
+// 主因アイコン
 const IconPressure = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M4 12a8 8 0 1 0 16 0" />
@@ -69,6 +69,11 @@ function fmtSigned(v, digits = 1) {
   return `${s}${n.toFixed(digits)}`;
 }
 
+function fmtNum(v, digits = 1) {
+  if (v == null || !Number.isFinite(Number(v))) return "—";
+  return Number(v).toFixed(digits);
+}
+
 function levelLabel(lv) {
   return ["安定", "注意", "要警戒"][lv] ?? "—";
 }
@@ -97,24 +102,23 @@ function triggerJa(trigger) {
   return "気圧の変化";
 }
 
-function hourLabelFromISO(iso) {
+function hourText(iso) {
   if (!iso) return "—";
-  const m = String(iso).match(/T(\d{2}):/);
-  if (m?.[1]) return `${Number(m[1])}:00`;
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return `${d.getHours()}:00`;
+  const h = d.getHours();
+  return `${h}:00`;
 }
 
-function compactHeadlineFromReasonText(reasonText) {
-  // APIのreason_textは「｜」区切りなので、最初の塊だけ抜いて見出しにする
+function pickShortReason(reasonText) {
   if (!reasonText || typeof reasonText !== "string") return null;
-  return reasonText.split("｜")[0]?.trim() || null;
+  // "｜" で区切っている想定なので、先頭の塊を採用
+  const head = reasonText.split("｜")[0]?.trim();
+  return head || reasonText;
 }
 
 /** ---------- UI bits ---------- */
-function MetricCard({ icon: Icon, label, value, unit, delta }) {
-  const d = delta;
+function MetricCard({ icon: Icon, label, value, unit, deltaRecent, deltaDigits = 1 }) {
+  const d = deltaRecent;
   const up = d != null && Number(d) > 0;
   const down = d != null && Number(d) < 0;
   const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
@@ -124,50 +128,55 @@ function MetricCard({ icon: Icon, label, value, unit, delta }) {
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-slate-400" />
-          <div className="text-xs font-bold text-slate-600">{label}</div>
+          <div className="text-xs font-extrabold text-slate-600">{label}</div>
         </div>
 
-        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+        {/* “1h”と断言しない：APIは直近Δ（基本3h）を返している */}
+        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-bold">
           {Arrow ? <Arrow className="w-4 h-4" /> : <span className="w-4 h-4 inline-block" />}
-          <span>{fmtSigned(d, label === "湿度" ? 0 : 1)}</span>
+          <span>{fmtSigned(d, deltaDigits)}</span>
+          <span className="text-[10px] text-slate-400">直近</span>
         </div>
       </div>
 
       <div className="mt-2 flex items-end gap-1">
         <div className="text-2xl font-extrabold text-slate-900">{value ?? "—"}</div>
-        <div className="text-xs font-bold text-slate-500 pb-1">{unit}</div>
+        <div className="text-xs font-extrabold text-slate-500 pb-1">{unit}</div>
       </div>
-      <div className="text-[10px] text-slate-400 mt-1">現在</div>
+      <div className="text-[10px] text-slate-400 mt-1 font-bold">現在</div>
     </div>
   );
 }
 
-function TimelineItem({ w, selected, onClick }) {
-  const Icon = w?.level3 === 0 ? IconSparkle : triggerIcon(w?.trigger);
-  const time = hourLabelFromISO(w?.time);
+function TimelinePill({ w, selected, onClick }) {
+  const time = hourText(w?.time);
   const lv = w?.level3 ?? 0;
 
+  const Icon = lv === 0 ? IconSparkle : triggerIcon(w?.trigger);
+
+  // “ボタンの羅列”に見えないよう、背景は薄く・枠も控えめに
   return (
     <button
       onClick={onClick}
       className={[
-        "shrink-0 w-[72px] rounded-2xl border bg-white px-2 py-2 text-left transition",
-        selected ? "border-slate-300 shadow-sm" : "border-slate-100 hover:border-slate-200",
+        "shrink-0 w-[64px] rounded-[18px] px-2 py-2 text-left transition",
+        selected
+          ? "bg-white border border-slate-200 shadow-sm"
+          : "bg-slate-50 border border-slate-100 hover:border-slate-200",
       ].join(" ")}
     >
-      <div className="text-[11px] font-bold text-slate-600">{time}</div>
+      <div className="text-[11px] font-extrabold text-slate-600">{time}</div>
 
       <div className="mt-2 flex items-center justify-center">
         <Icon className={["w-6 h-6", levelColor(lv)].join(" ")} />
       </div>
 
-      <div className="mt-2 flex items-center justify-between">
-        <div className={["text-[11px] font-bold", levelColor(lv)].join(" ")}>
-          {levelLabel(lv)}
-        </div>
+      <div className={["mt-2 text-[11px] font-extrabold", levelColor(lv)].join(" ")}>
+        {levelLabel(lv)}
       </div>
 
-      <div className="mt-2 h-1 w-full rounded-full bg-slate-100 overflow-hidden">
+      {/* 下線バー（iPhone天気っぽい帯） */}
+      <div className="mt-2 h-[3px] w-full rounded-full bg-slate-200/70 overflow-hidden">
         <div
           className={["h-full rounded-full", levelBarClass(lv)].join(" ")}
           style={{ width: lv === 2 ? "100%" : lv === 1 ? "66%" : "33%" }}
@@ -186,12 +195,61 @@ function DeltaPill({ label, value, unit, digits = 1 }) {
   return (
     <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
       <div className="flex items-center justify-between">
-        <div className="text-xs font-bold text-slate-600">{label}</div>
+        <div className="text-xs font-extrabold text-slate-600">{label}</div>
         {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
       </div>
       <div className="mt-1 flex items-end gap-1">
         <div className="text-lg font-extrabold text-slate-900">{fmtSigned(value, digits)}</div>
-        <div className="text-[11px] font-bold text-slate-500 pb-0.5">{unit}</div>
+        <div className="text-[11px] font-extrabold text-slate-500 pb-0.5">{unit}</div>
+      </div>
+    </div>
+  );
+}
+
+function BasePressureHint({ ext, windows }) {
+  const baseline = ext?.pressure_baseline;
+  const now = ext?.pressure;
+
+  if (baseline == null || now == null) return null;
+
+  const anomaly = Number(now) - Number(baseline);
+  if (!Number.isFinite(anomaly)) return null;
+
+  // “高め/低め”だけ軽く。内部語は出さない
+  const A = 4.0;
+  let state = "normal";
+  if (anomaly >= A) state = "high";
+  else if (anomaly <= -A) state = "low";
+
+  const Arrow = anomaly > 0 ? IconArrowUp : anomaly < 0 ? IconArrowDown : null;
+
+  // 体質に刺さっている時だけ windows[0].base.reason が入る
+  const reason = windows?.[0]?.base?.reason || null;
+
+  return (
+    <div className="mt-4 rounded-2xl bg-white border border-slate-100 px-4 py-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-extrabold text-slate-600">気圧のベース感</div>
+        <div className="text-[11px] font-extrabold text-slate-500 flex items-center gap-1">
+          {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
+          <span>{fmtSigned(anomaly, 1)} hPa</span>
+        </div>
+      </div>
+
+      <div className="mt-2 text-sm font-extrabold text-slate-900">
+        {state === "high" ? "今日は気圧が高め" : state === "low" ? "今日は気圧が低め" : "今日は気圧は平常域"}
+      </div>
+
+      {reason ? (
+        <div className="mt-1 text-[12px] font-bold text-slate-600 leading-6">{reason}</div>
+      ) : (
+        <div className="mt-1 text-[12px] font-bold text-slate-500 leading-6">
+          体質によって「高め/低め」の負担感が変わります。
+        </div>
+      )}
+
+      <div className="mt-2 text-[11px] text-slate-400 font-bold">
+        直近平均との差（{fmtNum(baseline, 1)} hPa 付近が基準）
       </div>
     </div>
   );
@@ -218,9 +276,7 @@ export default function RadarPage() {
       setSession(data.session || null);
       setLoadingAuth(false);
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   async function load() {
@@ -258,13 +314,8 @@ export default function RadarPage() {
     () => (Array.isArray(data?.time_windows) ? data.time_windows : []),
     [data]
   );
-  const selected = windows[selectedIdx] || windows[0] || null;
 
-  // 「現在」の矢印（最初のwindowのΔをメーターに流用）
-  const dNow = windows[0]?.deltas || {};
-  const dpNow = dNow?.dp ?? null;
-  const dtNow = dNow?.dt ?? null;
-  const dhNow = dNow?.dh ?? null;
+  const selected = windows[selectedIdx] || windows[0] || null;
 
   // states
   if (loadingAuth || (loading && !data)) {
@@ -286,13 +337,13 @@ export default function RadarPage() {
           <div className="mt-5 flex flex-col gap-3">
             <button
               onClick={() => router.push("/signup")}
-              className="rounded-xl bg-emerald-600 text-white font-bold py-3"
+              className="rounded-xl bg-emerald-600 text-white font-extrabold py-3"
             >
               無料で登録・ログイン
             </button>
             <button
               onClick={() => router.push("/check")}
-              className="rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold py-3"
+              className="rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-extrabold py-3"
             >
               体質チェックへ
             </button>
@@ -302,18 +353,16 @@ export default function RadarPage() {
     );
   }
 
-  // API：needs_profile = true を返す
+  // APIは needs_profile を返す
   if (data?.needs_profile) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 pt-10">
         <div className="max-w-[440px] mx-auto bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 text-center">
           <div className="text-lg font-extrabold text-slate-900">体質データがありません</div>
-          <div className="text-sm text-slate-600 mt-2">
-            {data?.message || "体質チェックを先に完了してください。"}
-          </div>
+          <div className="text-sm text-slate-600 mt-2">{data?.message || "体質チェックを先に完了してください。"}</div>
           <button
             onClick={() => router.push("/check")}
-            className="mt-6 w-full rounded-xl bg-emerald-600 text-white font-bold py-3"
+            className="mt-6 w-full rounded-xl bg-emerald-600 text-white font-extrabold py-3"
           >
             体質チェックを始める
           </button>
@@ -323,17 +372,25 @@ export default function RadarPage() {
   }
 
   const ext = data?.external || {};
-  const radar = data?.radar || {};
   const summary = data?.summary || {};
+  const radar = data?.radar || {};
 
-  const todayLv = summary?.level3 ?? radar?.level ?? 0;
+  const todayLevel = summary?.level3 ?? radar?.level ?? 0;
   const peakText = summary?.peak?.range_text || null;
 
-  const headlinePrimary =
-    compactHeadlineFromReasonText(radar?.reason_text) || "今日の予報";
-  const headlineSecondary = radar?.reason_text || null;
+  // 見出し：APIの reason_text を短く採用（余計な造語をUI側で作らない）
+  const headline = pickShortReason(radar?.reason_text) || (() => {
+    const main = triggerJa(summary?.main_trigger || "pressure");
+    if (todayLevel === 2) return `今日は「${main}」が強め。無理は避けて。`;
+    if (todayLevel === 1) return `今日は「${main}」が出やすい日。ペース配分を。`;
+    return "今日は概ね安定。";
+  })();
 
-  const mainTrigger = summary?.main_trigger || summary?.mainTrigger || "pressure";
+  // メーター右上の「直近Δ」：windows[0].deltas を使う（計算と一致）
+  const recent = windows?.[0]?.deltas || {};
+  const dpRecent = recent?.dp ?? null;
+  const dtRecent = recent?.dt ?? null;
+  const dhRecent = recent?.dh ?? null;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -342,7 +399,7 @@ export default function RadarPage() {
         <div className="max-w-[440px] mx-auto flex items-center justify-between">
           <div>
             <div className="text-lg font-extrabold text-slate-900">未病レーダー</div>
-            <div className="text-[11px] text-slate-500 font-bold">
+            <div className="text-[11px] text-slate-500 font-extrabold">
               {new Date().toLocaleDateString("ja-JP")} の予報
             </div>
           </div>
@@ -352,78 +409,72 @@ export default function RadarPage() {
             className="p-2 rounded-full bg-white border border-slate-200 shadow-sm active:scale-95 transition"
             aria-label="refresh"
           >
-            <IconRefresh
-              className={[
-                "w-5 h-5 text-slate-600",
-                refreshing ? "animate-spin" : "",
-              ].join(" ")}
-            />
+            <IconRefresh className={["w-5 h-5 text-slate-600", refreshing ? "animate-spin" : ""].join(" ")} />
           </button>
         </div>
       </div>
 
       <div className="max-w-[440px] mx-auto px-4 py-6 space-y-6">
-        {/* Hero */}
+        {/* Hero: 今日の変化ストレス */}
         <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6">
           <div
             className={[
               "absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-15 pointer-events-none",
-              todayLv === 2 ? "bg-rose-500" : todayLv === 1 ? "bg-amber-400" : "bg-emerald-400",
+              todayLevel === 2 ? "bg-rose-500" : todayLevel === 1 ? "bg-amber-400" : "bg-emerald-400",
             ].join(" ")}
           />
 
           <div className="relative">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-extrabold text-slate-700">今日の予報</div>
+              <div className="text-sm font-extrabold text-slate-700">今日の変化ストレス</div>
               <div
                 className={[
                   "text-xs font-extrabold px-3 py-1 rounded-full",
-                  todayLv === 2
+                  todayLevel === 2
                     ? "bg-rose-50 text-rose-700"
-                    : todayLv === 1
+                    : todayLevel === 1
                       ? "bg-amber-50 text-amber-700"
                       : "bg-emerald-50 text-emerald-700",
                 ].join(" ")}
               >
-                {levelLabel(todayLv)}
-                {peakText ? `（ピーク ${peakText}）` : ""}
+                {levelLabel(todayLevel)}
+                {peakText ? <span className="ml-1 font-extrabold text-[11px] opacity-80">（ピーク {peakText}）</span> : null}
               </div>
             </div>
 
             <div className="mt-4 text-2xl font-extrabold text-slate-900 leading-snug">
-              {headlinePrimary}
+              {headline}
             </div>
 
-            {/* 2行目は“説明”として控えめ */}
-            {headlineSecondary ? (
-              <div className="mt-2 text-[12px] text-slate-500 font-bold leading-5">
-                {headlineSecondary}
-              </div>
-            ) : null}
-
-            {/* Current metrics */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <MetricCard icon={IconThermo} label="気温" value={ext?.temp ?? "—"} unit="℃" delta={dtNow} />
-              <MetricCard icon={IconDroplet} label="湿度" value={ext?.humidity ?? "—"} unit="%" delta={dhNow} />
-              <MetricCard icon={IconGauge} label="気圧" value={ext?.pressure ?? "—"} unit="hPa" delta={dpNow} />
+              <MetricCard
+                icon={IconThermo}
+                label="気温"
+                value={ext?.temp ?? "—"}
+                unit="℃"
+                deltaRecent={dtRecent}
+                deltaDigits={1}
+              />
+              <MetricCard
+                icon={IconDroplet}
+                label="湿度"
+                value={ext?.humidity ?? "—"}
+                unit="%"
+                deltaRecent={dhRecent}
+                deltaDigits={0}
+              />
+              <MetricCard
+                icon={IconGauge}
+                label="気圧"
+                value={ext?.pressure ?? "—"}
+                unit="hPa"
+                deltaRecent={dpRecent}
+                deltaDigits={1}
+              />
             </div>
 
-            {/* 昨日比（控えめ） */}
-            <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-bold">
-              <div>昨日比</div>
-              <div className="flex gap-3">
-                <span>気温 {fmtSigned(ext?.d_temp_24h, 1)}℃</span>
-                <span>湿度 {fmtSigned(ext?.d_humidity_24h, 0)}%</span>
-                <span>気圧 {fmtSigned(ext?.d_pressure_24h, 1)}hPa</span>
-              </div>
-            </div>
-
-            {/* 体質×ベース気圧の存在感（数値は出しすぎない） */}
-            {Number.isFinite(Number(ext?.pressure_baseline)) ? (
-              <div className="mt-2 text-[11px] text-slate-400 font-bold">
-                基準気圧（目安）：{Number(ext.pressure_baseline).toFixed(1)} hPa
-              </div>
-            ) : null}
+            {/* ベース気圧 × 体質の一言（当たる時だけ刺す） */}
+            <BasePressureHint ext={ext} windows={windows} />
           </div>
         </div>
 
@@ -431,14 +482,14 @@ export default function RadarPage() {
         <div>
           <div className="flex items-end justify-between px-1 mb-3">
             <div className="text-base font-extrabold text-slate-900">1時間ごとの波</div>
-            <div className="text-[11px] text-slate-400 font-bold">横にスクロール</div>
+            <div className="text-[11px] text-slate-400 font-extrabold">横にスクロール</div>
           </div>
 
           <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-4">
             <div className="overflow-x-auto">
               <div className="flex gap-2 pb-2">
                 {windows.map((w, i) => (
-                  <TimelineItem
+                  <TimelinePill
                     key={w.time || i}
                     w={w}
                     selected={i === selectedIdx}
@@ -452,7 +503,7 @@ export default function RadarPage() {
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-extrabold text-slate-900">
-                  {hourLabelFromISO(selected?.time)} の変化
+                  {hourText(selected?.time)} の変化
                 </div>
                 <div
                   className={[
@@ -474,26 +525,21 @@ export default function RadarPage() {
                 <DeltaPill label="湿度" value={selected?.deltas?.dh} unit="%" digits={0} />
               </div>
 
-              <div className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-600">
+              <div className="mt-3 flex items-center gap-2 text-xs font-extrabold text-slate-600">
                 <span className={["inline-flex items-center gap-1", levelColor(selected?.level3 ?? 0)].join(" ")}>
                   {(selected?.level3 ?? 0) === 0 ? (
                     <IconSparkle className="w-4 h-4" />
-                  ) : (() => {
+                  ) : (
+                    (() => {
                       const I = triggerIcon(selected?.trigger);
                       return <I className="w-4 h-4" />;
-                    })()}
+                    })()
+                  )}
                   {(selected?.level3 ?? 0) === 0 ? "安定" : triggerJa(selected?.trigger)}
                 </span>
-                <span className="text-slate-400 font-bold">/</span>
-                <span className="text-slate-500 font-bold">（± で変化の向き）</span>
+                <span className="text-slate-400 font-extrabold">/</span>
+                <span className="text-slate-500 font-extrabold">（符号つきで表示：＋/−）</span>
               </div>
-
-              {/* ベース気圧×体質（選択時間の情報があれば） */}
-              {selected?.base?.reason ? (
-                <div className="mt-3 text-[12px] text-slate-500 font-bold leading-5">
-                  {selected.base.reason}
-                </div>
-              ) : null}
             </div>
           </div>
         </div>
@@ -505,7 +551,7 @@ export default function RadarPage() {
             className="w-full bg-white border border-slate-100 shadow-sm rounded-2xl px-4 py-4 text-left"
           >
             <div className="text-sm font-extrabold text-slate-900">過去のコンディション履歴</div>
-            <div className="text-[12px] text-slate-500 font-bold mt-1">振り返り・傾向の確認</div>
+            <div className="text-[12px] text-slate-500 font-extrabold mt-1">振り返り・傾向の確認</div>
           </button>
 
           <button
@@ -516,7 +562,7 @@ export default function RadarPage() {
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-400 font-bold leading-5 pb-6">
+        <div className="text-[11px] text-slate-400 font-extrabold leading-5 pb-6">
           ※ 本機能は医療行為ではなくセルフケア支援です。強い症状がある場合は無理をせず、必要に応じて医療機関へ。
         </div>
       </div>
