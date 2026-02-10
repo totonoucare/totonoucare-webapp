@@ -20,8 +20,7 @@ async function getPrimaryLocation(userId) {
 
   if (error) throw error;
 
-  // 未設定なら「日本（明石）」の近似（デフォルト）
-  // ※後でUIで設定させる前提
+  // 未設定なら日本（明石）付近を仮
   return data || { lat: 34.6519, lon: 134.9993 };
 }
 
@@ -38,7 +37,6 @@ export async function GET(req) {
     const date = jstDateString(new Date());
     const loc = await getPrimaryLocation(user.id);
 
-    // ---- weather (Open-Meteo) ----
     const meteo = await fetchOpenMeteo({ lat: loc.lat, lon: loc.lon });
     const current = meteo?.current || {};
     const hourly = meteo?.hourly || {};
@@ -59,21 +57,22 @@ export async function GET(req) {
     const d_temp_24h = temp != null && tempAgo != null ? temp - tempAgo : null;
     const d_humidity_24h = humidity != null && humidityAgo != null ? humidity - humidityAgo : null;
 
-    // ---- build wind-only time windows (next 24h) ----
-    const time_windows = buildTimeWindowsFromHourly({
-      hourly,
-      nowIdx,
-      hours: 24,
-      timezone: "Asia/Tokyo",
-    });
-
+    const time_windows = buildTimeWindowsFromHourly({ hourly, nowIdx, hours: 24, timezone: "Asia/Tokyo" });
     const summary = summarizeDayFromWindows(time_windows);
+
     const level3 = summary.level3;     // 0..2
     const maxWind = summary.maxWind;   // 0..3
     const top_sixin = level3 >= 1 ? ["wind"] : [];
 
-    // ---- save external factors (daily_external_factors) ----
-    // score_* range constraints: 0..3
+    // ✅ ユーザー向け reason_text：意味不明な内部ラベル禁止
+    const reason_text =
+      level3 === 2
+        ? "今日は「気圧・気温・湿度の変化」が強め。予定を詰め込みすぎないのが安全。"
+        : level3 === 1
+        ? "今日は「気圧・気温・湿度の変化」が出ています。無理を増やさない意識が◎。"
+        : "今日は大きな変化は少なめ。普段通りでOK。";
+
+    // daily_external_factors：wind-only（他は0固定）
     const { error: eDef } = await supabaseServer
       .from("daily_external_factors")
       .upsert(
@@ -91,7 +90,6 @@ export async function GET(req) {
             d_pressure_24h,
             d_temp_24h,
             d_humidity_24h,
-            // wind-only model: only score_wind is meaningful
             score_wind: Math.max(0, Math.min(3, Number(maxWind || 0))),
             score_cold: 0,
             score_heat: 0,
@@ -102,18 +100,9 @@ export async function GET(req) {
         ],
         { onConflict: "user_id,date" }
       );
-
     if (eDef) throw eDef;
 
-    // ---- save daily radar (daily_radar) ----
-    // daily_radar.level constraint allows 0..3; we store 0..2 (3段階)
-    const reason_text =
-      level3 === 2
-        ? "今日は「変化（風）」が強め。急な揺れに備えて、無理を増やさない日。"
-        : level3 === 1
-        ? "今日は「変化（風）」が出ています。予定を詰め込みすぎないのが安全。"
-        : "今日は大きな変化は少なめ。普段通りでOK。";
-
+    // daily_radar：levelは0..2で保存（3段階UI用）
     const { data: radarRow, error: eRadar } = await supabaseServer
       .from("daily_radar")
       .upsert(
@@ -126,17 +115,15 @@ export async function GET(req) {
             reason_text,
             recommended_main_card_id: null,
             recommended_food_card_id: null,
-            generated_by: "rule_wind_only_v1",
+            generated_by: "rule_wind_only_v2",
           },
         ],
         { onConflict: "user_id,date" }
       )
       .select("id,user_id,date,level,top_sixin,reason_text,generated_by,created_at")
       .single();
-
     if (eRadar) throw eRadar;
 
-    // ---- response ----
     return NextResponse.json({
       data: {
         date,
@@ -151,18 +138,16 @@ export async function GET(req) {
           d_pressure_24h,
           d_temp_24h,
           d_humidity_24h,
-          // wind-only summary
           score_wind: maxWind,
-          top_sixin,
           dominant_trigger: summary.dominant_trigger || null,
         },
         radar: {
           ...radarRow,
-          level3, // explicit for UI (0..2)
-          max_wind_score: maxWind, // 0..3
+          level3,
+          max_wind_score: maxWind,
           reason_short: summary.reason_short,
         },
-        time_windows, // next 24h, only wind-based
+        time_windows,
       },
     });
   } catch (e) {
