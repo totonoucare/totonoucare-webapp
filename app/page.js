@@ -1,323 +1,523 @@
+// app/radar/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { withTimeout } from "@/lib/withTimeout";
-import Button from "@/components/ui/Button";
 
-/* -----------------------------
- * Inline Icons (Result page taste)
- * ---------------------------- */
-function IconSpark() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2l1.2 5.1L18 9l-4.8 1.9L12 16l-1.2-5.1L6 9l4.8-1.9L12 2z" />
-      <path d="M19 13l.7 3L22 17l-2.3 1-.7 3-.7-3L16 17l2.3-1 .7-3z" />
-    </svg>
-  );
-}
-function IconCheck() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-function IconRadar() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 12l8-4" />
-      <path d="M12 12a8 8 0 1 0 8 8" />
-      <path d="M12 12V4" />
-    </svg>
-  );
-}
-function IconHistory() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 1 0 3-6.7" />
-      <path d="M3 3v5h5" />
-      <path d="M12 7v6l4 2" />
-    </svg>
-  );
-}
-function IconBook() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19a2 2 0 0 0 2 2h14" />
-      <path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2V5z" />
-      <path d="M8 7h8M8 11h8M8 15h6" />
-    </svg>
-  );
-}
-function IconLogin() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 17l5-5-5-5" />
-      <path d="M15 12H3" />
-      <path d="M21 3v18" />
-    </svg>
-  );
+/** ---------- Icons (inline SVG) ---------- */
+const IconRefresh = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12a9 9 0 0 1-15.3 6.3L3 16" />
+    <path d="M3 21v-5h5" />
+    <path d="M3 12a9 9 0 0 1 15.3-6.3L21 8" />
+    <path d="M21 3v5h-5" />
+  </svg>
+);
+
+const IconThermo = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4 4 0 1 0 5 0Z" />
+  </svg>
+);
+const IconDroplet = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-6.2S12 2 12 2s-1 1.6-4 4.8S5 13 5 15a7 7 0 0 0 7 7Z" />
+  </svg>
+);
+const IconGauge = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M20 13a8 8 0 1 0-16 0" />
+    <path d="M12 13l3-3" />
+  </svg>
+);
+
+// 主因アイコン（TimeLine用）
+const IconPressure = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M4 12a8 8 0 1 0 16 0" />
+    <path d="M12 4c2 2 2 6 0 8s-2 6 0 8" />
+  </svg>
+);
+const IconTemp = ({ className = "" }) => <IconThermo className={className} />;
+const IconHum = ({ className = "" }) => <IconDroplet className={className} />;
+const IconSparkle = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 2l1.2 4.2L17 7.5l-3.8 1.3L12 13l-1.2-4.2L7 7.5l3.8-1.3L12 2Z" />
+    <path d="M5 14l.7 2.4L8 17l-2.3.6L5 20l-.7-2.4L2 17l2.3-.6L5 14Z" />
+  </svg>
+);
+
+const IconArrowUp = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 19V5" />
+    <path d="M5 12l7-7 7 7" />
+  </svg>
+);
+const IconArrowDown = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 5v14" />
+    <path d="M19 12l-7 7-7-7" />
+  </svg>
+);
+
+/** ---------- Helpers ---------- */
+function fmtSigned(v, digits = 1) {
+  if (v == null || !Number.isFinite(Number(v))) return "—";
+  const n = Number(v);
+  const s = n >= 0 ? "+" : "";
+  return `${s}${n.toFixed(digits)}`;
 }
 
-/* -----------------------------
- * UI primitives (Result page taste)
- * ---------------------------- */
-function AppBar({ title }) {
+function levelLabel(lv) {
+  return ["安定", "注意", "要警戒"][lv] ?? "—";
+}
+
+function levelColor(lv) {
+  if (lv === 2) return "text-rose-600";
+  if (lv === 1) return "text-amber-600";
+  return "text-emerald-600";
+}
+
+function levelBarClass(lv) {
+  if (lv === 2) return "bg-rose-500";
+  if (lv === 1) return "bg-amber-400";
+  return "bg-emerald-500";
+}
+
+function triggerIcon(trigger) {
+  if (trigger === "temp") return IconTemp;
+  if (trigger === "humidity") return IconHum;
+  return IconPressure;
+}
+
+function triggerJa(trigger) {
+  if (trigger === "temp") return "寒暖差";
+  if (trigger === "humidity") return "湿度の変化";
+  return "気圧の変化";
+}
+
+function hourLabelFromISO(iso) {
+  if (!iso) return "—";
+  const m = String(iso).match(/T(\d{2}):/);
+  if (m?.[1]) return `${Number(m[1])}:00`;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return `${d.getHours()}:00`;
+}
+
+function compactHeadlineFromReasonText(reasonText) {
+  // APIのreason_textは「｜」区切りなので、最初の塊だけ抜いて見出しにする
+  if (!reasonText || typeof reasonText !== "string") return null;
+  return reasonText.split("｜")[0]?.trim() || null;
+}
+
+/** ---------- UI bits ---------- */
+function MetricCard({ icon: Icon, label, value, unit, delta }) {
+  const d = delta;
+  const up = d != null && Number(d) > 0;
+  const down = d != null && Number(d) < 0;
+  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
+
   return (
-    <div className="sticky top-0 z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
-      <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
-        <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-extrabold text-slate-800 shadow-sm ring-1 ring-[var(--ring)]">
-            <span className="text-[var(--accent-ink)]"><IconSpark /></span>
-            未病レーダー
-          </div>
-          <div className="text-sm font-extrabold tracking-tight text-slate-800">{title}</div>
-          <div className="w-[88px]" />
+    <div className="relative rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2">
+          <Icon className="w-5 h-5 text-slate-400" />
+          <div className="text-xs font-bold text-slate-600">{label}</div>
+        </div>
+
+        <div className="flex items-center gap-1 text-[11px] text-slate-400">
+          {Arrow ? <Arrow className="w-4 h-4" /> : <span className="w-4 h-4 inline-block" />}
+          <span>{fmtSigned(d, label === "湿度" ? 0 : 1)}</span>
         </div>
       </div>
+
+      <div className="mt-2 flex items-end gap-1">
+        <div className="text-2xl font-extrabold text-slate-900">{value ?? "—"}</div>
+        <div className="text-xs font-bold text-slate-500 pb-1">{unit}</div>
+      </div>
+      <div className="text-[10px] text-slate-400 mt-1">現在</div>
     </div>
   );
 }
 
-function Module({ children, className = "" }) {
+function TimelineItem({ w, selected, onClick }) {
+  const Icon = w?.level3 === 0 ? IconSparkle : triggerIcon(w?.trigger);
+  const time = hourLabelFromISO(w?.time);
+  const lv = w?.level3 ?? 0;
+
   return (
-    <section
+    <button
+      onClick={onClick}
       className={[
-        "rounded-[26px] bg-[var(--panel)] shadow-sm ring-1 ring-[var(--ring)] overflow-hidden",
-        className,
+        "shrink-0 w-[72px] rounded-2xl border bg-white px-2 py-2 text-left transition",
+        selected ? "border-slate-300 shadow-sm" : "border-slate-100 hover:border-slate-200",
       ].join(" ")}
     >
-      {children}
-    </section>
-  );
-}
+      <div className="text-[11px] font-bold text-slate-600">{time}</div>
 
-function ModuleHeader({ icon, title, sub }) {
-  return (
-    <div className="px-5 pt-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[var(--mint)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[17px] font-extrabold tracking-tight text-slate-900">{title}</div>
-            {sub ? <div className="mt-1 text-xs font-medium text-slate-500">{sub}</div> : null}
-          </div>
+      <div className="mt-2 flex items-center justify-center">
+        <Icon className={["w-6 h-6", levelColor(lv)].join(" ")} />
+      </div>
+
+      <div className="mt-2 flex items-center justify-between">
+        <div className={["text-[11px] font-bold", levelColor(lv)].join(" ")}>
+          {levelLabel(lv)}
         </div>
       </div>
-      <div className="mt-4 h-px w-full bg-black/5" />
-    </div>
+
+      <div className="mt-2 h-1 w-full rounded-full bg-slate-100 overflow-hidden">
+        <div
+          className={["h-full rounded-full", levelBarClass(lv)].join(" ")}
+          style={{ width: lv === 2 ? "100%" : lv === 1 ? "66%" : "33%" }}
+        />
+      </div>
+    </button>
   );
 }
 
-function Panel({ icon, title, tone = "mint", children, right }) {
-  const tones = {
-    mint: {
-      wrap: "bg-[color-mix(in_srgb,var(--mint),white_55%)]",
-      bar: "bg-[var(--accent)]",
-      title: "text-[var(--accent-ink)]",
-    },
-    violet: { wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]", bar: "bg-[#6d5bd0]", title: "text-[#3b2f86]" },
-    teal: { wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]", bar: "bg-[#0f766e]", title: "text-[#115e59]" },
-    amber: { wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]", bar: "bg-[#b45309]", title: "text-[#7c2d12]" },
-  };
-  const t = tones[tone] || tones.mint;
+function DeltaPill({ label, value, unit, digits = 1 }) {
+  const n = value == null ? null : Number(value);
+  const up = n != null && n > 0;
+  const down = n != null && n < 0;
+  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
 
   return (
-    <div className={`relative rounded-[20px] ${t.wrap} ring-1 ring-[var(--ring)]`}>
-      <div className={`absolute left-0 top-0 h-full w-1.5 rounded-l-[20px] ${t.bar}`} />
-      <div className="px-4 py-4 pl-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {icon ? (
-              <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-white/70 ring-1 ring-[var(--ring)] text-slate-700">
-                {icon}
-              </div>
-            ) : null}
-            <div className={`text-sm font-extrabold tracking-tight ${t.title}`}>{title}</div>
-          </div>
-          {right ? <div className="shrink-0">{right}</div> : null}
-        </div>
-        <div className="mt-3 text-sm leading-7 text-slate-800">{children}</div>
+    <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-bold text-slate-600">{label}</div>
+        {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
+      </div>
+      <div className="mt-1 flex items-end gap-1">
+        <div className="text-lg font-extrabold text-slate-900">{fmtSigned(value, digits)}</div>
+        <div className="text-[11px] font-bold text-slate-500 pb-0.5">{unit}</div>
       </div>
     </div>
   );
 }
 
-const SESSION_TIMEOUT_MS = 5000;
-
-export default function HomePage() {
-  const [loading, setLoading] = useState(true);
+/** ---------- Page ---------- */
+export default function RadarPage() {
+  const router = useRouter();
   const [session, setSession] = useState(null);
-  const [error, setError] = useState("");
 
-  const isLoggedIn = !!session;
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
+  const [data, setData] = useState(null);
+  const [selectedIdx, setSelectedIdx] = useState(0);
+
+  // auth
   useEffect(() => {
-    let unsub = null;
-
+    let mounted = true;
     (async () => {
-      try {
-        setError("");
-
-        if (!supabase) {
-          setSession(null);
-          return;
-        }
-
-        // ✅ タイムアウトで固まらない
-        const { data } = await withTimeout(
-          supabase.auth.getSession(),
-          SESSION_TIMEOUT_MS,
-          "getSession timeout"
-        );
-
-        setSession(data.session || null);
-
-        const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-          setSession(newSession);
-        });
-        unsub = sub?.subscription;
-      } catch (e) {
-        console.error(e);
-        setError(`セッション取得に失敗: ${e?.message || String(e)}`);
-        setSession(null);
-      } finally {
-        setLoading(false);
-      }
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(data.session || null);
+      setLoadingAuth(false);
     })();
-
     return () => {
-      try {
-        unsub?.unsubscribe?.();
-      } catch {}
+      mounted = false;
     };
   }, []);
 
-  async function logout() {
+  async function load() {
+    if (!session) return;
     try {
-      if (!supabase) return;
-      await supabase.auth.signOut();
-      window.location.href = "/";
+      setRefreshing(true);
+      if (!data) setLoading(true);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("No token");
+
+      const res = await fetch("/api/radar/today", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      const payload = json?.data || null;
+
+      setData(payload);
+      setSelectedIdx(0);
     } catch (e) {
       console.error(e);
-      alert("ログアウトに失敗しました");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   }
 
-  const email = useMemo(() => session?.user?.email || "", [session?.user?.email]);
+  useEffect(() => {
+    if (session) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  const windows = useMemo(
+    () => (Array.isArray(data?.time_windows) ? data.time_windows : []),
+    [data]
+  );
+  const selected = windows[selectedIdx] || windows[0] || null;
+
+  // 「現在」の矢印（最初のwindowのΔをメーターに流用）
+  const dNow = windows[0]?.deltas || {};
+  const dpNow = dNow?.dp ?? null;
+  const dtNow = dNow?.dt ?? null;
+  const dhNow = dNow?.dh ?? null;
+
+  // states
+  if (loadingAuth || (loading && !data)) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 pt-8 max-w-[440px] mx-auto space-y-5">
+        <div className="h-6 w-40 bg-slate-200 rounded-full animate-pulse" />
+        <div className="h-44 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
+        <div className="h-28 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 flex items-center justify-center">
+        <div className="max-w-[440px] w-full bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 text-center">
+          <div className="text-lg font-extrabold text-slate-900">ログインが必要です</div>
+          <div className="text-sm text-slate-600 mt-2">未病レーダーはログイン後に利用できます。</div>
+          <div className="mt-5 flex flex-col gap-3">
+            <button
+              onClick={() => router.push("/signup")}
+              className="rounded-xl bg-emerald-600 text-white font-bold py-3"
+            >
+              無料で登録・ログイン
+            </button>
+            <button
+              onClick={() => router.push("/check")}
+              className="rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-bold py-3"
+            >
+              体質チェックへ
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // API：needs_profile = true を返す
+  if (data?.needs_profile) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 pt-10">
+        <div className="max-w-[440px] mx-auto bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 text-center">
+          <div className="text-lg font-extrabold text-slate-900">体質データがありません</div>
+          <div className="text-sm text-slate-600 mt-2">
+            {data?.message || "体質チェックを先に完了してください。"}
+          </div>
+          <button
+            onClick={() => router.push("/check")}
+            className="mt-6 w-full rounded-xl bg-emerald-600 text-white font-bold py-3"
+          >
+            体質チェックを始める
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const ext = data?.external || {};
+  const radar = data?.radar || {};
+  const summary = data?.summary || {};
+
+  const todayLv = summary?.level3 ?? radar?.level ?? 0;
+  const peakText = summary?.peak?.range_text || null;
+
+  const headlinePrimary =
+    compactHeadlineFromReasonText(radar?.reason_text) || "今日の予報";
+  const headlineSecondary = radar?.reason_text || null;
+
+  const mainTrigger = summary?.main_trigger || summary?.mainTrigger || "pressure";
 
   return (
-    <div className="min-h-screen bg-app pb-10">
-      <AppBar title="トップ" />
-
-      <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="space-y-5 pb-3">
-          {/* Hero */}
-          <Module>
-            <ModuleHeader
-              icon={<IconSpark />}
-              title="未病レーダー"
-              sub="体質チェック × 気象変化で、今日を崩しにくくする"
+    <div className="min-h-screen bg-slate-50 pb-16">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur border-b border-slate-100 px-4 py-3">
+        <div className="max-w-[440px] mx-auto flex items-center justify-between">
+          <div>
+            <div className="text-lg font-extrabold text-slate-900">未病レーダー</div>
+            <div className="text-[11px] text-slate-500 font-bold">
+              {new Date().toLocaleDateString("ja-JP")} の予報
+            </div>
+          </div>
+          <button
+            onClick={load}
+            disabled={refreshing}
+            className="p-2 rounded-full bg-white border border-slate-200 shadow-sm active:scale-95 transition"
+            aria-label="refresh"
+          >
+            <IconRefresh
+              className={[
+                "w-5 h-5 text-slate-600",
+                refreshing ? "animate-spin" : "",
+              ].join(" ")}
             />
-            <div className="px-5 pb-6 pt-4 space-y-4">
-              <Panel title="まずは体質チェック" tone="mint" icon={<IconCheck />}>
-                2週間の傾向＋簡単な動作テストで、あなたの「崩れ方のクセ」を整理します。
-                <div className="mt-4">
-                  <a href="/check">
-                    <Button>体質チェックをはじめる</Button>
-                  </a>
-                </div>
-              </Panel>
+          </button>
+        </div>
+      </div>
 
-              <div className="grid gap-3">
-                <Panel title="今日の未病レーダー" tone="teal" icon={<IconRadar />}>
-                  天候の揺れとあなたの体質を掛け合わせて、注意日を先回りします。
-                  <div className="mt-4">
-                    <a href="/radar">
-                      <Button variant="secondary">未病レーダーへ</Button>
-                    </a>
-                  </div>
-                </Panel>
+      <div className="max-w-[440px] mx-auto px-4 py-6 space-y-6">
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6">
+          <div
+            className={[
+              "absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-15 pointer-events-none",
+              todayLv === 2 ? "bg-rose-500" : todayLv === 1 ? "bg-amber-400" : "bg-emerald-400",
+            ].join(" ")}
+          />
 
-                <Panel title="履歴・ガイド" tone="violet" icon={<IconBook />}>
-                  履歴は「保存」した結果だけ表示されます。ガイドは内容確認用（導線はあとで拡張OK）。
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/history">
-                      <Button variant="ghost">履歴を見る</Button>
-                    </a>
-                    <a href="/guide">
-                      <Button variant="ghost">ガイドを見る</Button>
-                    </a>
-                  </div>
-                </Panel>
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-extrabold text-slate-700">今日の予報</div>
+              <div
+                className={[
+                  "text-xs font-extrabold px-3 py-1 rounded-full",
+                  todayLv === 2
+                    ? "bg-rose-50 text-rose-700"
+                    : todayLv === 1
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-emerald-50 text-emerald-700",
+                ].join(" ")}
+              >
+                {levelLabel(todayLv)}
+                {peakText ? `（ピーク ${peakText}）` : ""}
               </div>
             </div>
-          </Module>
 
-          {/* Auth / Status */}
-          <Module>
-            <ModuleHeader
-              icon={<IconLogin />}
-              title="アカウント"
-              sub="保存・履歴・レーダーを使うためのログイン"
-            />
-            <div className="px-5 pb-6 pt-4 space-y-4">
-              {loading ? (
-                <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-sm font-bold text-slate-700">読み込み中…</div>
-                </div>
-              ) : error ? (
-                <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-sm font-extrabold text-slate-900">セッション確認に失敗</div>
-                  <div className="mt-2 text-xs font-bold text-slate-600 whitespace-pre-wrap">{error}</div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/debug/env">
-                      <Button variant="ghost">debug/envを見る</Button>
-                    </a>
-                    <Button variant="ghost" onClick={() => window.location.reload()}>リロード</Button>
-                  </div>
-                </div>
-              ) : isLoggedIn ? (
-                <div className="rounded-[20px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-sm font-extrabold text-emerald-800">ログイン中 ✅</div>
-                  <div className="mt-1 text-sm font-bold text-slate-800">{email}</div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/history">
-                      <Button>履歴を見る</Button>
-                    </a>
-                    <a href="/check">
-                      <Button variant="secondary">体質チェック（再）</Button>
-                    </a>
-                    <Button variant="ghost" onClick={logout}>ログアウト</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-base font-extrabold tracking-tight text-slate-900">
-                    結果を保存して、履歴とレーダーへ
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-slate-600">
-                    メールで登録/ログインできます（課金の話はここでは出しません）
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/signup">
-                      <Button>ログイン / 登録</Button>
-                    </a>
-                    <a href="/check">
-                      <Button variant="secondary">まずは体質チェック</Button>
-                    </a>
-                  </div>
-                </div>
-              )}
+            <div className="mt-4 text-2xl font-extrabold text-slate-900 leading-snug">
+              {headlinePrimary}
             </div>
-          </Module>
 
-          <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
-            ※ プロトタイプ運用中。UI・導線・データ設計は順次アップデートします。
+            {/* 2行目は“説明”として控えめ */}
+            {headlineSecondary ? (
+              <div className="mt-2 text-[12px] text-slate-500 font-bold leading-5">
+                {headlineSecondary}
+              </div>
+            ) : null}
+
+            {/* Current metrics */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <MetricCard icon={IconThermo} label="気温" value={ext?.temp ?? "—"} unit="℃" delta={dtNow} />
+              <MetricCard icon={IconDroplet} label="湿度" value={ext?.humidity ?? "—"} unit="%" delta={dhNow} />
+              <MetricCard icon={IconGauge} label="気圧" value={ext?.pressure ?? "—"} unit="hPa" delta={dpNow} />
+            </div>
+
+            {/* 昨日比（控えめ） */}
+            <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-bold">
+              <div>昨日比</div>
+              <div className="flex gap-3">
+                <span>気温 {fmtSigned(ext?.d_temp_24h, 1)}℃</span>
+                <span>湿度 {fmtSigned(ext?.d_humidity_24h, 0)}%</span>
+                <span>気圧 {fmtSigned(ext?.d_pressure_24h, 1)}hPa</span>
+              </div>
+            </div>
+
+            {/* 体質×ベース気圧の存在感（数値は出しすぎない） */}
+            {Number.isFinite(Number(ext?.pressure_baseline)) ? (
+              <div className="mt-2 text-[11px] text-slate-400 font-bold">
+                基準気圧（目安）：{Number(ext.pressure_baseline).toFixed(1)} hPa
+              </div>
+            ) : null}
           </div>
+        </div>
+
+        {/* 24h timeline */}
+        <div>
+          <div className="flex items-end justify-between px-1 mb-3">
+            <div className="text-base font-extrabold text-slate-900">1時間ごとの波</div>
+            <div className="text-[11px] text-slate-400 font-bold">横にスクロール</div>
+          </div>
+
+          <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-4">
+            <div className="overflow-x-auto">
+              <div className="flex gap-2 pb-2">
+                {windows.map((w, i) => (
+                  <TimelineItem
+                    key={w.time || i}
+                    w={w}
+                    selected={i === selectedIdx}
+                    onClick={() => setSelectedIdx(i)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* compact details (selected hour) */}
+            <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-extrabold text-slate-900">
+                  {hourLabelFromISO(selected?.time)} の変化
+                </div>
+                <div
+                  className={[
+                    "text-xs font-extrabold px-3 py-1 rounded-full",
+                    (selected?.level3 ?? 0) === 2
+                      ? "bg-rose-50 text-rose-700"
+                      : (selected?.level3 ?? 0) === 1
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-emerald-50 text-emerald-700",
+                  ].join(" ")}
+                >
+                  {levelLabel(selected?.level3 ?? 0)}
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <DeltaPill label="気圧" value={selected?.deltas?.dp} unit="hPa" digits={1} />
+                <DeltaPill label="気温" value={selected?.deltas?.dt} unit="℃" digits={1} />
+                <DeltaPill label="湿度" value={selected?.deltas?.dh} unit="%" digits={0} />
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-600">
+                <span className={["inline-flex items-center gap-1", levelColor(selected?.level3 ?? 0)].join(" ")}>
+                  {(selected?.level3 ?? 0) === 0 ? (
+                    <IconSparkle className="w-4 h-4" />
+                  ) : (() => {
+                      const I = triggerIcon(selected?.trigger);
+                      return <I className="w-4 h-4" />;
+                    })()}
+                  {(selected?.level3 ?? 0) === 0 ? "安定" : triggerJa(selected?.trigger)}
+                </span>
+                <span className="text-slate-400 font-bold">/</span>
+                <span className="text-slate-500 font-bold">（± で変化の向き）</span>
+              </div>
+
+              {/* ベース気圧×体質（選択時間の情報があれば） */}
+              {selected?.base?.reason ? (
+                <div className="mt-3 text-[12px] text-slate-500 font-bold leading-5">
+                  {selected.base.reason}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <div className="pt-2 flex flex-col gap-3">
+          <button
+            onClick={() => router.push("/history")}
+            className="w-full bg-white border border-slate-100 shadow-sm rounded-2xl px-4 py-4 text-left"
+          >
+            <div className="text-sm font-extrabold text-slate-900">過去のコンディション履歴</div>
+            <div className="text-[12px] text-slate-500 font-bold mt-1">振り返り・傾向の確認</div>
+          </button>
+
+          <button
+            onClick={() => router.push("/check")}
+            className="w-full py-3 text-sm font-extrabold text-slate-400 hover:text-emerald-600 transition"
+          >
+            体質チェックをやり直す
+          </button>
+        </div>
+
+        <div className="text-[11px] text-slate-400 font-bold leading-5 pb-6">
+          ※ 本機能は医療行為ではなくセルフケア支援です。強い症状がある場合は無理をせず、必要に応じて医療機関へ。
         </div>
       </div>
     </div>
