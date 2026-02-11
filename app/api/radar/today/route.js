@@ -352,3 +352,4 @@ export async function GET(req) {
     console.error(e);
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
   }
+}
