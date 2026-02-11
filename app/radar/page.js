@@ -480,7 +480,7 @@ export default function RadarPage() {
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-extrabold text-slate-600">今日の気圧ストレス指標</div>
+                  <div className="text-xs font-extrabold text-slate-600">今日の体感ストレス（気圧）</div>
                   <div className="mt-2 text-base font-extrabold text-slate-900">{baseTitle}</div>
                 </div>
 
