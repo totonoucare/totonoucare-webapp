@@ -47,14 +47,6 @@ const IconSparkle = ({ className = "" }) => (
     <path d="M5 14l.7 2.4L8 17l-2.3.6L5 20l-.7-2.4L2 17l2.3-.6L5 14Z" />
   </svg>
 );
-// 地層・土台用のアイコン
-const IconLayers = ({ className = "" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M2 17l10 5 10-5" />
-    <path d="M2 12l10 5 10-5" />
-    <path d="M12 2L2 7l10 5 10-5" />
-  </svg>
-);
 
 const IconArrowUp = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -90,6 +82,7 @@ function fmtValue(v, digits = 1) {
 
 function hourLabel(iso) {
   if (!iso || typeof iso !== "string") return "—";
+  // Open-Meteo: "YYYY-MM-DDTHH:00"
   const m = iso.match(/T(\d{2}):/);
   if (!m) return "—";
   return `${Number(m[1])}:00`;
@@ -126,12 +119,13 @@ function triggerJa(trigger) {
 function buildFallbackHeadline(summary) {
   const lv = summary?.level3 ?? 0;
   const main = triggerJa(summary?.main_trigger || summary?.mainTrigger || "pressure");
-  const peakText = summary?.peak?.range_text || summary?.peak || null;
+  const peakText =
+    summary?.peak?.range_text ||
+    summary?.peak ||
+    null;
 
-  if (lv === 2)
-    return `今日は「${main}」が強め。無理は避けて。${peakText ? `（ピーク ${peakText}）` : ""}`;
-  if (lv === 1)
-    return `今日は「${main}」が出やすい日。ペース配分を。${peakText ? `（ピーク ${peakText}）` : ""}`;
+  if (lv === 2) return `今日は「${main}」が強め。無理は避けて。${peakText ? `（ピーク ${peakText}）` : ""}`;
+  if (lv === 1) return `今日は「${main}」が出やすい日。ペース配分を。${peakText ? `（ピーク ${peakText}）` : ""}`;
   return `今日は概ね安定。${peakText ? `（山があるなら ${peakText}）` : ""}`.trim();
 }
 
@@ -140,10 +134,12 @@ function buildOneLinerForSelected({ w }) {
 
   const trig = w.trigger || "pressure";
   const ja = triggerJa(trig);
+
   const dp = numOrNull(w?.deltas?.dp);
   const dt = numOrNull(w?.deltas?.dt);
   const dh = numOrNull(w?.deltas?.dh);
 
+  // “体質”データをAPIが返していない前提で、まずは納得感のある一般文にする
   if (trig === "pressure") {
     const dir = dp == null ? null : dp < 0 ? "下がり気味" : "上がり気味";
     return `気圧の変化（${dir || "変化"}）が出やすい時間。集中タスクは後ろ倒しが無難。`;
@@ -160,7 +156,6 @@ function buildOneLinerForSelected({ w }) {
 }
 
 /** ---------- UI bits ---------- */
-// デザイン変更：カード背景を白ではなくSlate-50にして、少し沈ませる
 function MetricCard({ icon: Icon, label, value, unit, deltaRecent, deltaDigits = 1 }) {
   const d = numOrNull(deltaRecent);
   const up = d != null && d > 0;
@@ -188,7 +183,7 @@ function MetricCard({ icon: Icon, label, value, unit, deltaRecent, deltaDigits =
         </div>
         <div className="text-xs font-bold text-slate-500 pb-1">{unit}</div>
       </div>
-      {/* "現在"ラベルは冗長なので省略してスッキリさせる */}
+      <div className="text-[10px] text-slate-400 mt-1">現在</div>
     </div>
   );
 }
@@ -343,6 +338,7 @@ export default function RadarPage() {
     );
   }
 
+  // route.js: needs_profile
   if (data && data?.needs_profile) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 pt-10">
@@ -363,31 +359,40 @@ export default function RadarPage() {
   const summary = data?.summary || {};
   const radar = data?.radar || {};
   const ext = data?.external || {};
+
   const heroLevel = summary?.level3 ?? radar?.level ?? 0;
 
   const headline =
     (typeof radar?.reason_text === "string" && radar.reason_text.trim()) ||
     buildFallbackHeadline(summary);
 
+  // “直近”のΔ（タイムライン先頭のdeltasを使う：計算は3hΔだが、UI語彙は直近で統一）
   const recent = windows?.[0]?.deltas || {};
   const dpRecent = recent?.dp ?? null;
   const dtRecent = recent?.dt ?? null;
   const dhRecent = recent?.dh ?? null;
 
-  // 気圧ベース (土台用)
+  // 気圧環境の負担（現在枠のbaseを採用）
   const base = windows?.[0]?.base || {};
-  const anomaly = base?.anomaly ?? null;
+  const anomaly = base?.anomaly ?? null; // now - baseline
   const baseReason = base?.reason || null;
   const baseState = base?.state || "unknown";
 
   const baseTitle =
-    baseState === "high" ? "今日は気圧が高め（Deep）" :
-    baseState === "low" ? "今日は気圧が低め（Shallow）" :
+    baseState === "high" ? "今日は気圧が高め" :
+    baseState === "low" ? "今日は気圧が低め" :
     baseState === "normal" ? "今日は気圧は平常域" :
-    "気圧ベースを測定中";
+    "今日は気圧の状態を取得中";
 
-  // 土台の説明文：平均との差を少し補足
-  const baseSubtitle = `直近平均より ${fmtSigned(anomaly, 1)} hPa`;
+  const baseBody =
+    baseReason ||
+    (baseState === "high"
+      ? "最近より高め。張りやすいタイプはペース配分を。"
+      : baseState === "low"
+        ? "最近より低め。だるさが出やすいタイプは詰めすぎ注意。"
+        : baseState === "normal"
+          ? "最近と同じくらい。負担は“変化の山”で上がりやすい。"
+          : "直近データが足りず、平均との差が出せません。");
 
   const selectedOneLiner = buildOneLinerForSelected({ w: selected });
 
@@ -414,89 +419,85 @@ export default function RadarPage() {
       </div>
 
       <div className="max-w-[440px] mx-auto px-4 py-6 space-y-6">
-        
-        {/* --- Hero: 2層構造 (上部:変化 / 下部:土台) --- */}
-        <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col">
-          
-          {/* 上層：空気（変化） */}
-          <div className="relative p-6 pb-8">
-            {/* 背景装飾 */}
-            <div
-              className={[
-                "absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-15 pointer-events-none",
-                heroLevel === 2 ? "bg-rose-500" : heroLevel === 1 ? "bg-amber-400" : "bg-emerald-400",
-              ].join(" ")}
-            />
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6">
+          <div
+            className={[
+              "absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-15 pointer-events-none",
+              heroLevel === 2 ? "bg-rose-500" : heroLevel === 1 ? "bg-amber-400" : "bg-emerald-400",
+            ].join(" ")}
+          />
 
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-extrabold text-slate-700">今日の変化ストレス</div>
-                <div
-                  className={[
-                    "text-xs font-extrabold px-3 py-1 rounded-full",
-                    heroLevel === 2
-                      ? "bg-rose-50 text-rose-700"
-                      : heroLevel === 1
-                        ? "bg-amber-50 text-amber-700"
-                        : "bg-emerald-50 text-emerald-700",
-                  ].join(" ")}
-                >
-                  {levelLabel(heroLevel)}
+          <div className="relative">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-extrabold text-slate-700">今日の変化ストレス</div>
+              <div
+                className={[
+                  "text-xs font-extrabold px-3 py-1 rounded-full",
+                  heroLevel === 2
+                    ? "bg-rose-50 text-rose-700"
+                    : heroLevel === 1
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-emerald-50 text-emerald-700",
+                ].join(" ")}
+              >
+                {levelLabel(heroLevel)}
+              </div>
+            </div>
+
+            <div className="mt-4 text-2xl font-extrabold text-slate-900 leading-snug">
+              {headline}
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <MetricCard
+                icon={IconThermo}
+                label="気温"
+                value={ext?.temp ?? null}
+                unit="℃"
+                deltaRecent={dtRecent}
+                deltaDigits={1}
+              />
+              <MetricCard
+                icon={IconDroplet}
+                label="湿度"
+                value={ext?.humidity ?? null}
+                unit="%"
+                deltaRecent={dhRecent}
+                deltaDigits={0}
+              />
+              <MetricCard
+                icon={IconGauge}
+                label="気圧"
+                value={ext?.pressure ?? null}
+                unit="hPa"
+                deltaRecent={dpRecent}
+                deltaDigits={1}
+              />
+            </div>
+
+            {/* 気圧環境の負担 */}
+            <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs font-extrabold text-slate-600">気圧環境の負担</div>
+                  <div className="mt-2 text-base font-extrabold text-slate-900">{baseTitle}</div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-[11px] font-bold text-slate-400">最近の平均との差</div>
+                  <div className="mt-1 text-sm font-extrabold text-slate-700">
+                    {fmtSigned(anomaly, 1)}hPa
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4 text-2xl font-extrabold text-slate-900 leading-snug">
-                {headline}
+              <div className="mt-3 text-[12px] font-bold text-slate-600 leading-5">
+                {baseBody}
               </div>
 
-              <div className="mt-6 grid grid-cols-3 gap-2">
-                <MetricCard
-                  icon={IconThermo}
-                  label="気温"
-                  value={ext?.temp ?? null}
-                  unit="℃"
-                  deltaRecent={dtRecent}
-                  deltaDigits={1}
-                />
-                <MetricCard
-                  icon={IconDroplet}
-                  label="湿度"
-                  value={ext?.humidity ?? null}
-                  unit="%"
-                  deltaRecent={dhRecent}
-                  deltaDigits={0}
-                />
-                <MetricCard
-                  icon={IconGauge}
-                  label="気圧"
-                  value={ext?.pressure ?? null}
-                  unit="hPa"
-                  deltaRecent={dpRecent}
-                  deltaDigits={1}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 下層：地面（気圧ベース） */}
-          <div className="relative bg-slate-50 border-t border-slate-100 px-6 py-5">
-            {/* 視覚的な「地面」のメタファー */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <IconLayers className="w-5 h-5 text-slate-400" />
-                <div className="text-xs font-extrabold text-slate-500">気圧環境（土台）</div>
-              </div>
-              <div className="text-[10px] font-bold text-slate-400">{baseSubtitle}</div>
-            </div>
-
-            <div className="mt-1">
-              <div className={`text-sm font-extrabold ${
-                baseState === "high" ? "text-rose-700" : baseState === "low" ? "text-sky-700" : "text-slate-700"
-              }`}>
-                {baseTitle}
-              </div>
-              <div className="mt-1 text-xs font-bold text-slate-600 leading-relaxed">
-                {baseReason || "データ取得中..."}
+              <div className="mt-3 text-[11px] font-bold text-slate-400">
+                （基準：直近データの平均）
               </div>
             </div>
           </div>
@@ -563,6 +564,7 @@ export default function RadarPage() {
                 <span className="text-slate-500 font-bold">（変化の向きは ± で表示）</span>
               </div>
 
+              {/* one-liner (only when caution+) */}
               {selectedOneLiner ? (
                 <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4">
                   <div className="text-xs font-extrabold text-slate-600">ひとこと</div>
