@@ -480,12 +480,12 @@ export default function RadarPage() {
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-extrabold text-slate-600">気圧環境の負担</div>
+                  <div className="text-xs font-extrabold text-slate-600">気圧による負担（影響影響の土台）</div>
                   <div className="mt-2 text-base font-extrabold text-slate-900">{baseTitle}</div>
                 </div>
 
                 <div className="text-right">
-                  <div className="text-[11px] font-bold text-slate-400">最近の平均との差</div>
+                  <div className="text-[11px] font-bold text-slate-400">最近の平均気圧との差</div>
                   <div className="mt-1 text-sm font-extrabold text-slate-700">
                     {fmtSigned(anomaly, 1)}hPa
                   </div>
