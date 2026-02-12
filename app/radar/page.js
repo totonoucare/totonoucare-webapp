@@ -48,19 +48,6 @@ const IconSparkle = ({ className = "" }) => (
   </svg>
 );
 
-const IconArrowUp = ({ className = "" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 19V5" />
-    <path d="M5 12l7-7 7 7" />
-  </svg>
-);
-const IconArrowDown = ({ className = "" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 5v14" />
-    <path d="M19 12l-7 7-7-7" />
-  </svg>
-);
-
 /** ---------- Helpers ---------- */
 function fmtSigned(v, digits = 1) {
   if (v == null || !Number.isFinite(Number(v))) return "—";
@@ -114,23 +101,17 @@ function forecastBadgeClass(lv) {
 }
 
 /** ---------- UI bits ---------- */
-function MetricCard({ icon: Icon, label, value, unit, delta1h }) {
-  const d = delta1h;
-  const up = d != null && Number(d) > 0;
-  const down = d != null && Number(d) < 0;
-  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
-
+/**
+ * ✅ 方針3：メインカードは2週間平均との差に振り切る
+ * -> 右上の↑↓（delta1h）は表示しない
+ */
+function MetricCard({ icon: Icon, label, value, unit }) {
   return (
     <div className="relative rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-slate-400" />
           <div className="text-xs font-extrabold text-slate-600">{label}</div>
-        </div>
-
-        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-bold">
-          {Arrow ? <Arrow className="w-4 h-4" /> : <span className="w-4 h-4 inline-block" />}
-          <span>{fmtSigned(d, label === "湿度" ? 0 : 1)}</span>
         </div>
       </div>
 
@@ -179,16 +160,11 @@ function TimelineItem({ w, selected, onClick }) {
 }
 
 function DeltaPill({ label, value, unit, digits = 1 }) {
-  const n = value == null ? null : Number(value);
-  const up = n != null && n > 0;
-  const down = n != null && n < 0;
-  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
-
   return (
     <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
       <div className="flex items-center justify-between">
         <div className="text-xs font-extrabold text-slate-600">{label}</div>
-        {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
+        <span className="w-4 h-4 inline-block" />
       </div>
       <div className="mt-1 flex items-end gap-1">
         <div className="text-lg font-extrabold text-slate-900">{fmtSigned(value, digits)}</div>
@@ -312,7 +288,6 @@ export default function RadarPage() {
   const prof = data?.profile || {};
   const ext = data?.external || {};
   const cur = ext?.current || {};
-  const d1 = ext?.delta1h || {};
   const anomalyText = ext?.anomaly_text || null;
 
   const influence = data?.influence || {};
@@ -368,9 +343,9 @@ export default function RadarPage() {
             ) : null}
 
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <MetricCard icon={IconThermo} label="気温" value={cur?.temp ?? "—"} unit="℃" delta1h={d1?.dt} />
-              <MetricCard icon={IconDroplet} label="湿度" value={cur?.humidity ?? "—"} unit="%" delta1h={d1?.dh} />
-              <MetricCard icon={IconGauge} label="気圧" value={cur?.pressure ?? "—"} unit="hPa" delta1h={d1?.dp} />
+              <MetricCard icon={IconThermo} label="気温" value={cur?.temp ?? "—"} unit="℃" />
+              <MetricCard icon={IconDroplet} label="湿度" value={cur?.humidity ?? "—"} unit="%" />
+              <MetricCard icon={IconGauge} label="気圧" value={cur?.pressure ?? "—"} unit="hPa" />
             </div>
 
             {/* 最近平均との差 */}
