@@ -12,7 +12,13 @@ import {
   nextPeakFromWindows,
   levelLabelJa,
   triggerLabelJa,
+  computeInfluenceFromBaselines,
+  influenceLabelJa,
+  buildWindowHintJa,
+  buildAnomalyRowJa,
 } from "@/lib/radar/risk";
+
+import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -27,9 +33,7 @@ async function getPrimaryLocation(userId) {
     .maybeSingle();
 
   if (error) throw error;
-
-  // 未設定なら仮：大阪駅付近
-  return data || { lat: 34.7025, lon: 135.4959 };
+  return data || { lat: 34.7025, lon: 135.4959 }; // fallback: 大阪駅付近
 }
 
 async function getLatestConstitutionProfile(userId) {
@@ -62,57 +66,68 @@ async function getLatestConstitutionProfile(userId) {
   return data || null;
 }
 
-/**
- * ベース気圧（直近数日平均との差）を作る
- * - 基本：直近7日
- * - データ不足なら直近2日
- * - それでも不足なら null（補正なし）
- */
-async function getPressureBaseline(userId) {
-  // 直近7日
-  const { data: d7, error: e7 } = await supabaseServer
-    .from("daily_external_factors")
-    .select("date, pressure")
-    .eq("user_id", userId)
-    .order("date", { ascending: false })
-    .limit(7);
-
-  if (e7) throw e7;
-
-  const vals7 = (d7 || [])
-    .map((r) => Number(r.pressure))
-    .filter((x) => Number.isFinite(x));
-
-  const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
-
-  if (vals7.length >= 3) return avg(vals7);
-
-  // 直近2日（fallback）
-  const { data: d2, error: e2 } = await supabaseServer
-    .from("daily_external_factors")
-    .select("date, pressure")
-    .eq("user_id", userId)
-    .order("date", { ascending: false })
-    .limit(2);
-
-  if (e2) throw e2;
-
-  const vals2 = (d2 || [])
-    .map((r) => Number(r.pressure))
-    .filter((x) => Number.isFinite(x));
-
-  if (vals2.length >= 1) return avg(vals2);
-
-  return null;
-}
-
 function numOrNull(v) {
   const x = Number(v);
   return Number.isFinite(x) ? x : null;
 }
 
+function avg(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  const vals = arr.map(Number).filter(Number.isFinite);
+  if (vals.length === 0) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+/**
+ * 直近14日平均（不足時は7日→2日→null）
+ * daily_external_factors: pressure/temp/humidity を利用
+ */
+async function getEnvBaseline14d(userId) {
+  const fetchN = async (n) => {
+    const { data, error } = await supabaseServer
+      .from("daily_external_factors")
+      .select("date, pressure, temp, humidity")
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .limit(n);
+
+    if (error) throw error;
+    return data || [];
+  };
+
+  const rows14 = await fetchN(14);
+  const p14 = avg(rows14.map((r) => r.pressure));
+  const t14 = avg(rows14.map((r) => r.temp));
+  const h14 = avg(rows14.map((r) => r.humidity));
+
+  // 3要素のうち最低2要素が取れてるなら採用
+  const okCount14 = [p14, t14, h14].filter((x) => x != null).length;
+  if (okCount14 >= 2) {
+    return { pressure: p14, temp: t14, humidity: h14, days: Math.min(rows14.length, 14) };
+  }
+
+  const rows7 = rows14.length >= 7 ? rows14.slice(0, 7) : await fetchN(7);
+  const p7 = avg(rows7.map((r) => r.pressure));
+  const t7 = avg(rows7.map((r) => r.temp));
+  const h7 = avg(rows7.map((r) => r.humidity));
+  const okCount7 = [p7, t7, h7].filter((x) => x != null).length;
+  if (okCount7 >= 2) {
+    return { pressure: p7, temp: t7, humidity: h7, days: Math.min(rows7.length, 7) };
+  }
+
+  const rows2 = rows14.length >= 2 ? rows14.slice(0, 2) : await fetchN(2);
+  const p2 = avg(rows2.map((r) => r.pressure));
+  const t2 = avg(rows2.map((r) => r.temp));
+  const h2 = avg(rows2.map((r) => r.humidity));
+  const okCount2 = [p2, t2, h2].filter((x) => x != null).length;
+  if (okCount2 >= 1) {
+    return { pressure: p2, temp: t2, humidity: h2, days: Math.min(rows2.length, 2) };
+  }
+
+  return { pressure: null, temp: null, humidity: null, days: 0 };
+}
+
 function fmtHourRange(startISO, endISO) {
-  // "YYYY-MM-DDTHH:00" -> "HH時"
   const hour = (iso) => {
     if (!iso || typeof iso !== "string") return null;
     const m = iso.match(/T(\d{2}):/);
@@ -127,20 +142,15 @@ function fmtHourRange(startISO, endISO) {
   return `${s}–${e}時`;
 }
 
-function buildReasonText({ level3, mainTrigger, peakRangeText, profile, baseHint }) {
-  // “変化＝風”は言わない。ユーザー語彙で。
+function buildForecastLine({ level3, mainTrigger, peakRangeText, symptom_focus }) {
   const lv = levelLabelJa(level3);
   const trig = triggerLabelJa(mainTrigger);
 
-  const focus = profile?.symptom_focus || null;
-  // UIの短文：AIがいなくても意味が通る
   let line = `今日の予報：${lv}`;
   if (peakRangeText) line += `（ピーク ${peakRangeText}）`;
-  line += `｜主な要因：${trig}`;
+  line += `｜主因：${trig}`;
 
-  // 体質の存在を匂わせる（内部語は出さない）
-  // ※ここは短く。詳細はAI explain側へ。
-  if (focus) {
+  if (symptom_focus) {
     const map = {
       fatigue: "だるさ",
       sleep: "睡眠",
@@ -148,19 +158,47 @@ function buildReasonText({ level3, mainTrigger, peakRangeText, profile, baseHint
       neck_shoulder: "首肩",
       low_back_pain: "腰",
       swelling: "むくみ",
-      headache: "頭",
+      headache: "頭痛",
       dizziness: "めまい",
     };
-    const ja = map[focus] || "不調";
+    const ja = map[symptom_focus] || "不調";
     line += `｜${ja}が出やすい人は余裕を持って`;
   } else {
     line += "｜無理に詰めないのが安全";
   }
-
-  // ベース気圧×虚実ヒント（短文）
-  if (baseHint) line += `｜${baseHint}`;
-
   return line;
+}
+
+function buildInfluenceText({ influence, core, subTitles }) {
+  const label = influenceLabelJa(influence?.level ?? 1);
+
+  // 主因（最近平均との差の寄与が最大）
+  const main = influence?.main_factor || "pressure";
+  const mainJa =
+    main === "temp" ? "気温" : main === "humidity" ? "湿度" : "気圧";
+
+  const a = influence?.anomalies || {};
+  const p = a?.pressure;
+  const t = a?.temp;
+  const h = a?.humidity;
+
+  const head = core?.title ? `あなたは「${core.title}」。` : "あなたの体質傾向から見た予報です。";
+
+  if (label === "受けやすい") {
+    return `${head}最近より${mainJa}がズレていて、今日は影響を受けやすい日です。`;
+  }
+  if (label === "受けにくい") {
+    return `${head}最近より${mainJa}の条件が合いやすく、今日は影響を受けにくい側です。`;
+  }
+  // 通常
+  // “通常”でも少しだけ理由を出す（うるさくしない）
+  const hints = [];
+  if (p != null && Math.abs(p) >= 3) hints.push("気圧");
+  if (t != null && Math.abs(t) >= 3) hints.push("気温");
+  if (h != null && Math.abs(h) >= 10) hints.push("湿度");
+  const extra = hints.length ? `（最近より${hints.join("・")}がややズレ）` : "";
+  const sub = subTitles?.length ? `／弱点：${subTitles.join("・")}` : "";
+  return `${head}今日は概ね通常です${extra}${sub ? sub : ""}。`;
 }
 
 export async function GET(req) {
@@ -171,170 +209,137 @@ export async function GET(req) {
     const date = jstDateString(new Date());
     const loc = await getPrimaryLocation(user.id);
 
-    // 体質（内因）
+    // 体質
     const profile = await getLatestConstitutionProfile(user.id);
     if (!profile) {
       return NextResponse.json({
         data: {
           date,
-          needs_profile: true,
+          has_profile: false,
           message: "体質データがありません。先に体質チェックを行ってください。",
         },
       });
     }
 
-    // ベース気圧
-    const pressureBaseline = await getPressureBaseline(user.id);
+    // 直近14日平均（P/T/H）
+    const baseline = await getEnvBaseline14d(user.id);
 
     // 天気（Open-Meteo）
     const meteo = await fetchOpenMeteo({ lat: loc.lat, lon: loc.lon });
     const current = meteo?.current || {};
     const hourly = meteo?.hourly || {};
+    const { nowIdx } = pickNowAnd24hAgo(hourly);
 
-    const { nowIdx, agoIdx } = pickNowAnd24hAgo(hourly);
+    const curTemp = numOrNull(current?.temperature_2m ?? hourly?.temperature_2m?.[nowIdx]);
+    const curHum = numOrNull(current?.relative_humidity_2m ?? hourly?.relative_humidity_2m?.[nowIdx]);
+    const curPres = numOrNull(current?.pressure_msl ?? hourly?.pressure_msl?.[nowIdx]);
 
-    const temp = numOrNull(current?.temperature_2m ?? hourly?.temperature_2m?.[nowIdx]);
-    const humidity = numOrNull(current?.relative_humidity_2m ?? hourly?.relative_humidity_2m?.[nowIdx]);
-    const pressure = numOrNull(current?.pressure_msl ?? hourly?.pressure_msl?.[nowIdx]);
-    const wind_speed_10m = numOrNull(current?.wind_speed_10m ?? hourly?.wind_speed_10m?.[nowIdx]);
-    const precip = numOrNull(current?.precipitation ?? hourly?.precipitation?.[nowIdx]);
+    // 直近1h Δ（足りなければnull）
+    const prevIdx = nowIdx != null && nowIdx >= 1 ? nowIdx - 1 : null;
+    const prevTemp = prevIdx != null ? numOrNull(hourly?.temperature_2m?.[prevIdx]) : null;
+    const prevHum = prevIdx != null ? numOrNull(hourly?.relative_humidity_2m?.[prevIdx]) : null;
+    const prevPres = prevIdx != null ? numOrNull(hourly?.pressure_msl?.[prevIdx]) : null;
 
-    const pressureAgo = numOrNull(hourly?.pressure_msl?.[agoIdx]);
-    const tempAgo = numOrNull(hourly?.temperature_2m?.[agoIdx]);
-    const humidityAgo = numOrNull(hourly?.relative_humidity_2m?.[agoIdx]);
+    const d1 = {
+      dt: curTemp != null && prevTemp != null ? curTemp - prevTemp : null,
+      dh: curHum != null && prevHum != null ? curHum - prevHum : null,
+      dp: curPres != null && prevPres != null ? curPres - prevPres : null,
+    };
 
-    const d_pressure_24h =
-      pressure != null && pressureAgo != null ? pressure - pressureAgo : null;
-    const d_temp_24h = temp != null && tempAgo != null ? temp - tempAgo : null;
-    const d_humidity_24h =
-      humidity != null && humidityAgo != null ? humidity - humidityAgo : null;
-
-    // タイムライン（1時間刻み / 計算は3hΔ）
+    // タイムライン（変化ストレス）
     const hoursForward = 24;
-    const { windows, vulnerability } = buildTimeWindowsFromHourly(
-      hourly,
-      nowIdx,
-      hoursForward,
-      profile,
-      pressureBaseline
-    );
+    const { windows, vulnerability } = buildTimeWindowsFromHourly(hourly, nowIdx, hoursForward, profile);
 
     const summary = summarizeToday({ windows });
     const peak = peakWindowFromWindows(windows);
     const nextPeak = nextPeakFromWindows(windows, hourly?.time?.[nowIdx] || null);
 
     const peakRangeText = peak?.start && peak?.end ? fmtHourRange(peak.start, peak.end) : null;
-
-    // ベース気圧ヒント（総合カードに短く）
-    // windows[0]のbase.reasonを採用（“今日のベース感”として）
-    const baseHint = windows?.[0]?.base?.reason || null;
-
-    // 総合の短文（ダサい羅列禁止・内部語なし）
-    const reason_text = buildReasonText({
+    const forecastLine = buildForecastLine({
       level3: summary.level3,
       mainTrigger: summary.mainTrigger,
       peakRangeText,
-      profile,
-      baseHint,
+      symptom_focus: profile?.symptom_focus || null,
     });
 
-    // 保存：daily_external_factors（“日次の外因”として）
-    // - score_wind は「直近24hウィンドウの最大の change_score」を入れるのが筋
-    //   （daily_external_factorsのrangeチェックが0..3なので、ここは 0..3 を保存）
-    const maxChangeScore = windows.reduce((m, w) => {
-      // partsは0..3、change_scoreはext内部だがここでは再現できないので combinedからは作らない
-      // 代わりに level3 を 0..2 として保存するのは違うので、
-      // windowsのcombined(0..5)を 0..3に丸めて代用（設計上の“外因強度”）
-      const c = Number(w?.combined ?? 0);
-      if (!Number.isFinite(c)) return m;
-      // combinedのうち「外因の寄与が大きい時は 2~5」に寄る。粗く 0..3へ。
-      const s = c <= 1 ? 0 : c <= 3 ? 1 : c <= 4 ? 2 : 3;
-      return Math.max(m, s);
-    }, 0);
+    // 影響の受けやすさ（メイン）
+    const influence = computeInfluenceFromBaselines({
+      current: { pressure: curPres, temp: curTemp, humidity: curHum },
+      baseline,
+      profile,
+    });
 
-    const { error: eDef } = await supabaseServer
-      .from("daily_external_factors")
-      .upsert(
-        [
-          {
-            user_id: user.id,
-            date,
-            lat: loc.lat,
-            lon: loc.lon,
+    const core = getCoreLabel(profile?.core_code);
+    const subTitles = getSubLabels(profile?.sub_labels || []).map((x) => x?.short).filter(Boolean);
 
-            pressure,
-            temp,
-            humidity,
-            wind: wind_speed_10m,
-            precip,
+    const influenceText = buildInfluenceText({
+      influence,
+      core,
+      subTitles,
+    });
 
-            d_pressure_24h,
-            d_temp_24h,
-            d_humidity_24h,
+    // タイムライン詳細に「短文ヒント」を付与（注意/警戒のみ）
+    const windowsWithHint = windows.map((w) => ({
+      ...w,
+      hint_text: buildWindowHintJa({ window: w, influenceLevel: influence?.level ?? 1 }),
+    }));
 
-            // schema互換：風中心にする（他は0）
-            score_wind: maxChangeScore,
-            score_cold: 0,
-            score_heat: 0,
-            score_damp: 0,
-            score_dry: 0,
+    // 最近平均との差（表示用）
+    const anomalyRow = buildAnomalyRowJa(influence?.anomalies);
 
-            // 互換：主因トリガーを入れる（既存のwind/cold等とは意味が異なるが利用側がいない前提）
-            top_sixin: summary.level3 > 0 ? [summary.mainTrigger] : [],
-          },
-        ],
-        { onConflict: "user_id,date" }
-      );
-
-    if (eDef) throw eDef;
-
-    // 保存：daily_radar
-    // daily_radar.level は 0..3 なので、現状は 0..2 をそのまま入れる
-    const { data: radarRow, error: eRadar } = await supabaseServer
-      .from("daily_radar")
-      .upsert(
-        [
-          {
-            user_id: user.id,
-            date,
-            level: summary.level3,
-            top_sixin: summary.level3 > 0 ? [summary.mainTrigger] : [],
-            reason_text,
-            recommended_main_card_id: null,
-            recommended_food_card_id: null,
-            generated_by: "risk_v3_basepressure_gate",
-          },
-        ],
-        { onConflict: "user_id,date" }
-      )
-      .select("id, user_id, date, level, top_sixin, reason_text, created_at")
-      .single();
-
-    if (eRadar) throw eRadar;
-
-    // 返却
     return NextResponse.json({
       data: {
         date,
+
         profile: {
           symptom_focus: profile?.symptom_focus || null,
-          // UIが必要なら増やしてOK（出しすぎ注意）
+          core_code: profile?.core_code || null,
+          core_title: core?.title || null,
+          core_short: core?.short || null,
+          sub_labels: (profile?.sub_labels || []).slice(0, 2),
+          sub_shorts: subTitles,
         },
+
         external: {
-          lat: loc.lat,
-          lon: loc.lon,
-          temp,
-          humidity,
-          pressure,
-          wind: wind_speed_10m,
-          precip,
-          d_pressure_24h,
-          d_temp_24h,
-          d_humidity_24h,
-          pressure_baseline: pressureBaseline,
+          location: { lat: loc.lat, lon: loc.lon },
+          current: {
+            temp: curTemp,
+            humidity: curHum,
+            pressure: curPres,
+          },
+          delta1h: d1,
+          baseline: {
+            days: baseline?.days ?? 0,
+            temp: baseline?.temp ?? null,
+            humidity: baseline?.humidity ?? null,
+            pressure: baseline?.pressure ?? null,
+          },
+          anomaly: {
+            temp: influence?.anomalies?.temp ?? null,
+            humidity: influence?.anomalies?.humidity ?? null,
+            pressure: influence?.anomalies?.pressure ?? null,
+          },
+          anomaly_text: anomalyRow, // {pressure:"+x.x", temp:"+y.y", humidity:"+z"}
         },
-        radar: radarRow,
-        summary: {
+
+        // メインカード用
+        influence: {
+          level: influence?.level ?? 1,
+          label: influenceLabelJa(influence?.level ?? 1),
+          main_factor: influence?.main_factor || "pressure",
+          main_factor_label:
+            influence?.main_factor === "temp" ? "気温" :
+              influence?.main_factor === "humidity" ? "湿度" : "気圧",
+          text: influenceText,
+          debug: {
+            raw_signed: influence?.raw_signed ?? null,
+            signed_parts: influence?.signed_parts ?? null,
+            constitution: influence?.constitution ?? null,
+          },
+        },
+
+        // サブカード用（変化ストレス）
+        forecast: {
           level3: summary.level3,
           level_label: levelLabelJa(summary.level3),
           main_trigger: summary.mainTrigger,
@@ -343,9 +348,11 @@ export async function GET(req) {
             ? { maxLevel: peak.maxLevel, range_text: peakRangeText, start: peak.start, end: peak.end }
             : { maxLevel: peak.maxLevel, range_text: null, start: null, end: null },
           next_peak: nextPeak || null,
-          vulnerability, // 0..2（デバッグ用。UIで隠してOK）
+          text: forecastLine,
+          vulnerability, // デバッグ
         },
-        time_windows: windows, // UIの横スクロール帯に使う
+
+        time_windows: windowsWithHint,
       },
     });
   } catch (e) {
