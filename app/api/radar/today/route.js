@@ -78,55 +78,6 @@ function avg(arr) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-/**
- * 直近14日平均（不足時は7日→2日→null）
- * daily_external_factors: pressure/temp/humidity を利用
- */
-async function getEnvBaseline14d(userId) {
-  const fetchN = async (n) => {
-    const { data, error } = await supabaseServer
-      .from("daily_external_factors")
-      .select("date, pressure, temp, humidity")
-      .eq("user_id", userId)
-      .order("date", { ascending: false })
-      .limit(n);
-
-    if (error) throw error;
-    return data || [];
-  };
-
-  const rows14 = await fetchN(14);
-  const p14 = avg(rows14.map((r) => r.pressure));
-  const t14 = avg(rows14.map((r) => r.temp));
-  const h14 = avg(rows14.map((r) => r.humidity));
-
-  // 3要素のうち最低2要素が取れてるなら採用
-  const okCount14 = [p14, t14, h14].filter((x) => x != null).length;
-  if (okCount14 >= 2) {
-    return { pressure: p14, temp: t14, humidity: h14, days: Math.min(rows14.length, 14) };
-  }
-
-  const rows7 = rows14.length >= 7 ? rows14.slice(0, 7) : await fetchN(7);
-  const p7 = avg(rows7.map((r) => r.pressure));
-  const t7 = avg(rows7.map((r) => r.temp));
-  const h7 = avg(rows7.map((r) => r.humidity));
-  const okCount7 = [p7, t7, h7].filter((x) => x != null).length;
-  if (okCount7 >= 2) {
-    return { pressure: p7, temp: t7, humidity: h7, days: Math.min(rows7.length, 7) };
-  }
-
-  const rows2 = rows14.length >= 2 ? rows14.slice(0, 2) : await fetchN(2);
-  const p2 = avg(rows2.map((r) => r.pressure));
-  const t2 = avg(rows2.map((r) => r.temp));
-  const h2 = avg(rows2.map((r) => r.humidity));
-  const okCount2 = [p2, t2, h2].filter((x) => x != null).length;
-  if (okCount2 >= 1) {
-    return { pressure: p2, temp: t2, humidity: h2, days: Math.min(rows2.length, 2) };
-  }
-
-  return { pressure: null, temp: null, humidity: null, days: 0 };
-}
-
 function fmtHourRange(startISO, endISO) {
   const hour = (iso) => {
     if (!iso || typeof iso !== "string") return null;
@@ -172,10 +123,8 @@ function buildForecastLine({ level3, mainTrigger, peakRangeText, symptom_focus }
 function buildInfluenceText({ influence, core, subTitles }) {
   const label = influenceLabelJa(influence?.level ?? 1);
 
-  // 主因（最近平均との差の寄与が最大）
   const main = influence?.main_factor || "pressure";
-  const mainJa =
-    main === "temp" ? "気温" : main === "humidity" ? "湿度" : "気圧";
+  const mainJa = main === "temp" ? "気温" : main === "humidity" ? "湿度" : "気圧";
 
   const a = influence?.anomalies || {};
   const p = a?.pressure;
@@ -190,15 +139,91 @@ function buildInfluenceText({ influence, core, subTitles }) {
   if (label === "受けにくい") {
     return `${head}最近より${mainJa}の条件が合いやすく、今日は影響を受けにくい側です。`;
   }
-  // 通常
-  // “通常”でも少しだけ理由を出す（うるさくしない）
+
   const hints = [];
-  if (p != null && Math.abs(p) >= 3) hints.push("気圧");
-  if (t != null && Math.abs(t) >= 3) hints.push("気温");
-  if (h != null && Math.abs(h) >= 10) hints.push("湿度");
+  if (p != null && Math.abs(p) >= 1.5) hints.push("気圧");
+  if (t != null && Math.abs(t) >= 1.5) hints.push("気温");
+  if (h != null && Math.abs(h) >= 6) hints.push("湿度");
   const extra = hints.length ? `（最近より${hints.join("・")}がややズレ）` : "";
   const sub = subTitles?.length ? `／弱点：${subTitles.join("・")}` : "";
   return `${head}今日は概ね通常です${extra}${sub ? sub : ""}。`;
+}
+
+/**
+ * ✅ 方針1：baseline を user履歴ではなく location 由来にする
+ * Open-Meteoで past_days=14 を取得し、直近14日（今日を除く）の平均を作る。
+ *
+ * - timezone=Asia/Tokyo で日付がズレにくくする
+ * - 取得できない場合のみ null を返す（route側でfallback可能）
+ */
+async function fetchEnvBaseline14dByLocation({ lat, lon, todayDateJst }) {
+  const params = new URLSearchParams({
+    latitude: String(lat),
+    longitude: String(lon),
+    hourly: "temperature_2m,relative_humidity_2m,pressure_msl",
+    past_days: "14",
+    forecast_days: "1",
+    timezone: "Asia/Tokyo",
+  });
+
+  const url = `https://api.open-meteo.com/v1/forecast?${params.toString()}`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Open-Meteo baseline fetch failed: ${res.status}`);
+
+  const json = await res.json();
+  const hourly = json?.hourly || {};
+  const times = Array.isArray(hourly?.time) ? hourly.time : [];
+  const T = Array.isArray(hourly?.temperature_2m) ? hourly.temperature_2m : [];
+  const H = Array.isArray(hourly?.relative_humidity_2m) ? hourly.relative_humidity_2m : [];
+  const P = Array.isArray(hourly?.pressure_msl) ? hourly.pressure_msl : [];
+
+  // 今日（JST日付）を除いた直近日群を集計（最大14日）
+  // timesは "YYYY-MM-DDTHH:00" 想定
+  const daySet = [];
+  const idxByDay = new Map(); // day -> indices
+
+  for (let i = 0; i < times.length; i++) {
+    const ts = times[i];
+    if (typeof ts !== "string") continue;
+    const day = ts.slice(0, 10);
+    if (!day || day === todayDateJst) continue;
+
+    if (!idxByDay.has(day)) {
+      idxByDay.set(day, []);
+      daySet.push(day);
+    }
+    idxByDay.get(day).push(i);
+  }
+
+  // daySetは古い→新しい順になることが多いので、末尾から14日ぶん使う
+  const useDays = daySet.slice(Math.max(0, daySet.length - 14));
+  if (useDays.length === 0) {
+    return { pressure: null, temp: null, humidity: null, days: 0 };
+  }
+
+  const collect = (arr) => {
+    const vals = [];
+    for (const d of useDays) {
+      const idxs = idxByDay.get(d) || [];
+      for (const i of idxs) {
+        const v = Number(arr[i]);
+        if (Number.isFinite(v)) vals.push(v);
+      }
+    }
+    return avg(vals);
+  };
+
+  const bT = collect(T);
+  const bH = collect(H);
+  const bP = collect(P);
+
+  // 最低2要素取れてればOK（それ以下は弱いのでdaysを0扱いに近づける）
+  const ok = [bP, bT, bH].filter((x) => x != null).length;
+  if (ok < 2) {
+    return { pressure: bP ?? null, temp: bT ?? null, humidity: bH ?? null, days: Math.min(useDays.length, 14) };
+  }
+
+  return { pressure: bP, temp: bT, humidity: bH, days: Math.min(useDays.length, 14) };
 }
 
 export async function GET(req) {
@@ -221,20 +246,30 @@ export async function GET(req) {
       });
     }
 
-    // 直近14日平均（P/T/H）
-    const baseline = await getEnvBaseline14d(user.id);
-
-    // 天気（Open-Meteo）
+    // 天気（Open-Meteo）: タイムライン用
     const meteo = await fetchOpenMeteo({ lat: loc.lat, lon: loc.lon });
-    const current = meteo?.current || {};
     const hourly = meteo?.hourly || {};
     const { nowIdx } = pickNowAnd24hAgo(hourly);
 
-    const curTemp = numOrNull(current?.temperature_2m ?? hourly?.temperature_2m?.[nowIdx]);
-    const curHum = numOrNull(current?.relative_humidity_2m ?? hourly?.relative_humidity_2m?.[nowIdx]);
-    const curPres = numOrNull(current?.pressure_msl ?? hourly?.pressure_msl?.[nowIdx]);
+    // ✅ 方針1：baseline（直近14日平均）を location 由来で作る
+    let baseline = { pressure: null, temp: null, humidity: null, days: 0 };
+    try {
+      baseline = await fetchEnvBaseline14dByLocation({
+        lat: loc.lat,
+        lon: loc.lon,
+        todayDateJst: date,
+      });
+    } catch (e) {
+      // baselineが取れない場合は null のまま（influenceが「通常寄り」になるだけで落とさない）
+      baseline = { pressure: null, temp: null, humidity: null, days: 0 };
+    }
 
-    // 直近1h Δ（足りなければnull）
+    // ✅ 同時刻同値に寄せる：currentではなく hourly[nowIdx] を採用
+    const curTemp = numOrNull(hourly?.temperature_2m?.[nowIdx]);
+    const curHum = numOrNull(hourly?.relative_humidity_2m?.[nowIdx]);
+    const curPres = numOrNull(hourly?.pressure_msl?.[nowIdx]);
+
+    // delta1h はAPIには残す（UIでは非表示：方針3）
     const prevIdx = nowIdx != null && nowIdx >= 1 ? nowIdx - 1 : null;
     const prevTemp = prevIdx != null ? numOrNull(hourly?.temperature_2m?.[prevIdx]) : null;
     const prevHum = prevIdx != null ? numOrNull(hourly?.relative_humidity_2m?.[prevIdx]) : null;
@@ -307,7 +342,7 @@ export async function GET(req) {
             humidity: curHum,
             pressure: curPres,
           },
-          delta1h: d1,
+          delta1h: d1, // UIでは非表示
           baseline: {
             days: baseline?.days ?? 0,
             temp: baseline?.temp ?? null,
@@ -319,26 +354,26 @@ export async function GET(req) {
             humidity: influence?.anomalies?.humidity ?? null,
             pressure: influence?.anomalies?.pressure ?? null,
           },
-          anomaly_text: anomalyRow, // {pressure:"+x.x", temp:"+y.y", humidity:"+z"}
+          anomaly_text: anomalyRow,
         },
 
-        // メインカード用
         influence: {
           level: influence?.level ?? 1,
           label: influenceLabelJa(influence?.level ?? 1),
           main_factor: influence?.main_factor || "pressure",
           main_factor_label:
-            influence?.main_factor === "temp" ? "気温" :
-              influence?.main_factor === "humidity" ? "湿度" : "気圧",
+            influence?.main_factor === "temp" ? "気温"
+              : influence?.main_factor === "humidity" ? "湿度"
+                : "気圧",
           text: influenceText,
           debug: {
             raw_signed: influence?.raw_signed ?? null,
             signed_parts: influence?.signed_parts ?? null,
             constitution: influence?.constitution ?? null,
+            baseline_days: baseline?.days ?? 0,
           },
         },
 
-        // サブカード用（変化ストレス）
         forecast: {
           level3: summary.level3,
           level_label: levelLabelJa(summary.level3),
