@@ -1,4 +1,3 @@
-// app/radar/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -48,6 +47,19 @@ const IconSparkle = ({ className = "" }) => (
   </svg>
 );
 
+const IconArrowUp = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 19V5" />
+    <path d="M5 12l7-7 7 7" />
+  </svg>
+);
+const IconArrowDown = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 5v14" />
+    <path d="M19 12l-7 7-7-7" />
+  </svg>
+);
+
 /** ---------- Helpers ---------- */
 function fmtSigned(v, digits = 1) {
   if (v == null || !Number.isFinite(Number(v))) return "—";
@@ -68,6 +80,12 @@ function badgeClassByInfluence(lv) {
   if (lv === 2) return "bg-rose-50 text-rose-700";
   if (lv === 0) return "bg-emerald-50 text-emerald-700";
   return "bg-slate-100 text-slate-700";
+}
+
+function forecastBadgeClass(lv) {
+  if (lv === 2) return "bg-rose-50 text-rose-700";
+  if (lv === 1) return "bg-amber-50 text-amber-700";
+  return "bg-emerald-50 text-emerald-700";
 }
 
 function levelColor(lv) {
@@ -94,15 +112,36 @@ function triggerJa(trigger) {
   return "気圧の変化";
 }
 
-function forecastBadgeClass(lv) {
-  if (lv === 2) return "bg-rose-50 text-rose-700";
-  if (lv === 1) return "bg-amber-50 text-amber-700";
-  return "bg-emerald-50 text-emerald-700";
+/**
+ * 負担方向かどうかの判定（タグ表示用）
+ */
+function checkBurdenDirection(factorKey, influenceDebug, anomaly) {
+  const c = influenceDebug?.constitution || {};
+  const n = Number(anomaly);
+  if (!Number.isFinite(n)) return { isBurden: false, label: null };
+
+  let dir = "none";
+  let label = null;
+
+  if (factorKey === "pressure") {
+    dir = c.pressure_dir; // high/low/none
+    if (dir === "high" && n > 0) label = "高圧負担";
+    if (dir === "low" && n < 0) label = "低圧負担";
+  } else if (factorKey === "temp") {
+    dir = c.temp_dir; // high/low/none
+    if (dir === "high" && n > 0) label = "暑さ負担";
+    if (dir === "low" && n < 0) label = "冷え負担";
+  } else if (factorKey === "humidity") {
+    dir = c.humidity_dir; // high/low/none
+    if (dir === "high" && n > 0) label = "湿気負担";
+    if (dir === "low" && n < 0) label = "乾燥負担";
+  }
+
+  return { isBurden: !!label, label };
 }
 
 /**
- * anomaly -> 体感ワード変換
- * ここはUIの“翻訳辞書”なので、閾値は運用で調整前提。
+ * 体感翻訳：物理的なズレを「言葉」にする
  */
 function translateSensation(factorKey, anomaly) {
   const n = Number(anomaly);
@@ -124,125 +163,124 @@ function translateSensation(factorKey, anomaly) {
   }
   if (factorKey === "pressure") {
     if (n >= 4.0) return "超高圧";
-    if (n >= 1.0) return "高圧";
+    if (n >= 1.0) return "高圧"; // 押される
     if (n <= -4.0) return "超低圧";
-    if (n <= -1.0) return "低圧";
+    if (n <= -1.0) return "低圧"; // 抜ける
     return "平圧";
   }
   return "—";
 }
 
-/**
- * 体質(負担方向)に対して、今回のズレが “負担方向か” を判定してタグ化
- * - influence.debug.constitution があれば、それを優先して判定
- */
-function burdenTagForFactor({ factorKey, anomaly, influenceDebug }) {
-  const n = Number(anomaly);
-  if (!Number.isFinite(n)) return null;
-
-  const c = influenceDebug?.constitution || {};
-  const pDir = c?.pressure_dir || "none"; // high/low/none
-  const tDir = c?.temp_dir || "none"; // high/low/none
-  const hDir = c?.humidity_dir || "none"; // high/low/none
-
-  // “ズレが小さい”ときはタグ出さない（うるさくしない）
-  const isSmall =
-    factorKey === "humidity" ? Math.abs(n) < 5 : Math.abs(n) < 1.0;
-  if (isSmall) return null;
-
-  if (factorKey === "temp") {
-    if (tDir === "low" && n <= -1.0) return "冷え負担";
-    if (tDir === "high" && n >= 1.0) return "暑さ負担";
-    return null;
-  }
-  if (factorKey === "humidity") {
-    if (hDir === "high" && n >= 5) return "湿気負担";
-    if (hDir === "low" && n <= -5) return "乾燥負担";
-    return null;
-  }
-  if (factorKey === "pressure") {
-    if (pDir === "high" && n >= 1.0) return "圧迫負担";
-    if (pDir === "low" && n <= -1.0) return "低圧負担";
-    return null;
-  }
-  return null;
-}
+/** ---------- UI Components ---------- */
 
 /**
- * “負担方向じゃない”場合は、ズレがあっても青系（楽方向かも）にする
+ * 新・体感メーターカード
+ * - 言葉ファースト
+ * - 物理数値は小さく
+ * - バーでズレを可視化
+ * - 負担方向なら警告色
  */
-function isBurdenDirection({ factorKey, anomaly, influenceDebug }) {
-  const tag = burdenTagForFactor({ factorKey, anomaly, influenceDebug });
-  return !!tag;
-}
-
-/** ---------- UI bits ---------- */
-function SensationCard({ icon: Icon, title, unit, anomaly, factorKey, influenceDebug }) {
-  const n = anomaly == null ? null : Number(anomaly);
+function SensationCard({
+  icon: Icon,
+  title,
+  unit,
+  anomaly,
+  factorKey,
+  influenceDebug,
+}) {
+  const n = anomaly == null ? 0 : Number(anomaly);
   const sensationWord = translateSensation(factorKey, n);
-  const burdenTag = burdenTagForFactor({ factorKey, anomaly: n, influenceDebug });
-  const burden = isBurdenDirection({ factorKey, anomaly: n, influenceDebug });
+  const { isBurden, label: burdenLabel } = checkBurdenDirection(factorKey, influenceDebug, n);
 
-  // ズレ判定（色付けする最低ライン）
-  const hasShift =
-    Number.isFinite(n) &&
-    (factorKey === "humidity" ? Math.abs(n) >= 5 : Math.abs(n) >= 1.0);
+  // 色決定ロジック
+  // 1. 負担方向なら「赤（Rose）」
+  // 2. 負担ではないがズレが大きいなら「青（Sky）」
+  // 3. ズレが小さければ「グレー（Slate）」
+  
+  const isSignificant = Math.abs(n) >= (factorKey === "humidity" ? 5 : 1.0);
+  
+  let bgColor = "bg-slate-50";
+  let borderColor = "border-slate-100";
+  let textColor = "text-slate-700";
+  let barColor = "bg-slate-300";
+  let barBg = "bg-slate-200/50";
 
-  // 配色（負担=赤 / それ以外でズレあり=青 / ズレ小=グレー）
-  let cardClass = "bg-slate-50 border-slate-100";
-  let wordClass = "text-slate-700";
-  let barClass = "bg-slate-300";
-
-  if (hasShift) {
-    if (burden) {
-      cardClass = "bg-rose-50 border-rose-100";
-      wordClass = "text-rose-700";
-      barClass = "bg-rose-500";
+  if (isSignificant) {
+    if (isBurden) {
+      bgColor = "bg-rose-50";
+      borderColor = "border-rose-100";
+      textColor = "text-rose-700";
+      barColor = "bg-rose-500";
     } else {
-      cardClass = "bg-sky-50 border-sky-100";
-      wordClass = "text-sky-700";
-      barClass = "bg-sky-500";
+      bgColor = "bg-sky-50";
+      borderColor = "border-sky-100";
+      textColor = "text-sky-700";
+      barColor = "bg-sky-500";
     }
   }
 
-  // バー長（スケール：temp/pressure 5, humidity 20）
-  const maxScale = factorKey === "humidity" ? 20 : 5;
-  const pct =
-    Number.isFinite(n) ? Math.min(Math.abs(n) / maxScale, 1.0) * 100 : 0;
-
-  const digits = factorKey === "humidity" ? 0 : 1;
+  // バーの長さ計算 (Maxスケールに対する割合)
+  // 気圧4hPa, 気温4℃, 湿度20% をMAXとする
+  const maxScale = factorKey === "humidity" ? 20 : 4; 
+  const percent = Math.min(Math.abs(n) / maxScale, 1.0) * 100;
 
   return (
-    <div className={`relative rounded-2xl border px-3 py-3 flex flex-col justify-between h-28 ${cardClass} transition-colors`}>
-      <div className="flex items-center gap-1.5">
-        <Icon className={`w-4 h-4 ${wordClass} opacity-70`} />
+    <div className={`relative rounded-2xl border px-3 py-3 flex flex-col justify-between h-28 transition-colors ${bgColor} ${borderColor}`}>
+      {/* ヘッダー */}
+      <div className="flex items-center gap-1.5 mb-1">
+        <Icon className={`w-4 h-4 opacity-60 ${isSignificant ? textColor : "text-slate-400"}`} />
         <span className="text-[10px] font-extrabold text-slate-500">{title}</span>
       </div>
 
-      <div className="flex flex-col items-start mt-1">
-        <span className={`text-xl font-extrabold leading-tight ${wordClass}`}>
+      {/* メイン: 体感ワード */}
+      <div className="flex flex-col items-start mt-0.5">
+        <span className={`text-lg font-extrabold leading-tight ${textColor}`}>
           {sensationWord}
         </span>
+        {/* 物理数値は補足として小さく */}
         <span className="text-[10px] font-bold text-slate-400 mt-0.5">
-          {n == null || !Number.isFinite(n) ? "—" : `${fmtSigned(n, digits)}${unit}`}
-          <span className="ml-1">（最近平均との差）</span>
+          {fmtSigned(n, factorKey === "humidity" ? 0 : 1)}{unit}
         </span>
       </div>
 
-      <div className="mt-2 w-full">
-        <div className="h-1.5 w-full bg-slate-200/50 rounded-full overflow-hidden">
-          <div className={`h-full rounded-full ${barClass}`} style={{ width: `${pct}%` }} />
+      {/* フッター: メーター & 負担タグ */}
+      <div className="mt-auto w-full">
+        {/* バー */}
+        <div className={`h-1.5 w-full rounded-full overflow-hidden mb-2 ${barBg}`}>
+          <div 
+            className={`h-full rounded-full ${barColor}`} 
+            style={{ width: `${percent}%` }}
+          />
         </div>
 
-        <div className="mt-2">
-          {burdenTag ? (
-            <span className="inline-block px-1.5 py-0.5 rounded-md bg-white border border-rose-100 text-[9px] font-extrabold text-rose-600 shadow-sm">
-              {burdenTag}
-            </span>
-          ) : (
-            <span className="inline-block h-[18px]" />
-          )}
-        </div>
+        {/* 負担タグ (あれば表示) */}
+        {isBurden ? (
+          <div className="inline-block px-1.5 py-0.5 rounded-md bg-white border border-rose-100 text-[9px] font-extrabold text-rose-600 shadow-sm">
+            {burdenLabel}
+          </div>
+        ) : (
+          <div className="h-[18px]" /> // 高さ確保（レイアウト崩れ防止）
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DeltaPill({ label, value, unit, digits = 1 }) {
+  const n = value == null ? null : Number(value);
+  const up = n != null && n > 0;
+  const down = n != null && n < 0;
+  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
+
+  return (
+    <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
+      <div className="flex items-center justify-between">
+        <div className="text-xs font-extrabold text-slate-600">{label}</div>
+        {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
+      </div>
+      <div className="mt-1 flex items-end gap-1">
+        <div className="text-lg font-extrabold text-slate-900">{fmtSigned(value, digits)}</div>
+        <div className="text-[11px] font-extrabold text-slate-500 pb-0.5">{unit}</div>
       </div>
     </div>
   );
@@ -283,23 +321,7 @@ function TimelineItem({ w, selected, onClick }) {
   );
 }
 
-function DeltaPill({ label, value, unit, digits = 1 }) {
-  const n = value == null ? null : Number(value);
-
-  return (
-    <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-extrabold text-slate-600">{label}</div>
-      </div>
-      <div className="mt-1 flex items-end gap-1">
-        <div className="text-lg font-extrabold text-slate-900">{fmtSigned(n, digits)}</div>
-        <div className="text-[11px] font-extrabold text-slate-500 pb-0.5">{unit}</div>
-      </div>
-    </div>
-  );
-}
-
-/** ---------- Page ---------- */
+/** ---------- Page Component ---------- */
 export default function RadarPage() {
   const router = useRouter();
   const [session, setSession] = useState(null);
@@ -311,7 +333,7 @@ export default function RadarPage() {
   const [data, setData] = useState(null);
   const [selectedIdx, setSelectedIdx] = useState(0);
 
-  // auth
+  // auth check
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -320,9 +342,7 @@ export default function RadarPage() {
       setSession(data.session || null);
       setLoadingAuth(false);
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   async function load() {
@@ -359,12 +379,19 @@ export default function RadarPage() {
   const windows = useMemo(() => (Array.isArray(data?.time_windows) ? data.time_windows : []), [data]);
   const selected = windows[selectedIdx] || windows[0] || null;
 
-  // states
+  // Loading / Auth States
   if (loadingAuth || (loading && !data)) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 pt-8 max-w-[440px] mx-auto space-y-5">
         <div className="h-6 w-40 bg-slate-200 rounded-full animate-pulse" />
-        <div className="h-44 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
+        <div className="h-44 w-full bg-slate-200 rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6 space-y-4">
+           <div className="h-6 w-3/4 bg-slate-100 rounded-full animate-pulse" />
+           <div className="grid grid-cols-3 gap-2 mt-4">
+             <div className="h-28 bg-slate-50 rounded-2xl animate-pulse" />
+             <div className="h-28 bg-slate-50 rounded-2xl animate-pulse" />
+             <div className="h-28 bg-slate-50 rounded-2xl animate-pulse" />
+           </div>
+        </div>
         <div className="h-28 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
       </div>
     );
@@ -394,7 +421,7 @@ export default function RadarPage() {
       <div className="min-h-screen bg-slate-50 p-4 pt-10">
         <div className="max-w-[440px] mx-auto bg-white rounded-[2rem] border border-slate-100 shadow-sm p-6 text-center">
           <div className="text-lg font-extrabold text-slate-900">体質データがありません</div>
-          <div className="text-sm text-slate-600 mt-2 font-bold">{data?.message || "体質チェックを先に完了してください。"}</div>
+          <div className="text-sm text-slate-600 mt-2 font-bold">{data?.message || "先に体質チェックを完了してください。"}</div>
           <button onClick={() => router.push("/check")} className="mt-6 w-full rounded-xl bg-emerald-600 text-white font-extrabold py-3">
             体質チェックを始める
           </button>
@@ -405,10 +432,10 @@ export default function RadarPage() {
 
   const prof = data?.profile || {};
   const ext = data?.external || {};
-  const anomaly = ext?.anomaly || {}; // numeric
+  const anomaly = ext?.anomaly || {};
+  
   const influence = data?.influence || {};
   const forecast = data?.forecast || {};
-  const influenceDebug = influence?.debug || {};
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -431,8 +458,10 @@ export default function RadarPage() {
       </div>
 
       <div className="max-w-[440px] mx-auto px-4 py-6 space-y-6">
-        {/* Main: 影響の受けやすさ */}
+        
+        {/* Main: 影響の受けやすさ（体感メーター） */}
         <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6">
+          {/* 背景の装飾円 */}
           <div
             className={[
               "absolute -top-10 -right-10 w-44 h-44 rounded-full opacity-15 pointer-events-none",
@@ -459,41 +488,41 @@ export default function RadarPage() {
               </div>
             ) : null}
 
-            {/* 体感メーター（3枚カード） */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            {/* 新・体感メーター（3連カード） */}
+            <div className="mt-5 grid grid-cols-3 gap-2">
               <SensationCard
                 icon={IconThermo}
-                title="寒暖ストレス"
+                title="寒暖差"
                 unit="℃"
                 anomaly={anomaly?.temp}
                 factorKey="temp"
-                influenceDebug={influenceDebug}
+                influenceDebug={influence?.debug}
               />
               <SensationCard
                 icon={IconDroplet}
-                title="潤燥ストレス"
+                title="湿度感"
                 unit="%"
                 anomaly={anomaly?.humidity}
                 factorKey="humidity"
-                influenceDebug={influenceDebug}
+                influenceDebug={influence?.debug}
               />
               <SensationCard
                 icon={IconGauge}
-                title="圧ストレス"
+                title="気圧感"
                 unit="hPa"
                 anomaly={anomaly?.pressure}
                 factorKey="pressure"
-                influenceDebug={influenceDebug}
+                influenceDebug={influence?.debug}
               />
             </div>
 
-            <div className="mt-2 text-[10px] text-slate-400 font-bold">
-              ※ 体質傾向 × 最近2週間の環境平均との差で「体感」を翻訳しています
+            <div className="mt-4 text-[10px] text-slate-400 font-bold">
+              ※ 判定：「今日1日の平均」×「最近2週間の平均」のズレで算出。
             </div>
           </div>
         </div>
 
-        {/* Sub card: 今日いちばん気をつける変化（変化ストレスの要約） */}
+        {/* Sub card: 今日いちばん気をつける変化 */}
         <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-5">
           <div className="flex items-center justify-between">
             <div className="text-sm font-extrabold text-slate-900">今日いちばん気をつける変化</div>
@@ -517,10 +546,10 @@ export default function RadarPage() {
           )}
         </div>
 
-        {/* 24h timeline */}
+        {/* Timeline: 今日の波 */}
         <div>
           <div className="flex items-end justify-between px-1 mb-3">
-            <div className="text-base font-extrabold text-slate-900">1時間ごとの波</div>
+            <div className="text-base font-extrabold text-slate-900">今日の波（1時間ごと）</div>
             <div className="text-[11px] text-slate-400 font-extrabold">横にスクロール</div>
           </div>
 
@@ -528,12 +557,17 @@ export default function RadarPage() {
             <div className="overflow-x-auto">
               <div className="flex gap-2 pb-2">
                 {windows.map((w, i) => (
-                  <TimelineItem key={w.time || i} w={w} selected={i === selectedIdx} onClick={() => setSelectedIdx(i)} />
+                  <TimelineItem
+                    key={w.time || i}
+                    w={w}
+                    selected={i === selectedIdx}
+                    onClick={() => setSelectedIdx(i)}
+                  />
                 ))}
               </div>
             </div>
 
-            {/* compact details (selected hour) */}
+            {/* selected detail */}
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-extrabold text-slate-900">
@@ -545,28 +579,23 @@ export default function RadarPage() {
               </div>
 
               <div className="mt-3 grid grid-cols-3 gap-2">
-                <DeltaPill label="気圧(3hΔ)" value={selected?.deltas?.dp} unit="hPa" digits={1} />
-                <DeltaPill label="気温(3hΔ)" value={selected?.deltas?.dt} unit="℃" digits={1} />
-                <DeltaPill label="湿度(3hΔ)" value={selected?.deltas?.dh} unit="%" digits={0} />
+                <DeltaPill label="気圧" value={selected?.deltas?.dp} unit="hPa" digits={1} />
+                <DeltaPill label="気温" value={selected?.deltas?.dt} unit="℃" digits={1} />
+                <DeltaPill label="湿度" value={selected?.deltas?.dh} unit="%" digits={0} />
               </div>
 
               <div className="mt-3 flex items-center gap-2 text-xs font-extrabold text-slate-600">
                 <span className={["inline-flex items-center gap-1", levelColor(selected?.level3 ?? 0)].join(" ")}>
-                  {selected?.level3 === 0 ? (
-                    <IconSparkle className="w-4 h-4" />
-                  ) : (
-                    (() => {
-                      const I = triggerIcon(selected?.trigger);
-                      return <I className="w-4 h-4" />;
-                    })()
-                  )}
+                  {selected?.level3 === 0 ? <IconSparkle className="w-4 h-4" /> : (() => {
+                    const I = triggerIcon(selected?.trigger);
+                    return <I className="w-4 h-4" />;
+                  })()}
                   {selected?.level3 === 0 ? "安定" : triggerJa(selected?.trigger)}
                 </span>
                 <span className="text-slate-400 font-extrabold">/</span>
-                <span className="text-slate-500 font-extrabold">（± は変化の向き）</span>
+                <span className="text-slate-500 font-extrabold">（± は直近3時間の変化の向き）</span>
               </div>
 
-              {/* 注意/警戒のみ：パーソナライズ短文 */}
               {selected?.hint_text ? (
                 <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 px-3 py-3 text-[12px] text-slate-700 font-extrabold leading-6">
                   {selected.hint_text}
@@ -578,12 +607,18 @@ export default function RadarPage() {
 
         {/* Nav */}
         <div className="pt-2 flex flex-col gap-3">
-          <button onClick={() => router.push("/history")} className="w-full bg-white border border-slate-100 shadow-sm rounded-2xl px-4 py-4 text-left">
+          <button
+            onClick={() => router.push("/history")}
+            className="w-full bg-white border border-slate-100 shadow-sm rounded-2xl px-4 py-4 text-left"
+          >
             <div className="text-sm font-extrabold text-slate-900">過去のコンディション履歴</div>
             <div className="text-[12px] text-slate-500 font-extrabold mt-1">振り返り・傾向の確認</div>
           </button>
 
-          <button onClick={() => router.push("/check")} className="w-full py-3 text-sm font-extrabold text-slate-400 hover:text-emerald-600 transition">
+          <button
+            onClick={() => router.push("/check")}
+            className="w-full py-3 text-sm font-extrabold text-slate-400 hover:text-emerald-600 transition"
+          >
             体質チェックをやり直す
           </button>
         </div>
