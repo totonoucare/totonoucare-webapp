@@ -48,12 +48,30 @@ const IconSparkle = ({ className = "" }) => (
   </svg>
 );
 
+const IconArrowUp = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 19V5" />
+    <path d="M5 12l7-7 7 7" />
+  </svg>
+);
+const IconArrowDown = ({ className = "" }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 5v14" />
+    <path d="M19 12l-7 7-7-7" />
+  </svg>
+);
+
 /** ---------- Helpers ---------- */
 function fmtSigned(v, digits = 1) {
   if (v == null || !Number.isFinite(Number(v))) return "—";
   const n = Number(v);
   const s = n >= 0 ? "+" : "";
   return `${s}${n.toFixed(digits)}`;
+}
+
+function fmtNum(v, digits = 1) {
+  if (v == null || !Number.isFinite(Number(v))) return "—";
+  return Number(v).toFixed(digits);
 }
 
 function levelLabel(lv) {
@@ -68,6 +86,12 @@ function badgeClassByInfluence(lv) {
   if (lv === 2) return "bg-rose-50 text-rose-700";
   if (lv === 0) return "bg-emerald-50 text-emerald-700";
   return "bg-slate-100 text-slate-700";
+}
+
+function forecastBadgeClass(lv) {
+  if (lv === 2) return "bg-rose-50 text-rose-700";
+  if (lv === 1) return "bg-amber-50 text-amber-700";
+  return "bg-emerald-50 text-emerald-700";
 }
 
 function levelColor(lv) {
@@ -94,32 +118,97 @@ function triggerJa(trigger) {
   return "気圧の変化";
 }
 
-function forecastBadgeClass(lv) {
-  if (lv === 2) return "bg-rose-50 text-rose-700";
-  if (lv === 1) return "bg-amber-50 text-amber-700";
-  return "bg-emerald-50 text-emerald-700";
+function burdenTagForFactor({ factorKey, influenceDebug }) {
+  const c = influenceDebug?.constitution || {};
+  if (!c) return null;
+
+  if (factorKey === "pressure") {
+    const dir = c.pressure_dir; // high/low/none
+    if (dir === "high") return "高圧側が負担";
+    if (dir === "low") return "低圧側が負担";
+    return null;
+  }
+  if (factorKey === "temp") {
+    const dir = c.temp_dir; // high/low/none
+    if (dir === "high") return "暑さ側が負担";
+    if (dir === "low") return "冷え側が負担";
+    return null;
+  }
+  if (factorKey === "humidity") {
+    const dir = c.humidity_dir; // high/low/none
+    if (dir === "high") return "湿気側が負担";
+    if (dir === "low") return "乾燥側が負担";
+    return null;
+  }
+  return null;
 }
 
 /** ---------- UI bits ---------- */
-/**
- * ✅ 方針3：メインカードは2週間平均との差に振り切る
- * -> 右上の↑↓（delta1h）は表示しない
- */
-function MetricCard({ icon: Icon, label, value, unit }) {
+function SensationCard({
+  icon: Icon,
+  title,
+  unit,
+  anomaly,
+  baselineAvg,
+  todayAvg,
+  todayMin,
+  todayMax,
+  factorKey,
+  influenceDebug,
+  digits = 1,
+}) {
+  const n = anomaly == null ? null : Number(anomaly);
+  const up = n != null && Number.isFinite(n) && n > 0;
+  const down = n != null && Number.isFinite(n) && n < 0;
+  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
+
+  // “負担方向” のときだけ小タグ（うるさくしない）
+  // 例）冷え側負担なのに anomalyがマイナス（冷え寄り）なら負担方向
+  const burdenDirLabel = burdenTagForFactor({ factorKey, influenceDebug });
+  const consti = influenceDebug?.constitution || {};
+  const dir =
+    factorKey === "pressure" ? consti.pressure_dir
+      : factorKey === "temp" ? consti.temp_dir
+        : factorKey === "humidity" ? consti.humidity_dir
+          : "none";
+
+  const isBurden =
+    n != null &&
+    ((dir === "high" && n > 0) || (dir === "low" && n < 0));
+
   return (
     <div className="relative rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-slate-400" />
-          <div className="text-xs font-extrabold text-slate-600">{label}</div>
+          <div className="text-xs font-extrabold text-slate-700">{title}</div>
+        </div>
+
+        <div className="flex items-center gap-1 text-[11px] text-slate-500 font-extrabold">
+          {Arrow ? <Arrow className="w-4 h-4" /> : <span className="w-4 h-4 inline-block" />}
+          <span>{fmtSigned(anomaly, unit === "%" ? 0 : digits)}</span>
         </div>
       </div>
 
       <div className="mt-2 flex items-end gap-1">
-        <div className="text-2xl font-extrabold text-slate-900 leading-none">{value ?? "—"}</div>
+        <div className="text-2xl font-extrabold text-slate-900 leading-none">
+          {fmtSigned(anomaly, unit === "%" ? 0 : digits)}
+        </div>
         <div className="text-xs font-extrabold text-slate-500 pb-0.5">{unit}</div>
       </div>
-      <div className="text-[10px] text-slate-400 mt-1 font-bold">現在</div>
+
+      <div className="mt-2 text-[10px] text-slate-500 font-bold leading-5">
+        <div>最近 {fmtNum(baselineAvg, unit === "%" ? 0 : digits)} → 今日 {fmtNum(todayAvg, unit === "%" ? 0 : digits)}</div>
+        <div>今日 min–max {fmtNum(todayMin, unit === "%" ? 0 : digits)}–{fmtNum(todayMax, unit === "%" ? 0 : digits)}</div>
+      </div>
+
+      {isBurden && burdenDirLabel ? (
+        <div className="mt-2 inline-flex items-center rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-extrabold text-slate-700">
+          負担方向
+        </div>
+      ) : (
+        <div className="mt-2 h-[18px]" />
+      )}
     </div>
   );
 }
@@ -160,11 +249,16 @@ function TimelineItem({ w, selected, onClick }) {
 }
 
 function DeltaPill({ label, value, unit, digits = 1 }) {
+  const n = value == null ? null : Number(value);
+  const up = n != null && n > 0;
+  const down = n != null && n < 0;
+  const Arrow = up ? IconArrowUp : down ? IconArrowDown : null;
+
   return (
     <div className="rounded-2xl bg-slate-50 border border-slate-100 px-3 py-3">
       <div className="flex items-center justify-between">
         <div className="text-xs font-extrabold text-slate-600">{label}</div>
-        <span className="w-4 h-4 inline-block" />
+        {Arrow ? <Arrow className="w-4 h-4 text-slate-400" /> : <span className="w-4 h-4 inline-block" />}
       </div>
       <div className="mt-1 flex items-end gap-1">
         <div className="text-lg font-extrabold text-slate-900">{fmtSigned(value, digits)}</div>
@@ -287,7 +381,9 @@ export default function RadarPage() {
 
   const prof = data?.profile || {};
   const ext = data?.external || {};
-  const cur = ext?.current || {};
+  const todayAvg = ext?.today?.avg || {};
+  const todayMM = ext?.today?.minmax || {};
+  const baseline = ext?.baseline || {};
   const anomalyText = ext?.anomaly_text || null;
 
   const influence = data?.influence || {};
@@ -342,13 +438,50 @@ export default function RadarPage() {
               </div>
             ) : null}
 
+            {/* 体感メーター（ズレ主役） */}
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <MetricCard icon={IconThermo} label="気温" value={cur?.temp ?? "—"} unit="℃" />
-              <MetricCard icon={IconDroplet} label="湿度" value={cur?.humidity ?? "—"} unit="%" />
-              <MetricCard icon={IconGauge} label="気圧" value={cur?.pressure ?? "—"} unit="hPa" />
+              <SensationCard
+                icon={IconThermo}
+                title="寒暖ストレス"
+                unit="℃"
+                anomaly={ext?.anomaly?.temp}
+                baselineAvg={baseline?.temp}
+                todayAvg={todayAvg?.temp}
+                todayMin={todayMM?.temp?.min}
+                todayMax={todayMM?.temp?.max}
+                factorKey="temp"
+                influenceDebug={influence?.debug}
+                digits={1}
+              />
+              <SensationCard
+                icon={IconDroplet}
+                title="潤燥ストレス"
+                unit="%"
+                anomaly={ext?.anomaly?.humidity}
+                baselineAvg={baseline?.humidity}
+                todayAvg={todayAvg?.humidity}
+                todayMin={todayMM?.humidity?.min}
+                todayMax={todayMM?.humidity?.max}
+                factorKey="humidity"
+                influenceDebug={influence?.debug}
+                digits={0}
+              />
+              <SensationCard
+                icon={IconGauge}
+                title="圧ストレス"
+                unit="hPa"
+                anomaly={ext?.anomaly?.pressure}
+                baselineAvg={baseline?.pressure}
+                todayAvg={todayAvg?.pressure}
+                todayMin={todayMM?.pressure?.min}
+                todayMax={todayMM?.pressure?.max}
+                factorKey="pressure"
+                influenceDebug={influence?.debug}
+                digits={1}
+              />
             </div>
 
-            {/* 最近平均との差 */}
+            {/* 最近平均との差（文字でも一応残す：でも主役じゃない） */}
             <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-extrabold">
               <div>最近平均との差</div>
               <div className="flex gap-3">
@@ -359,12 +492,12 @@ export default function RadarPage() {
             </div>
 
             <div className="mt-2 text-[10px] text-slate-400 font-bold">
-              ※ 体質傾向 × 最近2週間の環境平均との差で推定
+              ※ 判定も表示も「今日平均」×「最近2週間平均」で統一（朝見ても夜見てもブレない）
             </div>
           </div>
         </div>
 
-        {/* Sub card: 今日いちばん気をつける変化（変化ストレスの要約） */}
+        {/* Sub card: 今日いちばん気をつける変化（今日の範囲のみ） */}
         <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-5">
           <div className="flex items-center justify-between">
             <div className="text-sm font-extrabold text-slate-900">今日いちばん気をつける変化</div>
@@ -388,10 +521,10 @@ export default function RadarPage() {
           )}
         </div>
 
-        {/* 24h timeline */}
+        {/* Timeline: 今日0:00〜23:00 */}
         <div>
           <div className="flex items-end justify-between px-1 mb-3">
-            <div className="text-base font-extrabold text-slate-900">1時間ごとの波</div>
+            <div className="text-base font-extrabold text-slate-900">今日の波（1時間ごと）</div>
             <div className="text-[11px] text-slate-400 font-extrabold">横にスクロール</div>
           </div>
 
@@ -409,7 +542,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            {/* compact details (selected hour) */}
+            {/* selected detail */}
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm font-extrabold text-slate-900">
@@ -435,10 +568,9 @@ export default function RadarPage() {
                   {selected?.level3 === 0 ? "安定" : triggerJa(selected?.trigger)}
                 </span>
                 <span className="text-slate-400 font-extrabold">/</span>
-                <span className="text-slate-500 font-extrabold">（± は変化の向き）</span>
+                <span className="text-slate-500 font-extrabold">（± は直近3時間の変化の向き）</span>
               </div>
 
-              {/* 注意/警戒のみ：パーソナライズ短文 */}
               {selected?.hint_text ? (
                 <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 px-3 py-3 text-[12px] text-slate-700 font-extrabold leading-6">
                   {selected.hint_text}
