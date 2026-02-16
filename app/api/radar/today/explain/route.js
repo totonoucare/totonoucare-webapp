@@ -1,5 +1,4 @@
 // app/api/radar/today/explain/route.js
-// 「なぜこうなった？」用（todayと同じ計算結果を返すだけ：二重実装しない）
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireUser } from "@/lib/requireUser";
@@ -28,7 +27,7 @@ async function getPrimaryLocation(userId) {
 async function getLatestConstitutionProfile(userId) {
   const { data, error } = await supabaseServer
     .from("constitution_profiles")
-    .select(["user_id", "symptom_focus", "core_code", "sub_labels", "computed"].join(","))
+    .select("user_id,symptom_focus,core_code,sub_labels,computed,updated_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -36,48 +35,16 @@ async function getLatestConstitutionProfile(userId) {
   return data || null;
 }
 
-function avg(arr) {
-  if (!Array.isArray(arr) || arr.length === 0) return null;
-  const vals = arr.map(Number).filter(Number.isFinite);
-  if (vals.length === 0) return null;
-  return vals.reduce((a, b) => a + b, 0) / vals.length;
-}
-
 async function getBaselineDays(userId) {
-  const fetchN = async (n) => {
-    const { data, error } = await supabaseServer
-      .from("daily_external_factors")
-      .select("date, pressure, temp, humidity")
-      .eq("user_id", userId)
-      .order("date", { ascending: false })
-      .limit(n);
+  const { data, error } = await supabaseServer
+    .from("daily_external_factors")
+    .select("date")
+    .eq("user_id", userId)
+    .order("date", { ascending: false })
+    .limit(14);
 
-    if (error) throw error;
-    return data || [];
-  };
-
-  const rows14 = await fetchN(14);
-  const p14 = avg(rows14.map((r) => r.pressure));
-  const t14 = avg(rows14.map((r) => r.temp));
-  const h14 = avg(rows14.map((r) => r.humidity));
-  const ok14 = [p14, t14, h14].filter((x) => x != null).length;
-  if (ok14 >= 2) return Math.min(rows14.length, 14);
-
-  const rows7 = rows14.length >= 7 ? rows14.slice(0, 7) : await fetchN(7);
-  const p7 = avg(rows7.map((r) => r.pressure));
-  const t7 = avg(rows7.map((r) => r.temp));
-  const h7 = avg(rows7.map((r) => r.humidity));
-  const ok7 = [p7, t7, h7].filter((x) => x != null).length;
-  if (ok7 >= 2) return Math.min(rows7.length, 7);
-
-  const rows2 = rows14.length >= 2 ? rows14.slice(0, 2) : await fetchN(2);
-  const p2 = avg(rows2.map((r) => r.pressure));
-  const t2 = avg(rows2.map((r) => r.temp));
-  const h2 = avg(rows2.map((r) => r.humidity));
-  const ok2 = [p2, t2, h2].filter((x) => x != null).length;
-  if (ok2 >= 1) return Math.min(rows2.length, 2);
-
-  return 0;
+  if (error) throw error;
+  return (data || []).length;
 }
 
 export async function GET(req) {
@@ -90,21 +57,15 @@ export async function GET(req) {
 
     const profile = await getLatestConstitutionProfile(user.id);
     if (!profile) {
-      return NextResponse.json({
-        data: { date, has_profile: false, message: "体質データがありません。" },
-      });
+      return NextResponse.json({ error: "no profile" }, { status: 400 });
     }
 
     const baselineDays = await getBaselineDays(user.id);
 
-    const meteo = await fetchOpenMeteo({
-      lat: loc.lat,
-      lon: loc.lon,
-      timezone: "Asia/Tokyo",
-    });
-
+    const meteo = await fetchOpenMeteo({ lat: loc.lat, lon: loc.lon });
     const hourly = meteo?.hourly || {};
-    const pack = computeTodayRiskPackage({
+
+    const pkg = computeTodayRiskPackage({
       hourly,
       dateStrJST: date,
       profile,
@@ -112,29 +73,68 @@ export async function GET(req) {
     });
 
     const core = getCoreLabel(profile?.core_code);
-    const sub = getSubLabels(profile?.sub_labels || []);
+    const sub = getSubLabels(profile?.sub_labels || []).map((x) => x?.title).filter(Boolean);
+    const focusLabel = SYMPTOM_LABELS?.[profile?.symptom_focus] || null;
+
+    // timelineの要点だけ（重いので全部は返しすぎない）
+    const hero = pkg.hero;
+    const items = pkg.timeline || [];
+    const peak = hero?.peak || {};
+
+    const peakSlice =
+      peak?.start_idx >= 0
+        ? items.slice(peak.start_idx, peak.end_idx + 1)
+        : [];
+
+    // ピーク帯の寄与合計
+    const sum = peakSlice.reduce(
+      (acc, it) => {
+        acc.pressure += Number(it?.contrib?.pressure || 0);
+        acc.temp += Number(it?.contrib?.temp || 0);
+        acc.humidity += Number(it?.contrib?.humidity || 0);
+        return acc;
+      },
+      { pressure: 0, temp: 0, humidity: 0 }
+    );
+
+    // ピーク帯で発火したイベント
+    const events = [];
+    for (const it of peakSlice) {
+      for (const ev of (it?.events || [])) {
+        events.push({ time: it?.time, ...ev });
+      }
+    }
 
     return NextResponse.json({
       data: {
         date,
-        focus: {
-          symptom_focus: profile?.symptom_focus || null,
-          label_ja: SYMPTOM_LABELS[profile?.symptom_focus] || "不調",
-        },
+        location: loc,
+
         profile: {
-          core_code: profile?.core_code || null,
+          symptom_focus: profile?.symptom_focus || null,
+          symptom_label: focusLabel,
           core_title: core?.title || null,
-          core_short: core?.short || null,
-          sub_labels: (profile?.sub_labels || []).slice(0, 2),
-          sub_titles: sub.map((x) => x?.title).filter(Boolean),
-          sub_shorts: sub.map((x) => x?.short).filter(Boolean),
+          sub_titles: sub,
         },
-        hero: pack.hero,
-        explain: {
-          ...pack.explain,
-          debug: pack.debug, // explainでは出してOK
+
+        hero,
+        why_short: pkg.explain?.why_short || null,
+
+        // 検算用
+        debug: {
+          confidence: pkg.debug?.confidence,
+          coverage: pkg.debug?.coverage,
+          baselineDays: pkg.debug?.baselineDays,
+          S_user: pkg.debug?.S || null,
+          hero_raw: pkg.debug?.hero_raw || null,
+
+          peak_contrib_sum: {
+            pressure: Number(sum.pressure.toFixed(2)),
+            temp: Number(sum.temp.toFixed(2)),
+            humidity: Number(sum.humidity.toFixed(2)),
+          },
+          peak_events: events.slice(0, 50),
         },
-        timeline_sample: (pack.timeline || []).slice(0, 6), // 画面用の軽量プレビュー（必要なら）
       },
     });
   } catch (e) {
