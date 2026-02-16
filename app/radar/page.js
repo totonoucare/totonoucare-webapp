@@ -1,7 +1,7 @@
 // app/radar/page.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -61,7 +61,6 @@ function confidenceLabelJa(c) {
 }
 
 function badgeClassByLevel(lv) {
-  // lv: 0..2 (安定/注意/要警戒)
   if (lv === 2) return "bg-rose-50 text-rose-700 border-rose-100";
   if (lv === 1) return "bg-amber-50 text-amber-700 border-amber-100";
   return "bg-emerald-50 text-emerald-700 border-emerald-100";
@@ -72,9 +71,6 @@ function levelLabel(lv) {
 }
 
 function computeLevelFromProbIntensity(prob, intensity) {
-  // UIのバッジをheroから決める（timelineと整合するよう“強め”で）
-  // intensity >=7 or prob>=0.70 => 要警戒
-  // intensity >=4 or prob>=0.45 => 注意
   if ((intensity ?? 0) >= 7 || (prob ?? 0) >= 0.7) return 2;
   if ((intensity ?? 0) >= 4 || (prob ?? 0) >= 0.45) return 1;
   return 0;
@@ -86,7 +82,7 @@ function pickInitialSelectedIdxFromPeak(timeline, hero) {
   const s = hero?.peak?.start_idx ?? -1;
   const e = hero?.peak?.end_idx ?? -1;
   if (s >= 0 && e >= s) return Math.floor((s + e) / 2);
-  // fallback: max risk
+
   let best = 0;
   let bestR = -1;
   for (let i = 0; i < items.length; i++) {
@@ -99,7 +95,6 @@ function pickInitialSelectedIdxFromPeak(timeline, hero) {
   return best;
 }
 
-/** Timeline chip */
 function TimelineChip({ it, selected, onClick }) {
   const time = it?.time ? `${new Date(it.time).getHours()}:00` : "—";
   const lv = it?.level3 ?? 0;
@@ -134,7 +129,6 @@ function TimelineChip({ it, selected, onClick }) {
   );
 }
 
-/** Collapsible detail */
 function Disclosure({ title, children }) {
   const [open, setOpen] = useState(false);
   return (
@@ -169,6 +163,10 @@ export default function RadarPage() {
   const [data, setData] = useState(null);
   const [selectedIdx, setSelectedIdx] = useState(0);
 
+  // ✅ Hooks は必ず最上部で呼ぶ（useMemoは使わず plain にする）
+  const tl = Array.isArray(data?.timeline) ? data.timeline : [];
+  const selected = tl[selectedIdx] || tl[0] || null;
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -193,12 +191,15 @@ export default function RadarPage() {
       const res = await fetch("/api/radar/today", {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const json = await res.json();
       const payload = json?.data || null;
       setData(payload);
 
-      const tl = Array.isArray(payload?.timeline) ? payload.timeline : [];
-      const idx = pickInitialSelectedIdxFromPeak(tl, payload?.hero);
+      const idx = pickInitialSelectedIdxFromPeak(
+        Array.isArray(payload?.timeline) ? payload.timeline : [],
+        payload?.hero
+      );
       setSelectedIdx(idx);
     } catch (e) {
       console.error(e);
@@ -213,6 +214,7 @@ export default function RadarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
+  // states
   if (loadingAuth || (loading && !data)) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 pt-8 max-w-[440px] mx-auto space-y-5">
@@ -268,8 +270,6 @@ export default function RadarPage() {
   const focus = data?.focus || {};
   const prof = data?.profile || {};
   const hero = data?.hero || {};
-  const tl = useMemo(() => (Array.isArray(data?.timeline) ? data.timeline : []), [data]);
-  const selected = tl[selectedIdx] || tl[0] || null;
 
   const probPct = Math.round((hero?.prob ?? 0) * 100);
   const intensity = hero?.intensity ?? 0;
@@ -311,7 +311,6 @@ export default function RadarPage() {
           />
 
           <div className="relative">
-            {/* focus + badge */}
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 border border-slate-100 px-3 py-1">
@@ -331,7 +330,6 @@ export default function RadarPage() {
               </div>
             </div>
 
-            {/* numbers */}
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
                 <div className="text-[11px] font-extrabold text-slate-500">発症確率（今日）</div>
@@ -349,7 +347,6 @@ export default function RadarPage() {
               </div>
             </div>
 
-            {/* peak + trigger + confidence */}
             <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
               <div className="flex items-center justify-between">
                 <div className="text-[12px] font-extrabold text-slate-600">ピーク帯</div>
@@ -375,12 +372,10 @@ export default function RadarPage() {
               </div>
             </div>
 
-            {/* explanation collapsed */}
             <Disclosure title="なぜこう予測した？（短い説明）">
               <div className="text-[12px] font-extrabold text-slate-700 leading-6">
                 {data?.explain?.why_short || "—"}
               </div>
-
               {data?.debug ? (
                 <div className="mt-3 text-[11px] text-slate-400 font-bold leading-5">
                   ※ debug: baselineDays={data.debug.baselineDays}, coverage={Math.round((data.debug.coverage || 0) * 100)}%
@@ -405,7 +400,6 @@ export default function RadarPage() {
             </div>
           </div>
 
-          {/* selected details */}
           <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4">
             <div className="flex items-center justify-between">
               <div className="text-sm font-extrabold text-slate-900">
@@ -426,7 +420,6 @@ export default function RadarPage() {
               </div>
             )}
 
-            {/* tiny detail (optional) */}
             <Disclosure title="この時間の内訳（開発者向け）">
               <div className="text-[12px] text-slate-700 font-bold leading-6">
                 risk: {selected?.risk ?? "—"} / trigger: {selected?.trigger || "—"} / parts:{" "}
