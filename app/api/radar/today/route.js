@@ -21,7 +21,7 @@ async function getPrimaryLocation(userId) {
     .maybeSingle();
 
   if (error) throw error;
-  return data || { lat: 34.7025, lon: 135.4959 };
+  return data || { lat: 34.7025, lon: 135.4959 }; // fallback: 大阪駅付近
 }
 
 async function getLatestConstitutionProfile(userId) {
@@ -51,7 +51,10 @@ function avg(arr) {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-/** 直近14日（不足時は7→2）の日数だけ返す：confidenceの根拠 */
+/**
+ * baselineは「days」だけ使う（confidence用）
+ * daily_external_factors が無いユーザーもいるので段階fallback
+ */
 async function getBaselineDays(userId) {
   const fetchN = async (n) => {
     const { data, error } = await supabaseServer
@@ -70,6 +73,7 @@ async function getBaselineDays(userId) {
   const t14 = avg(rows14.map((r) => r.temp));
   const h14 = avg(rows14.map((r) => r.humidity));
   const ok14 = [p14, t14, h14].filter((x) => x != null).length;
+
   if (ok14 >= 2) return Math.min(rows14.length, 14);
 
   const rows7 = rows14.length >= 7 ? rows14.slice(0, 7) : await fetchN(7);
@@ -77,6 +81,7 @@ async function getBaselineDays(userId) {
   const t7 = avg(rows7.map((r) => r.temp));
   const h7 = avg(rows7.map((r) => r.humidity));
   const ok7 = [p7, t7, h7].filter((x) => x != null).length;
+
   if (ok7 >= 2) return Math.min(rows7.length, 7);
 
   const rows2 = rows14.length >= 2 ? rows14.slice(0, 2) : await fetchN(2);
@@ -84,6 +89,7 @@ async function getBaselineDays(userId) {
   const t2 = avg(rows2.map((r) => r.temp));
   const h2 = avg(rows2.map((r) => r.humidity));
   const ok2 = [p2, t2, h2].filter((x) => x != null).length;
+
   if (ok2 >= 1) return Math.min(rows2.length, 2);
 
   return 0;
@@ -108,18 +114,13 @@ export async function GET(req) {
       });
     }
 
-    // confidenceの根拠（2週間平均が十分か）
     const baselineDays = await getBaselineDays(user.id);
 
-    // Open-Meteo：必ずJST指定（openMeteo実装側が timezone を受けられる想定）
-    const meteo = await fetchOpenMeteo({
-      lat: loc.lat,
-      lon: loc.lon,
-      timezone: "Asia/Tokyo",
-    });
-
+    // Open-Meteo
+    const meteo = await fetchOpenMeteo({ lat: loc.lat, lon: loc.lon });
     const hourly = meteo?.hourly || {};
-    const pack = computeTodayRiskPackage({
+
+    const pkg = computeTodayRiskPackage({
       hourly,
       dateStrJST: date,
       profile,
@@ -127,26 +128,32 @@ export async function GET(req) {
     });
 
     const core = getCoreLabel(profile?.core_code);
-    const subShorts = getSubLabels(profile?.sub_labels || []).map((x) => x?.short).filter(Boolean);
+    const subTitles = getSubLabels(profile?.sub_labels || [])
+      .map((x) => x?.title)
+      .filter(Boolean);
+
+    const focusLabel = SYMPTOM_LABELS?.[profile?.symptom_focus] || null;
 
     return NextResponse.json({
       data: {
         date,
-        focus: {
-          symptom_focus: profile?.symptom_focus || null,
-          label_ja: SYMPTOM_LABELS[profile?.symptom_focus] || "不調",
-        },
+        location: { lat: loc.lat, lon: loc.lon },
+
         profile: {
+          symptom_focus: profile?.symptom_focus || null,
+          symptom_label: focusLabel,
           core_code: profile?.core_code || null,
           core_title: core?.title || null,
           core_short: core?.short || null,
-          sub_labels: (profile?.sub_labels || []).slice(0, 2),
-          sub_shorts: subShorts,
+          sub_labels: (profile?.sub_labels || []).slice(0, 3),
+          sub_titles: subTitles,
         },
-        hero: pack.hero,
-        explain: pack.explain,
-        timeline: pack.timeline,
-        debug: pack.debug, // UIでは隠してOK
+
+        hero: pkg.hero,
+        timeline: pkg.timeline,
+
+        explain: pkg.explain, // short text only
+        debug: process.env.NODE_ENV === "development" ? pkg.debug : undefined,
       },
     });
   } catch (e) {
