@@ -1,11 +1,11 @@
 // app/radar/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-/** Icons (inline SVG) */
+/** Icons */
 const IconRefresh = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 12a9 9 0 0 1-15.3 6.3L3 16" />
@@ -15,140 +15,97 @@ const IconRefresh = ({ className = "" }) => (
   </svg>
 );
 
-const IconBolt = ({ className = "" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8Z" />
-  </svg>
-);
-
 const IconInfo = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" />
-    <path d="M12 16v-5" />
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 16v-4" />
     <path d="M12 8h.01" />
   </svg>
 );
 
-const IconPressure = ({ className = "" }) => (
+const IconSparkle = ({ className = "" }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M4 12a8 8 0 1 0 16 0" />
-    <path d="M12 4c2 2 2 6 0 8s-2 6 0 8" />
+    <path d="M12 2l1.2 4.2L17 7.5l-3.8 1.3L12 13l-1.2-4.2L7 7.5l3.8-1.3L12 2Z" />
+    <path d="M5 14l.7 2.4L8 17l-2.3.6L5 20l-.7-2.4L2 17l2.3-.6L5 14Z" />
   </svg>
 );
 
-const IconThermo = ({ className = "" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4 4 0 1 0 5 0Z" />
-  </svg>
-);
-
-const IconDroplet = ({ className = "" }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-6.2S12 2 12 2s-1 1.6-4 4.8S5 13 5 15a7 7 0 0 0 7 7Z" />
-  </svg>
-);
-
-function triggerIcon(trigger) {
-  if (trigger === "temp") return IconThermo;
-  if (trigger === "humidity") return IconDroplet;
-  return IconPressure;
+function pct(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return "—";
+  return `${Math.round(x * 100)}%`;
 }
 
-function confidenceLabelJa(c) {
+function confidenceJa(c) {
   if (c === "high") return "高";
   if (c === "mid") return "中";
   return "低";
 }
 
-function badgeClassByLevel(lv) {
-  if (lv === 2) return "bg-rose-50 text-rose-700 border-rose-100";
-  if (lv === 1) return "bg-amber-50 text-amber-700 border-amber-100";
-  return "bg-emerald-50 text-emerald-700 border-emerald-100";
+function badgeClass(level) {
+  // intensityベースの色付け（単純）
+  if (level >= 8) return "bg-rose-50 text-rose-700";
+  if (level >= 4) return "bg-amber-50 text-amber-700";
+  return "bg-emerald-50 text-emerald-700";
 }
 
-function levelLabel(lv) {
+function triggerJa(t) {
+  if (t === "temp") return "気温の揺れ";
+  if (t === "humidity") return "湿度の揺れ";
+  return "気圧の揺れ";
+}
+
+function levelLabel3(lv) {
   return ["安定", "注意", "要警戒"][lv] ?? "—";
 }
 
-function computeLevelFromProbIntensity(prob, intensity) {
-  if ((intensity ?? 0) >= 7 || (prob ?? 0) >= 0.7) return 2;
-  if ((intensity ?? 0) >= 4 || (prob ?? 0) >= 0.45) return 1;
-  return 0;
+function levelColor(lv) {
+  if (lv === 2) return "text-rose-600";
+  if (lv === 1) return "text-amber-600";
+  return "text-emerald-600";
 }
 
-function pickInitialSelectedIdxFromPeak(timeline, hero) {
-  const items = Array.isArray(timeline) ? timeline : [];
-  if (!items.length) return 0;
-  const s = hero?.peak?.start_idx ?? -1;
-  const e = hero?.peak?.end_idx ?? -1;
-  if (s >= 0 && e >= s) return Math.floor((s + e) / 2);
-
-  let best = 0;
-  let bestR = -1;
-  for (let i = 0; i < items.length; i++) {
-    const r = Number(items[i]?.risk ?? 0);
-    if (r > bestR) {
-      bestR = r;
-      best = i;
-    }
-  }
-  return best;
+function barClass(lv) {
+  if (lv === 2) return "bg-rose-500";
+  if (lv === 1) return "bg-amber-400";
+  return "bg-emerald-500";
 }
 
-function TimelineChip({ it, selected, onClick }) {
-  const time = it?.time ? `${new Date(it.time).getHours()}:00` : "—";
+function hourLabel(iso) {
+  if (!iso || typeof iso !== "string") return "—";
+  const d = new Date(iso);
+  return `${d.getHours()}:00`;
+}
+
+function TimelineItem({ it, selected, onClick }) {
   const lv = it?.level3 ?? 0;
-  const Icon = triggerIcon(it?.trigger);
-
   return (
     <button
       onClick={onClick}
       className={[
-        "shrink-0 w-[76px] rounded-2xl border px-2 py-2 text-left transition bg-white",
+        "shrink-0 w-[76px] rounded-2xl border bg-white px-2 py-2 text-left transition",
         selected ? "border-slate-300 shadow-sm" : "border-slate-100 hover:border-slate-200",
       ].join(" ")}
-      aria-label={`hour-${time}`}
     >
-      <div className="text-[11px] font-extrabold text-slate-600">{time}</div>
+      <div className="text-[11px] font-extrabold text-slate-600">{hourLabel(it?.time)}</div>
+
       <div className="mt-2 flex items-center justify-center">
-        <Icon className={["w-6 h-6", lv === 2 ? "text-rose-600" : lv === 1 ? "text-amber-600" : "text-emerald-600"].join(" ")} />
+        <IconSparkle className={["w-6 h-6", levelColor(lv)].join(" ")} />
       </div>
-      <div className={["mt-2 text-[11px] font-extrabold", lv === 2 ? "text-rose-700" : lv === 1 ? "text-amber-700" : "text-emerald-700"].join(" ")}>
-        {levelLabel(lv)}
+
+      <div className="mt-2 flex items-center justify-between">
+        <div className={["text-[11px] font-extrabold", levelColor(lv)].join(" ")}>
+          {levelLabel3(lv)}
+        </div>
       </div>
+
       <div className="mt-2 h-1 w-full rounded-full bg-slate-100 overflow-hidden">
         <div
-          className={[
-            "h-full rounded-full",
-            lv === 2 ? "bg-rose-500" : lv === 1 ? "bg-amber-400" : "bg-emerald-500",
-          ].join(" ")}
+          className={["h-full rounded-full", barClass(lv)].join(" ")}
           style={{ width: lv === 2 ? "100%" : lv === 1 ? "66%" : "33%" }}
         />
       </div>
     </button>
-  );
-}
-
-function Disclosure({ title, children }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="mt-4">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-3 py-3"
-      >
-        <div className="flex items-center gap-2">
-          <IconInfo className="w-4 h-4 text-slate-400" />
-          <div className="text-[12px] font-extrabold text-slate-700">{title}</div>
-        </div>
-        <div className="text-[11px] font-extrabold text-slate-400">{open ? "閉じる" : "開く"}</div>
-      </button>
-      {open ? (
-        <div className="mt-2 rounded-2xl bg-white border border-slate-100 p-4 text-[12px] text-slate-700 font-bold leading-6">
-          {children}
-        </div>
-      ) : null}
-    </div>
   );
 }
 
@@ -162,11 +119,9 @@ export default function RadarPage() {
 
   const [data, setData] = useState(null);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [showWhy, setShowWhy] = useState(false);
 
-  // ✅ Hooks は必ず最上部で呼ぶ（useMemoは使わず plain にする）
-  const tl = Array.isArray(data?.timeline) ? data.timeline : [];
-  const selected = tl[selectedIdx] || tl[0] || null;
-
+  // auth
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -191,16 +146,18 @@ export default function RadarPage() {
       const res = await fetch("/api/radar/today", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const json = await res.json();
       const payload = json?.data || null;
+
       setData(payload);
 
-      const idx = pickInitialSelectedIdxFromPeak(
-        Array.isArray(payload?.timeline) ? payload.timeline : [],
-        payload?.hero
-      );
-      setSelectedIdx(idx);
+      // 初期選択はピーク開始へ（UX）
+      const peakStartIdx = payload?.hero?.peak?.start_idx;
+      if (Number.isFinite(Number(peakStartIdx)) && Number(peakStartIdx) >= 0) {
+        setSelectedIdx(Number(peakStartIdx));
+      } else {
+        setSelectedIdx(0);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -214,13 +171,16 @@ export default function RadarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  // states
+  const timeline = useMemo(() => (Array.isArray(data?.timeline) ? data.timeline : []), [data]);
+  const selected = timeline[selectedIdx] || timeline[0] || null;
+
+  // loading states
   if (loadingAuth || (loading && !data)) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 pt-8 max-w-[440px] mx-auto space-y-5">
         <div className="h-6 w-40 bg-slate-200 rounded-full animate-pulse" />
         <div className="h-44 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
-        <div className="h-44 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
+        <div className="h-28 w-full bg-slate-200 rounded-[2rem] animate-pulse" />
       </div>
     );
   }
@@ -267,16 +227,14 @@ export default function RadarPage() {
     );
   }
 
-  const focus = data?.focus || {};
   const prof = data?.profile || {};
   const hero = data?.hero || {};
+  const peak = hero?.peak || {};
 
-  const probPct = Math.round((hero?.prob ?? 0) * 100);
-  const intensity = hero?.intensity ?? 0;
-  const heroLv = computeLevelFromProbIntensity(hero?.prob ?? 0, intensity);
-
-  const TriggerIcon = triggerIcon(hero?.main_trigger);
+  const peakText = peak?.range_text ? peak.range_text : "—";
+  const intensity = Number(hero?.intensity ?? 0);
   const conf = hero?.confidence || "low";
+  const mainTrig = hero?.main_trigger || "pressure";
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -301,131 +259,123 @@ export default function RadarPage() {
       </div>
 
       <div className="max-w-[440px] mx-auto px-4 py-6 space-y-6">
-        {/* HERO */}
+        {/* HERO（結論） */}
         <div className="relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm p-6">
-          <div
-            className={[
-              "absolute -top-12 -right-12 w-52 h-52 rounded-full opacity-15 pointer-events-none",
-              heroLv === 2 ? "bg-rose-500" : heroLv === 1 ? "bg-amber-400" : "bg-emerald-400",
-            ].join(" ")}
-          />
-
-          <div className="relative">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 border border-slate-100 px-3 py-1">
-                  <IconBolt className="w-4 h-4 text-slate-400" />
-                  <div className="text-[12px] font-extrabold text-slate-700">{focus?.label_ja || "不調"}の予報</div>
-                </div>
-                {prof?.core_short ? (
-                  <div className="mt-2 text-[11px] text-slate-500 font-extrabold">
-                    体質：{prof.core_short}
-                    {Array.isArray(prof?.sub_shorts) && prof.sub_shorts.length ? ` ／弱点：${prof.sub_shorts.join("・")}` : ""}
-                  </div>
-                ) : null}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[12px] text-slate-500 font-extrabold">
+                {prof?.symptom_label ? `主訴：${prof.symptom_label}` : "今日の予報"}
               </div>
-
-              <div className={["inline-flex items-center gap-2 border px-3 py-1 rounded-full text-[12px] font-extrabold", badgeClassByLevel(heroLv)].join(" ")}>
-                {levelLabel(heroLv)}
+              <div className="mt-2 text-3xl font-extrabold text-slate-900 leading-tight">
+                強度 {hero?.intensity ?? "—"}/10
+              </div>
+              <div className="mt-1 text-[13px] text-slate-600 font-extrabold">
+                発症確率 {pct(hero?.prob)}
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-                <div className="text-[11px] font-extrabold text-slate-500">発症確率（今日）</div>
-                <div className="mt-2 text-4xl font-extrabold text-slate-900 leading-none">{probPct}%</div>
-                <div className="mt-2 text-[11px] text-slate-400 font-extrabold">目安（Phase1）</div>
-              </div>
-
-              <div className="rounded-2xl bg-slate-50 border border-slate-100 p-4">
-                <div className="text-[11px] font-extrabold text-slate-500">強度予測（今日）</div>
-                <div className="mt-2 flex items-end gap-2">
-                  <div className="text-4xl font-extrabold text-slate-900 leading-none">{intensity}</div>
-                  <div className="text-[13px] font-extrabold text-slate-500 pb-1">/10</div>
-                </div>
-                <div className="mt-2 text-[11px] text-slate-400 font-extrabold">0が軽い / 10が強い</div>
-              </div>
+            <div className={["shrink-0 text-xs font-extrabold px-3 py-1 rounded-full", badgeClass(intensity)].join(" ")}>
+              信頼度 {confidenceJa(conf)}
             </div>
-
-            <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-[12px] font-extrabold text-slate-600">ピーク帯</div>
-                <div className="text-[12px] font-extrabold text-slate-500">
-                  信頼度 <span className="text-slate-900">{confidenceLabelJa(conf)}</span>
-                </div>
-              </div>
-
-              <div className="mt-2 flex items-center justify-between">
-                <div className="text-2xl font-extrabold text-slate-900">
-                  {hero?.peak?.range_text || "—"}
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 border border-slate-100 px-3 py-1">
-                  <TriggerIcon className="w-4 h-4 text-slate-500" />
-                  <div className="text-[12px] font-extrabold text-slate-700">
-                    {hero?.main_trigger === "temp" ? "気温" : hero?.main_trigger === "humidity" ? "湿度" : "気圧"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-3 text-[12px] text-slate-600 font-extrabold leading-6">
-                {hero?.one_liner || "—"}
-              </div>
-            </div>
-
-            <Disclosure title="なぜこう予測した？（短い説明）">
-              <div className="text-[12px] font-extrabold text-slate-700 leading-6">
-                {data?.explain?.why_short || "—"}
-              </div>
-              {data?.debug ? (
-                <div className="mt-3 text-[11px] text-slate-400 font-bold leading-5">
-                  ※ debug: baselineDays={data.debug.baselineDays}, coverage={Math.round((data.debug.coverage || 0) * 100)}%
-                </div>
-              ) : null}
-            </Disclosure>
           </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+              <div className="text-[11px] text-slate-500 font-extrabold">ピーク帯</div>
+              <div className="mt-1 text-lg font-extrabold text-slate-900">{peakText}</div>
+            </div>
+            <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+              <div className="text-[11px] text-slate-500 font-extrabold">主因</div>
+              <div className="mt-1 text-lg font-extrabold text-slate-900">{triggerJa(mainTrig)}</div>
+            </div>
+          </div>
+
+          <div className="mt-4 text-[13px] text-slate-700 font-extrabold leading-6">
+            {hero?.one_liner || "—"}
+          </div>
+
+          {/* why (fold) */}
+          <button
+            onClick={() => setShowWhy((v) => !v)}
+            className="mt-4 inline-flex items-center gap-2 text-[12px] font-extrabold text-slate-500 hover:text-slate-700"
+          >
+            <IconInfo className="w-4 h-4" />
+            なぜこう予測した？
+          </button>
+
+          {showWhy ? (
+            <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-4 text-[12px] text-slate-700 font-extrabold leading-6">
+              {data?.explain?.why_short || "—"}
+              <div className="mt-2 text-[11px] text-slate-400 font-bold">
+                ※ 詳細は /api/radar/today/explain（開発者用）
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        {/* Timeline */}
+        {/* 体質（labels.js の title をそのまま） */}
         <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-5">
-          <div className="flex items-end justify-between">
-            <div className="text-base font-extrabold text-slate-900">今日の波（時間帯）</div>
-            <div className="text-[11px] text-slate-400 font-extrabold">ピークを中心に表示</div>
+          <div className="text-sm font-extrabold text-slate-900">あなたの体質</div>
+          <div className="mt-2 text-[13px] text-slate-700 font-extrabold leading-6">
+            {prof?.core_title ? prof.core_title : "—"}
           </div>
-
-          <div className="mt-4 overflow-x-auto">
-            <div className="flex gap-2 pb-2">
-              {tl.map((it, i) => (
-                <TimelineChip key={it?.time || i} it={it} selected={i === selectedIdx} onClick={() => setSelectedIdx(i)} />
+          {Array.isArray(prof?.sub_titles) && prof.sub_titles.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {prof.sub_titles.slice(0, 4).map((t, i) => (
+                <span key={i} className="px-3 py-1 rounded-full bg-slate-50 border border-slate-100 text-[12px] font-extrabold text-slate-700">
+                  {t}
+                </span>
               ))}
             </div>
+          ) : (
+            <div className="mt-2 text-[12px] text-slate-500 font-extrabold">弱点ラベルなし</div>
+          )}
+        </div>
+
+        {/* Timeline（ピーク中心の導線） */}
+        <div>
+          <div className="flex items-end justify-between px-1 mb-3">
+            <div className="text-base font-extrabold text-slate-900">今日の波（1時間ごと）</div>
+            <div className="text-[11px] text-slate-400 font-extrabold">ピーク開始を初期選択</div>
           </div>
 
-          <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-extrabold text-slate-900">
-                {selected?.time ? `${new Date(selected.time).getHours()}:00` : "—"} の予測
-              </div>
-              <div className={["text-xs font-extrabold px-3 py-1 rounded-full border", badgeClassByLevel(selected?.level3 ?? 0)].join(" ")}>
-                {levelLabel(selected?.level3 ?? 0)}
+          <div className="bg-white border border-slate-100 shadow-sm rounded-[2rem] p-4">
+            <div className="overflow-x-auto">
+              <div className="flex gap-2 pb-2">
+                {timeline.map((it, i) => (
+                  <TimelineItem
+                    key={it?.time || i}
+                    it={it}
+                    selected={i === selectedIdx}
+                    onClick={() => setSelectedIdx(i)}
+                  />
+                ))}
               </div>
             </div>
 
-            {selected?.hint_text ? (
-              <div className="mt-3 rounded-xl bg-white border border-slate-100 px-3 py-3 text-[12px] text-slate-700 font-extrabold leading-6">
-                {selected.hint_text}
+            {/* selected detail */}
+            <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-extrabold text-slate-900">
+                  {selected?.time ? `${hourLabel(selected.time)} のリスク` : "—"}
+                </div>
+                <div className={["text-xs font-extrabold px-3 py-1 rounded-full", badgeClass(Math.round((selected?.risk ?? 0) * 2))].join(" ")}>
+                  {levelLabel3(selected?.level3 ?? 0)}
+                </div>
               </div>
-            ) : (
-              <div className="mt-3 text-[12px] text-slate-500 font-extrabold">
-                安定寄り。大きな変化イベントは検出されていません。
-              </div>
-            )}
 
-            <Disclosure title="この時間の内訳（開発者向け）">
-              <div className="text-[12px] text-slate-700 font-bold leading-6">
-                risk: {selected?.risk ?? "—"} / trigger: {selected?.trigger || "—"} / parts:{" "}
-                p={selected?.parts?.p ?? 0}, t={selected?.parts?.t ?? 0}, h={selected?.parts?.h ?? 0}
+              <div className="mt-2 text-[13px] text-slate-600 font-extrabold">
+                主因：{triggerJa(selected?.main_trigger || "pressure")}
+                <span className="text-slate-400 font-extrabold"> ／ </span>
+                リスク値：{selected?.risk ?? "—"}
               </div>
-            </Disclosure>
+
+              {selected?.hint_text ? (
+                <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 px-3 py-3 text-[12px] text-slate-700 font-extrabold leading-6">
+                  {selected.hint_text}
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
 
