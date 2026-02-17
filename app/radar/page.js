@@ -42,10 +42,11 @@ function confidenceJa(c) {
   return "低";
 }
 
-function badgeClass(level) {
-  // intensityベースの色付け（単純）
-  if (level >= 8) return "bg-rose-50 text-rose-700";
-  if (level >= 4) return "bg-amber-50 text-amber-700";
+function badgeClassByIntensity(intensity) {
+  const n = Number(intensity);
+  if (!Number.isFinite(n)) return "bg-slate-50 text-slate-600";
+  if (n >= 8) return "bg-rose-50 text-rose-700";
+  if (n >= 4) return "bg-amber-50 text-amber-700";
   return "bg-emerald-50 text-emerald-700";
 }
 
@@ -274,7 +275,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className={["shrink-0 text-xs font-extrabold px-3 py-1 rounded-full", badgeClass(intensity)].join(" ")}>
+            <div className={["shrink-0 text-xs font-extrabold px-3 py-1 rounded-full", badgeClassByIntensity(intensity)].join(" ")}>
               信頼度 {confidenceJa(conf)}
             </div>
           </div>
@@ -359,7 +360,7 @@ export default function RadarPage() {
                 <div className="text-sm font-extrabold text-slate-900">
                   {selected?.time ? `${hourLabel(selected.time)} のリスク` : "—"}
                 </div>
-                <div className={["text-xs font-extrabold px-3 py-1 rounded-full", badgeClass(Math.round((selected?.risk ?? 0) * 2))].join(" ")}>
+                <div className={["text-xs font-extrabold px-3 py-1 rounded-full", badgeClassByIntensity(hero?.intensity ?? 0)].join(" ")}>
                   {levelLabel3(selected?.level3 ?? 0)}
                 </div>
               </div>
