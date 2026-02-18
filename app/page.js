@@ -1,17 +1,15 @@
-// app/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import Button from "@/components/ui/Button";
+import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 
-/* -----------------------------
- * Icons
- * ---------------------------- */
 function IconSpark() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M12 2l1.2 5.1L18 9l-4.8 1.9L12 16l-1.2-5.1L6 9l4.8-1.9L12 2z" />
       <path d="M19 13l.7 3L22 17l-2.3 1-.7 3-.7-3L16 17l2.3-1 .7-3z" />
     </svg>
@@ -19,192 +17,75 @@ function IconSpark() {
 }
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );
 }
 function IconRadar() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 12l8-4" />
       <path d="M12 12a8 8 0 1 0 8 8" />
       <path d="M12 12V4" />
     </svg>
   );
 }
-function IconDoc() {
+function IconRoute() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M7 3h10v18H7z" />
-      <path d="M9 7h6M9 11h6M9 15h4" />
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 16c2-3 4-4 7-4s5-1 7-4" />
+      <path d="M6 6h0M18 18h0" />
+      <path d="M6 6a2 2 0 1 0 0 .01" />
+      <path d="M18 18a2 2 0 1 0 0 .01" />
     </svg>
   );
 }
-function IconLogin() {
+function IconBook() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M10 17l5-5-5-5" />
-      <path d="M15 12H3" />
-      <path d="M21 3v18" />
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 19a2 2 0 0 0 2 2h14" />
+      <path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2V5z" />
+      <path d="M8 7h8M8 11h8M8 15h6" />
+    </svg>
+  );
+}
+function IconUser() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21a8 8 0 0 0-16 0" />
+      <path d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" />
     </svg>
   );
 }
 
-/* -----------------------------
- * UI primitives（result味）
- * ---------------------------- */
-function TopBar({ title }) {
+function HeroArt() {
+  // 外部SVGに差し替え前提：今は抽象で「和モダン×システム」寄せ
   return (
-    <div className="sticky top-0 z-30 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
-      <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-extrabold text-slate-800 shadow-sm ring-1 ring-[var(--ring)]">
-            <span className="text-[var(--accent-ink)]"><IconSpark /></span>
-            未病レーダー
-          </div>
-          <div className="min-w-0 text-sm font-extrabold tracking-tight text-slate-800 truncate">{title}</div>
-          <div className="w-[88px]" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Card({ children, className = "" }) {
-  return (
-    <section
-      className={[
-        "rounded-[26px] bg-[var(--panel)] shadow-sm ring-1 ring-[var(--ring)] overflow-hidden",
-        className,
-      ].join(" ")}
-    >
-      {children}
-    </section>
-  );
-}
-
-function CardHeader({ icon, title, sub }) {
-  return (
-    <div className="px-5 pt-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[var(--mint)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[17px] font-extrabold tracking-tight text-slate-900">{title}</div>
-            {sub ? <div className="mt-1 text-xs font-medium text-slate-500">{sub}</div> : null}
-          </div>
-        </div>
-      </div>
-      <div className="mt-4 h-px w-full bg-black/5" />
-    </div>
-  );
-}
-
-function Panel({ icon, title, tone = "mint", children, right }) {
-  const tones = {
-    mint: { wrap: "bg-[color-mix(in_srgb,var(--mint),white_55%)]", bar: "bg-[var(--accent)]", title: "text-[var(--accent-ink)]" },
-    teal: { wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]", bar: "bg-[#0f766e]", title: "text-[#115e59]" },
-    violet: { wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]", bar: "bg-[#6d5bd0]", title: "text-[#3b2f86]" },
-    amber: { wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]", bar: "bg-[#b45309]", title: "text-[#7c2d12]" },
-  };
-  const t = tones[tone] || tones.mint;
-
-  return (
-    <div className={`relative rounded-[22px] ${t.wrap} ring-1 ring-[var(--ring)]`}>
-      <div className={`absolute left-0 top-0 h-full w-1.5 rounded-l-[22px] ${t.bar}`} />
-      <div className="px-4 py-4 pl-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {icon ? (
-              <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-white/70 ring-1 ring-[var(--ring)] text-slate-700">
-                {icon}
-              </div>
-            ) : null}
-            <div className={`text-sm font-extrabold tracking-tight ${t.title}`}>{title}</div>
-          </div>
-          {right ? <div className="shrink-0">{right}</div> : null}
-        </div>
-        <div className="mt-3 text-sm leading-7 text-slate-800">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-/* -----------------------------
- * Bottom Tab Bar（3タブ）
- * ---------------------------- */
-function IconHome() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <path d="M3 11l9-8 9 8" />
-      <path d="M5 10v10h14V10" />
+    <svg viewBox="0 0 320 140" className="h-[110px] w-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#E9EDDD" />
+          <stop offset="1" stopColor="#6a9770" stopOpacity="0.38" />
+        </linearGradient>
+        <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#111827" stopOpacity="0.08" />
+          <stop offset="1" stopColor="#111827" stopOpacity="0.0" />
+        </linearGradient>
+      </defs>
+      <path d="M18,88 C42,18 138,6 190,28 C238,48 272,38 302,18 C312,72 272,132 190,136 C108,140 34,120 18,88Z" fill="url(#g1)" />
+      <path d="M20 108c40-14 86-10 120-26s60-40 156-44" stroke="#0f172a" strokeOpacity="0.18" strokeWidth="2" fill="none" />
+      <circle cx="78" cy="58" r="10" fill="#6a9770" fillOpacity="0.22" />
+      <circle cx="214" cy="52" r="14" fill="#6a9770" fillOpacity="0.18" />
+      <rect x="210" y="16" width="92" height="48" rx="18" fill="url(#g2)" />
     </svg>
-  );
-}
-function IconRadarTab() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <path d="M12 12l8-4" />
-      <path d="M12 12a8 8 0 1 0 8 8" />
-      <path d="M12 12V4" />
-    </svg>
-  );
-}
-/**
- * @param {{
- *  active: 'home'|'latest'|'forecast',
- *  hrefs?: { home?: string, latest?: string, forecast?: string }
- * }} props
- */
-function BottomTabs({ active, hrefs }) {
-  const go = (key) => {
-    const h = hrefs?.[key];
-    if (h) window.location.href = h;
-  };
-
-  const item = (key, label, Icon) => {
-    const isActive = active === key;
-    return (
-      <button
-        type="button"
-        onClick={() => go(key)}
-        className={[
-          "flex flex-1 flex-col items-center justify-center gap-1 rounded-[16px] py-2",
-          isActive ? "text-[var(--accent-ink)]" : "text-slate-500",
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "grid h-9 w-9 place-items-center rounded-[14px] transition",
-            isActive ? "bg-[var(--mint)] ring-1 ring-[var(--ring)]" : "bg-transparent",
-          ].join(" ")}
-        >
-          <Icon />
-        </span>
-        <span className={`text-[11px] font-extrabold ${isActive ? "" : "font-bold"}`}>{label}</span>
-      </button>
-    );
-  };
-
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-40 bg-white/92 backdrop-blur supports-[backdrop-filter]:bg-white/75 ring-1 ring-[var(--ring)]">
-      <div className="mx-auto w-full max-w-[440px] px-4 py-2">
-        <div className="flex items-stretch gap-2 rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-1 shadow-[0_10px_30px_-22px_rgba(0,0,0,0.35)]">
-          {item("home", "トップ", IconHome)}
-          {item("latest", "最新結果", IconDoc)}
-          {item("forecast", "体調予報", IconRadarTab)}
-        </div>
-      </div>
-    </div>
   );
 }
 
 const SESSION_TIMEOUT_MS = 5000;
 
 export default function HomePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [error, setError] = useState("");
@@ -218,7 +99,6 @@ export default function HomePage() {
     (async () => {
       try {
         setError("");
-
         if (!supabase) {
           setSession(null);
           return;
@@ -264,141 +144,132 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-app pb-28">
-      <TopBar title="トップ" />
-
-      <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="space-y-5 pb-3">
-          {/* Hero */}
-          <div className="pt-2">
-            <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
-              <div className="px-5 pt-5 pb-5">
-                <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">今日の目的</div>
-                <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">
-                  崩れやすい日を先回りして、今日を軽くする
+    <AppShell title="トップ">
+      {/* Hero */}
+      <Module>
+        <ModuleHeader
+          icon={<IconSpark />}
+          title="未病レーダー"
+          sub="体質チェック × 気象変化で、崩れる前に先回りする"
+        />
+        <div className="px-5 pb-6 pt-4 space-y-4">
+          <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_50%)] ring-1 ring-[var(--ring)] p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-[var(--accent-ink)]/80">今日の方針</div>
+                <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
+                  「崩れ方」を測って、「揺れそうな日」を読めるように
                 </div>
-                <div className="mt-3 text-sm leading-7 text-slate-700">
-                  体質チェックの結果と気象変化を組み合わせて、揺れを読みやすくします。
+                <div className="mt-2 text-sm leading-7 text-slate-700">
+                  東洋医学の分類を、曖昧なスピリチュアルではなく「傾向のデータ」として扱い、
+                  あなたの状態と気象変化を組み合わせて、先回りの意思決定に繋げます。
                 </div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <HeroArt />
+            </div>
 
-                <div className="mt-4 grid gap-2">
-                  <a href="/check">
-                    <Button>体質チェックをはじめる</Button>
-                  </a>
-                  <a href="/radar">
-                    <Button variant="secondary">今日の体調予報（未病レーダー）</Button>
-                  </a>
+            <div className="mt-4 grid gap-2">
+              <Button onClick={() => router.push("/check")}>体質チェックをはじめる</Button>
+              <Button variant="secondary" onClick={() => router.push("/radar")}>体調予報へ</Button>
+            </div>
+
+            <div className="mt-3 text-[11px] font-bold text-slate-500">
+              ※ 対策の中身は結果と予報に合わせて提示（ここでは煽らない）
+            </div>
+          </div>
+
+          {/* main routes */}
+          <div className="grid gap-3">
+            <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-4">
+              <div className="flex items-start gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[color-mix(in_srgb,#ede9fe,white_40%)] ring-1 ring-[var(--ring)] text-[#3b2f86]">
+                  <IconRoute />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-slate-900">全導線</div>
+                  <div className="mt-1 text-xs font-medium text-slate-500">
+                    迷子防止。必要な導線だけを短距離で。
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button variant="ghost" onClick={() => router.push("/check")}>体質チェック</Button>
+                    <Button variant="ghost" onClick={() => router.push("/radar")}>体調予報</Button>
+                    <Button variant="ghost" onClick={() => router.push("/history")}>履歴</Button>
+                    <Button variant="ghost" onClick={() => router.push("/guide")}>使い方</Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </Module>
 
-          {/* Quick actions */}
-          <Card>
-            <CardHeader icon={<IconSpark />} title="入口" sub="迷ったらここから" />
-            <div className="px-5 pb-6 pt-4 space-y-3">
-              <Panel title="体質チェック" tone="mint" icon={<IconCheck />}>
-                2週間の傾向＋動作テストで、「崩れ方のクセ」を整理します。
-                <div className="mt-4">
-                  <a href="/check">
-                    <Button>チェックへ</Button>
-                  </a>
-                </div>
-              </Panel>
-
-              <Panel title="最新のチェック結果" tone="violet" icon={<IconDoc />}>
-                直近の保存結果を確認します（未保存の場合は履歴に出ません）。
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <a href="/history?tab=latest">
-                    <Button variant="secondary">最新結果へ</Button>
-                  </a>
-                  <a href="/history">
-                    <Button variant="ghost">履歴一覧</Button>
-                  </a>
-                </div>
-              </Panel>
-
-              <Panel title="体調予報（レーダー）" tone="teal" icon={<IconRadar />}>
-                気象の揺れと体質を掛け合わせて、注意日を先回りします。
-                <div className="mt-4">
-                  <a href="/radar">
-                    <Button variant="secondary">予報を見る</Button>
-                  </a>
-                </div>
-              </Panel>
+      {/* Account */}
+      <Module>
+        <ModuleHeader icon={<IconUser />} title="アカウント" sub="保存・履歴・予報のパーソナライズに必要" />
+        <div className="px-5 pb-6 pt-4 space-y-4">
+          {loading ? (
+            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
+              <div className="text-sm font-bold text-slate-700">読み込み中…</div>
             </div>
-          </Card>
-
-          {/* Auth / Status */}
-          <Card>
-            <CardHeader icon={<IconLogin />} title="アカウント" sub="保存・履歴・レーダーを使うためのログイン" />
-            <div className="px-5 pb-6 pt-4 space-y-4">
-              {loading ? (
-                <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-sm font-bold text-slate-700">読み込み中…</div>
-                </div>
-              ) : error ? (
-                <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-sm font-extrabold text-slate-900">セッション確認に失敗</div>
-                  <div className="mt-2 text-xs font-bold text-slate-600 whitespace-pre-wrap">{error}</div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/debug/env">
-                      <Button variant="ghost">debug/envを見る</Button>
-                    </a>
-                    <Button variant="ghost" onClick={() => window.location.reload()}>
-                      リロード
-                    </Button>
-                  </div>
-                </div>
-              ) : isLoggedIn ? (
-                <div className="rounded-[22px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-sm font-extrabold text-emerald-800">ログイン中 ✅</div>
-                  <div className="mt-1 text-sm font-bold text-slate-800">{email}</div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/history">
-                      <Button>履歴を見る</Button>
-                    </a>
-                    <a href="/check">
-                      <Button variant="secondary">体質チェック（再）</Button>
-                    </a>
-                    <Button variant="ghost" onClick={logout}>ログアウト</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                  <div className="text-base font-extrabold tracking-tight text-slate-900">
-                    保存して、履歴と予報が“自分用”に
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-slate-600">
-                    メールで登録/ログインできます（登録だけでは課金されません）
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <a href="/signup">
-                      <Button>ログイン / 登録</Button>
-                    </a>
-                    <a href="/check">
-                      <Button variant="secondary">まずは体質チェック</Button>
-                    </a>
-                  </div>
-                </div>
-              )}
+          ) : error ? (
+            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
+              <div className="text-sm font-extrabold text-slate-900">セッション確認に失敗</div>
+              <div className="mt-2 text-xs font-bold text-slate-600 whitespace-pre-wrap">{error}</div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button variant="ghost" onClick={() => window.location.reload()}>リロード</Button>
+                <Button variant="ghost" onClick={() => router.push("/debug/env")}>debug/env</Button>
+              </div>
             </div>
-          </Card>
+          ) : isLoggedIn ? (
+            <div className="rounded-[20px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
+              <div className="text-sm font-extrabold text-emerald-800">ログイン中 ✅</div>
+              <div className="mt-1 text-sm font-bold text-slate-800">{email}</div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={() => router.push("/history")}>履歴</Button>
+                <Button variant="secondary" onClick={() => router.push("/check")}>体質チェック</Button>
+                <Button variant="ghost" onClick={logout}>ログアウト</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
+              <div className="text-base font-extrabold tracking-tight text-slate-900">
+                結果を保存して、履歴と予報へ
+              </div>
+              <div className="mt-2 text-xs font-bold text-slate-600">
+                メールで登録/ログインできます
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button onClick={() => router.push("/signup")}>ログイン / 登録</Button>
+                <Button variant="secondary" onClick={() => router.push("/check")}>まずは体質チェック</Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Module>
 
-          <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
-            ※ プロトタイプ運用中。UI・導線・データ設計は順次アップデートします。
+      {/* Guide teaser */}
+      <Module>
+        <ModuleHeader icon={<IconBook />} title="使い方（準備中）" sub="後で外部SVGも含めて強くする場所" />
+        <div className="px-5 pb-6 pt-4">
+          <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-5">
+            <div className="text-sm font-bold text-slate-800">
+              「体質 → 予報 → 提案」の順で、迷わず使える設計にします。
+            </div>
+            <div className="mt-2 text-xs font-medium text-slate-500">
+              まずは体質チェックを終えると、予報が“意味のある情報”になります。
+            </div>
+            <div className="mt-4">
+              <Button variant="ghost" onClick={() => router.push("/guide")}>ガイドを見る</Button>
+            </div>
           </div>
         </div>
-      </div>
+      </Module>
 
-      <BottomTabs
-        active="home"
-        hrefs={{
-          home: "/",
-          latest: "/history?tab=latest",
-          forecast: "/radar",
-        }}
-      />
-    </div>
+      <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
+        ※ UI・導線・データ設計は順次アップデート
+      </div>
+    </AppShell>
   );
 }
