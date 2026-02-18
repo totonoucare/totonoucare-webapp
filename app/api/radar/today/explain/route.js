@@ -56,7 +56,9 @@ export async function GET(req) {
     const loc = await getPrimaryLocation(user.id);
 
     const profile = await getLatestConstitutionProfile(user.id);
-    if (!profile) return NextResponse.json({ error: "no profile" }, { status: 400 });
+    if (!profile) {
+      return NextResponse.json({ error: "no profile" }, { status: 400 });
+    }
 
     const baselineDays = await getBaselineDays(user.id);
 
@@ -71,7 +73,7 @@ export async function GET(req) {
     });
 
     const core = getCoreLabel(profile?.core_code);
-    const subTitles = getSubLabels(profile?.sub_labels || []).map((x) => x?.title).filter(Boolean);
+    const sub = getSubLabels(profile?.sub_labels || []).map((x) => x?.title).filter(Boolean);
     const focusLabel = SYMPTOM_LABELS?.[profile?.symptom_focus] || null;
 
     const hero = pkg.hero;
@@ -79,8 +81,8 @@ export async function GET(req) {
     const peak = hero?.peak || {};
 
     const peakSlice =
-      Number.isFinite(Number(peak?.start_idx)) && peak.start_idx >= 0
-        ? items.slice(peak.start_idx, (peak.end_idx ?? peak.start_idx) + 1)
+      peak?.start_idx >= 0
+        ? items.slice(peak.start_idx, peak.end_idx + 1)
         : [];
 
     // ピーク帯の寄与合計
@@ -110,19 +112,17 @@ export async function GET(req) {
         profile: {
           symptom_focus: profile?.symptom_focus || null,
           symptom_label: focusLabel,
-          core_code: profile?.core_code || null,
           core_title: core?.title || null,
-          sub_labels: profile?.sub_labels || [],
-          sub_titles: subTitles,
+          sub_titles: sub,
         },
 
-        hero: pkg.hero,
-        explain: pkg.explain,
+        hero,
+        why_short: pkg.explain?.why_short || null,
 
         debug: {
+          confidence: pkg.debug?.confidence,
           coverage: pkg.debug?.coverage,
           baselineDays: pkg.debug?.baselineDays,
-          confidence: pkg.debug?.confidence,
           S_user: pkg.debug?.S || null,
           hero_raw: pkg.debug?.hero_raw || null,
 
