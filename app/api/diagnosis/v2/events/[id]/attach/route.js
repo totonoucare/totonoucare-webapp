@@ -95,9 +95,14 @@ export async function POST(req, { params }) {
       secondary_meridian: computed.secondary_meridian,
 
       core_code: computed.core_code,
+      core9: computed.core9,
+      yin_yang: computed.yin_yang,
+      drive: computed.drive,
+      obstruction: computed.obstruction,
+
       sub_labels: computed.sub_labels,
 
-      engine_version: "v2",
+      engine_version: "v3",
 
       source_event_id: id,
       notes: { source_event_id: id },
