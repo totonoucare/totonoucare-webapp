@@ -21,7 +21,7 @@ export async function POST(req) {
           symptom_focus: computed.symptom_focus || "fatigue",
           answers,
           computed,
-          version: "v3",
+          version: "v2",
         },
       ])
       .select("id")
