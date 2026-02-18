@@ -22,8 +22,14 @@ export async function GET(req) {
           "created_at",
           "user_id",
           "symptom_focus",
-          "core_code","core9","yin_yang","drive","obstruction",
-          "sub_labels","thermo","resilience","is_mixed","qi","blood","fluid",
+          "core_code",         // ✅ 9 types
+          "sub_labels",
+          "thermo",            // ✅ yin_yang tri (repurposed)
+          "resilience",        // ✅ drive tri (repurposed)
+          "is_mixed",          // false
+          "qi",
+          "blood",
+          "fluid",
           "primary_meridian",
           "secondary_meridian",
           "source_event_id",
@@ -40,8 +46,7 @@ export async function GET(req) {
     const mapped =
       (data || []).map((r) => ({
         ...r,
-        source_event_id:
-          r.source_event_id || (r.notes && r.notes.source_event_id) || null,
+        source_event_id: r.source_event_id || (r.notes && r.notes.source_event_id) || null,
       })) || [];
 
     return NextResponse.json({ data: mapped });
