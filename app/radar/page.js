@@ -42,11 +42,9 @@ function confidenceJa(c) {
   return "低";
 }
 
-function badgeClassByIntensity(intensity) {
-  const n = Number(intensity);
-  if (!Number.isFinite(n)) return "bg-slate-50 text-slate-600";
-  if (n >= 8) return "bg-rose-50 text-rose-700";
-  if (n >= 4) return "bg-amber-50 text-amber-700";
+function badgeClass(level) {
+  if (level >= 8) return "bg-rose-50 text-rose-700";
+  if (level >= 4) return "bg-amber-50 text-amber-700";
   return "bg-emerald-50 text-emerald-700";
 }
 
@@ -54,6 +52,14 @@ function triggerJa(t) {
   if (t === "temp") return "気温の揺れ";
   if (t === "humidity") return "湿度の揺れ";
   return "気圧の揺れ";
+}
+
+function triggerDirJa(t, dir) {
+  if (!dir || dir === "none") return "";
+  if (t === "pressure") return dir === "down" ? "（低下）" : "（上昇）";
+  if (t === "temp") return dir === "down" ? "（冷え込み）" : "（上昇）";
+  if (t === "humidity") return dir === "down" ? "（乾燥寄り）" : "（多湿寄り）";
+  return "";
 }
 
 function levelLabel3(lv) {
@@ -152,7 +158,7 @@ export default function RadarPage() {
 
       setData(payload);
 
-      // 初期選択はピーク開始へ（UX）
+      // 初期選択はピーク開始へ
       const peakStartIdx = payload?.hero?.peak?.start_idx;
       if (Number.isFinite(Number(peakStartIdx)) && Number(peakStartIdx) >= 0) {
         setSelectedIdx(Number(peakStartIdx));
@@ -235,7 +241,9 @@ export default function RadarPage() {
   const peakText = peak?.range_text ? peak.range_text : "—";
   const intensity = Number(hero?.intensity ?? 0);
   const conf = hero?.confidence || "low";
+
   const mainTrig = hero?.main_trigger || "pressure";
+  const mainDir = hero?.main_trigger_dir || "none";
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -275,7 +283,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className={["shrink-0 text-xs font-extrabold px-3 py-1 rounded-full", badgeClassByIntensity(intensity)].join(" ")}>
+            <div className={["shrink-0 text-xs font-extrabold px-3 py-1 rounded-full", badgeClass(intensity)].join(" ")}>
               信頼度 {confidenceJa(conf)}
             </div>
           </div>
@@ -287,7 +295,9 @@ export default function RadarPage() {
             </div>
             <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
               <div className="text-[11px] text-slate-500 font-extrabold">主因</div>
-              <div className="mt-1 text-lg font-extrabold text-slate-900">{triggerJa(mainTrig)}</div>
+              <div className="mt-1 text-lg font-extrabold text-slate-900">
+                {triggerJa(mainTrig)}{triggerDirJa(mainTrig, mainDir)}
+              </div>
             </div>
           </div>
 
@@ -360,13 +370,15 @@ export default function RadarPage() {
                 <div className="text-sm font-extrabold text-slate-900">
                   {selected?.time ? `${hourLabel(selected.time)} のリスク` : "—"}
                 </div>
-                <div className={["text-xs font-extrabold px-3 py-1 rounded-full", badgeClassByIntensity(hero?.intensity ?? 0)].join(" ")}>
+                <div className={["text-xs font-extrabold px-3 py-1 rounded-full", badgeClass(Math.round((selected?.risk ?? 0) * 2))].join(" ")}>
                   {levelLabel3(selected?.level3 ?? 0)}
                 </div>
               </div>
 
               <div className="mt-2 text-[13px] text-slate-600 font-extrabold">
-                主因：{triggerJa(selected?.main_trigger || "pressure")}
+                主因：
+                {triggerJa(selected?.main_trigger || "pressure")}
+                {triggerDirJa(selected?.main_trigger || "pressure", selected?.main_trigger_dir || "none")}
                 <span className="text-slate-400 font-extrabold"> ／ </span>
                 リスク値：{selected?.risk ?? "—"}
               </div>
