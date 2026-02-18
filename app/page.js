@@ -156,7 +156,7 @@ export default function HomePage() {
           <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_50%)] ring-1 ring-[var(--ring)] p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="text-xs font-bold text-[var(--accent-ink)]/80">体調予報×先手対策</div>
+                <div className="text-xs font-bold text-[var(--accent-ink)]/80">体調予報 × 先回りケア</div>
                 <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
                   不調の波が来る前に気づいて、先回りで軽くする
                 </div>
