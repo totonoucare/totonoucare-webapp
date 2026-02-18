@@ -2,17 +2,19 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { generateText } from "@/lib/openai/server";
+import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-/** ---- helpers ---- */
+/* -----------------------------
+ * helpers
+ * ---------------------------- */
 function safeArr(v) {
   return Array.isArray(v) ? v : [];
 }
-
 function clampInt(v, min, max) {
   const n = Number(v);
   if (!Number.isFinite(n)) return min;
@@ -34,40 +36,53 @@ function envVectorJa(v) {
     dryness_up: "乾燥が強まる変化",
     wind_strong: "強風・冷風",
   };
-  return map[v] || v;
+  return map[v] || "特になし";
+}
+
+function obstructionLevelJa(obstructionScore) {
+  const x = Number(obstructionScore);
+  if (!Number.isFinite(x)) return "不明";
+  if (x >= 0.7) return "やや強め";
+  if (x >= 0.4) return "中くらい";
+  return "軽め";
 }
 
 /**
- * ざっくり品質検知（強すぎる検閲はやめる）
- * - 英コード漏れ、見出し逸脱、プロンプト文言漏れ、過度な箇条書き命令の残骸などを軽く検知
+ * ざっくり品質検知（軽め）
+ * - 英コード漏れ / 見出し欠落 / メタ漏れ / 過剰な命令文残骸
  */
 function looksBad(text) {
   if (!text) return true;
 
-  // 英語コード / snake_case
+  // snake_case や英コードの混入をざっくり検知
   const hasSnake = /[a-z]+_[a-z]+/.test(text);
 
-  // 見出しが2つあるか（両方の「」が存在するか）
-  const hasHead1 = text.includes("いまの体のクセ（今回のまとめ）");
-  const hasHead2 = text.includes("体調の揺れを予報で先回り（未病レーダー）");
-  const missingHeads = !(hasHead1 && hasHead2);
+  const h1 = "いまの体のクセ（今回のまとめ）";
+  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
+  const hasHeads = text.includes(h1) && text.includes(h2);
 
-  // メタ漏れ（ルールや禁止など）
-  const hasMetaLeak = /絶対|禁止|出力|プロンプト|モデル|トークン|max_output/i.test(text);
+  // メタ漏れ（ルール/プロンプト/モデル等）
+  const hasMetaLeak = /プロンプト|モデル|トークン|max_output|system|developer|禁止|出力形式/i.test(text);
 
-  // 露骨な箇条書き命令の残骸
-  const hasInstructionLeak = /必ずこの|見出しは|番号は付けない/.test(text);
+  // 箇条書き命令が残ってる感じ
+  const hasInstructionLeak = /必ず|見出しは|番号は付けない|Markdown禁止/.test(text);
 
-  return hasSnake || missingHeads || hasMetaLeak || hasInstructionLeak;
+  // 長さが極端
+  const tooShort = text.trim().length < 260;
+  const tooLong = text.trim().length > 1400;
+
+  return hasSnake || !hasHeads || hasMetaLeak || hasInstructionLeak || tooShort || tooLong;
 }
 
 async function generateExplainText({ event }) {
   const model = process.env.OPENAI_DIAG_EXPLAIN_MODEL || "gpt-5.2";
 
   const answers = event?.answers || {};
-  const computed = event?.computed || {};
 
-  // ---- 日本語素材に整形 ----
+  // ✅ computedは信用せず、必ず現行 scoring で再計算（ここが重要）
+  const computed = scoreDiagnosis(answers);
+
+  // ---- 日本語素材（英コードを渡さない）----
   const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
   const symptomJa = SYMPTOM_LABELS?.[symptomKey] || "だるさ・疲労";
 
@@ -90,14 +105,13 @@ async function generateExplainText({ event }) {
   const envVecRaw = safeArr(answers?.env_vectors).filter((x) => x && x !== "none").slice(0, 2);
   const envVecJa = envVecRaw.length ? envVecRaw.map(envVectorJa).join("・") : "特になし";
 
-  // 「素材」を“説明しやすい形”で渡す（英コードは渡さない）
+  const obstructionJa = obstructionLevelJa(computed?.axes?.obstruction_score);
+
   const subJa =
     subItems.length > 0
       ? subItems
           .map((s) => {
-            const parts = [s.title];
-            if (s.short) parts.push(`（${s.short}）`);
-            const head = parts.join("");
+            const head = s.short ? `${s.title}（${s.short}）` : s.title;
             return s.action ? `- ${head}：${s.action}` : `- ${head}`;
           })
           .join("\n")
@@ -112,37 +126,33 @@ async function generateExplainText({ event }) {
       : `副：なし`,
   ].join("\n");
 
-  // ---- prompt（縛りは最小限、品質要件を強める）----
+  // ---- prompt（AIは「つなぎの補足」だけ。比喩多用しない）----
   const prompt = `
-あなたは未病レーダーの案内役「トトノウくん」🤖として、日本語で文章を書きます。
-口調は丁寧な「です・ます調」で統一し、語尾のブレ（〜だ／〜である）は混ぜません。
-読み物として自然で、途中で雑に感じない文章にします（接続が滑らかで、読了感がある）。
+あなたは未病レーダーの案内役として、日本語で短い補足解説を書きます。
+口調は丁寧な「です・ます調」で統一します。
 
-【今回の目的】
-次の4要素（体質の軸／整えポイント／張りやすい場所／環境変化）を、お悩みと絡めて“統合”し、
-「どういう流れで揺れやすいか」を因果っぽく説明してください。
-※4要素を別々に順番解説するのは禁止です。必ず「つながり」を作って一本の説明にしてください。
+【AIの役割（重要）】
+この文章は「確定の説明（辞書・スコア）」に対する“読みやすい補足”です。
+そのため、次のことを守ってください。
+- 具体的な対策は書きません（食材名、レシピ、ツボ名、ストレッチ手順、回数分量、運動メニューなどは禁止）
+- 比喩やキャラ語りは控えめにし、説明は現実的に（過剰なメタファーは不要）
+- 断定しすぎず「傾向」「〜しやすい」でまとめます
+- 英語コードや内部ラベル（snake_case等）は絶対に出しません
+- 価格/課金/支払いの話はしません
+- ルール/プロンプト/モデル等のメタ話は本文に混ぜません
 
-【書き方のコツ（重要）】
-- 「AがあるのでBになりやすく、そこにCが重なるとDとして出やすい」など、過不足なく繋げます。
-- 飛躍しすぎず、断定もしません（〜の傾向／〜しやすい）。
-- 具体的な対策（食材名、レシピ、ツボ名、ストレッチ手順、回数分量、運動メニュー）は書きません。
-  ただし未病レーダーで【今日の生活・食養生ヒント】や【監修ケア（ツボ・ストレッチ）】の提案が“受けられる”ことは触れてOKです（中身は書かない）。
-
-【禁止】
-- 英語コード・snake_case・内部ラベルを出さない
-- 価格/課金/支払いの話をしない
-- ルールやプロンプトなどのメタな話を本文に混ぜない
-
-【出力形式】
-見出しは次の2つだけ。必ず「見出し単独の1行」として出力します。
-記号（#, ##, ###, 「」, "", **, ・, -）で見出しを装飾しないでください（Markdown禁止）。
+【構成（必須）】
+見出しは次の2つだけを、見出し単独の1行で出力します。
+記号（#, 「」, "", **, ・, -）で装飾しないでください（Markdown禁止）。
 番号も付けません。
 
 いまの体のクセ（今回のまとめ）
 体調の揺れを予報で先回り（未病レーダー）
 
-最後の注意文は付けません（出力しない）。
+【文章の狙い】
+4要素（体質の軸／整えポイント／張りやすい場所／環境変化）を“つなげて”、
+「どういう流れで揺れやすいか」を短く説明してください。
+別々に順番解説するのではなく、1本の説明として自然に繋げます。
 
 【入力（今回の結果）】
 - お悩み：${symptomJa}
@@ -161,30 +171,34 @@ ${meridianJa}
   影響の受けやすさ：${envSensitivityJa(envSens)}
   影響の出やすい方向：${envVecJa}
 
+- 詰まり・重さの出やすさ（総合）：${obstructionJa}
+
 【未病レーダーでできること（本文で触れてよい範囲）】
-- 日々の気象の変化とあなたの体質の組み合わせから「揺れやすい日」を予報として先回りできる
-- 予報に合わせて【今日の生活・食養生ヒント】や【監修ケア（ツボ・ストレッチ）】などの対策提案につながる
+- 日々の気象の変化とあなたの結果の組み合わせから「揺れやすい日」を予報として先回りできる
+- 予報に合わせて【今日の生活・食養生ヒント】や【監修ケア（ツボ・ストレッチ）】などの提案につながる（中身は書かない）
 `.trim();
 
   const text1 = await generateText({
     model,
     input: prompt,
-    max_output_tokens: 1400,
+    max_output_tokens: 900,
     reasoning: { effort: "low" },
   });
 
   let text = (text1 || "").trim();
 
-  // ざっくり再生成（“修正指示”ではなく“書き直し”で質を上げる）
-  if (looksBad(text) || text.length < 350) {
+  // 再生成（“修正指示”より“全文書き直し”で安定）
+  if (looksBad(text)) {
     const rewritePrompt = `
 同じ入力に基づいて、文章を「全文書き直し」してください。
 
-改善したい点：
-- です・ます調の統一（混ざらない）
-- 2つの見出しの文章に読了感を出す（雑に繋げた印象をなくす）
-- 4要素を統合して因果っぽく説明（別々に並べない）
-- 具体対策は書かない（提案が“ある”ことだけ触れる）
+改善ポイント：
+- です・ます調の統一
+- 2見出しは必ず含める（装飾なし）
+- 4要素をつなげて一本化（羅列禁止）
+- 具体対策は書かない
+- 内部ラベル/英語コードは出さない
+- 比喩は控えめ
 
 【入力（再掲）】
 ${prompt}
@@ -193,7 +207,7 @@ ${prompt}
     const text2 = await generateText({
       model,
       input: rewritePrompt,
-      max_output_tokens: 1400,
+      max_output_tokens: 900,
       reasoning: { effort: "low" },
     });
 
@@ -201,21 +215,27 @@ ${prompt}
     if (t2) text = t2;
   }
 
-  // 最低限の保険
-  if (!text) {
+  // 最低限の保険（2見出し + ほどほどの長さ）
+  if (!text || looksBad(text)) {
     text =
-      "いまの体のクセ（今回のまとめ）\n今の結果からは、お悩みが出るときに「体の土台」「整えの方向」「張りやすい場所」「環境の揺れ」が重なりやすい傾向が見えます。いくつかの条件が同時に重なるほど、同じ負担でも体調の揺れとして表に出やすいタイプかもしれません。\n\n体調の揺れを予報で先回り（未病レーダー）\n未病レーダーでは、日々の気象変化とあなたの体質の組み合わせから、揺れやすいタイミングを予報として捉えて先回りできます。さらに予報に合わせて、生活のコツ＋食養生や、鍼灸師監修のツボケア＆ストレッチなどの提案につなげられます。";
+      "いまの体のクセ（今回のまとめ）\n" +
+      `今回のお悩み「${symptomJa}」は、体質の軸と整えポイント、張りやすい場所の傾向が重なったときに表に出やすい可能性があります。特に生活の負荷が続いたり、切り替えがうまくいかない時に同じ形で揺れやすくなることがあります。\n\n` +
+      "体調の揺れを予報で先回り（未病レーダー）\n" +
+      "未病レーダーでは、日々の気象変化とあなたの結果を組み合わせて「揺れやすい日」を予報として先回りできます。予報に合わせて【今日の生活・食養生ヒント】や【監修ケア（ツボ・ストレッチ）】の提案につなげられます（ここでは中身は出しません）。";
   }
 
-  return { text, model };
+  return { text, model, computed };
 }
 
+/* -----------------------------
+ * POST
+ * ---------------------------- */
 export async function POST(_req, { params }) {
   try {
     const id = params?.id;
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-    // 1) diagnosis_events を取得（保存済みならそれを返す）
+    // 1) diagnosis_events 取得（保存済みなら返す）
     const { data: ev, error: e0 } = await supabaseServer
       .from("diagnosis_events")
       .select(
@@ -234,8 +254,10 @@ export async function POST(_req, { params }) {
       )
       .eq("id", id)
       .single();
+
     if (e0) throw e0;
 
+    // すでに生成済みなら即返す（UIはAI任意なのでキャッシュ効く）
     if (ev?.ai_explain_text) {
       return NextResponse.json({
         data: {
@@ -248,7 +270,7 @@ export async function POST(_req, { params }) {
       });
     }
 
-    // 2) 生成
+    // 2) 生成（現行 scoring で再計算した computed を使う）
     const { text, model } = await generateExplainText({ event: ev });
     const now = new Date().toISOString();
 
