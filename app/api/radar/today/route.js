@@ -73,6 +73,7 @@ async function getBaselineDays(userId) {
   const t14 = avg(rows14.map((r) => r.temp));
   const h14 = avg(rows14.map((r) => r.humidity));
   const ok14 = [p14, t14, h14].filter((x) => x != null).length;
+
   if (ok14 >= 2) return Math.min(rows14.length, 14);
 
   const rows7 = rows14.length >= 7 ? rows14.slice(0, 7) : await fetchN(7);
@@ -80,6 +81,7 @@ async function getBaselineDays(userId) {
   const t7 = avg(rows7.map((r) => r.temp));
   const h7 = avg(rows7.map((r) => r.humidity));
   const ok7 = [p7, t7, h7].filter((x) => x != null).length;
+
   if (ok7 >= 2) return Math.min(rows7.length, 7);
 
   const rows2 = rows14.length >= 2 ? rows14.slice(0, 2) : await fetchN(2);
@@ -87,6 +89,7 @@ async function getBaselineDays(userId) {
   const t2 = avg(rows2.map((r) => r.temp));
   const h2 = avg(rows2.map((r) => r.humidity));
   const ok2 = [p2, t2, h2].filter((x) => x != null).length;
+
   if (ok2 >= 1) return Math.min(rows2.length, 2);
 
   return 0;
@@ -148,8 +151,8 @@ export async function GET(req) {
 
         hero: pkg.hero,
         timeline: pkg.timeline,
-        explain: pkg.explain, // { why_short }
 
+        explain: pkg.explain, // short text only
         debug: process.env.NODE_ENV === "development" ? pkg.debug : undefined,
       },
     });
