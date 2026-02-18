@@ -29,11 +29,10 @@ export async function POST(req) {
 
     if (error) throw error;
 
-    // ✅ 互換のために eventId も返す
     return NextResponse.json({
       data: {
         id: data.id,
-        eventId: data.id,
+        eventId: data.id, // legacy compatibility
       },
     });
   } catch (e) {
