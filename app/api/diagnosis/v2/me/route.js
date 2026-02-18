@@ -22,12 +22,12 @@ export async function GET(req) {
           "fluid",
 
           // repurposed:
-          "cold_heat",   // ✅ yin_yang tri (kept column name)
-          "resilience",  // ✅ drive tri
+          "cold_heat",   // yin_yang tri (kept column name)
+          "resilience",  // drive tri
 
-          "thermo",      // ✅ yin_yang tri (duplicate cache; ok)
+          "thermo",      // yin_yang tri (duplicate cache; ok)
           "is_mixed",    // false
-          "core_code",   // ✅ 9 types
+          "core_code",   // 9 types
           "sub_labels",
           "engine_version",
 
