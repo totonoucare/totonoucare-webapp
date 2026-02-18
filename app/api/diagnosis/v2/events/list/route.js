@@ -30,6 +30,8 @@ export async function GET(req) {
           "qi",
           "blood",
           "fluid",
+          "core_code","core9","yin_yang","drive","obstruction",
+          "sub_labels","thermo","resilience","is_mixed","qi","blood","fluid",
           "primary_meridian",
           "secondary_meridian",
           "source_event_id",
