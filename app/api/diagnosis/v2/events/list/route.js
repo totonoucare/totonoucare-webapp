@@ -22,10 +22,10 @@ export async function GET(req) {
           "created_at",
           "user_id",
           "symptom_focus",
-          "core_code",         // ✅ 9 types
+          "core_code",         // 9 types
           "sub_labels",
-          "thermo",            // ✅ yin_yang tri (repurposed)
-          "resilience",        // ✅ drive tri (repurposed)
+          "thermo",            // yin_yang tri
+          "resilience",        // drive tri
           "is_mixed",          // false
           "qi",
           "blood",
