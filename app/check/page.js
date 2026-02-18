@@ -1,291 +1,123 @@
-// app/check/page.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Card from "@/components/ui/Card";
+import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
-import { getQuestions, getTotalQuestions } from "@/lib/diagnosis/v2/questions";
+import { supabase } from "@/lib/supabaseClient";
 
-function ProgressBar({ current, total }) {
-  const pct = Math.round((current / total) * 100);
+function IconCheck() {
   return (
-    <div className="mb-4">
-      <div className="flex items-center justify-between text-xs text-slate-500">
-        <div>
-          Q{current} / {total}
-        </div>
-        <div>{pct}%</div>
-      </div>
-      <div className="mt-2 h-2 w-full rounded-full bg-slate-200">
-        <div
-          className="h-2 rounded-full bg-slate-900 transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+function IconHistory() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v6l4 2" />
+    </svg>
+  );
+}
+function IconInfo() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 16v-4" />
+      <path d="M12 8h0" />
+      <path d="M12 22a10 10 0 1 1 10-10 10 10 0 0 1-10 10z" />
+    </svg>
   );
 }
 
-const PENDING_KEY = "pending_diagnosis_v2_answers";
-
-export default function CheckPage() {
+export default function CheckLandingPage() {
   const router = useRouter();
-  const questions = useMemo(() => getQuestions(), []);
-  const total = useMemo(() => getTotalQuestions(), []);
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  const q = questions[step];
-
-  // ★ answers は q.key で保持する（スコア側と一致させる）
-  const ansKey = q?.key;
-
-  // single/multi 対応
-  const rawSelected = ansKey ? answers?.[ansKey] : undefined;
-  const isMulti = q?.type === "multi";
-  const selected = isMulti ? (Array.isArray(rawSelected) ? rawSelected : []) : rawSelected;
-
-  // ---------------------------
-  // ENV2 スキップ（ENV1=0 のとき）
-  // - env_sensitivity は "0".."3" の string 想定
-  // - env_vectors は multi
-  // ---------------------------
-  const envSensitivity = answers?.env_sensitivity; // "0".."3" or 0..3
-  const isEnv2 = q?.key === "env_vectors";
-  const shouldSkipEnv2 = isEnv2 && (envSensitivity === "0" || envSensitivity === 0);
-
-  function persist(next) {
-    try {
-      sessionStorage.setItem(PENDING_KEY, JSON.stringify(next));
-    } catch {}
-  }
-
-  // ENV1=0 なら ENV2 を自動で ["none"] にして 1ステップ進める
   useEffect(() => {
-    if (!shouldSkipEnv2) return;
+    let mounted = true;
 
-    setAnswers((prev) => {
-      const next = { ...prev, env_vectors: ["none"] };
-      persist(next);
-      return next;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(data.session || null);
+      setLoadingAuth(false);
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
+      setSession(s || null);
+      setLoadingAuth(false);
     });
 
-    setError("");
-    setStep((s) => Math.min(s + 1, total - 1));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldSkipEnv2]);
-
-  const canGoNext = shouldSkipEnv2 ? true : isMulti ? selected.length > 0 : Boolean(selected);
-  const isLast = step === total - 1;
-
-  // 途中保存があれば復元（主に「戻ってきた時」用）
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(PENDING_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      if (saved && typeof saved === "object") {
-        setAnswers(saved);
-
-        // ★ 未回答判定も q.key で
-        const idx = questions.findIndex((qq) => {
-          const k = qq.key;
-          const v = saved?.[k];
-          if (qq.type === "multi") return !Array.isArray(v) || v.length === 0;
-          return !v;
-        });
-
-        setStep(idx === -1 ? total - 1 : Math.max(0, idx));
-      }
-    } catch {
-      // ignore
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      mounted = false;
+      sub?.subscription?.unsubscribe?.();
+    };
   }, []);
 
-  function pick(value) {
-    if (!ansKey) return;
-
-    setAnswers((prev) => {
-      // MULTI
-      if (q.type === "multi") {
-        const max = Number(q.max || 2);
-        const cur = Array.isArray(prev?.[ansKey]) ? prev[ansKey] : [];
-
-        // "none" は単独扱い
-        if (value === "none") {
-          const next = { ...prev, [ansKey]: ["none"] };
-          persist(next);
-          return next;
-        }
-
-        // 既に "none" が入ってたら除去
-        const base = cur.filter((v) => v !== "none");
-
-        let updated;
-        if (base.includes(value)) {
-          // toggle off
-          updated = base.filter((v) => v !== value);
-        } else {
-          // add (max超過なら古い方を落とす)
-          updated = base.length >= max ? [...base.slice(1), value] : [...base, value];
-        }
-
-        const next = { ...prev, [ansKey]: updated };
-        persist(next);
-        return next;
-      }
-
-      // SINGLE / FREQ
-      const next = { ...prev, [ansKey]: value };
-
-      // ✅ ENV1（env_sensitivity）を 0 にした瞬間に env_vectors が残ってたら消す/寄せる（保険）
-      if (ansKey === "env_sensitivity" && (value === "0" || value === 0)) {
-        next.env_vectors = ["none"];
-      }
-
-      persist(next);
-      return next;
-    });
-
-    setError("");
-  }
-
-  function next() {
-    if (!canGoNext) return;
-    setStep((s) => Math.min(s + 1, total - 1));
-  }
-
-  function back() {
-    setError("");
-    setStep((s) => Math.max(s - 1, 0));
-  }
-
-  async function submit() {
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/diagnosis/v2/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "診断の保存に失敗しました");
-
-      // eventId / id 両対応
-      const eventId = json?.data?.eventId || json?.data?.id;
-      if (!eventId) throw new Error("eventId が返りませんでした");
-
-      try {
-        sessionStorage.removeItem(PENDING_KEY);
-      } catch {}
-
-      router.push(`/result/${encodeURIComponent(eventId)}`);
-    } catch (e) {
-      setError(e?.message || String(e));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  if (!q) {
-    return (
-      <div className="space-y-3">
-        <h1 className="text-xl font-semibold">質問が見つかりません。</h1>
-        <Button onClick={() => router.push("/")}>トップへ</Button>
-      </div>
-    );
-  }
-
-  // ENV2 は shouldSkipEnv2 の useEffect で自動送ってるので、ここに来る前に次へ進む想定。
-  // ただし保険として、描画側でも隠しておく。
-  if (shouldSkipEnv2) {
-    return (
-      <div className="space-y-3">
-        <div className="text-sm text-slate-500">環境の追加質問をスキップ中…</div>
-      </div>
-    );
-  }
+  const isLoggedIn = !!session;
 
   return (
-    <div className="space-y-4">
-      <ProgressBar current={step + 1} total={total} />
-
-      <Card>
-        <div className="space-y-3">
-          <div className="text-lg font-semibold whitespace-pre-wrap">{q.title}</div>
-
-          <div className="space-y-2 pt-2">
-            {q.options.map((opt) => {
-              const isSel = isMulti ? selected.includes(opt.value) : selected === opt.value;
-
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => pick(opt.value)}
-                  className={[
-                    "w-full rounded-xl border px-4 py-3 text-left transition",
-                    isSel
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white hover:border-slate-400",
-                  ].join(" ")}
-                >
-                  <div className="font-medium">{opt.label}</div>
-                  {opt.hint ? (
-                    <div
-                      className={[
-                        "mt-1 text-xs",
-                        isSel ? "text-white/80" : "text-slate-500",
-                      ].join(" ")}
-                    >
-                      {opt.hint}
-                    </div>
-                  ) : null}
-                </button>
-              );
-            })}
+    <AppShell title="体質チェック">
+      <Module>
+        <ModuleHeader icon={<IconCheck />} title="体質チェック" sub="2週間の傾向＋簡単な動作テスト" />
+        <div className="px-5 pb-6 pt-4 space-y-4">
+          <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_50%)] ring-1 ring-[var(--ring)] p-5">
+            <div className="text-sm font-extrabold text-slate-900">このチェックで分かること</div>
+            <div className="mt-2 text-sm leading-7 text-slate-700">
+              「崩れ方のクセ（体質の軸）」と「整えポイント（最大2つ）」、さらに「張りやすい場所」を整理します。
+              その結果を、体調予報（未病レーダー）に接続します。
+            </div>
+            <div className="mt-4">
+              <Button onClick={() => router.push("/check/run")}>チェックを始める</Button>
+            </div>
           </div>
 
-          {isMulti ? (
-            <div className="pt-1 text-xs text-slate-500">
-              ※ 最大{q.max || 2}つまで選べます（「特にない・わからない」は単独になります）
+          <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-5">
+            <div className="flex items-start gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[color-mix(in_srgb,#ede9fe,white_40%)] ring-1 ring-[var(--ring)] text-[#3b2f86]">
+                <IconInfo />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-extrabold text-slate-900">所要時間</div>
+                <div className="mt-1 text-xs font-medium text-slate-500">
+                  だいたい 2〜3分。痛みが出る動作は無理しなくてOKです。
+                </div>
+              </div>
             </div>
-          ) : null}
-
-          {error ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="flex items-center justify-between pt-2">
-            <Button variant="ghost" onClick={back} disabled={step === 0 || submitting}>
-              戻る
-            </Button>
-
-            {!isLast ? (
-              <Button onClick={next} disabled={!canGoNext || submitting}>
-                次へ
-              </Button>
-            ) : (
-              <Button onClick={submit} disabled={!canGoNext || submitting}>
-                {submitting ? "作成中…" : "診断を確定"}
-              </Button>
-            )}
           </div>
 
-          <div className="pt-2 text-xs text-slate-500">
-            ※ 無理のある動作は避けてOK。違和感が強い場合は中止してください。
+          <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[color-mix(in_srgb,#d1fae5,white_40%)] ring-1 ring-[var(--ring)] text-[#115e59]">
+                  <IconHistory />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-slate-900">履歴</div>
+                  <div className="mt-1 text-xs font-medium text-slate-500">
+                    保存した結果だけ履歴に残ります（ログイン時に利用可）。
+                  </div>
+                </div>
+              </div>
+
+              {loadingAuth ? null : (
+                <div className="shrink-0">
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push(isLoggedIn ? "/history" : "/signup")}
+                  >
+                    {isLoggedIn ? "履歴を見る" : "ログインして履歴を使う"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </Card>
-    </div>
+      </Module>
+    </AppShell>
   );
 }
