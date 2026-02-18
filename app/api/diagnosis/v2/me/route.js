@@ -20,12 +20,17 @@ export async function GET(req) {
           "qi",
           "blood",
           "fluid",
-          "cold_heat",
-          "resilience",
-          "thermo",
-          "is_mixed",
-          "core_code","core9","yin_yang","drive","obstruction",
-          "sub_labels","engine_version",
+
+          // repurposed:
+          "cold_heat",   // ✅ yin_yang tri (kept column name)
+          "resilience",  // ✅ drive tri
+
+          "thermo",      // ✅ yin_yang tri (duplicate cache; ok)
+          "is_mixed",    // false
+          "core_code",   // ✅ 9 types
+          "sub_labels",
+          "engine_version",
+
           "primary_meridian",
           "secondary_meridian",
           "organs",
