@@ -4,6 +4,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
+import BottomTabs from "@/components/nav/BottomTabs";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
@@ -262,46 +263,6 @@ function SegmentedTabs({ value, onChange }) {
   );
 }
 
-/* -----------------------------
- * Bottom Tab Bar（既存）
- * ---------------------------- */
-function BottomTabs({ active, onGo }) {
-  const item = (key, label, Icon) => {
-    const isActive = active === key;
-    return (
-      <button
-        type="button"
-        onClick={() => onGo(key)}
-        className={[
-          "flex flex-1 flex-col items-center justify-center gap-1 rounded-[16px] py-2",
-          isActive ? "text-[var(--accent-ink)]" : "text-slate-500",
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "grid h-9 w-9 place-items-center rounded-[14px] transition",
-            isActive ? "bg-[var(--mint)] ring-1 ring-[var(--ring)]" : "bg-transparent",
-          ].join(" ")}
-        >
-          <Icon />
-        </span>
-        <span className={`text-[11px] font-extrabold ${isActive ? "" : "font-bold"}`}>{label}</span>
-      </button>
-    );
-  };
-
-  return (
-    <div className="fixed inset-x-0 bottom-0 z-40 bg-white/92 backdrop-blur supports-[backdrop-filter]:bg-white/75 ring-1 ring-[var(--ring)]">
-      <div className="mx-auto w-full max-w-[440px] px-4 py-2">
-        <div className="flex items-stretch gap-2 rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-1 shadow-[0_10px_30px_-22px_rgba(0,0,0,0.35)]">
-          {item("check", "チェック", IconCheck)}
-          {item("result", "結果", IconResult)}
-          {item("radar", "レーダー", IconRadarTab)}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* -----------------------------
  * Illustration（抽象）
@@ -1063,14 +1024,7 @@ function ResultPage({ params }) {
         </div>
       </div>
 
-      <BottomTabs
-        active="result"
-        onGo={(key) => {
-          if (key === "check") router.push("/check");
-          if (key === "radar") router.push("/radar");
-          if (key === "result") router.push(`/result/${encodeURIComponent(id)}`);
-        }}
-      />
+      <BottomTabs />
     </AppShell>
   );
 }
