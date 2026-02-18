@@ -156,13 +156,13 @@ export default function HomePage() {
           <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_50%)] ring-1 ring-[var(--ring)] p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="text-xs font-bold text-[var(--accent-ink)]/80">今日の方針</div>
+                <div className="text-xs font-bold text-[var(--accent-ink)]/80">体調予報×先手対策</div>
                 <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
-                  「崩れ方」を測って、「揺れそうな日」を読めるように
+                  不調の波が来る前に気づいて、先回りで軽くする
                 </div>
                 <div className="mt-2 text-sm leading-7 text-slate-700">
-                  東洋医学の分類を、曖昧なスピリチュアルではなく「傾向のデータ」として扱い、
-                  あなたの状態と気象変化を組み合わせて、先回りの意思決定に繋げます。
+                  あなたの体質と気象の変化を重ねて、崩れやすいタイミングがわかります。
+                  危ない日は、30秒でできる先回りケアが出ます。
                 </div>
               </div>
             </div>
