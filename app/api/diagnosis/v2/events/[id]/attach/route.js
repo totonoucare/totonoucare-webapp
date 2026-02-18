@@ -80,10 +80,10 @@ export async function POST(req, { params }) {
       symptom_focus: computed.symptom_focus,
       answers,
 
-      // tri-state fields (semantics updated inside scoring.js)
-      thermo: computed.thermo,
-      resilience: computed.resilience,
-      is_mixed: computed.is_mixed,
+      // repurposed tri-state fields
+      thermo: computed.thermo,         // yin_yang tri
+      resilience: computed.resilience, // drive tri
+      is_mixed: computed.is_mixed,     // false
 
       qi: computed.qi,
       blood: computed.blood,
@@ -92,7 +92,7 @@ export async function POST(req, { params }) {
       primary_meridian: computed.primary_meridian,
       secondary_meridian: computed.secondary_meridian,
 
-      core_code: computed.core_code, // ✅ 9 types
+      core_code: computed.core_code, // 9 types
       sub_labels: computed.sub_labels,
 
       engine_version: "v2",
