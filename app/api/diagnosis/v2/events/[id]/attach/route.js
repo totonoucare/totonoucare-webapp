@@ -14,19 +14,19 @@ function getBearer(req) {
 }
 
 /**
- * Attach flow (robust):
+ * Attach flow:
  * 1) validate bearer -> user
  * 2) load diagnosis_events
- * 3) create/find constitution_events row by source_event_id
- * 4) upsert constitution_profiles (latest cache) with latest_event_id
- * 5) finally set diagnosis_events.user_id (only after above success)
+ * 3) upsert constitution_events by source_event_id
+ * 4) upsert constitution_profiles (latest cache)
+ * 5) finally set diagnosis_events.user_id
  */
 export async function POST(req, { params }) {
   try {
     const id = params?.id;
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-    // --- Auth: Bearer token -> user
+    // --- Auth
     const token = getBearer(req);
     if (!token) return NextResponse.json({ error: "Missing Bearer token" }, { status: 401 });
 
@@ -39,7 +39,7 @@ export async function POST(req, { params }) {
     }
     const user = userData.user;
 
-    // --- 1) load diagnosis_events
+    // --- Load diagnosis_events
     const { data: ev, error: e0 } = await supabaseServer
       .from("diagnosis_events")
       .select(
@@ -62,7 +62,7 @@ export async function POST(req, { params }) {
     if (e0) throw e0;
     if (!ev) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    // --- 2) already attached to another user -> forbid
+    // already attached to another user -> forbid
     if (ev.user_id && ev.user_id !== user.id) {
       return NextResponse.json(
         { error: "This result is already attached to another account." },
@@ -73,16 +73,14 @@ export async function POST(req, { params }) {
     const answers = ev.answers || {};
     const computed = scoreDiagnosis(answers);
 
-    // --- 3) ensure constitution_events exists (idempotent-ish)
-    // NOTE:
-    // - 本当は DB に unique(source_event_id) があるのが理想（推奨）
-    // - uniqueが無い場合でも、まず既存を探し、無ければ insert
-    // - 同時実行の完全排除は unique 制約が必要
+    // --- Upsert constitution_events by source_event_id
+    // Note: ideally DB has UNIQUE(source_event_id). If not, we still do find->update/insert.
     const eventRow = {
       user_id: user.id,
       symptom_focus: computed.symptom_focus,
       answers,
 
+      // tri-state fields (semantics updated inside scoring.js)
       thermo: computed.thermo,
       resilience: computed.resilience,
       is_mixed: computed.is_mixed,
@@ -94,26 +92,20 @@ export async function POST(req, { params }) {
       primary_meridian: computed.primary_meridian,
       secondary_meridian: computed.secondary_meridian,
 
-      core_code: computed.core_code,
-      core9: computed.core9,
-      yin_yang: computed.yin_yang,
-      drive: computed.drive,
-      obstruction: computed.obstruction,
-
+      core_code: computed.core_code, // ✅ 9 types
       sub_labels: computed.sub_labels,
 
-      engine_version: "v3",
+      engine_version: "v2",
 
       source_event_id: id,
       notes: { source_event_id: id },
 
-      // もし診断側でAI解説が既にあれば、コピーしておく（nullでもOK）
+      // copy AI explain cache if exists
       ai_explain_text: ev.ai_explain_text || null,
       ai_explain_model: ev.ai_explain_model || null,
       ai_explain_created_at: ev.ai_explain_created_at || null,
     };
 
-    // 3-1) find existing by source_event_id (and user_id)
     const { data: ceExisting, error: eFind } = await supabaseServer
       .from("constitution_events")
       .select("id, user_id, source_event_id, created_at")
@@ -127,7 +119,6 @@ export async function POST(req, { params }) {
     let ceId = null;
 
     if (ceExisting?.id) {
-      // 既にある：ユーザー違いなら（本来は起こらないが）拒否
       if (ceExisting.user_id && ceExisting.user_id !== user.id) {
         return NextResponse.json(
           { error: "This result is already attached to another account." },
@@ -137,7 +128,6 @@ export async function POST(req, { params }) {
 
       ceId = ceExisting.id;
 
-      // 既存行を「最新仕様で」更新しておく（取りこぼし防止）
       const { error: eUpd } = await supabaseServer
         .from("constitution_events")
         .update(eventRow)
@@ -146,7 +136,6 @@ export async function POST(req, { params }) {
 
       if (eUpd) throw eUpd;
     } else {
-      // 無い：insert
       const { data: ceNew, error: eIns } = await supabaseServer
         .from("constitution_events")
         .insert([eventRow])
@@ -159,7 +148,7 @@ export async function POST(req, { params }) {
 
     if (!ceId) throw new Error("constitution_events の作成に失敗しました（idが取得できません）");
 
-    // --- 4) upsert constitution_profiles (latest cache)
+    // --- Upsert constitution_profiles (latest cache)
     const profilePayload = buildConstitutionProfilePayload(user.id, answers);
     profilePayload.latest_event_id = ceId;
 
@@ -169,7 +158,7 @@ export async function POST(req, { params }) {
 
     if (eProf) throw eProf;
 
-    // --- 5) finally attach diagnosis_events.user_id (only after success)
+    // --- Finally attach diagnosis_events.user_id
     if (!ev.user_id) {
       const { error: eAttach } = await supabaseServer
         .from("diagnosis_events")
