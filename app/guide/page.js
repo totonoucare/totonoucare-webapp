@@ -160,12 +160,12 @@ export default function GuidePage() {
             />
             <div className="px-5 pb-6 pt-4 space-y-4">
               <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                <div className="text-xs font-bold text-[var(--accent-ink)]/80">結論</div>
+                <div className="text-xs font-bold text-[var(--accent-ink)]/80">目的</div>
                 <div className="mt-1 text-lg font-extrabold tracking-tight text-slate-900">
-                  不調が来る前に「危ない日」を知って、軽く済ませる
+                  不調が来る前に「危ない日」を知り、先回りして軽く済ませる
                 </div>
                 <div className="mt-2 text-sm leading-7 text-slate-700">
-                  体質チェックで「崩れ方のクセ」を掴み、体調予報で“揺れやすいタイミング”を先回りします。
+                  体質チェックで「崩れ方のクセ」を掴み、体調予報で“揺れやすいタイミング”を先回りで備えます。
                 </div>
               </div>
 
@@ -236,7 +236,7 @@ export default function GuidePage() {
                   30秒〜数分で「悪化のきっかけ」を潰す設計が一番効きます。
                 </Card>
                 <Card title="表示範囲はプランで変わる" icon={<IconSpark />}>
-                  無料でも使えます。より先の予報や、より細かい提案はプランで拡張されます。
+                  無料でも使えます。より先の予報や、より細かいケア提案はプランで拡張されます。
                   まずは“危ない日を見逃さない”状態を作るのが最優先です。
                 </Card>
 
