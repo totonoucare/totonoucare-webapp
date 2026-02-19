@@ -645,17 +645,17 @@ function ResultPage({ params }) {
         <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
           <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
 
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-[color-mix(in_srgb,var(--mint),white_55%)] px-4 py-2 text-sm font-black text-slate-900 ring-1 ring-[var(--ring)]">
-              {core?.title || "—"}
-            </span>
+          <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
+            {core?.title || "—"}
+          </div>
 
-            {core?.short ? (
+          {core?.short ? (
+            <div className="mt-2">
               <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
                 {core.short}
               </span>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <div className="mt-3 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
         </div>
