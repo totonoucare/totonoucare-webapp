@@ -1,3 +1,4 @@
+// app/check/run/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -8,7 +9,15 @@ import { getQuestions, getTotalQuestions } from "@/lib/diagnosis/v2/questions";
 
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );
@@ -19,7 +28,9 @@ function ProgressBar({ current, total }) {
   return (
     <div>
       <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-        <div>Q{current} / {total}</div>
+        <div>
+          Q{current} / {total}
+        </div>
         <div>{pct}%</div>
       </div>
       <div className="mt-2 h-2 w-full rounded-full bg-black/10">
@@ -156,8 +167,12 @@ export default function CheckRunPage() {
       const eventId = json?.data?.eventId || json?.data?.id;
       if (!eventId) throw new Error("eventId が返りませんでした");
 
-      try { sessionStorage.removeItem(PENDING_KEY); } catch {}
-      router.push(`/result/${encodeURIComponent(eventId)}`);
+      try {
+        sessionStorage.removeItem(PENDING_KEY);
+      } catch {}
+
+      // ✅ チェック実行→結果：from=check_run を付ける
+      router.push(`/result/${encodeURIComponent(eventId)}?from=check_run`);
     } catch (e) {
       setError(e?.message || String(e));
     } finally {
