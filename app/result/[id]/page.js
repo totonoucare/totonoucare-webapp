@@ -613,7 +613,7 @@ function ResultPage({ params }) {
 
   // Main UI
   return (
-    <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+    <AppShell title="体質チェック結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
         <div className="fixed left-1/2 top-3 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-[18px] bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-lg ring-1 ring-[var(--ring)]">
           {toast}
@@ -641,7 +641,7 @@ function ResultPage({ params }) {
 
             <div className="px-5 pb-5">
               <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
-                <div className="text-xs font-extrabold text-slate-500">体質の軸</div>
+                <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
                 <div className="mt-1 text-base font-extrabold text-slate-900">{core?.title || "—"}</div>
 
                 {core?.short ? (
@@ -671,7 +671,7 @@ function ResultPage({ params }) {
           {tab === "overview" ? (
             <>
               <Card>
-                <CardHeader icon={<IconCompass />} title="見立ての内訳" sub="整えポイント・張りやすい場所" />
+                <CardHeader icon={<IconCompass />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
                 <div className="px-5 pb-6 pt-4 space-y-4">
                   <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
                     {subLabels?.length ? (
