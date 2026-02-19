@@ -67,7 +67,7 @@ export default function BottomTabs() {
     <div className="fixed inset-x-0 bottom-0 z-30 bg-white/92 backdrop-blur supports-[backdrop-filter]:bg-white/75 ring-1 ring-[var(--ring)]">
       <div className="mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch gap-2 rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-1 shadow-[0_10px_30px_-22px_rgba(0,0,0,0.35)]">
-          {item("home", "トップ", IconHome, "/")}
+          {item("home", "ホーム", IconHome, "/")}
           {item("check", "体質チェック", IconCheck, "/check")}
           {item("radar", "体調予報", IconRadar, "/radar")}
         </div>
