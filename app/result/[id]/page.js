@@ -4,7 +4,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
-import BottomTabs from "@/components/nav/BottomTabs";
+import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 
@@ -129,35 +129,6 @@ function IconRadarTab() {
       <path d="M12 12a8 8 0 1 0 8 8" />
       <path d="M12 12V4" />
     </svg>
-  );
-}
-
-/* -----------------------------
- * UI primitives（アプリっぽい）
- * ---------------------------- */
-function AppShell({ children }) {
-  return <div className="min-h-screen bg-app pb-28">{children}</div>;
-}
-
-function TopBar({ title, onBack, right }) {
-  return (
-    <div className="sticky top-0 z-30 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
-      <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-          >
-            <span className="text-slate-400">←</span>もどる
-          </button>
-
-          <div className="min-w-0 text-sm font-extrabold tracking-tight text-slate-800 truncate">{title}</div>
-
-          <div className="w-[88px] flex justify-end">{right || null}</div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -589,51 +560,81 @@ function ResultPage({ params }) {
   // UI states
   if (loadingEvent) {
     return (
-      <AppShell>
-        <TopBar title="診断結果" onBack={() => router.push("/check")} />
-        <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
-          <Card>
-            <div className="px-5 py-6">
+      <AppShell
+        title="診断結果"
+        noTabs={true}
+        headerLeft={
+          <button
+            type="button"
+            onClick={() => router.push("/check")}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          >
+            ← 戻る
+          </button>
+        }
+      >
+        <Module>
+          <ModuleHeader icon={<IconResult />} title="結果を読み込み中…" sub="少し待ってください" />
+          <div className="px-5 pb-6 pt-4">
+            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
-                <div>
-                  <div className="text-base font-bold text-slate-900">結果を読み込み中…</div>
-                  <div className="mt-1 text-xs text-slate-500">少し待ってください。</div>
-                </div>
+                <div className="text-sm font-bold text-slate-700">読み込み中…</div>
               </div>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Module>
       </AppShell>
+
     );
   }
 
   if (!event || event?.notFound) {
     return (
-      <AppShell>
-        <TopBar title="診断結果" onBack={() => router.push("/check")} />
-        <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
-          <Card>
-            <div className="px-5 py-6">
-              <div className="text-lg font-extrabold text-slate-900">結果が見つかりません</div>
-              <div className="mt-2 text-sm leading-7 text-slate-600">
+      <AppShell
+        title="診断結果"
+        noTabs={true}
+        headerLeft={
+          <button
+            type="button"
+            onClick={() => router.push("/check")}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          >
+            ← 戻る
+          </button>
+        }
+      >
+        <Module>
+          <ModuleHeader icon={<IconResult />} title="結果が見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
+          <div className="px-5 pb-6 pt-4 space-y-4">
+            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
+              <div className="text-sm leading-7 text-slate-700">
                 期限切れ/削除、または保存に失敗した可能性があります。
               </div>
-              <div className="mt-5">
-                <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
-              </div>
             </div>
-          </Card>
-        </div>
+            <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
+          </div>
+        </Module>
       </AppShell>
+
     );
   }
 
   // Main UI
   return (
-    <AppShell>
-      <TopBar title="診断結果" onBack={() => router.push("/check")} />
-
+    <AppShell
+      title="診断結果"
+      noTabs={true}
+      headerLeft={
+        <button
+          type="button"
+          onClick={() => router.push("/check")}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          ← 戻る
+        </button>
+      }
+    >
       {toast ? (
         <div className="fixed left-1/2 top-3 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-[18px] bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-lg ring-1 ring-[var(--ring)]">
           {toast}
@@ -1024,7 +1025,6 @@ function ResultPage({ params }) {
         </div>
       </div>
 
-      <BottomTabs />
     </AppShell>
   );
 }
