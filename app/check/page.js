@@ -61,7 +61,18 @@ export default function CheckLandingPage() {
   const isLoggedIn = !!session;
 
   return (
-    <AppShell title="体質チェック">
+    <AppShell
+      title="体質チェック"
+      headerRight={
+        <button
+          type="button"
+          onClick={() => router.push(isLoggedIn ? "/history" : "/signup")}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          履歴
+        </button>
+      }
+    >
       <Module>
         <ModuleHeader icon={<IconCheck />} title="体質チェック" sub="2週間の傾向＋簡単な動作テスト" />
         <div className="px-5 pb-6 pt-4 space-y-4">
