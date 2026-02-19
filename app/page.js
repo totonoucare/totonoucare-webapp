@@ -144,7 +144,7 @@ export default function HomePage() {
   }
 
   return (
-    <AppShell title="トップ">
+    <AppShell title="ホーム">
       {/* Hero */}
       <Module>
         <ModuleHeader
