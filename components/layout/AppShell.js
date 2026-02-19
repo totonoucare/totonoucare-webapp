@@ -1,57 +1,32 @@
-// components/layout/AppShell.js
 "use client";
 
-import { useRouter } from "next/navigation";
 import BottomTabs from "@/components/nav/BottomTabs";
 
-function IconBack() {
+/**
+ * 共通アプリヘッダー
+ * - 左：戻る or 何もなし
+ * - 中：title
+ * - 右：文脈アクション1つ（推奨）
+ */
+export function AppHeader({ title, left, right, subtitle }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 18l-6-6 6-6" />
-    </svg>
-  );
-}
-
-export function AppBar({
-  title,
-  left,
-  right,
-  back = false,
-  backHref,
-  onBack,
-}) {
-  const router = useRouter();
-
-  const handleBack = () => {
-    if (typeof onBack === "function") return onBack();
-    if (backHref) return router.push(backHref);
-    return router.back();
-  };
-
-  return (
-    <div className="sticky top-0 z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
+    <div className="sticky top-0 z-30 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
       <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="w-[96px]">
-            {back ? (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-              >
-                <IconBack />
-                戻る
-              </button>
-            ) : (
-              left || null
-            )}
+          <div className="w-[88px] shrink-0">{left || null}</div>
+
+          <div className="min-w-0 flex-1 text-center">
+            <div className="text-sm font-extrabold tracking-tight text-slate-800 truncate">
+              {title}
+            </div>
+            {subtitle ? (
+              <div className="mt-0.5 text-[11px] font-bold text-slate-500 truncate">
+                {subtitle}
+              </div>
+            ) : null}
           </div>
 
-          <div className="min-w-0 text-sm font-extrabold tracking-tight text-slate-800 truncate">
-            {title}
-          </div>
-
-          <div className="w-[96px] flex justify-end">{right || null}</div>
+          <div className="w-[88px] shrink-0 flex justify-end">{right || null}</div>
         </div>
       </div>
     </div>
@@ -71,7 +46,7 @@ export function Module({ children, className = "" }) {
   );
 }
 
-export function ModuleHeader({ icon, title, sub }) {
+export function ModuleHeader({ icon, title, sub, right }) {
   return (
     <div className="px-5 pt-5">
       <div className="flex items-start justify-between gap-3">
@@ -88,34 +63,40 @@ export function ModuleHeader({ icon, title, sub }) {
             ) : null}
           </div>
         </div>
+        {right ? <div className="shrink-0">{right}</div> : null}
       </div>
       <div className="mt-4 h-px w-full bg-black/5" />
     </div>
   );
 }
 
+/**
+ * AppShell
+ * - title: ヘッダー中央
+ * - headerLeft: 左枠（戻るボタンなど）
+ * - headerRight: 右枠（文脈アクション1つ推奨）
+ * - subtitle: 小さい日付や補助情報（任意）
+ * - noTabs: タブを消したい時（ログイン画面など）
+ */
 export default function AppShell({
   title,
-  children,
-  noTabs = false,
-
-  // ✅ new options（互換：未指定なら何も起きない）
-  back = false,
-  backHref,
-  onBack,
+  subtitle,
   headerLeft,
   headerRight,
+  children,
+  noHeader = false,
+  noTabs = false,
 }) {
   return (
     <div className={`min-h-screen bg-app ${noTabs ? "" : "pb-24"}`}>
-      <AppBar
-        title={title}
-        back={back}
-        backHref={backHref}
-        onBack={onBack}
-        left={headerLeft}
-        right={headerRight}
-      />
+      {noHeader ? null : (
+        <AppHeader
+          title={title}
+          subtitle={subtitle}
+          left={headerLeft}
+          right={headerRight}
+        />
+      )}
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="space-y-5 pb-3">{children}</div>
