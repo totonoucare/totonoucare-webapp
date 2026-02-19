@@ -643,6 +643,13 @@ function ResultPage({ params }) {
               <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
                 <div className="text-xs font-extrabold text-slate-500">体質の軸</div>
                 <div className="mt-1 text-base font-extrabold text-slate-900">{core?.title || "—"}</div>
+
+                {core?.short ? (
+                  <div className="mt-1 text-[11px] font-bold text-slate-500">
+                    {core.short}
+                  </div>
+                ) : null}
+
                 <div className="mt-2 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
               </div>
             </div>
