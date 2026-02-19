@@ -25,6 +25,7 @@ function IconHistory() {
     </svg>
   );
 }
+
 function IconPlus() {
   return (
     <svg
@@ -173,7 +174,9 @@ export default function HistoryPage() {
           const when = r.created_at ? new Date(r.created_at).toLocaleString("ja-JP") : "—";
 
           const resultId = r.source_event_id || (r.notes?.source_event_id ?? null);
-          const href = resultId ? `/result/${encodeURIComponent(resultId)}` : null;
+
+          // ✅ 履歴→結果：from=history を付ける
+          const href = resultId ? `/result/${encodeURIComponent(resultId)}?from=history` : null;
 
           return (
             <div key={r.id} className="rounded-[22px] bg-white ring-1 ring-[var(--ring)] p-5">
