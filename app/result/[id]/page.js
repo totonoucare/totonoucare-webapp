@@ -625,46 +625,56 @@ function ResultPage({ params }) {
 <div className="mx-auto w-full max-w-[440px] px-4">
   <div className="pt-2 pb-3">
     <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
+      {/* お悩み */}
       <div className="px-5 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
-            <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
-              {symptomLabel}
-            </div>
-            <div className="mt-2 text-xs font-bold text-slate-600">
-              チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
-            </div>
+        <div className="min-w-0">
+          <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
+          <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
+            {symptomLabel}
           </div>
-
-          {/* ✅ ここが差し替え：コアタイプ別イラスト */}
-          <div className="shrink-0">
-            <CoreIllust
-              code={computed?.core_code}
-              title={core?.title || "体質タイプ"}
-              className="h-20 w-32 opacity-90"
-            />
+          <div className="mt-2 text-xs font-bold text-slate-600">
+            チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
           </div>
         </div>
       </div>
 
+      {/* 体質の軸（カード内にイラスト） */}
       <div className="px-5 pb-5">
         <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
-          <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
+          <div className="flex items-start justify-between gap-4">
+            {/* 左：テキスト */}
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
 
-          <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
-            {core?.title || "—"}
+              <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
+                {core?.title || "—"}
+              </div>
+
+              {core?.short ? (
+                <div className="mt-2">
+                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+                    {core.short}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+
+            {/* 右：1:1 イラスト枠（人物用） */}
+            <div className="shrink-0">
+              <div className="grid aspect-square w-[92px] place-items-center overflow-hidden rounded-[18px] bg-white ring-1 ring-[var(--ring)]">
+                <CoreIllust
+                  code={computed?.core_code}
+                  title={core?.title || "体質タイプ"}
+                  className="h-full w-full"
+                />
+              </div>
+            </div>
           </div>
 
-          {core?.short ? (
-            <div className="mt-2">
-              <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
-                {core.short}
-              </span>
-            </div>
-          ) : null}
-
-          <div className="mt-3 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
+          {/* 下：説明文 */}
+          <div className="mt-3 text-sm leading-7 text-slate-700">
+            {core?.tcm_hint || ""}
+          </div>
         </div>
       </div>
     </div>
