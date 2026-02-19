@@ -15,22 +15,6 @@ function IconSpark() {
     </svg>
   );
 }
-function IconCheck() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-function IconRadar() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 12l8-4" />
-      <path d="M12 12a8 8 0 1 0 8 8" />
-      <path d="M12 12V4" />
-    </svg>
-  );
-}
 function IconRoute() {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,7 +44,6 @@ function IconUser() {
 }
 
 function HeroArt() {
-  // 外部SVGに差し替え前提：今は抽象で「和モダン×システム」寄せ
   return (
     <svg viewBox="0 0 320 140" className="h-[110px] w-full" aria-hidden="true">
       <defs>
@@ -156,8 +139,6 @@ export default function HomePage() {
         </button>
       }
     >
-  ...
-</AppShell>
       {/* Hero */}
       <Module>
         <ModuleHeader
@@ -179,13 +160,16 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
             <div className="mt-4">
               <HeroArt />
             </div>
 
             <div className="mt-4 grid gap-2">
               <Button onClick={() => router.push("/check")}>体質チェックをはじめる</Button>
-              <Button variant="secondary" onClick={() => router.push("/radar")}>体調予報へ</Button>
+              <Button variant="secondary" onClick={() => router.push("/radar")}>
+                体調予報へ
+              </Button>
             </div>
 
             <div className="mt-3 text-[11px] font-bold text-slate-500">
