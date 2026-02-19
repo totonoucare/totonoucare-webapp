@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
@@ -25,6 +25,7 @@ function IconHistory() {
     </svg>
   );
 }
+
 function IconPlus() {
   return (
     <svg
@@ -43,15 +44,6 @@ function IconPlus() {
 
 export default function HistoryPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // ✅ 来た元（/history?from=xxx）
-  const from = searchParams?.get("from") || "";
-  const backHref =
-    from === "check" ? "/check" :
-    from === "radar" ? "/radar" :
-    from === "home" ? "/" :
-    ""; // unknown -> fallback
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -182,7 +174,8 @@ export default function HistoryPage() {
           const when = r.created_at ? new Date(r.created_at).toLocaleString("ja-JP") : "—";
 
           const resultId = r.source_event_id || (r.notes?.source_event_id ?? null);
-          // ✅ 履歴 → 結果 は from=history を付ける（結果側の戻るが安定）
+
+          // ✅ 履歴→結果：from=history を付ける
           const href = resultId ? `/result/${encodeURIComponent(resultId)}?from=history` : null;
 
           return (
@@ -240,10 +233,7 @@ export default function HistoryPage() {
       headerLeft={
         <button
           type="button"
-          onClick={() => {
-            if (backHref) router.push(backHref);
-            else router.back(); // unknown from -> fallback
-          }}
+          onClick={() => router.push("/check")}
           className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
           ← 戻る
