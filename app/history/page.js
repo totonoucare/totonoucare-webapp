@@ -226,45 +226,44 @@ export default function HistoryPage() {
     );
   }, [loadingAuth, loading, isLoggedIn, err, rows, router]);
 
-  return (
-    <AppShell
-      title="履歴"
-      noTabs={true}
-      headerLeft={
-        <button
-          type="button"
-          onClick={() => router.push("/check")}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-        >
-          ← 戻る
-        </button>
-      }
-      headerRight={
-        <button
-          type="button"
-          onClick={() => router.push("/check")}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-        >
-          <IconPlus />
-          新規
-        </button>
-      }
-    >
-      <Module>
-        <ModuleHeader icon={<IconHistory />} title="チェック履歴" sub="保存した結果だけ表示されます" />
-        <div className="px-5 pb-6 pt-4 space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-extrabold text-slate-900">一覧</div>
-            <Button variant="secondary" onClick={() => router.push("/check")}>
-              <span className="inline-flex items-center gap-2">
-                <IconPlus />
-                新しくチェック
-              </span>
-            </Button>
-          </div>
-          {content}
+return (
+  <AppShell
+    title="履歴"
+    noTabs={true}
+    headerLeft={
+      <button
+        type="button"
+        onClick={() => router.push("/")}
+        className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      >
+        ← ホーム
+      </button>
+    }
+    headerRight={
+      <button
+        type="button"
+        onClick={() => router.push("/radar")}
+        className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      >
+        レーダー →
+      </button>
+    }
+  >
+    <Module>
+      <ModuleHeader icon={<IconHistory />} title="チェック履歴" sub="保存した結果だけ表示されます" />
+      <div className="px-5 pb-6 pt-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-extrabold text-slate-900">一覧</div>
+          <Button variant="secondary" onClick={() => router.push("/check")}>
+            <span className="inline-flex items-center gap-2">
+              <IconPlus />
+              新しくチェック
+            </span>
+          </Button>
         </div>
-      </Module>
-    </AppShell>
-  );
+        {content}
+      </div>
+    </Module>
+  </AppShell>
+);
 }
