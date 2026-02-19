@@ -192,7 +192,27 @@ export default function CheckRunPage() {
   }
 
   return (
-    <AppShell title="体質チェック">
+    <AppShell
+      title="体質チェック"
+      headerLeft={
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          ← 戻る
+        </button>
+      }
+      headerRight={
+        <button
+          type="button"
+          onClick={() => router.push("/check")}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          中断
+        </button>
+      }
+    
       <Module>
         <ModuleHeader icon={<IconCheck />} title="チェック中" sub="回答は途中保存されます" />
         <div className="px-5 pb-6 pt-4 space-y-4">
