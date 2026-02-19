@@ -107,31 +107,18 @@ function IconRadar() {
     </svg>
   );
 }
-function IconCheck() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
 function IconResult() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
       <path d="M7 3h10v18H7z" />
       <path d="M9 7h6M9 11h6M9 15h4" />
     </svg>
   );
 }
-function IconRadarTab() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <path d="M12 12l8-4" />
-      <path d="M12 12a8 8 0 1 0 8 8" />
-      <path d="M12 12V4" />
-    </svg>
-  );
-}
 
+/* -----------------------------
+ * UI
+ * ---------------------------- */
 function Card({ children, className = "" }) {
   return (
     <section
@@ -196,9 +183,6 @@ function SoftPanel({ tone = "mint", title, icon, right, children }) {
   );
 }
 
-/* -----------------------------
- * Segmented control（アプリ感UP）
- * ---------------------------- */
 function SegmentedTabs({ value, onChange }) {
   const tabs = [
     { key: "overview", label: "概要" },
@@ -234,10 +218,6 @@ function SegmentedTabs({ value, onChange }) {
   );
 }
 
-
-/* -----------------------------
- * Illustration（抽象）
- * ---------------------------- */
 function CoreIllustration() {
   return (
     <svg viewBox="0 0 200 120" className="h-20 w-32 opacity-85" aria-hidden="true">
@@ -377,6 +357,23 @@ function ResultPage({ params }) {
 
   const attachAfterLogin = searchParams?.get("attach") === "1";
   const autoAttachRan = useRef(false);
+
+  // ✅ “来た元” 判定（from が無い直リンクでも破綻しない）
+  const from = (searchParams?.get("from") || "").toLowerCase();
+  const backHref = useMemo(() => {
+    // from は「遷移元で明示」が最強
+    if (from === "history") return "/history";
+    if (from === "check_run") return "/check/run";
+    if (from === "check") return "/check";
+    if (from === "home") return "/";
+    if (from === "radar") return "/radar";
+
+    // attach=1（ログイン後に保存フロー）なら check に戻すのが無難
+    if (attachAfterLogin) return "/check";
+
+    // デフォルト（直リンク/不明）：check に返す（診断の文脈を維持）
+    return "/check";
+  }, [from, attachAfterLogin]);
 
   // Auth
   useEffect(() => {
@@ -557,22 +554,30 @@ function ResultPage({ params }) {
     );
   }
 
+  const headerLeft = (
+    <button
+      type="button"
+      onClick={() => router.push(backHref)}
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+    >
+      ← 戻る
+    </button>
+  );
+
+  const headerRight = (
+    <button
+      type="button"
+      onClick={() => router.push("/")}
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+    >
+      ホーム
+    </button>
+  );
+
   // UI states
   if (loadingEvent) {
     return (
-      <AppShell
-        title="診断結果"
-        noTabs={true}
-        headerLeft={
-          <button
-            type="button"
-            onClick={() => router.push("/check")}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-          >
-            ← 戻る
-          </button>
-        }
-      >
+      <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
           <ModuleHeader icon={<IconResult />} title="結果を読み込み中…" sub="少し待ってください" />
           <div className="px-5 pb-6 pt-4">
@@ -585,25 +590,12 @@ function ResultPage({ params }) {
           </div>
         </Module>
       </AppShell>
-
     );
   }
 
   if (!event || event?.notFound) {
     return (
-      <AppShell
-        title="診断結果"
-        noTabs={true}
-        headerLeft={
-          <button
-            type="button"
-            onClick={() => router.push("/check")}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-          >
-            ← 戻る
-          </button>
-        }
-      >
+      <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
           <ModuleHeader icon={<IconResult />} title="結果が見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-4">
@@ -616,25 +608,12 @@ function ResultPage({ params }) {
           </div>
         </Module>
       </AppShell>
-
     );
   }
 
   // Main UI
   return (
-    <AppShell
-      title="診断結果"
-      noTabs={true}
-      headerLeft={
-        <button
-          type="button"
-          onClick={() => router.push("/check")}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
-        >
-          ← 戻る
-        </button>
-      }
-    >
+    <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
         <div className="fixed left-1/2 top-3 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-[18px] bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-lg ring-1 ring-[var(--ring)]">
           {toast}
@@ -1024,7 +1003,6 @@ function ResultPage({ params }) {
           </div>
         </div>
       </div>
-
     </AppShell>
   );
 }
