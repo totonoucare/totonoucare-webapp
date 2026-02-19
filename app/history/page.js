@@ -1,3 +1,4 @@
+// app/history/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -9,7 +10,15 @@ import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/l
 
 function IconHistory() {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3 12a9 9 0 1 0 3-6.7" />
       <path d="M3 3v5h5" />
       <path d="M12 7v6l4 2" />
@@ -18,7 +27,15 @@ function IconHistory() {
 }
 function IconPlus() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 5v14M5 12h14" />
     </svg>
   );
@@ -35,6 +52,8 @@ export default function HistoryPage() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    let unsub = null;
+
     (async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session || null);
@@ -46,7 +65,13 @@ export default function HistoryPage() {
       setLoadingAuth(false);
     });
 
-    return () => sub?.subscription?.unsubscribe?.();
+    unsub = sub?.subscription;
+
+    return () => {
+      try {
+        unsub?.unsubscribe?.();
+      } catch {}
+    };
   }, []);
 
   useEffect(() => {
@@ -100,7 +125,9 @@ export default function HistoryPage() {
           </div>
           <div className="mt-4 flex gap-2">
             <Button onClick={() => router.push("/signup")}>ログイン / 登録へ</Button>
-            <Button variant="secondary" onClick={() => router.push("/check")}>体質チェックへ</Button>
+            <Button variant="secondary" onClick={() => router.push("/check")}>
+              体質チェックへ
+            </Button>
           </div>
         </div>
       );
@@ -197,14 +224,39 @@ export default function HistoryPage() {
   }, [loadingAuth, loading, isLoggedIn, err, rows, router]);
 
   return (
-    <AppShell title="履歴">
+    <AppShell
+      title="履歴"
+      noTabs={true}
+      headerLeft={
+        <button
+          type="button"
+          onClick={() => router.push("/check")}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          ← 戻る
+        </button>
+      }
+      headerRight={
+        <button
+          type="button"
+          onClick={() => router.push("/check")}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          <IconPlus />
+          新規
+        </button>
+      }
+    >
       <Module>
         <ModuleHeader icon={<IconHistory />} title="チェック履歴" sub="保存した結果だけ表示されます" />
         <div className="px-5 pb-6 pt-4 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-extrabold text-slate-900">一覧</div>
-            <Button variant="secondary" onClick={() => router.push("/check")} >
-              <span className="inline-flex items-center gap-2"><IconPlus />新しくチェック</span>
+            <Button variant="secondary" onClick={() => router.push("/check")}>
+              <span className="inline-flex items-center gap-2">
+                <IconPlus />
+                新しくチェック
+              </span>
             </Button>
           </div>
           {content}
