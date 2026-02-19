@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
+import { CoreIllust } from "@/components/illust/core";
 
 // ✅ Next.js の useSearchParams 対策
 export default function ResultPageWrapper({ params }) {
@@ -627,35 +628,52 @@ function ResultPage({ params }) {
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">フォーカス</div>
+            <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
             <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
               {symptomLabel}
             </div>
             <div className="mt-2 text-xs font-bold text-slate-600">
-              診断作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
+              チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
             </div>
           </div>
+
+          {/* ✅ ここが差し替えポイント：CoreIllustration → CoreIllust */}
           <div className="shrink-0">
-            <CoreIllustration />
+            <CoreIllust
+              code={computed?.core_code}
+              title={core?.title || "体質タイプ"}
+              className="h-20 w-32 opacity-90"
+            />
           </div>
         </div>
       </div>
 
       <div className="px-5 pb-5">
         <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
-          <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
 
-          <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
-            {core?.title || "—"}
-          </div>
+              <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
+                {core?.title || "—"}
+              </div>
 
-          {core?.short ? (
-            <div className="mt-2">
-              <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
-                {core.short}
-              </span>
+              {core?.short ? (
+                <div className="mt-2">
+                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+                    {core.short}
+                  </span>
+                </div>
+              ) : null}
             </div>
-          ) : null}
+
+            {/* 右上に小タグ（任意：あれば「覚えやすい」導線になる） */}
+            {computed?.core_code ? (
+              <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-500 ring-1 ring-[var(--ring)]">
+                {computed.core_code}
+              </span>
+            ) : null}
+          </div>
 
           <div className="mt-3 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
         </div>
