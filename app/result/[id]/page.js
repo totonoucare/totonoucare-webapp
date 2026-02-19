@@ -645,8 +645,10 @@ function ResultPage({ params }) {
                 <div className="mt-1 text-base font-extrabold text-slate-900">{core?.title || "—"}</div>
 
                 {core?.short ? (
-                  <div className="mt-1 text-[11px] font-bold text-slate-500">
-                    {core.short}
+                  <div className="mt-2">
+                    <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+                      {core.short}
+                    </span>
                   </div>
                 ) : null}
 
