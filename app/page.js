@@ -144,7 +144,20 @@ export default function HomePage() {
   }
 
   return (
-    <AppShell title="ホーム">
+    <AppShell
+      title="ホーム"
+      headerRight={
+        <button
+          type="button"
+          onClick={() => router.push("/guide")}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+        >
+          使い方
+        </button>
+      }
+    >
+  ...
+</AppShell>
       {/* Hero */}
       <Module>
         <ModuleHeader
