@@ -117,10 +117,7 @@ export default function CheckLandingPage() {
 
               {loadingAuth ? null : (
                 <div className="shrink-0">
-                  <Button
-                    variant="ghost"
-                    onClick={() => router.push(isLoggedIn ? "/history" : "/signup")}
-                  >
+                  <Button variant="ghost" onClick={() => router.push(isLoggedIn ? "/history" : "/signup")}>
                     {isLoggedIn ? "履歴を見る" : "ログインして履歴を使う"}
                   </Button>
                 </div>
