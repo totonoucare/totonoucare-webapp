@@ -174,7 +174,7 @@ export default function CheckRunPage() {
             <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
               <div className="text-sm font-bold text-slate-700">質問が見つかりません。</div>
             </div>
-            <Button onClick={() => router.push("/")}>トップへ</Button>
+            <Button onClick={() => router.push("/")}>ホームへ</Button>
           </div>
         </Module>
       </AppShell>
@@ -212,7 +212,7 @@ export default function CheckRunPage() {
           中断
         </button>
       }
-    
+    >
       <Module>
         <ModuleHeader icon={<IconCheck />} title="チェック中" sub="回答は途中保存されます" />
         <div className="px-5 pb-6 pt-4 space-y-4">
