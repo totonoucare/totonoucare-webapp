@@ -8,6 +8,16 @@ import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 import { CoreIllust } from "@/components/illust/core";
+import {
+  IconChevron,
+  IconMemo,
+  IconCompass,
+  IconRobot,
+  IconBolt,
+  IconBrain,
+  IconRadar,
+  IconResult,
+} from "@/components/illust/icons/result";
 
 // ✅ Next.js の useSearchParams 対策
 export default function ResultPageWrapper({ params }) {
@@ -31,89 +41,6 @@ export default function ResultPageWrapper({ params }) {
     >
       <ResultPage params={params} />
     </Suspense>
-  );
-}
-
-/* -----------------------------
- * Inline SVG Icons
- * ---------------------------- */
-function IconChevron() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-5 w-5 transition-transform group-open:rotate-180"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-function IconMemo() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M8 7h10M8 11h10M8 15h7" />
-      <path d="M6 3h14a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 0 1 2-2z" />
-    </svg>
-  );
-}
-function IconCompass() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M12 22a10 10 0 1 1 10-10 10 10 0 0 1-10 10z" />
-      <path d="M14.5 9.5l-2 5-5 2 2-5 5-2z" />
-      <path d="M12 7v2M17 12h-2M12 17v-2M7 12h2" />
-    </svg>
-  );
-}
-function IconRobot() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M12 3v3" />
-      <path d="M8 6h8" />
-      <rect x="5" y="8" width="14" height="11" rx="4" />
-      <path d="M9 13h0M15 13h0" />
-      <path d="M9 16c1 .8 5 .8 6 0" />
-    </svg>
-  );
-}
-function IconBolt() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
-    </svg>
-  );
-}
-function IconBrain() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M8 7a3 3 0 0 1 6 0v10a3 3 0 0 1-6 0" />
-      <path d="M8 9a3 3 0 0 0-3 3v1a3 3 0 0 0 3 3" />
-      <path d="M14 9a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3" />
-    </svg>
-  );
-}
-function IconRadar() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d="M12 12l7-7" />
-      <path d="M12 12a7 7 0 1 0 7 7" />
-      <path d="M12 12V3" />
-      <path d="M12 12h9" />
-      <path d="M5 19l2-2" />
-    </svg>
-  );
-}
-function IconResult() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-      <path d="M7 3h10v18H7z" />
-      <path d="M9 7h6M9 11h6M9 15h4" />
-    </svg>
   );
 }
 
@@ -155,7 +82,11 @@ function CardHeader({ icon, title, sub, right }) {
 
 function SoftPanel({ tone = "mint", title, icon, right, children }) {
   const tones = {
-    mint: { wrap: "bg-[color-mix(in_srgb,var(--mint),white_55%)]", bar: "bg-[var(--accent)]", title: "text-[var(--accent-ink)]" },
+    mint: {
+      wrap: "bg-[color-mix(in_srgb,var(--mint),white_55%)]",
+      bar: "bg-[var(--accent)]",
+      title: "text-[var(--accent-ink)]",
+    },
     violet: { wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]", bar: "bg-[#6d5bd0]", title: "text-[#3b2f86]" },
     teal: { wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]", bar: "bg-[#0f766e]", title: "text-[#115e59]" },
     amber: { wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]", bar: "bg-[#b45309]", title: "text-[#7c2d12]" },
@@ -216,25 +147,6 @@ function SegmentedTabs({ value, onChange }) {
         </div>
       </div>
     </div>
-  );
-}
-
-function CoreIllustration() {
-  return (
-    <svg viewBox="0 0 200 120" className="h-20 w-32 opacity-85" aria-hidden="true">
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#E9EDDD" />
-          <stop offset="1" stopColor="#6a9770" stopOpacity="0.45" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M12,70 C30,18 92,8 120,30 C150,52 176,42 188,24 C192,66 168,104 120,110 C72,116 24,100 12,70Z"
-        fill="url(#g)"
-      />
-      <circle cx="52" cy="52" r="8" fill="#6a9770" fillOpacity="0.35" />
-      <circle cx="146" cy="54" r="10" fill="#6a9770" fillOpacity="0.25" />
-    </svg>
   );
 }
 
@@ -362,17 +274,13 @@ function ResultPage({ params }) {
   // ✅ “来た元” 判定（from が無い直リンクでも破綻しない）
   const from = (searchParams?.get("from") || "").toLowerCase();
   const backHref = useMemo(() => {
-    // from は「遷移元で明示」が最強
     if (from === "history") return "/history";
     if (from === "check_run") return "/check/run";
     if (from === "check") return "/check";
     if (from === "home") return "/";
     if (from === "radar") return "/radar";
 
-    // attach=1（ログイン後に保存フロー）なら check に戻すのが無難
     if (attachAfterLogin) return "/check";
-
-    // デフォルト（直リンク/不明）：check に返す（診断の文脈を維持）
     return "/check";
   }, [from, attachAfterLogin]);
 
@@ -621,65 +529,61 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
-{/* Hero */}
-<div className="mx-auto w-full max-w-[440px] px-4">
-  <div className="pt-2 pb-3">
-    <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
-      {/* お悩み */}
-      <div className="px-5 pt-5 pb-4">
-        <div className="min-w-0">
-          <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
-          <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
-            {symptomLabel}
-          </div>
-          <div className="mt-2 text-xs font-bold text-slate-600">
-            チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
-          </div>
-        </div>
-      </div>
-
-      {/* 体質の軸（カード内にイラスト） */}
-      <div className="px-5 pb-5">
-        <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
-          <div className="flex items-start justify-between gap-4">
-            {/* 左：テキスト */}
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
-
-              <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
-                {core?.title || "—"}
-              </div>
-
-              {core?.short ? (
-                <div className="mt-2">
-                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
-                    {core.short}
-                  </span>
+      {/* Hero */}
+      <div className="mx-auto w-full max-w-[440px] px-4">
+        <div className="pt-2 pb-3">
+          <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
+            {/* お悩み */}
+            <div className="px-5 pt-5 pb-4">
+              <div className="min-w-0">
+                <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
+                <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">{symptomLabel}</div>
+                <div className="mt-2 text-xs font-bold text-slate-600">
+                  チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
                 </div>
-              ) : null}
+              </div>
             </div>
 
-            {/* 右：1:1 イラスト枠（人物用） */}
-            <div className="shrink-0">
-              <div className="grid aspect-square w-[92px] place-items-center overflow-hidden rounded-[18px] bg-white ring-1 ring-[var(--ring)]">
-                <CoreIllust
-                  code={computed?.core_code}
-                  title={core?.title || "体質タイプ"}
-                  className="h-full w-full"
-                />
+            {/* 体質の軸（カード内にイラスト） */}
+            <div className="px-5 pb-5">
+              <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  {/* 左：テキスト */}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
+
+                    <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
+                      {core?.title || "—"}
+                    </div>
+
+                    {core?.short ? (
+                      <div className="mt-2">
+                        <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+                          {core.short}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* 右：1:1 イラスト枠（人物用） */}
+                  <div className="shrink-0">
+                    <div className="grid aspect-square w-[92px] place-items-center overflow-hidden rounded-[18px] bg-white ring-1 ring-[var(--ring)]">
+                      <CoreIllust
+                        code={computed?.core_code}
+                        title={core?.title || "体質タイプ"}
+                        className="h-full w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 下：説明文 */}
+                <div className="mt-3 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
               </div>
             </div>
           </div>
-
-          {/* 下：説明文 */}
-          <div className="mt-3 text-sm leading-7 text-slate-700">
-            {core?.tcm_hint || ""}
-          </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
       {/* Segmented tabs */}
       <SegmentedTabs value={tab} onChange={setTab} />
@@ -699,17 +603,12 @@ function ResultPage({ params }) {
                     {subLabels?.length ? (
                       <div className="space-y-3">
                         {subLabels.map((s) => (
-                          <div
-                            key={s.title}
-                            className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4"
-                          >
+                          <div key={s.title} className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4">
                             <div className="text-sm font-extrabold text-slate-900">
                               {s.title}
                               {s.short ? <span className="text-slate-500">（{s.short}）</span> : null}
                             </div>
-                            <div className="mt-2 text-sm leading-7 text-slate-700">
-                              {s.action_hint || "（ヒントなし）"}
-                            </div>
+                            <div className="mt-2 text-sm leading-7 text-slate-700">{s.action_hint || "（ヒントなし）"}</div>
                           </div>
                         ))}
                       </div>
@@ -778,9 +677,7 @@ function ResultPage({ params }) {
                           <div className="text-sm font-extrabold text-slate-900">
                             この結果を保存して、今日の未病レーダーへ進みましょう。
                           </div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">
-                            登録だけでは課金されません（無料の範囲で使えます）
-                          </div>
+                          <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
                           <div className="mt-4">
                             <Button onClick={() => attachToAccount(false)} disabled={attaching}>
                               {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
@@ -804,9 +701,7 @@ function ResultPage({ params }) {
                         <div className="text-base font-extrabold tracking-tight text-slate-900">
                           無料で保存して、今日の「予報と対策」へ。
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-600">
-                          登録だけでは課金されません（無料の範囲で使えます）
-                        </div>
+                        <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
                       </div>
 
                       <div className="space-y-2">
@@ -831,7 +726,7 @@ function ResultPage({ params }) {
           {tab === "explain" ? (
             <>
               <Card>
-                <CardHeader icon={<IconRobot />} title="体質の解説" sub="まずは確定の説明 → 必要ならAI補足（任意）" />
+                <CardHeader icon={<IconRobot />} title="解説" sub="ルールの説明 → 必要ならAI補足" />
                 <div className="px-5 pb-6 pt-4 space-y-4">
                   {/* Rule explain (always) */}
                   <details open className="group rounded-[22px] ring-1 ring-[var(--ring)] bg-white overflow-hidden">
@@ -842,8 +737,8 @@ function ResultPage({ params }) {
                             <IconBrain />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-sm font-extrabold text-slate-900">いまの体のクセ（確定の説明）</div>
-                            <div className="mt-1 text-[11px] font-medium text-slate-500">AIなし・即表示</div>
+                            <div className="text-sm font-extrabold text-slate-900">体のクセ（ルール解説）</div>
+                            <div className="mt-1 text-[11px] font-medium text-slate-500">AIなし・すぐ読める</div>
                           </div>
                         </div>
                         <div className="text-slate-500">
@@ -866,8 +761,8 @@ function ResultPage({ params }) {
                             <IconRadar />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-sm font-extrabold text-slate-900">揺れの先回り（確定の説明）</div>
-                            <div className="mt-1 text-[11px] font-medium text-slate-500">環境変化の見方</div>
+                            <div className="text-sm font-extrabold text-slate-900">揺れやすい条件（環境の影響）</div>
+                            <div className="mt-1 text-[11px] font-medium text-slate-500">天気・寒暖差など</div>
                           </div>
                         </div>
                         <div className="text-slate-500">
@@ -887,10 +782,8 @@ function ResultPage({ params }) {
                     <div className="px-5 py-5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="text-sm font-extrabold text-slate-900">AIの短い補足（任意）</div>
-                          <div className="mt-1 text-xs font-bold text-slate-500">
-                            読みやすい“つなぎ”だけ。具体的な対策は出しません。
-                          </div>
+                          <div className="text-sm font-extrabold text-slate-900">AIの補足（任意）</div>
+                          <div className="mt-1 text-xs font-bold text-slate-500">読みやすい言い換えだけ。対策はここでは出しません。</div>
                         </div>
                         <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_55%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
                           <IconRobot />
@@ -900,9 +793,7 @@ function ResultPage({ params }) {
                       {explainText ? (
                         <div className="mt-4 space-y-3">
                           <div className="rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_55%)] ring-1 ring-[var(--ring)] p-4">
-                            <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">
-                              {`${aiParts.p1}\n\n${aiParts.p2}`.trim()}
-                            </div>
+                            <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{`${aiParts.p1}\n\n${aiParts.p2}`.trim()}</div>
                           </div>
 
                           {(explainCreatedAt || explainModel) ? (
@@ -967,9 +858,7 @@ function ResultPage({ params }) {
                         <div className="text-sm font-bold text-slate-800">
                           ログイン中：<span className="font-extrabold">{session.user?.email}</span>
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-500">
-                          保存すると、今日の「予報と対策」にすぐ進めます。
-                        </div>
+                        <div className="mt-2 text-xs font-bold text-slate-500">保存すると、今日の「予報と対策」にすぐ進めます。</div>
                       </div>
 
                       {isAttached ? (
@@ -982,9 +871,7 @@ function ResultPage({ params }) {
                       ) : (
                         <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
                           <div className="text-sm font-extrabold text-slate-900">この結果を保存しますか？</div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">
-                            登録だけでは課金されません（無料の範囲で使えます）
-                          </div>
+                          <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
                           <div className="mt-4">
                             <Button onClick={() => attachToAccount(false)} disabled={attaching}>
                               {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
@@ -1005,12 +892,8 @@ function ResultPage({ params }) {
                   ) : (
                     <>
                       <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-base font-extrabold tracking-tight text-slate-900">
-                          無料で保存して、今日の「予報と対策」へ。
-                        </div>
-                        <div className="mt-2 text-xs font-bold text-slate-600">
-                          登録だけでは課金されません（無料の範囲で使えます）
-                        </div>
+                        <div className="text-base font-extrabold tracking-tight text-slate-900">無料で保存して、今日の「予報と対策」へ。</div>
+                        <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
                       </div>
 
                       <div className="space-y-2">
@@ -1029,9 +912,7 @@ function ResultPage({ params }) {
             </>
           ) : null}
 
-          <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
-            ID：{id}
-          </div>
+          <div className="pb-6 text-center text-[11px] font-bold text-slate-400">ID：{id}</div>
         </div>
       </div>
     </AppShell>
