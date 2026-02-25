@@ -6,22 +6,7 @@ import { useRouter } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { getQuestions, getTotalQuestions } from "@/lib/diagnosis/v2/questions";
-
-function IconCheck() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-7 w-7"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
+import { IconCheck } from "@/components/illust/icons/check";
 
 function ProgressBar({ current, total }) {
   const pct = Math.round((current / total) * 100);
@@ -170,9 +155,7 @@ export default function CheckRunPage() {
       try {
         sessionStorage.removeItem(PENDING_KEY);
       } catch {}
-
-      // ✅ チェック実行→結果：from=check_run を付ける
-      router.push(`/result/${encodeURIComponent(eventId)}?from=check_run`);
+      router.push(`/result/${encodeURIComponent(eventId)}`);
     } catch (e) {
       setError(e?.message || String(e));
     } finally {
