@@ -1,3 +1,4 @@
+// app/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -6,69 +7,13 @@ import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import Button from "@/components/ui/Button";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
-
-function IconSpark() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2l1.2 5.1L18 9l-4.8 1.9L12 16l-1.2-5.1L6 9l4.8-1.9L12 2z" />
-      <path d="M19 13l.7 3L22 17l-2.3 1-.7 3-.7-3L16 17l2.3-1 .7-3z" />
-    </svg>
-  );
-}
-function IconRoute() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 16c2-3 4-4 7-4s5-1 7-4" />
-      <path d="M6 6h0M18 18h0" />
-      <path d="M6 6a2 2 0 1 0 0 .01" />
-      <path d="M18 18a2 2 0 1 0 0 .01" />
-    </svg>
-  );
-}
-function IconBook() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19a2 2 0 0 0 2 2h14" />
-      <path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2V5z" />
-      <path d="M8 7h8M8 11h8M8 15h6" />
-    </svg>
-  );
-}
-function IconUser() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21a8 8 0 0 0-16 0" />
-      <path d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" />
-    </svg>
-  );
-}
-
-function HeroArt() {
-  return (
-    <svg viewBox="0 0 320 140" className="h-[110px] w-full" aria-hidden="true">
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#E9EDDD" />
-          <stop offset="1" stopColor="#6a9770" stopOpacity="0.38" />
-        </linearGradient>
-        <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#111827" stopOpacity="0.08" />
-          <stop offset="1" stopColor="#111827" stopOpacity="0.0" />
-        </linearGradient>
-      </defs>
-      <path d="M18,88 C42,18 138,6 190,28 C238,48 272,38 302,18 C312,72 272,132 190,136 C108,140 34,120 18,88Z" fill="url(#g1)" />
-      <path d="M20 108c40-14 86-10 120-26s60-40 156-44" stroke="#0f172a" strokeOpacity="0.18" strokeWidth="2" fill="none" />
-      <circle cx="78" cy="58" r="10" fill="#6a9770" fillOpacity="0.22" />
-      <circle cx="214" cy="52" r="14" fill="#6a9770" fillOpacity="0.18" />
-      <rect x="210" y="16" width="92" height="48" rx="18" fill="url(#g2)" />
-    </svg>
-  );
-}
+import { IconSpark, IconRoute, IconUser, HeroArt } from "@/components/illust/icons/home";
 
 const SESSION_TIMEOUT_MS = 5000;
 
 export default function HomePage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [error, setError] = useState("");
@@ -141,23 +86,17 @@ export default function HomePage() {
     >
       {/* Hero */}
       <Module>
-        <ModuleHeader
-          icon={<IconSpark />}
-          title="未病レーダー"
-          sub="体質チェック × 気象変化で、崩れる前に先回りする"
-        />
+        <ModuleHeader icon={<IconSpark />} title="未病レーダー" sub="体質 × 気象で、崩れる前に先回りする" />
         <div className="px-5 pb-6 pt-4 space-y-4">
           <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_50%)] ring-1 ring-[var(--ring)] p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-[var(--accent-ink)]/80">体調予報 × 先回りケア</div>
-                <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
-                  不調の波が来る前に気づいて、先回りで軽くする
-                </div>
-                <div className="mt-2 text-sm leading-7 text-slate-700">
-                  あなたの体質と気象の変化を重ねて、崩れやすいタイミングがわかります。
-                  危ない日は、30秒でできる先回りケアが出ます。
-                </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-[var(--accent-ink)]/80">体調予報 × 先回りケア</div>
+              <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
+                不調の波が来る前に気づいて、先回りで軽くする
+              </div>
+              <div className="mt-2 text-sm leading-7 text-slate-700">
+                あなたの体質と気象の変化を重ねて、崩れやすいタイミングがわかります。
+                危ない日は、30秒でできる先回りケアが出ます。
               </div>
             </div>
 
@@ -177,7 +116,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* main routes */}
+          {/* routes */}
           <div className="grid gap-3">
             <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-4">
               <div className="flex items-start gap-3">
@@ -246,28 +185,9 @@ export default function HomePage() {
         </div>
       </Module>
 
-      {/* Guide teaser */}
-      <Module>
-        <ModuleHeader icon={<IconBook />} title="使い方（準備中）" sub="後で外部SVGも含めて強くする場所" />
-        <div className="px-5 pb-6 pt-4">
-          <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-5">
-            <div className="text-sm font-bold text-slate-800">
-              「体質 → 予報 → 提案」の順で、迷わず使える設計にします。
-            </div>
-            <div className="mt-2 text-xs font-medium text-slate-500">
-              まずは体質チェックを終えると、予報が“意味のある情報”になります。
-            </div>
-            <div className="mt-4">
-              <Button variant="ghost" onClick={() => router.push("/guide")}>ガイドを見る</Button>
-            </div>
-          </div>
-        </div>
-      </Module>
-
       <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
         ※ UI・導線・データ設計は順次アップデート
       </div>
     </AppShell>
   );
 }
-
