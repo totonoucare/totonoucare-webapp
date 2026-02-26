@@ -1,16 +1,24 @@
 // components/illust/icons/home.jsx
-import React from "react";
+"use client";
 
-export function IconSpark({ className = "h-7 w-7" }) {
+export function IconSpark({ className = "h-7 w-7", ...props }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden="true"
+      {...props}
+    >
       <path d="M12 2l1.2 5.1L18 9l-4.8 1.9L12 16l-1.2-5.1L6 9l4.8-1.9L12 2z" />
       <path d="M19 13l.7 3L22 17l-2.3 1-.7 3-.7-3L16 17l2.3-1 .7-3z" />
     </svg>
   );
 }
 
-export function IconRoute({ className = "h-6 w-6" }) {
+export function IconCheck({ className = "h-6 w-6", ...props }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -21,6 +29,45 @@ export function IconRoute({ className = "h-6 w-6" }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      {...props}
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+export function IconRadar({ className = "h-6 w-6", ...props }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12 12l8-4" />
+      <path d="M12 12a8 8 0 1 0 8 8" />
+      <path d="M12 12V4" />
+    </svg>
+  );
+}
+
+export function IconRoute({ className = "h-6 w-6", ...props }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
     >
       <path d="M5 16c2-3 4-4 7-4s5-1 7-4" />
       <path d="M6 6h0M18 18h0" />
@@ -30,7 +77,7 @@ export function IconRoute({ className = "h-6 w-6" }) {
   );
 }
 
-export function IconBook({ className = "h-6 w-6" }) {
+export function IconBook({ className = "h-6 w-6", ...props }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -41,6 +88,7 @@ export function IconBook({ className = "h-6 w-6" }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      {...props}
     >
       <path d="M4 19a2 2 0 0 0 2 2h14" />
       <path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2V5z" />
@@ -49,7 +97,7 @@ export function IconBook({ className = "h-6 w-6" }) {
   );
 }
 
-export function IconUser({ className = "h-6 w-6" }) {
+export function IconUser({ className = "h-6 w-6", ...props }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -60,6 +108,7 @@ export function IconUser({ className = "h-6 w-6" }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      {...props}
     >
       <path d="M20 21a8 8 0 0 0-16 0" />
       <path d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" />
@@ -67,10 +116,10 @@ export function IconUser({ className = "h-6 w-6" }) {
   );
 }
 
-export function HeroArt({ className = "h-[110px] w-full" }) {
-  // 外部SVGに差し替え前提：今は抽象で「和モダン×システム」寄せ
+/** home hero art (外部SVG差し替え前提の仮アート) */
+export function HeroArt({ className = "h-[110px] w-full", ...props }) {
   return (
-    <svg viewBox="0 0 320 140" className={className} aria-hidden="true">
+    <svg viewBox="0 0 320 140" className={className} aria-hidden="true" {...props}>
       <defs>
         <linearGradient id="home_g1" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#E9EDDD" />
