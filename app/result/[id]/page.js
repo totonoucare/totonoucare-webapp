@@ -8,6 +8,7 @@ import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/lib/supabaseClient";
 import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
 import { CoreIllust } from "@/components/illust/core";
+import { SubIllust } from "@/components/illust/sub";
 import {
   IconChevron,
   IconMemo,
@@ -602,15 +603,23 @@ function ResultPage({ params }) {
                   <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
                     {subLabels?.length ? (
                       <div className="space-y-3">
-                        {subLabels.map((s) => (
-                          <div key={s.title} className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4">
-                            <div className="text-sm font-extrabold text-slate-900">
-                              {s.title}
-                              {s.short ? <span className="text-slate-500">（{s.short}）</span> : null}
-                            </div>
-                            <div className="mt-2 text-sm leading-7 text-slate-700">{s.action_hint || "（ヒントなし）"}</div>
-                          </div>
-                        ))}
+{subLabels.map((s) => (
+  <div key={s.code || s.title} className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4">
+    <div className="flex gap-3">
+      <div className="shrink-0 pt-0.5 text-[var(--accent)]">
+        <SubIllust code={s.code} size="sm" />
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-sm font-extrabold text-slate-900">
+          {s.title}
+          {s.short ? <span className="text-slate-500">（{s.short}）</span> : null}
+        </div>
+        <div className="mt-2 text-sm leading-7 text-slate-700">{s.action_hint || "（ヒントなし）"}</div>
+      </div>
+    </div>
+  </div>
+))}
                       </div>
                     ) : (
                       <div className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4 text-sm text-slate-700">
