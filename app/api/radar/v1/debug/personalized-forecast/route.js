@@ -14,9 +14,6 @@ export async function GET(req) {
   const lon = Number(searchParams.get("lon") ?? "139.767125");
   const date = searchParams.get("date");
 
-  // Debug: pass constitution via query
-  // Example:
-  // ?core_code=accel_batt_small&sub_labels=qi_stagnation,fluid_damp&env_sensitivity=2&env_vectors=pressure_shift,humidity_up
   const core_code = searchParams.get("core_code") ?? "steady_batt_standard";
   const sub_labels = (searchParams.get("sub_labels") ?? "")
     .split(",")
@@ -40,10 +37,27 @@ export async function GET(req) {
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
 
     const { data, meta } = await fetchMetnoLocationForecast({ lat, lon });
+
     const normalized = normalizeMetnoForTargetDate({
       metnoJson: data,
       targetDate,
     });
+
+    if (!normalized.points.length) {
+      return Response.json({
+        ok: false,
+        error: "normalized.points is empty",
+        debug: {
+          target_date: targetDate,
+          target_mode: mode,
+          location: { lat, lon },
+          total_timeseries_count: data?.properties?.timeseries?.length ?? 0,
+          first_times: (data?.properties?.timeseries ?? []).slice(0, 8).map((x) => x.time),
+          last_times: (data?.properties?.timeseries ?? []).slice(-8).map((x) => x.time),
+          normalized_point_count: normalized.points.length,
+        },
+      }, { status: 500 });
+    }
 
     const weatherStress = buildWeatherStress({ points: normalized.points });
 
@@ -74,9 +88,9 @@ export async function GET(req) {
         },
       },
 
+      normalized_point_count: normalized.points.length,
       weather_stress: weatherStress,
       personalized_forecast: personalized,
-      point_count: normalized.points.length,
       fetched_meta: meta,
     });
   } catch (e) {
