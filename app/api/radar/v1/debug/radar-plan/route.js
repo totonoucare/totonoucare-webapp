@@ -11,6 +11,15 @@ import { buildRadarPlan } from "@/lib/radar_v1/buildRadarPlan";
 
 export const runtime = "nodejs";
 
+function jsonUtf8(payload, status = 200) {
+  return new Response(JSON.stringify(payload, null, 2), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+    },
+  });
+}
+
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
 
@@ -21,26 +30,20 @@ export async function GET(req) {
   const previousPointCode = searchParams.get("previous_point_code");
 
   if (!userId) {
-    return Response.json(
-      { ok: false, error: "user_id is required" },
-      { status: 400 }
-    );
+    return jsonUtf8({ ok: false, error: "user_id is required" }, 400);
   }
 
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    return Response.json(
-      { ok: false, error: "lat/lon must be numbers" },
-      { status: 400 }
-    );
+    return jsonUtf8({ ok: false, error: "lat/lon must be numbers" }, 400);
   }
 
   try {
     const profile = await getRadarConstitutionProfile({ userId });
 
     if (!profile) {
-      return Response.json(
+      return jsonUtf8(
         { ok: false, error: "constitution_profile not found for this user_id" },
-        { status: 404 }
+        404
       );
     }
 
@@ -53,7 +56,7 @@ export async function GET(req) {
     });
 
     if (!normalized.points.length) {
-      return Response.json(
+      return jsonUtf8(
         {
           ok: false,
           error: "normalized.points is empty",
@@ -63,7 +66,7 @@ export async function GET(req) {
             total_timeseries_count: data?.properties?.timeseries?.length ?? 0,
           },
         },
-        { status: 500 }
+        500
       );
     }
 
@@ -91,7 +94,7 @@ export async function GET(req) {
       mtestPoint,
     });
 
-    return Response.json({
+    return jsonUtf8({
       ok: true,
       user_id: userId,
       target_date: targetDate,
@@ -102,9 +105,6 @@ export async function GET(req) {
       fetched_meta: meta,
     });
   } catch (e) {
-    return Response.json(
-      { ok: false, error: String(e) },
-      { status: 500 }
-    );
+    return jsonUtf8({ ok: false, error: String(e) }, 500);
   }
 }
