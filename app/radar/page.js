@@ -1,9 +1,9 @@
-// app/radar/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { RADAR_LOCATION_PRESETS, flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 
 function formatTargetDate(dateStr) {
   if (!dateStr) return "—";
@@ -54,6 +54,8 @@ function getForecastText(bundle) {
   );
 }
 
+const FLAT_PRESETS = flattenRadarLocationPresets();
+
 export default function RadarPage() {
   const router = useRouter();
 
@@ -68,6 +70,8 @@ export default function RadarPage() {
 
   const [needsLocation, setNeedsLocation] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [savingPreset, setSavingPreset] = useState(false);
+  const [selectedPresetKey, setSelectedPresetKey] = useState("");
 
   const [tab, setTab] = useState("forecast");
 
@@ -157,7 +161,11 @@ export default function RadarPage() {
       },
       (geoErr) => {
         setLocating(false);
-        setError(geoErr?.message || "位置情報を取得できませんでした。");
+        if (geoErr?.code === 1) {
+          setError("位置情報の使用が拒否されました。下の「地域を選んで設定する」を使ってください。");
+        } else {
+          setError(geoErr?.message || "位置情報を取得できませんでした。");
+        }
       },
       {
         enableHighAccuracy: true,
@@ -165,6 +173,22 @@ export default function RadarPage() {
         maximumAge: 300000,
       }
     );
+  }
+
+  async function savePresetLocation() {
+    const preset = FLAT_PRESETS.find((p) => p.key === selectedPresetKey);
+    if (!preset) {
+      setError("地域を選んでください。");
+      return;
+    }
+
+    try {
+      setSavingPreset(true);
+      setError("");
+      await fetchForecast({ lat: preset.lat, lon: preset.lon, force: true });
+    } finally {
+      setSavingPreset(false);
+    }
   }
 
   const forecast = bundle?.forecast || null;
@@ -230,7 +254,7 @@ export default function RadarPage() {
         <div className="max-w-[440px] mx-auto rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
           <div className="text-xl font-extrabold text-slate-900">位置情報の設定が必要です</div>
           <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
-            予報を固定保存するために、最初に現在地を設定してください。
+            予報を固定保存するために、最初に現在地か生活圏の代表地点を設定してください。
           </div>
 
           {error ? (
@@ -239,22 +263,63 @@ export default function RadarPage() {
             </div>
           ) : null}
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
+            <div className="text-sm font-extrabold text-slate-900">現在地を使う</div>
+            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+              いまいる場所をそのまま保存します。
+            </div>
             <button
               onClick={useCurrentLocation}
               disabled={locating}
-              className="w-full rounded-2xl bg-emerald-600 py-3 text-sm font-extrabold text-white disabled:opacity-60"
+              className="mt-4 w-full rounded-2xl bg-emerald-600 py-3 text-sm font-extrabold text-white disabled:opacity-60"
             >
               {locating ? "位置情報を取得中…" : "現在地を使う"}
             </button>
+          </div>
+
+          <div className="mt-4 rounded-[1.5rem] border border-slate-100 bg-white p-4">
+            <div className="text-sm font-extrabold text-slate-900">地域を選んで設定する</div>
+            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+              生活圏に近い代表地点を選べば使えます。あとで変更もできます。
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
+                地域
+              </label>
+              <select
+                value={selectedPresetKey}
+                onChange={(e) => setSelectedPresetKey(e.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none"
+              >
+                <option value="">選んでください</option>
+                {RADAR_LOCATION_PRESETS.map((group) => (
+                  <optgroup key={group.group} label={group.group}>
+                    {group.options.map((opt) => (
+                      <option key={opt.key} value={opt.key}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
 
             <button
-              onClick={() => router.push("/check")}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-700"
+              onClick={savePresetLocation}
+              disabled={!selectedPresetKey || savingPreset}
+              className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-900 py-3 text-sm font-extrabold text-white disabled:opacity-60"
             >
-              体質チェックへ戻る
+              {savingPreset ? "設定中…" : "この地域で設定する"}
             </button>
           </div>
+
+          <button
+            onClick={() => router.push("/check")}
+            className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-700"
+          >
+            体質チェックへ戻る
+          </button>
         </div>
       </div>
     );
@@ -360,7 +425,7 @@ export default function RadarPage() {
                   <div className="text-[11px] font-extrabold text-slate-500">崩れやすい時間帯</div>
                   <div className="mt-1 text-lg font-extrabold text-slate-900">
                     {forecast.peak_start && forecast.peak_end
-                      ? `${forecast.peak_start.slice(0, 5)}–${forecast.peak_end.slice(0, 5)}`
+                      ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
                       : "—"}
                   </div>
                 </div>
@@ -455,9 +520,7 @@ export default function RadarPage() {
               </div>
 
               <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
-                <div className="text-sm font-extrabold text-emerald-900">
-                  {carePlan?.night_note ? "今夜の注意" : "今夜のポイント"}
-                </div>
+                <div className="text-sm font-extrabold text-emerald-900">今夜の注意</div>
                 <div className="mt-2 text-[13px] font-bold leading-6 text-emerald-900">
                   {carePlan?.night_note || "今夜のうちに軽く整えておくと、明日のぶれを抑えやすくなります。"}
                 </div>
