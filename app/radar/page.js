@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { RADAR_LOCATION_PRESETS, flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
+import {
+  RADAR_LOCATION_PRESETS,
+  flattenRadarLocationPresets,
+} from "@/lib/radar_v1/locationPresets";
 
 function formatTargetDate(dateStr) {
   if (!dateStr) return "—";
@@ -56,6 +59,98 @@ function getForecastText(bundle) {
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
 
+function LocationEditor({
+  error,
+  locating,
+  savingPreset,
+  selectedPresetKey,
+  setSelectedPresetKey,
+  onUseCurrentLocation,
+  onSavePresetLocation,
+  onClose,
+  showClose = true,
+}) {
+  return (
+    <div className="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-lg font-extrabold text-slate-900">地域を設定する</div>
+          <div className="mt-1 text-[13px] font-bold leading-6 text-slate-600">
+            現在地か、生活圏に近い代表地点を設定できます。
+            変更した場合は次回の予報から反映されます。
+          </div>
+        </div>
+
+        {showClose ? (
+          <button
+            onClick={onClose}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-slate-600"
+          >
+            閉じる
+          </button>
+        ) : null}
+      </div>
+
+      {error ? (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="mt-5 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
+        <div className="text-sm font-extrabold text-slate-900">現在地を使う</div>
+        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+          いまいる場所をそのまま保存します。
+        </div>
+        <button
+          onClick={onUseCurrentLocation}
+          disabled={locating}
+          className="mt-4 w-full rounded-2xl bg-emerald-600 py-3 text-sm font-extrabold text-white disabled:opacity-60"
+        >
+          {locating ? "位置情報を取得中…" : "現在地を使う"}
+        </button>
+      </div>
+
+      <div className="mt-4 rounded-[1.5rem] border border-slate-100 bg-white p-4">
+        <div className="text-sm font-extrabold text-slate-900">地域を選んで設定する</div>
+        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+          GPSを使わなくても、生活圏に近い地点を選べば使えます。
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
+            地域
+          </label>
+          <select
+            value={selectedPresetKey}
+            onChange={(e) => setSelectedPresetKey(e.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none"
+          >
+            <option value="">選んでください</option>
+            {RADAR_LOCATION_PRESETS.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (
+                  <option key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        <button
+          onClick={onSavePresetLocation}
+          disabled={!selectedPresetKey || savingPreset}
+          className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-900 py-3 text-sm font-extrabold text-white disabled:opacity-60"
+        >
+          {savingPreset ? "設定中…" : "この地域で設定する"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function RadarPage() {
   const router = useRouter();
 
@@ -72,6 +167,8 @@ export default function RadarPage() {
   const [locating, setLocating] = useState(false);
   const [savingPreset, setSavingPreset] = useState(false);
   const [selectedPresetKey, setSelectedPresetKey] = useState("");
+  const [showLocationEditor, setShowLocationEditor] = useState(false);
+  const [locationNotice, setLocationNotice] = useState("");
 
   const [tab, setTab] = useState("forecast");
 
@@ -90,7 +187,12 @@ export default function RadarPage() {
     };
   }, []);
 
-  async function fetchForecast({ lat = null, lon = null, force = false } = {}) {
+  async function fetchForecast({
+    lat = null,
+    lon = null,
+    force = false,
+    locationChanged = false,
+  } = {}) {
     if (!session) return;
 
     try {
@@ -130,6 +232,10 @@ export default function RadarPage() {
 
       setNeedsLocation(false);
       setBundle(json);
+
+      if (locationChanged) {
+        setLocationNotice("地域を更新しました。変更は次回の予報から反映されます。");
+      }
     } catch (e) {
       setError(e?.message || "予報の取得に失敗しました。");
     } finally {
@@ -151,13 +257,24 @@ export default function RadarPage() {
 
     setLocating(true);
     setError("");
+    setLocationNotice("");
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
-        await fetchForecast({ lat, lon, force: true });
+
+        await fetchForecast({
+          lat,
+          lon,
+          force: true,
+          locationChanged: !needsLocation,
+        });
+
         setLocating(false);
+        if (!needsLocation) {
+          setShowLocationEditor(false);
+        }
       },
       (geoErr) => {
         setLocating(false);
@@ -185,7 +302,18 @@ export default function RadarPage() {
     try {
       setSavingPreset(true);
       setError("");
-      await fetchForecast({ lat: preset.lat, lon: preset.lon, force: true });
+      setLocationNotice("");
+
+      await fetchForecast({
+        lat: preset.lat,
+        lon: preset.lon,
+        force: true,
+        locationChanged: !needsLocation,
+      });
+
+      if (!needsLocation) {
+        setShowLocationEditor(false);
+      }
     } finally {
       setSavingPreset(false);
     }
@@ -251,67 +379,26 @@ export default function RadarPage() {
   if (needsLocation) {
     return (
       <div className="min-h-screen bg-slate-50 px-4 py-10">
-        <div className="max-w-[440px] mx-auto rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
-          <div className="text-xl font-extrabold text-slate-900">位置情報の設定が必要です</div>
-          <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
-            予報を固定保存するために、最初に現在地か生活圏の代表地点を設定してください。
+        <div className="max-w-[440px] mx-auto">
+          <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+            <div className="text-xl font-extrabold text-slate-900">位置情報の設定が必要です</div>
+            <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
+              予報を固定保存するために、最初に現在地か生活圏の代表地点を設定してください。
+            </div>
           </div>
 
-          {error ? (
-            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
-              {error}
-            </div>
-          ) : null}
-
-          <div className="mt-6 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
-            <div className="text-sm font-extrabold text-slate-900">現在地を使う</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
-              いまいる場所をそのまま保存します。
-            </div>
-            <button
-              onClick={useCurrentLocation}
-              disabled={locating}
-              className="mt-4 w-full rounded-2xl bg-emerald-600 py-3 text-sm font-extrabold text-white disabled:opacity-60"
-            >
-              {locating ? "位置情報を取得中…" : "現在地を使う"}
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-[1.5rem] border border-slate-100 bg-white p-4">
-            <div className="text-sm font-extrabold text-slate-900">地域を選んで設定する</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
-              生活圏に近い代表地点を選べば使えます。あとで変更もできます。
-            </div>
-
-            <div className="mt-4">
-              <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
-                地域
-              </label>
-              <select
-                value={selectedPresetKey}
-                onChange={(e) => setSelectedPresetKey(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none"
-              >
-                <option value="">選んでください</option>
-                {RADAR_LOCATION_PRESETS.map((group) => (
-                  <optgroup key={group.group} label={group.group}>
-                    {group.options.map((opt) => (
-                      <option key={opt.key} value={opt.key}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </div>
-
-            <button
-              onClick={savePresetLocation}
-              disabled={!selectedPresetKey || savingPreset}
-              className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-900 py-3 text-sm font-extrabold text-white disabled:opacity-60"
-            >
-              {savingPreset ? "設定中…" : "この地域で設定する"}
-            </button>
+          <div className="mt-4">
+            <LocationEditor
+              error={error}
+              locating={locating}
+              savingPreset={savingPreset}
+              selectedPresetKey={selectedPresetKey}
+              setSelectedPresetKey={setSelectedPresetKey}
+              onUseCurrentLocation={useCurrentLocation}
+              onSavePresetLocation={savePresetLocation}
+              onClose={() => {}}
+              showClose={false}
+            />
           </div>
 
           <button
@@ -347,25 +434,61 @@ export default function RadarPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
       <div className="sticky top-0 z-20 border-b border-slate-100 bg-slate-50/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-[440px] items-center justify-between">
-          <div>
-            <div className="text-lg font-extrabold text-slate-900">未病レーダー</div>
-            <div className="text-[11px] font-extrabold text-slate-500">
-              {targetDateLabel} の予報
+        <div className="mx-auto max-w-[440px]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-lg font-extrabold text-slate-900">未病レーダー</div>
+              <div className="text-[11px] font-extrabold text-slate-500">
+                {targetDateLabel} の予報
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowLocationEditor(true)}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 shadow-sm"
+              >
+                地域変更
+              </button>
+
+              <button
+                onClick={() => fetchForecast({ force: true })}
+                disabled={refreshing}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 shadow-sm disabled:opacity-60"
+              >
+                {refreshing ? "更新中…" : bundle?.cached ? "再表示" : "更新"}
+              </button>
             </div>
           </div>
 
-          <button
-            onClick={() => fetchForecast({ force: true })}
-            disabled={refreshing}
-            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-slate-700 shadow-sm disabled:opacity-60"
-          >
-            {refreshing ? "更新中…" : bundle?.cached ? "再表示" : "更新"}
-          </button>
+          {locationNotice ? (
+            <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[12px] font-extrabold text-emerald-800">
+              {locationNotice}
+            </div>
+          ) : null}
         </div>
       </div>
 
       <div className="mx-auto max-w-[440px] px-4 py-5">
+        {showLocationEditor ? (
+          <div className="mb-4">
+            <LocationEditor
+              error={error}
+              locating={locating}
+              savingPreset={savingPreset}
+              selectedPresetKey={selectedPresetKey}
+              setSelectedPresetKey={setSelectedPresetKey}
+              onUseCurrentLocation={useCurrentLocation}
+              onSavePresetLocation={savePresetLocation}
+              onClose={() => {
+                setShowLocationEditor(false);
+                setError("");
+              }}
+              showClose
+            />
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
           <button
             onClick={() => setTab("forecast")}
@@ -387,7 +510,7 @@ export default function RadarPage() {
           </button>
         </div>
 
-        {error ? (
+        {error && !showLocationEditor ? (
           <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
             {error}
           </div>
