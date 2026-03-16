@@ -7,6 +7,11 @@ import {
   RADAR_LOCATION_PRESETS,
   flattenRadarLocationPresets,
 } from "@/lib/radar_v1/locationPresets";
+import {
+  getCoreLabel,
+  getSubLabels,
+  getMeridianLine,
+} from "@/lib/diagnosis/v2/labels";
 
 function formatTargetDate(dateStr) {
   if (!dateStr) return "—";
@@ -36,8 +41,8 @@ function signalDotClass(signal) {
 }
 
 function sourceLabel(source) {
-  if (source === "mtest") return "ライン";
-  return "体質";
+  if (source === "mtest") return "ラインケア";
+  return "体質ケア";
 }
 
 function sourceBadgeClass(source) {
@@ -53,8 +58,28 @@ function getForecastText(bundle) {
   return (
     bundle?.forecast?.gpt_summary ||
     bundle?.forecast?.why_short ||
-    "今日は大きく崩れない見込みですが、先回りして整えておくと明日が軽くなりやすい日です。"
+    "気象の変化と体質の重なりを見て、明日の崩れやすさを出しています。"
   );
+}
+
+function getRiskContext(bundle) {
+  return bundle?.forecast?.computed?.radar_plan_meta?.risk_context || null;
+}
+
+function getTriggerLabelFromForecast(forecast) {
+  if (forecast?.main_trigger_label) return forecast.main_trigger_label;
+  if (forecast?.main_trigger === "pressure" && forecast?.trigger_dir === "down") return "気圧が下がる日";
+  if (forecast?.main_trigger === "pressure" && forecast?.trigger_dir === "up") return "気圧が上がる日";
+  if (forecast?.main_trigger === "temp" && forecast?.trigger_dir === "down") return "冷え込みやすい日";
+  if (forecast?.main_trigger === "temp" && forecast?.trigger_dir === "up") return "気温が上がりやすい日";
+  if (forecast?.main_trigger === "humidity" && forecast?.trigger_dir === "up") return "湿がこもりやすい日";
+  return "気象の変化がある日";
+}
+
+function getPointRegionLabel(region) {
+  if (region === "abdomen") return "腹部";
+  if (region === "head_neck") return "頭頸";
+  return "四肢";
 }
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
@@ -327,6 +352,17 @@ export default function RadarPage() {
 
   const food = carePlan?.tomorrow_food_context || {};
   const reviewSchema = carePlan?.review_schema || {};
+  const riskContext = getRiskContext(bundle);
+
+  const coreCode = riskContext?.constitution_context?.core_code || null;
+  const coreLabel = coreCode ? getCoreLabel(coreCode) : null;
+  const subLabelObjects = getSubLabels(
+    safeArray(riskContext?.constitution_context?.sub_labels)
+  );
+
+  const primaryLine = riskContext?.constitution_context?.primary_meridian
+    ? getMeridianLine(riskContext.constitution_context.primary_meridian)
+    : null;
 
   const targetDateLabel = useMemo(
     () => formatTargetDate(bundle?.target_date),
@@ -334,6 +370,7 @@ export default function RadarPage() {
   );
 
   const forecastText = useMemo(() => getForecastText(bundle), [bundle]);
+  const triggerLabel = useMemo(() => getTriggerLabelFromForecast(forecast), [forecast]);
 
   if (loadingAuth || loading) {
     return (
@@ -518,11 +555,49 @@ export default function RadarPage() {
 
         {tab === "forecast" ? (
           <div className="mt-4 space-y-4">
+            {coreLabel ? (
+              <section className="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm">
+                <div className="text-[11px] font-extrabold text-slate-500">あなたの体質</div>
+                <div className="mt-1 text-lg font-extrabold text-slate-900">
+                  {coreLabel.title}
+                </div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+                  {coreLabel.short}
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {subLabelObjects.map((s) => (
+                    <span
+                      key={s.code}
+                      className="rounded-full bg-slate-100 px-3 py-1.5 text-[12px] font-extrabold text-slate-700"
+                    >
+                      {s.short}
+                    </span>
+                  ))}
+                </div>
+
+                {primaryLine ? (
+                  <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">負担が出やすいライン</div>
+                    <div className="mt-1 text-sm font-extrabold text-slate-900">
+                      {primaryLine.title}
+                    </div>
+                    <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+                      {primaryLine.body_area}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
             <section className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[12px] font-extrabold text-slate-500">
-                    {targetDateLabel} の予報
+                    明日の崩れやすさ
+                  </div>
+                  <div className="mt-1 text-[11px] font-bold text-slate-400">
+                    気象と体質の重なりから見た目安
                   </div>
                   <div className="mt-2 flex items-end gap-2">
                     <span className="text-4xl font-extrabold tracking-tight text-slate-900">
@@ -554,25 +629,16 @@ export default function RadarPage() {
                 </div>
 
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">主な引き金</div>
-                  <div className="mt-1 text-lg font-extrabold text-slate-900">
-                    {forecast.main_trigger === "pressure"
-                      ? "気圧"
-                      : forecast.main_trigger === "humidity"
-                      ? "湿度"
-                      : "気温"}
-                    {forecast.trigger_dir === "down"
-                      ? "↓"
-                      : forecast.trigger_dir === "up"
-                      ? "↑"
-                      : ""}
+                  <div className="text-[11px] font-extrabold text-slate-500">気象の主な引き金</div>
+                  <div className="mt-1 text-sm font-extrabold text-slate-900">
+                    {triggerLabel}
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
                 <div className="text-sm font-extrabold text-slate-900">
-                  {forecast.main_trigger_label || "今日の見立て"}
+                  あなたにとっての明日の注意点
                 </div>
                 <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
                   {forecastText}
@@ -592,52 +658,31 @@ export default function RadarPage() {
                     key={`${p.code}-${i}`}
                     className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
-                          {p.code}
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
+                        {p.code}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-base font-extrabold text-slate-900">
+                          {p.name_ja || p.code}
                         </div>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          <span
+                            className={[
+                              "rounded-full px-2.5 py-1 text-[11px] font-extrabold",
+                              sourceBadgeClass(p.source),
+                            ].join(" ")}
+                          >
+                            {sourceLabel(p.source)}
+                          </span>
 
-                        <div>
-                          <div className="text-base font-extrabold text-slate-900">
-                            {p.name_ja || p.code}
-                          </div>
-                          <div className="mt-1 flex flex-wrap gap-2">
-                            <span
-                              className={[
-                                "rounded-full px-2.5 py-1 text-[11px] font-extrabold",
-                                sourceBadgeClass(p.source),
-                              ].join(" ")}
-                            >
-                              {sourceLabel(p.source)}
-                            </span>
-
-                            {p.point_region ? (
-                              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-500">
-                                {p.point_region === "abdomen"
-                                  ? "腹部"
-                                  : p.point_region === "head_neck"
-                                  ? "頭頸"
-                                  : "四肢"}
-                              </span>
-                            ) : null}
-                          </div>
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-500">
+                            {getPointRegionLabel(p.point_region)}
+                          </span>
                         </div>
                       </div>
                     </div>
-
-                    {safeArray(p.tcm_actions).length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {p.tcm_actions.map((a) => (
-                          <span
-                            key={a}
-                            className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600"
-                          >
-                            {a}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
                   </div>
                 ))}
               </div>
@@ -652,27 +697,72 @@ export default function RadarPage() {
 
             <section className="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm">
               <div className="text-base font-extrabold text-slate-900">明日の食養生</div>
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">おすすめのタイミング</div>
-                  <div className="mt-1 text-lg font-extrabold text-slate-900">
-                    {food.timing || "—"}
-                  </div>
+
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                <div className="text-sm font-extrabold text-slate-900">
+                  {food.title || "明日の食養生"}
                 </div>
 
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">意識したいこと</div>
-                  <div className="mt-1 text-[14px] font-extrabold leading-6 text-slate-900">
-                    {food.focus || "—"}
+                {food.recommendation || food.focus ? (
+                  <div className="mt-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">おすすめ</div>
+                    <div className="mt-1 text-[14px] font-extrabold leading-6 text-slate-900">
+                      {food.recommendation || food.focus}
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
-                <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">避けたいこと</div>
-                  <div className="mt-1 text-[14px] font-extrabold leading-6 text-slate-900">
-                    {food.avoid || "—"}
+                {safeArray(food.examples).length > 0 ? (
+                  <div className="mt-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">例</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {food.examples.map((x, idx) => (
+                        <span
+                          key={`${x}-${idx}`}
+                          className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700"
+                        >
+                          {x}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : null}
+
+                {food.how_to ? (
+                  <div className="mt-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">取り入れ方</div>
+                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                      {food.how_to}
+                    </div>
+                  </div>
+                ) : null}
+
+                {food.avoid ? (
+                  <div className="mt-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">控えたいこと</div>
+                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                      {food.avoid}
+                    </div>
+                  </div>
+                ) : null}
+
+                {food.reason ? (
+                  <div className="mt-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">ひとこと理由</div>
+                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                      {food.reason}
+                    </div>
+                  </div>
+                ) : null}
+
+                {food.lifestyle_tip ? (
+                  <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">一緒に意識したいこと</div>
+                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                      {food.lifestyle_tip}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </section>
 
