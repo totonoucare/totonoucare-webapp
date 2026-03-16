@@ -10,7 +10,10 @@ import { buildRiskContext } from "@/lib/radar_v1/buildRiskContext";
 import { pickTcmPoints } from "@/lib/radar_v1/pickTcmPoints";
 import { selectMtestPoint } from "@/lib/radar_v1/selectMtestPoint";
 import { buildRadarPlan } from "@/lib/radar_v1/buildRadarPlan";
-import { generateRadarSummary, generateTomorrowFood } from "@/lib/radar_v1/gptRadar";
+import {
+  generateRadarSummary,
+  generateTomorrowFood,
+} from "@/lib/radar_v1/gptRadar";
 import {
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
@@ -36,7 +39,9 @@ function getAuthSupabase(authHeader) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !anonKey) {
-    throw new Error("Missing Supabase env: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    throw new Error(
+      "Missing Supabase env: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
   }
 
   return createClient(url, anonKey, {
@@ -101,7 +106,8 @@ export async function GET(req) {
       return jsonUtf8(
         {
           ok: false,
-          error: "No radar location found. Pass lat/lon once to set a primary location.",
+          error:
+            "No radar location found. Pass lat/lon once to set a primary location.",
         },
         400
       );
@@ -126,6 +132,15 @@ export async function GET(req) {
         },
         forecast: existing.forecast,
         care_plan: existing.care_plan,
+        debug: {
+          point_count: null,
+          partial_day: null,
+          used_openai: !!process.env.OPENAI_API_KEY,
+          radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.2",
+          summary_error: null,
+          food_error: null,
+          from_cache: true,
+        },
       });
     }
 
@@ -137,10 +152,11 @@ export async function GET(req) {
       );
     }
 
-    const { data: metnoData, meta: metnoMeta } = await fetchMetnoLocationForecast({
-      lat: location.lat,
-      lon: location.lon,
-    });
+    const { data: metnoData, meta: metnoMeta } =
+      await fetchMetnoLocationForecast({
+        lat: location.lat,
+        lon: location.lon,
+      });
 
     const normalized = normalizeMetnoForTargetDate({
       metnoJson: metnoData,
@@ -188,7 +204,13 @@ export async function GET(req) {
       mtestPoint,
     });
 
-    // GPT summary
+    let openaiDebug = {
+      used_openai: !!process.env.OPENAI_API_KEY,
+      radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.2",
+      summary_error: null,
+      food_error: null,
+    };
+
     try {
       const summary = await generateRadarSummary({
         riskContext,
@@ -202,15 +224,16 @@ export async function GET(req) {
             ...radarPlan.forecast,
             gpt_summary: summary.text,
             gpt_model: summary.model || null,
-            gpt_generated_at: summary.generated_at || new Date().toISOString(),
+            gpt_generated_at:
+              summary.generated_at || new Date().toISOString(),
           },
         };
       }
     } catch (e) {
       console.error("generateRadarSummary failed:", e);
+      openaiDebug.summary_error = String(e);
     }
 
-    // GPT food
     try {
       const generatedFood = await generateTomorrowFood({
         riskContext,
@@ -228,6 +251,7 @@ export async function GET(req) {
       }
     } catch (e) {
       console.error("generateTomorrowFood failed:", e);
+      openaiDebug.food_error = String(e);
     }
 
     const vendorMeta = {
@@ -267,7 +291,8 @@ export async function GET(req) {
       debug: {
         point_count: normalized.points.length,
         partial_day: normalized.points.length < 24,
-        used_openai: !!process.env.OPENAI_API_KEY,
+        ...openaiDebug,
+        from_cache: false,
       },
     });
   } catch (e) {
