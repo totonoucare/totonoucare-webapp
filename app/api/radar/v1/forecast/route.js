@@ -10,6 +10,7 @@ import { buildRiskContext } from "@/lib/radar_v1/buildRiskContext";
 import { pickTcmPoints } from "@/lib/radar_v1/pickTcmPoints";
 import { selectMtestPoint } from "@/lib/radar_v1/selectMtestPoint";
 import { buildRadarPlan } from "@/lib/radar_v1/buildRadarPlan";
+import { generateRadarSummary, generateTomorrowFood } from "@/lib/radar_v1/gptRadar";
 import {
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
@@ -83,7 +84,6 @@ export async function GET(req) {
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
 
-    // 1) location
     let location = null;
 
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
@@ -107,7 +107,6 @@ export async function GET(req) {
       );
     }
 
-    // 2) cached forecast
     const existing = await getForecastBundle({
       userId: user.id,
       targetDate,
@@ -130,7 +129,6 @@ export async function GET(req) {
       });
     }
 
-    // 3) profile
     const profile = await getRadarConstitutionProfile({ userId: user.id });
     if (!profile) {
       return jsonUtf8(
@@ -139,7 +137,6 @@ export async function GET(req) {
       );
     }
 
-    // 4) weather
     const { data: metnoData, meta: metnoMeta } = await fetchMetnoLocationForecast({
       lat: location.lat,
       lon: location.lon,
@@ -164,13 +161,11 @@ export async function GET(req) {
 
     const weatherStress = buildWeatherStress({ points: normalized.points });
 
-    // 5) risk context
     const riskContext = buildRiskContext({
       profile,
       weatherStress,
     });
 
-    // 6) point selection
     const tcmPoints = await pickTcmPoints({
       differentiation: riskContext.tcm_context,
     });
@@ -187,12 +182,53 @@ export async function GET(req) {
       previousPointCode,
     });
 
-    // 7) full plan
-    const radarPlan = buildRadarPlan({
+    let radarPlan = buildRadarPlan({
       riskContext,
       tcmPoints,
       mtestPoint,
     });
+
+    // GPT summary
+    try {
+      const summary = await generateRadarSummary({
+        riskContext,
+        radarPlan,
+      });
+
+      if (summary?.text) {
+        radarPlan = {
+          ...radarPlan,
+          forecast: {
+            ...radarPlan.forecast,
+            gpt_summary: summary.text,
+            gpt_model: summary.model || null,
+            gpt_generated_at: summary.generated_at || new Date().toISOString(),
+          },
+        };
+      }
+    } catch (e) {
+      console.error("generateRadarSummary failed:", e);
+    }
+
+    // GPT food
+    try {
+      const generatedFood = await generateTomorrowFood({
+        riskContext,
+        radarPlan,
+      });
+
+      if (generatedFood?.food) {
+        radarPlan = {
+          ...radarPlan,
+          tomorrow_food: {
+            ...radarPlan.tomorrow_food,
+            ...generatedFood.food,
+          },
+        };
+      }
+    } catch (e) {
+      console.error("generateTomorrowFood failed:", e);
+    }
 
     const vendorMeta = {
       metno: metnoMeta,
@@ -201,7 +237,6 @@ export async function GET(req) {
       previous_mtest_point_code: previousPointCode || null,
     };
 
-    // 8) save
     const forecast = await saveForecast({
       userId: user.id,
       targetDate,
@@ -232,6 +267,7 @@ export async function GET(req) {
       debug: {
         point_count: normalized.points.length,
         partial_day: normalized.points.length < 24,
+        used_openai: !!process.env.OPENAI_API_KEY,
       },
     });
   } catch (e) {
