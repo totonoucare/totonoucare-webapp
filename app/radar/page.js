@@ -1,6 +1,7 @@
+// app/radar/page.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
@@ -61,13 +62,37 @@ function getDefaultDateModeJST() {
   return hour < 18 ? "today" : "tomorrow";
 }
 
+function inferModeFromTargetDate(targetDate) {
+  const { today, tomorrow } = getJstTodayTomorrow();
+  if (targetDate === today) return "today";
+  if (targetDate === tomorrow) return "tomorrow";
+  return null;
+}
+
 function getDateModeLabel(mode) {
-  if (mode === "today") return "今日";
-  return "明日";
+  return mode === "today" ? "今日" : "明日";
 }
 
 function buildScoreCardTitle(mode, targetDate) {
   return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の崩れやすさ`;
+}
+
+function getSectionLabels(mode) {
+  if (mode === "today") {
+    return {
+      noticeTitle: "あなたにとっての今日の注意点",
+      tsuboTitle: "今日の整えツボ",
+      tsuboSubtitle: "今日ここから整えたい3点セット",
+      foodTitle: "今日の食養生",
+    };
+  }
+
+  return {
+    noticeTitle: "あなたにとっての明日の注意点",
+    tsuboTitle: "今夜の先回りツボ",
+    tsuboSubtitle: "今夜のうちに整えておきたい3点セット",
+    foodTitle: "明日の食養生",
+  };
 }
 
 function signalLabel(signal) {
@@ -243,6 +268,8 @@ export default function RadarPage() {
   const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
   const [showProfileDetail, setShowProfileDetail] = useState(false);
 
+  const requestSeqRef = useRef(0);
+
   useEffect(() => {
     let mounted = true;
 
@@ -266,6 +293,8 @@ export default function RadarPage() {
     nextDateMode = dateMode,
   } = {}) {
     if (!session) return;
+
+    const requestSeq = ++requestSeqRef.current;
 
     try {
       setError("");
@@ -298,6 +327,8 @@ export default function RadarPage() {
 
       const json = await res.json();
 
+      if (requestSeq !== requestSeqRef.current) return;
+
       if (!res.ok) {
         if (json?.error?.includes("No radar location found")) {
           setNeedsLocation(true);
@@ -310,30 +341,30 @@ export default function RadarPage() {
       setNeedsLocation(false);
       setBundle(json);
 
+      const returnedMode = inferModeFromTargetDate(json?.target_date);
+      if (returnedMode) {
+        setDateMode(returnedMode);
+      }
+
       if (locationChanged) {
         setLocationNotice("地域を更新しました。変更は次回の予報から反映されます。");
       }
     } catch (e) {
+      if (requestSeq !== requestSeqRef.current) return;
       setError(e?.message || "予報の取得に失敗しました。");
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestSeq === requestSeqRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }
 
   useEffect(() => {
-    if (session) {
-      fetchForecast({ nextDateMode: dateMode });
-    }
+    if (!session || loadingAuth) return;
+    fetchForecast({ force: true, nextDateMode: dateMode });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
-
-  useEffect(() => {
-    if (session && !loadingAuth) {
-      fetchForecast({ force: true, nextDateMode: dateMode });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateMode]);
+  }, [session, loadingAuth, dateMode]);
 
   async function useCurrentLocation() {
     if (!navigator.geolocation) {
@@ -426,14 +457,24 @@ export default function RadarPage() {
   const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomLabel = symptomFocus ? SYMPTOM_LABELS[symptomFocus] || symptomFocus : null;
 
+  const bundleDateMode = useMemo(
+    () => inferModeFromTargetDate(bundle?.target_date) || dateMode,
+    [bundle?.target_date, dateMode]
+  );
+
   const targetDateLabel = useMemo(
     () => formatTargetDate(bundle?.target_date),
     [bundle?.target_date]
   );
 
   const scoreCardTitle = useMemo(
-    () => buildScoreCardTitle(dateMode, bundle?.target_date),
-    [dateMode, bundle?.target_date]
+    () => buildScoreCardTitle(bundleDateMode, bundle?.target_date),
+    [bundleDateMode, bundle?.target_date]
+  );
+
+  const sectionLabels = useMemo(
+    () => getSectionLabels(bundleDateMode),
+    [bundleDateMode]
   );
 
   const forecastText = useMemo(() => getForecastText(bundle), [bundle]);
@@ -594,7 +635,9 @@ export default function RadarPage() {
               onClick={() => setDateMode("today")}
               className={[
                 "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-                dateMode === "today" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
+                bundleDateMode === "today"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500",
               ].join(" ")}
             >
               今日
@@ -603,7 +646,9 @@ export default function RadarPage() {
               onClick={() => setDateMode("tomorrow")}
               className={[
                 "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-                dateMode === "tomorrow" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
+                bundleDateMode === "tomorrow"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500",
               ].join(" ")}
             >
               明日
@@ -625,6 +670,7 @@ export default function RadarPage() {
                 <div className="mt-1 text-[11px] font-bold text-slate-400">
                   気象と体質の重なりから見た目安
                 </div>
+
                 {symptomLabel ? (
                   <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-extrabold text-slate-700">
                     気になる症状: {symptomLabel}
@@ -645,23 +691,34 @@ export default function RadarPage() {
                   signalBadgeClass(forecast.signal),
                 ].join(" ")}
               >
-                <span className={["h-2.5 w-2.5 rounded-full", signalDotClass(forecast.signal)].join(" ")} />
+                <span
+                  className={[
+                    "h-2.5 w-2.5 rounded-full",
+                    signalDotClass(forecast.signal),
+                  ].join(" ")}
+                />
                 {forecast.signal_label || signalLabel(forecast.signal)}
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <div className="text-[11px] font-extrabold text-slate-500">日中に気をつけたい時間帯</div>
+                <div className="text-[11px] font-extrabold text-slate-500">
+                  日中に気をつけたい時間帯
+                </div>
                 <div className="mt-1 text-lg font-extrabold text-slate-900">
                   {forecast.peak_start && forecast.peak_end
-                    ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
+                    ? `${String(forecast.peak_start).slice(0, 5)}–${String(
+                        forecast.peak_end
+                      ).slice(0, 5)}`
                     : "—"}
                 </div>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <div className="text-[11px] font-extrabold text-slate-500">一番響きやすい要素</div>
+                <div className="text-[11px] font-extrabold text-slate-500">
+                  一番響きやすい要素
+                </div>
                 <div className="mt-1 text-sm font-extrabold text-slate-900">
                   {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
                 </div>
@@ -670,7 +727,7 @@ export default function RadarPage() {
 
             <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
               <div className="text-sm font-extrabold text-slate-900">
-                あなたにとっての{getDateModeLabel(dateMode)}の注意点
+                {sectionLabels.noticeTitle}
               </div>
               <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
                 {forecastText}
@@ -684,7 +741,9 @@ export default function RadarPage() {
               className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-4 text-left"
             >
               <div className="min-w-0">
-                <div className="text-[11px] font-extrabold text-slate-500">あなたの体質</div>
+                <div className="text-[11px] font-extrabold text-slate-500">
+                  あなたの体質
+                </div>
                 <div className="mt-1 text-sm font-extrabold text-slate-900">
                   {coreLabel?.title || "—"}
                 </div>
@@ -715,7 +774,9 @@ export default function RadarPage() {
 
                 {primaryLine ? (
                   <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                    <div className="text-[11px] font-extrabold text-slate-500">負担が出やすいライン</div>
+                    <div className="text-[11px] font-extrabold text-slate-500">
+                      負担が出やすいライン
+                    </div>
                     <div className="mt-1 text-sm font-extrabold text-slate-900">
                       {primaryLine.title}
                     </div>
@@ -729,9 +790,11 @@ export default function RadarPage() {
           </Module>
 
           <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">今夜の先回りツボ</div>
+            <div className="text-base font-extrabold text-slate-900">
+              {sectionLabels.tsuboTitle}
+            </div>
             <div className="mt-1 text-[12px] font-extrabold text-slate-500">
-              今夜のうちに整えておきたい3点セット
+              {sectionLabels.tsuboSubtitle}
             </div>
 
             <div className="mt-4 space-y-3">
@@ -770,24 +833,28 @@ export default function RadarPage() {
             </div>
 
             <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
-              <div className="text-sm font-extrabold text-emerald-900">今夜の注意</div>
+              <div className="text-sm font-extrabold text-emerald-900">ひとこと</div>
               <div className="mt-2 text-[13px] font-bold leading-6 text-emerald-900">
-                {carePlan?.night_note || "今夜のうちに軽く整えておくと、明日のぶれを抑えやすくなります。"}
+                {carePlan?.night_note || "軽く整えておくと、ぶれを抑えやすくなります。"}
               </div>
             </div>
           </Module>
 
           <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">明日の食養生</div>
+            <div className="text-base font-extrabold text-slate-900">
+              {sectionLabels.foodTitle}
+            </div>
 
             <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
               <div className="text-sm font-extrabold text-slate-900">
-                {food.title || "明日の食養生"}
+                {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
               </div>
 
               {food.recommendation || food.focus ? (
                 <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">おすすめ</div>
+                  <div className="text-[11px] font-extrabold text-slate-500">
+                    おすすめ
+                  </div>
                   <div className="mt-1 text-[14px] font-extrabold leading-6 text-slate-900">
                     {food.recommendation || food.focus}
                   </div>
@@ -812,7 +879,9 @@ export default function RadarPage() {
 
               {food.how_to ? (
                 <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">取り入れ方</div>
+                  <div className="text-[11px] font-extrabold text-slate-500">
+                    取り入れ方
+                  </div>
                   <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
                     {food.how_to}
                   </div>
@@ -821,7 +890,9 @@ export default function RadarPage() {
 
               {food.avoid ? (
                 <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">控えたいこと</div>
+                  <div className="text-[11px] font-extrabold text-slate-500">
+                    控えたいこと
+                  </div>
                   <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
                     {food.avoid}
                   </div>
@@ -830,7 +901,9 @@ export default function RadarPage() {
 
               {food.reason ? (
                 <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">ひとこと理由</div>
+                  <div className="text-[11px] font-extrabold text-slate-500">
+                    ひとこと理由
+                  </div>
                   <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
                     {food.reason}
                   </div>
@@ -839,19 +912,14 @@ export default function RadarPage() {
 
               {food.lifestyle_tip ? (
                 <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">一緒に意識したいこと</div>
+                  <div className="text-[11px] font-extrabold text-slate-500">
+                    一緒に意識したいこと
+                  </div>
                   <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
                     {food.lifestyle_tip}
                   </div>
                 </div>
               ) : null}
-            </div>
-          </Module>
-
-          <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">明日気をつけたいこと</div>
-            <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-[13px] font-bold leading-6 text-slate-700">
-              {carePlan?.tomorrow_caution || "無理に頑張りきるより、少し余白を残す方が合う日です。"}
             </div>
           </Module>
         </div>
@@ -880,7 +948,9 @@ export default function RadarPage() {
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <div className="text-[11px] font-extrabold text-slate-500">対策できたか</div>
+                <div className="text-[11px] font-extrabold text-slate-500">
+                  対策できたか
+                </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {safeArray(reviewSchema.prevent_options).map((opt) => (
                     <span
@@ -910,7 +980,9 @@ export default function RadarPage() {
           </Module>
 
           <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">カレンダーで振り返る</div>
+            <div className="text-base font-extrabold text-slate-900">
+              カレンダーで振り返る
+            </div>
             <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
               予報スコアと記録を並べて見返せるように、記録画面はカレンダー導線でつないでいきます。
             </div>
