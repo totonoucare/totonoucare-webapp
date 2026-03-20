@@ -194,7 +194,13 @@ export async function GET(req) {
     const mtestPoint = await selectMtestPoint({
       selectedLine: riskContext.mtest_context.selected_line,
       motherChild: { mode: riskContext.mtest_context.mode },
-      weatherStress,
+      weatherStress: {
+        main_trigger: riskContext.summary.main_trigger,
+        trigger_dir: riskContext.summary.trigger_dir,
+        pressure_down_strength: riskContext.weather_context.pressure_down_strength,
+        cold_strength: riskContext.weather_context.cold_strength,
+        damp_strength: riskContext.weather_context.damp_strength,
+      },
       previousPointCode,
     });
 
@@ -215,6 +221,8 @@ export async function GET(req) {
       const summary = await generateRadarSummary({
         riskContext,
         radarPlan,
+        targetDate,
+        targetMode: mode,
       });
 
       if (summary?.text) {
@@ -238,6 +246,8 @@ export async function GET(req) {
       const generatedFood = await generateTomorrowFood({
         riskContext,
         radarPlan,
+        targetDate,
+        targetMode: mode,
       });
 
       if (generatedFood?.food) {
