@@ -1,7 +1,7 @@
 // app/api/radar/v1/forecast/route.js
 import { createClient } from "@supabase/supabase-js";
 
-import { decideTargetDateJST } from "@/lib/radar_v1/timeJST";
+import { decideTargetDateJST, nowJstParts } from "@/lib/radar_v1/timeJST";
 import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
 import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
@@ -70,6 +70,21 @@ async function getAuthenticatedUser(req) {
   return data?.user || null;
 }
 
+function getRelativeTargetMode(targetDate) {
+  const { isoDate: today } = nowJstParts(new Date());
+  const d = new Date(`${today}T00:00:00+09:00`);
+  d.setDate(d.getDate() + 1);
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const tomorrow = `${yyyy}-${mm}-${dd}`;
+
+  if (targetDate === today) return "today";
+  if (targetDate === tomorrow) return "tomorrow";
+  return "explicit";
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -88,6 +103,7 @@ export async function GET(req) {
     const lon = lonParam !== null ? Number(lonParam) : null;
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
+    const relativeTargetMode = getRelativeTargetMode(targetDate);
 
     let location = null;
 
@@ -124,6 +140,7 @@ export async function GET(req) {
         cached: true,
         target_date: targetDate,
         target_mode: mode,
+        relative_target_mode: relativeTargetMode,
         location: {
           id: location.id,
           lat: location.lat,
@@ -170,6 +187,7 @@ export async function GET(req) {
           error: "No forecast points for target_date",
           target_date: targetDate,
           target_mode: mode,
+          relative_target_mode: relativeTargetMode,
         },
         500
       );
@@ -222,7 +240,7 @@ export async function GET(req) {
         riskContext,
         radarPlan,
         targetDate,
-        targetMode: mode,
+        relativeTargetMode,
       });
 
       if (summary?.text) {
@@ -247,7 +265,7 @@ export async function GET(req) {
         riskContext,
         radarPlan,
         targetDate,
-        targetMode: mode,
+        relativeTargetMode,
       });
 
       if (generatedFood?.food) {
@@ -290,6 +308,7 @@ export async function GET(req) {
       cached: false,
       target_date: targetDate,
       target_mode: mode,
+      relative_target_mode: relativeTargetMode,
       location: {
         id: location.id,
         lat: location.lat,
