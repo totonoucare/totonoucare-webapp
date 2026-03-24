@@ -479,25 +479,6 @@ export default function RadarPage() {
 
   const forecastText = useMemo(() => getForecastText(bundle), [bundle]);
 
-  const apiDebug = useMemo(
-  () => ({
-    ui_selected_tab: tab,
-    ui_selected_date_mode: dateMode,
-    bundle_date_mode: bundleDateMode,
-    target_date: bundle?.target_date ?? null,
-    target_mode: bundle?.target_mode ?? null,
-    relative_target_mode: bundle?.relative_target_mode ?? null,
-    location: bundle?.location ?? null,
-    cached: bundle?.cached ?? null,
-    forecast_score: forecast?.score_0_10 ?? null,
-    forecast_signal: forecast?.signal ?? null,
-    gpt_summary: forecast?.gpt_summary ?? null,
-    gpt_model: forecast?.gpt_model ?? null,
-    debug: bundle?.debug ?? null,
-  }),
-  [tab, dateMode, bundleDateMode, bundle, forecast]
-);
-
   if (loadingAuth || loading) {
     return (
       <AppShell title="未病レーダー" subtitle="読み込み中…">
@@ -679,13 +660,6 @@ export default function RadarPage() {
               {error}
             </div>
           ) : null}
-
-       <Module className="p-4">
-  <div className="text-xs font-extrabold text-slate-500">API debug</div>
-  <pre className="mt-2 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-[11px] leading-5 text-green-300">
-    {JSON.stringify(apiDebug, null, 2)}
-  </pre>
-</Module>
 
           <Module className="p-5">
             <div className="flex items-start justify-between gap-3">
