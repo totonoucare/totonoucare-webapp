@@ -1,7 +1,11 @@
 // app/api/radar/v1/forecast/route.js
 import { createClient } from "@supabase/supabase-js";
 
-import { decideTargetDateJST, nowJstParts } from "@/lib/radar_v1/timeJST";
+import {
+  decideTargetDateJST,
+  nowJstParts,
+  toJstISODate,
+} from "@/lib/radar_v1/timeJST";
 import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
 import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
@@ -72,13 +76,10 @@ async function getAuthenticatedUser(req) {
 
 function getRelativeTargetMode(targetDate) {
   const { isoDate: today } = nowJstParts(new Date());
-  const d = new Date(`${today}T00:00:00+09:00`);
-  d.setDate(d.getDate() + 1);
 
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const tomorrow = `${yyyy}-${mm}-${dd}`;
+  const [y, m, d] = today.split("-").map(Number);
+  const tomorrowDate = new Date(Date.UTC(y, m - 1, d + 1, 0, 0, 0));
+  const tomorrow = toJstISODate(tomorrowDate);
 
   if (targetDate === today) return "today";
   if (targetDate === tomorrow) return "tomorrow";
@@ -153,7 +154,7 @@ export async function GET(req) {
           point_count: null,
           partial_day: null,
           used_openai: !!process.env.OPENAI_API_KEY,
-          radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.2",
+          radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.4",
           summary_error: null,
           food_error: null,
           from_cache: true,
@@ -230,7 +231,7 @@ export async function GET(req) {
 
     let openaiDebug = {
       used_openai: !!process.env.OPENAI_API_KEY,
-      radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.2",
+      radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.4",
       summary_error: null,
       food_error: null,
     };
