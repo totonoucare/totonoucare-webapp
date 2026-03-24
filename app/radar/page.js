@@ -680,6 +680,13 @@ export default function RadarPage() {
             </div>
           ) : null}
 
+       <Module className="p-4">
+  <div className="text-xs font-extrabold text-slate-500">API debug</div>
+  <pre className="mt-2 overflow-x-auto rounded-2xl bg-slate-950 p-4 text-[11px] leading-5 text-green-300">
+    {JSON.stringify(apiDebug, null, 2)}
+  </pre>
+</Module>
+
           <Module className="p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
