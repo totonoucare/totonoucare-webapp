@@ -16,23 +16,6 @@ import {
   SYMPTOM_LABELS,
 } from "@/lib/diagnosis/v2/labels";
 
-const ACTION_LABELS = {
-  tonify_qi: "気を補う",
-  support_kidney: "腎を支える",
-  generate_fluids: "うるおいを補う",
-  nourish_blood: "血を補う",
-  move_qi: "巡りを動かす",
-  soothe_liver: "張りをゆるめる",
-};
-
-const ORGAN_LABELS = {
-  liver: "肝",
-  spleen: "脾",
-  kidney: "腎",
-  lung: "肺",
-  heart: "心",
-};
-
 function safeArray(v) {
   return Array.isArray(v) ? v : [];
 }
@@ -169,13 +152,18 @@ function getCompatTriggerLabel(mainTrigger, triggerDir) {
 }
 
 function getPointRoleSummary(point) {
-  if (point?.source === "mtest") {
-    return "張りや詰まりが出やすいラインをゆるめる軸";
-  }
-  if (point?.point_region === "abdomen") {
-    return "土台を整えて、支えを作る軸";
-  }
-  return "体質の偏りを整える軸";
+  return point?.explanation?.role_summary || "整えの軸になるツボです。";
+}
+
+function getPointSelectionReason(point) {
+  return (
+    point?.explanation?.selection_reason ||
+    "今日の整え方に合う方向で選んでいます。"
+  );
+}
+
+function getPointMatchTags(point) {
+  return safeArray(point?.explanation?.match_tags).slice(0, 3);
 }
 
 function getPointPressGuide(point) {
@@ -192,51 +180,10 @@ function getPointPressGuide(point) {
   return `${base}${side} 痛すぎる強さは避けてください。`;
 }
 
-function getPointDetailText(point) {
-  if (!point) return "";
-
-  if (point.source === "mtest") {
-    return "張りや詰まりが出やすいラインを抜いて、今の負担を軽くしやすいツボです。";
-  }
-
-  const actionLabels = safeArray(point.tcm_actions)
-    .map((x) => ACTION_LABELS[x] || null)
-    .filter(Boolean);
-
-  const organLabels = safeArray(point.organ_focus)
-    .map((x) => ORGAN_LABELS[x] || x)
-    .filter(Boolean);
-
-  if (actionLabels.length && organLabels.length) {
-    return `${actionLabels.slice(0, 2).join("・")}を意識しつつ、${organLabels.join("・")}の負担を整える方向のツボです。`;
-  }
-
-  if (actionLabels.length) {
-    return `${actionLabels.slice(0, 2).join("・")}を意識して使いやすいツボです。`;
-  }
-
-  return "体質の偏りを整える方向で使いやすいツボです。";
-}
-
 function getPointImageSrc(point) {
   if (!point?.image_path) return null;
   const clean = String(point.image_path).replace(/^\/+/, "");
   return `/${clean}`;
-}
-
-function getBodyActionBadges(point) {
-  return safeArray(point?.tcm_actions)
-    .map((x) => ACTION_LABELS[x] || null)
-    .filter(Boolean);
-}
-
-function getPointExtraTags(point) {
-  const organTags = safeArray(point?.organ_focus)
-    .map((x) => ORGAN_LABELS[x] || x)
-    .filter(Boolean)
-    .map((x) => `${x}を意識`);
-
-  return organTags.slice(0, 2);
 }
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
@@ -343,8 +290,7 @@ function PointDetailSheet({ point, onClose }) {
   if (!point) return null;
 
   const imageSrc = getPointImageSrc(point);
-  const actionBadges = getBodyActionBadges(point);
-  const extraTags = getPointExtraTags(point);
+  const reasonTags = getPointMatchTags(point);
 
   return (
     <div
@@ -401,21 +347,13 @@ function PointDetailSheet({ point, onClose }) {
             {getPointRoleSummary(point)}
           </div>
           <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-            {getPointDetailText(point)}
+            {getPointSelectionReason(point)}
           </div>
         </div>
 
-        {(actionBadges.length > 0 || extraTags.length > 0) && (
+        {reasonTags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
-            {actionBadges.map((label) => (
-              <span
-                key={label}
-                className="rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-extrabold text-emerald-700"
-              >
-                {label}
-              </span>
-            ))}
-            {extraTags.map((label) => (
+            {reasonTags.map((label) => (
               <span
                 key={label}
                 className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
@@ -1025,8 +963,7 @@ export default function RadarPage() {
 
             <div className="mt-4 space-y-3">
               {tsuboPoints.map((p, i) => {
-                const actionBadges = getBodyActionBadges(p);
-                const extraTags = getPointExtraTags(p);
+                const reasonTags = getPointMatchTags(p);
 
                 return (
                   <div
@@ -1065,17 +1002,9 @@ export default function RadarPage() {
                           {getPointRoleSummary(p)}
                         </div>
 
-                        {(actionBadges.length > 0 || extraTags.length > 0) && (
+                        {reasonTags.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
-                            {actionBadges.map((label) => (
-                              <span
-                                key={label}
-                                className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700"
-                              >
-                                {label}
-                              </span>
-                            ))}
-                            {extraTags.map((label) => (
+                            {reasonTags.map((label) => (
                               <span
                                 key={label}
                                 className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600"
@@ -1092,6 +1021,15 @@ export default function RadarPage() {
                           </div>
                           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-700">
                             {getPointPressGuide(p)}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-3 py-3">
+                          <div className="text-[11px] font-extrabold text-slate-500">
+                            なぜこのツボ？
+                          </div>
+                          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-700">
+                            {getPointSelectionReason(p)}
                           </div>
                         </div>
 
