@@ -16,6 +16,23 @@ import {
   SYMPTOM_LABELS,
 } from "@/lib/diagnosis/v2/labels";
 
+const ACTION_LABELS = {
+  tonify_qi: "気を補う",
+  support_kidney: "腎を支える",
+  generate_fluids: "うるおいを補う",
+  nourish_blood: "血を補う",
+  move_qi: "巡りを動かす",
+  soothe_liver: "張りをゆるめる",
+};
+
+const ORGAN_LABELS = {
+  liver: "肝",
+  spleen: "脾",
+  kidney: "腎",
+  lung: "肺",
+  heart: "心",
+};
+
 function safeArray(v) {
   return Array.isArray(v) ? v : [];
 }
@@ -151,6 +168,77 @@ function getCompatTriggerLabel(mainTrigger, triggerDir) {
   return "気象変化";
 }
 
+function getPointRoleSummary(point) {
+  if (point?.source === "mtest") {
+    return "張りや詰まりが出やすいラインをゆるめる軸";
+  }
+  if (point?.point_region === "abdomen") {
+    return "土台を整えて、支えを作る軸";
+  }
+  return "体質の偏りを整える軸";
+}
+
+function getPointPressGuide(point) {
+  const base =
+    point?.point_region === "abdomen"
+      ? "仰向けでお腹の力を抜き、吐く息に合わせてやさしく押します。"
+      : "息を吐きながら、じんわり気持ちいい強さで押します。";
+
+  const side =
+    point?.point_region === "abdomen"
+      ? "20〜30秒を2〜3回。"
+      : "左右ある場所は片側20〜30秒ずつ、2〜3回が目安です。";
+
+  return `${base}${side} 痛すぎる強さは避けてください。`;
+}
+
+function getPointDetailText(point) {
+  if (!point) return "";
+
+  if (point.source === "mtest") {
+    return "張りや詰まりが出やすいラインを抜いて、今の負担を軽くしやすいツボです。";
+  }
+
+  const actionLabels = safeArray(point.tcm_actions)
+    .map((x) => ACTION_LABELS[x] || null)
+    .filter(Boolean);
+
+  const organLabels = safeArray(point.organ_focus)
+    .map((x) => ORGAN_LABELS[x] || x)
+    .filter(Boolean);
+
+  if (actionLabels.length && organLabels.length) {
+    return `${actionLabels.slice(0, 2).join("・")}を意識しつつ、${organLabels.join("・")}の負担を整える方向のツボです。`;
+  }
+
+  if (actionLabels.length) {
+    return `${actionLabels.slice(0, 2).join("・")}を意識して使いやすいツボです。`;
+  }
+
+  return "体質の偏りを整える方向で使いやすいツボです。";
+}
+
+function getPointImageSrc(point) {
+  if (!point?.image_path) return null;
+  const clean = String(point.image_path).replace(/^\/+/, "");
+  return `/${clean}`;
+}
+
+function getBodyActionBadges(point) {
+  return safeArray(point?.tcm_actions)
+    .map((x) => ACTION_LABELS[x] || null)
+    .filter(Boolean);
+}
+
+function getPointExtraTags(point) {
+  const organTags = safeArray(point?.organ_focus)
+    .map((x) => ORGAN_LABELS[x] || x)
+    .filter(Boolean)
+    .map((x) => `${x}を意識`);
+
+  return organTags.slice(0, 2);
+}
+
 const FLAT_PRESETS = flattenRadarLocationPresets();
 
 function LocationEditor({
@@ -245,6 +333,110 @@ function LocationEditor({
   );
 }
 
+function PointDetailSheet({ point, onClose }) {
+  const [imageBroken, setImageBroken] = useState(false);
+
+  useEffect(() => {
+    setImageBroken(false);
+  }, [point?.code]);
+
+  if (!point) return null;
+
+  const imageSrc = getPointImageSrc(point);
+  const actionBadges = getBodyActionBadges(point);
+  const extraTags = getPointExtraTags(point);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/45 p-4 sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="point-detail-title"
+        className="w-full max-w-md rounded-[28px] bg-white p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-extrabold text-slate-500">
+              {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
+            </div>
+            <div id="point-detail-title" className="mt-1 text-xl font-extrabold text-slate-900">
+              {point.name_ja || point.code}
+            </div>
+            <div className="mt-1 text-[12px] font-bold text-slate-500">
+              {point.code}
+              {point.name_en ? ` / ${point.name_en}` : ""}
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
+          >
+            閉じる
+          </button>
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+          {imageSrc && !imageBroken ? (
+            <img
+              src={imageSrc}
+              alt={`${point.name_ja || point.code} の位置`}
+              className="h-56 w-full object-contain bg-white"
+              onError={() => setImageBroken(true)}
+            />
+          ) : (
+            <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+              画像がまだ用意されていないか、表示できませんでした。ツボ名とコードを見ながら、押し方の目安を先に使えます。
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+          <div className="text-[11px] font-extrabold text-slate-500">役割</div>
+          <div className="mt-1 text-[13px] font-bold leading-6 text-slate-800">
+            {getPointRoleSummary(point)}
+          </div>
+          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+            {getPointDetailText(point)}
+          </div>
+        </div>
+
+        {(actionBadges.length > 0 || extraTags.length > 0) && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {actionBadges.map((label) => (
+              <span
+                key={label}
+                className="rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-extrabold text-emerald-700"
+              >
+                {label}
+              </span>
+            ))}
+            {extraTags.map((label) => (
+              <span
+                key={label}
+                className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4">
+          <div className="text-[11px] font-extrabold text-amber-700">押し方の目安</div>
+          <div className="mt-1 text-[13px] font-bold leading-6 text-amber-900">
+            {getPointPressGuide(point)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RadarPage() {
   const router = useRouter();
 
@@ -267,6 +459,7 @@ export default function RadarPage() {
   const [tab, setTab] = useState("forecast");
   const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState(null);
 
   const requestSeqRef = useRef(0);
 
@@ -831,38 +1024,88 @@ export default function RadarPage() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {tsuboPoints.map((p, i) => (
-                <div
-                  key={`${p.code}-${i}`}
-                  className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
-                      {p.code}
-                    </div>
+              {tsuboPoints.map((p, i) => {
+                const actionBadges = getBodyActionBadges(p);
+                const extraTags = getPointExtraTags(p);
 
-                    <div className="min-w-0 flex-1">
-                      <div className="text-base font-extrabold text-slate-900">
-                        {p.name_ja || p.code}
+                return (
+                  <div
+                    key={`${p.code}-${i}`}
+                    className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
+                        {p.code}
                       </div>
-                      <div className="mt-1 flex flex-wrap gap-2">
-                        <span
-                          className={[
-                            "rounded-full px-2.5 py-1 text-[11px] font-extrabold",
-                            sourceBadgeClass(p.source),
-                          ].join(" ")}
-                        >
-                          {sourceLabel(p.source)}
-                        </span>
 
-                        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-500">
-                          {getPointRegionLabel(p.point_region)}
-                        </span>
+                      <div className="min-w-0 flex-1">
+                        <button
+                          onClick={() => setSelectedPoint(p)}
+                          className="text-left text-base font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4"
+                        >
+                          {p.name_ja || p.code}
+                        </button>
+
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          <span
+                            className={[
+                              "rounded-full px-2.5 py-1 text-[11px] font-extrabold",
+                              sourceBadgeClass(p.source),
+                            ].join(" ")}
+                          >
+                            {sourceLabel(p.source)}
+                          </span>
+
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-500">
+                            {getPointRegionLabel(p.point_region)}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 text-[12px] font-bold leading-5 text-slate-700">
+                          {getPointRoleSummary(p)}
+                        </div>
+
+                        {(actionBadges.length > 0 || extraTags.length > 0) && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {actionBadges.map((label) => (
+                              <span
+                                key={label}
+                                className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                            {extraTags.map((label) => (
+                              <span
+                                key={label}
+                                className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-3 py-3">
+                          <div className="text-[11px] font-extrabold text-slate-500">
+                            押し方の目安
+                          </div>
+                          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-700">
+                            {getPointPressGuide(p)}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => setSelectedPoint(p)}
+                          className="mt-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
+                        >
+                          画像と押し方を見る
+                        </button>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
@@ -1037,6 +1280,13 @@ export default function RadarPage() {
           </Module>
         </div>
       )}
+
+      {selectedPoint ? (
+        <PointDetailSheet
+          point={selectedPoint}
+          onClose={() => setSelectedPoint(null)}
+        />
+      ) : null}
 
       <div className="pb-4 text-[11px] font-bold leading-5 text-slate-400">
         ※ 未病レーダーはセルフケア支援です。強い症状がある場合は無理をせず、必要に応じて医療機関に相談してください。
