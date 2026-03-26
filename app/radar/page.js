@@ -266,7 +266,7 @@ export default function RadarPage() {
 
   const [tab, setTab] = useState("forecast");
   const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
-  const [showProfileDetail, setShowProfileDetail] = useState(false);
+  const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
 
   const requestSeqRef = useRef(0);
 
@@ -435,6 +435,49 @@ export default function RadarPage() {
       }
     } finally {
       setSavingPreset(false);
+    }
+  }
+
+  async function openLatestResultDetail() {
+    try {
+      setOpeningProfileDetail(true);
+      setError("");
+
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+
+      if (!token) {
+        router.push("/history");
+        return;
+      }
+
+      const res = await fetch("/api/diagnosis/v2/events/list?limit=1", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(json?.error || "最新の体質履歴を取得できませんでした。");
+      }
+
+      const row = Array.isArray(json?.data) ? json.data[0] : null;
+      const resultId = row?.source_event_id || row?.notes?.source_event_id || null;
+
+      if (resultId) {
+        router.push(`/result/${encodeURIComponent(resultId)}?from=history`);
+        return;
+      }
+
+      router.push("/history");
+    } catch (e) {
+      console.error("openLatestResultDetail failed:", e);
+      router.push("/history");
+    } finally {
+      setOpeningProfileDetail(false);
     }
   }
 
@@ -736,10 +779,7 @@ export default function RadarPage() {
           </Module>
 
           <Module className="p-4">
-            <button
-              onClick={() => setShowProfileDetail((v) => !v)}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-4 text-left"
-            >
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-4">
               <div className="min-w-0">
                 <div className="text-[11px] font-extrabold text-slate-500">
                   あなたの体質
@@ -747,7 +787,14 @@ export default function RadarPage() {
                 <div className="mt-1 text-sm font-extrabold text-slate-900">
                   {coreLabel?.title || "—"}
                 </div>
-                <div className="mt-1 flex flex-wrap gap-2">
+
+                {coreLabel?.short ? (
+                  <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+                    {coreLabel.short}
+                  </div>
+                ) : null}
+
+                <div className="mt-2 flex flex-wrap gap-2">
                   {subLabelObjects.slice(0, 2).map((s) => (
                     <span
                       key={s.code}
@@ -757,36 +804,22 @@ export default function RadarPage() {
                     </span>
                   ))}
                 </div>
-              </div>
-
-              <div className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600">
-                {showProfileDetail ? "閉じる" : "詳しく見る"}
-              </div>
-            </button>
-
-            {showProfileDetail ? (
-              <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                {coreLabel?.short ? (
-                  <div className="text-[13px] font-bold leading-6 text-slate-700">
-                    {coreLabel.short}
-                  </div>
-                ) : null}
 
                 {primaryLine ? (
-                  <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                    <div className="text-[11px] font-extrabold text-slate-500">
-                      負担が出やすいライン
-                    </div>
-                    <div className="mt-1 text-sm font-extrabold text-slate-900">
-                      {primaryLine.title}
-                    </div>
-                    <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
-                      {primaryLine.body_area}
-                    </div>
+                  <div className="mt-2 text-[11px] font-bold text-slate-500">
+                    負担が出やすいライン：{primaryLine.title}
                   </div>
                 ) : null}
               </div>
-            ) : null}
+
+              <button
+                onClick={openLatestResultDetail}
+                disabled={openingProfileDetail}
+                className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600 disabled:opacity-60"
+              >
+                {openingProfileDetail ? "開いています…" : "詳しく見る"}
+              </button>
+            </div>
           </Module>
 
           <Module className="p-5">
