@@ -6,14 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import { supabase } from "@/lib/supabaseClient";
-import { SYMPTOM_LABELS, getCoreLabel, getSubLabels, getMeridianLine } from "@/lib/diagnosis/v2/labels";
+import {
+  SYMPTOM_LABELS,
+  getCoreLabel,
+  getSubLabels,
+  getMeridianLine,
+} from "@/lib/diagnosis/v2/labels";
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
 import {
   IconChevron,
   IconMemo,
   IconCompass,
-  IconRobot,
   IconBolt,
   IconBrain,
   IconRadar,
@@ -88,10 +92,26 @@ function SoftPanel({ tone = "mint", title, icon, right, children }) {
       bar: "bg-[var(--accent)]",
       title: "text-[var(--accent-ink)]",
     },
-    violet: { wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]", bar: "bg-[#6d5bd0]", title: "text-[#3b2f86]" },
-    teal: { wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]", bar: "bg-[#0f766e]", title: "text-[#115e59]" },
-    amber: { wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]", bar: "bg-[#b45309]", title: "text-[#7c2d12]" },
-    slate: { wrap: "bg-[color-mix(in_srgb,#eef2ff,white_40%)]", bar: "bg-slate-700", title: "text-slate-800" },
+    violet: {
+      wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]",
+      bar: "bg-[#6d5bd0]",
+      title: "text-[#3b2f86]",
+    },
+    teal: {
+      wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]",
+      bar: "bg-[#0f766e]",
+      title: "text-[#115e59]",
+    },
+    amber: {
+      wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]",
+      bar: "bg-[#b45309]",
+      title: "text-[#7c2d12]",
+    },
+    slate: {
+      wrap: "bg-[color-mix(in_srgb,#eef2ff,white_40%)]",
+      bar: "bg-slate-700",
+      title: "text-slate-800",
+    },
   };
   const t = tones[tone] || tones.mint;
 
@@ -119,7 +139,7 @@ function SoftPanel({ tone = "mint", title, icon, right, children }) {
 function SegmentedTabs({ value, onChange }) {
   const tabs = [
     { key: "overview", label: "概要" },
-    { key: "explain", label: "解説" },
+    { key: "compat", label: "天気との相性" },
     { key: "save", label: "保存" },
   ];
 
@@ -137,7 +157,9 @@ function SegmentedTabs({ value, onChange }) {
                   onClick={() => onChange(t.key)}
                   className={[
                     "h-10 rounded-[14px] text-sm font-extrabold tracking-tight transition active:scale-[0.99]",
-                    active ? "bg-[var(--mint)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]" : "text-slate-600",
+                    active
+                      ? "bg-[var(--mint)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]"
+                      : "text-slate-600",
                   ].join(" ")}
                 >
                   {t.label}
@@ -152,79 +174,42 @@ function SegmentedTabs({ value, onChange }) {
 }
 
 /* -----------------------------
- * Explain split（互換維持）
- * ---------------------------- */
-function splitExplain(text) {
-  const raw = (text || "").trim();
-  if (!raw) return { p1: "", p2: "" };
-
-  const normalize = (s) =>
-    s
-      .replace(/^#+\s*/gm, "")
-      .replace(/[「」]/g, "")
-      .replace(/\r\n/g, "\n")
-      .trim();
-
-  const t = normalize(raw);
-
-  const h1 = "いまの体のクセ（今回のまとめ）";
-  const h2 = "体調の揺れを予報で先回り（未病レーダー）";
-
-  const i1 = t.indexOf(h1);
-  const i2 = t.indexOf(h2);
-
-  if (i1 === -1 && i2 === -1) return { p1: t, p2: "" };
-  if (i1 !== -1 && i2 === -1) return { p1: t.slice(i1 + h1.length).trim() || t, p2: "" };
-  if (i1 === -1 && i2 !== -1) return { p1: t, p2: t.slice(i2 + h2.length).trim() || "" };
-
-  const p1 = t.slice(i1 + h1.length, i2).trim();
-  const p2 = t.slice(i2 + h2.length).trim();
-
-  return { p1: p1 || t.slice(0, i2).trim(), p2: p2 || "" };
-}
-
-/* -----------------------------
  * Rule-based explain（即表示）
  * ---------------------------- */
-function buildRuleExplainClient({ symptomLabel, core, subLabels, meridianPrimary, meridianSecondary, answers, computed }) {
-  const envSensitivityJa = (n) => {
-    if (n <= 0) return "ほとんど影響なし";
-    if (n === 1) return "たまに影響を受ける";
-    if (n === 2) return "わりと影響を受ける";
-    return "かなり影響を受ける";
-  };
-  const envVectorJa = (v) => {
-    const map = {
-      pressure_shift: "気圧の変化",
-      temp_swing: "寒暖差",
-      humidity_up: "湿度が上がる変化",
-      dryness_up: "乾燥が強まる変化",
-      wind_strong: "強風・冷風",
-    };
-    return map[v] || v;
-  };
-
+function buildRuleExplainClient({
+  symptomLabel,
+  core,
+  subLabels,
+  meridianPrimary,
+  meridianSecondary,
+  computed,
+}) {
   const obs = Number(computed?.axes?.obstruction_score);
-  const obsLevel = Number.isFinite(obs) ? (obs >= 0.7 ? "強め" : obs >= 0.4 ? "中くらい" : "軽め") : "—";
-
-  const envSens = Math.max(0, Math.min(3, Number(answers?.env_sensitivity ?? 0) || 0));
-  const envVecRaw = Array.isArray(answers?.env_vectors)
-    ? answers.env_vectors.filter((x) => x && x !== "none").slice(0, 2)
-    : [];
-  const envVecJa = envVecRaw.length ? envVecRaw.map(envVectorJa).join("・") : "特になし";
+  const obsLevel = Number.isFinite(obs)
+    ? obs >= 0.7
+      ? "強め"
+      : obs >= 0.4
+      ? "中くらい"
+      : "軽め"
+    : "—";
 
   const subLine = subLabels?.length
     ? subLabels
-        .map((s) => `・${s.title}${s.short ? `（${s.short}）` : ""}：${(s.action_hint || "").trim()}`.trim())
+        .map(
+          (s) =>
+            `・${s.title}${s.short ? `（${s.short}）` : ""}：${(s.action_hint || "").trim()}`.trim()
+        )
         .join("\n")
     : "・今回は強い偏りは見られませんでした（バランス良好）。";
 
   const meridianLine = [
     meridianPrimary ? `主：${meridianPrimary.title}（${meridianPrimary.body_area}）` : "主：今回は強い偏りなし",
-    meridianSecondary ? `副：${meridianSecondary.title}（${meridianSecondary.body_area}）` : "副：今回は強い偏りなし",
+    meridianSecondary
+      ? `副：${meridianSecondary.title}（${meridianSecondary.body_area}）`
+      : "副：今回は強い偏りなし",
   ].join("\n");
 
-  const p1 = [
+  return [
     `今回のお悩みは「${symptomLabel}」でした。`,
     `体質の軸は「${core?.title || "—"}」です。`,
     core?.tcm_hint || "",
@@ -234,14 +219,259 @@ function buildRuleExplainClient({ symptomLabel, core, subLabels, meridianPrimary
   ]
     .filter(Boolean)
     .join("\n");
+}
 
-  const p2 = [
-    `環境変化の影響は「${envSensitivityJa(envSens)}」で、引き金になりやすい方向は「${envVecJa}」です。`,
-    `未病レーダーでは、日々の気象の変化とあなたの結果を組み合わせて「揺れやすい日」を予報として先回りできます。`,
-    `予報に合わせて【今日の生活・食養生ヒント】や【監修ケア（ツボ・ストレッチ）】の提案につなげられます（ここでは中身は出しません）。`,
-  ].join("\n");
+/* -----------------------------
+ * Weather compatibility
+ * ---------------------------- */
+function clamp(v, min, max) {
+  if (!Number.isFinite(v)) return min;
+  if (v < min) return min;
+  if (v > max) return max;
+  return v;
+}
 
-  return { p1, p2 };
+function round2(v) {
+  return Math.round(v * 100) / 100;
+}
+
+function buildWeatherCompatibility({
+  answers,
+  computed,
+  symptomKey,
+  core,
+  subLabels,
+}) {
+  const subCodes = Array.isArray(computed?.sub_labels) ? computed.sub_labels : [];
+  const coreCode = computed?.core_code || "";
+  const envSensitivity = clamp(Number(answers?.env_sensitivity ?? 0) || 0, 0, 3);
+  const envVectors = Array.isArray(answers?.env_vectors)
+    ? answers.env_vectors.filter((x) => x && x !== "none")
+    : [];
+
+  const thermoAnswer = answers?.thermo || answers?.cold_heat || "neutral";
+
+  const scores = {
+    pressure_down: 0,
+    pressure_up: 0,
+    cold: 0,
+    heat: 0,
+    damp: 0,
+    dry: 0,
+  };
+
+  // sub label contributions (Radar寄り)
+  for (const label of subCodes) {
+    switch (label) {
+      case "qi_stagnation":
+        scores.pressure_down += 0.14;
+        scores.pressure_up += 0.08;
+        scores.heat += 0.06;
+        scores.damp += 0.04;
+        break;
+      case "qi_deficiency":
+        scores.pressure_down += 0.1;
+        scores.cold += 0.14;
+        scores.damp += 0.1;
+        break;
+      case "blood_deficiency":
+        scores.cold += 0.12;
+        scores.dry += 0.1;
+        scores.pressure_down += 0.06;
+        break;
+      case "blood_stasis":
+        scores.pressure_down += 0.1;
+        scores.pressure_up += 0.04;
+        scores.cold += 0.08;
+        scores.damp += 0.05;
+        break;
+      case "fluid_damp":
+        scores.damp += 0.22;
+        scores.cold += 0.06;
+        scores.pressure_down += 0.04;
+        break;
+      case "fluid_deficiency":
+        scores.dry += 0.22;
+        scores.heat += 0.16;
+        scores.pressure_up += 0.05;
+        break;
+      default:
+        break;
+    }
+  }
+
+  // core nuance
+  if (coreCode.includes("batt_small")) {
+    for (const k of Object.keys(scores)) scores[k] += 0.08;
+  }
+  if (coreCode.includes("batt_large")) {
+    for (const k of Object.keys(scores)) scores[k] -= 0.03;
+  }
+  if (coreCode.startsWith("accel")) {
+    scores.pressure_down += 0.06;
+    scores.pressure_up += 0.05;
+    scores.heat += 0.05;
+  }
+  if (coreCode.startsWith("brake")) {
+    scores.cold += 0.08;
+    scores.damp += 0.1;
+    scores.pressure_down += 0.03;
+  }
+
+  // thermo self-report is intentionally weak
+  if (thermoAnswer === "heat") scores.heat += 0.08;
+  if (thermoAnswer === "cold") scores.cold += 0.08;
+
+  // env vectors
+  if (envVectors.includes("pressure_shift")) {
+    scores.pressure_down += 0.12;
+    scores.pressure_up += 0.12;
+  }
+  if (envVectors.includes("temp_swing")) {
+    scores.cold += 0.1;
+    scores.heat += 0.1;
+  }
+  if (envVectors.includes("humidity_up")) {
+    scores.damp += 0.12;
+  }
+  if (envVectors.includes("dryness_up")) {
+    scores.dry += 0.1;
+  }
+  if (envVectors.includes("wind_strong")) {
+    scores.pressure_down += 0.03;
+    scores.pressure_up += 0.03;
+  }
+
+  // overall sensitivity
+  for (const k of Object.keys(scores)) {
+    scores[k] += envSensitivity * 0.03;
+    scores[k] = round2(Math.max(0, scores[k]));
+  }
+
+  const items = Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([key, score]) => ({
+      key,
+      score,
+      label: weatherLabel(key),
+      body: weatherBody(key, symptomKey, coreCode, subCodes),
+    }));
+
+  return {
+    intro: buildCompatIntro({ core, subLabels, symptomKey }),
+    items,
+    signs: buildLikelySigns({ symptomKey, coreCode, subCodes }),
+    radarBridge: buildRadarBridge({ symptomKey }),
+  };
+}
+
+function weatherLabel(key) {
+  const map = {
+    pressure_down: "気圧が下がる日",
+    pressure_up: "気圧が上がる日",
+    cold: "冷え込む日",
+    heat: "気温が上がりやすい日",
+    damp: "湿っぽい日",
+    dry: "乾燥しやすい日",
+  };
+  return map[key] || key;
+}
+
+function weatherBody(key, symptomKey, coreCode, subCodes) {
+  const hasQiStag = subCodes.includes("qi_stagnation");
+  const hasBloodDef = subCodes.includes("blood_deficiency");
+  const hasFluidDef = subCodes.includes("fluid_deficiency");
+  const hasFluidDamp = subCodes.includes("fluid_damp");
+  const isBattSmall = coreCode.includes("batt_small");
+  const isAccel = coreCode.startsWith("accel");
+
+  if (key === "pressure_down") {
+    if (symptomKey === "headache") {
+      return "変化に押される日に、首肩やこめかみの緊張が強まりやすく、巡りの詰まりから頭痛につながりやすくなります。";
+    }
+    return "変化に押される日に、切り替えがうまくいかず、緊張や巡りの詰まりが出やすくなります。";
+  }
+
+  if (key === "pressure_up") {
+    return "張りつめた感じや、頭や上半身の詰まりが出やすい方向です。無理に詰め込まず、少しゆるめる意識が合います。";
+  }
+
+  if (key === "cold") {
+    if (hasBloodDef || isBattSmall) {
+      return "冷え込む日は、支える余力が削れやすく、首肩のこわばりや消耗として出やすい方向です。";
+    }
+    return "冷え込む日は、体が縮こまりやすく、こわばりやだるさとして出やすい方向です。";
+  }
+
+  if (key === "heat") {
+    if (hasFluidDef || isAccel) {
+      return "気温が上がる日は、熱や刺激がこもりやすく、上半身の張りやのぼせ感につながりやすい方向です。";
+    }
+    return "暑さや熱こもりで、詰まりや疲れが出やすい方向です。";
+  }
+
+  if (key === "damp") {
+    if (symptomKey === "headache") {
+      return "湿っぽい日は、重さが加わって巡りの悪さが増し、頭や体が重く感じやすくなります。";
+    }
+    if (hasFluidDamp) {
+      return "湿っぽい日は、重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
+    }
+    return "湿っぽい日は、重さが増して動き出しにくくなりやすい方向です。";
+  }
+
+  if (key === "dry") {
+    if (hasFluidDef || hasBloodDef) {
+      return "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚や頭の疲れとして出やすい方向です。";
+    }
+    return "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
+  }
+
+  return "この方向の天気変化で体調が揺れやすい傾向があります。";
+}
+
+function buildCompatIntro({ core, subLabels, symptomKey }) {
+  const subShorts = Array.isArray(subLabels) ? subLabels.map((s) => s.short).filter(Boolean) : [];
+  const subText = subShorts.length ? subShorts.join("・") : "大きな偏りなし";
+
+  return `${core?.title || "今回の体質"}は、${subText}の傾向が重なることで、天気の変化を受けた時の崩れ方に特徴が出やすいタイプです。特に「${SYMPTOM_LABELS[symptomKey] || symptomKey}」では、外の変化が首肩・頭まわりや全身の重さとして現れやすくなります。`;
+}
+
+function buildLikelySigns({ symptomKey, subCodes }) {
+  if (symptomKey === "headache") {
+    return [
+      "首肩〜こめかみが張ってくる",
+      "頭が重い・すっきりしない",
+      "呼吸が浅い感じになる",
+      "朝の立ち上がりが重い",
+    ];
+  }
+  if (symptomKey === "sleep") {
+    return [
+      "夜に切り替えにくい",
+      "頭や体が緩みにくい",
+      "眠っても疲れが残る",
+    ];
+  }
+  if (symptomKey === "mood") {
+    return [
+      "気分が詰まる",
+      "切り替えに時間がかかる",
+      "重さやだるさが先に来る",
+    ];
+  }
+
+  if (subCodes.includes("fluid_damp")) {
+    return ["体が重い", "朝が動きにくい", "むくみっぽさが出る"];
+  }
+
+  return ["だるさが出る", "こわばりや重さが残る", "切り替えにくくなる"];
+}
+
+function buildRadarBridge({ symptomKey }) {
+  const symptomText = SYMPTOM_LABELS[symptomKey] || symptomKey;
+  return `未病レーダーでは、その日の天気の変化とあなたの体質を組み合わせて、「今日はどの要素が響きやすいか」「日中のどの時間帯に気をつけたいか」「${symptomText}に対してどんなツボや食養生が合いやすいか」を先回りして見られます。`;
 }
 
 /* -----------------------------
@@ -263,12 +493,6 @@ function ResultPage({ params }) {
   const [attaching, setAttaching] = useState(false);
   const [toast, setToast] = useState("");
 
-  const [explainText, setExplainText] = useState("");
-  const [explainModel, setExplainModel] = useState("");
-  const [explainCreatedAt, setExplainCreatedAt] = useState("");
-  const [loadingExplain, setLoadingExplain] = useState(false);
-  const [explainError, setExplainError] = useState("");
-
   const attachAfterLogin = searchParams?.get("attach") === "1";
   const autoAttachRan = useRef(false);
 
@@ -280,7 +504,6 @@ function ResultPage({ params }) {
     if (from === "check") return "/check";
     if (from === "home") return "/";
     if (from === "radar") return "/radar";
-
     if (attachAfterLogin) return "/check";
     return "/check";
   }, [from, attachAfterLogin]);
@@ -324,14 +547,6 @@ function ResultPage({ params }) {
         }
 
         setEvent(json.data);
-
-        // cached explain
-        const t = json.data?.ai_explain_text || "";
-        if (t) {
-          setExplainText(t);
-          setExplainModel(json.data?.ai_explain_model || "");
-          setExplainCreatedAt(json.data?.ai_explain_created_at || "");
-        }
       } catch (e) {
         console.error(e);
         if (!mounted) return;
@@ -364,15 +579,22 @@ function ResultPage({ params }) {
   const computed = event?.computed || {};
   const answers = event?.answers || {};
 
+  const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
+
   const symptomLabel = useMemo(() => {
-    const k = answers?.symptom_focus || event?.symptom_focus || "fatigue";
-    return SYMPTOM_LABELS[k] || "だるさ・疲労";
-  }, [answers?.symptom_focus, event?.symptom_focus]);
+    return SYMPTOM_LABELS[symptomKey] || "だるさ・疲労";
+  }, [symptomKey]);
 
   const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
   const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
-  const meridianPrimary = useMemo(() => getMeridianLine(computed?.primary_meridian), [computed?.primary_meridian]);
-  const meridianSecondary = useMemo(() => getMeridianLine(computed?.secondary_meridian), [computed?.secondary_meridian]);
+  const meridianPrimary = useMemo(
+    () => getMeridianLine(computed?.primary_meridian),
+    [computed?.primary_meridian]
+  );
+  const meridianSecondary = useMemo(
+    () => getMeridianLine(computed?.secondary_meridian),
+    [computed?.secondary_meridian]
+  );
 
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
@@ -384,12 +606,19 @@ function ResultPage({ params }) {
       subLabels,
       meridianPrimary,
       meridianSecondary,
-      answers,
       computed,
     });
-  }, [symptomLabel, core, subLabels, meridianPrimary, meridianSecondary, answers, computed]);
+  }, [symptomLabel, core, subLabels, meridianPrimary, meridianSecondary, computed]);
 
-  const aiParts = useMemo(() => splitExplain(explainText), [explainText]);
+  const weatherCompat = useMemo(() => {
+    return buildWeatherCompatibility({
+      answers,
+      computed,
+      symptomKey,
+      core,
+      subLabels,
+    });
+  }, [answers, computed, symptomKey, core, subLabels]);
 
   // Actions
   async function attachToAccount(silent = false) {
@@ -419,32 +648,6 @@ function ResultPage({ params }) {
       setTimeout(() => setToast(""), 2500);
     } finally {
       setAttaching(false);
-    }
-  }
-
-  async function requestExplain() {
-    if (loadingExplain) return;
-    setExplainError("");
-    setLoadingExplain(true);
-
-    try {
-      const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/explain`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "AI補足の生成に失敗しました");
-
-      const text = json?.data?.text || json?.data?.ai_explain_text || "";
-      if (!text) throw new Error("AI補足が空でした");
-
-      setExplainText(text);
-      setExplainModel(json?.data?.model || json?.data?.ai_explain_model || "");
-      setExplainCreatedAt(json?.data?.created_at || json?.data?.ai_explain_created_at || "");
-    } catch (e) {
-      setExplainError(e?.message || String(e));
-    } finally {
-      setLoadingExplain(false);
     }
   }
 
@@ -484,7 +687,6 @@ function ResultPage({ params }) {
     </button>
   );
 
-  // UI states
   if (loadingEvent) {
     return (
       <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
@@ -507,7 +709,11 @@ function ResultPage({ params }) {
     return (
       <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
-          <ModuleHeader icon={<IconResult />} title="結果が見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
+          <ModuleHeader
+            icon={<IconResult />}
+            title="結果が見つかりません"
+            sub="期限切れ/削除、または保存失敗の可能性"
+          />
           <div className="px-5 pb-6 pt-4 space-y-4">
             <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
               <div className="text-sm leading-7 text-slate-700">
@@ -521,7 +727,6 @@ function ResultPage({ params }) {
     );
   }
 
-  // Main UI
   return (
     <AppShell title="体質チェック結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
@@ -534,22 +739,22 @@ function ResultPage({ params }) {
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-2 pb-3">
           <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
-            {/* お悩み */}
             <div className="px-5 pt-5 pb-4">
               <div className="min-w-0">
                 <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
-                <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">{symptomLabel}</div>
+                <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
+                  {symptomLabel}
+                </div>
                 <div className="mt-2 text-xs font-bold text-slate-600">
-                  チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
+                  チェック作成：
+                  {event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
                 </div>
               </div>
             </div>
 
-            {/* 体質の軸（カード内にイラスト） */}
             <div className="px-5 pb-5">
               <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
                 <div className="flex items-start justify-between gap-4">
-                  {/* 左：テキスト */}
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
 
@@ -566,7 +771,6 @@ function ResultPage({ params }) {
                     ) : null}
                   </div>
 
-                  {/* 右：1:1 イラスト枠（人物用） */}
                   <div className="shrink-0">
                     <div className="grid aspect-square w-[92px] place-items-center overflow-hidden rounded-[18px] bg-white ring-1 ring-[var(--ring)]">
                       <CoreIllust
@@ -578,7 +782,6 @@ function ResultPage({ params }) {
                   </div>
                 </div>
 
-                {/* 下：説明文 */}
                 <div className="mt-3 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
               </div>
             </div>
@@ -586,10 +789,8 @@ function ResultPage({ params }) {
         </div>
       </div>
 
-      {/* Segmented tabs */}
       <SegmentedTabs value={tab} onChange={setTab} />
 
-      {/* Content */}
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="space-y-5 pb-3">
           {/* --------------------
@@ -603,23 +804,28 @@ function ResultPage({ params }) {
                   <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
                     {subLabels?.length ? (
                       <div className="space-y-3">
-{subLabels.map((s) => (
-  <div key={s.code || s.title} className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4">
-    <div className="flex gap-3">
-      <div className="shrink-0 pt-0.5 text-[var(--accent)]">
-        <SubIllust code={s.code} size="sm" />
-      </div>
+                        {subLabels.map((s) => (
+                          <div
+                            key={s.code || s.title}
+                            className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4"
+                          >
+                            <div className="flex gap-3">
+                              <div className="shrink-0 pt-0.5 text-[var(--accent)]">
+                                <SubIllust code={s.code} size="sm" />
+                              </div>
 
-      <div className="min-w-0">
-        <div className="text-sm font-extrabold text-slate-900">
-          {s.title}
-          {s.short ? <span className="text-slate-500">（{s.short}）</span> : null}
-        </div>
-        <div className="mt-2 text-sm leading-7 text-slate-700">{s.action_hint || "（ヒントなし）"}</div>
-      </div>
-    </div>
-  </div>
-))}
+                              <div className="min-w-0">
+                                <div className="text-sm font-extrabold text-slate-900">
+                                  {s.title}
+                                  {s.short ? <span className="text-slate-500">（{s.short}）</span> : null}
+                                </div>
+                                <div className="mt-2 text-sm leading-7 text-slate-700">
+                                  {s.action_hint || "（ヒントなし）"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <div className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4 text-sm text-slate-700">
@@ -631,11 +837,15 @@ function ResultPage({ params }) {
                   <SoftPanel tone="violet" title="体の張りやすい場所（主）" icon={<IconCompass />}>
                     {meridianPrimary ? (
                       <>
-                        <div className="text-base font-extrabold text-slate-900">{meridianPrimary.title}</div>
+                        <div className="text-base font-extrabold text-slate-900">
+                          {meridianPrimary.title}
+                        </div>
                         <div className="mt-1 text-xs font-bold text-slate-500">
                           {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
                         </div>
-                        <div className="mt-2 text-sm leading-7 text-slate-700">{meridianPrimary.organs_hint}</div>
+                        <div className="mt-2 text-sm leading-7 text-slate-700">
+                          {meridianPrimary.organs_hint}
+                        </div>
                       </>
                     ) : (
                       <div className="text-sm text-slate-700">今回は強い偏りなし</div>
@@ -645,11 +855,15 @@ function ResultPage({ params }) {
                   <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconCompass />}>
                     {meridianSecondary ? (
                       <>
-                        <div className="text-base font-extrabold text-slate-900">{meridianSecondary.title}</div>
+                        <div className="text-base font-extrabold text-slate-900">
+                          {meridianSecondary.title}
+                        </div>
                         <div className="mt-1 text-xs font-bold text-slate-500">
                           {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
                         </div>
-                        <div className="mt-2 text-sm leading-7 text-slate-700">{meridianSecondary.organs_hint}</div>
+                        <div className="mt-2 text-sm leading-7 text-slate-700">
+                          {meridianSecondary.organs_hint}
+                        </div>
                       </>
                     ) : (
                       <div className="text-sm text-slate-700">今回は強い偏りなし</div>
@@ -671,12 +885,16 @@ function ResultPage({ params }) {
                         <div className="text-sm font-bold text-slate-800">
                           ログイン中：<span className="font-extrabold">{session.user?.email}</span>
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-500">今日の「予報と対策」は無料で見られます。</div>
+                        <div className="mt-2 text-xs font-bold text-slate-500">
+                          今日の「予報と対策」は無料で見られます。
+                        </div>
                       </div>
 
                       {isAttached ? (
                         <div className="rounded-[22px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-emerald-800">この結果は保存済みです ✅</div>
+                          <div className="text-sm font-extrabold text-emerald-800">
+                            この結果は保存済みです ✅
+                          </div>
                           <div className="mt-4">
                             <Button onClick={() => router.push("/radar")}>今日の予報と対策へ</Button>
                           </div>
@@ -686,7 +904,9 @@ function ResultPage({ params }) {
                           <div className="text-sm font-extrabold text-slate-900">
                             この結果を保存して、今日の未病レーダーへ進みましょう。
                           </div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
+                          <div className="mt-2 text-xs font-bold text-slate-600">
+                            登録だけでは課金されません（無料の範囲で使えます）
+                          </div>
                           <div className="mt-4">
                             <Button onClick={() => attachToAccount(false)} disabled={attaching}>
                               {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
@@ -699,8 +919,8 @@ function ResultPage({ params }) {
                         <Button variant="ghost" onClick={() => router.push("/check")}>
                           もう一度チェックする
                         </Button>
-                        <Button variant="ghost" onClick={() => setTab("explain")}>
-                          解説を見る
+                        <Button variant="ghost" onClick={() => setTab("compat")}>
+                          天気との相性を見る
                         </Button>
                       </div>
                     </>
@@ -710,11 +930,15 @@ function ResultPage({ params }) {
                         <div className="text-base font-extrabold tracking-tight text-slate-900">
                           無料で保存して、今日の「予報と対策」へ。
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
+                        <div className="mt-2 text-xs font-bold text-slate-600">
+                          登録だけでは課金されません（無料の範囲で使えます）
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Button onClick={goSignupToRadar}>無料で保存して、今日の予報と対策を見る</Button>
+                        <Button onClick={goSignupToRadar}>
+                          無料で保存して、今日の予報と対策を見る
+                        </Button>
                         <Button variant="ghost" onClick={goLoginToRadar}>
                           すでに登録済みの方はこちら（ログイン）
                         </Button>
@@ -730,113 +954,57 @@ function ResultPage({ params }) {
           ) : null}
 
           {/* --------------------
-           * TAB: Explain
+           * TAB: Compatibility
            * -------------------- */}
-          {tab === "explain" ? (
+          {tab === "compat" ? (
             <>
               <Card>
-                <CardHeader icon={<IconRobot />} title="解説" sub="ルールの説明 → 必要ならAI補足" />
+                <CardHeader
+                  icon={<IconRadar />}
+                  title="天気との相性"
+                  sub="体質と天気の変化が重なると、どんな崩れ方をしやすいか"
+                />
                 <div className="px-5 pb-6 pt-4 space-y-4">
-                  {/* Rule explain (always) */}
-                  <details open className="group rounded-[22px] ring-1 ring-[var(--ring)] bg-white overflow-hidden">
-                    <summary className="cursor-pointer select-none px-4 py-4 list-none [&::-webkit-details-marker]:hidden">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-[color-mix(in_srgb,#ede9fe,white_35%)] text-[#3b2f86] ring-1 ring-[var(--ring)]">
-                            <IconBrain />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-extrabold text-slate-900">体のクセ（ルール解説）</div>
-                            <div className="mt-1 text-[11px] font-medium text-slate-500">AIなし・すぐ読める</div>
-                          </div>
-                        </div>
-                        <div className="text-slate-500">
-                          <IconChevron />
-                        </div>
-                      </div>
-                    </summary>
-                    <div className="px-5 pb-5 pt-0">
-                      <div className="rounded-[18px] bg-[color-mix(in_srgb,#ede9fe,white_55%)] ring-1 ring-[var(--ring)] p-4">
-                        <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{ruleExplain.p1}</div>
-                      </div>
+                  <SoftPanel tone="violet" title="この体質が揺れやすい理由" icon={<IconBrain />}>
+                    <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">
+                      {ruleExplain}
                     </div>
-                  </details>
+                  </SoftPanel>
 
-                  <details open className="group rounded-[22px] ring-1 ring-[var(--ring)] bg-white overflow-hidden">
-                    <summary className="cursor-pointer select-none px-4 py-4 list-none [&::-webkit-details-marker]:hidden">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] text-[#115e59] ring-1 ring-[var(--ring)]">
-                            <IconRadar />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-sm font-extrabold text-slate-900">揺れやすい条件（環境の影響）</div>
-                            <div className="mt-1 text-[11px] font-medium text-slate-500">天気・寒暖差など</div>
-                          </div>
-                        </div>
-                        <div className="text-slate-500">
-                          <IconChevron />
-                        </div>
-                      </div>
-                    </summary>
-                    <div className="px-5 pb-5 pt-0">
-                      <div className="rounded-[18px] bg-[color-mix(in_srgb,#d1fae5,white_55%)] ring-1 ring-[var(--ring)] p-4">
-                        <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{ruleExplain.p2}</div>
-                      </div>
-                    </div>
-                  </details>
+                  <SoftPanel tone="teal" title="影響を受けやすい天気変化" icon={<IconRadar />}>
+                    <div className="text-sm leading-8 text-slate-800">{weatherCompat.intro}</div>
 
-                  {/* Optional AI */}
-                  <Card className="bg-white">
-                    <div className="px-5 py-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-extrabold text-slate-900">AIの補足（任意）</div>
-                          <div className="mt-1 text-xs font-bold text-slate-500">読みやすい言い換えだけ。対策はここでは出しません。</div>
-                        </div>
-                        <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_55%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
-                          <IconRobot />
-                        </div>
-                      </div>
-
-                      {explainText ? (
-                        <div className="mt-4 space-y-3">
-                          <div className="rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_55%)] ring-1 ring-[var(--ring)] p-4">
-                            <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">{`${aiParts.p1}\n\n${aiParts.p2}`.trim()}</div>
-                          </div>
-
-                          {(explainCreatedAt || explainModel) ? (
-                            <div className="text-right text-[11px] font-bold text-slate-400">
-                              {explainCreatedAt ? `生成：${new Date(explainCreatedAt).toLocaleString("ja-JP")}` : ""}
-                              {explainModel ? ` / model: ${explainModel}` : ""}
+                    <div className="mt-4 space-y-3">
+                      {weatherCompat.items.map((item) => (
+                        <div
+                          key={item.key}
+                          className="rounded-[18px] bg-white/80 ring-1 ring-[var(--ring)] p-4"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-sm font-extrabold text-slate-900">{item.label}</div>
+                            <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                              反応しやすさ {item.score}
                             </div>
-                          ) : null}
+                          </div>
+                          <div className="mt-2 text-sm leading-7 text-slate-700">{item.body}</div>
                         </div>
-                      ) : (
-                        <div className="mt-4">
-                          {loadingExplain ? (
-                            <div className="flex items-center gap-3 rounded-[18px] bg-white ring-1 ring-[var(--ring)] p-4">
-                              <div className="h-7 w-7 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
-                              <div className="text-sm font-bold text-slate-700">AI補足を生成中…</div>
-                            </div>
-                          ) : (
-                            <>
-                              {explainError ? (
-                                <div className="rounded-[18px] bg-white ring-1 ring-[var(--ring)] p-4">
-                                  <div className="text-sm font-bold text-rose-700">生成に失敗しました：{explainError}</div>
-                                </div>
-                              ) : null}
-                              <div className="mt-3">
-                                <Button onClick={requestExplain} disabled={loadingExplain}>
-                                  AI補足を生成する（任意）
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
+                      ))}
                     </div>
-                  </Card>
+                  </SoftPanel>
+
+                  <SoftPanel tone="amber" title="天気が重なると出やすいサイン" icon={<IconMemo />}>
+                    <ul className="space-y-2">
+                      {weatherCompat.signs.map((s, idx) => (
+                        <li key={`${s}-${idx}`} className="rounded-[16px] bg-white/80 ring-1 ring-[var(--ring)] px-4 py-3">
+                          <div className="text-sm font-bold text-slate-800">・{s}</div>
+                        </li>
+                      ))}
+                    </ul>
+                  </SoftPanel>
+
+                  <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconBolt />}>
+                    <div className="text-sm leading-8 text-slate-800">{weatherCompat.radarBridge}</div>
+                  </SoftPanel>
 
                   <div className="flex gap-2">
                     <Button variant="ghost" onClick={() => setTab("overview")}>
@@ -855,7 +1023,11 @@ function ResultPage({ params }) {
           {tab === "save" ? (
             <>
               <Card>
-                <CardHeader icon={<IconBolt />} title="保存してレーダーへ" sub="結果は“今後の予報”の精度に効きます" />
+                <CardHeader
+                  icon={<IconBolt />}
+                  title="保存してレーダーへ"
+                  sub="結果は“今後の予報”の精度に効きます"
+                />
                 <div className="px-5 pb-6 pt-4 space-y-4">
                   {loadingAuth ? (
                     <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
@@ -867,20 +1039,28 @@ function ResultPage({ params }) {
                         <div className="text-sm font-bold text-slate-800">
                           ログイン中：<span className="font-extrabold">{session.user?.email}</span>
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-500">保存すると、今日の「予報と対策」にすぐ進めます。</div>
+                        <div className="mt-2 text-xs font-bold text-slate-500">
+                          保存すると、今日の「予報と対策」にすぐ進めます。
+                        </div>
                       </div>
 
                       {isAttached ? (
                         <div className="rounded-[22px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-emerald-800">この結果は保存済みです ✅</div>
+                          <div className="text-sm font-extrabold text-emerald-800">
+                            この結果は保存済みです ✅
+                          </div>
                           <div className="mt-4">
                             <Button onClick={() => router.push("/radar")}>今日の予報と対策へ</Button>
                           </div>
                         </div>
                       ) : (
                         <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-slate-900">この結果を保存しますか？</div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
+                          <div className="text-sm font-extrabold text-slate-900">
+                            この結果を保存しますか？
+                          </div>
+                          <div className="mt-2 text-xs font-bold text-slate-600">
+                            登録だけでは課金されません（無料の範囲で使えます）
+                          </div>
                           <div className="mt-4">
                             <Button onClick={() => attachToAccount(false)} disabled={attaching}>
                               {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
@@ -893,20 +1073,26 @@ function ResultPage({ params }) {
                         <Button variant="ghost" onClick={() => router.push("/check")}>
                           もう一度チェックする
                         </Button>
-                        <Button variant="ghost" onClick={() => setTab("explain")}>
-                          解説を見る
+                        <Button variant="ghost" onClick={() => setTab("compat")}>
+                          天気との相性を見る
                         </Button>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-base font-extrabold tracking-tight text-slate-900">無料で保存して、今日の「予報と対策」へ。</div>
-                        <div className="mt-2 text-xs font-bold text-slate-600">登録だけでは課金されません（無料の範囲で使えます）</div>
+                        <div className="text-base font-extrabold tracking-tight text-slate-900">
+                          無料で保存して、今日の「予報と対策」へ。
+                        </div>
+                        <div className="mt-2 text-xs font-bold text-slate-600">
+                          登録だけでは課金されません（無料の範囲で使えます）
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Button onClick={goSignupToRadar}>無料で保存して、今日の予報と対策を見る</Button>
+                        <Button onClick={goSignupToRadar}>
+                          無料で保存して、今日の予報と対策を見る
+                        </Button>
                         <Button variant="ghost" onClick={goLoginToRadar}>
                           すでに登録済みの方はこちら（ログイン）
                         </Button>
