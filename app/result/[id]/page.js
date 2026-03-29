@@ -15,11 +15,9 @@ import {
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
 import {
-  IconChevron,
   IconMemo,
   IconCompass,
   IconBolt,
-  IconBrain,
   IconRadar,
   IconResult,
 } from "@/components/illust/icons/result";
@@ -107,11 +105,6 @@ function SoftPanel({ tone = "mint", title, icon, right, children }) {
       bar: "bg-[#b45309]",
       title: "text-[#7c2d12]",
     },
-    slate: {
-      wrap: "bg-[color-mix(in_srgb,#eef2ff,white_40%)]",
-      bar: "bg-slate-700",
-      title: "text-slate-800",
-    },
   };
   const t = tones[tone] || tones.mint;
 
@@ -174,54 +167,6 @@ function SegmentedTabs({ value, onChange }) {
 }
 
 /* -----------------------------
- * Rule-based explain（即表示）
- * ---------------------------- */
-function buildRuleExplainClient({
-  symptomLabel,
-  core,
-  subLabels,
-  meridianPrimary,
-  meridianSecondary,
-  computed,
-}) {
-  const obs = Number(computed?.axes?.obstruction_score);
-  const obsLevel = Number.isFinite(obs)
-    ? obs >= 0.7
-      ? "強め"
-      : obs >= 0.4
-      ? "中くらい"
-      : "軽め"
-    : "—";
-
-  const subLine = subLabels?.length
-    ? subLabels
-        .map(
-          (s) =>
-            `・${s.title}${s.short ? `（${s.short}）` : ""}：${(s.action_hint || "").trim()}`.trim()
-        )
-        .join("\n")
-    : "・今回は強い偏りは見られませんでした（バランス良好）。";
-
-  const meridianLine = [
-    meridianPrimary ? `主：${meridianPrimary.title}（${meridianPrimary.body_area}）` : "主：今回は強い偏りなし",
-    meridianSecondary
-      ? `副：${meridianSecondary.title}（${meridianSecondary.body_area}）`
-      : "副：今回は強い偏りなし",
-  ].join("\n");
-
-  return [
-    `今回のお悩みは「${symptomLabel}」でした。`,
-    `体質の軸は「${core?.title || "—"}」です。`,
-    core?.tcm_hint || "",
-    `整えポイントは次の方向です：\n${subLine}`,
-    `張りやすい場所の傾向：\n${meridianLine}`,
-    `詰まり・重さの出やすさ：${obsLevel}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
-/* -----------------------------
  * Weather compatibility
  * ---------------------------- */
 function clamp(v, min, max) {
@@ -233,6 +178,12 @@ function clamp(v, min, max) {
 
 function round2(v) {
   return Math.round(v * 100) / 100;
+}
+
+function getImpactRankLabel(index) {
+  if (index === 0) return "特に影響しやすい";
+  if (index === 1) return "影響しやすい";
+  return "やや影響しやすい";
 }
 
 function buildWeatherCompatibility({
@@ -260,7 +211,6 @@ function buildWeatherCompatibility({
     dry: 0,
   };
 
-  // sub label contributions (Radar寄り)
   for (const label of subCodes) {
     switch (label) {
       case "qi_stagnation":
@@ -300,7 +250,6 @@ function buildWeatherCompatibility({
     }
   }
 
-  // core nuance
   if (coreCode.includes("batt_small")) {
     for (const k of Object.keys(scores)) scores[k] += 0.08;
   }
@@ -318,11 +267,9 @@ function buildWeatherCompatibility({
     scores.pressure_down += 0.03;
   }
 
-  // thermo self-report is intentionally weak
   if (thermoAnswer === "heat") scores.heat += 0.08;
   if (thermoAnswer === "cold") scores.cold += 0.08;
 
-  // env vectors
   if (envVectors.includes("pressure_shift")) {
     scores.pressure_down += 0.12;
     scores.pressure_up += 0.12;
@@ -342,7 +289,6 @@ function buildWeatherCompatibility({
     scores.pressure_up += 0.03;
   }
 
-  // overall sensitivity
   for (const k of Object.keys(scores)) {
     scores[k] += envSensitivity * 0.03;
     scores[k] = round2(Math.max(0, scores[k]));
@@ -351,17 +297,17 @@ function buildWeatherCompatibility({
   const items = Object.entries(scores)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
-    .map(([key, score]) => ({
+    .map(([key], index) => ({
       key,
-      score,
       label: weatherLabel(key),
+      rankLabel: getImpactRankLabel(index),
       body: weatherBody(key, symptomKey, coreCode, subCodes),
     }));
 
   return {
     intro: buildCompatIntro({ core, subLabels, symptomKey }),
     items,
-    signs: buildLikelySigns({ symptomKey, coreCode, subCodes }),
+    signs: buildLikelySigns({ symptomKey, subCodes }),
     radarBridge: buildRadarBridge({ symptomKey }),
   };
 }
@@ -379,7 +325,6 @@ function weatherLabel(key) {
 }
 
 function weatherBody(key, symptomKey, coreCode, subCodes) {
-  const hasQiStag = subCodes.includes("qi_stagnation");
   const hasBloodDef = subCodes.includes("blood_deficiency");
   const hasFluidDef = subCodes.includes("fluid_deficiency");
   const hasFluidDamp = subCodes.includes("fluid_damp");
@@ -496,7 +441,6 @@ function ResultPage({ params }) {
   const attachAfterLogin = searchParams?.get("attach") === "1";
   const autoAttachRan = useRef(false);
 
-  // ✅ “来た元” 判定（from が無い直リンクでも破綻しない）
   const from = (searchParams?.get("from") || "").toLowerCase();
   const backHref = useMemo(() => {
     if (from === "history") return "/history";
@@ -508,7 +452,6 @@ function ResultPage({ params }) {
     return "/check";
   }, [from, attachAfterLogin]);
 
-  // Auth
   useEffect(() => {
     let mounted = true;
 
@@ -530,7 +473,6 @@ function ResultPage({ params }) {
     };
   }, []);
 
-  // Fetch event
   useEffect(() => {
     let mounted = true;
 
@@ -562,7 +504,6 @@ function ResultPage({ params }) {
     };
   }, [id]);
 
-  // Auto-attach legacy (attach=1 after login)
   useEffect(() => {
     if (!attachAfterLogin) return;
     if (loadingAuth) return;
@@ -575,7 +516,6 @@ function ResultPage({ params }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
-  // Derived
   const computed = event?.computed || {};
   const answers = event?.answers || {};
 
@@ -599,17 +539,6 @@ function ResultPage({ params }) {
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
 
-  const ruleExplain = useMemo(() => {
-    return buildRuleExplainClient({
-      symptomLabel,
-      core,
-      subLabels,
-      meridianPrimary,
-      meridianSecondary,
-      computed,
-    });
-  }, [symptomLabel, core, subLabels, meridianPrimary, meridianSecondary, computed]);
-
   const weatherCompat = useMemo(() => {
     return buildWeatherCompatibility({
       answers,
@@ -620,7 +549,6 @@ function ResultPage({ params }) {
     });
   }, [answers, computed, symptomKey, core, subLabels]);
 
-  // Actions
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
@@ -735,7 +663,6 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
-      {/* Hero */}
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-2 pb-3">
           <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
@@ -793,9 +720,6 @@ function ResultPage({ params }) {
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="space-y-5 pb-3">
-          {/* --------------------
-           * TAB: Overview
-           * -------------------- */}
           {tab === "overview" ? (
             <>
               <Card>
@@ -953,9 +877,6 @@ function ResultPage({ params }) {
             </>
           ) : null}
 
-          {/* --------------------
-           * TAB: Compatibility
-           * -------------------- */}
           {tab === "compat" ? (
             <>
               <Card>
@@ -965,12 +886,6 @@ function ResultPage({ params }) {
                   sub="体質と天気の変化が重なると、どんな崩れ方をしやすいか"
                 />
                 <div className="px-5 pb-6 pt-4 space-y-4">
-                  <SoftPanel tone="violet" title="この体質が揺れやすい理由" icon={<IconBrain />}>
-                    <div className="whitespace-pre-wrap text-sm leading-8 text-slate-800">
-                      {ruleExplain}
-                    </div>
-                  </SoftPanel>
-
                   <SoftPanel tone="teal" title="影響を受けやすい天気変化" icon={<IconRadar />}>
                     <div className="text-sm leading-8 text-slate-800">{weatherCompat.intro}</div>
 
@@ -983,7 +898,7 @@ function ResultPage({ params }) {
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-sm font-extrabold text-slate-900">{item.label}</div>
                             <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
-                              反応しやすさ {item.score}
+                              {item.rankLabel}
                             </div>
                           </div>
                           <div className="mt-2 text-sm leading-7 text-slate-700">{item.body}</div>
@@ -995,7 +910,10 @@ function ResultPage({ params }) {
                   <SoftPanel tone="amber" title="天気が重なると出やすいサイン" icon={<IconMemo />}>
                     <ul className="space-y-2">
                       {weatherCompat.signs.map((s, idx) => (
-                        <li key={`${s}-${idx}`} className="rounded-[16px] bg-white/80 ring-1 ring-[var(--ring)] px-4 py-3">
+                        <li
+                          key={`${s}-${idx}`}
+                          className="rounded-[16px] bg-white/80 ring-1 ring-[var(--ring)] px-4 py-3"
+                        >
                           <div className="text-sm font-bold text-slate-800">・{s}</div>
                         </li>
                       ))}
@@ -1017,9 +935,6 @@ function ResultPage({ params }) {
             </>
           ) : null}
 
-          {/* --------------------
-           * TAB: Save
-           * -------------------- */}
           {tab === "save" ? (
             <>
               <Card>
