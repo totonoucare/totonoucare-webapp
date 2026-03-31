@@ -146,6 +146,27 @@ function getForecastText(bundle) {
   );
 }
 
+function getForecastLines(bundle) {
+  const text = String(getForecastText(bundle) || "").trim();
+  if (!text) return [];
+
+  const lines = text
+    .split(/\r?\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^[・•●\-]\s*/, "").trim())
+    .filter(Boolean);
+
+  if (lines.length >= 2) return lines;
+
+  return text
+    .split(/(?<=[。！？])/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^[・•●\-]\s*/, "").trim())
+    .filter(Boolean);
+}
+
 function getRiskContext(bundle) {
   return bundle?.forecast?.computed?.radar_plan_meta?.risk_context || null;
 }
@@ -722,7 +743,7 @@ export default function RadarPage() {
     [bundleDateMode]
   );
 
-  const forecastText = useMemo(() => getForecastText(bundle), [bundle]);
+  const forecastLines = useMemo(() => getForecastLines(bundle), [bundle]);
   const todayRecordDate = getJstTodayTomorrow().today;
   const todayRecordDateLabel = formatTargetDate(todayRecordDate);
 
@@ -976,9 +997,14 @@ export default function RadarPage() {
               <div className="text-sm font-extrabold text-slate-900">
                 {sectionLabels.noticeTitle}
               </div>
-              <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
-                {forecastText}
-              </div>
+              <ul className="mt-3 space-y-2">
+                {forecastLines.map((line, idx) => (
+                  <li key={`${idx}-${line}`} className="flex items-start gap-2 text-[13px] font-bold leading-6 text-slate-700">
+                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </Module>
 
