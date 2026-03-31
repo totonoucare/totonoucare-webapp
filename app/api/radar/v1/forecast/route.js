@@ -1,4 +1,3 @@
-// app/api/radar/v1/forecast/route.js
 import { createClient } from "@supabase/supabase-js";
 
 import {
@@ -26,6 +25,7 @@ import {
   saveForecast,
   saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
+import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
 
 export const runtime = "nodejs";
 
@@ -86,6 +86,32 @@ function getRelativeTargetMode(targetDate) {
   return "explicit";
 }
 
+function serializeLocation(location) {
+  if (!location) return null;
+  return {
+    id: location.id,
+    lat: location.lat,
+    lon: location.lon,
+    timezone: location.timezone,
+    label: location.label || null,
+    display_name: location.display_name || null,
+    region_name: location.region_name || null,
+  };
+}
+
+async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) {
+  const meta = await resolveRadarLocationMeta({ lat, lon, labelHint });
+  return upsertPrimaryRadarLocation({
+    userId,
+    lat,
+    lon,
+    timezone,
+    label: meta.label || labelHint || "primary",
+    displayName: meta.display_name,
+    regionName: meta.region_name,
+  });
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -109,14 +135,25 @@ export async function GET(req) {
     let location = null;
 
     if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      location = await upsertPrimaryRadarLocation({
+      location = await enrichAndSaveLocation({
         userId: user.id,
         lat,
         lon,
         timezone: "Asia/Tokyo",
+        labelHint: "primary",
       });
     } else {
       location = await getPrimaryRadarLocation({ userId: user.id });
+
+      if (location && (!location.display_name || !location.region_name)) {
+        location = await enrichAndSaveLocation({
+          userId: user.id,
+          lat: Number(location.lat),
+          lon: Number(location.lon),
+          timezone: location.timezone || "Asia/Tokyo",
+          labelHint: location.label || "primary",
+        });
+      }
     }
 
     if (!location) {
@@ -142,12 +179,7 @@ export async function GET(req) {
         target_date: targetDate,
         target_mode: mode,
         relative_target_mode: relativeTargetMode,
-        location: {
-          id: location.id,
-          lat: location.lat,
-          lon: location.lon,
-          timezone: location.timezone,
-        },
+        location: serializeLocation(location),
         forecast: existing.forecast,
         care_plan: existing.care_plan,
         debug: {
@@ -310,12 +342,7 @@ export async function GET(req) {
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
-      location: {
-        id: location.id,
-        lat: location.lat,
-        lon: location.lon,
-        timezone: location.timezone,
-      },
+      location: serializeLocation(location),
       forecast,
       care_plan: carePlan,
       debug: {
