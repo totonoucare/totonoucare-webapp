@@ -105,7 +105,7 @@ function getSectionLabels(mode) {
 }
 
 function signalLabel(signal) {
-  if (signal === 2) return "要警戒";
+  if (signal === 2) return "警戒";
   if (signal === 1) return "注意";
   return "安定";
 }
@@ -122,9 +122,21 @@ function signalDotClass(signal) {
   return "bg-emerald-500";
 }
 
+function signalPanelClass(signal) {
+  if (signal === 2) return "border-rose-200 bg-rose-50 text-rose-900";
+  if (signal === 1) return "border-amber-200 bg-amber-50 text-amber-900";
+  return "border-emerald-200 bg-emerald-50 text-emerald-900";
+}
+
+function signalPanelSubtext(signal) {
+  if (signal === 2) return "無理を詰め込みすぎず、早めのケアを意識したい日です。";
+  if (signal === 1) return "少し崩れやすさがあるので、余白を持って過ごしたい日です。";
+  return "大きく崩れにくい見込みですが、普段どおりのケアは続けると安心です。";
+}
+
 function sourceLabel(source) {
-  if (source === "mtest") return "ラインケア";
-  return "体質ケア";
+  if (source === "mtest") return "動きから選んだケア";
+  return "体質から選んだケア";
 }
 
 function sourceBadgeClass(source) {
@@ -133,9 +145,9 @@ function sourceBadgeClass(source) {
 }
 
 function getPointRegionLabel(region) {
-  if (region === "abdomen") return "腹部";
-  if (region === "head_neck") return "頭頸";
-  return "四肢";
+  if (region === "abdomen") return "お腹まわり";
+  if (region === "head_neck") return "頭・首まわり";
+  return "手足まわり";
 }
 
 function getForecastText(bundle) {
@@ -176,7 +188,7 @@ function getCompatTriggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
   if (mainTrigger === "temp" && triggerDir === "down") return "冷え";
   if (mainTrigger === "temp" && triggerDir === "up") return "暑さ";
-  if (mainTrigger === "humidity" && triggerDir === "up") return "湿";
+  if (mainTrigger === "humidity" && triggerDir === "up") return "湿度";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
 }
@@ -214,6 +226,37 @@ function getPointImageSrc(point) {
   if (!point?.image_path) return null;
   const clean = String(point.image_path).replace(/^\/+/, "");
   return `/${clean}`;
+}
+
+function getPointCautions(point) {
+  return safeArray(point?.cautions)
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (item && typeof item === "object") return item.text || item.label || item.title || "";
+      return "";
+    })
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+const FLAT_PRESETS = flattenRadarLocationPresets();
+
+function getLocationDisplayLabel(location) {
+  if (!location) return "設定中の地域";
+
+  const matched = FLAT_PRESETS.find(
+    (opt) =>
+      Number(opt.lat).toFixed(4) === Number(location.lat).toFixed(4) &&
+      Number(opt.lon).toFixed(4) === Number(location.lon).toFixed(4)
+  );
+  if (matched?.label) return matched.label;
+
+  if (location.lat != null && location.lon != null) {
+    return `緯度${Number(location.lat).toFixed(2)} / 経度${Number(location.lon).toFixed(2)}`;
+  }
+
+  return "設定中の地域";
 }
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
@@ -321,84 +364,105 @@ function PointDetailSheet({ point, onClose }) {
 
   const imageSrc = getPointImageSrc(point);
   const reasonTags = getPointMatchTags(point);
+  const cautions = getPointCautions(point);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/45 p-4 sm:items-center"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/45 p-3 sm:flex sm:items-center sm:justify-center sm:p-4"
       onClick={onClose}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="point-detail-title"
-        className="w-full max-w-md rounded-[28px] bg-white p-5 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[11px] font-extrabold text-slate-500">
-              {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
+      <div className="min-h-full sm:min-h-0 flex items-end sm:items-center justify-center">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="point-detail-title"
+          className="w-full max-w-md rounded-[28px] bg-white p-5 shadow-2xl max-h-[88vh] overflow-y-auto overscroll-contain sm:max-h-[85vh]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[11px] font-extrabold text-slate-500">
+                {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
+              </div>
+              <div id="point-detail-title" className="mt-1 text-xl font-extrabold text-slate-900">
+                {point.name_ja || point.code}
+              </div>
+              <div className="mt-1 text-[12px] font-bold text-slate-500">
+                {point.code}
+                {point.name_en ? ` / ${point.name_en}` : ""}
+              </div>
             </div>
-            <div id="point-detail-title" className="mt-1 text-xl font-extrabold text-slate-900">
-              {point.name_ja || point.code}
+
+            <button
+              onClick={onClose}
+              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
+            >
+              閉じる
+            </button>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+            {imageSrc && !imageBroken ? (
+              <img
+                src={imageSrc}
+                alt={`${point.name_ja || point.code} の位置`}
+                className="h-56 w-full object-contain bg-white"
+                onError={() => setImageBroken(true)}
+              />
+            ) : (
+              <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+                画像がまだ用意されていないか、表示できませんでした。ツボ名とコードを見ながら、押し方の目安を先に使えます。
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+            <div className="text-[11px] font-extrabold text-slate-500">どんなとき向き？</div>
+            <div className="mt-1 text-[13px] font-bold leading-6 text-slate-800">
+              {getPointRoleSummary(point)}
             </div>
-            <div className="mt-1 text-[12px] font-bold text-slate-500">
-              {point.code}
-              {point.name_en ? ` / ${point.name_en}` : ""}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
+            <div className="text-[11px] font-extrabold text-slate-500">このツボを選んだ理由</div>
+            <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+              {getPointSelectionReason(point)}
+            </div>
+
+            {reasonTags.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {reasonTags.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4">
+            <div className="text-[11px] font-extrabold text-amber-700">押し方の目安</div>
+            <div className="mt-1 text-[13px] font-bold leading-6 text-amber-900">
+              {getPointPressGuide(point)}
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
-          >
-            閉じる
-          </button>
-        </div>
-
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-          {imageSrc && !imageBroken ? (
-            <img
-              src={imageSrc}
-              alt={`${point.name_ja || point.code} の位置`}
-              className="h-56 w-full object-contain bg-white"
-              onError={() => setImageBroken(true)}
-            />
-          ) : (
-            <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
-              画像がまだ用意されていないか、表示できませんでした。ツボ名とコードを見ながら、押し方の目安を先に使えます。
+          {cautions.length > 0 ? (
+            <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
+              <div className="text-[11px] font-extrabold text-slate-500">注意したいこと</div>
+              <ul className="mt-2 space-y-2">
+                {cautions.map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-[13px] font-bold leading-6 text-slate-700">
+                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-          <div className="text-[11px] font-extrabold text-slate-500">役割</div>
-          <div className="mt-1 text-[13px] font-bold leading-6 text-slate-800">
-            {getPointRoleSummary(point)}
-          </div>
-          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-            {getPointSelectionReason(point)}
-          </div>
-        </div>
-
-        {reasonTags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {reasonTags.map((label) => (
-              <span
-                key={label}
-                className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4">
-          <div className="text-[11px] font-extrabold text-amber-700">押し方の目安</div>
-          <div className="mt-1 text-[13px] font-bold leading-6 text-amber-900">
-            {getPointPressGuide(point)}
-          </div>
+          ) : null}
         </div>
       </div>
     </div>
@@ -733,6 +797,11 @@ export default function RadarPage() {
     [bundle?.target_date]
   );
 
+  const locationDisplayLabel = useMemo(
+    () => getLocationDisplayLabel(bundle?.location),
+    [bundle?.location]
+  );
+
   const scoreCardTitle = useMemo(
     () => buildScoreCardTitle(bundleDateMode, bundle?.target_date),
     [bundleDateMode, bundle?.target_date]
@@ -844,12 +913,9 @@ export default function RadarPage() {
       title="未病レーダー"
       subtitle={targetDateLabel}
       headerRight={
-        <button
-          onClick={() => setShowLocationEditor(true)}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
-        >
-          地域変更
-        </button>
+        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700">
+          📍 {locationDisplayLabel}
+        </div>
       }
     >
       {locationNotice ? (
@@ -930,49 +996,84 @@ export default function RadarPage() {
           ) : null}
 
           <Module className="p-5">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="text-[12px] font-extrabold text-slate-500">
                   {scoreCardTitle}
                 </div>
-                <div className="mt-1 text-[11px] font-bold text-slate-400">
-                  気象と体質の重なりから見た目安
-                </div>
-
-                {symptomLabel ? (
-                  <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-extrabold text-slate-700">
-                    気になる症状: {symptomLabel}
-                  </div>
-                ) : null}
-
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-4xl font-extrabold tracking-tight text-slate-900">
-                    {forecast.score_0_10}
-                  </span>
-                  <span className="pb-1 text-sm font-extrabold text-slate-500">/ 10</span>
+                <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-extrabold text-slate-700">
+                  📍 {locationDisplayLabel}
                 </div>
               </div>
 
-              <div
-                className={[
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-extrabold",
-                  signalBadgeClass(forecast.signal),
-                ].join(" ")}
+              <button
+                onClick={() => setShowLocationEditor(true)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
               >
-                <span
-                  className={[
-                    "h-2.5 w-2.5 rounded-full",
-                    signalDotClass(forecast.signal),
-                  ].join(" ")}
-                />
-                {forecast.signal_label || signalLabel(forecast.signal)}
+                地域変更
+              </button>
+            </div>
+
+            <div
+              className={[
+                "mt-4 rounded-[1.5rem] border px-4 py-4",
+                signalPanelClass(forecast.signal),
+              ].join(" ")}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={[
+                        "inline-flex items-center gap-2 rounded-full border bg-white/80 px-3 py-1.5 text-sm font-extrabold",
+                        signalBadgeClass(forecast.signal),
+                      ].join(" ")}
+                    >
+                      <span
+                        className={[
+                          "h-2.5 w-2.5 rounded-full",
+                          signalDotClass(forecast.signal),
+                        ].join(" ")}
+                      />
+                      {forecast.signal_label || signalLabel(forecast.signal)}
+                    </span>
+                    <span className="text-[12px] font-bold opacity-80">
+                      {signalPanelSubtext(forecast.signal)}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 text-[11px] font-extrabold text-slate-500">
+                    崩れやすさの目安
+                  </div>
+                  <div className="mt-1 flex items-end gap-2">
+                    <span className="text-4xl font-extrabold tracking-tight text-slate-900">
+                      {forecast.score_0_10}
+                    </span>
+                    <span className="pb-1 text-sm font-extrabold text-slate-500">/ 10</span>
+                  </div>
+                </div>
+
+                {symptomLabel ? (
+                  <div className="rounded-2xl bg-white/80 px-4 py-3">
+                    <div className="text-[11px] font-extrabold text-slate-500">
+                      気になりやすい症状
+                    </div>
+                    <div className="mt-1 text-sm font-extrabold text-slate-900">
+                      {symptomLabel}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mt-3 text-[11px] font-bold text-slate-500">
+                気象と体質の重なりから見た目安です。
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
                 <div className="text-[11px] font-extrabold text-slate-500">
-                  日中に気をつけたい時間帯
+                  気をつけたい時間帯
                 </div>
                 <div className="mt-1 text-lg font-extrabold text-slate-900">
                   {forecast.peak_start && forecast.peak_end
@@ -995,11 +1096,14 @@ export default function RadarPage() {
 
             <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
               <div className="text-sm font-extrabold text-slate-900">
-                {sectionLabels.noticeTitle}
+                {bundleDateMode === "today" ? "今日、気をつけたいこと" : "明日、気をつけたいこと"}
               </div>
               <ul className="mt-3 space-y-2">
                 {forecastLines.map((line, idx) => (
-                  <li key={`${idx}-${line}`} className="flex items-start gap-2 text-[13px] font-bold leading-6 text-slate-700">
+                  <li
+                    key={`${idx}-${line}`}
+                    className="flex items-start gap-2 text-[13px] font-bold leading-6 text-slate-700"
+                  >
                     <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
                     <span>{line}</span>
                   </li>
@@ -1082,7 +1186,7 @@ export default function RadarPage() {
                           {p.name_ja || p.code}
                         </button>
 
-                        <div className="mt-1 flex flex-wrap gap-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
                           <span
                             className={[
                               "rounded-full px-2.5 py-1 text-[11px] font-extrabold",
@@ -1097,12 +1201,16 @@ export default function RadarPage() {
                           </span>
                         </div>
 
-                        <div className="mt-3 text-[12px] font-bold leading-5 text-slate-700">
+                        <div className="mt-3 text-[13px] font-bold leading-6 text-slate-800">
                           {getPointRoleSummary(p)}
                         </div>
 
+                        <div className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
+                          {getPointSelectionReason(p)}
+                        </div>
+
                         {reasonTags.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
+                          <div className="mt-3 flex flex-wrap gap-2">
                             {reasonTags.map((label) => (
                               <span
                                 key={label}
@@ -1114,29 +1222,11 @@ export default function RadarPage() {
                           </div>
                         )}
 
-                        <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-3 py-3">
-                          <div className="text-[11px] font-extrabold text-slate-500">
-                            押し方の目安
-                          </div>
-                          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-700">
-                            {getPointPressGuide(p)}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-3 py-3">
-                          <div className="text-[11px] font-extrabold text-slate-500">
-                            なぜこのツボ？
-                          </div>
-                          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-700">
-                            {getPointSelectionReason(p)}
-                          </div>
-                        </div>
-
                         <button
                           onClick={() => setSelectedPoint(p)}
-                          className="mt-3 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
+                          className="mt-4 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
                         >
-                          画像と押し方を見る
+                          画像と解説を見る
                         </button>
                       </div>
                     </div>
