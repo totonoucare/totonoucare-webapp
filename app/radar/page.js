@@ -5,6 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
+import ReviewFormSheet from "@/components/records/ReviewFormSheet";
+import {
+  actionTagLabel,
+  conditionLabel,
+  preventLabel,
+  signalBadgeClass as reviewSignalBadgeClass,
+  signalLabel as reviewSignalLabel,
+  triggerLabel as reviewTriggerLabel,
+} from "@/components/records/reviewConfig";
 import {
   RADAR_LOCATION_PRESETS,
   flattenRadarLocationPresets,
@@ -398,6 +407,11 @@ export default function RadarPage() {
   const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [todayReview, setTodayReview] = useState(null);
+  const [todayReviewForecast, setTodayReviewForecast] = useState(null);
+  const [loadingTodayReview, setLoadingTodayReview] = useState(false);
+  const [savingTodayReview, setSavingTodayReview] = useState(false);
+  const [reviewEditorOpen, setReviewEditorOpen] = useState(false);
 
   const requestSeqRef = useRef(0);
 
@@ -415,6 +429,58 @@ export default function RadarPage() {
       mounted = false;
     };
   }, []);
+
+  async function authedFetch(path, opts = {}) {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) throw new Error("No token");
+
+    const res = await fetch(path, {
+      ...opts,
+      headers: {
+        ...(opts.headers || {}),
+        Authorization: `Bearer ${token}`,
+        ...(opts.body ? { "Content-Type": "application/json" } : {}),
+      },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+    return json;
+  }
+
+  async function fetchTodayReview() {
+    if (!session) return;
+    try {
+      setLoadingTodayReview(true);
+      const { today } = getJstTodayTomorrow();
+      const json = await authedFetch(`/api/radar/review?date=${today}`);
+      setTodayReview(json?.data?.review || null);
+      setTodayReviewForecast(json?.data?.forecast || null);
+    } catch (e) {
+      console.error("fetchTodayReview failed:", e);
+    } finally {
+      setLoadingTodayReview(false);
+    }
+  }
+
+  async function saveTodayReview(payload) {
+    try {
+      setSavingTodayReview(true);
+      const json = await authedFetch("/api/radar/review", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setTodayReview(json?.data?.review || null);
+      setTodayReviewForecast(json?.data?.forecast || null);
+      setReviewEditorOpen(false);
+    } catch (e) {
+      alert(e?.message || "保存に失敗しました");
+    } finally {
+      setSavingTodayReview(false);
+    }
+  }
 
   async function fetchForecast({
     lat = null,
@@ -496,6 +562,12 @@ export default function RadarPage() {
     fetchForecast({ force: true, nextDateMode: dateMode });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, loadingAuth, dateMode]);
+
+  useEffect(() => {
+    if (!session || loadingAuth) return;
+    fetchTodayReview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, loadingAuth]);
 
   async function useCurrentLocation() {
     if (!navigator.geolocation) {
@@ -617,7 +689,6 @@ export default function RadarPage() {
   const tsuboSet = carePlan?.night_tsubo_set || {};
   const tsuboPoints = safeArray(tsuboSet?.points);
   const food = carePlan?.tomorrow_food_context || {};
-  const reviewSchema = carePlan?.review_schema || {};
   const riskContext = getRiskContext(bundle);
 
   const coreCode = riskContext?.constitution_context?.core_code || null;
@@ -652,6 +723,8 @@ export default function RadarPage() {
   );
 
   const forecastText = useMemo(() => getForecastText(bundle), [bundle]);
+  const todayRecordDate = getJstTodayTomorrow().today;
+  const todayRecordDateLabel = formatTargetDate(todayRecordDate);
 
   if (loadingAuth || loading) {
     return (
@@ -798,7 +871,7 @@ export default function RadarPage() {
             tab === "record" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
           ].join(" ")}
         >
-          カレンダー・記録
+          記録
         </button>
       </div>
 
@@ -1140,84 +1213,131 @@ export default function RadarPage() {
       ) : (
         <div className="space-y-5">
           <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">翌日夜のレビュー</div>
-            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-              予報の答え合わせは、翌日夜に1回まとめて行う設計です。
-              体調と、対策をどれくらい意識できたかを軽く残していきます。
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-extrabold text-slate-900">今日の記録</div>
+                <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+                  予報を見た日の終わりに1回だけ、実際どうだったかと先回りできたかを残します。
+                </div>
+              </div>
+              <button
+                onClick={() => setReviewEditorOpen(true)}
+                className="rounded-full bg-slate-900 px-4 py-2 text-xs font-extrabold text-white"
+              >
+                {todayReview ? "編集する" : "記録する"}
+              </button>
             </div>
 
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <div className="text-[11px] font-extrabold text-slate-500">体調</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {safeArray(reviewSchema.condition_options).map((opt) => (
-                    <span
-                      key={`cond-${opt.value}`}
-                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700"
-                    >
-                      {opt.label}
-                    </span>
-                  ))}
+            {loadingTodayReview ? (
+              <div className="mt-4 text-sm font-bold text-slate-600">読み込み中…</div>
+            ) : todayReviewForecast ? (
+              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={[
+                      "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
+                      reviewSignalBadgeClass(todayReviewForecast.signal),
+                    ].join(" ")}
+                  >
+                    {reviewSignalLabel(todayReviewForecast.signal)}
+                  </span>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                    {todayReviewForecast.score_0_10}/10
+                  </span>
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                    {reviewTriggerLabel(
+                      todayReviewForecast.main_trigger,
+                      todayReviewForecast.trigger_dir
+                    )}
+                  </span>
+                </div>
+                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-700">
+                  {todayReviewForecast.why_short || "今日の予報と体調の答え合わせを残せます。"}
                 </div>
               </div>
+            ) : null}
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <div className="text-[11px] font-extrabold text-slate-500">
-                  対策できたか
+            {todayReview ? (
+              <div className="mt-4 space-y-3">
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
+                  <div className="text-[11px] font-extrabold text-slate-500">実際どうだった？</div>
+                  <div className="mt-1 text-[15px] font-extrabold text-slate-900">
+                    {conditionLabel(todayReview.condition_level)}
+                  </div>
                 </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {safeArray(reviewSchema.prevent_options).map((opt) => (
-                    <span
-                      key={`prev-${opt.value}`}
-                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700"
-                    >
-                      {opt.label}
-                    </span>
-                  ))}
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
+                  <div className="text-[11px] font-extrabold text-slate-500">先回りできた？</div>
+                  <div className="mt-1 text-[15px] font-extrabold text-slate-900">
+                    {preventLabel(todayReview.prevent_level)}
+                  </div>
                 </div>
+                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
+                  <div className="text-[11px] font-extrabold text-slate-500">やったこと</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {safeArray(todayReview.action_tags).length > 0 ? (
+                      safeArray(todayReview.action_tags).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
+                        >
+                          {actionTagLabel(tag)}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm font-bold text-slate-500">記録なし</span>
+                    )}
+                  </div>
+                </div>
+                {todayReview.note ? (
+                  <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
+                    <div className="text-[11px] font-extrabold text-slate-500">メモ</div>
+                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                      {todayReview.note}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <div className="text-[11px] font-extrabold text-slate-500">任意メモ</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {safeArray(reviewSchema.action_tag_options).map((opt) => (
-                    <span
-                      key={`tag-${opt.value}`}
-                      className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700"
-                    >
-                      {opt.label}
-                    </span>
-                  ))}
-                </div>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm font-bold leading-6 text-slate-600">
+                {todayRecordDateLabel} の記録はまだありません。しんどかった日だけでも残しておくと、週次レポートで自分の傾向が見えやすくなります。
               </div>
-            </div>
+            )}
           </Module>
 
           <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">
-              カレンダーで振り返る
-            </div>
+            <div className="text-base font-extrabold text-slate-900">記録ページで見返す</div>
             <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-              予報スコアと記録を並べて見返せるように、記録画面はカレンダー導線でつないでいきます。
+              記録カレンダーでは日ごとの履歴を、週次レポートでは1週間の傾向をまとめて見返せます。
             </div>
 
             <div className="mt-4 flex gap-3">
               <button
-                onClick={() => router.push("/calendar")}
+                onClick={() => router.push("/records?tab=calendar")}
                 className="flex-1 rounded-2xl bg-slate-900 py-3 text-sm font-extrabold text-white"
               >
-                カレンダーへ
+                記録カレンダーへ
               </button>
               <button
-                onClick={() => router.push("/insights")}
+                onClick={() => router.push("/records?tab=report")}
                 className="flex-1 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-extrabold text-slate-700"
               >
-                傾向を見る
+                週次レポートへ
               </button>
             </div>
           </Module>
         </div>
       )}
+
+      <ReviewFormSheet
+        open={reviewEditorOpen}
+        date={todayRecordDate}
+        review={todayReview}
+        forecast={todayReviewForecast}
+        saving={savingTodayReview}
+        title={todayReview ? "今日の記録を編集する" : "今日を記録する"}
+        onClose={() => setReviewEditorOpen(false)}
+        onSave={saveTodayReview}
+      />
 
       {selectedPoint ? (
         <PointDetailSheet
