@@ -379,7 +379,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
             {selectedRow?.review ? (
               <div className="mt-4 space-y-3">
                 <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">実際どうだった？</div>
+                  <div className="text-[11px] font-extrabold text-slate-500">その日の体調</div>
                   <div className="mt-1 text-[15px] font-extrabold text-slate-900">
                     {conditionLabel(selectedRow.review.condition_level)}
                   </div>
@@ -409,7 +409,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                 </div>
                 {selectedRow.review.note ? (
                   <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">メモ</div>
+                    <div className="text-[11px] font-extrabold text-slate-500">ひとことメモ</div>
                     <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
                       {selectedRow.review.note}
                     </div>
@@ -426,7 +426,11 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
       ) : (
         <>
           <Module className="p-5">
-            <div className="text-[11px] font-extrabold text-slate-500">今週のまとめ</div>
+            <div className="text-base font-extrabold text-slate-900">今週のふり返り</div>
+            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+              この1週間の体調と先回りケアを、ひとことでまとめています。
+            </div>
+
             {reportLoading ? (
               <div className="mt-3 text-sm font-bold text-slate-600">読み込み中…</div>
             ) : reportError ? (
@@ -435,12 +439,12 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
               </div>
             ) : (
               <>
-                <div className="mt-2 text-lg font-extrabold leading-7 text-slate-900">
+                <div className="mt-3 text-lg font-extrabold leading-7 text-slate-900">
                   {report?.summary?.weekly_comment || "直近1週間の傾向をまとめます。"}
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">記録した日</div>
+                    <div className="text-[11px] font-extrabold text-slate-500">記録できた日</div>
                     <div className="mt-1 text-2xl font-extrabold text-slate-900">
                       {report?.summary?.recorded_days || 0}/{report?.summary?.total_days || 7}
                     </div>
@@ -459,16 +463,20 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
           {!reportLoading && !reportError ? (
             <>
               <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">崩れやすかった条件</div>
+                <div className="text-base font-extrabold text-slate-900">今週、影響しやすかったもの</div>
+                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                  気圧・気温・湿度のうち、今週はどれの影響が出やすかったかを見ています。
+                </div>
+
                 <div className="mt-4 grid gap-3">
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">主に重なりやすかったもの</div>
+                    <div className="text-[11px] font-extrabold text-slate-500">影響が出やすかったもの</div>
                     <div className="mt-1 text-[15px] font-extrabold text-slate-900">
                       {report?.summary?.top_trigger_label || "まだ判定中"}
                     </div>
                   </div>
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">つらかった日</div>
+                    <div className="text-[11px] font-extrabold text-slate-500">つらさが出た日</div>
                     <div className="mt-1 text-[15px] font-extrabold text-slate-900">
                       {report?.summary?.hard_days || 0}日
                     </div>
@@ -477,7 +485,11 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
               </Module>
 
               <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">予報と実際の並び</div>
+                <div className="text-base font-extrabold text-slate-900">予報と体調の答え合わせ</div>
+                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                  その日の予報と、実際の体調や先回りできたかを見比べられます。
+                </div>
+
                 <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
                   {(report?.rows || []).map((row) => (
                     <div
@@ -487,6 +499,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                       <div className="text-[11px] font-extrabold text-slate-500">
                         {formatDateLabel(row.date)}
                       </div>
+
                       {row.forecast ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           <span
@@ -502,11 +515,13 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                           </span>
                         </div>
                       ) : null}
-                      <div className="mt-3 text-[11px] font-extrabold text-slate-500">実際どうだった？</div>
+
+                      <div className="mt-3 text-[11px] font-extrabold text-slate-500">その日の体調</div>
                       <div className="mt-1 text-sm font-extrabold text-slate-900">
                         {row.review ? conditionLabel(row.review.condition_level) : "未記録"}
                       </div>
-                      <div className="mt-2 text-[11px] font-extrabold text-slate-500">先回り</div>
+
+                      <div className="mt-2 text-[11px] font-extrabold text-slate-500">先回りできた？</div>
                       <div className="mt-1 text-sm font-extrabold text-slate-900">
                         {row.review ? preventLabel(row.review.prevent_level) : "—"}
                       </div>
@@ -516,23 +531,33 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
               </Module>
 
               <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">対策の傾向</div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(report?.summary?.top_action_tags || []).length ? (
-                    report.summary.top_action_tags.map((tag) => (
-                      <span
-                        key={tag.value}
-                        className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
-                      >
-                        {actionTagLabel(tag.value)} × {tag.count}
-                      </span>
-                    ))
-                  ) : (
-                    <div className="text-sm font-bold text-slate-500">まだ集計できるほど記録がありません。</div>
-                  )}
+                <div className="text-base font-extrabold text-slate-900">今週の先回りケア</div>
+                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                  よくやっていた対策や、来週に活かしたいポイントをまとめています。
                 </div>
+
+                <div className="mt-4">
+                  <div className="text-[11px] font-extrabold text-slate-500">今週よくやったこと</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(report?.summary?.top_action_tags || []).length ? (
+                      report.summary.top_action_tags.map((tag) => (
+                        <span
+                          key={tag.value}
+                          className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
+                        >
+                          {actionTagLabel(tag.value)} × {tag.count}
+                        </span>
+                      ))
+                    ) : (
+                      <div className="text-sm font-bold text-slate-500">
+                        まだ集計できるほど記録がありません。
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-emerald-700">来週のひとこと</div>
+                  <div className="text-[11px] font-extrabold text-emerald-700">来週の意識ポイント</div>
                   <div className="mt-1 text-[13px] font-bold leading-6 text-emerald-900">
                     {report?.summary?.next_tip}
                   </div>
