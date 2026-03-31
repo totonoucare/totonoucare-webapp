@@ -259,8 +259,6 @@ function getLocationDisplayLabel(location) {
   return "設定中の地域";
 }
 
-const FLAT_PRESETS = flattenRadarLocationPresets();
-
 function LocationEditor({
   error,
   locating,
