@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
@@ -29,6 +29,7 @@ function ymdStr(d) {
 function startOfMonth(y, m) {
   return new Date(y, m - 1, 1);
 }
+
 function endOfMonth(y, m) {
   return new Date(y, m, 0);
 }
@@ -46,7 +47,6 @@ function cardTone(row) {
 
 export default function RecordsPageClient({ initialTab = "calendar" }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -56,7 +56,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
   const [month, setMonth] = useState(ym(today).m);
   const [selectedDate, setSelectedDate] = useState(ymdStr(today));
 
-  const [tab, setTab] = useState(searchParams?.get("tab") || initialTab);
+  const [tab, setTab] = useState(initialTab === "report" ? "report" : "calendar");
 
   const [monthRows, setMonthRows] = useState([]);
   const [monthLoading, setMonthLoading] = useState(true);
@@ -70,9 +70,8 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const nextTab = searchParams?.get("tab") || initialTab;
-    setTab(nextTab === "report" ? "report" : "calendar");
-  }, [searchParams, initialTab]);
+    setTab(initialTab === "report" ? "report" : "calendar");
+  }, [initialTab]);
 
   async function authedFetch(path, opts = {}) {
     const { data } = await supabase.auth.getSession();
@@ -148,11 +147,14 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
       setEditorOpen(false);
+
       const [monthRes, reportRes] = await Promise.all([
         authedFetch(`/api/calendar/month?year=${year}&month=${month}`),
         authedFetch("/api/insights/14days?days=7"),
       ]);
+
       setMonthRows(monthRes.data || []);
       setReport(reportRes.data || null);
     } catch (e) {
@@ -293,6 +295,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                   const row = day.summary;
                   const isSelected = selectedDate === day.date;
                   const isRecorded = hasRecorded(row?.review);
+
                   return (
                     <button
                       key={day.date}
