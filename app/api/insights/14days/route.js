@@ -54,7 +54,10 @@ function buildWeeklyComment(summary) {
     return `今週は${summary.top_trigger_label}が重なった日に崩れやすい傾向がありました。`;
   }
 
-  if (summary.strong_forecast_days > 0 && summary.well_prevented_days >= Math.ceil(summary.strong_forecast_days / 2)) {
+  if (
+    summary.strong_forecast_days > 0 &&
+    summary.well_prevented_days >= Math.ceil(summary.strong_forecast_days / 2)
+  ) {
     return "警戒日があっても、先回りできた日は軽く済みやすい週でした。";
   }
 
@@ -70,7 +73,7 @@ function buildNextTip(summary) {
     return `${summary.top_trigger_label}が強い日は、早めにケアを入れる意識が合いそうです。`;
   }
   if (summary.top_action_tags?.length) {
-    return `続けやすかった対策から先に使うと、記録も続けやすくなります。`;
+    return "続けやすかった対策から先に使うと、記録も続けやすくなります。";
   }
   return "まずはつらかった日だけでも記録すると、次の週次レポートが濃くなります。";
 }
@@ -107,6 +110,7 @@ export async function GET(req) {
 
     const forecastMap = new Map((forecasts || []).map((row) => [String(row.target_date), row]));
     const reviewMap = new Map();
+
     for (const row of reviews || []) {
       const date = String(row.target_date);
       const prev = reviewMap.get(date);
@@ -120,6 +124,7 @@ export async function GET(req) {
       const date = addDays(start, i);
       const forecast = forecastMap.get(date) || null;
       const review = reviewMap.get(date) || null;
+
       rows.push({
         date,
         forecast: forecast
@@ -143,11 +148,17 @@ export async function GET(req) {
     }
 
     const recordedRows = rows.filter((row) => row.review);
+    const scoredRows = rows.filter((row) => row.forecast?.score_0_10 != null);
     const topTrigger = mostFrequent(rows.map((row) => row.forecast?.main_trigger || null));
     const topActionTags = topItems(
       recordedRows.flatMap((row) => row.review?.action_tags || []),
       3
     );
+
+    const avgScore =
+      scoredRows.length > 0
+        ? scoredRows.reduce((sum, row) => sum + row.forecast.score_0_10, 0) / scoredRows.length
+        : 0;
 
     const summary = {
       recorded_days: recordedRows.length,
@@ -156,9 +167,8 @@ export async function GET(req) {
       stable_days: recordedRows.filter((row) => row.review?.condition_level === 2).length,
       well_prevented_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
       strong_forecast_days: rows.filter((row) => (row.forecast?.signal ?? 0) >= 2).length,
-      avg_score:
-        rows.filter((row) => row.forecast?.score_0_10 != null).reduce((sum, row, _idx, arr) => sum + row.forecast.score_0_10 / arr.length, 0) || 0,
-      top_trigger,
+      avg_score: avgScore,
+      top_trigger: topTrigger,
       top_trigger_label: triggerLabel(topTrigger),
       top_action_tags: topActionTags,
     };
