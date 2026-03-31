@@ -150,6 +150,31 @@ function getPointRegionLabel(region) {
   return "手足まわり";
 }
 
+const HIDDEN_LOCATION_LABELS = new Set(["primary", "current", "home"]);
+
+const MATCH_TAG_LABELS = {
+  "脾を意識": "消化吸収や重だるさに関わるはたらき",
+  "脾": "消化吸収や重だるさに関わるはたらき",
+  "肝を意識": "緊張や巡りの滞りに関わりやすいはたらき",
+  "肝・胆ライン": "緊張や巡りの滞りに関わりやすいはたらき",
+  "肝胆ライン": "緊張や巡りの滞りに関わりやすいはたらき",
+  "湿": "重だるさ・むくみ・べたつく不調につながりやすい状態",
+  "腹部から整える": "お腹まわりから整えたい日に向く考え方",
+  "支える方向": "土台を支えて崩れにくくしたい日に向く考え方",
+  "体質ケア": "体質に合わせたケア",
+  "ラインケア": "動きの負担に向くケア",
+};
+
+function humanizeMatchTag(tag) {
+  const raw = String(tag || "").trim();
+  if (!raw) return "";
+  return MATCH_TAG_LABELS[raw] || raw;
+}
+
+function getPointReading(point) {
+  return String(point?.reading_ja || "").trim();
+}
+
 function getForecastText(bundle) {
   return (
     bundle?.forecast?.gpt_summary ||
@@ -205,7 +230,14 @@ function getPointSelectionReason(point) {
 }
 
 function getPointMatchTags(point) {
-  return safeArray(point?.explanation?.match_tags).slice(0, 3);
+  return Array.from(
+    new Set(
+      safeArray(point?.explanation?.match_tags)
+        .map((tag) => humanizeMatchTag(tag))
+        .map((tag) => String(tag || "").trim())
+        .filter(Boolean)
+    )
+  ).slice(0, 3);
 }
 
 function getPointPressGuide(point) {
@@ -244,6 +276,11 @@ const FLAT_PRESETS = flattenRadarLocationPresets();
 
 function getLocationDisplayLabel(location) {
   if (!location) return "設定中の地域";
+
+  const directLabel = [location.display_name, location.label]
+    .map((v) => String(v || "").trim())
+    .find((v) => v && !HIDDEN_LOCATION_LABELS.has(v.toLowerCase()));
+  if (directLabel) return directLabel;
 
   const matched = FLAT_PRESETS.find(
     (opt) =>
@@ -386,8 +423,7 @@ function PointDetailSheet({ point, onClose }) {
                 {point.name_ja || point.code}
               </div>
               <div className="mt-1 text-[12px] font-bold text-slate-500">
-                {point.code}
-                {point.name_en ? ` / ${point.name_en}` : ""}
+                {getPointReading(point) ? `${getPointReading(point)} / ` : ""}{point.code}
               </div>
             </div>
 
@@ -428,16 +464,14 @@ function PointDetailSheet({ point, onClose }) {
             </div>
 
             {reasonTags.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ul className="mt-3 space-y-2">
                 {reasonTags.map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
-                  >
-                    {label}
-                  </span>
+                  <li key={label} className="flex items-start gap-2 text-[12px] font-bold leading-6 text-slate-600">
+                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                    <span>{label}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : null}
           </div>
 
@@ -1163,74 +1197,48 @@ export default function RadarPage() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {tsuboPoints.map((p, i) => {
-                const reasonTags = getPointMatchTags(p);
+              {tsuboPoints.map((p, i) => (
+                <div
+                  key={`${p.code}-${i}`}
+                  className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
+                      {p.code}
+                    </div>
 
-                return (
-                  <div
-                    key={`${p.code}-${i}`}
-                    className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
-                        {p.code}
+                    <div className="min-w-0 flex-1">
+                      <button
+                        onClick={() => setSelectedPoint(p)}
+                        className="text-left text-base font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4"
+                      >
+                        {p.name_ja || p.code}
+                      </button>
+
+                      {getPointReading(p) ? (
+                        <div className="mt-1 text-[11px] font-extrabold text-slate-500">
+                          {getPointReading(p)}
+                        </div>
+                      ) : null}
+
+                      <div className="mt-3 text-[13px] font-bold leading-6 text-slate-800">
+                        {getPointRoleSummary(p)}
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <button
-                          onClick={() => setSelectedPoint(p)}
-                          className="text-left text-base font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4"
-                        >
-                          {p.name_ja || p.code}
-                        </button>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span
-                            className={[
-                              "rounded-full px-2.5 py-1 text-[11px] font-extrabold",
-                              sourceBadgeClass(p.source),
-                            ].join(" ")}
-                          >
-                            {sourceLabel(p.source)}
-                          </span>
-
-                          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-500">
-                            {getPointRegionLabel(p.point_region)}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 text-[13px] font-bold leading-6 text-slate-800">
-                          {getPointRoleSummary(p)}
-                        </div>
-
-                        <div className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
-                          {getPointSelectionReason(p)}
-                        </div>
-
-                        {reasonTags.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {reasonTags.map((label) => (
-                              <span
-                                key={label}
-                                className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600"
-                              >
-                                {label}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        <button
-                          onClick={() => setSelectedPoint(p)}
-                          className="mt-4 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
-                        >
-                          画像と解説を見る
-                        </button>
+                      <div className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
+                        {getPointSelectionReason(p)}
                       </div>
+
+                      <button
+                        onClick={() => setSelectedPoint(p)}
+                        className="mt-4 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
+                      >
+                        画像と解説を見る
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
