@@ -1,114 +1,83 @@
+import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
+import { requireUser } from "@/lib/requireUser";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(req) {
   try {
+    const { user, error } = await requireUser(req);
+    if (!user) return NextResponse.json({ error }, { status: 401 });
+
     const url = new URL(req.url);
     const year = Number(url.searchParams.get("year"));
     const month = Number(url.searchParams.get("month"));
 
     if (!year || !month || month < 1 || month > 12) {
-      return new Response(JSON.stringify({ error: "invalid year/month" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return NextResponse.json({ error: "invalid year/month" }, { status: 400 });
     }
 
-    // Bearer tokenでユーザー特定
-    const auth = req.headers.get("authorization") || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-    if (!token) {
-      return new Response(JSON.stringify({ error: "missing bearer token" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const { data: userData, error: userErr } = await supabaseServer.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    const userId = userData.user.id;
-
-    // date列で範囲指定（YYYY-MM-DD）
     const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endDateObj = new Date(year, month, 0); // monthは1-based
+    const endDateObj = new Date(year, month, 0);
     const endDate = `${endDateObj.getFullYear()}-${String(endDateObj.getMonth() + 1).padStart(2, "0")}-${String(
       endDateObj.getDate()
     ).padStart(2, "0")}`;
 
-    // daily_checkins
-    const { data: checkins, error: chkErr } = await supabaseServer
-      .from("daily_checkins")
-      .select("date, condition_am, condition_pm")
-      .eq("user_id", userId)
-      .gte("date", startDate)
-      .lte("date", endDate);
+    const [{ data: reviews, error: reviewErr }, { data: forecasts, error: forecastErr }] =
+      await Promise.all([
+        supabaseServer
+          .from("radar_reviews")
+          .select("target_date, condition_level, prevent_level, note, action_tags, created_at")
+          .eq("user_id", user.id)
+          .gte("target_date", startDate)
+          .lte("target_date", endDate),
+        supabaseServer
+          .from("radar_forecasts")
+          .select("target_date, score_0_10, signal, main_trigger, trigger_dir, why_short")
+          .eq("user_id", user.id)
+          .gte("target_date", startDate)
+          .lte("target_date", endDate),
+      ]);
 
-    if (chkErr) throw chkErr;
+    if (reviewErr) throw reviewErr;
+    if (forecastErr) throw forecastErr;
 
-    // daily_care_logs
-    const { data: carelogs, error: careErr } = await supabaseServer
-      .from("daily_care_logs")
-      .select("date, kind, done_level")
-      .eq("user_id", userId)
-      .gte("date", startDate)
-      .lte("date", endDate);
-
-    if (careErr) throw careErr;
-
-    // date => summary
     const map = new Map();
 
-    // checkins（1日1行想定）
-    for (const r of checkins || []) {
-      const d = String(r.date);
-      map.set(d, {
-        date: d,
-        main_done: false,
-        food_done_level: null,
-        condition_am: r.condition_am ?? null,
-        condition_pm: r.condition_pm ?? null,
-      });
+    for (const row of forecasts || []) {
+      const date = String(row.target_date);
+      const base = map.get(date) || { date, review: null, forecast: null };
+      base.forecast = {
+        score_0_10: row.score_0_10 ?? null,
+        signal: row.signal ?? null,
+        main_trigger: row.main_trigger || null,
+        trigger_dir: row.trigger_dir || null,
+        why_short: row.why_short || "",
+      };
+      map.set(date, base);
     }
 
-    // carelogs（同日複数あり得るので集約）
-    for (const r of carelogs || []) {
-      const d = String(r.date);
-      const s =
-        map.get(d) || {
-          date: d,
-          main_done: false,
-          food_done_level: null,
-          condition_am: null,
-          condition_pm: null,
+    for (const row of reviews || []) {
+      const date = String(row.target_date);
+      const base = map.get(date) || { date, review: null, forecast: null };
+      if (!base.review || String(row.created_at) > String(base.review.created_at || "")) {
+        base.review = {
+          condition_level: row.condition_level ?? null,
+          prevent_level: row.prevent_level ?? null,
+          note: row.note || "",
+          action_tags: row.action_tags || [],
+          created_at: row.created_at,
         };
-
-      if (r.kind === "food") {
-        const cur = s.food_done_level;
-        const next = r.done_level;
-        s.food_done_level = cur == null ? next : Math.max(cur, next); // ◎優先
-      } else {
-        if (r.done_level >= 2) s.main_done = true;
       }
-
-      map.set(d, s);
+      map.set(date, base);
     }
 
-    const out = Array.from(map.values()).sort((a, b) => (a.date < b.date ? -1 : 1));
-
-    return new Response(JSON.stringify({ data: out }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    const data = Array.from(map.values()).sort((a, b) => (a.date < b.date ? -1 : 1));
+    return NextResponse.json({ data });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e?.message || "unknown error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error(e);
+    return NextResponse.json({ error: e?.message || "unknown error" }, { status: 500 });
   }
 }
