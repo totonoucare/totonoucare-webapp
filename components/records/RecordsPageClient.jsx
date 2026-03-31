@@ -485,7 +485,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
               </Module>
 
               <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">予報と体調の見比べ</div>
+                <div className="text-base font-extrabold text-slate-900">予報と体調の答え合わせ</div>
                 <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
                   その日の予報と、実際の体調や先回りできたかを見比べられます。
                 </div>
