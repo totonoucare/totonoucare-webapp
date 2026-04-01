@@ -14,7 +14,7 @@ const SESSION_TIMEOUT_MS = 5000;
 
 function FeatureChip({ children }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+    <span className="inline-flex items-center rounded-full bg-white/85 px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
       {children}
     </span>
   );
@@ -104,24 +104,23 @@ export default function HomePage() {
     >
       <Module>
         <div className="px-5 pb-6 pt-5">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--mint),white_38%)] px-3 py-1.5 text-[11px] font-extrabold tracking-[0.04em] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--mint),white_36%)] px-3 py-1.5 text-[11px] font-extrabold tracking-[0.04em] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
             <IconSpark className="h-4 w-4" />
-            体質チェック × 天気予報 × 先回りケア
+            体質チェック × 気象変化 × 先回りケア
           </div>
 
-          <div className="mt-4 text-[29px] font-extrabold leading-[1.25] tracking-tight text-slate-900">
-            崩れる前に気づいて、<br />
-            明日の不調を軽くする。
+          <div className="mt-5 max-w-[16ch] text-[34px] font-extrabold leading-[1.18] tracking-tight text-slate-900 sm:max-w-none sm:text-[36px]">
+            今日の「しんどい」には、理由がある。
           </div>
 
-          <div className="mt-3 text-[14px] font-bold leading-7 text-slate-700">
-            あなたの体質と天気の変化を重ねて、明日どんな不調が出やすいか、どの時間帯に注意したいか、どんなケアが合いやすいかを先回りで見られます。
+          <div className="mt-3 max-w-[30ch] text-[14px] font-bold leading-7 text-slate-700 sm:max-w-none">
+            気象の変化と、あなたの体質。天気だけでは見えにくい「体調の波」を先読みして、無理をしないための一日をナビゲートします。
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <FeatureChip>体質チェック</FeatureChip>
-            <FeatureChip>明日の崩れやすさ</FeatureChip>
-            <FeatureChip>ツボ・食養生</FeatureChip>
+            <FeatureChip>体質の偏りを見る</FeatureChip>
+            <FeatureChip>体調の波を先読み</FeatureChip>
+            <FeatureChip>合いやすいケアを知る</FeatureChip>
           </div>
 
           <div className="mt-5">
@@ -130,7 +129,7 @@ export default function HomePage() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Button onClick={() => router.push("/check")} size="lg" className="rounded-2xl font-extrabold">
-              体質チェックをはじめる
+              無料で体質チェックをはじめる
             </Button>
             <Button
               variant="secondary"
@@ -167,7 +166,7 @@ export default function HomePage() {
             />
             <FeatureCard
               title="未病レーダー"
-              body="体質と天気の変化を重ねて、明日どんな不調が出やすいかを先回りで見られます。"
+              body="体質と気象の変化を重ねて、明日どんな不調が出やすいかを先回りで見られます。"
             />
             <FeatureCard
               title="合いやすいケア"
