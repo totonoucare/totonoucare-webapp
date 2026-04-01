@@ -6,10 +6,28 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import Button from "@/components/ui/Button";
-import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
-import { IconSpark, IconRoute, IconUser, HeroArt } from "@/components/illust/icons/home";
+import AppShell, { Module } from "@/components/layout/AppShell";
+import { IconSpark, IconRoute, IconUser } from "@/components/illust/icons/home";
+import { HeroMain } from "@/components/illust/home";
 
 const SESSION_TIMEOUT_MS = 5000;
+
+function FeatureChip({ children }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+      {children}
+    </span>
+  );
+}
+
+function FeatureCard({ title, body }) {
+  return (
+    <div className="rounded-[20px] bg-white p-4 ring-1 ring-[var(--ring)]">
+      <div className="text-sm font-extrabold text-slate-900">{title}</div>
+      <div className="mt-1 text-xs font-bold leading-6 text-slate-600">{body}</div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -84,109 +102,137 @@ export default function HomePage() {
         </button>
       }
     >
-      {/* Hero */}
       <Module>
-        <ModuleHeader icon={<IconSpark />} title="未病レーダー" sub="体質 × 気象で、崩れる前に先回りする" />
-        <div className="px-5 pb-6 pt-4 space-y-4">
-          <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_50%)] ring-1 ring-[var(--ring)] p-5">
-            <div className="min-w-0">
-              <div className="text-xs font-bold text-[var(--accent-ink)]/80">体調予報 × 先回りケア</div>
-              <div className="mt-1 text-xl font-extrabold tracking-tight text-slate-900">
-                不調の波が来る前に気づいて、先回りで軽くする
-              </div>
-              <div className="mt-2 text-sm leading-7 text-slate-700">
-                あなたの体質と気象の変化を重ねて、崩れやすいタイミングがわかります。
-                危ない日は、30秒でできる先回りケアが出ます。
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <HeroArt />
-            </div>
-
-            <div className="mt-4 grid gap-2">
-              <Button onClick={() => router.push("/check")}>体質チェックをはじめる</Button>
-              <Button variant="secondary" onClick={() => router.push("/radar")}>
-                体調予報へ
-              </Button>
-            </div>
-
-            <div className="mt-3 text-[11px] font-bold text-slate-500">
-              ※ 対策の中身は結果と予報に合わせて提示（ここでは煽らない）
-            </div>
+        <div className="px-5 pb-6 pt-5">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[color-mix(in_srgb,var(--mint),white_38%)] px-3 py-1.5 text-[11px] font-extrabold tracking-[0.04em] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
+            <IconSpark className="h-4 w-4" />
+            体質チェック × 天気予報 × 先回りケア
           </div>
 
-          {/* routes */}
-          <div className="grid gap-3">
-            <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-4">
-              <div className="flex items-start gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[color-mix(in_srgb,#ede9fe,white_40%)] ring-1 ring-[var(--ring)] text-[#3b2f86]">
-                  <IconRoute />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-extrabold text-slate-900">全導線</div>
-                  <div className="mt-1 text-xs font-medium text-slate-500">
-                    迷子防止。必要な導線だけを短距離で。
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button variant="ghost" onClick={() => router.push("/check")}>体質チェック</Button>
-                    <Button variant="ghost" onClick={() => router.push("/radar")}>体調予報</Button>
-                    <Button variant="ghost" onClick={() => router.push("/history")}>履歴</Button>
-                    <Button variant="ghost" onClick={() => router.push("/guide")}>使い方</Button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="mt-4 text-[29px] font-extrabold leading-[1.25] tracking-tight text-slate-900">
+            崩れる前に気づいて、<br />
+            明日の不調を軽くする。
+          </div>
+
+          <div className="mt-3 text-[14px] font-bold leading-7 text-slate-700">
+            あなたの体質と天気の変化を重ねて、明日どんな不調が出やすいか、どの時間帯に注意したいか、どんなケアが合いやすいかを先回りで見られます。
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <FeatureChip>体質チェック</FeatureChip>
+            <FeatureChip>明日の崩れやすさ</FeatureChip>
+            <FeatureChip>ツボ・食養生</FeatureChip>
+          </div>
+
+          <div className="mt-5">
+            <HeroMain />
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <Button onClick={() => router.push("/check")} size="lg" className="rounded-2xl font-extrabold">
+              体質チェックをはじめる
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => router.push("/radar")}
+              size="lg"
+              className="rounded-2xl font-extrabold"
+            >
+              未病レーダーを見る
+            </Button>
+          </div>
+
+          <div className="mt-3 text-[11px] font-bold leading-5 text-slate-500">
+            まずは無料で体質チェックと結果閲覧ができます。ログインすると、予報・履歴・記録を使って継続的に振り返れます。
           </div>
         </div>
       </Module>
 
-      {/* Account */}
       <Module>
-        <ModuleHeader icon={<IconUser />} title="アカウント" sub="保存・履歴・予報のパーソナライズに必要" />
-        <div className="px-5 pb-6 pt-4 space-y-4">
-          {loading ? (
-            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-              <div className="text-sm font-bold text-slate-700">読み込み中…</div>
+        <div className="px-5 pb-6 pt-5">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-[18px] bg-[var(--mint)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
+              <IconRoute className="h-6 w-6" />
             </div>
-          ) : error ? (
-            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-              <div className="text-sm font-extrabold text-slate-900">セッション確認に失敗</div>
-              <div className="mt-2 text-xs font-bold text-slate-600 whitespace-pre-wrap">{error}</div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button variant="ghost" onClick={() => window.location.reload()}>リロード</Button>
-                <Button variant="ghost" onClick={() => router.push("/debug/env")}>debug/env</Button>
-              </div>
+            <div>
+              <div className="text-[17px] font-extrabold tracking-tight text-slate-900">このサービスでわかること</div>
+              <div className="mt-1 text-xs font-bold text-slate-500">体質・明日の予報・先回りケアまでを一連で見られます。</div>
             </div>
-          ) : isLoggedIn ? (
-            <div className="rounded-[20px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-              <div className="text-sm font-extrabold text-emerald-800">ログイン中 ✅</div>
-              <div className="mt-1 text-sm font-bold text-slate-800">{email}</div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button onClick={() => router.push("/history")}>履歴</Button>
-                <Button variant="secondary" onClick={() => router.push("/check")}>体質チェック</Button>
-                <Button variant="ghost" onClick={logout}>ログアウト</Button>
-              </div>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            <FeatureCard
+              title="体質チェック"
+              body="気血津液や踏み癖、余力の傾向から、今の体質の偏りを見える化します。"
+            />
+            <FeatureCard
+              title="未病レーダー"
+              body="体質と天気の変化を重ねて、明日どんな不調が出やすいかを先回りで見られます。"
+            />
+            <FeatureCard
+              title="合いやすいケア"
+              body="注意したい時間帯に合わせて、ツボ・食養生・過ごし方をすぐ確認できます。"
+            />
+          </div>
+        </div>
+      </Module>
+
+      <Module>
+        <div className="px-5 pb-6 pt-5">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-[18px] bg-[color-mix(in_srgb,#ede9fe,white_40%)] text-[#3b2f86] ring-1 ring-[var(--ring)]">
+              <IconUser className="h-6 w-6" />
             </div>
-          ) : (
-            <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-              <div className="text-base font-extrabold tracking-tight text-slate-900">
-                結果を保存して、履歴と予報へ
-              </div>
-              <div className="mt-2 text-xs font-bold text-slate-600">
-                メールで登録/ログインできます
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button onClick={() => router.push("/signup")}>ログイン / 登録</Button>
-                <Button variant="secondary" onClick={() => router.push("/check")}>まずは体質チェック</Button>
-              </div>
+            <div>
+              <div className="text-[17px] font-extrabold tracking-tight text-slate-900">アカウント</div>
+              <div className="mt-1 text-xs font-bold text-slate-500">結果保存や継続利用のためのログイン状況です。</div>
             </div>
-          )}
+          </div>
+
+          <div className="mt-4">
+            {loading ? (
+              <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
+                <div className="text-sm font-bold text-slate-700">読み込み中…</div>
+              </div>
+            ) : error ? (
+              <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
+                <div className="text-sm font-extrabold text-slate-900">セッション確認に失敗</div>
+                <div className="mt-2 whitespace-pre-wrap text-xs font-bold text-slate-600">{error}</div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button variant="ghost" onClick={() => window.location.reload()}>リロード</Button>
+                  <Button variant="ghost" onClick={() => router.push("/debug/env")}>debug/env</Button>
+                </div>
+              </div>
+            ) : isLoggedIn ? (
+              <div className="rounded-[20px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
+                <div className="text-sm font-extrabold text-emerald-800">ログイン中 ✅</div>
+                <div className="mt-1 text-sm font-bold text-slate-800">{email}</div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button onClick={() => router.push("/history")}>履歴</Button>
+                  <Button variant="secondary" onClick={() => router.push("/check")}>体質チェック</Button>
+                  <Button variant="ghost" onClick={logout}>ログアウト</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
+                <div className="text-base font-extrabold tracking-tight text-slate-900">
+                  結果を保存して、履歴と予報へ
+                </div>
+                <div className="mt-2 text-xs font-bold text-slate-600">
+                  メールで登録/ログインできます
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button onClick={() => router.push("/signup")}>ログイン / 登録</Button>
+                  <Button variant="secondary" onClick={() => router.push("/check")}>まずは体質チェック</Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </Module>
 
       <div className="pb-6 text-center text-[11px] font-bold text-slate-400">
-        ※ UI・導線・データ設計は順次アップデート
+        ※ 先行公開中のため、見た目や導線は順次アップデートします
       </div>
     </AppShell>
   );
