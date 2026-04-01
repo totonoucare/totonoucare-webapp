@@ -40,7 +40,7 @@ export default function CheckLandingPage() {
   const isLoggedIn = !!session;
 
   return (
-    <AppShell title="体質チェック" noTabs={true}>
+    <AppShell title="体質チェック">
       <Module>
         <ModuleHeader icon={<IconCheck />} title="体質チェック" sub="未病のクセをサクッと見える化" />
         <div className="px-5 pb-6 pt-4 space-y-4">
