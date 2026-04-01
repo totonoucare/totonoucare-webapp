@@ -1,78 +1,79 @@
-export default function HeroScene({ className = "h-[324px] w-full" }) {
+export default function HeroScene({ className = "h-[320px] w-full" }) {
   return (
     <svg viewBox="0 0 420 328" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="hero_panel_bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#f7f7f1" />
-          <stop offset="1" stopColor="#e4eee1" />
+        <linearGradient id="hero_panel_bg2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#f9faf6" />
+          <stop offset="1" stopColor="#e7efe3" />
         </linearGradient>
-        <linearGradient id="hero_card_bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#fffef9" />
-          <stop offset="1" stopColor="#eef4eb" />
+        <linearGradient id="hero_card_bg2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#fffefa" />
+          <stop offset="1" stopColor="#eef4ea" />
         </linearGradient>
-        <linearGradient id="hero_body_fill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="hero_skin_fill2" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#fff8ee" />
           <stop offset="1" stopColor="#f3ead8" />
         </linearGradient>
-        <linearGradient id="hero_shirt_fill" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id="hero_shirt_fill2" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#dde8d9" />
           <stop offset="1" stopColor="#c7d9c6" />
         </linearGradient>
       </defs>
 
-      <rect x="18" y="18" width="384" height="292" rx="34" fill="url(#hero_panel_bg)" />
+      <rect x="18" y="18" width="384" height="292" rx="34" fill="url(#hero_panel_bg2)" />
 
-      <circle cx="236" cy="162" r="98" fill="none" stroke="#c5d6c4" strokeWidth="2.2" />
-      <circle cx="236" cy="162" r="76" fill="none" stroke="#d7e4d5" strokeWidth="2" strokeDasharray="6 8" />
-      <circle cx="236" cy="162" r="54" fill="none" stroke="#e5eee5" strokeWidth="2" />
-      <path d="M236 64A98 98 0 0 1 334 162" fill="none" stroke="#aec4b7" strokeWidth="2.5" strokeDasharray="7 8" />
+      <circle cx="236" cy="162" r="102" fill="none" stroke="#cad8c6" strokeWidth="2.2" />
+      <circle cx="236" cy="162" r="78" fill="none" stroke="#d9e4d6" strokeWidth="2" strokeDasharray="6 8" />
+      <circle cx="236" cy="162" r="56" fill="none" stroke="#e8efe6" strokeWidth="2" />
+      <path d="M236 60A102 102 0 0 1 338 162" fill="none" stroke="#a7c0b2" strokeWidth="2.5" strokeDasharray="7 8" />
 
-      <rect x="62" y="196" width="296" height="90" rx="28" fill="url(#hero_card_bg)" stroke="#d8e1d3" strokeWidth="2" />
-      <text x="87" y="221" fontSize="11" fontWeight="800" fill="#6a756c">体質と気象の重なり</text>
-      <rect x="85" y="231" width="64" height="22" rx="11" fill="#ffffff" stroke="#d6ddd1" strokeWidth="1.5" />
-      <text x="117" y="245" textAnchor="middle" fontSize="10" fontWeight="800" fill="#61766f">気圧</text>
-      <rect x="156" y="231" width="64" height="22" rx="11" fill="#ffffff" stroke="#d6ddd1" strokeWidth="1.5" />
-      <text x="188" y="245" textAnchor="middle" fontSize="10" fontWeight="800" fill="#61766f">湿度</text>
-      <rect x="227" y="231" width="70" height="22" rx="11" fill="#ffffff" stroke="#d6ddd1" strokeWidth="1.5" />
-      <text x="262" y="245" textAnchor="middle" fontSize="10" fontWeight="800" fill="#61766f">時間帯</text>
-      <path d="M92 266c28-14 60-16 88-8 16 5 34 4 56-4" fill="none" stroke="#98b2a0" strokeWidth="3.2" strokeLinecap="round" />
-      <path d="M236 254c18 0 34 6 52 18" fill="none" stroke="#d6a062" strokeWidth="3.2" strokeLinecap="round" />
-      <circle cx="310" cy="266" r="8" fill="#eff6f2" stroke="#cbdacf" strokeWidth="1.6" />
-      <circle cx="310" cy="266" r="2.8" fill="#7aaeb2" />
+      <rect x="82" y="208" width="256" height="74" rx="24" fill="url(#hero_card_bg2)" stroke="#d8e1d3" strokeWidth="2" />
+      <text x="102" y="229" fontSize="10.5" fontWeight="800" fill="#6a756c">体質と気象の重なり</text>
+      <rect x="100" y="238" width="58" height="20" rx="10" fill="#ffffff" stroke="#d6ddd1" strokeWidth="1.5" />
+      <text x="129" y="251" textAnchor="middle" fontSize="9.4" fontWeight="800" fill="#61766f">気圧</text>
+      <rect x="165" y="238" width="58" height="20" rx="10" fill="#ffffff" stroke="#d6ddd1" strokeWidth="1.5" />
+      <text x="194" y="251" textAnchor="middle" fontSize="9.4" fontWeight="800" fill="#61766f">湿度</text>
+      <rect x="230" y="238" width="64" height="20" rx="10" fill="#ffffff" stroke="#d6ddd1" strokeWidth="1.5" />
+      <text x="262" y="251" textAnchor="middle" fontSize="9.4" fontWeight="800" fill="#61766f">時間帯</text>
+      <path d="M106 266c26-13 56-14 82-7 18 5 37 4 58-5" fill="none" stroke="#96b19d" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx="307" cy="266" r="8" fill="#eff6f2" stroke="#cbdacf" strokeWidth="1.6" />
+      <circle cx="307" cy="266" r="2.8" fill="#7aaeb2" />
 
-      <circle cx="102" cy="88" r="20" fill="#eff6f5" stroke="#d7e4e1" strokeWidth="2" />
-      <path d="M92 89c4-7 13-7 17 0-2 8-12 9-17 0z" fill="#79adb3" />
-      <path d="M102 73v10" stroke="#79adb3" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M99 70h6" stroke="#79adb3" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="104" cy="92" r="20" fill="#eff6f5" stroke="#d7e4e1" strokeWidth="2" />
+      <path d="M94 93c4-7 13-7 17 0-2 8-12 9-17 0z" fill="#79adb3" />
+      <path d="M104 77v10" stroke="#79adb3" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M101 74h6" stroke="#79adb3" strokeWidth="2.2" strokeLinecap="round" />
 
-      <circle cx="328" cy="86" r="18" fill="#fff4e7" stroke="#ead9be" strokeWidth="2" />
-      <path d="M327 72v10" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M327 96v6" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M316 85h8" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M331 85h8" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="328" cy="92" r="18" fill="#fff4e7" stroke="#ead9be" strokeWidth="2" />
+      <path d="M327 78v10" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M327 102v6" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M316 91h8" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M331 91h8" stroke="#d8964a" strokeWidth="2.2" strokeLinecap="round" />
 
-      <rect x="274" y="120" width="86" height="36" rx="18" fill="#ffffff" stroke="#d8dfd3" strokeWidth="2" />
-      <text x="317" y="135" textAnchor="middle" fontSize="10" fontWeight="800" fill="#69766a">明日の注意点</text>
-      <path d="M292 145h42" stroke="#87a391" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M330 140l4 5-4 5" fill="none" stroke="#87a391" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="278" y="126" width="78" height="32" rx="16" fill="#ffffff" stroke="#d8dfd3" strokeWidth="2" />
+      <text x="317" y="140" textAnchor="middle" fontSize="9.5" fontWeight="800" fill="#69766a">明日の注意点</text>
+      <path d="M294 147h36" stroke="#87a391" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M326 143l4 4-4 4" fill="none" stroke="#87a391" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
 
-      <ellipse cx="218" cy="287" rx="110" ry="14" fill="#111827" opacity="0.05" />
+      <ellipse cx="214" cy="288" rx="110" ry="14" fill="#111827" opacity="0.05" />
 
-      <path d="M146 170c0-34 28-62 62-62h18c34 0 62 28 62 62v22c0 34-28 62-62 62h-18c-34 0-62-28-62-62v-22z" fill="url(#hero_body_fill)" stroke="#d8ccba" strokeWidth="2" />
-      <path d="M164 153c0-24 19-43 43-43h20c24 0 43 19 43 43v24c0 24-19 43-43 43h-20c-24 0-43-19-43-43v-24z" fill="#fffaf1" />
-      <path d="M180 126c14-18 50-19 74 0" fill="none" stroke="#d8c8ab" strokeWidth="3" strokeLinecap="round" />
-      <path d="M172 212c11-8 22-11 34-12" fill="none" stroke="#b8cdbd" strokeWidth="3" strokeLinecap="round" />
-      <path d="M250 200c14 1 24 4 36 12" fill="none" stroke="#b8cdbd" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="196" cy="161" r="3" fill="#6f7d71" />
-      <circle cx="232" cy="161" r="3" fill="#6f7d71" />
-      <path d="M199 183c10 7 21 7 31 0" fill="none" stroke="#6f7d71" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M149 171c0-35 28-63 63-63h14c35 0 63 28 63 63v21c0 35-28 63-63 63h-14c-35 0-63-28-63-63v-21z" fill="url(#hero_skin_fill2)" stroke="#d8ccba" strokeWidth="2" />
+      <path d="M166 153c0-23 19-42 42-42h22c23 0 42 19 42 42v24c0 23-19 42-42 42h-22c-23 0-42-19-42-42v-24z" fill="url(#hero_shirt_fill2)" />
+      <circle cx="219" cy="140" r="31" fill="url(#hero_skin_fill2)" stroke="#d8ccba" strokeWidth="1.6" />
+      <path d="M189 136c6-20 34-26 54-11 4 3 7 7 9 11-11 7-22 10-34 10-13 0-23-3-29-10z" fill="#7d8e85" />
+      <circle cx="208" cy="144" r="2.8" fill="#61766f" />
+      <circle cx="231" cy="144" r="2.8" fill="#61766f" />
+      <path d="M212 159c6 4 13 4 19 0" fill="none" stroke="#61766f" strokeWidth="2.3" strokeLinecap="round" />
+      <path d="M196 189c8 12 18 18 24 18 7 0 17-6 26-18" fill="none" stroke="#f1d5a8" strokeWidth="8" strokeLinecap="round" opacity="0.9" />
+      <path d="M170 228c12-9 23-12 38-13" fill="none" stroke="#b6cabd" strokeWidth="3" strokeLinecap="round" />
+      <path d="M246 215c15 1 27 5 38 13" fill="none" stroke="#b6cabd" strokeWidth="3" strokeLinecap="round" />
 
-      <path d="M174 149c-10 10-13 20-11 32" fill="none" stroke="#78a8b2" strokeWidth="3.2" strokeLinecap="round" opacity="0.62" />
-      <path d="M251 146c8 7 12 18 11 30" fill="none" stroke="#d4a06a" strokeWidth="3.2" strokeLinecap="round" opacity="0.58" />
-      <path d="M206 222c-14 4-23 12-27 23" fill="none" stroke="#8cae93" strokeWidth="3" strokeLinecap="round" opacity="0.7" />
-      <path d="M190 209c-1 10 5 18 16 21" fill="none" stroke="#9bb7a2" strokeWidth="2.6" strokeLinecap="round" />
-      <path d="M246 210c2 10-3 18-14 21" fill="none" stroke="#9bb7a2" strokeWidth="2.6" strokeLinecap="round" />
-      <ellipse cx="218" cy="186" rx="66" ry="40" fill="#d8e7d8" opacity="0.32" />
+      <path d="M182 150c-11 9-15 21-13 35" fill="none" stroke="#78a8b2" strokeWidth="3.4" strokeLinecap="round" opacity="0.68" />
+      <path d="M256 149c9 7 14 18 12 31" fill="none" stroke="#d4a06a" strokeWidth="3.4" strokeLinecap="round" opacity="0.64" />
+      <path d="M220 206c-15 4-24 12-28 24" fill="none" stroke="#90ad99" strokeWidth="3" strokeLinecap="round" opacity="0.74" />
+      <path d="M204 195c0 10 6 18 17 22" fill="none" stroke="#9bb7a2" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M239 195c1 10-4 18-15 22" fill="none" stroke="#9bb7a2" strokeWidth="2.8" strokeLinecap="round" />
+      <ellipse cx="219" cy="183" rx="68" ry="42" fill="#dce8dc" opacity="0.32" />
     </svg>
   );
 }
