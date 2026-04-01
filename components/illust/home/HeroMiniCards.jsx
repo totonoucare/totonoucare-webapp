@@ -14,18 +14,18 @@ function ToneBadge({ children, tone = "warn" }) {
 
 export function HeroRiskCard() {
   return (
-    <div className="rounded-[22px] bg-white/96 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] ring-1 ring-slate-200 backdrop-blur">
+    <div className="rounded-[22px] bg-white/97 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] ring-1 ring-slate-200 backdrop-blur">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[10px] font-extrabold tracking-[0.08em] text-slate-500">明日の崩れやすさ</div>
-          <div className="mt-1 text-[15px] font-extrabold text-slate-900">湿度と気圧の重なりに注意</div>
+          <div className="mt-1 text-[14px] font-extrabold text-slate-900">湿度と気圧の重なりに注意</div>
         </div>
         <ToneBadge tone="warn">注意</ToneBadge>
       </div>
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
           <div className="text-[10px] font-bold text-slate-500">崩れやすさの目安</div>
-          <div className="mt-0.5 text-[22px] font-extrabold leading-none text-slate-900">4 / 10</div>
+          <div className="mt-0.5 text-[21px] font-extrabold leading-none text-slate-900">4 / 10</div>
         </div>
         <div className="text-right">
           <div className="text-[10px] font-bold text-slate-500">気になりやすい症状</div>
@@ -42,9 +42,9 @@ export function HeroCareCard() {
       <div className="text-[10px] font-extrabold tracking-[0.08em] text-[var(--accent-ink)]/72">先回りケア</div>
       <div className="mt-1 text-[13px] font-extrabold text-slate-900">ツボ・食養生・過ごし方まで見られる</div>
       <div className="mt-2 flex flex-wrap gap-2">
-        <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">ツボ</span>
-        <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">食養生</span>
-        <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">過ごし方</span>
+        <span className="rounded-full bg-white/84 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">ツボ</span>
+        <span className="rounded-full bg-white/84 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">食養生</span>
+        <span className="rounded-full bg-white/84 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">過ごし方</span>
       </div>
     </div>
   );
