@@ -14,7 +14,7 @@ function ToneBadge({ children, tone = "warn" }) {
 
 export function HeroRiskCard() {
   return (
-    <div className="rounded-[22px] bg-white/95 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] ring-1 ring-slate-200 backdrop-blur">
+    <div className="rounded-[22px] bg-white/96 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.10)] ring-1 ring-slate-200 backdrop-blur">
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[10px] font-extrabold tracking-[0.08em] text-slate-500">明日の崩れやすさ</div>
@@ -38,13 +38,13 @@ export function HeroRiskCard() {
 
 export function HeroCareCard() {
   return (
-    <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_62%)] px-4 py-3 shadow-[0_14px_34px_rgba(106,151,112,0.14)] ring-1 ring-[var(--ring)]">
-      <div className="text-[10px] font-extrabold tracking-[0.08em] text-[var(--accent-ink)]/70">先回りケア</div>
-      <div className="mt-1 text-[13px] font-extrabold text-slate-900">ツボ・食養生・過ごし方を提示</div>
+    <div className="rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_58%)] px-4 py-3 shadow-[0_14px_34px_rgba(106,151,112,0.14)] ring-1 ring-[var(--ring)]">
+      <div className="text-[10px] font-extrabold tracking-[0.08em] text-[var(--accent-ink)]/72">先回りケア</div>
+      <div className="mt-1 text-[13px] font-extrabold text-slate-900">ツボ・食養生・過ごし方まで見られる</div>
       <div className="mt-2 flex flex-wrap gap-2">
         <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">ツボ</span>
         <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">食養生</span>
-        <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">注意時間</span>
+        <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">過ごし方</span>
       </div>
     </div>
   );
