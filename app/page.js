@@ -8,17 +8,9 @@ import { withTimeout } from "@/lib/withTimeout";
 import Button from "@/components/ui/Button";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import { IconSpark, IconRoute, IconUser } from "@/components/illust/icons/home";
-import { HeroMain } from "@/components/illust/home";
+import { HeroMain, HeroTitleMark } from "@/components/illust/home";
 
 const SESSION_TIMEOUT_MS = 5000;
-
-function FeatureChip({ children }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-white/85 px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
-      {children}
-    </span>
-  );
-}
 
 function FeatureCard({ title, body }) {
   return (
@@ -109,21 +101,19 @@ export default function HomePage() {
             体質チェック × 気象変化 × 先回りケア
           </div>
 
-          <div className="mt-5 max-w-[16ch] text-[34px] font-extrabold leading-[1.18] tracking-tight text-slate-900 sm:max-w-none sm:text-[36px]">
+          <div className="mt-4">
+            <HeroTitleMark className="h-[52px] w-[248px] sm:h-[56px] sm:w-[280px]" />
+          </div>
+
+          <div className="mt-3 max-w-[12ch] text-[28px] font-extrabold leading-[1.24] tracking-tight text-slate-900 sm:max-w-none sm:text-[32px]">
             今日の「しんどい」には、理由がある。
           </div>
 
-          <div className="mt-3 max-w-[30ch] text-[14px] font-bold leading-7 text-slate-700 sm:max-w-none">
+          <div className="mt-3 max-w-[32ch] text-[14px] font-bold leading-7 text-slate-700 sm:max-w-none">
             気象の変化と、あなたの体質。天気だけでは見えにくい「体調の波」を先読みして、無理をしないための一日をナビゲートします。
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <FeatureChip>体質の偏りを見る</FeatureChip>
-            <FeatureChip>体調の波を先読み</FeatureChip>
-            <FeatureChip>合いやすいケアを知る</FeatureChip>
-          </div>
-
-          <div className="mt-5">
+          <div className="mt-4">
             <HeroMain />
           </div>
 
