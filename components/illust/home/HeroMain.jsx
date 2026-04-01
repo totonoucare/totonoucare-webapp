@@ -5,18 +5,18 @@ import { HeroRiskCard, HeroCareCard } from "@/components/illust/home/HeroMiniCar
 export default function HeroMain() {
   return (
     <div className="relative mx-auto w-full max-w-[360px]">
-      <HeroScene className="h-[324px] w-full" />
+      <HeroScene className="h-[320px] w-full" />
 
-      <div className="absolute left-3 top-4 w-[220px] sm:w-[230px]">
+      <div className="absolute left-4 top-3 w-[206px] sm:w-[214px]">
         <HeroRiskCard />
       </div>
 
-      <div className="absolute right-3 top-[150px] w-[188px] sm:w-[194px]">
+      <div className="absolute right-4 top-[164px] w-[182px] sm:w-[188px]">
         <HeroCareCard />
       </div>
 
-      <div className="absolute bottom-1 right-1">
-        <HeroGuideBot className="h-[138px] w-[118px]" />
+      <div className="absolute bottom-0 right-2">
+        <HeroGuideBot className="h-[148px] w-[126px]" />
       </div>
     </div>
   );
