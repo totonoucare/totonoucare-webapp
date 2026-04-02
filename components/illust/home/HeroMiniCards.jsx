@@ -34,7 +34,7 @@ export default function HeroMiniCards({ compact = false }) {
           {/* 1. 診断結果のイメージカード（短期集中型） - 位置を上にずらす */}
           <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all group-hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Analysis Result</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">体質チェック結果</span>
               <StatusChip label="短期集中型" tone="warn" />
             </div>
             <div className="mt-2 text-sm font-black text-slate-900 leading-tight">アクセル優位 × 余力小</div>
@@ -46,7 +46,7 @@ export default function HeroMiniCards({ compact = false }) {
 
           {/* 2. 予報のイメージカード（気圧上昇） - 位置を上にずらし、重なりを解消 */}
           <div className="absolute right-4 top-[110px] w-[170px] rounded-[22px] bg-white/90 backdrop-blur-md p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-10 transition-all group-hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forecast</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">体調予報</div>
             <div className="mt-1 text-sm font-black text-slate-900">明日：気圧上昇</div>
             <div className="mt-3 flex items-end justify-between">
               <div className="text-[11px] font-bold leading-tight text-slate-500">崩れやすさ<br /><span className="text-xl font-black text-rose-600">6</span> <span className="text-[10px] text-slate-300">/ 10</span></div>
