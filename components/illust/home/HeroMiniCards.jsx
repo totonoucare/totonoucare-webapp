@@ -25,10 +25,11 @@ export default function HeroMiniCards({ compact = false }) {
       <div className="rounded-[32px] border border-[var(--ring)] bg-white p-2 shadow-[0_22px_48px_-24px_rgba(77,111,85,0.25)]">
         {/* 高さを320pxにして配置の余裕を確保 */}
         <div className="relative h-[320px] overflow-hidden rounded-[26px] bg-[#fdfefc] ring-1 ring-inset ring-black/5">
-          {/* 背景: 抽象的な円形グラデーションを中央に配置して全体をまとめる */}
+          {/* 背景: 洗練版（はみ出し溶け込みデザイン） */}
+          {/* 円の中心を左下（キャラクターの背後）にずらし、半径を大きくして画面外へ大きくはみ出させる */}
           <svg viewBox="0 0 320 320" className="absolute inset-0 h-full w-full" aria-hidden="true">
-             <circle cx="160" cy="160" r="140" fill="#eef4eb" fillOpacity="0.6" />
-             <circle cx="160" cy="160" r="80" fill="#eef4eb" fillOpacity="0.4" />
+             <circle cx="30" cy="250" r="180" fill="#eef4eb" fillOpacity="0.5" />
+             <circle cx="30" cy="250" r="100" fill="#eef4eb" fillOpacity="0.3" />
           </svg>
 
           {/* 1. 左上：診断結果のイメージカード */}
@@ -67,7 +68,7 @@ export default function HeroMiniCards({ compact = false }) {
           <div className="absolute right-4 bottom-5 flex flex-col items-end gap-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-sm ring-1 ring-black/5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 
-              体質と気象の重なりを解析
+              東洋医学のパーソナライズ
             </div>
           </div>
         </div>
