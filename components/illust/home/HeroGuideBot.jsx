@@ -1,55 +1,34 @@
-export default function HeroGuideBot({ className = "h-[148px] w-[126px]" }) {
+"use client";
+
+export default function HeroGuideBot({ message = "今日はどんな日か、ひと目で見ていこう。", compact = false }) {
   return (
-    <svg viewBox="0 0 132 160" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id="guide_leaf_3" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#94c46c" />
-          <stop offset="1" stopColor="#5f925f" />
-        </linearGradient>
-      </defs>
-
-      <path
-        d="M14 18c0-9 7-16 16-16h42c12 0 22 10 22 22v9c0 12-10 22-22 22H49l-12 11 3-11h-10c-9 0-16-7-16-16V18z"
-        fill="#ffffff"
-        stroke="#d7dfcf"
-        strokeWidth="2"
-      />
-      <text x="54" y="23" textAnchor="middle" fontSize="8" fontWeight="800" fill="#516057">
-        あなた専用の
-      </text>
-      <text x="54" y="35" textAnchor="middle" fontSize="8" fontWeight="700" fill="#516057">
-        体調レーダーを
-      </text>
-      <text x="54" y="47" textAnchor="middle" fontSize="8" fontWeight="700" fill="#516057">
-        先回りで見てみよう
-      </text>
-
-      <ellipse cx="67" cy="145" rx="32" ry="7" fill="#111827" opacity="0.08" />
-      <path
-        d="M36 104c0-16 13-28 28-28h4c16 0 28 12 28 28v10c0 15-12 27-28 27h-4c-15 0-28-12-28-27v-10z"
-        fill="#f5f1df"
-        stroke="#d7ceb3"
-        strokeWidth="2"
-      />
-      <path
-        d="M48 93c0-10 8-18 18-18h2c10 0 18 8 18 18v8c0 10-8 18-18 18h-2c-10 0-18-8-18-18v-8z"
-        fill="#fffaf0"
-      />
-      <circle cx="58" cy="96" r="2.2" fill="#6f7b6b" />
-      <circle cx="73" cy="96" r="2.2" fill="#6f7b6b" />
-      <path d="M59 109c5 3 10 3 14 0" stroke="#6f7b6b" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M63 73c-3-8-3-15 2-21 8 4 10 10 8 18-1 3-4 6-10 3z" fill="url(#guide_leaf_3)" />
-      <path d="M66 73c0-10 1-17 6-25" stroke="#4b7154" strokeWidth="2" strokeLinecap="round" />
-      <path d="M50 123c9 6 19 6 30 0" stroke="#c7b893" strokeWidth="2" strokeLinecap="round" />
-
-      <circle cx="104" cy="90" r="10" fill="#edf4ea" stroke="#cbd7c4" strokeWidth="2" />
-      <path d="M104 84v6l5 3" stroke="#658169" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="23" cy="100" r="9" fill="#eef6f5" stroke="#c7d8d6" strokeWidth="2" />
-      <path d="M20 100c2-3 6-3 7 0-1 4-5 5-7 0z" fill="#74aab0" />
-
-      <path d="M82 65c6-7 14-7 20 0" fill="none" stroke="#8fb1a1" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-      <path d="M85 60c8-9 18-9 26 0" fill="none" stroke="#8fb1a1" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-      <path d="M89 55c10-10 23-10 33 0" fill="none" stroke="#8fb1a1" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
-    </svg>
+    <div className={["relative", compact ? "w-[112px]" : "w-[152px]"].join(" ")}>
+      <div className={["absolute left-0 top-0 max-w-[150px] rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm", compact ? "translate-y-0" : "-translate-y-1"].join(" ")}>
+        {message}
+      </div>
+      <div className={["ml-auto rounded-[28px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_48%)]", compact ? "mt-12 h-[88px] w-[88px]" : "mt-14 h-[108px] w-[108px]"].join(" ")}>
+        <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden="true">
+          <defs>
+            <linearGradient id="bot_body" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#edf5ea" />
+              <stop offset="1" stopColor="#dfeadf" />
+            </linearGradient>
+          </defs>
+          <circle cx="66" cy="68" r="30" fill="url(#bot_body)" />
+          <path d="M60 28c0-7 5-12 12-12s12 5 12 12" fill="none" stroke="#6a9770" strokeWidth="3" strokeLinecap="round" />
+          <path d="M68 17c0-5 4-9 9-9" fill="none" stroke="#6a9770" strokeWidth="3" strokeLinecap="round" />
+          <path d="M75 10l6 2-2 6" fill="none" stroke="#6a9770" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="55" cy="63" r="4" fill="#49684d" />
+          <circle cx="77" cy="63" r="4" fill="#49684d" />
+          <path d="M54 80c7 6 17 6 24 0" fill="none" stroke="#49684d" strokeWidth="3" strokeLinecap="round" />
+          <path d="M34 54c5-7 10-11 16-14" fill="none" stroke="#9ab59e" strokeWidth="3" strokeLinecap="round" />
+          <path d="M89 54c-5-7-10-11-16-14" fill="none" stroke="#9ab59e" strokeWidth="3" strokeLinecap="round" />
+          <path d="M50 92l-12 8" fill="none" stroke="#9ab59e" strokeWidth="3" strokeLinecap="round" />
+          <path d="M82 92l12 8" fill="none" stroke="#9ab59e" strokeWidth="3" strokeLinecap="round" />
+          <path d="M22 26a22 22 0 0 1 18-14" fill="none" stroke="#6a9770" strokeOpacity="0.42" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M17 18a31 31 0 0 1 23-17" fill="none" stroke="#6a9770" strokeOpacity="0.26" strokeWidth="2.4" strokeLinecap="round" />
+        </svg>
+      </div>
+    </div>
   );
 }
