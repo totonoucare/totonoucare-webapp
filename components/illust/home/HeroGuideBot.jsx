@@ -1,36 +1,50 @@
 "use client";
 
 export default function HeroGuideBot({
-  message = "まずは体質チェックから！",
+  message = "今日はどんな日か、ひと目で見ていこう。",
   compact = false,
-  bubbleSide = "left", // デフォルトを左側に
+  bubbleSide = "left",
   showBubble = true,
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
-  const bubblePos = bubbleSide === "right" ? "right-[-10px]" : "left-[-10px]";
+  
+  // 吹き出しの位置ロジックの修正
+  const isRightBubble = bubbleSide === "right";
+  let bubbleClasses = [
+    "absolute top-0 max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-20",
+  ];
+
+  if (compact) {
+    if (isRightBubble) {
+      // compact かつ右吹き出しの場合、顔に被らないように右側へ大きく押し出す
+      bubbleClasses.push("left-0 translate-x-[90px] translate-y-0");
+    } else {
+      bubbleClasses.push("left-0 translate-y-0");
+    }
+  } else {
+    if (isRightBubble) {
+      bubbleClasses.push("right-[-10px] -translate-y-1");
+    } else {
+      bubbleClasses.push("left-0 -translate-y-1");
+    }
+  }
 
   return (
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
-        <div
-          className={[
-            "absolute top-0 max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white/95 backdrop-blur px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-30",
-            bubblePos,
-            compact ? "translate-y-0" : "-translate-y-1",
-          ].join(" ")}
-        >
+        <div className={bubbleClasses.join(" ")}>
           {message}
         </div>
       ) : null}
 
-      {/* ワクを消し、SVGを直接配置。overflow-hiddenを外すことで「はみ出し」を許可 */}
+      {/* キャラクターSVG（透明＆ワクなし） */}
       <div
         className={[
           "relative ml-auto",
-          compact ? "mt-10 h-[92px] w-[92px]" : "mt-14 h-[112px] w-[112px]",
+          compact ? "mt-8 h-[92px] w-[92px]" : "mt-12 h-[112px] w-[112px]",
         ].join(" ")}
       >
-        <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full z-10" aria-hidden="true">
+        <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <defs>
             <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#ffffff" />
@@ -48,17 +62,34 @@ export default function HeroGuideBot({
               <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#4d6f55" floodOpacity="0.12" />
             </filter>
           </defs>
+
+          {/* 背後の光（これを加えることで透過しても背景に沈まない） */}
+          <circle cx="60" cy="70" r="40" fill="white" fillOpacity="0.3" filter="blur(10px)" />
+
+          {/* ボディ */}
           <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" />
+          
+          {/* 胸のレーダー */}
           <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.9" />
           <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
           <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
+
+          {/* 頭の葉っぱアンテナ */}
           <path d="M60 28 L60 18" stroke="#89ac8e" strokeWidth="2.5" strokeLinecap="round" />
           <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#a8c7ab" />
+
+          {/* 顔の輪郭（Squircleに近い角丸矩形、シャドウで浮かせる） */}
           <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" />
+
+          {/* 目 */}
           <circle cx="44" cy="50" r="4.5" fill="#4d6f55" />
           <circle cx="76" cy="50" r="4.5" fill="#4d6f55" />
+
+          {/* ほほの赤み */}
           <ellipse cx="36" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.4" />
           <ellipse cx="84" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.4" />
+
+          {/* 口 */}
           <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="#4d6f55" strokeWidth="2.2" strokeLinecap="round" />
         </svg>
       </div>
