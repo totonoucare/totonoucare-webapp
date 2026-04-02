@@ -22,17 +22,17 @@ export default function HeroMiniCards({ compact = false }) {
   // LP（ログイン前）などで使われるコンパクトな使用イメージ表示
   if (compact) {
     return (
-      <div className="rounded-[32px] border border-[var(--ring)] bg-white p-2 shadow-[0_22px_48px_-24px_rgba(77,111,85,0.25)] transition-all group-hover:shadow-[0_32px_56px_-24px_rgba(77,111,85,0.3)]">
-        {/* 背景高さを320pxにわずかに広げ、配置に余裕を持たせる */}
+      <div className="rounded-[32px] border border-[var(--ring)] bg-white p-2 shadow-[0_22px_48px_-24px_rgba(77,111,85,0.25)]">
+        {/* 高さを320pxにして配置の余裕を確保 */}
         <div className="relative h-[320px] overflow-hidden rounded-[26px] bg-[#fdfefc] ring-1 ring-inset ring-black/5">
-          {/* 背景: 抽象的な円形グラデーション */}
+          {/* 背景: 抽象的な円形グラデーションを中央に配置して全体をまとめる */}
           <svg viewBox="0 0 320 320" className="absolute inset-0 h-full w-full" aria-hidden="true">
-             <circle cx="280" cy="240" r="120" fill="#eef4eb" fillOpacity="0.7" />
-             <circle cx="280" cy="240" r="70" fill="#eef4eb" fillOpacity="0.5" />
+             <circle cx="160" cy="160" r="140" fill="#eef4eb" fillOpacity="0.6" />
+             <circle cx="160" cy="160" r="80" fill="#eef4eb" fillOpacity="0.4" />
           </svg>
 
-          {/* 1. 診断結果のイメージカード（短期集中型） - 左上 */}
-          <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all group-hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
+          {/* 1. 左上：診断結果のイメージカード */}
+          <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Analysis Result</span>
               <StatusChip label="短期集中型" tone="warn" />
@@ -44,8 +44,8 @@ export default function HeroMiniCards({ compact = false }) {
             </div>
           </div>
 
-          {/* 2. 予報のイメージカード（気圧上昇） - 右上、重なりを完全に解消 */}
-          <div className="absolute right-4 top-10 w-[170px] rounded-[22px] bg-white/90 backdrop-blur-md p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-10 transition-all group-hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
+          {/* 2. 右側中央：予報のイメージカード（重なりを解消し、目線を右へ誘導） */}
+          <div className="absolute right-4 top-[120px] w-[170px] rounded-[22px] bg-white/90 backdrop-blur-md p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-10 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forecast</div>
             <div className="mt-1 text-sm font-black text-slate-900">明日：気圧上昇</div>
             <div className="mt-3 flex items-end justify-between">
@@ -58,17 +58,16 @@ export default function HeroMiniCards({ compact = false }) {
             </div>
           </div>
 
-          {/* 3. キャラクター: 左下に移動、枠をなくし、カードに直接「溶け込んで座っている」ように配置 */}
-          {/* 吹き出しを左側（外側）に出すことで、キャラクターの顔との被りを避ける */}
-          <div className="absolute left-[-4px] bottom-[-4px] scale-[0.72] origin-bottom-left z-30 transition-transform group-hover:scale-[0.75] group-hover:translate-x-1">
-            <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="left" />
+          {/* 3. 左下：キャラクター（目線を最後左下へ。吹き出しは右側へ） */}
+          <div className="absolute left-[-2px] bottom-[-4px] scale-[0.72] origin-bottom-left z-30 transition-transform hover:scale-[0.75]">
+            <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" />
           </div>
 
-          {/* 装飾ラベル - 位置を右下に移動 */}
-          <div className="absolute right-6 bottom-4 flex flex-col gap-2">
+          {/* 4. 右下：装飾ラベル（空いた右下のスペースを美しく埋める） */}
+          <div className="absolute right-4 bottom-5 flex flex-col items-end gap-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-sm ring-1 ring-black/5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 
-              東洋医学のパーソナライズ
+              体質と気象の重なりを解析
             </div>
           </div>
         </div>
