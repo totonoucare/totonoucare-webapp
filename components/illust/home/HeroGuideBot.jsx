@@ -25,60 +25,65 @@ export default function HeroGuideBot({
 
       <div
         className={[
-          "relative ml-auto overflow-hidden rounded-[28px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_48%)]",
+          "relative ml-auto overflow-hidden rounded-[28px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_48%)] shadow-inner",
           compact ? "mt-10 h-[92px] w-[92px]" : "mt-14 h-[112px] w-[112px]",
         ].join(" ")}
       >
-        {/* ▼▼ 新しい「未病レーダー公式ボット」のSVG ▼▼ */}
-        <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden="true">
+        <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <defs>
-            <linearGradient id="botBase" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#ffffff" />
-              <stop offset="1" stopColor="#f3f7ef" />
+            {/* 立体感・高級感を出すためのグラデーション群 */}
+            <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#e8f0ea" />
             </linearGradient>
+            <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#e8f0ea" />
+              <stop offset="100%" stopColor="#cce0d2" />
+            </linearGradient>
+            <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#d9a54a" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#e5b85c" stopOpacity="0.2" />
+            </linearGradient>
+
+            {/* アウトラインなしで境界を際立たせるための柔らかいドロップシャドウ */}
+            <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#4d6f55" floodOpacity="0.12" />
+            </filter>
+            <filter id="leafShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#4d6f55" floodOpacity="0.15" />
+            </filter>
           </defs>
 
-          {/* 背景のレーダーエフェクト（気象感知） */}
-          <circle cx="60" cy="70" r="40" fill="none" stroke="#7ea284" strokeOpacity="0.15" strokeWidth="2.5" />
-          <circle cx="60" cy="70" r="26" fill="none" stroke="#7ea284" strokeOpacity="0.25" strokeWidth="2.5" />
+          {/* 背景の抽象的なレーダー波紋 */}
+          <circle cx="60" cy="70" r="45" fill="none" stroke="#ffffff" strokeOpacity="0.6" strokeWidth="1.5" />
+          <circle cx="60" cy="70" r="30" fill="none" stroke="#ffffff" strokeOpacity="0.4" strokeWidth="1.5" />
 
-          {/* 体（丸みを帯びたフォルム） */}
-          <path d="M30 115 C 30 90, 42 82, 60 82 C 78 82, 90 90, 90 115" fill="url(#botBase)" stroke="#6a9770" strokeWidth="3.5" />
+          {/* ボディ部（アウトラインなし、グラデーションで立体感） */}
+          <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" />
 
-          {/* 胸のミニレーダー（未病レーダーのアイデンティティ） */}
-          <circle cx="60" cy="98" r="7" fill="none" stroke="#6a9770" strokeWidth="2" opacity="0.5" />
-          <path d="M60 98 L65 93" stroke="#6a9770" strokeWidth="2" opacity="0.6" strokeLinecap="round" />
-          <circle cx="60" cy="98" r="2.5" fill="#d9a54a" opacity="0.8" />
+          {/* 胸のレーダー（同心円状の光の波紋） */}
+          <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.9" />
+          <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
+          <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
 
-          {/* 耳（気象センサー） */}
-          <path d="M25 56 A 7 7 0 0 0 32 46 L 32 66 A 7 7 0 0 0 25 56 Z" fill="#a8c7ab" stroke="#6a9770" strokeWidth="3" strokeLinejoin="round" />
-          <path d="M95 56 A 7 7 0 0 1 88 46 L 88 66 A 7 7 0 0 1 95 56 Z" fill="#a8c7ab" stroke="#6a9770" strokeWidth="3" strokeLinejoin="round" />
+          {/* 頭の葉っぱ（アンテナ） */}
+          <path d="M60 28 L60 18" stroke="#89ac8e" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#a8c7ab" filter="url(#leafShadow)" />
 
-          {/* 顔の輪郭（LINEボットの四角ベースを踏襲しつつ角丸に） */}
-          <rect x="32" y="36" width="56" height="42" rx="14" fill="url(#botBase)" stroke="#6a9770" strokeWidth="3.5" />
+          {/* 顔部（Squircleに近い角丸矩形、シャドウで浮かせる） */}
+          <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" />
 
-          {/* 頭の葉っぱアンテナ（気象と東洋医学の象徴） */}
-          {/* 茎 */}
-          <path d="M60 36 L60 22" stroke="#6a9770" strokeWidth="3.5" strokeLinecap="round" />
-          {/* 葉っぱ */}
-          <path d="M60 22 C 48 16, 52 4, 60 4 C 68 4, 72 16, 60 22 Z" fill="#a8c7ab" stroke="#6a9770" strokeWidth="3" strokeLinejoin="round" />
+          {/* 目（シンプルで高級感のあるダークカラー） */}
+          <circle cx="44" cy="50" r="4.5" fill="#4d6f55" />
+          <circle cx="76" cy="50" r="4.5" fill="#4d6f55" />
 
-          {/* アンテナの受信電波（ピピピッ） */}
-          <path d="M72 15 A 8 8 0 0 1 76 24" fill="none" stroke="#d9a54a" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M78 11 A 14 14 0 0 1 84 27" fill="none" stroke="#d9a54a" strokeWidth="2.5" strokeLinecap="round" opacity="0.5" />
+          {/* ほほの赤み（ぼかしを効かせて優しく） */}
+          <ellipse cx="36" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.4" />
+          <ellipse cx="84" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.4" />
 
-          {/* 目（ととのうケアの特徴的な黄色） */}
-          <circle cx="47" cy="53" r="4.5" fill="#e5b85c" />
-          <circle cx="73" cy="53" r="4.5" fill="#e5b85c" />
-
-          {/* ほっぺ */}
-          <circle cx="41" cy="59" r="3.5" fill="#e2b4b4" opacity="0.6" />
-          <circle cx="79" cy="59" r="3.5" fill="#e2b4b4" opacity="0.6" />
-
-          {/* 口（優しい笑顔） */}
-          <path d="M53 62 Q 60 69 67 62" fill="none" stroke="#4d6f55" strokeWidth="3" strokeLinecap="round" />
+          {/* 口（控えめな笑顔、線幅を細くして洗練さを出す） */}
+          <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="#4d6f55" strokeWidth="2.2" strokeLinecap="round" />
         </svg>
-        {/* ▲▲ ここまで ▲▲ */}
       </div>
     </div>
   );
