@@ -1,21 +1,35 @@
-export default function HeroTitleMark({ className = 'h-[46px] w-[220px]' }) {
+"use client";
+
+export default function HeroTitleMark({ compact = false, className = "" }) {
   return (
-    <svg viewBox="0 0 300 64" className={className} aria-label="未病レーダー">
-      <defs>
-        <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#1f3b33" />
-          <stop offset="1" stopColor="#395f53" />
-        </linearGradient>
-      </defs>
-      <g transform="translate(6 10)">
-        <circle cx="18" cy="22" r="16" fill="#eef4ea" stroke="#d6e0d1" />
-        <circle cx="18" cy="22" r="10.5" fill="none" stroke="#88a89b" strokeWidth="1.8" />
-        <circle cx="18" cy="22" r="5.5" fill="none" stroke="#88a89b" strokeWidth="1.8" strokeDasharray="2.5 3" />
-        <path d="M18 6 A16 16 0 0 1 34 22" fill="none" stroke="#6e9587" strokeWidth="2.2" strokeLinecap="round" />
-        <circle cx="33" cy="10" r="2.6" fill="#d89d5c" />
-      </g>
-      <text x="48" y="28" fill="url(#titleGrad)" fontSize="28" fontWeight="800" letterSpacing="0.04em">未病レーダー</text>
-      <text x="50" y="48" fill="#6a756c" fontSize="10.5" fontWeight="700" letterSpacing="0.08em">気象変化と体質から、体調の波を先読み</text>
-    </svg>
+    <div className={["inline-flex items-center gap-3", className].join(" ")}>
+      <div className={["relative shrink-0 rounded-[18px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_45%)]", compact ? "h-11 w-11" : "h-14 w-14"].join(" ")}>
+        <svg viewBox="0 0 56 56" className="h-full w-full" aria-hidden="true">
+          <defs>
+            <linearGradient id="radar_title_grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#6a9770" stopOpacity="0.22" />
+              <stop offset="1" stopColor="#6a9770" stopOpacity="0.04" />
+            </linearGradient>
+          </defs>
+          <circle cx="28" cy="28" r="26" fill="url(#radar_title_grad)" />
+          <path d="M28 28m-14 0a14 14 0 1 1 28 0" fill="none" stroke="#6a9770" strokeOpacity="0.28" strokeWidth="2.2" />
+          <path d="M28 28m-9 0a9 9 0 1 1 18 0" fill="none" stroke="#6a9770" strokeOpacity="0.42" strokeWidth="2.2" />
+          <path d="M28 28m-4.5 0a4.5 4.5 0 1 1 9 0" fill="none" stroke="#49684d" strokeOpacity="0.75" strokeWidth="2.4" />
+          <circle cx="28" cy="28" r="2.8" fill="#49684d" />
+          <path d="M28 28L39 19" stroke="#49684d" strokeWidth="2.6" strokeLinecap="round" />
+          <path d="M20 12c2.8 1.6 5.1 4 6.5 6.8" stroke="#7ea284" strokeWidth="2" strokeLinecap="round" />
+          <path d="M35 9c-1.4 3.4-3.8 6.2-6.9 8.3" stroke="#7ea284" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      <div className="min-w-0">
+        <div className={["font-black tracking-tight text-slate-900", compact ? "text-lg" : "text-[26px] leading-none"].join(" ")}>
+          未病レーダー
+        </div>
+        <div className={["font-bold text-slate-500", compact ? "text-[11px] mt-0.5" : "text-xs mt-1"].join(" ")}>
+          体質と気象の変化を重ねて見る、あなた専用の体調予報
+        </div>
+      </div>
+    </div>
   );
 }
