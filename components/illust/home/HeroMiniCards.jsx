@@ -20,9 +20,33 @@ function StatusChip({ label, tone }) {
 export default function HeroMiniCards({ compact = false }) {
   if (compact) {
     return (
-      <div className="rounded-[24px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_56%)] p-4 shadow-[0_16px_36px_-28px_rgba(0,0,0,0.26)]">
-        <div className="relative h-[230px] overflow-hidden rounded-[18px] bg-white/70 ring-1 ring-[var(--ring)]">
-          <div className="absolute left-3 top-3 w-[208px] rounded-[20px] border border-[var(--ring)] bg-white p-4 shadow-sm">
+      <div className="rounded-[24px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_58%)] p-4 shadow-[0_16px_36px_-28px_rgba(0,0,0,0.26)]">
+        <div className="relative h-[248px] overflow-hidden rounded-[18px] bg-white/72 ring-1 ring-[var(--ring)]">
+          <svg viewBox="0 0 320 248" className="absolute inset-0 h-full w-full" aria-hidden="true">
+            <defs>
+              <linearGradient id="compactRadarBg2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#f2f6f0" />
+                <stop offset="1" stopColor="#e3ece1" />
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="320" height="248" fill="url(#compactRadarBg2)" />
+            <circle cx="118" cy="152" r="82" fill="none" stroke="#7ea284" strokeOpacity="0.22" strokeWidth="3" />
+            <circle cx="118" cy="152" r="56" fill="none" stroke="#7ea284" strokeOpacity="0.34" strokeWidth="3" />
+            <path d="M118 152L178 106" stroke="#6a9770" strokeWidth="4" strokeLinecap="round" />
+            <path d="M52 178c18-24 42-36 72-36 32 0 51 8 74 8" fill="none" stroke="#6a9770" strokeOpacity="0.65" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="118" cy="152" r="6" fill="#6a9770" />
+            <path d="M196 48a15 15 0 0 1 15 15" fill="none" stroke="#7ea284" strokeOpacity="0.45" strokeWidth="2.4" />
+            <path d="M205 39a26 26 0 0 1 26 26" fill="none" stroke="#7ea284" strokeOpacity="0.24" strokeWidth="2.4" />
+            <circle cx="196" cy="48" r="5" fill="#d9a54a" fillOpacity="0.84" />
+          </svg>
+
+          <div className="absolute left-3 right-3 top-4 flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--ring)] bg-white px-4 py-2 text-[12px] font-extrabold text-slate-600 shadow-sm">
+              未病レーダーの使用イメージ
+            </div>
+          </div>
+
+          <div className="absolute left-4 top-[56px] w-[198px] rounded-[20px] border border-[var(--ring)] bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-[11px] font-extrabold text-slate-500">明日の崩れやすさ</div>
@@ -42,7 +66,7 @@ export default function HeroMiniCards({ compact = false }) {
             </div>
           </div>
 
-          <div className="absolute right-3 bottom-3 w-[216px] rounded-[20px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_62%)] p-4 shadow-sm">
+          <div className="absolute right-4 bottom-4 w-[188px] rounded-[20px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_64%)] p-4 shadow-sm">
             <div className="text-[11px] font-extrabold text-slate-500">先回りケア</div>
             <div className="mt-1 text-[14px] font-extrabold text-slate-900">今日のうちに整えておく</div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -52,35 +76,17 @@ export default function HeroMiniCards({ compact = false }) {
             </div>
           </div>
 
-          <svg viewBox="0 0 320 230" className="absolute inset-0 h-full w-full" aria-hidden="true">
-            <defs>
-              <linearGradient id="compactRadarBg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#f2f6f0" />
-                <stop offset="1" stopColor="#e3ece1" />
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="320" height="230" fill="url(#compactRadarBg)" />
-            <circle cx="114" cy="156" r="76" fill="none" stroke="#7ea284" strokeOpacity="0.22" strokeWidth="3" />
-            <circle cx="114" cy="156" r="52" fill="none" stroke="#7ea284" strokeOpacity="0.34" strokeWidth="3" />
-            <path d="M114 156L168 114" stroke="#6a9770" strokeWidth="4" strokeLinecap="round" />
-            <path d="M48 180c18-24 42-36 73-36 31 0 49 7 72 7" fill="none" stroke="#6a9770" strokeOpacity="0.65" strokeWidth="4" strokeLinecap="round" />
-            <circle cx="118" cy="156" r="6" fill="#6a9770" />
-            <path d="M196 46a15 15 0 0 1 15 15" fill="none" stroke="#7ea284" strokeOpacity="0.45" strokeWidth="2.4" />
-            <path d="M205 37a26 26 0 0 1 26 26" fill="none" stroke="#7ea284" strokeOpacity="0.24" strokeWidth="2.4" />
-            <circle cx="196" cy="46" r="5" fill="#d9a54a" fillOpacity="0.84" />
-          </svg>
-
-          <div className="absolute left-5 bottom-5 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
+          <div className="absolute left-4 bottom-6 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
             体質と気象の重なり
           </div>
-          <div className="absolute left-5 bottom-16 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
+          <div className="absolute left-4 bottom-17 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
             気圧
           </div>
-          <div className="absolute right-24 top-24 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
+          <div className="absolute right-[86px] top-[128px] rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
             明日の注意点
           </div>
 
-          <div className="absolute right-5 bottom-0">
+          <div className="absolute right-4 bottom-2">
             <HeroGuideBot compact message="まずは体質チェックから見てみよう。" />
           </div>
         </div>
