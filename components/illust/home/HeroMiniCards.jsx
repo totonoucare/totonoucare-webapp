@@ -41,7 +41,7 @@ export default function HeroMiniCards({ compact = false }) {
           {/* 浮遊する診断結果カード（短期集中型） */}
           <div className="absolute left-4 top-14 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_24px_-8px_rgba(0,0,0,0.1)] ring-1 ring-black/5 z-20">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Your Type</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">あなたの体質の軸</span>
               <StatusChip label="短期集中型" tone="warn" />
             </div>
             <div className="mt-2 text-sm font-black text-slate-900">アクセル優位 × 余力小</div>
@@ -53,7 +53,7 @@ export default function HeroMiniCards({ compact = false }) {
 
           {/* 浮遊する予報カード（気圧低下） */}
           <div className="absolute right-4 bottom-14 w-[170px] rounded-[22px] bg-white/90 backdrop-blur-md p-4 shadow-[0_12px_24px_-8px_rgba(0,0,0,0.1)] ring-1 ring-black/5 z-10">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forecast</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">体調予報</div>
             <div className="mt-1 text-sm font-black text-slate-900">明日：気圧低下</div>
             <div className="mt-3 flex items-end justify-between">
               <div className="text-[11px] font-bold leading-tight text-slate-500">崩れやすさ<br /><span className="text-lg font-black text-rose-600">6</span> <span className="text-[10px]">/ 10</span></div>
