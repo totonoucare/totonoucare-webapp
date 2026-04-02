@@ -345,23 +345,26 @@ export default function HomePage() {
         <Module className="p-5">
           <HeroTitleMark />
 
-          <div className="mt-5 text-[28px] font-black tracking-tight leading-[1.18] text-slate-900 sm:text-[32px]">
-            今日の「しんどい」には、理由がある。
-          </div>
-          <div className="mt-3 max-w-[34ch] text-[14px] font-bold leading-7 text-slate-600">
-            気象の変化と、あなたの体質。天気だけでは見えにくい体調の波を先読みして、無理をしないための一日をナビゲートします。
+          <div className="mt-5">
+            <HeroMiniCards compact />
           </div>
 
-          <div className="mt-5 grid gap-2 sm:max-w-[320px]">
+          <div className="mt-5 text-center">
+            <div className="text-[24px] font-black tracking-tight leading-[1.28] text-slate-900 sm:text-[28px]">
+              気象変化と体質から、体調の波を先読み。
+            </div>
+            <div className="mt-3 text-[13px] font-bold leading-6 text-slate-500">
+              明日の崩れやすさや、合いやすいケアをひと目で見られます。
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-2 sm:max-w-[320px] sm:mx-auto">
             <Button onClick={() => router.push("/check")}>無料で体質チェックをはじめる</Button>
             <Button variant="secondary" onClick={() => router.push("/signup")}>ログインする</Button>
+            <Button variant="ghost" onClick={() => router.push("/guide")}>使い方を見る</Button>
           </div>
-          <div className="mt-3 text-[11px] font-bold text-slate-500">
+          <div className="mt-3 text-center text-[11px] font-bold text-slate-500">
             体質チェックと結果閲覧は無料。予報・履歴・記録はログイン後に使えます。
-          </div>
-
-          <div className="mt-6">
-            <HeroMiniCards compact />
           </div>
         </Module>
       </AppShell>
@@ -375,7 +378,7 @@ export default function HomePage() {
       headerRight={
         <HomeHeaderMenu
           onGuide={() => router.push("/guide")}
-          onSettings={() => router.push("/radar")}
+          onRegionSettings={() => router.push("/radar")}
           onLogout={handleLogout}
         />
       }
@@ -387,11 +390,11 @@ export default function HomePage() {
             <div className="mt-4 text-[22px] font-black tracking-tight leading-[1.25] text-slate-900">
               今日はどんな日か、ひと目で確認。
             </div>
-            <div className="mt-2 max-w-[28ch] text-[13px] font-bold leading-6 text-slate-600">
+            <div className="mt-2 max-w-[31ch] text-[13px] font-bold leading-6 text-slate-600">
               詳しい注意点やケアは体調予報へ。ここでは、今日どう見るかと次の一歩だけをまとめています。
             </div>
           </div>
-          <div className="shrink-0">
+          <div className="shrink-0 pt-1">
             <HeroDashboardArt />
           </div>
         </div>
