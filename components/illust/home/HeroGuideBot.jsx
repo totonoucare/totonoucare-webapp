@@ -1,20 +1,20 @@
 "use client";
 
 export default function HeroGuideBot({
-  message = "今日はどんな日か、ひと目で見ていこう。",
+  message = "まずは体質チェックから！",
   compact = false,
-  bubbleSide = "left",
+  bubbleSide = "left", // デフォルトを左側に
   showBubble = true,
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
-  const bubblePos = bubbleSide === "right" ? "right-0" : "left-0";
+  const bubblePos = bubbleSide === "right" ? "right-[-10px]" : "left-[-10px]";
 
   return (
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
         <div
           className={[
-            "absolute top-0 max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-20",
+            "absolute top-0 max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white/95 backdrop-blur px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-30",
             bubblePos,
             compact ? "translate-y-0" : "-translate-y-1",
           ].join(" ")}
@@ -27,10 +27,10 @@ export default function HeroGuideBot({
       <div
         className={[
           "relative ml-auto",
-          compact ? "mt-8 h-[92px] w-[92px]" : "mt-12 h-[112px] w-[112px]",
+          compact ? "mt-10 h-[92px] w-[92px]" : "mt-14 h-[112px] w-[112px]",
         ].join(" ")}
       >
-        <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full z-10" aria-hidden="true">
           <defs>
             <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#ffffff" />
@@ -48,10 +48,6 @@ export default function HeroGuideBot({
               <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#4d6f55" floodOpacity="0.12" />
             </filter>
           </defs>
-
-          {/* 背後の光（これを加えることで透過しても背景に沈まない） */}
-          <circle cx="60" cy="70" r="40" fill="white" fillOpacity="0.3" filter="blur(10px)" />
-
           <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" />
           <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.9" />
           <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
