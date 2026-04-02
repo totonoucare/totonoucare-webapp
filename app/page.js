@@ -7,7 +7,12 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
-import { HeroGuideBot, HeroMiniCards, HeroTitleMark } from "@/components/illust/home";
+import {
+  HeroDashboardArt,
+  HeroMiniCards,
+  HeroTitleMark,
+  HomeHeaderMenu,
+} from "@/components/illust/home";
 
 const SESSION_TIMEOUT_MS = 5000;
 
@@ -28,21 +33,22 @@ function IconPin() {
   );
 }
 
+function IconJournalCard() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="4" width="14" height="16" rx="3" />
+      <path d="M9 8h6" />
+      <path d="M9 12h3" />
+      <path d="M9 16l1.8 1.8L15 13.6" />
+    </svg>
+  );
+}
+
 function IconCheckCard() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="4" y="4" width="16" height="16" rx="3" />
       <path d="M8 12l2.5 2.5L16 9" />
-    </svg>
-  );
-}
-
-function IconRadarCard() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 12l7-4" />
-      <path d="M12 12a8 8 0 1 0 8 8" />
-      <path d="M12 12V4" />
     </svg>
   );
 }
@@ -214,7 +220,6 @@ export default function HomePage() {
   const [weeklySummary, setWeeklySummary] = useState(null);
 
   const isLoggedIn = !!session;
-  const email = useMemo(() => session?.user?.email || "", [session?.user?.email]);
 
   async function authedFetch(path) {
     const { data } = await supabase.auth.getSession();
@@ -229,6 +234,17 @@ export default function HomePage() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
     return json;
+  }
+
+  async function handleLogout() {
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      router.replace("/");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   useEffect(() => {
@@ -323,41 +339,29 @@ export default function HomePage() {
         title="ホーム"
         subtitle="未病レーダー"
         headerRight={
-          <Button size="sm" variant="ghost" onClick={() => router.push("/guide")}>
-            使い方
-          </Button>
+          <Button size="sm" variant="ghost" onClick={() => router.push("/guide")}>使い方</Button>
         }
       >
         <Module className="p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <HeroTitleMark />
-              <div className="mt-5 text-[28px] font-black tracking-tight leading-[1.18] text-slate-900">
-                今日の「しんどい」には、理由がある。
-              </div>
-              <div className="mt-3 text-[14px] font-bold leading-7 text-slate-600">
-                気象の変化と、あなたの体質。天気だけでは見えにくい体調の波を先読みして、
-                無理をしないための一日をナビゲートします。
-              </div>
-              <div className="mt-5 grid gap-2 sm:max-w-[300px]">
-                <Button onClick={() => router.push("/check")}>無料で体質チェックをはじめる</Button>
-                <Button variant="secondary" onClick={() => router.push("/signup")}>ログインする</Button>
-              </div>
-              <div className="mt-3 text-[11px] font-bold text-slate-500">
-                体質チェックと結果閲覧は無料。予報・履歴・記録はログイン後に使えます。
-              </div>
-            </div>
-            <div className="hidden shrink-0 sm:block">
-              <HeroGuideBot message="まずは体質チェックから。結果までは無料で見られます。" />
-            </div>
+          <HeroTitleMark />
+
+          <div className="mt-5 text-[28px] font-black tracking-tight leading-[1.18] text-slate-900 sm:text-[32px]">
+            今日の「しんどい」には、理由がある。
+          </div>
+          <div className="mt-3 max-w-[34ch] text-[14px] font-bold leading-7 text-slate-600">
+            気象の変化と、あなたの体質。天気だけでは見えにくい体調の波を先読みして、無理をしないための一日をナビゲートします。
           </div>
 
-          <div className="mt-6 sm:hidden">
-            <HeroGuideBot compact message="まずは体質チェックから見てみよう。" />
+          <div className="mt-5 grid gap-2 sm:max-w-[320px]">
+            <Button onClick={() => router.push("/check")}>無料で体質チェックをはじめる</Button>
+            <Button variant="secondary" onClick={() => router.push("/signup")}>ログインする</Button>
+          </div>
+          <div className="mt-3 text-[11px] font-bold text-slate-500">
+            体質チェックと結果閲覧は無料。予報・履歴・記録はログイン後に使えます。
           </div>
 
           <div className="mt-6">
-            <HeroMiniCards />
+            <HeroMiniCards compact />
           </div>
         </Module>
       </AppShell>
@@ -369,9 +373,11 @@ export default function HomePage() {
       title="ホーム"
       subtitle="今日の体調予報と次の一歩"
       headerRight={
-        <Button size="sm" variant="ghost" onClick={() => router.push("/guide")}>
-          使い方
-        </Button>
+        <HomeHeaderMenu
+          onGuide={() => router.push("/guide")}
+          onSettings={() => router.push("/radar")}
+          onLogout={handleLogout}
+        />
       }
     >
       <Module className="p-5">
@@ -381,15 +387,12 @@ export default function HomePage() {
             <div className="mt-4 text-[22px] font-black tracking-tight leading-[1.25] text-slate-900">
               今日はどんな日か、ひと目で確認。
             </div>
-            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-              予報の詳細は体調予報へ。ここでは、今日どう見るかと次の一歩だけをまとめています。
+            <div className="mt-2 max-w-[28ch] text-[13px] font-bold leading-6 text-slate-600">
+              詳しい注意点やケアは体調予報へ。ここでは、今日どう見るかと次の一歩だけをまとめています。
             </div>
-            {email ? (
-              <div className="mt-3 text-[11px] font-bold text-slate-500">{email}</div>
-            ) : null}
           </div>
           <div className="shrink-0">
-            <HeroGuideBot compact message="詳しく見たい日は体調予報へ。今日は次にやることを確認しよう。" />
+            <HeroDashboardArt />
           </div>
         </div>
       </Module>
@@ -429,7 +432,7 @@ export default function HomePage() {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <ActionTile
-            icon={<IconRadarCard />}
+            icon={<IconJournalCard />}
             title="今日の記録をつける"
             sub="体調予報を見たら、そのまま記録へ。"
             onClick={() => router.push("/records?tab=calendar")}
