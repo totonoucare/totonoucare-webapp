@@ -35,7 +35,8 @@ export default function HeroMiniCards({ compact = false }) {
           {/* 1. 左上：診断結果のイメージカード */}
           <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">あなたの体質</span>
+              {/* 日本語に修正 */}
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">体質診断結果</span>
               <StatusChip label="短期集中型" tone="warn" />
             </div>
             <div className="mt-2 text-sm font-black text-slate-900 leading-tight">アクセル優位 × 余力小</div>
@@ -45,7 +46,7 @@ export default function HeroMiniCards({ compact = false }) {
             </div>
           </div>
 
-          {/* 2. 右側中央：予報のイメージカード（重なりを解消し、目線を右へ誘導） */}
+          {/* 2. 右側中央：予報のイメージカード */}
           <div className="absolute right-4 top-[120px] w-[170px] rounded-[22px] bg-white/90 backdrop-blur-md p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-10 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">体調予報</div>
             <div className="mt-1 text-sm font-black text-slate-900">明日：気圧上昇</div>
@@ -59,16 +60,17 @@ export default function HeroMiniCards({ compact = false }) {
             </div>
           </div>
 
-          {/* 3. 左下：キャラクター（目線を最後左下へ。吹き出しは右側へ） */}
-          <div className="absolute left-[-2px] bottom-[-4px] scale-[0.72] origin-bottom-left z-30 transition-transform hover:scale-[0.75]">
+          {/* 3. 左下：キャラクター */}
+          {/* scaleを0.8に拡大し、位置を微調整（left-[-8px] bottom-[-8px]） */}
+          <div className="absolute left-[-8px] bottom-[-8px] scale-[0.8] origin-bottom-left z-30 transition-transform hover:scale-[0.82]">
             <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" />
           </div>
 
-          {/* 4. 右下：装飾ラベル（空いた右下のスペースを美しく埋める） */}
+          {/* 4. 右下：装飾ラベル */}
           <div className="absolute right-4 bottom-5 flex flex-col items-end gap-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-sm ring-1 ring-black/5">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 
-              東洋医学のパーソナライズ
+              体質と気象の重なりを解析
             </div>
           </div>
         </div>
@@ -81,7 +83,8 @@ export default function HeroMiniCards({ compact = false }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="group relative overflow-hidden rounded-[30px] border border-[var(--ring)] bg-white p-5 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] transition-all hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)]">
         <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Personal Forecast</div>
+          {/* 日本語に修正 */}
+          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">体調予報サマリー</div>
           <div className="mt-1 text-base font-black text-slate-900 leading-tight">明日のあなたの体調予報</div>
           <div className="mt-8 flex items-end justify-between">
             <div className="text-[11px] font-bold text-slate-400">目安スコア<br /><span className="text-2xl font-black text-slate-900 tracking-tighter">4</span> <span className="text-xs font-bold text-slate-300">/ 10</span></div>
@@ -96,7 +99,8 @@ export default function HeroMiniCards({ compact = false }) {
 
       <div className="group relative overflow-hidden rounded-[30px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-5 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
         <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-500/60">Self Care Guide</div>
+          {/* 日本語に修正 */}
+          <div className="text-[11px] font-black uppercase tracking-widest text-slate-500/60">セルフケアガイド</div>
           <div className="mt-1 text-base font-black text-slate-900 leading-tight">今日のうちに整えておく</div>
           
           <div className="mt-4 flex flex-wrap gap-2">
