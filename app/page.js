@@ -33,42 +33,50 @@ function IconPin() {
   );
 }
 
+// 洗練版: 今日の記録をつける
 function IconJournalCard() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="4" width="14" height="16" rx="3" />
-      <path d="M9 8h6" />
-      <path d="M9 12h3" />
-      <path d="M9 16l1.8 1.8L15 13.6" />
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="3" width="16" height="18" rx="5" fill="currentColor" fillOpacity="0.12" stroke="none" />
+      <rect x="4" y="3" width="16" height="18" rx="5" />
+      <path d="M8 9h8" />
+      <path d="M8 13h5" />
     </svg>
   );
 }
 
+// 洗練版: 体質結果を見る
 function IconCheckCard() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <path d="M8 12l2.5 2.5L16 9" />
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="5" fill="currentColor" fillOpacity="0.12" stroke="none" />
+      <rect x="4" y="4" width="16" height="16" rx="5" />
+      <path d="M8 12.5l2.5 2.5 5-5" strokeWidth="2.5" />
     </svg>
   );
 }
 
+// 洗練版: 履歴を見る
 function IconHistoryCard() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 1 0 3-6.7" />
-      <path d="M3 3v5h5" />
-      <path d="M12 7v6l4 2" />
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" fill="currentColor" fillOpacity="0.12" stroke="none" />
+      <path d="M3.05 11a9 9 0 1 1 .5 4m-.5-4v4h4" />
+      <path d="M12 7v5l3 2" />
     </svg>
   );
 }
 
+// 洗練版: 週次レポートを見る
 function IconReportCard() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 20V10" />
-      <path d="M12 20V4" />
-      <path d="M18 20v-6" />
+    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="14" width="4" height="6" rx="1.5" fill="currentColor" fillOpacity="0.12" stroke="none" />
+      <rect x="10" y="9" width="4" height="11" rx="1.5" fill="currentColor" fillOpacity="0.12" stroke="none" />
+      <rect x="16" y="4" width="4" height="16" rx="1.5" fill="currentColor" fillOpacity="0.12" stroke="none" />
+      <rect x="4" y="14" width="4" height="6" rx="1.5" />
+      <rect x="10" y="9" width="4" height="11" rx="1.5" />
+      <rect x="16" y="4" width="4" height="16" rx="1.5" />
     </svg>
   );
 }
