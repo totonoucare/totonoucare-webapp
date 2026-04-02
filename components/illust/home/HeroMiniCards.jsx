@@ -1,141 +1,218 @@
 "use client";
 
-import HeroGuideBot from "./HeroGuideBot";
+import Button from "@/components/ui/Button";
 
-function StatusChip({ label, tone }) {
-  const toneClass =
-    tone === "warn"
-      ? "border-amber-200 bg-amber-50 text-amber-700"
-      : tone === "danger"
-        ? "border-rose-200 bg-rose-50 text-rose-700"
-        : "border-emerald-200 bg-emerald-50 text-emerald-700";
-
+function IconChevron() {
   return (
-    <span className={["inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-extrabold", toneClass].join(" ")}>
-      {label}
-    </span>
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+function IconCore9() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full" fill="none">
+      <defs>
+        <linearGradient id="core9Grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#cce0d2" />
+          <stop offset="100%" stopColor="#e8f0ea" />
+        </linearGradient>
+        <filter id="core9Glow">
+          <feGaussianBlur stdDeviation="2" stdDeviationX="2" stdDeviationY="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <circle cx="60" cy="60" r="50" fill="url(#core9Grad)" />
+      
+      {/* アクセル（上） */}
+      <circle cx="60" cy="30" r="7" fill="#6a9770" />
+      <path d="M54 30 L66 30" stroke="#ffffff" strokeWidth="1.5" />
+      
+      {/* ブレーキ（下） */}
+      <circle cx="60" cy="90" r="7" fill="#89ac8e" />
+      <path d="M54 90 L66 90" stroke="#ffffff" strokeWidth="1.5" />
+      
+      {/* バッテリー（中） */}
+      <circle cx="60" cy="60" r="9" fill="#e5b85c" filter="url(#core9Glow)" />
+      
+      {/* 残りの6タイプ（抽象的な円の重なり） */}
+      <circle cx="34" cy="46" r="4.5" fill="#a8c7ab" fillOpacity="0.8" />
+      <circle cx="34" cy="74" r="4.5" fill="#a8c7ab" fillOpacity="0.8" />
+      <circle cx="86" cy="46" r="4.5" fill="#a8c7ab" fillOpacity="0.8" />
+      <circle cx="86" cy="74" r="4.5" fill="#a8c7ab" fillOpacity="0.8" />
+      <circle cx="46" cy="34" r="4" fill="#a8c7ab" fillOpacity="0.6" />
+      <circle cx="74" cy="34" r="4" fill="#a8c7ab" fillOpacity="0.6" />
+      <circle cx="46" cy="86" r="4" fill="#a8c7ab" fillOpacity="0.6" />
+      <circle cx="74" cy="86" r="4" fill="#a8c7ab" fillOpacity="0.6" />
+    </svg>
+  );
+}
+
+function IconForecastwave() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full" fill="none">
+      <defs>
+        <linearGradient id="forecastBg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.1" />
+        </linearGradient>
+        <filter id="forecastGlow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+        <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d9a54a" />
+          <stop offset="100%" stopColor="#e5b85c" />
+        </linearGradient>
+      </defs>
+      
+      {/* グラスモーフィズムの背景 */}
+      <rect x="10" y="10" width="100" height="100" rx="20" fill="url(#forecastBg)" />
+      
+      {/* 気象の波 (データウェーブ、グラスモーフィズム) */}
+      <path d="M 0 50 Q 25 35, 45 50 T 110 45" fill="none" stroke="#6a9770" strokeWidth="2.5" strokeLinecap="round" strokeOpacity="0.3" />
+      
+      {/* 体調の波 (滑らかな曲線) */}
+      <path d="M 0 70 Q 20 50, 40 70 T 110 65" fill="none" stroke="#6a9770" strokeWidth="3.5" strokeLinecap="round" />
+      
+      {/* 雨雲 (抽象化、透明感) */}
+      <circle cx="40" cy="32" r="8" fill="#cce0d2" fillOpacity="0.6" />
+      <circle cx="52" cy="32" r="8" fill="#cce0d2" fillOpacity="0.8" />
+      
+      {/* 太陽 (抽象化、発光) */}
+      <circle cx="80" cy="28" r="7" fill="#e5b85c" filter="url(#forecastGlow)" />
+      
+      {/* 目安スコア (キャラクター胸のレーダーの抽象化) */}
+      <circle cx="60" cy="90" r="14" fill="#ffffff" fillOpacity="0.8" />
+      <circle cx="60" cy="90" r="8" fill="url(#scoreGrad)" />
+      
+      {/* シグナルポイント */}
+      <circle cx="60" cy="62" r="4.5" fill="#ffffff" fillOpacity="0.9" />
+      <circle cx="60" cy="62" r="2.5" fill="#6a9770" />
+    </svg>
+  );
+}
+
+function IconCareTsuboMoxa() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-full w-full" fill="none">
+      <defs>
+        <filter id="careShadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#4d6f55" floodOpacity="0.12" />
+        </filter>
+        <linearGradient id="careGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#e8f0ea" />
+        </linearGradient>
+        <filter id="careGlow">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      
+      {/* ケア提案 (抽象化されたツボとお灸、発光、アウトラインなし) */}
+      <circle cx="60" cy="60" r="48" fill="url(#careGrad)" filter="url(#careShadow)" />
+      
+      {/* ツボ押しとお灸の手元 (抽象化) */}
+      <rect x="30" y="55" width="20" height="28" rx="8" fill="#a8c7ab" />
+      <path d="M40 78 C 38 88, 52 88, 50 78" fill="none" stroke="#89ac8e" strokeWidth="2.5" strokeLinecap="round" />
+      
+      {/* お灸 (Moxa、発光) */}
+      <circle cx="60" cy="98" r="6" fill="#e5b85c" filter="url(#careGlow)" />
+      
+      {/* 薬草の束 (漢方) */}
+      <path d="M80 60 C 72 45, 92 35, 90 45 Z" fill="#89ac8e" />
+      <path d="M85 60 C 77 48, 97 42, 95 48 Z" fill="#a8c7ab" fillOpacity="0.7" />
+      
+      {/* 食養生のポイント */}
+      <circle cx="90" cy="85" r="3.5" fill="#89ac8e" fillOpacity="0.6" />
+      <circle cx="100" cy="80" r="3.5" fill="#89ac8e" fillOpacity="0.6" />
+      <circle cx="85" cy="75" r="3.5" fill="#89ac8e" fillOpacity="0.6" />
+      
+      {/* 中央の発光ポイント (体調が整うオーラ) */}
+      <circle cx="60" cy="60" r="14" fill="none" stroke="#e5b85c" strokeWidth="1.5" strokeOpacity="0.6" filter="url(#careGlow)" />
+    </svg>
+  );
+}
+
+function MiniCard({ icon, title, core, signal, score, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[200px] flex-col rounded-[24px] border border-[var(--ring)] bg-white p-4 text-left shadow-[0_12px_24px_-20px_rgba(0,0,0,0.18)] transition active:scale-[0.99]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="grid h-12 w-12 place-items-center rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] overflow-hidden">
+          {icon}
+        </div>
+        <IconChevron />
+      </div>
+
+      <div className="mt-4 min-w-0 flex-1">
+        <div className="text-sm font-extrabold text-slate-900">{title}</div>
+        
+        {children || (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-1.5 ring-1 ring-slate-100">
+            <span className="text-[11px] font-extrabold text-slate-700">{core}</span>
+            <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-500">
+              {signal} /
+              <span className="text-sm font-black text-slate-900">{score}</span>
+              <span className="text-[10px] text-slate-500">点</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-auto inline-flex items-center gap-1 text-[12px] font-extrabold text-[var(--accent-ink)]">
+        詳しく見る
+        <IconChevron />
+      </div>
+    </button>
   );
 }
 
 export default function HeroMiniCards({ compact = false }) {
-  if (compact) {
-    return (
-      <div className="rounded-[24px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_58%)] p-4 shadow-[0_16px_36px_-28px_rgba(0,0,0,0.26)]">
-        <div className="relative h-[248px] overflow-hidden rounded-[18px] bg-white/72 ring-1 ring-[var(--ring)]">
-          <svg viewBox="0 0 320 248" className="absolute inset-0 h-full w-full" aria-hidden="true">
-            <defs>
-              <linearGradient id="compactRadarBg2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stopColor="#f2f6f0" />
-                <stop offset="1" stopColor="#e3ece1" />
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="320" height="248" fill="url(#compactRadarBg2)" />
-            <circle cx="118" cy="152" r="82" fill="none" stroke="#7ea284" strokeOpacity="0.22" strokeWidth="3" />
-            <circle cx="118" cy="152" r="56" fill="none" stroke="#7ea284" strokeOpacity="0.34" strokeWidth="3" />
-            <path d="M118 152L178 106" stroke="#6a9770" strokeWidth="4" strokeLinecap="round" />
-            <path d="M52 178c18-24 42-36 72-36 32 0 51 8 74 8" fill="none" stroke="#6a9770" strokeOpacity="0.65" strokeWidth="4" strokeLinecap="round" />
-            <circle cx="118" cy="152" r="6" fill="#6a9770" />
-            <path d="M196 48a15 15 0 0 1 15 15" fill="none" stroke="#7ea284" strokeOpacity="0.45" strokeWidth="2.4" />
-            <path d="M205 39a26 26 0 0 1 26 26" fill="none" stroke="#7ea284" strokeOpacity="0.24" strokeWidth="2.4" />
-            <circle cx="196" cy="48" r="5" fill="#d9a54a" fillOpacity="0.84" />
-          </svg>
+  const latestResultHref = null;
+  const core = { title: "短期集中型" };
 
-          <div className="absolute left-3 right-3 top-4 flex justify-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--ring)] bg-white px-4 py-2 text-[12px] font-extrabold text-slate-600 shadow-sm">
-              未病レーダーの使用イメージ
-            </div>
-          </div>
-
-          <div className="absolute left-4 top-[56px] w-[198px] rounded-[20px] border border-[var(--ring)] bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-extrabold text-slate-500">明日の崩れやすさ</div>
-                <div className="mt-1 text-[14px] font-extrabold text-slate-900">あなた専用の体調予報</div>
-              </div>
-              <StatusChip label="注意" tone="warn" />
-            </div>
-            <div className="mt-4 flex items-end justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-bold text-slate-500">気になりやすい症状</div>
-                <div className="mt-1 text-[14px] font-extrabold text-slate-900">頭痛・重だるさ</div>
-              </div>
-              <div className="rounded-2xl bg-[color-mix(in_srgb,var(--mint),white_35%)] px-3 py-2 text-right">
-                <div className="text-[10px] font-extrabold text-slate-500">目安スコア</div>
-                <div className="text-base font-black tracking-tight text-slate-900">4 / 10</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute right-4 bottom-4 w-[188px] rounded-[20px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_64%)] p-4 shadow-sm">
-            <div className="text-[11px] font-extrabold text-slate-500">先回りケア</div>
-            <div className="mt-1 text-[14px] font-extrabold text-slate-900">今日のうちに整えておく</div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">ツボ</span>
-              <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">食養生</span>
-              <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">記録</span>
-            </div>
-          </div>
-
-          <div className="absolute left-4 bottom-6 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
-            体質と気象の重なり
-          </div>
-          <div className="absolute left-4 bottom-17 rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
-            気圧
-          </div>
-          <div className="absolute right-[86px] top-[128px] rounded-full border border-[var(--ring)] bg-white px-3 py-1 text-[11px] font-extrabold text-slate-600 shadow-sm">
-            明日の注意点
-          </div>
-
-          <div className="absolute right-4 bottom-2">
-            <HeroGuideBot compact message="まずは体質チェックから見てみよう。" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const heightClass = compact ? "h-[200px]" : "h-auto";
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-[22px] border border-[var(--ring)] bg-white p-4 shadow-[0_14px_32px_-24px_rgba(0,0,0,0.28)]">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <div className="text-[11px] font-extrabold text-slate-500">明日の崩れやすさ</div>
-            <div className="mt-1 text-sm font-extrabold text-slate-900">あなた専用の体調予報</div>
-          </div>
-          <StatusChip label="注意" tone="warn" />
+    <div className={["grid gap-3 sm:grid-cols-2 lg:grid-cols-3", heightClass].join(" ")}>
+      <MiniCard icon={<IconCore9 />} title="1.体質チェック" core={core?.title} onClick={() => {}}>
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-2.5 py-1.5 ring-1 ring-slate-100">
+          <span className="text-[11px] font-extrabold text-slate-700">{core?.title}</span>
+          <span className="text-[11px] font-extrabold text-slate-500">
+            アクセル / バッテリー
+          </span>
         </div>
-        <div className="mt-3 flex items-end justify-between gap-3">
-          <div>
-            <div className="text-[11px] font-bold text-slate-500">気になりやすい症状</div>
-            <div className="mt-1 text-sm font-extrabold text-slate-900">頭痛・重だるさ</div>
-          </div>
-          <div className="rounded-2xl bg-[color-mix(in_srgb,var(--mint),white_35%)] px-3 py-2 text-right">
-            <div className="text-[10px] font-extrabold text-slate-500">目安スコア</div>
-            <div className="text-base font-black tracking-tight text-slate-900">4 / 10</div>
-          </div>
-        </div>
-      </div>
+      </MiniCard>
 
-      <div className="rounded-[22px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_52%)] p-4 shadow-[0_14px_32px_-24px_rgba(0,0,0,0.22)]">
-        <div className="text-[11px] font-extrabold text-slate-500">先回りケア</div>
-        <div className="mt-1 text-sm font-extrabold text-slate-900">今日のうちに整えておく</div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">ツボ</span>
-          <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">食養生</span>
-          <span className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">記録</span>
+      <MiniCard
+        icon={<IconForecastwave />}
+        title="2.気象×体質予報"
+        onClick={() => {}}
+      >
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-2.5 py-1.5 ring-1 ring-emerald-100">
+          <span className="text-[11px] font-extrabold text-emerald-800">安定</span>
+          <span className="text-xs font-black text-emerald-900">2</span>
+          <span className="text-[10px] text-emerald-600">点</span>
         </div>
-        <div className="mt-4 rounded-[18px] bg-white/80 p-3 ring-1 ring-[var(--ring)]">
-          <svg viewBox="0 0 260 96" className="h-full w-full" aria-hidden="true">
-            <path d="M20 68c14-17 30-28 50-28 18 0 32 8 44 8 14 0 25-9 40-9 16 0 29 8 44 8 13 0 27-6 42-17" fill="none" stroke="#6a9770" strokeWidth="3" strokeLinecap="round" />
-            <circle cx="68" cy="40" r="6" fill="#6a9770" fillOpacity="0.2" />
-            <circle cx="141" cy="39" r="6" fill="#6a9770" fillOpacity="0.2" />
-            <circle cx="214" cy="30" r="6" fill="#6a9770" fillOpacity="0.2" />
-            <path d="M83 18a18 18 0 0 1 18 18" fill="none" stroke="#6a9770" strokeOpacity="0.24" strokeWidth="2.4" />
-            <path d="M132 14a16 16 0 0 1 16 16" fill="none" stroke="#6a9770" strokeOpacity="0.24" strokeWidth="2.4" />
-            <path d="M195 17a14 14 0 0 1 14 14" fill="none" stroke="#6a9770" strokeOpacity="0.22" strokeWidth="2.4" />
-          </svg>
+      </MiniCard>
+
+      <MiniCard
+        icon={<IconCareTsuboMoxa />}
+        title="3.合いやすい対策"
+        onClick={() => {}}
+      >
+        <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-2.5 py-1.5 ring-1 ring-amber-100">
+          <span className="text-[11px] font-extrabold text-amber-800">ケア</span>
+          <span className="text-xs font-black text-amber-900">8</span>
+          <span className="text-[10px] text-amber-600">点</span>
         </div>
-      </div>
+      </MiniCard>
     </div>
   );
 }
