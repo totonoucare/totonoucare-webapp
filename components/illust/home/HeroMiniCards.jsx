@@ -62,7 +62,7 @@ export default function HeroMiniCards({ compact = false }) {
 
           {/* 3. 左下：キャラクター */}
           {/* scaleを0.8に拡大し、位置を微調整（left-[-8px] bottom-[-8px]） */}
-          <div className="absolute left-[-8px] bottom-[-8px] scale-[0.95] origin-bottom-left z-30 transition-transform hover:scale-[0.82]">
+          <div className="absolute left-[-8px] bottom-[-8px] scale-[0.85] origin-bottom-left z-30 transition-transform hover:scale-[0.82]">
             <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" />
           </div>
 
