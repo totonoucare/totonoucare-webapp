@@ -5,25 +5,33 @@ export default function HeroGuideBot({
   compact = false,
   bubbleSide = "left",
   showBubble = true,
+  showTail = false, // ★新規追加：尻尾を表示するかどうかのフラグ
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
-  // w-max と max-w を組み合わせることで、短い文は1行に、長い文は美しく改行させます。
   let bubbleClasses = [
-    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-sm z-20 transition-all w-max max-w-[220px]",
+    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20 transition-all",
   ];
+
+  // ★新規追加：指し口（尻尾）のCSS。右側に吹き出しが出る場合のみ、左側に尻尾をつける
+  if (showTail && bubbleSide === "right") {
+    bubbleClasses.push(
+      "before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-[5px] before:w-[10px] before:h-[10px] before:bg-white before:border-b before:border-l before:border-[var(--ring)] before:rotate-45 before:rounded-[2px]"
+    );
+  }
 
   if (compact) {
     if (bubbleSide === "left-belly") {
-      bubbleClasses.push("right-[95px] bottom-[30px]");
+      // ログイン後（影響なし）
+      bubbleClasses.push("right-[95px] bottom-[40px] w-[200px]");
     } else if (bubbleSide === "right") {
-      // 少し上に配置して、カードとの被りを防ぎます
-      bubbleClasses.push("left-[90px] top-2");
+      // ★修正：LP用。w-maxとwhitespace-nowrapで絶対に1行にする。Y位置も顔に合わせて微調整。
+      bubbleClasses.push("left-[90px] top-[15px] w-max whitespace-nowrap");
     } else {
-      bubbleClasses.push("right-[90px] top-2");
+      bubbleClasses.push("right-[90px] top-0 w-[160px]");
     }
   } else {
-    bubbleClasses.push("right-[130px] top-4");
+    bubbleClasses.push("right-[130px] top-4 w-[180px]");
   }
 
   return (
@@ -31,16 +39,6 @@ export default function HeroGuideBot({
       {showBubble ? (
         <div className={bubbleClasses.join(" ")}>
           {message}
-          
-          {/* 追加：吹き出しの指し口（しっぽ） */}
-          <div 
-            className={[
-              "absolute w-[10px] h-[10px] bg-white border-[var(--ring)]",
-              bubbleSide === "left-belly" || bubbleSide === "left"
-                ? "right-[-6px] top-1/2 -translate-y-1/2 border-r border-t rotate-45" // 右向きのしっぽ
-                : "left-[-6px] top-1/2 -translate-y-1/2 border-l border-b rotate-45"  // 左向きのしっぽ
-            ].join(" ")}
-          />
         </div>
       ) : null}
 
