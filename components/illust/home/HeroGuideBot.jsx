@@ -15,7 +15,7 @@ export default function HeroGuideBot({
   if (compact) {
     if (bubbleSide === "left-belly") {
       // ★位置を少し下げ（bottom-[22px]）、しっぽが出るスペースを確保
-      bubbleClasses.push("right-[95px] bottom-[40px] w-[200px]");
+      bubbleClasses.push("right-[95px] bottom-[22px] w-[200px]");
     } else if (bubbleSide === "right") {
       bubbleClasses.push("left-[90px] top-0 w-[160px]");
     } else {
