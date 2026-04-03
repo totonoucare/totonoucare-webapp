@@ -9,7 +9,7 @@ import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 import {
   HeroDashboardArt,
-  HeroGuideBot, // キャラを統合
+  HeroGuideBot,
   HeroMiniCards,
   HeroTitleMark,
   HomeHeaderMenu,
@@ -34,7 +34,6 @@ function IconPin() {
   );
 }
 
-// 洗練版: 今日の記録をつける
 function IconJournalCard() {
   return (
     <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -46,7 +45,6 @@ function IconJournalCard() {
   );
 }
 
-// 洗練版: 体質結果を見る
 function IconCheckCard() {
   return (
     <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -57,7 +55,6 @@ function IconCheckCard() {
   );
 }
 
-// 洗練版: 履歴を見る
 function IconHistoryCard() {
   return (
     <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -68,7 +65,6 @@ function IconHistoryCard() {
   );
 }
 
-// 洗練版: 週次レポートを見る
 function IconReportCard() {
   return (
     <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -393,25 +389,27 @@ export default function HomePage() {
       }
     >
       <Module className="p-5 overflow-hidden relative rounded-[28px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
-        {/* 背景の洗練された予報のオーラ */}
-        <div className="absolute inset-0 z-[1] translate-x-12 translate-y-12 scale-[1.0]">
+        {/* 【修正箇所1】アートワークは絶対に右端（キャラクターの真裏）に固定。テキストエリアに干渉させない */}
+        <div className="absolute right-[-20px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-90">
           <HeroDashboardArt />
         </div>
         
-        <div className="relative z-[2] flex items-start justify-between gap-4">
+        <div className="relative z-[2] flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1 relative z-[2]">
             <HeroTitleMark compact />
+            {/* テキストが改行されても綺麗に見えるように調整 */}
             <div className="mt-4 text-[22px] font-black tracking-tight leading-[1.25] text-slate-900">
-              今日はどんな日か、ひと目で確認。
+              今日はどんな日か、<br />ひと目で確認。
             </div>
-            {/* テキストを短縮 */}
-            <div className="mt-2 max-w-[31ch] text-[13px] font-bold leading-6 text-slate-600">
-              崩れやすさと、次の一歩だけをまとめています。詳しい注意点やケアは体調予報へ。
+            {/* 余計な長文を削り、max-w を細かく制御して黄金コアとの被りを物理的に防ぐ */}
+            <div className="mt-2 max-w-[14ch] text-[12px] font-bold leading-5 text-slate-600 sm:max-w-[20ch]">
+              崩れやすさと、次の一歩だけをまとめています。
             </div>
           </div>
-          {/* キャラクターを統合し、メッセージを設定。オーラのはみ出しを許可するために相対配置 */}
-          <div className="relative shrink-0 pt-1 z-[2]">
-              <HeroGuideBot compact message="おかえりなさい" bubbleSide="right" />
+          
+          {/* 【修正箇所2】キャラクターは右端固定。吹き出しは「左（内側）」へ出すことで画面内に綺麗に収める */}
+          <div className="relative shrink-0 pt-2 z-[2] translate-y-2">
+              <HeroGuideBot compact message="おかえり！" bubbleSide="left" />
           </div>
         </div>
       </Module>
