@@ -9,6 +9,7 @@ import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 import {
   HeroDashboardArt,
+  HeroGuideBot, // キャラを統合
   HeroMiniCards,
   HeroTitleMark,
   HomeHeaderMenu,
@@ -391,19 +392,26 @@ export default function HomePage() {
         />
       }
     >
-      <Module className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
+      <Module className="p-5 overflow-hidden relative rounded-[28px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
+        {/* 背景の洗練された予報のオーラ */}
+        <div className="absolute inset-0 z-[1] translate-x-12 translate-y-12 scale-[1.0]">
+          <HeroDashboardArt />
+        </div>
+        
+        <div className="relative z-[2] flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1 relative z-[2]">
             <HeroTitleMark compact />
             <div className="mt-4 text-[22px] font-black tracking-tight leading-[1.25] text-slate-900">
               今日はどんな日か、ひと目で確認。
             </div>
+            {/* テキストを短縮 */}
             <div className="mt-2 max-w-[31ch] text-[13px] font-bold leading-6 text-slate-600">
-              詳しい注意点やケアは体調予報へ。ここでは、今日どう見るかと次の一歩だけをまとめています。
+              崩れやすさと、次の一歩だけをまとめています。詳しい注意点やケアは体調予報へ。
             </div>
           </div>
-          <div className="shrink-0 pt-1">
-            <HeroDashboardArt />
+          {/* キャラクターを統合し、メッセージを設定。オーラのはみ出しを許可するために相対配置 */}
+          <div className="relative shrink-0 pt-1 z-[2]">
+              <HeroGuideBot compact message="おかえりなさい" bubbleSide="right" />
           </div>
         </div>
       </Module>
