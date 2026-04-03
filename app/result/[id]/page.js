@@ -14,6 +14,7 @@ import {
 } from "@/lib/diagnosis/v2/labels";
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
+import { MeridianIllust } from "@/components/illust/meridian";
 import {
   IconMemo,
   IconCompass,
@@ -124,6 +125,36 @@ function SoftPanel({ tone = "mint", title, icon, right, children }) {
           {right ? <div className="shrink-0">{right}</div> : null}
         </div>
         <div className="mt-3 text-sm leading-8 text-slate-800">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+
+function MeridianPanelContent({ line, tone = "violet" }) {
+  const toneClass = {
+    violet: "text-[#5b4bb7]",
+    teal: "text-[#0f766e]",
+    mint: "text-[var(--accent)]",
+  };
+
+  if (!line) {
+    return <div className="text-sm text-slate-700">今回は強い偏りなし</div>;
+  }
+
+  return (
+    <div className="flex gap-4">
+      <div className="shrink-0">
+        <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)]">
+          <MeridianIllust code={line.code} size="lg" className={toneClass[tone] || toneClass.violet} />
+        </div>
+      </div>
+      <div className="min-w-0">
+        <div className="text-base font-extrabold text-slate-900">{line.title}</div>
+        <div className="mt-1 text-xs font-bold text-slate-500">
+          {line.body_area}（{line.meridians.join("・")}）
+        </div>
+        <div className="mt-2 text-sm leading-7 text-slate-700">{line.organs_hint}</div>
       </div>
     </div>
   );
@@ -759,39 +790,11 @@ function ResultPage({ params }) {
                   </SoftPanel>
 
                   <SoftPanel tone="violet" title="体の張りやすい場所（主）" icon={<IconCompass />}>
-                    {meridianPrimary ? (
-                      <>
-                        <div className="text-base font-extrabold text-slate-900">
-                          {meridianPrimary.title}
-                        </div>
-                        <div className="mt-1 text-xs font-bold text-slate-500">
-                          {meridianPrimary.body_area}（{meridianPrimary.meridians.join("・")}）
-                        </div>
-                        <div className="mt-2 text-sm leading-7 text-slate-700">
-                          {meridianPrimary.organs_hint}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-sm text-slate-700">今回は強い偏りなし</div>
-                    )}
+                    <MeridianPanelContent line={meridianPrimary ? { ...meridianPrimary, code: computed?.primary_meridian } : null} tone="violet" />
                   </SoftPanel>
 
                   <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconCompass />}>
-                    {meridianSecondary ? (
-                      <>
-                        <div className="text-base font-extrabold text-slate-900">
-                          {meridianSecondary.title}
-                        </div>
-                        <div className="mt-1 text-xs font-bold text-slate-500">
-                          {meridianSecondary.body_area}（{meridianSecondary.meridians.join("・")}）
-                        </div>
-                        <div className="mt-2 text-sm leading-7 text-slate-700">
-                          {meridianSecondary.organs_hint}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-sm text-slate-700">今回は強い偏りなし</div>
-                    )}
+                    <MeridianPanelContent line={meridianSecondary ? { ...meridianSecondary, code: computed?.secondary_meridian } : null} tone="teal" />
                   </SoftPanel>
                 </div>
               </Card>
