@@ -2,12 +2,37 @@ export default function MeridianLungLI({ title = "首・鎖骨まわりライン
   return (
     <svg viewBox="0 0 72 72" role="img" aria-label={title} className={className} {...props}>
       <title>{title}</title>
-      <circle cx="36" cy="36" r="30" fill="currentColor" opacity="0.10" />
-      <path d="M36 16c-8 0-13 6-13 13v5c0 3-2 7-6 12 4 6 12 10 19 10s15-4 19-10c-4-5-6-9-6-12v-5c0-7-5-13-13-13Z" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinejoin="round" opacity="0.35" />
-      <path d="M29 22c0 6 0 10-2 15" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M43 22c0 6 0 10 2 15" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" opacity="0.45" />
-      <path d="M24 28c4-2 8-3 12-3s8 1 12 3" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
-      <path d="M21 42c3-3 6-5 10-6" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="lungGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#34d399" />
+          <stop offset="100%" stopColor="#059669" />
+        </linearGradient>
+        <filter id="lungGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      
+      <circle cx="36" cy="36" r="32" fill="currentColor" opacity="0.03" />
+      
+      <g stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.2">
+        <circle cx="36" cy="15" r="7" />
+        <path d="M 31 21 V 24 C 31 26, 28 27, 22 27 C 15 27, 10 33, 10 42 V 56" />
+        <path d="M 41 21 V 24 C 41 26, 44 27, 50 27 C 57 27, 62 33, 62 42 V 56" />
+        <path d="M 23 38 C 23 48, 26 58, 26 58" />
+        <path d="M 49 38 C 49 48, 46 58, 46 58" />
+      </g>
+
+      <g filter="url(#lungGlow)">
+        <path d="M 28 26 C 22 26, 16 30, 14 38 L 12 48" fill="none" stroke="url(#lungGrad)" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 44 26 C 50 26, 56 30, 58 38 L 60 48" fill="none" stroke="url(#lungGrad)" strokeWidth="2.5" strokeLinecap="round" />
+        
+        {/* ツボ（鎖骨付近と肩先） */}
+        <circle cx="22" cy="27" r="2" fill="#fff" stroke="#059669" strokeWidth="1" />
+        <circle cx="50" cy="27" r="2" fill="#fff" stroke="#059669" strokeWidth="1" />
+        <circle cx="14" cy="38" r="1.5" fill="#fff" stroke="#059669" strokeWidth="1" />
+        <circle cx="58" cy="38" r="1.5" fill="#fff" stroke="#059669" strokeWidth="1" />
+      </g>
     </svg>
   );
 }
