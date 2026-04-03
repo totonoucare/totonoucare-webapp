@@ -14,8 +14,8 @@ export default function HeroGuideBot({
 
   if (compact) {
     if (bubbleSide === "left-belly") {
-      // キャラクターの左側にゆったりと配置。w-autoで内容に応じた幅に。
-      bubbleClasses.push("right-[95px] bottom-[40px] w-[200px]");
+      // ★位置を少し下げ（bottom-[22px]）、しっぽが出るスペースを確保
+      bubbleClasses.push("right-[95px] bottom-[22px] w-[200px]");
     } else if (bubbleSide === "right") {
       bubbleClasses.push("left-[90px] top-0 w-[160px]");
     } else {
@@ -29,8 +29,12 @@ export default function HeroGuideBot({
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
         <div className={bubbleClasses.join(" ")}>
-          {/* 吹き出しの尻尾的な装飾をあえて省くことで、よりモダンでクリーンな印象に */}
           {message}
+          
+          {/* ★吹き出しのしっぽ（指し口） */}
+          {bubbleSide === "left-belly" && (
+            <div className="absolute right-[-6px] bottom-[14px] h-3 w-3 rotate-45 border-r border-t border-[var(--ring)] bg-white shadow-[2px_-2px_2px_rgba(0,0,0,0.02)]" />
+          )}
         </div>
       ) : null}
 
