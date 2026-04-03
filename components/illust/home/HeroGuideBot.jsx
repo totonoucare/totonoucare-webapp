@@ -6,29 +6,26 @@ export default function HeroGuideBot({
   bubbleSide = "left",
   showBubble = true,
 }) {
-  // コンテナの幅
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
-  // 吹き出しの位置を計算するロジック
   let bubbleClasses = [
-    "absolute max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-20",
+    "absolute rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-20",
   ];
 
   if (compact) {
     if (bubbleSide === "right") {
-      bubbleClasses.push("left-[90px] top-0");
+      bubbleClasses.push("left-[90px] top-0 max-w-[158px]");
     } else if (bubbleSide === "left-belly") {
-      // ★新規追加：お腹の左側あたりに配置（顔を隠さず、左側の余白を活かす）
-      bubbleClasses.push("right-[75px] top-[45px]");
+      // ★修正：基準を右下に固定。文字が増えても左上へ伸びるため見切れない
+      bubbleClasses.push("right-[75px] bottom-[30px] w-[160px]");
     } else {
-      bubbleClasses.push("right-[80px] top-0");
+      bubbleClasses.push("right-[80px] top-0 max-w-[158px]");
     }
   } else {
-    // 標準サイズ時の配置
     if (bubbleSide === "right") {
-      bubbleClasses.push("left-[120px] top-4");
+      bubbleClasses.push("left-[120px] top-4 max-w-[158px]");
     } else {
-      bubbleClasses.push("right-[120px] top-4");
+      bubbleClasses.push("right-[120px] top-4 max-w-[158px]");
     }
   }
 
