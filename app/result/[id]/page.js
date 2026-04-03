@@ -15,12 +15,16 @@ import {
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
 import { MeridianIllust } from "@/components/illust/meridian";
+// ★インポートを更新
 import {
   IconMemo,
   IconCompass,
   IconBolt,
   IconRadar,
   IconResult,
+  IconAnalysis,
+  IconBody,
+  IconCloud,
 } from "@/components/illust/icons/result";
 
 // ✅ Next.js の useSearchParams 対策
@@ -145,7 +149,6 @@ function MeridianPanelContent({ line, tone = "violet" }) {
   return (
     <div className="flex items-start gap-4">
       <div className="shrink-0">
-        {/* ★修正: 枠を h-16 w-16 に広げ、overflow-hidden で囲むことではみ出しを防止 */}
         <div className="grid h-16 w-16 place-items-center rounded-[16px] bg-slate-50 ring-1 ring-[var(--ring)] overflow-hidden">
           <MeridianIllust code={line.code} size="lg" className={toneClass[tone] || toneClass.violet} />
         </div>
@@ -527,10 +530,8 @@ function ResultPage({ params }) {
       ) : null}
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        {/* 新しい美しく洗練されたヘッダーバナー */}
         <div className="pt-4 pb-3">
           <div className="relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.05)] overflow-hidden">
-            {/* 上半分のミントグリーン背景 */}
             <div className="absolute inset-x-0 top-0 h-[140px] bg-[color-mix(in_srgb,var(--mint),white_50%)]" />
             
             <div className="relative z-10 px-6 pt-6 pb-5">
@@ -591,7 +592,8 @@ function ResultPage({ params }) {
           {tab === "overview" ? (
             <>
               <Card>
-                <CardHeader icon={<IconCompass />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
+                {/* ★ 詳しい見立て のアイコンを IconAnalysis に変更 */}
+                <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
                 <div className="px-6 pb-7 pt-5 space-y-4">
                   <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
                     {subLabels?.length ? (
@@ -603,7 +605,6 @@ function ResultPage({ params }) {
                           >
                             <div className="flex gap-4">
                               <div className="shrink-0 pt-0.5">
-                                {/* サブアイコンの枠も美しく */}
                                 <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-white ring-1 ring-[var(--ring)] shadow-sm text-[var(--accent)]">
                                   <SubIllust code={s.code} size="md" />
                                 </div>
@@ -627,11 +628,13 @@ function ResultPage({ params }) {
                     )}
                   </SoftPanel>
 
-                  <SoftPanel tone="violet" title="体の張りやすい場所（主）" icon={<IconCompass />}>
+                  {/* ★ 体の張りやすい場所 のアイコンを IconBody に変更 */}
+                  <SoftPanel tone="violet" title="体の張りやすい場所（主）" icon={<IconBody />}>
                     <MeridianPanelContent line={meridianPrimary ? { ...meridianPrimary, code: computed?.primary_meridian } : null} tone="violet" />
                   </SoftPanel>
 
-                  <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconCompass />}>
+                  {/* ★ 体の張りやすい場所 のアイコンを IconBody に変更 */}
+                  <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconBody />}>
                     <MeridianPanelContent line={meridianSecondary ? { ...meridianSecondary, code: computed?.secondary_meridian } : null} tone="teal" />
                   </SoftPanel>
                 </div>
@@ -721,8 +724,9 @@ function ResultPage({ params }) {
           {tab === "compat" ? (
             <>
               <Card>
+                {/* ★ 天気との相性 のアイコンを IconCloud に変更 */}
                 <CardHeader
-                  icon={<IconRadar />}
+                  icon={<IconCloud />}
                   title="天気との相性"
                   sub="体質と天気の変化が重なると、どんな崩れ方をしやすいか"
                 />
@@ -748,7 +752,7 @@ function ResultPage({ params }) {
                     </div>
                   </SoftPanel>
 
-                  <SoftPanel tone="amber" title="天気が重なると出やすいサイン" icon={<IconMemo />}>
+                  <SoftPanel tone="amber" title="天気が重なると出やすいサイン" icon={<IconBolt />}>
                     <ul className="space-y-2">
                       {weatherCompat.signs.map((s, idx) => (
                         <li
@@ -761,7 +765,8 @@ function ResultPage({ params }) {
                     </ul>
                   </SoftPanel>
 
-                  <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconBolt />}>
+                  {/* ★ 未病レーダーで分かること のアイコンを IconCompass に変更 */}
+                  <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconCompass />}>
                     <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.radarBridge}</div>
                   </SoftPanel>
 
