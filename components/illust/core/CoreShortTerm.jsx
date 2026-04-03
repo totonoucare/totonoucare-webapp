@@ -1,45 +1,53 @@
 "use client";
 
-export default function FigureShortTerm({ className = "h-full w-full", title = "短期集中型" }) {
+export default function CoreShortTerm({ className = "h-full w-full", title = "短期集中型" }) {
   // コンセプト：陽（アクセル）× 小（余力）。人物モチーフ（顔なし、性別不詳）。
-  // ポーズは全力疾走（mid-action）。前傾姿勢でスピード感を出しつつ、少し疲労感（余力小）をシルエットに。
+  // SaaS風のジオメトリック・ラインアートで「全力疾走」を表現。
   // 胸のコアは小さく、儚い光。
   return (
     <svg viewBox="0 0 120 120" className={className} role="img" aria-label={title}>
       <defs>
-        {/* 洗練されたプレミアムSaaS感のあるグラデーション */}
-        <linearGradient id="figureGrad_st_f" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor="#eef4eb" />
-        </linearGradient>
-        <radialGradient id="coreGlow_st_f" cx="50%" cy="50%" r="50%">
+        <radialGradient id="coreGlow_st" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#d9a54a" />
           <stop offset="100%" stopColor="#d9a54a" stopOpacity="0" />
         </radialGradient>
-        <filter id="coreBlur_st_f" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="6" />
-        </filter>
-        <filter id="auraBlur_st_f" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="15" />
+        <filter id="glowBlur_st" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" />
         </filter>
       </defs>
 
-      {/* 1. 最背面: 淡い背景（静） */}
-      <rect width="120" height="120" fill="#fdfefc" />
-      
-      {/* 2. 背景グラフィック: 奥行きを出す（非常に薄いオーラ） */}
-      <circle cx="60" cy="80" r="45" fill="#eef4eb" opacity="0.6" filter="url(#auraBlur_st_f)" />
+      {/* 優しい背景の円（カード内での収まりを良くする） */}
+      <circle cx="60" cy="60" r="48" fill="#fdfefc" />
+      <circle cx="60" cy="60" r="42" fill="#eef4eb" opacity="0.5" />
 
-      {/* 3. 人物モチーフ: 全力疾走、前傾姿勢 (顔なし、性別不詳) */}
-      {/* 動きと疲労感を伝えるシルエット */}
-      <path d="M 40 40 C 35 45, 30 55, 30 65 S 35 85, 45 90 C 55 95, 65 95, 75 90 S 90 70, 90 60 S 85 45, 80 40 Z" fill="url(#figureGrad_st_f)" stroke="#d3e2d6" strokeWidth="1" />
-      {/* 動きを補完するライン（汗ドロップや疲労の曲線） */}
-      <path d="M 35 55 Q 38 60, 35 65" fill="none" stroke="#6a9770" strokeOpacity="0.3" strokeWidth="2" strokeLinecap="round" />
-      <path d="M 42 62 Q 45 67, 42 72" fill="none" stroke="#6a9770" strokeOpacity="0.3" strokeWidth="2" strokeLinecap="round" />
+      {/* アクセル（スピード感）を表現する風のライン */}
+      <path d="M 15 45 L 35 45 M 8 65 L 25 65 M 20 85 L 40 85" stroke="#d3e2d6" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
 
-      {/* 4. 胸のコア: 余力小 (最小。小さく儚く輝くコア) */}
-      <circle cx="60" cy="65" r="18" fill="url(#coreGlow_st_f)" opacity="0.6" filter="url(#coreBlur_st_f)" />
-      <circle cx="60" cy="65" r="4" fill="#d9a54a" opacity="0.9" />
+      {/* 人物モチーフ（関節を重ね合わせたモダンなラインアート） */}
+      <g transform="translate(2, 5)">
+        {/* 奥のレイヤー (右腕、左脚) - 透明度を下げて奥行きを出す */}
+        <g stroke="#89ac8e" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.4">
+          <path d="M 76 40 L 60 30 L 45 40" /> {/* 後ろに振る腕 */}
+          <path d="M 55 70 L 25 85" /> {/* 地面を蹴る脚 */}
+        </g>
+
+        {/* 中間のレイヤー (胴体と頭) */}
+        <g stroke="#6a9770" strokeWidth="13" strokeLinecap="round" fill="none" opacity="0.9">
+          <path d="M 76 40 L 55 70" /> {/* 前傾姿勢の胴体 */}
+        </g>
+        {/* 頭部 */}
+        <circle cx="86" cy="24" r="7.5" fill="#6a9770" opacity="0.9" />
+
+        {/* 手前のレイヤー (左腕、右脚) - 明るい色で手前を表現 */}
+        <g stroke="#a8c7ab" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="1">
+          <path d="M 76 40 L 90 50 L 80 70" /> {/* 前に振る腕 */}
+          <path d="M 55 70 L 75 65 L 75 90" /> {/* 振り上げる脚 */}
+        </g>
+
+        {/* コア（バッテリー小：小さく儚い輝き） */}
+        <circle cx="65" cy="55" r="14" fill="url(#coreGlow_st)" opacity="0.8" filter="url(#glowBlur_st)" />
+        <circle cx="65" cy="55" r="4" fill="#d9a54a" />
+      </g>
     </svg>
   );
 }
