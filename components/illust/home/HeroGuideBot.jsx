@@ -6,26 +6,29 @@ export default function HeroGuideBot({
   bubbleSide = "left",
   showBubble = true,
 }) {
+  // コンテナの幅
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
-  // 吹き出しの位置ロジックの修正
-  const isRightBubble = bubbleSide === "right";
+  // 吹き出しの位置を計算するロジック
   let bubbleClasses = [
-    "absolute top-0 max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-20",
+    "absolute max-w-[158px] rounded-2xl border border-[var(--ring)] bg-white px-3 py-2 text-left text-[11px] font-bold leading-5 text-slate-600 shadow-sm z-20",
   ];
 
   if (compact) {
-    if (isRightBubble) {
-      // compact かつ右吹き出しの場合、顔に被らないように右側へ大きく押し出す
-      bubbleClasses.push("left-0 translate-x-[90px] translate-y-0");
+    if (bubbleSide === "right") {
+      bubbleClasses.push("left-[90px] top-0");
+    } else if (bubbleSide === "left-belly") {
+      // ★新規追加：お腹の左側あたりに配置（顔を隠さず、左側の余白を活かす）
+      bubbleClasses.push("right-[75px] top-[45px]");
     } else {
-      bubbleClasses.push("left-0 translate-y-0");
+      bubbleClasses.push("right-[80px] top-0");
     }
   } else {
-    if (isRightBubble) {
-      bubbleClasses.push("right-[-10px] -translate-y-1");
+    // 標準サイズ時の配置
+    if (bubbleSide === "right") {
+      bubbleClasses.push("left-[120px] top-4");
     } else {
-      bubbleClasses.push("left-0 -translate-y-1");
+      bubbleClasses.push("right-[120px] top-4");
     }
   }
 
@@ -63,7 +66,7 @@ export default function HeroGuideBot({
             </filter>
           </defs>
 
-          {/* 背後の光（これを加えることで透過しても背景に沈まない） */}
+          {/* 背後の光 */}
           <circle cx="60" cy="70" r="40" fill="white" fillOpacity="0.3" filter="blur(10px)" />
 
           {/* ボディ */}
@@ -78,7 +81,7 @@ export default function HeroGuideBot({
           <path d="M60 28 L60 18" stroke="#89ac8e" strokeWidth="2.5" strokeLinecap="round" />
           <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#a8c7ab" />
 
-          {/* 顔の輪郭（Squircleに近い角丸矩形、シャドウで浮かせる） */}
+          {/* 顔の輪郭 */}
           <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" />
 
           {/* 目 */}
