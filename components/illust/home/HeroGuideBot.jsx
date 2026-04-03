@@ -8,22 +8,20 @@ export default function HeroGuideBot({
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
-  // 吹き出しの位置・幅・しっぽの向きを、バリエーションごとに完全に独立して定義
   let bubbleStyles = "";
   let tailStyles = null;
 
   if (compact) {
     if (bubbleSide === "left-belly") {
-      // ▼ ログイン後ダッシュボード用（絶対に崩さない）
-      // 幅を固定し、複数行になっても綺麗に収まるように。しっぽは右側。
+      // ▼ ログイン後ダッシュボード用（変更なし）
       bubbleStyles = "right-[90px] bottom-[25px] w-[210px]";
       tailStyles = (
         <div className="absolute top-[50%] right-[-6px] -translate-y-1/2 h-3 w-3 rotate-45 border-t border-r border-[var(--ring)] bg-white"></div>
       );
     } else if (bubbleSide === "right") {
       // ▼ 未ログインLP用（今回修正）
-      // 1行にスッキリ収めるため w-max と whitespace-nowrap を使用。しっぽは左側。
-      bubbleStyles = "left-[95px] top-[20px] w-max whitespace-nowrap";
+      // キャラクターとの間にスペースを開けるため、leftを 95px -> 110px に変更
+      bubbleStyles = "left-[110px] top-[20px] w-max whitespace-nowrap";
       tailStyles = (
         <div className="absolute top-[50%] left-[-6px] -translate-y-1/2 h-3 w-3 rotate-45 border-b border-l border-[var(--ring)] bg-white"></div>
       );
