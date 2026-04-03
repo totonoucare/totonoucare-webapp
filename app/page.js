@@ -404,7 +404,7 @@ export default function HomePage() {
         <div className="absolute right-6 bottom-2 z-[3]">
             <HeroGuideBot 
               compact 
-              message="今日・明日の予報と、次の一歩をまとめています。" 
+              message="ここでは今日・明日の予報と、次の一歩をまとめています。" 
               bubbleSide="left-belly" 
             />
         </div>
