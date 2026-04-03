@@ -5,7 +5,6 @@ export default function HeroGuideBot({
   compact = false,
   bubbleSide = "left",
   showBubble = true,
-  showTail = false, // ★新規追加：尻尾を表示するかどうかのフラグ
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
@@ -13,20 +12,13 @@ export default function HeroGuideBot({
     "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20 transition-all",
   ];
 
-  // ★新規追加：指し口（尻尾）のCSS。右側に吹き出しが出る場合のみ、左側に尻尾をつける
-  if (showTail && bubbleSide === "right") {
-    bubbleClasses.push(
-      "before:absolute before:top-1/2 before:-translate-y-1/2 before:-left-[5px] before:w-[10px] before:h-[10px] before:bg-white before:border-b before:border-l before:border-[var(--ring)] before:rotate-45 before:rounded-[2px]"
-    );
-  }
-
   if (compact) {
     if (bubbleSide === "left-belly") {
-      // ログイン後（影響なし）
+      // ★ログイン後用：前回完璧に決まった位置。絶対に触らない！
       bubbleClasses.push("right-[95px] bottom-[40px] w-[200px]");
     } else if (bubbleSide === "right") {
-      // ★修正：LP用。w-maxとwhitespace-nowrapで絶対に1行にする。Y位置も顔に合わせて微調整。
-      bubbleClasses.push("left-[90px] top-[15px] w-max whitespace-nowrap");
+      // ★未ログインLP用：装飾ラベルが消えた分、w-maxでスッキリ1行に収める。少し下げて頭とのバランスを取る。
+      bubbleClasses.push("left-[90px] top-[15px] w-max max-w-[220px]");
     } else {
       bubbleClasses.push("right-[90px] top-0 w-[160px]");
     }
