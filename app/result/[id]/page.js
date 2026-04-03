@@ -49,13 +49,13 @@ export default function ResultPageWrapper({ params }) {
 }
 
 /* -----------------------------
- * UI
+ * UI Components (Refined)
  * ---------------------------- */
 function Card({ children, className = "" }) {
   return (
     <section
       className={[
-        "rounded-[26px] bg-[var(--panel)] shadow-sm ring-1 ring-[var(--ring)] overflow-hidden",
+        "rounded-[32px] bg-white shadow-[0_12px_24px_-12px_rgba(0,0,0,0.05)] ring-1 ring-[var(--ring)] overflow-hidden",
         className,
       ].join(" ")}
     >
@@ -66,70 +66,70 @@ function Card({ children, className = "" }) {
 
 function CardHeader({ icon, title, sub, right }) {
   return (
-    <div className="px-5 pt-5">
+    <div className="px-6 pt-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[var(--mint)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
+          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
             {icon}
           </div>
           <div className="min-w-0">
-            <div className="text-[17px] font-extrabold tracking-tight text-slate-900">{title}</div>
-            {sub ? <div className="mt-1 text-xs font-medium text-slate-500">{sub}</div> : null}
+            <div className="text-lg font-black tracking-tight text-slate-900">{title}</div>
+            {sub ? <div className="mt-0.5 text-[12px] font-bold text-slate-500">{sub}</div> : null}
           </div>
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}
       </div>
-      <div className="mt-4 h-px w-full bg-black/5" />
+      <div className="mt-5 h-px w-full bg-slate-100" />
     </div>
   );
 }
 
-function SoftPanel({ tone = "mint", title, icon, right, children }) {
+function SoftPanel({ tone = "mint", title, icon, children }) {
   const tones = {
     mint: {
-      wrap: "bg-[color-mix(in_srgb,var(--mint),white_55%)]",
+      wrap: "bg-white",
       bar: "bg-[var(--accent)]",
       title: "text-[var(--accent-ink)]",
+      iconBg: "bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)]",
     },
     violet: {
-      wrap: "bg-[color-mix(in_srgb,#ede9fe,white_35%)]",
+      wrap: "bg-white",
       bar: "bg-[#6d5bd0]",
       title: "text-[#3b2f86]",
+      iconBg: "bg-[#ede9fe] text-[#6d5bd0]",
     },
     teal: {
-      wrap: "bg-[color-mix(in_srgb,#d1fae5,white_35%)]",
+      wrap: "bg-white",
       bar: "bg-[#0f766e]",
       title: "text-[#115e59]",
+      iconBg: "bg-[#ccfbf1] text-[#0f766e]",
     },
     amber: {
-      wrap: "bg-[color-mix(in_srgb,#fef3c7,white_35%)]",
+      wrap: "bg-white",
       bar: "bg-[#b45309]",
-      title: "text-[#7c2d12]",
+      title: "text-[#92400e]",
+      iconBg: "bg-[#fef3c7] text-[#b45309]",
     },
   };
   const t = tones[tone] || tones.mint;
 
   return (
-    <div className={`relative rounded-[22px] ${t.wrap} ring-1 ring-[var(--ring)]`}>
-      <div className={`absolute left-0 top-0 h-full w-1.5 rounded-l-[22px] ${t.bar}`} />
-      <div className="px-4 py-4 pl-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            {icon ? (
-              <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-white/70 ring-1 ring-[var(--ring)] text-slate-700">
-                {icon}
-              </div>
-            ) : null}
-            <div className={`text-sm font-extrabold tracking-tight ${t.title}`}>{title}</div>
-          </div>
-          {right ? <div className="shrink-0">{right}</div> : null}
+    <div className={`relative rounded-[24px] ${t.wrap} ring-1 ring-[var(--ring)] overflow-hidden shadow-sm`}>
+      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${t.bar}`} />
+      <div className="p-5 pl-6">
+        <div className="flex items-center gap-3">
+          {icon ? (
+            <div className={`grid h-8 w-8 place-items-center rounded-[10px] ${t.iconBg}`}>
+              {icon}
+            </div>
+          ) : null}
+          <div className={`text-[15px] font-extrabold tracking-tight ${t.title}`}>{title}</div>
         </div>
-        <div className="mt-3 text-sm leading-8 text-slate-800">{children}</div>
+        <div className="mt-4">{children}</div>
       </div>
     </div>
   );
 }
-
 
 function MeridianPanelContent({ line, tone = "violet" }) {
   const toneClass = {
@@ -139,22 +139,23 @@ function MeridianPanelContent({ line, tone = "violet" }) {
   };
 
   if (!line) {
-    return <div className="text-sm text-slate-700">今回は強い偏りなし</div>;
+    return <div className="text-[13px] font-bold text-slate-500">今回は強い偏りなし</div>;
   }
 
   return (
-    <div className="flex gap-4">
+    <div className="flex items-start gap-4">
       <div className="shrink-0">
-        <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)]">
+        {/* ★修正: 枠を h-16 w-16 に広げ、overflow-hidden で囲むことではみ出しを防止 */}
+        <div className="grid h-16 w-16 place-items-center rounded-[16px] bg-slate-50 ring-1 ring-[var(--ring)] overflow-hidden">
           <MeridianIllust code={line.code} size="lg" className={toneClass[tone] || toneClass.violet} />
         </div>
       </div>
-      <div className="min-w-0">
-        <div className="text-base font-extrabold text-slate-900">{line.title}</div>
-        <div className="mt-1 text-xs font-bold text-slate-500">
+      <div className="min-w-0 py-0.5">
+        <div className="text-[15px] font-extrabold text-slate-900">{line.title}</div>
+        <div className="mt-1 text-[11px] font-extrabold text-slate-500">
           {line.body_area}（{line.meridians.join("・")}）
         </div>
-        <div className="mt-2 text-sm leading-7 text-slate-700">{line.organs_hint}</div>
+        <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">{line.organs_hint}</div>
       </div>
     </div>
   );
@@ -168,29 +169,28 @@ function SegmentedTabs({ value, onChange }) {
   ];
 
   return (
-    <div className="sticky top-[72px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70">
-      <div className="mx-auto w-full max-w-[440px] px-4 pb-3">
-        <div className="rounded-[18px] bg-white ring-1 ring-[var(--ring)] p-1 shadow-[0_8px_24px_-18px_rgba(0,0,0,0.35)]">
-          <div className="grid grid-cols-3 gap-1">
-            {tabs.map((t) => {
-              const active = value === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => onChange(t.key)}
-                  className={[
-                    "h-10 rounded-[14px] text-sm font-extrabold tracking-tight transition active:scale-[0.99]",
-                    active
-                      ? "bg-[var(--mint)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]"
-                      : "text-slate-600",
-                  ].join(" ")}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
+    <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur-md supports-[backdrop-filter]:bg-app/70 py-3">
+      <div className="mx-auto w-full max-w-[440px] px-4">
+        {/* iOS風のピル型タブUI */}
+        <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
+          {tabs.map((t) => {
+            const active = value === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => onChange(t.key)}
+                className={[
+                  "flex-1 h-[34px] rounded-full text-[13px] font-extrabold tracking-tight transition-all duration-200",
+                  active
+                    ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
+                    : "text-slate-500 hover:text-slate-800",
+                ].join(" ")}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -198,7 +198,7 @@ function SegmentedTabs({ value, onChange }) {
 }
 
 /* -----------------------------
- * Weather compatibility
+ * Weather compatibility Logic
  * ---------------------------- */
 function clamp(v, min, max) {
   if (!Number.isFinite(v)) return min;
@@ -217,13 +217,7 @@ function getImpactRankLabel(index) {
   return "やや影響しやすい";
 }
 
-function buildWeatherCompatibility({
-  answers,
-  computed,
-  symptomKey,
-  core,
-  subLabels,
-}) {
+function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels }) {
   const subCodes = Array.isArray(computed?.sub_labels) ? computed.sub_labels : [];
   const coreCode = computed?.core_code || "";
   const envSensitivity = clamp(Number(answers?.env_sensitivity ?? 0) || 0, 0, 3);
@@ -245,80 +239,34 @@ function buildWeatherCompatibility({
   for (const label of subCodes) {
     switch (label) {
       case "qi_stagnation":
-        scores.pressure_down += 0.14;
-        scores.pressure_up += 0.08;
-        scores.heat += 0.06;
-        scores.damp += 0.04;
-        break;
+        scores.pressure_down += 0.14; scores.pressure_up += 0.08; scores.heat += 0.06; scores.damp += 0.04; break;
       case "qi_deficiency":
-        scores.pressure_down += 0.1;
-        scores.cold += 0.14;
-        scores.damp += 0.1;
-        break;
+        scores.pressure_down += 0.1; scores.cold += 0.14; scores.damp += 0.1; break;
       case "blood_deficiency":
-        scores.cold += 0.12;
-        scores.dry += 0.1;
-        scores.pressure_down += 0.06;
-        break;
+        scores.cold += 0.12; scores.dry += 0.1; scores.pressure_down += 0.06; break;
       case "blood_stasis":
-        scores.pressure_down += 0.1;
-        scores.pressure_up += 0.04;
-        scores.cold += 0.08;
-        scores.damp += 0.05;
-        break;
+        scores.pressure_down += 0.1; scores.pressure_up += 0.04; scores.cold += 0.08; scores.damp += 0.05; break;
       case "fluid_damp":
-        scores.damp += 0.22;
-        scores.cold += 0.06;
-        scores.pressure_down += 0.04;
-        break;
+        scores.damp += 0.22; scores.cold += 0.06; scores.pressure_down += 0.04; break;
       case "fluid_deficiency":
-        scores.dry += 0.22;
-        scores.heat += 0.16;
-        scores.pressure_up += 0.05;
-        break;
-      default:
-        break;
+        scores.dry += 0.22; scores.heat += 0.16; scores.pressure_up += 0.05; break;
+      default: break;
     }
   }
 
-  if (coreCode.includes("batt_small")) {
-    for (const k of Object.keys(scores)) scores[k] += 0.08;
-  }
-  if (coreCode.includes("batt_large")) {
-    for (const k of Object.keys(scores)) scores[k] -= 0.03;
-  }
-  if (coreCode.startsWith("accel")) {
-    scores.pressure_down += 0.06;
-    scores.pressure_up += 0.05;
-    scores.heat += 0.05;
-  }
-  if (coreCode.startsWith("brake")) {
-    scores.cold += 0.08;
-    scores.damp += 0.1;
-    scores.pressure_down += 0.03;
-  }
+  if (coreCode.includes("batt_small")) { for (const k of Object.keys(scores)) scores[k] += 0.08; }
+  if (coreCode.includes("batt_large")) { for (const k of Object.keys(scores)) scores[k] -= 0.03; }
+  if (coreCode.startsWith("accel")) { scores.pressure_down += 0.06; scores.pressure_up += 0.05; scores.heat += 0.05; }
+  if (coreCode.startsWith("brake")) { scores.cold += 0.08; scores.damp += 0.1; scores.pressure_down += 0.03; }
 
   if (thermoAnswer === "heat") scores.heat += 0.08;
   if (thermoAnswer === "cold") scores.cold += 0.08;
 
-  if (envVectors.includes("pressure_shift")) {
-    scores.pressure_down += 0.12;
-    scores.pressure_up += 0.12;
-  }
-  if (envVectors.includes("temp_swing")) {
-    scores.cold += 0.1;
-    scores.heat += 0.1;
-  }
-  if (envVectors.includes("humidity_up")) {
-    scores.damp += 0.12;
-  }
-  if (envVectors.includes("dryness_up")) {
-    scores.dry += 0.1;
-  }
-  if (envVectors.includes("wind_strong")) {
-    scores.pressure_down += 0.03;
-    scores.pressure_up += 0.03;
-  }
+  if (envVectors.includes("pressure_shift")) { scores.pressure_down += 0.12; scores.pressure_up += 0.12; }
+  if (envVectors.includes("temp_swing")) { scores.cold += 0.1; scores.heat += 0.1; }
+  if (envVectors.includes("humidity_up")) { scores.damp += 0.12; }
+  if (envVectors.includes("dryness_up")) { scores.dry += 0.1; }
+  if (envVectors.includes("wind_strong")) { scores.pressure_down += 0.03; scores.pressure_up += 0.03; }
 
   for (const k of Object.keys(scores)) {
     scores[k] += envSensitivity * 0.03;
@@ -344,14 +292,7 @@ function buildWeatherCompatibility({
 }
 
 function weatherLabel(key) {
-  const map = {
-    pressure_down: "気圧が下がる日",
-    pressure_up: "気圧が上がる日",
-    cold: "冷え込む日",
-    heat: "気温が上がりやすい日",
-    damp: "湿っぽい日",
-    dry: "乾燥しやすい日",
-  };
+  const map = { pressure_down: "気圧が下がる日", pressure_up: "気圧が上がる日", cold: "冷え込む日", heat: "気温が上がりやすい日", damp: "湿っぽい日", dry: "乾燥しやすい日" };
   return map[key] || key;
 }
 
@@ -362,86 +303,30 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
   const isBattSmall = coreCode.includes("batt_small");
   const isAccel = coreCode.startsWith("accel");
 
-  if (key === "pressure_down") {
-    if (symptomKey === "headache") {
-      return "変化に押される日に、首肩やこめかみの緊張が強まりやすく、巡りの詰まりから頭痛につながりやすくなります。";
-    }
-    return "変化に押される日に、切り替えがうまくいかず、緊張や巡りの詰まりが出やすくなります。";
-  }
-
-  if (key === "pressure_up") {
-    return "張りつめた感じや、頭や上半身の詰まりが出やすい方向です。無理に詰め込まず、少しゆるめる意識が合います。";
-  }
-
-  if (key === "cold") {
-    if (hasBloodDef || isBattSmall) {
-      return "冷え込む日は、支える余力が削れやすく、首肩のこわばりや消耗として出やすい方向です。";
-    }
-    return "冷え込む日は、体が縮こまりやすく、こわばりやだるさとして出やすい方向です。";
-  }
-
-  if (key === "heat") {
-    if (hasFluidDef || isAccel) {
-      return "気温が上がる日は、熱や刺激がこもりやすく、上半身の張りやのぼせ感につながりやすい方向です。";
-    }
-    return "暑さや熱こもりで、詰まりや疲れが出やすい方向です。";
-  }
-
+  if (key === "pressure_down") return symptomKey === "headache" ? "変化に押される日に、首肩やこめかみの緊張が強まりやすく、巡りの詰まりから頭痛につながりやすくなります。" : "変化に押される日に、切り替えがうまくいかず、緊張や巡りの詰まりが出やすくなります。";
+  if (key === "pressure_up") return "張りつめた感じや、頭や上半身の詰まりが出やすい方向です。無理に詰め込まず、少しゆるめる意識が合います。";
+  if (key === "cold") return (hasBloodDef || isBattSmall) ? "冷え込む日は、支える余力が削れやすく、首肩のこわばりや消耗として出やすい方向です。" : "冷え込む日は、体が縮こまりやすく、こわばりやだるさとして出やすい方向です。";
+  if (key === "heat") return (hasFluidDef || isAccel) ? "気温が上がる日は、熱や刺激がこもりやすく、上半身の張りやのぼせ感につながりやすい方向です。" : "暑さや熱こもりで、詰まりや疲れが出やすい方向です。";
   if (key === "damp") {
-    if (symptomKey === "headache") {
-      return "湿っぽい日は、重さが加わって巡りの悪さが増し、頭や体が重く感じやすくなります。";
-    }
-    if (hasFluidDamp) {
-      return "湿っぽい日は、重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
-    }
+    if (symptomKey === "headache") return "湿っぽい日は、重さが加わって巡りの悪さが増し、頭や体が重く感じやすくなります。";
+    if (hasFluidDamp) return "湿っぽい日は、重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
     return "湿っぽい日は、重さが増して動き出しにくくなりやすい方向です。";
   }
-
-  if (key === "dry") {
-    if (hasFluidDef || hasBloodDef) {
-      return "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚や頭の疲れとして出やすい方向です。";
-    }
-    return "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
-  }
-
+  if (key === "dry") return (hasFluidDef || hasBloodDef) ? "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚や頭の疲れとして出やすい方向です。" : "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
   return "この方向の天気変化で体調が揺れやすい傾向があります。";
 }
 
 function buildCompatIntro({ core, subLabels, symptomKey }) {
   const subShorts = Array.isArray(subLabels) ? subLabels.map((s) => s.short).filter(Boolean) : [];
   const subText = subShorts.length ? subShorts.join("・") : "大きな偏りなし";
-
   return `${core?.title || "今回の体質"}は、${subText}の傾向が重なることで、天気の変化を受けた時の崩れ方に特徴が出やすいタイプです。特に「${SYMPTOM_LABELS[symptomKey] || symptomKey}」では、外の変化が首肩・頭まわりや全身の重さとして現れやすくなります。`;
 }
 
 function buildLikelySigns({ symptomKey, subCodes }) {
-  if (symptomKey === "headache") {
-    return [
-      "首肩〜こめかみが張ってくる",
-      "頭が重い・すっきりしない",
-      "呼吸が浅い感じになる",
-      "朝の立ち上がりが重い",
-    ];
-  }
-  if (symptomKey === "sleep") {
-    return [
-      "夜に切り替えにくい",
-      "頭や体が緩みにくい",
-      "眠っても疲れが残る",
-    ];
-  }
-  if (symptomKey === "mood") {
-    return [
-      "気分が詰まる",
-      "切り替えに時間がかかる",
-      "重さやだるさが先に来る",
-    ];
-  }
-
-  if (subCodes.includes("fluid_damp")) {
-    return ["体が重い", "朝が動きにくい", "むくみっぽさが出る"];
-  }
-
+  if (symptomKey === "headache") return ["首肩〜こめかみが張ってくる", "頭が重い・すっきりしない", "呼吸が浅い感じになる", "朝の立ち上がりが重い"];
+  if (symptomKey === "sleep") return ["夜に切り替えにくい", "頭や体が緩みにくい", "眠っても疲れが残る"];
+  if (symptomKey === "mood") return ["気分が詰まる", "切り替えに時間がかかる", "重さやだるさが先に来る"];
+  if (subCodes.includes("fluid_damp")) return ["体が重い", "朝が動きにくい", "むくみっぽさが出る"];
   return ["だるさが出る", "こわばりや重さが残る", "切り替えにくくなる"];
 }
 
@@ -485,40 +370,28 @@ function ResultPage({ params }) {
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(data.session || null);
       setLoadingAuth(false);
     })();
-
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setLoadingAuth(false);
     });
-
-    return () => {
-      mounted = false;
-      sub?.subscription?.unsubscribe?.();
-    };
+    return () => { mounted = false; sub?.subscription?.unsubscribe?.(); };
   }, []);
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       try {
         setLoadingEvent(true);
         const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
         const json = await res.json().catch(() => ({}));
         if (!mounted) return;
-
-        if (!res.ok || !json?.data) {
-          setEvent({ notFound: true });
-          return;
-        }
-
+        if (!res.ok || !json?.data) { setEvent({ notFound: true }); return; }
         setEvent(json.data);
       } catch (e) {
         console.error(e);
@@ -529,19 +402,11 @@ function ResultPage({ params }) {
         setLoadingEvent(false);
       }
     })();
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [id]);
 
   useEffect(() => {
-    if (!attachAfterLogin) return;
-    if (loadingAuth) return;
-    if (!session) return;
-    if (!event || event?.notFound) return;
-    if (autoAttachRan.current) return;
-
+    if (!attachAfterLogin || loadingAuth || !session || !event || event?.notFound || autoAttachRan.current) return;
     autoAttachRan.current = true;
     attachToAccount(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -551,53 +416,32 @@ function ResultPage({ params }) {
   const answers = event?.answers || {};
 
   const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
-
-  const symptomLabel = useMemo(() => {
-    return SYMPTOM_LABELS[symptomKey] || "だるさ・疲労";
-  }, [symptomKey]);
+  const symptomLabel = useMemo(() => SYMPTOM_LABELS[symptomKey] || "だるさ・疲労", [symptomKey]);
 
   const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
   const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
-  const meridianPrimary = useMemo(
-    () => getMeridianLine(computed?.primary_meridian),
-    [computed?.primary_meridian]
-  );
-  const meridianSecondary = useMemo(
-    () => getMeridianLine(computed?.secondary_meridian),
-    [computed?.secondary_meridian]
-  );
+  const meridianPrimary = useMemo(() => getMeridianLine(computed?.primary_meridian), [computed?.primary_meridian]);
+  const meridianSecondary = useMemo(() => getMeridianLine(computed?.secondary_meridian), [computed?.secondary_meridian]);
 
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
 
   const weatherCompat = useMemo(() => {
-    return buildWeatherCompatibility({
-      answers,
-      computed,
-      symptomKey,
-      core,
-      subLabels,
-    });
+    return buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels });
   }, [answers, computed, symptomKey, core, subLabels]);
 
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
-
     try {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-
-      if (!token) {
-        if (!silent) setToast("先にログインが必要です");
-        return;
-      }
+      if (!token) { if (!silent) setToast("先にログインが必要です"); return; }
 
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
 
@@ -611,26 +455,18 @@ function ResultPage({ params }) {
   }
 
   function goSignupToRadar() {
-    router.push(
-      `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-        `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
-      )}`
-    );
+    router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
   function goLoginToRadar() {
-    router.push(
-      `/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(
-        `/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`
-      )}`
-    );
+    router.push(`/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
   const headerLeft = (
     <button
       type="button"
       onClick={() => router.push(backHref)}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ← 戻る
     </button>
@@ -640,7 +476,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push("/")}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ホーム
     </button>
@@ -668,11 +504,7 @@ function ResultPage({ params }) {
     return (
       <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
-          <ModuleHeader
-            icon={<IconResult />}
-            title="結果が見つかりません"
-            sub="期限切れ/削除、または保存失敗の可能性"
-          />
+          <ModuleHeader icon={<IconResult />} title="結果が見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-4">
             <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
               <div className="text-sm leading-7 text-slate-700">
@@ -695,34 +527,37 @@ function ResultPage({ params }) {
       ) : null}
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="pt-2 pb-3">
-          <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm overflow-hidden">
-            <div className="px-5 pt-5 pb-4">
-              <div className="min-w-0">
-                <div className="text-xs font-extrabold text-[var(--accent-ink)]/80">あなたのお悩み</div>
-                <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 truncate">
-                  {symptomLabel}
-                </div>
-                <div className="mt-2 text-xs font-bold text-slate-600">
-                  チェック作成：
-                  {event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
-                </div>
+        {/* 新しい美しく洗練されたヘッダーバナー */}
+        <div className="pt-4 pb-3">
+          <div className="relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.05)] overflow-hidden">
+            {/* 上半分のミントグリーン背景 */}
+            <div className="absolute inset-x-0 top-0 h-[140px] bg-[color-mix(in_srgb,var(--mint),white_50%)]" />
+            
+            <div className="relative z-10 px-6 pt-6 pb-5">
+              <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+                あなたのお悩み
+              </div>
+              <div className="mt-1 text-[26px] font-black tracking-tight text-slate-900 truncate">
+                {symptomLabel}
+              </div>
+              <div className="mt-1.5 text-[11px] font-bold text-[var(--accent-ink)]/60">
+                チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
               </div>
             </div>
 
-            <div className="px-5 pb-5">
-              <div className="rounded-[22px] bg-white/70 ring-1 ring-[var(--ring)] p-4">
-                <div className="flex items-start justify-between gap-4">
+            <div className="relative z-10 px-5 pb-5">
+              <div className="rounded-[24px] bg-white/90 backdrop-blur-md ring-1 ring-[var(--ring)] p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-extrabold text-slate-500">あなたの体質の軸</div>
-
-                    <div className="mt-1 text-xl font-black tracking-tight text-slate-900 leading-tight">
+                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      あなたの体質の軸
+                    </div>
+                    <div className="mt-1 text-[22px] font-black tracking-tight text-slate-900 leading-[1.1]">
                       {core?.title || "—"}
                     </div>
-
                     {core?.short ? (
-                      <div className="mt-2">
-                        <span className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[var(--ring)]">
+                      <div className="mt-2.5">
+                        <span className="inline-flex items-center rounded-md bg-slate-50 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-inset ring-slate-200/50">
                           {core.short}
                         </span>
                       </div>
@@ -730,17 +565,19 @@ function ResultPage({ params }) {
                   </div>
 
                   <div className="shrink-0">
-                    <div className="grid aspect-square w-[92px] place-items-center overflow-hidden rounded-[18px] bg-white ring-1 ring-[var(--ring)]">
+                    <div className="grid h-[88px] w-[88px] place-items-center overflow-hidden rounded-[20px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm">
                       <CoreIllust
                         code={computed?.core_code}
                         title={core?.title || "体質タイプ"}
-                        className="h-full w-full"
+                        className="h-full w-full scale-[1.25] translate-y-1"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-3 text-sm leading-7 text-slate-700">{core?.tcm_hint || ""}</div>
+                <div className="mt-4 text-[13px] font-bold leading-6 text-slate-600">
+                  {core?.tcm_hint || ""}
+                </div>
               </div>
             </div>
           </div>
@@ -750,31 +587,32 @@ function ResultPage({ params }) {
       <SegmentedTabs value={tab} onChange={setTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="space-y-5 pb-3">
+        <div className="space-y-6 pb-6 mt-3">
           {tab === "overview" ? (
             <>
               <Card>
                 <CardHeader icon={<IconCompass />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
-                <div className="px-5 pb-6 pt-4 space-y-4">
+                <div className="px-6 pb-7 pt-5 space-y-4">
                   <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
                     {subLabels?.length ? (
                       <div className="space-y-3">
                         {subLabels.map((s) => (
                           <div
                             key={s.code || s.title}
-                            className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4"
+                            className="rounded-[20px] bg-slate-50/50 ring-1 ring-slate-100 p-4"
                           >
-                            <div className="flex gap-3">
-                              <div className="shrink-0 pt-0.5 text-[var(--accent)]">
-                                <SubIllust code={s.code} size="sm" />
-                              </div>
-
-                              <div className="min-w-0">
-                                <div className="text-sm font-extrabold text-slate-900">
-                                  {s.title}
-                                  {s.short ? <span className="text-slate-500">（{s.short}）</span> : null}
+                            <div className="flex gap-4">
+                              <div className="shrink-0 pt-0.5">
+                                {/* サブアイコンの枠も美しく */}
+                                <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-white ring-1 ring-[var(--ring)] shadow-sm text-[var(--accent)]">
+                                  <SubIllust code={s.code} size="md" />
                                 </div>
-                                <div className="mt-2 text-sm leading-7 text-slate-700">
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[15px] font-extrabold text-slate-900">
+                                  {s.title}
+                                </div>
+                                <div className="mt-2 text-[13px] leading-6 font-bold text-slate-600">
                                   {s.action_hint || "（ヒントなし）"}
                                 </div>
                               </div>
@@ -783,7 +621,7 @@ function ResultPage({ params }) {
                         ))}
                       </div>
                     ) : (
-                      <div className="rounded-[18px] bg-white/75 ring-1 ring-[var(--ring)] p-4 text-sm text-slate-700">
+                      <div className="rounded-[18px] bg-slate-50/50 ring-1 ring-slate-100 p-4 text-[13px] font-bold text-slate-600">
                         今回は強い偏りは見られませんでした（バランス良好）。
                       </div>
                     )}
@@ -801,25 +639,25 @@ function ResultPage({ params }) {
 
               <Card>
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存 → 今日の予報と対策へ" />
-                <div className="px-5 pb-6 pt-4 space-y-4">
+                <div className="px-6 pb-7 pt-5 space-y-4">
                   {loadingAuth ? (
-                    <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                      <div className="text-sm font-bold text-slate-700">ログイン状態を確認中…</div>
+                    <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100">
+                      <div className="text-[13px] font-bold text-slate-600">ログイン状態を確認中…</div>
                     </div>
                   ) : isLoggedIn ? (
                     <>
-                      <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-sm font-bold text-slate-800">
+                      <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100">
+                        <div className="text-[13px] font-bold text-slate-800">
                           ログイン中：<span className="font-extrabold">{session.user?.email}</span>
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-500">
+                        <div className="mt-1 text-[11px] font-bold text-slate-500">
                           今日の「予報と対策」は無料で見られます。
                         </div>
                       </div>
 
                       {isAttached ? (
-                        <div className="rounded-[22px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-emerald-800">
+                        <div className="rounded-[22px] bg-[#ecfdf5] p-5 ring-1 ring-[#a7f3d0]">
+                          <div className="text-[14px] font-extrabold text-[#065f46]">
                             この結果は保存済みです ✅
                           </div>
                           <div className="mt-4">
@@ -828,10 +666,10 @@ function ResultPage({ params }) {
                         </div>
                       ) : (
                         <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-slate-900">
+                          <div className="text-[14px] font-extrabold text-slate-900">
                             この結果を保存して、今日の未病レーダーへ進みましょう。
                           </div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">
+                          <div className="mt-2 text-[11px] font-bold text-slate-600">
                             登録だけでは課金されません（無料の範囲で使えます）
                           </div>
                           <div className="mt-4">
@@ -842,9 +680,9 @@ function ResultPage({ params }) {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 pt-2">
                         <Button variant="ghost" onClick={() => router.push("/check")}>
-                          もう一度チェックする
+                          もう一度チェック
                         </Button>
                         <Button variant="ghost" onClick={() => setTab("compat")}>
                           天気との相性を見る
@@ -854,19 +692,19 @@ function ResultPage({ params }) {
                   ) : (
                     <>
                       <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-base font-extrabold tracking-tight text-slate-900">
+                        <div className="text-[15px] font-extrabold tracking-tight text-slate-900">
                           無料で保存して、今日の「予報と対策」へ。
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-600">
+                        <div className="mt-2 text-[11px] font-bold text-slate-600">
                           登録だけでは課金されません（無料の範囲で使えます）
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3 pt-2">
                         <Button onClick={goSignupToRadar}>
                           無料で保存して、今日の予報と対策を見る
                         </Button>
-                        <Button variant="ghost" onClick={goLoginToRadar}>
+                        <Button variant="secondary" onClick={goLoginToRadar}>
                           すでに登録済みの方はこちら（ログイン）
                         </Button>
                         <Button variant="ghost" onClick={() => router.push("/check")}>
@@ -888,23 +726,23 @@ function ResultPage({ params }) {
                   title="天気との相性"
                   sub="体質と天気の変化が重なると、どんな崩れ方をしやすいか"
                 />
-                <div className="px-5 pb-6 pt-4 space-y-4">
+                <div className="px-6 pb-7 pt-5 space-y-4">
                   <SoftPanel tone="teal" title="影響を受けやすい天気変化" icon={<IconRadar />}>
-                    <div className="text-sm leading-8 text-slate-800">{weatherCompat.intro}</div>
+                    <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.intro}</div>
 
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-5 space-y-3">
                       {weatherCompat.items.map((item) => (
                         <div
                           key={item.key}
-                          className="rounded-[18px] bg-white/80 ring-1 ring-[var(--ring)] p-4"
+                          className="rounded-[20px] bg-slate-50/50 ring-1 ring-slate-100 p-4"
                         >
                           <div className="flex items-center justify-between gap-3">
-                            <div className="text-sm font-extrabold text-slate-900">{item.label}</div>
-                            <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                            <div className="text-[14px] font-extrabold text-slate-900">{item.label}</div>
+                            <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-black/5 shadow-sm">
                               {item.rankLabel}
                             </div>
                           </div>
-                          <div className="mt-2 text-sm leading-7 text-slate-700">{item.body}</div>
+                          <div className="mt-2 text-[13px] leading-6 font-bold text-slate-600">{item.body}</div>
                         </div>
                       ))}
                     </div>
@@ -915,23 +753,23 @@ function ResultPage({ params }) {
                       {weatherCompat.signs.map((s, idx) => (
                         <li
                           key={`${s}-${idx}`}
-                          className="rounded-[16px] bg-white/80 ring-1 ring-[var(--ring)] px-4 py-3"
+                          className="rounded-[16px] bg-slate-50/50 ring-1 ring-slate-100 px-4 py-3"
                         >
-                          <div className="text-sm font-bold text-slate-800">・{s}</div>
+                          <div className="text-[13px] font-extrabold text-slate-700">・{s}</div>
                         </li>
                       ))}
                     </ul>
                   </SoftPanel>
 
                   <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconBolt />}>
-                    <div className="text-sm leading-8 text-slate-800">{weatherCompat.radarBridge}</div>
+                    <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.radarBridge}</div>
                   </SoftPanel>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-2">
                     <Button variant="ghost" onClick={() => setTab("overview")}>
                       概要に戻る
                     </Button>
-                    <Button onClick={() => setTab("save")}>保存へ</Button>
+                    <Button onClick={() => setTab("save")}>保存へ進む</Button>
                   </div>
                 </div>
               </Card>
@@ -946,25 +784,25 @@ function ResultPage({ params }) {
                   title="保存してレーダーへ"
                   sub="結果は“今後の予報”の精度に効きます"
                 />
-                <div className="px-5 pb-6 pt-4 space-y-4">
+                <div className="px-6 pb-7 pt-5 space-y-4">
                   {loadingAuth ? (
-                    <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-                      <div className="text-sm font-bold text-slate-700">ログイン状態を確認中…</div>
+                    <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100">
+                      <div className="text-[13px] font-bold text-slate-600">ログイン状態を確認中…</div>
                     </div>
                   ) : isLoggedIn ? (
                     <>
-                      <div className="rounded-[22px] bg-white ring-1 ring-[var(--ring)] p-5">
-                        <div className="text-sm font-bold text-slate-800">
+                      <div className="rounded-[22px] bg-white ring-1 ring-slate-200 p-5 shadow-sm">
+                        <div className="text-[13px] font-bold text-slate-800">
                           ログイン中：<span className="font-extrabold">{session.user?.email}</span>
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-500">
+                        <div className="mt-1 text-[11px] font-bold text-slate-500">
                           保存すると、今日の「予報と対策」にすぐ進めます。
                         </div>
                       </div>
 
                       {isAttached ? (
-                        <div className="rounded-[22px] bg-[color-mix(in_srgb,#d1fae5,white_35%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-emerald-800">
+                        <div className="rounded-[22px] bg-[#ecfdf5] p-5 ring-1 ring-[#a7f3d0]">
+                          <div className="text-[14px] font-extrabold text-[#065f46]">
                             この結果は保存済みです ✅
                           </div>
                           <div className="mt-4">
@@ -973,10 +811,10 @@ function ResultPage({ params }) {
                         </div>
                       ) : (
                         <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-sm font-extrabold text-slate-900">
+                          <div className="text-[14px] font-extrabold text-slate-900">
                             この結果を保存しますか？
                           </div>
-                          <div className="mt-2 text-xs font-bold text-slate-600">
+                          <div className="mt-2 text-[11px] font-bold text-slate-600">
                             登録だけでは課金されません（無料の範囲で使えます）
                           </div>
                           <div className="mt-4">
@@ -987,7 +825,7 @@ function ResultPage({ params }) {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 pt-2">
                         <Button variant="ghost" onClick={() => router.push("/check")}>
                           もう一度チェックする
                         </Button>
@@ -999,19 +837,19 @@ function ResultPage({ params }) {
                   ) : (
                     <>
                       <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-base font-extrabold tracking-tight text-slate-900">
+                        <div className="text-[15px] font-extrabold tracking-tight text-slate-900">
                           無料で保存して、今日の「予報と対策」へ。
                         </div>
-                        <div className="mt-2 text-xs font-bold text-slate-600">
+                        <div className="mt-2 text-[11px] font-bold text-slate-600">
                           登録だけでは課金されません（無料の範囲で使えます）
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3 pt-2">
                         <Button onClick={goSignupToRadar}>
                           無料で保存して、今日の予報と対策を見る
                         </Button>
-                        <Button variant="ghost" onClick={goLoginToRadar}>
+                        <Button variant="secondary" onClick={goLoginToRadar}>
                           すでに登録済みの方はこちら（ログイン）
                         </Button>
                         <Button variant="ghost" onClick={() => router.push("/check")}>
@@ -1025,7 +863,7 @@ function ResultPage({ params }) {
             </>
           ) : null}
 
-          <div className="pb-6 text-center text-[11px] font-bold text-slate-400">ID：{id}</div>
+          <div className="text-center text-[10px] font-extrabold text-slate-300">ID：{id}</div>
         </div>
       </div>
     </AppShell>
