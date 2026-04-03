@@ -16,8 +16,8 @@ export default function HeroGuideBot({
     if (bubbleSide === "right") {
       bubbleClasses.push("left-[90px] top-0 max-w-[158px]");
     } else if (bubbleSide === "left-belly") {
-      // ★修正：基準を右下に固定。文字が増えても左上へ伸びるため見切れない
-      bubbleClasses.push("right-[75px] bottom-[30px] w-[160px]");
+      // ★修正：横幅を少し広げ（w-[180px]）、セリフが美しく改行されるように調整
+      bubbleClasses.push("right-[75px] bottom-[30px] w-[180px]");
     } else {
       bubbleClasses.push("right-[80px] top-0 max-w-[158px]");
     }
