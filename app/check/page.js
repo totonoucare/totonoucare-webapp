@@ -53,6 +53,7 @@ export default function CheckLandingPage() {
             
             <div className="relative z-10 p-6">
               <div className="flex items-start gap-4">
+                {/* アイコンもブランドカラーに */}
                 <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
                   <IconInfo className="h-7 w-7" />
                 </div>
@@ -81,17 +82,19 @@ export default function CheckLandingPage() {
             </div>
           </div>
 
-          {/* 2. 履歴カード (SoftPanel風デザイン) */}
-          <div className="relative overflow-hidden rounded-[24px] bg-[color-mix(in_srgb,#eef2ff,white_50%)] ring-1 ring-[var(--ring)] shadow-sm">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#6366f1]" />
+          {/* 2. 履歴カード (ブランドカラー統一版) */}
+          <div className="relative overflow-hidden rounded-[24px] bg-slate-50 ring-1 ring-[var(--ring)] shadow-sm">
+            {/* アクセントバーを落ち着いたスレートに変更 */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-300" />
             <div className="p-5 pl-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white shadow-sm ring-1 ring-indigo-100 text-indigo-600">
+                  {/* アイコン背景もモノトーン寄りに */}
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white shadow-sm ring-1 ring-slate-200/50 text-slate-600">
                     <IconHistory className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[15px] font-extrabold text-indigo-900">
+                    <div className="text-[15px] font-extrabold text-slate-800">
                       過去の履歴
                     </div>
                   </div>
@@ -101,19 +104,19 @@ export default function CheckLandingPage() {
                   size="sm"
                   onClick={() => router.push("/history")}
                   disabled={loadingAuth || !isLoggedIn}
-                  className="shrink-0 bg-white"
+                  className="shrink-0 bg-white shadow-sm"
                 >
                   見る
                 </Button>
               </div>
 
-              <div className="mt-3 text-[13px] font-bold leading-6 text-indigo-800/70">
+              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
                 保存した過去の診断結果を見返して、体質の変化を確認できます。
               </div>
 
               {!loadingAuth && !isLoggedIn ? (
                 <div className="mt-4">
-                  <span className="inline-flex items-center rounded-full bg-white/60 px-3 py-1.5 text-[11px] font-extrabold text-indigo-500 ring-1 ring-inset ring-indigo-100/50">
+                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-500 ring-1 ring-inset ring-slate-200">
                     ※ ログイン後に表示されます
                   </span>
                 </div>
