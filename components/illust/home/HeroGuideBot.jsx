@@ -9,29 +9,17 @@ export default function HeroGuideBot({
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
   let bubbleClasses = [
-    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20",
+    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20 transition-all",
   ];
 
-  // 指し口（テイル）の共通スタイル
-  const tailBase = "after:content-[''] after:absolute after:w-3 after:h-3 after:bg-white after:border-r after:border-b after:border-[var(--ring)] after:rotate-[135deg]";
-
   if (compact) {
-    if (bubbleSide === "right") {
-      // ログイン前ページ用：右側に吹き出し
-      bubbleClasses.push(
-        "left-[95px] top-2 w-max whitespace-nowrap", 
-        tailBase,
-        "after:left-[-7px] after:top-[14px] after:rotate-[135deg]"
-      );
-    } else if (bubbleSide === "left-belly") {
-      // ダッシュボード用：お腹の左側に吹き出し
-      bubbleClasses.push(
-        "right-[95px] bottom-[30px] w-[200px]", 
-        tailBase,
-        "after:right-[-7px] after:bottom-[14px] after:rotate-[-45deg]"
-      );
+    if (bubbleSide === "left-belly") {
+      // ★位置を少し下げ（bottom-[22px]）、しっぽが出るスペースを確保
+      bubbleClasses.push("right-[95px] bottom-[22px] w-[200px]");
+    } else if (bubbleSide === "right") {
+      bubbleClasses.push("left-[90px] top-0 w-[160px]");
     } else {
-      bubbleClasses.push("right-[80px] top-0 w-[160px]");
+      bubbleClasses.push("right-[90px] top-0 w-[160px]");
     }
   } else {
     bubbleClasses.push("right-[130px] top-4 w-[180px]");
@@ -39,11 +27,16 @@ export default function HeroGuideBot({
 
   return (
     <div className={["relative", widthClass].join(" ")}>
-      {showBubble && (
+      {showBubble ? (
         <div className={bubbleClasses.join(" ")}>
           {message}
+          
+          {/* ★吹き出しのしっぽ（指し口） */}
+          {bubbleSide === "left-belly" && (
+            <div className="absolute right-[-6px] bottom-[14px] h-3 w-3 rotate-45 border-r border-t border-[var(--ring)] bg-white shadow-[2px_-2px_2px_rgba(0,0,0,0.02)]" />
+          )}
         </div>
-      )}
+      ) : null}
 
       <div className={["relative ml-auto", compact ? "mt-8 h-[92px] w-[92px]" : "mt-12 h-[112px] w-[112px]"].join(" ")}>
         <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden="true">
@@ -82,4 +75,3 @@ export default function HeroGuideBot({
     </div>
   );
 }
-
