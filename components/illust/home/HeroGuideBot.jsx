@@ -8,21 +8,22 @@ export default function HeroGuideBot({
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
+  // w-max と max-w を組み合わせることで、短い文は1行に、長い文は美しく改行させます。
   let bubbleClasses = [
-    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20 transition-all",
+    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-sm z-20 transition-all w-max max-w-[220px]",
   ];
 
   if (compact) {
     if (bubbleSide === "left-belly") {
-      // ★位置を少し下げ（bottom-[22px]）、しっぽが出るスペースを確保
-      bubbleClasses.push("right-[95px] bottom-[22px] w-[200px]");
+      bubbleClasses.push("right-[95px] bottom-[30px]");
     } else if (bubbleSide === "right") {
-      bubbleClasses.push("left-[90px] top-0 w-[160px]");
+      // 少し上に配置して、カードとの被りを防ぎます
+      bubbleClasses.push("left-[90px] top-2");
     } else {
-      bubbleClasses.push("right-[90px] top-0 w-[160px]");
+      bubbleClasses.push("right-[90px] top-2");
     }
   } else {
-    bubbleClasses.push("right-[130px] top-4 w-[180px]");
+    bubbleClasses.push("right-[130px] top-4");
   }
 
   return (
@@ -31,10 +32,15 @@ export default function HeroGuideBot({
         <div className={bubbleClasses.join(" ")}>
           {message}
           
-          {/* ★吹き出しのしっぽ（指し口） */}
-          {bubbleSide === "left-belly" && (
-            <div className="absolute right-[-6px] bottom-[14px] h-3 w-3 rotate-45 border-r border-t border-[var(--ring)] bg-white shadow-[2px_-2px_2px_rgba(0,0,0,0.02)]" />
-          )}
+          {/* 追加：吹き出しの指し口（しっぽ） */}
+          <div 
+            className={[
+              "absolute w-[10px] h-[10px] bg-white border-[var(--ring)]",
+              bubbleSide === "left-belly" || bubbleSide === "left"
+                ? "right-[-6px] top-1/2 -translate-y-1/2 border-r border-t rotate-45" // 右向きのしっぽ
+                : "left-[-6px] top-1/2 -translate-y-1/2 border-l border-b rotate-45"  // 左向きのしっぽ
+            ].join(" ")}
+          />
         </div>
       ) : null}
 
