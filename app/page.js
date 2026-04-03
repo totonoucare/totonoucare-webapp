@@ -389,34 +389,28 @@ export default function HomePage() {
       }
     >
       <Module className="p-5 overflow-hidden relative rounded-[28px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
-        {/* 背景の洗練されたオーラ */}
-        <div className="absolute right-[-40px] top-[-20px] z-[1] pointer-events-none opacity-80 scale-[1.2]">
+        {/* 【修正箇所1】アートワークは絶対に右端（キャラクターの真裏）に固定。テキストエリアに干渉させない */}
+        <div className="absolute right-[-20px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-90">
           <HeroDashboardArt />
         </div>
         
-        {/* 左上のロゴ */}
-        <div className="relative z-[2]">
-          <HeroTitleMark compact />
-        </div>
-
-        {/* ユーザー様の天才的なひらめきレイアウト：文字全体をキャラの「吹き出し」化 */}
-        <div className="relative z-[2] mt-5 flex items-end justify-between gap-3">
-          
-          {/* カスタムの大きな吹き出し（右下の角を尖らせて、キャラが喋っているように見せる） */}
-          <div className="relative flex-1 rounded-[22px] rounded-br-sm border border-[var(--ring)] bg-white/95 backdrop-blur-sm p-4 shadow-sm">
-            <div className="text-[17px] font-black tracking-tight leading-snug text-slate-900">
+        <div className="relative z-[2] flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1 relative z-[2]">
+            <HeroTitleMark compact />
+            {/* テキストが改行されても綺麗に見えるように調整 */}
+            <div className="mt-4 text-[22px] font-black tracking-tight leading-[1.25] text-slate-900">
               今日はどんな日か、<br />ひと目で確認。
             </div>
-            <div className="mt-2 text-[12px] font-bold leading-relaxed text-slate-500">
-              崩れやすさと、次の一歩だけを<br />まとめています。
+            {/* 余計な長文を削り、max-w を細かく制御して黄金コアとの被りを物理的に防ぐ */}
+            <div className="mt-2 max-w-[14ch] text-[12px] font-bold leading-5 text-slate-600 sm:max-w-[20ch]">
+              崩れやすさと、次の一歩だけをまとめています。
             </div>
           </div>
           
-          {/* 右端に鎮座するキャラクター（内部の小さな吹き出しはOFF） */}
-          <div className="relative shrink-0 translate-y-3 translate-x-2">
-              <HeroGuideBot compact={true} showBubble={false} />
+          {/* 【修正箇所2】キャラクターは右端固定。吹き出しは「左（内側）」へ出すことで画面内に綺麗に収める */}
+          <div className="relative shrink-0 pt-2 z-[2] translate-y-2">
+              <HeroGuideBot compact message="おかえり！" bubbleSide="left" />
           </div>
-
         </div>
       </Module>
 
