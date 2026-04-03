@@ -388,31 +388,29 @@ export default function HomePage() {
         />
       }
     >
-            {/* --- ここから差し替え --- */}
-      <Module className="p-6 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] min-h-[220px]">
+      {/* --- ここから差し替え --- */}
+      <Module className="p-6 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] min-h-[160px]">
         {/* 背景の洗練された予報のオーラ */}
-        <div className="absolute right-[-40px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-80 scale-[1.3]">
+        <div className="absolute right-[-20px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-80 scale-[1.3]">
           <HeroDashboardArt />
         </div>
         
-        {/* 左上：テキストエリア（極限までシンプルに） */}
-        <div className="relative z-[2] max-w-[200px]">
+        {/* 左上：ロゴのみ（テキストを削ぎ落として究極にシンプルに） */}
+        <div className="relative z-[2]">
           <HeroTitleMark compact />
-          <div className="mt-5 text-[24px] font-black tracking-tight leading-[1.3] text-slate-900">
-            今日はどんな日か、<br />ひと目で確認。
-          </div>
         </div>
         
-        {/* 右下：キャラクター（説明文をセリフとして喋らせる） */}
+        {/* 右下：キャラクター（すべての案内をこの子に任せる） */}
         <div className="absolute right-2 bottom-[-8px] z-[3]">
             <HeroGuideBot 
               compact 
-              message="崩れやすさと次の一歩だけをまとめています。" 
+              message="今日・明日の予報と次の一歩をまとめています。" 
               bubbleSide="left-belly" 
             />
         </div>
       </Module>
       {/* --- ここまで差し替え --- */}
+
 
 
       <Module className="p-5">
