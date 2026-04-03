@@ -8,32 +8,44 @@ export default function HeroGuideBot({
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
   
-  let bubbleClasses = [
-    "absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20 transition-all",
-  ];
+  // 吹き出しの位置・幅・しっぽの向きを、バリエーションごとに完全に独立して定義
+  let bubbleStyles = "";
+  let tailStyles = null;
 
   if (compact) {
     if (bubbleSide === "left-belly") {
-      // ★ログイン後用：前回完璧に決まった位置。絶対に触らない！
-      bubbleClasses.push("right-[95px] bottom-[40px] w-[200px]");
+      // ▼ ログイン後ダッシュボード用（絶対に崩さない）
+      // 幅を固定し、複数行になっても綺麗に収まるように。しっぽは右側。
+      bubbleStyles = "right-[90px] bottom-[25px] w-[210px]";
+      tailStyles = (
+        <div className="absolute top-[50%] right-[-6px] -translate-y-1/2 h-3 w-3 rotate-45 border-t border-r border-[var(--ring)] bg-white"></div>
+      );
     } else if (bubbleSide === "right") {
-      // ★未ログインLP用：装飾ラベルが消えた分、w-maxでスッキリ1行に収める。少し下げて頭とのバランスを取る。
-      bubbleClasses.push("left-[90px] top-[15px] w-max max-w-[220px]");
+      // ▼ 未ログインLP用（今回修正）
+      // 1行にスッキリ収めるため w-max と whitespace-nowrap を使用。しっぽは左側。
+      bubbleStyles = "left-[95px] top-[20px] w-max whitespace-nowrap";
+      tailStyles = (
+        <div className="absolute top-[50%] left-[-6px] -translate-y-1/2 h-3 w-3 rotate-45 border-b border-l border-[var(--ring)] bg-white"></div>
+      );
     } else {
-      bubbleClasses.push("right-[90px] top-0 w-[160px]");
+      bubbleStyles = "right-[90px] top-0 w-[160px]";
     }
   } else {
-    bubbleClasses.push("right-[130px] top-4 w-[180px]");
+    bubbleStyles = "right-[130px] top-4 w-[180px]";
   }
 
   return (
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
-        <div className={bubbleClasses.join(" ")}>
-          {message}
+        <div className={`absolute rounded-2xl border border-[var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-md z-20 transition-all ${bubbleStyles}`}>
+          {/* 吹き出しのしっぽ */}
+          {tailStyles}
+          {/* しっぽがテキストに被らないように相対配置 */}
+          <div className="relative z-10">{message}</div>
         </div>
       ) : null}
 
+      {/* キャラクターSVG（変更なし） */}
       <div className={["relative ml-auto", compact ? "mt-8 h-[92px] w-[92px]" : "mt-12 h-[112px] w-[112px]"].join(" ")}>
         <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <defs>
