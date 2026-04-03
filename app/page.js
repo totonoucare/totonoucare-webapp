@@ -388,32 +388,37 @@ export default function HomePage() {
         />
       }
     >
-      {/* --- ここから差し替え --- */}
-      <Module className="p-6 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] min-h-[220px]">
-        {/* 背景の洗練された予報のオーラ：サイズを大きくし、文字の裏へ少し被せる */}
-        <div className="absolute right-[-30px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-80 scale-[1.35]">
+      <Module className="p-5 overflow-hidden relative rounded-[28px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
+        {/* 背景の洗練されたオーラ */}
+        <div className="absolute right-[-40px] top-[-20px] z-[1] pointer-events-none opacity-80 scale-[1.2]">
           <HeroDashboardArt />
         </div>
         
-        {/* 左上：テキストエリア（オーラの手前に配置） */}
-        <div className="relative z-[2] max-w-[180px] sm:max-w-[240px]">
+        {/* 左上のロゴ */}
+        <div className="relative z-[2]">
           <HeroTitleMark compact />
-          <div className="mt-5 text-[24px] font-black tracking-tight leading-[1.25] text-slate-900">
-            今日はどんな日か、<br />ひと目で確認。
-          </div>
-          <div className="mt-3 text-[12px] font-bold leading-6 text-slate-600">
-            崩れやすさと次の一歩だけを<br />まとめています。
-          </div>
         </div>
-        
-        {/* 右下：キャラクター（絶対配置で右下に固定し、アシンメトリなバランスを作る） */}
-        <div className="absolute right-2 bottom-0 z-[3]">
-            {/* 吹き出しを「お腹の左側（left-belly）」に指定 */}
-            <HeroGuideBot compact message="おかえり！" bubbleSide="left-belly" />
+
+        {/* ユーザー様の天才的なひらめきレイアウト：文字全体をキャラの「吹き出し」化 */}
+        <div className="relative z-[2] mt-5 flex items-end justify-between gap-3">
+          
+          {/* カスタムの大きな吹き出し（右下の角を尖らせて、キャラが喋っているように見せる） */}
+          <div className="relative flex-1 rounded-[22px] rounded-br-sm border border-[var(--ring)] bg-white/95 backdrop-blur-sm p-4 shadow-sm">
+            <div className="text-[17px] font-black tracking-tight leading-snug text-slate-900">
+              今日はどんな日か、<br />ひと目で確認。
+            </div>
+            <div className="mt-2 text-[12px] font-bold leading-relaxed text-slate-500">
+              崩れやすさと、次の一歩だけを<br />まとめています。
+            </div>
+          </div>
+          
+          {/* 右端に鎮座するキャラクター（内部の小さな吹き出しはOFF） */}
+          <div className="relative shrink-0 translate-y-3 translate-x-2">
+              <HeroGuideBot compact={true} showBubble={false} />
+          </div>
+
         </div>
       </Module>
-      {/* --- ここまで差し替え --- */}
-
 
       <Module className="p-5">
         <div className="flex items-center justify-between gap-3">
