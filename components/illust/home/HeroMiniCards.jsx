@@ -26,7 +26,6 @@ export default function HeroMiniCards({ compact = false }) {
         {/* 高さを320pxにして配置の余裕を確保 */}
         <div className="relative h-[320px] overflow-hidden rounded-[26px] bg-[#fdfefc] ring-1 ring-inset ring-black/5">
           {/* 背景: 洗練版（はみ出し溶け込みデザイン） */}
-          {/* 円の中心を左下（キャラクターの背後）にずらし、半径を大きくして画面外へ大きくはみ出させる */}
           <svg viewBox="0 0 320 320" className="absolute inset-0 h-full w-full" aria-hidden="true">
              <circle cx="30" cy="250" r="180" fill="#eef4eb" fillOpacity="0.5" />
              <circle cx="30" cy="250" r="100" fill="#eef4eb" fillOpacity="0.3" />
@@ -35,7 +34,6 @@ export default function HeroMiniCards({ compact = false }) {
           {/* 1. 左上：診断結果のイメージカード */}
           <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="flex items-center justify-between">
-              {/* 日本語に修正 */}
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">体質診断結果</span>
               <StatusChip label="短期集中型" tone="warn" />
             </div>
@@ -61,18 +59,12 @@ export default function HeroMiniCards({ compact = false }) {
           </div>
 
           {/* 3. 左下：キャラクター */}
-          {/* scaleを0.85に拡大し、位置を微調整（left-[-8px] bottom-[-8px]） */}
-          <div className="absolute left-[-8px] bottom-[-8px] scale-[0.85] origin-bottom-left z-30 transition-transform hover:scale-[0.82]">
-            <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" />
+          {/* ★修正: showTail={true} を追加し、スッキリとした1行の吹き出しを表示 */}
+          <div className="absolute left-[-8px] bottom-[-8px] scale-[0.8] origin-bottom-left z-30 transition-transform hover:scale-[0.82]">
+            <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" showTail={true} />
           </div>
 
-          {/* 4. 右下：装飾ラベル */}
-          <div className="absolute right-4 bottom-5 flex flex-col items-end gap-2">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur px-3 py-1.5 text-[10px] font-black text-slate-600 shadow-sm ring-1 ring-black/5">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> 
-              体質と気象の重なりを解析
-            </div>
-          </div>
+          {/* 4. 右下：装飾ラベルは削除し、空間をスッキリさせました */}
         </div>
       </div>
     );
@@ -83,7 +75,6 @@ export default function HeroMiniCards({ compact = false }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="group relative overflow-hidden rounded-[30px] border border-[var(--ring)] bg-white p-5 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] transition-all hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)]">
         <div className="relative z-10">
-          {/* 日本語に修正 */}
           <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">体調予報サマリー</div>
           <div className="mt-1 text-base font-black text-slate-900 leading-tight">明日のあなたの体調予報</div>
           <div className="mt-8 flex items-end justify-between">
@@ -99,7 +90,6 @@ export default function HeroMiniCards({ compact = false }) {
 
       <div className="group relative overflow-hidden rounded-[30px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-5 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
         <div className="relative z-10">
-          {/* 日本語に修正 */}
           <div className="text-[11px] font-black uppercase tracking-widest text-slate-500/60">セルフケアガイド</div>
           <div className="mt-1 text-base font-black text-slate-900 leading-tight">今日のうちに整えておく</div>
           
@@ -122,3 +112,4 @@ export default function HeroMiniCards({ compact = false }) {
     </div>
   );
 }
+
