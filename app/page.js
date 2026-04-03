@@ -391,17 +391,17 @@ export default function HomePage() {
       {/* --- Module部分を以下で上書き --- */}
       <Module className="p-8 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-16px_rgba(77,111,85,0.12)] min-h-[180px]">
         
-        {/* 右側に寄せた背景：キャラクターのステージとして機能させる */}
-        <div className="absolute right-[-20px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-90 scale-[1.2] origin-right">
+        {/* 背景の洗練された予報のオーラ：右上（角）へ移動、サイズ縮小、 origin-top-rightを指定 */}
+        <div className="absolute right-[-20px] top-[10%] z-[1] pointer-events-none opacity-90 scale-[0.9] origin-top-right">
           <HeroDashboardArt />
         </div>
         
-        {/* 左上：ロゴ（周囲に十分な余白を持たせて気品を出す） */}
+        {/* 左上：ロゴ（Anchor） */}
         <div className="relative z-[2]">
           <HeroTitleMark compact />
         </div>
         
-        {/* 右下：キャラクターと中央へのメッセージ */}
+        {/* 右下：キャラクターと中央へのメッセージ（Focus Area + Interaction） */}
         {/* bottomを少し浮かせる（bottom-2）ことで、カード内に綺麗に座っている感を出します */}
         <div className="absolute right-6 bottom-2 z-[3]">
             <HeroGuideBot 
@@ -411,9 +411,6 @@ export default function HomePage() {
             />
         </div>
       </Module>
-
-
-
 
       <Module className="p-5">
         <div className="flex items-center justify-between gap-3">
