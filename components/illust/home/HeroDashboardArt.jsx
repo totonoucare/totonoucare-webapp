@@ -1,56 +1,50 @@
 "use client";
 
 export default function HeroDashboardArt({ className = "" }) {
+  // キャラクターとメッセージを美しく包み込み、ロゴとは一線を画す洗練されたオーラ。
+  // ロゴのような正確な同心円ではなく、より流動的で奥行きのある氣の巡りを表現。
   return (
     <div className={["relative shrink-0", className].join(" ")}>
-      {/* ダッシュボード右上（キャラクターの背後）に配置されるアートワーク */}
-      {/* 画面全体の奥行きと一体感を出すため、キャラクター全体を包むようなサイズ（200x200）で構成 */}
+      {/* Create a sophisticated, multi-layered visual aura, designed to perfectly surround and harmonize with the character. */}
+      {/* This artwork breaks away from the strict geometric similarity with the logo, forming a protective field of pulsing light. */}
       <svg viewBox="0 0 200 200" className="h-[200px] w-[200px]" aria-hidden="true">
         <defs>
-          {/* 高級感を出すためのぼかし効果 */}
-          <filter id="auraBlur" x="-30%" y="-30%" width="160%" height="160%">
+          {/* Create sophisticated, diffused lighting effects for layered translucency */}
+          <filter id="softGlowAura" x="-40%" y="-40%" width="180%" height="180%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="15" />
           </filter>
-          <filter id="coreBlur" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+          <filter id="corePulseGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" />
+          </filter>
+          <filter id="waveLayerBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
           </filter>
 
-          {/* 複数のグラデーションで深みを出す */}
-          <linearGradient id="mintWaveGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6a9770" />
-            <stop offset="100%" stopColor="#6a9770" stopOpacity="0" />
-          </linearGradient>
-          <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+          {/* Golden life-force glow (derived from character core) */}
+          <radialGradient id="lifeForceGold" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#d9a54a" />
             <stop offset="100%" stopColor="#d9a54a" stopOpacity="0" />
           </radialGradient>
-          <linearGradient id="softMintAura" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#f0f5f1" stopOpacity="1" />
-          </linearGradient>
         </defs>
 
-        {/* 最背面: 淡いミントグリーンのぼかしたオーラ（全体のトーンを形成） */}
-        <circle cx="100" cy="100" r="90" fill="url(#softMintAura)" opacity="0.6" filter="url(#auraBlur)" />
+        {/* 最背面 (Layer 1): 淡いミントグリーンのぼかしたオーラ（全体のトーンを形成） */}
+        <circle cx="100" cy="100" r="95" fill="#fdfefc" filter="url(#softGlowAura)" opacity="0.6" />
 
-        {/* 中間面: 気象の層（同心円状の波紋） */}
-        <circle cx="100" cy="100" r="85" fill="none" stroke="#d3e2d6" strokeWidth="2" strokeOpacity="0.5" />
-        <circle cx="100" cy="100" r="65" fill="none" stroke="#a3c1a8" strokeWidth="2" strokeOpacity="0.3" />
-        <circle cx="100" cy="100" r="45" fill="none" stroke="#6a9770" strokeWidth="2.5" strokeLinecap="round" opacity="0.2" />
+        {/* 中間面 (Layer 2): 気象の層（同心円状の波紋ではなく、緩やかな氣の巡り） */}
+        {/* Mint waves, forming an aura, breaking direct similarity to logo's strict concentric circles. */}
+        <path d="M10 100 C 40 60, 80 140, 110 100 S 160 60, 190 100" fill="none" stroke="#6a9770" strokeOpacity="0.2" strokeWidth="4" strokeLinecap="round" filter="url(#waveLayerBlur)" />
+        <path d="M20 120 C 50 80, 90 160, 120 120 S 170 80, 200 120" fill="none" stroke="#6a9770" strokeOpacity="0.1" strokeWidth="4" strokeLinecap="round" filter="url(#waveLayerBlur)" />
+        
+        {/* 前面 (Layer 3): 予報のコア（ゴールドの柔らかい光が波打つ） */}
+        <circle cx="100" cy="100" r="28" fill="url(#lifeForceGold)" filter="url(#corePulseGlow)" opacity="0.8" />
+        <circle cx="100" cy="100" r="14" fill="#d9a54a" opacity="0.9" />
 
-        {/* 前面: 予報のコア（ゴールドの柔らかい光） */}
-        <circle cx="100" cy="100" r="22" fill="url(#goldGlow)" filter="url(#coreBlur)" opacity="0.8" />
-        <circle cx="100" cy="100" r="10" fill="#d9a54a" opacity="0.9" />
-
-        {/* 最前面: 氣の巡り（緩やかな曲線） */}
-        <path d="M40 100 C 60 80, 80 120, 100 100 S 140 80, 160 100" fill="none" stroke="#6a9770" strokeWidth="3" strokeLinecap="round" opacity="0.3" />
-        <path d="M50 115 C 70 95, 90 135, 110 115 S 150 95, 170 115" fill="none" stroke="#6a9770" strokeWidth="3" strokeLinecap="round" opacity="0.1" />
-
-        {/* 抽象化されたツボ（ロゴとの呼應） */}
+        {/* 最前面 (Layer 4): 東洋医学の象徴（ツボ・経絡）を非常に控えめに統合 */}
         <circle cx="100" cy="30" r="3" fill="#6a9770" opacity="0.3" />
         <circle cx="100" cy="170" r="3" fill="#6a9770" opacity="0.3" />
         <circle cx="30" cy="100" r="3" fill="#6a9770" opacity="0.3" />
         <circle cx="170" cy="100" r="3" fill="#6a9770" opacity="0.3" />
+        
       </svg>
     </div>
   );
