@@ -388,11 +388,10 @@ export default function HomePage() {
         />
       }
     >
-      {/* --- Module部分を以下で上書き --- */}
       <Module className="p-8 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-16px_rgba(77,111,85,0.12)] min-h-[180px]">
         
-        {/* 背景の洗練された予報のオーラ：右上（角）へ移動、サイズ縮小、 origin-top-rightを指定 */}
-        <div className="absolute right-[-20px] top-[10%] z-[1] pointer-events-none opacity-90 scale-[0.9] origin-top-right">
+        {/* 【修正箇所1】オーラ背景を物理的に上端に固定 (top-[-10px])。キャラクターの頭部から完全に離す */}
+        <div className="absolute right-[-20px] top-[-10px] z-[1] pointer-events-none opacity-90 scale-[0.8] origin-top-right">
           <HeroDashboardArt />
         </div>
         
@@ -402,7 +401,6 @@ export default function HomePage() {
         </div>
         
         {/* 右下：キャラクターと中央へのメッセージ（Focus Area + Interaction） */}
-        {/* bottomを少し浮かせる（bottom-2）ことで、カード内に綺麗に座っている感を出します */}
         <div className="absolute right-6 bottom-2 z-[3]">
             <HeroGuideBot 
               compact 
