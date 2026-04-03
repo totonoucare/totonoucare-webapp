@@ -1,24 +1,3 @@
-"use client";
-
-import HeroGuideBot from "./HeroGuideBot";
-
-// ステータスチップ（枠線をなくし、柔らかい色味で洗練さを強調）
-function StatusChip({ label, tone }) {
-  const toneClass =
-    tone === "warn"
-      ? "bg-amber-100 text-amber-700"
-      : tone === "danger"
-        ? "bg-rose-100 text-rose-700"
-        : "bg-emerald-100 text-emerald-700";
-
-  return (
-    <span className={["inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-wider", toneClass].join(" ")}>
-      {label}
-    </span>
-  );
-}
-
-export default function HeroMiniCards({ compact = false }) {
   // LP（ログイン前）などで使われるコンパクトな使用イメージ表示
   if (compact) {
     return (
@@ -59,57 +38,12 @@ export default function HeroMiniCards({ compact = false }) {
           </div>
 
           {/* 3. 左下：キャラクター */}
-          {/* ★修正: showTail={true} を追加し、スッキリとした1行の吹き出しを表示 */}
           <div className="absolute left-[-8px] bottom-[-8px] scale-[0.8] origin-bottom-left z-30 transition-transform hover:scale-[0.82]">
-            <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" showTail={true} />
+            <HeroGuideBot compact message="まずは体質チェックから！" bubbleSide="right" />
           </div>
 
-          {/* 4. 右下：装飾ラベルは削除し、空間をスッキリさせました */}
+          {/* 4. 装飾ラベルは削除しました */}
         </div>
       </div>
     );
   }
-
-  // ログイン後のダッシュボード等で使われる標準グリッド版
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      <div className="group relative overflow-hidden rounded-[30px] border border-[var(--ring)] bg-white p-5 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] transition-all hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.12)]">
-        <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">体調予報サマリー</div>
-          <div className="mt-1 text-base font-black text-slate-900 leading-tight">明日のあなたの体調予報</div>
-          <div className="mt-8 flex items-end justify-between">
-            <div className="text-[11px] font-bold text-slate-400">目安スコア<br /><span className="text-2xl font-black text-slate-900 tracking-tighter">4</span> <span className="text-xs font-bold text-slate-300">/ 10</span></div>
-            <StatusChip label="注意" tone="warn" />
-          </div>
-        </div>
-        {/* 背景に薄くキャラを配置してブランド感を出す */}
-        <div className="absolute right-[-20px] bottom-[-20px] scale-[0.6] opacity-10 group-hover:opacity-20 transition-opacity">
-            <HeroGuideBot compact showBubble={false} />
-        </div>
-      </div>
-
-      <div className="group relative overflow-hidden rounded-[30px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-5 shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
-        <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-500/60">セルフケアガイド</div>
-          <div className="mt-1 text-base font-black text-slate-900 leading-tight">今日のうちに整えておく</div>
-          
-          <div className="mt-4 flex flex-wrap gap-2">
-            {["ツボ", "食養生", "記録"].map((tag) => (
-              <span key={tag} className="rounded-full bg-white px-3.5 py-1.5 text-[10px] font-black text-slate-700 shadow-sm ring-1 ring-black/5">
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-8 h-12 w-full rounded-xl bg-white/40 p-2 ring-1 ring-white/50 overflow-hidden">
-            <svg viewBox="0 0 200 40" className="h-full w-full">
-              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#6a9770" strokeOpacity="0.3" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="90" cy="20" r="3" fill="#d9a54a" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
