@@ -388,31 +388,32 @@ export default function HomePage() {
         />
       }
     >
-      <Module className="p-5 overflow-hidden relative rounded-[28px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)]">
-        {/* 【修正箇所1】アートワークは絶対に右端（キャラクターの真裏）に固定。テキストエリアに干渉させない */}
-        <div className="absolute right-[-20px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-90">
+      {/* --- ここから差し替え --- */}
+      <Module className="p-6 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.08)] min-h-[220px]">
+        {/* 背景の洗練された予報のオーラ：サイズを大きくし、文字の裏へ少し被せる */}
+        <div className="absolute right-[-30px] top-[50%] -translate-y-1/2 z-[1] pointer-events-none opacity-80 scale-[1.35]">
           <HeroDashboardArt />
         </div>
         
-        <div className="relative z-[2] flex items-center justify-between gap-2">
-          <div className="min-w-0 flex-1 relative z-[2]">
-            <HeroTitleMark compact />
-            {/* テキストが改行されても綺麗に見えるように調整 */}
-            <div className="mt-4 text-[22px] font-black tracking-tight leading-[1.25] text-slate-900">
-              今日はどんな日か、<br />ひと目で確認。
-            </div>
-            {/* 余計な長文を削り、max-w を細かく制御して黄金コアとの被りを物理的に防ぐ */}
-            <div className="mt-2 max-w-[14ch] text-[12px] font-bold leading-5 text-slate-600 sm:max-w-[20ch]">
-              崩れやすさと、次の一歩だけをまとめています。
-            </div>
+        {/* 左上：テキストエリア（オーラの手前に配置） */}
+        <div className="relative z-[2] max-w-[180px] sm:max-w-[240px]">
+          <HeroTitleMark compact />
+          <div className="mt-5 text-[24px] font-black tracking-tight leading-[1.25] text-slate-900">
+            今日はどんな日か、<br />ひと目で確認。
           </div>
-          
-          {/* 【修正箇所2】キャラクターは右端固定。吹き出しは「左（内側）」へ出すことで画面内に綺麗に収める */}
-          <div className="relative shrink-0 pt-2 z-[2] translate-y-2">
-              <HeroGuideBot compact message="おかえり！" bubbleSide="left" />
+          <div className="mt-3 text-[12px] font-bold leading-6 text-slate-600">
+            崩れやすさと次の一歩だけを<br />まとめています。
           </div>
         </div>
+        
+        {/* 右下：キャラクター（絶対配置で右下に固定し、アシンメトリなバランスを作る） */}
+        <div className="absolute right-2 bottom-0 z-[3]">
+            {/* 吹き出しを「お腹の左側（left-belly）」に指定 */}
+            <HeroGuideBot compact message="おかえり！" bubbleSide="left-belly" />
+        </div>
       </Module>
+      {/* --- ここまで差し替え --- */}
+
 
       <Module className="p-5">
         <div className="flex items-center justify-between gap-3">
