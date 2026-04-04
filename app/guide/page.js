@@ -10,8 +10,10 @@ import {
   IconChecklist,
   IconWeather,
   IconCalendar,
-  IconCore,
-  IconBodyLine,
+  IconConstitution, // ★ベース体質
+  IconBodyLine,     // ★経絡ライン
+  IconTsubo,        // ★ツボ
+  IconBowl,         // ★食養生
 } from "@/components/illust/icons/guide";
 
 /* -----------------------------
@@ -154,12 +156,14 @@ export default function GuidePage() {
           </div>
           
           <div className="space-y-4">
-            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconCore />}>
+            {/* ★ ここで Constitution を使用 */}
+            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconConstitution />}>
               バッテリー（余力）の大きさと、アクセル/ブレーキの踏みやすさを掛け合わせた、あなたの根本的な性質です。
             </GuideCard>
             <GuideCard tone="teal" title="気・血・水のバランス" icon={<IconSpark />}>
               エネルギー不足（気虚）や、潤い不足（津液不足）など、今現在どの要素が崩れているか（サブ体質）を表示します。
             </GuideCard>
+            {/* ★ ここで BodyLine を使用 */}
             <GuideCard tone="violet" title="張りやすい場所（経絡）" icon={<IconBodyLine />}>
               動作テストの違和感から、首・肩、背中、体側など、負担が蓄積しやすい「体のライン」を特定します。
             </GuideCard>
@@ -185,10 +189,12 @@ export default function GuidePage() {
             <GuideCard tone="amber" title="崩れやすさ（10段階）" icon={<IconWeather />}>
               気圧低下、寒暖差、湿気などの気象変化に対して、あなたの体質がどれくらいダメージを受けやすいかをスコア化します。
             </GuideCard>
-            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconBodyLine />}>
+            {/* ★ ここで Tsubo を使用 */}
+            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconTsubo />}>
               明日が「崩れやすい日」なら、前夜のうちに押しておきたいツボを提案します。お風呂上がりなどに30秒でOKです。
             </GuideCard>
-            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconSpark />}>
+            {/* ★ ここで Bowl を使用 */}
+            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconBowl />}>
               胃腸に負担をかけない食事や、冷えを防ぐ食材など、その日の天候と体質に合った「食事の取り入れ方」が分かります。
             </GuideCard>
 
