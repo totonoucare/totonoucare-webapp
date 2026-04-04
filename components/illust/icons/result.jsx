@@ -72,8 +72,6 @@ export function IconResult({ className = "h-7 w-7", ...props }) {
   );
 }
 
-/* --- 新規追加 --- */
-
 export function IconAnalysis({ className = "h-7 w-7", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
@@ -103,6 +101,28 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <path d="M6.5 17.5A4.5 4.5 0 1 1 9 9.2a6 6 0 1 1 10.8 3.8 4 4 0 1 1-3.3 7h-10z" fill="currentColor" fillOpacity="0.15" />
       <path d="M6.5 17.5A4.5 4.5 0 1 1 9 9.2a6 6 0 1 1 10.8 3.8 4 4 0 1 1-3.3 7h-10z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ★ 新規追加（波紋・ツボ用） */
+export function IconRipple({ className = "h-7 w-7", ...props }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
+      <circle cx="12" cy="12" r="4" fill="currentColor" />
+      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="3 4" opacity="0.7" />
+      <circle cx="12" cy="12" r="12" fill="currentColor" fillOpacity="0.12" />
+    </svg>
+  );
+}
+
+/* ★ 新規追加（お椀・食養生用） */
+export function IconBowl({ className = "h-7 w-7", ...props }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
+      <path d="M4 11h16v3c0 4.4-3.6 8-8 8s-8-3.6-8-8v-3z" fill="currentColor" fillOpacity="0.15" />
+      <path d="M4 11h16v3c0 4.4-3.6 8-8 8s-8-3.6-8-8v-3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 5l1 3M12 4v4M16 5l-1 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
 }
