@@ -16,6 +16,8 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
+// ★ 天候別トトノウくんアイコンをインポート
+import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
   conditionLabel,
@@ -437,7 +439,6 @@ function PointDetailSheet({ point, onClose }) {
 
   return (
     <div
-      // ★ Zインデックスを100にしてタブバーの上に覆いかぶせる
       className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
@@ -531,8 +532,8 @@ function PointDetailSheet({ point, onClose }) {
             </ul>
           </div>
         ) : null}
-
-        {/* ★ スクロール領域の最下部の見切れを防ぐための見えないスペーサー */}
+        
+        {/* 下部見切れ防止用スペーサー */}
         <div className="h-8 w-full sm:h-2" />
       </div>
     </div>
@@ -1106,11 +1107,10 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                {/* ★ お困りの不調に変更 */}
                 {symptomLabel ? (
                   <div className="shrink-0 rounded-[18px] bg-white/60 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 shadow-sm min-w-[100px] text-center">
                     <div className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                      お困りの不調
+                      気になる不調
                     </div>
                     <div className="mt-1 text-[16px] font-black tracking-tight opacity-90">
                       {symptomLabel}
@@ -1134,12 +1134,27 @@ export default function RadarPage() {
                 </div>
               </div>
 
+              {/* ★ ここに天候アイコンを追加！ */}
               <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
                 <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   一番響きやすい要素
                 </div>
-                <div className="mt-2 text-[15px] font-black tracking-tight text-slate-900">
-                  {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                <div className="mt-2 flex items-center gap-2.5">
+                   <div className="text-[var(--accent-ink)]">
+                      <WeatherIcon 
+                        triggerKey={
+                          forecast.main_trigger === "pressure" && forecast.trigger_dir === "down" ? "pressure_down" : 
+                          forecast.main_trigger === "pressure" && forecast.trigger_dir === "up" ? "pressure_up" : 
+                          forecast.main_trigger === "temp" && forecast.trigger_dir === "down" ? "cold" : 
+                          forecast.main_trigger === "temp" && forecast.trigger_dir === "up" ? "heat" : 
+                          forecast.main_trigger === "humidity" && forecast.trigger_dir === "up" ? "damp" : "dry"
+                        } 
+                        className="h-6 w-6" 
+                      />
+                   </div>
+                   <div className="text-[15px] font-black tracking-tight text-slate-900">
+                    {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                   </div>
                 </div>
               </div>
             </div>
@@ -1167,7 +1182,7 @@ export default function RadarPage() {
           </Module>
 
           {/* 2. 体質ミニカード */}
-          <Module className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
+          <Module className="p-5 flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
              <div className="min-w-0 pl-1">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
                   ベースとなるあなたの体質
@@ -1176,11 +1191,10 @@ export default function RadarPage() {
                   {coreLabel?.title || "—"}
                 </div>
                 
-                {/* ★ サブ体質（気血津液）のバッジを追加 */}
                 {subLabelObjects?.length > 0 ? (
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {subLabelObjects.map((s) => (
-                      <span key={s.code} className="rounded-md bg-white/60 px-2 py-0.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5 shadow-sm">
+                      <span key={s.code} className="rounded-md bg-white/60 px-2 py-0.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5">
                         {s.short}
                       </span>
                     ))}
@@ -1188,7 +1202,7 @@ export default function RadarPage() {
                 ) : null}
 
                 {primaryLine ? (
-                  <div className="mt-2.5 text-[11px] font-bold text-[var(--accent-ink)]/80">
+                  <div className="mt-2 text-[11px] font-bold text-[var(--accent-ink)]/80">
                     負担が出やすい：{primaryLine.title}
                   </div>
                 ) : null}
@@ -1198,7 +1212,7 @@ export default function RadarPage() {
                 size="sm"
                 onClick={openLatestResultDetail}
                 disabled={openingProfileDetail}
-                className="shrink-0 w-full sm:w-auto bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
+                className="shrink-0 bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
               >
                 {openingProfileDetail ? "開いています…" : "詳しく見る"}
               </Button>
@@ -1208,7 +1222,6 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
                 <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   {/* ★ 新しい波紋アイコン */}
                    <IconRipple className="h-5 w-5" />
                 </div>
                 <div>
@@ -1269,7 +1282,6 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
                 <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   {/* ★ 新しいお椀アイコン */}
                    <IconBowl className="h-5 w-5" />
                 </div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">
