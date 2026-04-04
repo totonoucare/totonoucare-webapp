@@ -34,9 +34,9 @@ export default function ResultPageWrapper({ params }) {
         <div className="min-h-screen bg-app">
           <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
             <div className="rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-[var(--ring)] flex items-center gap-3">
-              <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
               <div>
-                <div className="text-[15px] font-black tracking-tight text-slate-900">結果を読み込み中…</div>
+                <div className="text-[15px] font-black tracking-tight text-slate-900">読み込み中…</div>
                 <div className="mt-1 text-[12px] font-bold text-slate-500">少しお待ちください</div>
               </div>
             </div>
@@ -50,7 +50,7 @@ export default function ResultPageWrapper({ params }) {
 }
 
 /* -----------------------------
- * UI Components (Premium Clean)
+ * UI Components (Flat & Clean)
  * ---------------------------- */
 function Card({ children, className = "" }) {
   return (
@@ -80,52 +80,12 @@ function CardHeader({ icon, title, sub, right }) {
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}
       </div>
-      <div className="mt-5 h-px w-full bg-slate-100" />
+      <div className="mt-6 h-px w-full bg-slate-100" />
     </div>
   );
 }
 
-function SoftPanel({ tone = "mint", title, icon, children }) {
-  const tones = {
-    mint: {
-      wrap: "bg-[color-mix(in_srgb,var(--mint),white_80%)]",
-      title: "text-[var(--accent-ink)]",
-      iconBg: "bg-white text-[var(--accent-ink)] ring-1 ring-[var(--ring)]",
-    },
-    violet: {
-      wrap: "bg-[color-mix(in_srgb,#ede9fe,white_50%)]",
-      title: "text-[#4c1d95]",
-      iconBg: "bg-white text-[#6d5bd0] ring-1 ring-violet-200/50",
-    },
-    teal: {
-      wrap: "bg-[color-mix(in_srgb,#ccfbf1,white_50%)]",
-      title: "text-[#134e4a]",
-      iconBg: "bg-white text-[#0f766e] ring-1 ring-teal-200/50",
-    },
-    amber: {
-      wrap: "bg-[color-mix(in_srgb,#fef3c7,white_50%)]",
-      title: "text-[#7c2d12]",
-      iconBg: "bg-white text-[#b45309] ring-1 ring-amber-200/50",
-    },
-  };
-  const t = tones[tone] || tones.mint;
-
-  return (
-    <div className={`rounded-[28px] ${t.wrap} ring-1 ring-inset ring-black/5 overflow-hidden shadow-sm p-6`}>
-      <div className="flex items-center gap-3">
-        {icon ? (
-          <div className={`grid h-10 w-10 place-items-center rounded-[12px] shadow-sm ${t.iconBg}`}>
-            {icon}
-          </div>
-        ) : null}
-        <div className={`text-[16px] font-black tracking-tight ${t.title}`}>{title}</div>
-      </div>
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
-
-// ★ 経絡カードも「上部タイトル・下部テキスト」のフル幅レイアウトに改修
+// 主・副をまとめたシンプルな経絡リスト用コンポーネント
 function MeridianPanelContent({ line, tone = "violet" }) {
   const toneClass = {
     violet: "text-[#5b4bb7]",
@@ -136,22 +96,19 @@ function MeridianPanelContent({ line, tone = "violet" }) {
   if (!line) return null;
 
   return (
-    <div className="rounded-[28px] bg-white ring-1 ring-slate-200 p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="shrink-0">
-          <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 shadow-sm overflow-hidden">
-            <MeridianIllust code={line.code} size="lg" className={`${toneClass[tone] || toneClass.violet} scale-125`} />
-          </div>
-        </div>
-        <div className="min-w-0 pt-0.5">
-          <div className="text-[17px] font-black tracking-tight text-slate-900 truncate">{line.title}</div>
-          <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-slate-500 truncate">
-            {line.body_area}（{line.meridians.join("・")}）
-          </div>
+    <div className="flex items-start gap-4">
+      <div className="shrink-0">
+        <div className="grid h-[68px] w-[68px] place-items-center rounded-[18px] bg-white ring-1 ring-black/5 shadow-sm overflow-hidden">
+          <MeridianIllust code={line.code} size="lg" className={`${toneClass[tone] || toneClass.violet} scale-110`} />
         </div>
       </div>
-      <div className="text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
-        {line.organs_hint}
+      <div className="min-w-0 pt-1">
+        {/* 見切れ防止のため truncate は使わず leading-snug で自然に折り返す */}
+        <div className="text-[16px] font-black tracking-tight text-slate-900 leading-snug">{line.title}</div>
+        <div className="mt-1 text-[11px] font-extrabold text-slate-500">
+          {line.body_area}（{line.meridians.join("・")}）
+        </div>
+        <div className="mt-2 text-[13px] font-bold leading-relaxed text-slate-700">{line.organs_hint}</div>
       </div>
     </div>
   );
@@ -535,7 +492,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push(backHref)}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
     >
       ← 戻る
     </button>
@@ -545,7 +502,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push("/")}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
     >
       ホーム
     </button>
@@ -559,7 +516,7 @@ function ResultPage({ params }) {
           <div className="px-5 pb-6 pt-4">
             <div className="rounded-[32px] bg-white p-8 ring-1 ring-[var(--ring)] flex flex-col items-center gap-4 shadow-sm text-center">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
-              <div className="text-[15px] font-black text-slate-400 tracking-widest">LOADING...</div>
+              <div className="text-[15px] font-black text-slate-400 tracking-widest">読み込み中…</div>
             </div>
           </div>
         </Module>
@@ -595,52 +552,53 @@ function ResultPage({ params }) {
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
-          {/* ★ヒーローセクション改修：「体質の軸」イラストとテキストを美しく並べる */}
+          {/* ★ ヒーローカード：入れ子をなくし、主役の「体質」を最大化 */}
           <div className="relative rounded-[36px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-[180px] bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_30%)] to-[color-mix(in_srgb,var(--mint),white_80%)]" />
+            <div className="absolute inset-x-0 top-0 h-[220px] bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_30%)] to-white" />
             
-            <div className="relative z-10 px-6 pt-6 pb-2 text-center">
-              {/* お悩みは控えめなバッジに */}
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/60 backdrop-blur-md px-3.5 py-1.5 ring-1 ring-black/5 shadow-sm">
-                <span className="text-[10px] font-extrabold text-slate-500">
-                  お悩み：{symptomLabel}
-                </span>
+            <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
+              
+              {/* お困りの不調はバッジ化して邪魔にならないように */}
+              <div className="flex justify-center mb-6">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-md px-3.5 py-1.5 ring-1 ring-black/5 shadow-sm">
+                  <span className="text-[10px] font-extrabold text-slate-500">
+                    お困りの不調：{symptomLabel}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            {/* 体質結果パネル（イラストとタイトルを横並び） */}
-            <div className="relative z-10 px-5 pb-5">
-              <div className="rounded-[32px] bg-white/95 backdrop-blur-xl ring-1 ring-[var(--ring)] p-6 shadow-sm mt-3">
-                <div className="flex items-center gap-5 mb-5">
-                  <div className="shrink-0">
-                    <div className="grid h-[96px] w-[96px] place-items-center overflow-hidden rounded-[24px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105">
-                      <CoreIllust
-                        code={computed?.core_code}
-                        title={core?.title || "体質タイプ"}
-                        className="h-full w-full scale-[1.25] translate-y-1"
-                      />
-                    </div>
+              {/* 体質の軸を堂々と表示 */}
+              <div className="flex flex-col items-center text-center">
+                <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+                  あなたの体質の軸
+                </div>
+                <div className="mt-2 text-[32px] font-black tracking-tight text-slate-900 leading-[1.15]">
+                  {core?.title || "—"}
+                </div>
+                {core?.short ? (
+                  <div className="mt-3">
+                    <span className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-[12px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                      {core.short}
+                    </span>
                   </div>
-                  <div className="min-w-0 text-left pt-1">
-                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                      あなたの体質の軸
-                    </div>
-                    <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">
-                      {core?.title || "—"}
-                    </div>
-                    {core?.short ? (
-                      <div className="mt-2.5">
-                        <span className="inline-flex items-center rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-inset ring-slate-200/60 shadow-sm">
-                          {core.short}
-                        </span>
-                      </div>
-                    ) : null}
+                ) : null}
+              </div>
+
+              <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                <div className="shrink-0">
+                  <div className="grid h-[100px] w-[100px] place-items-center overflow-hidden rounded-[24px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105">
+                    <CoreIllust
+                      code={computed?.core_code}
+                      title={core?.title || "体質タイプ"}
+                      className="h-full w-full scale-[1.25] translate-y-1"
+                    />
                   </div>
                 </div>
-                <div className="text-[13px] leading-relaxed font-bold text-slate-700 bg-slate-50 rounded-[20px] p-5 ring-1 ring-slate-100">
+                <div className="text-[14px] font-bold leading-relaxed text-slate-600 text-center sm:text-left pt-2">
                   {core?.tcm_hint || ""}
                 </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -654,25 +612,29 @@ function ResultPage({ params }) {
             <>
               <Card>
                 <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
-                <div className="px-6 pb-8 pt-5 space-y-5">
+                
+                {/* ★ 概要タブ：SoftPanelの入れ子を廃止し、フラットで広々とした構成へ */}
+                <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
                   
-                  {/* ★ サブ体質：トップアイコン・ボトムテキストのカードに */}
-                  <SoftPanel tone="amber" title="整えたいバランス（気血水）" icon={<IconMemo />}>
+                  {/* セクション1：気血水 */}
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <IconMemo className="h-5 w-5 text-amber-600" />
+                      <h3 className="text-[16px] font-black text-slate-900">整えたいバランス（気血水）</h3>
+                    </div>
                     {subLabels?.length ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {subLabels.map((s) => (
-                          <div key={s.code || s.title} className="rounded-[28px] bg-white ring-1 ring-slate-200 p-6 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
-                            <div className="flex items-center gap-4 mb-4">
-                              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 text-[var(--accent-ink)] shadow-sm">
+                          <div key={s.code || s.title} className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
+                            <div className="flex gap-4 items-start">
+                              <div className="shrink-0 pt-0.5 text-[var(--accent)]">
                                 <SubIllust code={s.code} size="md" />
                               </div>
-                              <div className="min-w-0 pt-0.5">
-                                <div className="text-[17px] font-black tracking-tight text-slate-900 truncate">{s.title}</div>
-                                {s.short ? <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{s.short}</div> : null}
+                              <div className="min-w-0">
+                                {/* 見切れ防止のため truncate を使わず leading-snug を指定 */}
+                                <div className="text-[16px] font-black tracking-tight text-slate-900 leading-snug">{s.title}</div>
+                                <div className="mt-2 text-[13px] leading-relaxed font-bold text-slate-600">{s.action_hint}</div>
                               </div>
-                            </div>
-                            <div className="text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
-                              {s.action_hint || "（ヒントなし）"}
                             </div>
                           </div>
                         ))}
@@ -680,11 +642,17 @@ function ResultPage({ params }) {
                     ) : (
                       <div className="text-[13px] font-bold text-slate-500">良好なバランスです。</div>
                     )}
-                  </SoftPanel>
+                  </div>
 
-                  {/* ★ 経絡：主・副をフル幅のカードに統合 */}
-                  <SoftPanel tone="violet" title="負担がかかりやすい場所（経絡）" icon={<IconBody />}>
-                    <div className="space-y-4">
+                  <div className="h-px w-full bg-slate-100" />
+
+                  {/* セクション2：経絡（主・副を一つのカード空間に統合） */}
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <IconBody className="h-5 w-5 text-violet-600" />
+                      <h3 className="text-[16px] font-black text-slate-900">負担がかかりやすい場所（経絡）</h3>
+                    </div>
+                    <div className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5 space-y-5">
                       {meridianPrimary ? (
                         <MeridianPanelContent line={{ ...meridianPrimary, code: computed?.primary_meridian }} tone="violet" />
                       ) : (
@@ -692,11 +660,14 @@ function ResultPage({ params }) {
                       )}
                       
                       {meridianSecondary && (
-                        <MeridianPanelContent line={{ ...meridianSecondary, code: computed?.secondary_meridian }} tone="teal" />
+                        <>
+                          <div className="h-px w-full bg-slate-200/60" />
+                          <MeridianPanelContent line={{ ...meridianSecondary, code: computed?.secondary_meridian }} tone="teal" />
+                        </>
                       )}
                     </div>
-                  </SoftPanel>
-                  
+                  </div>
+
                 </div>
               </Card>
 
@@ -737,48 +708,68 @@ function ResultPage({ params }) {
           {tab === "compat" ? (
             <Card>
               <CardHeader icon={<IconCloud />} title="天気との相性" sub="気象変化による崩れやすさの傾向" />
-              <div className="px-6 pb-8 pt-5 space-y-6">
-                <div className="text-[13px] leading-relaxed font-bold text-slate-700 bg-[color-mix(in_srgb,var(--mint),white_80%)] p-6 rounded-[28px] ring-1 ring-slate-200 shadow-sm">
+              
+              {/* ★ 相性タブ：SoftPanelの入れ子を廃止し、フラットな構成へ */}
+              <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
+                <div className="text-[14px] leading-relaxed font-bold text-slate-700 bg-slate-50 p-6 rounded-[24px] ring-1 ring-slate-100">
                   {weatherCompat.intro}
                 </div>
 
-                <div className="space-y-4">
-                  {weatherCompat.items.map((item) => (
-                    <div key={item.key} className="rounded-[28px] bg-white ring-1 ring-slate-200 p-6 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
-                      <div className="flex items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-4 min-w-0">
-                          {/* ★ トトノウくん天候アイコンを配置 */}
-                          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 text-[var(--accent-ink)] shadow-sm transition-transform hover:scale-105">
-                             <WeatherIcon triggerKey={item.key} className="h-8 w-8" />
-                          </div>
-                          <div className="min-w-0 pt-0.5">
-                            <div className="text-[17px] font-black tracking-tight text-slate-900 truncate">{item.label}</div>
-                            <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{item.rankLabel}</div>
+                <div>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <IconRadar className="h-5 w-5 text-teal-600" />
+                    <h3 className="text-[16px] font-black text-slate-900">影響を受けやすい天気変化</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {weatherCompat.items.map((item) => (
+                      <div key={item.key} className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-white ring-1 ring-slate-200 text-[var(--accent-ink)] shadow-sm">
+                               <WeatherIcon triggerKey={item.key} className="h-7 w-7" />
+                            </div>
+                            <div className="min-w-0">
+                              {/* 見切れ防止のため truncate なし */}
+                              <div className="text-[16px] font-black tracking-tight text-slate-900 leading-snug">{item.label}</div>
+                              <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{item.rankLabel}</div>
+                            </div>
                           </div>
                         </div>
+                        <div className="mt-4 text-[13px] leading-relaxed font-bold text-slate-600">
+                          {item.body}
+                        </div>
                       </div>
-                      <div className="mt-2 text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
-                        {item.body}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                <SoftPanel tone="amber" title="天気が重なると出やすいサイン" icon={<IconBolt />}>
-                  <ul className="grid gap-3">
+                <div className="h-px w-full bg-slate-100" />
+
+                <div>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <IconBolt className="h-5 w-5 text-amber-500" />
+                    <h3 className="text-[16px] font-black text-slate-900">天気が重なると出やすいサイン</h3>
+                  </div>
+                  <ul className="grid gap-2">
                     {weatherCompat.signs.map((s, idx) => (
-                      <li key={idx} className="flex items-center gap-3 rounded-[16px] bg-white px-5 py-3.5 text-[14px] font-bold text-slate-700 ring-1 ring-inset ring-slate-200 shadow-sm">
+                      <li key={idx} className="flex items-center gap-3 rounded-[16px] bg-slate-50 px-5 py-3.5 text-[14px] font-bold text-slate-700 ring-1 ring-inset ring-slate-100">
                         <span className="h-2 w-2 shrink-0 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
                         {s}
                       </li>
                     ))}
                   </ul>
-                </SoftPanel>
+                </div>
 
-                <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconCompass />}>
-                  <div className="text-[13px] leading-relaxed font-bold text-slate-700">{weatherCompat.radarBridge}</div>
-                  <Button onClick={() => setTab("save")} className="mt-6 w-full shadow-md py-4">保存して予報へ進む</Button>
-                </SoftPanel>
+                <div className="h-px w-full bg-slate-100" />
+
+                <div>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <IconCompass className="h-5 w-5 text-[var(--accent)]" />
+                    <h3 className="text-[16px] font-black text-slate-900">未病レーダーで分かること</h3>
+                  </div>
+                  <div className="text-[13px] leading-relaxed font-bold text-slate-700 mb-6">{weatherCompat.radarBridge}</div>
+                  <Button onClick={() => setTab("save")} className="w-full shadow-md py-4">保存して予報へ進む</Button>
+                </div>
               </div>
             </Card>
           ) : null}
