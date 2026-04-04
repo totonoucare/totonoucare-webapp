@@ -5,7 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
+import Button from "@/components/ui/Button";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
+import {
+  IconBolt,
+  IconCompass,
+  IconMemo,
+  IconRadar,
+  IconResult,
+} from "@/components/illust/icons/result";
 import {
   actionTagLabel,
   conditionLabel,
@@ -89,7 +97,7 @@ function buildScoreCardTitle(mode, targetDate) {
 function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "あなたにとっての今日の注意点",
+      noticeTitle: "今日の注意点",
       tsuboTitle: "今日の整えツボ",
       tsuboSubtitle: "今日ここから整えたい3点セット",
       foodTitle: "今日の食養生",
@@ -97,7 +105,7 @@ function getSectionLabels(mode) {
   }
 
   return {
-    noticeTitle: "あなたにとっての明日の注意点",
+    noticeTitle: "明日の注意点",
     tsuboTitle: "今夜の先回りツボ",
     tsuboSubtitle: "今夜のうちに整えておきたい3点セット",
     foodTitle: "明日の食養生",
@@ -111,21 +119,21 @@ function signalLabel(signal) {
 }
 
 function signalBadgeClass(signal) {
-  if (signal === 2) return "bg-rose-50 text-rose-700 border-rose-200";
-  if (signal === 1) return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (signal === 2) return "bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200";
+  if (signal === 1) return "bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200";
+  return "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200";
 }
 
 function signalDotClass(signal) {
-  if (signal === 2) return "bg-rose-500";
-  if (signal === 1) return "bg-amber-400";
-  return "bg-emerald-500";
+  if (signal === 2) return "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
+  if (signal === 1) return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+  return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
 }
 
 function signalPanelClass(signal) {
-  if (signal === 2) return "border-rose-200 bg-rose-50 text-rose-900";
-  if (signal === 1) return "border-amber-200 bg-amber-50 text-amber-900";
-  return "border-emerald-200 bg-emerald-50 text-emerald-900";
+  if (signal === 2) return "ring-1 ring-rose-200 bg-gradient-to-br from-rose-50 to-[#fff1f2] text-rose-900";
+  if (signal === 1) return "ring-1 ring-amber-200 bg-gradient-to-br from-amber-50 to-[#fffbeb] text-amber-900";
+  return "ring-1 ring-emerald-200 bg-gradient-to-br from-emerald-50 to-[#ecfdf5] text-emerald-900";
 }
 
 function signalPanelSubtext(signal) {
@@ -137,11 +145,6 @@ function signalPanelSubtext(signal) {
 function sourceLabel(source) {
   if (source === "mtest") return "動きから選んだケア";
   return "体質から選んだケア";
-}
-
-function sourceBadgeClass(source) {
-  if (source === "mtest") return "bg-slate-100 text-slate-700";
-  return "bg-emerald-50 text-emerald-700";
 }
 
 function getPointRegionLabel(region) {
@@ -296,6 +299,35 @@ function getLocationDisplayLabel(location) {
   return "設定中の地域";
 }
 
+/* -----------------------------
+ * Components
+ * ---------------------------- */
+
+function SegmentedTabs({ tabs, value, onChange }) {
+  return (
+    <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
+      {tabs.map((t) => {
+        const active = value === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => onChange(t.key)}
+            className={[
+              "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
+              active
+                ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
+                : "text-slate-500 hover:text-slate-800",
+            ].join(" ")}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function LocationEditor({
   error,
   locating,
@@ -308,11 +340,11 @@ function LocationEditor({
   showClose = true,
 }) {
   return (
-    <Module className="p-5">
+    <Module className="p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-lg font-extrabold text-slate-900">地域を設定する</div>
-          <div className="mt-1 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="text-[18px] font-black tracking-tight text-slate-900">地域を設定する</div>
+          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
             現在地か、生活圏に近い代表地点を設定できます。
             変更した場合は次回の予報から反映されます。
           </div>
@@ -321,7 +353,7 @@ function LocationEditor({
         {showClose ? (
           <button
             onClick={onClose}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-slate-600"
+            className="shrink-0 rounded-full bg-slate-100 px-3.5 py-2 text-[11px] font-extrabold text-slate-600 hover:bg-slate-200 transition-colors"
           >
             閉じる
           </button>
@@ -329,39 +361,39 @@ function LocationEditor({
       </div>
 
       {error ? (
-        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+        <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 ring-1 ring-inset ring-rose-200">
           {error}
         </div>
       ) : null}
 
-      <div className="mt-5 rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
-        <div className="text-sm font-extrabold text-slate-900">現在地を使う</div>
+      <div className="mt-6 rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)] p-5">
+        <div className="text-[14px] font-black text-slate-900">現在地を使う</div>
         <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
           いまいる場所をそのまま保存します。
         </div>
-        <button
+        <Button
           onClick={onUseCurrentLocation}
           disabled={locating}
-          className="mt-4 w-full rounded-2xl bg-emerald-600 py-3 text-sm font-extrabold text-white disabled:opacity-60"
+          className="mt-4 w-full bg-[var(--accent)] hover:bg-[var(--accent-ink)] text-white shadow-md"
         >
           {locating ? "位置情報を取得中…" : "現在地を使う"}
-        </button>
+        </Button>
       </div>
 
-      <div className="mt-4 rounded-[1.5rem] border border-slate-100 bg-white p-4">
-        <div className="text-sm font-extrabold text-slate-900">地域を選んで設定する</div>
+      <div className="mt-4 rounded-[24px] bg-white ring-1 ring-[var(--ring)] p-5 shadow-sm">
+        <div className="text-[14px] font-black text-slate-900">地域を選んで設定する</div>
         <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
           GPSを使わなくても、生活圏に近い地点を選べば使えます。
         </div>
 
         <div className="mt-4">
           <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
-            地域
+            都道府県・地域
           </label>
           <select
             value={selectedPresetKey}
             onChange={(e) => setSelectedPresetKey(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none"
+            className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)]"
           >
             <option value="">選んでください</option>
             {RADAR_LOCATION_PRESETS.map((group) => (
@@ -376,13 +408,13 @@ function LocationEditor({
           </select>
         </div>
 
-        <button
+        <Button
           onClick={onSavePresetLocation}
           disabled={!selectedPresetKey || savingPreset}
-          className="mt-4 w-full rounded-2xl border border-slate-200 bg-slate-900 py-3 text-sm font-extrabold text-white disabled:opacity-60"
+          className="mt-5 w-full shadow-sm"
         >
           {savingPreset ? "設定中…" : "この地域で設定する"}
-        </button>
+        </Button>
       </div>
     </Module>
   );
@@ -403,103 +435,107 @@ function PointDetailSheet({ point, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/45 p-3 sm:flex sm:items-center sm:justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
-      <div className="min-h-full sm:min-h-0 flex items-end sm:items-center justify-center">
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="point-detail-title"
-          className="w-full max-w-md rounded-[28px] bg-white p-5 shadow-2xl max-h-[88vh] overflow-y-auto overscroll-contain sm:max-h-[85vh]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[11px] font-extrabold text-slate-500">
-                {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
-              </div>
-              <div id="point-detail-title" className="mt-1 text-xl font-extrabold text-slate-900">
-                {point.name_ja || point.code}
-              </div>
-              <div className="mt-1 text-[12px] font-bold text-slate-500">
-                {getPointReading(point) ? `${getPointReading(point)} / ` : ""}{point.code}
-              </div>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="point-detail-title"
+        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white p-6 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.4)] max-h-[90vh] overflow-y-auto overscroll-contain animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+              {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
             </div>
-
-            <button
-              onClick={onClose}
-              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
-            >
-              閉じる
-            </button>
-          </div>
-
-          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-            {imageSrc && !imageBroken ? (
-              <img
-                src={imageSrc}
-                alt={`${point.name_ja || point.code} の位置`}
-                className="h-56 w-full object-contain bg-white"
-                onError={() => setImageBroken(true)}
-              />
-            ) : (
-              <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
-                画像がまだ用意されていないか、表示できませんでした。ツボ名とコードを見ながら、押し方の目安を先に使えます。
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-            <div className="text-[11px] font-extrabold text-slate-500">どんなとき向き？</div>
-            <div className="mt-1 text-[13px] font-bold leading-6 text-slate-800">
-              {getPointRoleSummary(point)}
+            <div id="point-detail-title" className="mt-1 text-[22px] font-black tracking-tight text-slate-900">
+              {point.name_ja || point.code}
+            </div>
+            <div className="mt-1 text-[12px] font-bold text-slate-500">
+              {getPointReading(point) ? `${getPointReading(point)} / ` : ""}{point.code}
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
-            <div className="text-[11px] font-extrabold text-slate-500">このツボを選んだ理由</div>
-            <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
-              {getPointSelectionReason(point)}
-            </div>
+          <button
+            onClick={onClose}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-            {reasonTags.length > 0 ? (
-              <ul className="mt-3 space-y-2">
-                {reasonTags.map((label) => (
-                  <li key={label} className="flex items-start gap-2 text-[12px] font-bold leading-6 text-slate-600">
-                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
-                    <span>{label}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+        <div className="mt-6 overflow-hidden rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)]">
+          {imageSrc && !imageBroken ? (
+            <img
+              src={imageSrc}
+              alt={`${point.name_ja || point.code} の位置`}
+              className="h-56 w-full object-contain bg-white"
+              onError={() => setImageBroken(true)}
+            />
+          ) : (
+            <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+              画像がまだ用意されていないか、表示できませんでした。ツボ名とコードを見ながら、押し方の目安を先に使えます。
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5 rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_70%)] px-5 py-4 ring-1 ring-[var(--ring)]">
+          <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">どんなとき向き？</div>
+          <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
+            {getPointRoleSummary(point)}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-[var(--ring)] shadow-sm">
+          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">このツボを選んだ理由</div>
+          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+            {getPointSelectionReason(point)}
           </div>
 
-          <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4">
-            <div className="text-[11px] font-extrabold text-amber-700">押し方の目安</div>
-            <div className="mt-1 text-[13px] font-bold leading-6 text-amber-900">
-              {getPointPressGuide(point)}
-            </div>
-          </div>
-
-          {cautions.length > 0 ? (
-            <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
-              <div className="text-[11px] font-extrabold text-slate-500">注意したいこと</div>
-              <ul className="mt-2 space-y-2">
-                {cautions.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-[13px] font-bold leading-6 text-slate-700">
-                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {reasonTags.length > 0 ? (
+            <ul className="mt-4 space-y-2.5">
+              {reasonTags.map((label) => (
+                <li key={label} className="flex items-start gap-2.5 text-[12px] font-extrabold leading-5 text-slate-600">
+                  <span className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
+                  <span>{label}</span>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
+
+        <div className="mt-4 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-amber-200/50 shadow-sm">
+          <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">押し方の目安</div>
+          <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-amber-900">
+            {getPointPressGuide(point)}
+          </div>
+        </div>
+
+        {cautions.length > 0 ? (
+          <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-slate-200 shadow-sm">
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">注意したいこと</div>
+            <ul className="mt-3 space-y-2.5">
+              {cautions.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-[13px] font-bold leading-6 text-slate-700">
+                  <span className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
+
+/* -----------------------------
+ * Main Page
+ * ---------------------------- */
 
 export default function RadarPage() {
   const router = useRouter();
@@ -524,6 +560,7 @@ export default function RadarPage() {
   const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
+  
   const [todayReview, setTodayReview] = useState(null);
   const [todayReviewForecast, setTodayReviewForecast] = useState(null);
   const [loadingTodayReview, setLoadingTodayReview] = useState(false);
@@ -850,12 +887,12 @@ export default function RadarPage() {
 
   if (loadingAuth || loading) {
     return (
-      <AppShell title="未病レーダー" subtitle="読み込み中…">
-        <div className="space-y-4 py-2">
-          <div className="h-36 rounded-[28px] bg-slate-200 animate-pulse" />
-          <div className="h-20 rounded-[28px] bg-slate-200 animate-pulse" />
-          <div className="h-32 rounded-[28px] bg-slate-200 animate-pulse" />
-          <div className="h-32 rounded-[28px] bg-slate-200 animate-pulse" />
+      <AppShell title="体調予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
+        <div className="space-y-6 pt-4">
+          <div className="h-10 w-full rounded-full bg-slate-100 animate-pulse" />
+          <div className="h-48 rounded-[32px] bg-slate-100 animate-pulse" />
+          <div className="h-24 rounded-[32px] bg-slate-100 animate-pulse" />
+          <div className="h-64 rounded-[32px] bg-slate-100 animate-pulse" />
         </div>
       </AppShell>
     );
@@ -863,26 +900,27 @@ export default function RadarPage() {
 
   if (!session) {
     return (
-      <AppShell title="未病レーダー" subtitle="ログインが必要です">
+      <AppShell title="体調予報" subtitle="ログインが必要です">
         <Module className="p-6">
-          <div className="text-xl font-extrabold text-slate-900">ログインが必要です</div>
-          <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
-            未病レーダーはログイン後に使えます。
+          <div className="text-[18px] font-black tracking-tight text-slate-900">ログインが必要です</div>
+          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+            体調予報（未病レーダー）はログイン後に使えます。
           </div>
 
-          <div className="mt-6 space-y-3">
-            <button
+          <div className="mt-8 space-y-3">
+            <Button
               onClick={() => router.push("/signup")}
-              className="w-full rounded-2xl bg-emerald-600 py-3 text-sm font-extrabold text-white"
+              className="w-full shadow-md"
             >
               無料で登録・ログイン
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => router.push("/check")}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-700"
+              className="w-full"
             >
               体質チェックへ
-            </button>
+            </Button>
           </div>
         </Module>
       </AppShell>
@@ -891,10 +929,10 @@ export default function RadarPage() {
 
   if (needsLocation) {
     return (
-      <AppShell title="未病レーダー" subtitle="地域設定">
+      <AppShell title="体調予報" subtitle="地域設定">
         <Module className="p-6">
-          <div className="text-xl font-extrabold text-slate-900">位置情報の設定が必要です</div>
-          <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
+          <div className="text-[18px] font-black tracking-tight text-slate-900">位置情報の設定が必要です</div>
+          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
             予報を固定保存するために、最初に現在地か生活圏の代表地点を設定してください。
           </div>
         </Module>
@@ -911,27 +949,28 @@ export default function RadarPage() {
           showClose={false}
         />
 
-        <button
+        <Button
+          variant="secondary"
           onClick={() => router.push("/check")}
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-700"
+          className="w-full mt-2 bg-white"
         >
           体質チェックへ戻る
-        </button>
+        </Button>
       </AppShell>
     );
   }
 
   if (!bundle || !forecast || !carePlan) {
     return (
-      <AppShell title="未病レーダー" subtitle="予報を読み込めませんでした">
+      <AppShell title="体調予報" subtitle="予報を読み込めませんでした">
         <Module className="p-6">
-          <div className="text-lg font-extrabold text-slate-900">予報を読み込めませんでした</div>
-          <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
+          <div className="text-[18px] font-black tracking-tight text-slate-900">予報を読み込めませんでした</div>
+          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
             {error || "時間をおいてもう一度お試しください。"}
           </div>
-          <button
+          <Button
             onClick={() => fetchForecast({ force: true, nextDateMode: dateMode })}
-            className="mt-6 w-full rounded-2xl bg-slate-900 py-3 text-sm font-extrabold text-white"
+            className="mt-8 w-full shadow-md"
           >
             再読み込み
           </button>
@@ -942,16 +981,19 @@ export default function RadarPage() {
 
   return (
     <AppShell
-      title="未病レーダー"
+      title="体調予報"
       subtitle={targetDateLabel}
       headerRight={
-        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700">
-          📍 {locationDisplayLabel}
-        </div>
+        <button
+          onClick={() => setShowLocationEditor(true)}
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-600 shadow-sm ring-1 ring-inset ring-[var(--ring)] hover:bg-slate-50 transition-all active:scale-95"
+        >
+          <span className="text-[14px]">📍</span> {locationDisplayLabel}
+        </button>
       }
     >
       {locationNotice ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[12px] font-extrabold text-emerald-800">
+        <div className="rounded-[16px] bg-emerald-50 px-4 py-3 text-[12px] font-extrabold text-emerald-800 ring-1 ring-inset ring-emerald-200 shadow-sm">
           {locationNotice}
         </div>
       ) : null}
@@ -973,91 +1015,63 @@ export default function RadarPage() {
         />
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
-        <button
-          onClick={() => setTab("forecast")}
-          className={[
-            "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-            tab === "forecast" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
-          ].join(" ")}
-        >
-          予報・対策
-        </button>
-        <button
-          onClick={() => setTab("record")}
-          className={[
-            "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-            tab === "record" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
-          ].join(" ")}
-        >
-          記録
-        </button>
+      {/* メインタブ (予報・対策 / 記録) */}
+      <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70 py-2 mb-2">
+        <SegmentedTabs
+          tabs={[
+            { key: "forecast", label: "予報・対策" },
+            { key: "record", label: "記録" },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
       </div>
 
       {tab === "forecast" ? (
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
-            <button
-              onClick={() => setDateMode("today")}
-              className={[
-                "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-                bundleDateMode === "today"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500",
-              ].join(" ")}
-            >
-              今日
-            </button>
-            <button
-              onClick={() => setDateMode("tomorrow")}
-              className={[
-                "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-                bundleDateMode === "tomorrow"
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500",
-              ].join(" ")}
-            >
-              明日
-            </button>
+        <div className="space-y-6">
+          {/* サブタブ (今日 / 明日) */}
+          <div className="mx-auto w-[60%]">
+             <SegmentedTabs
+              tabs={[
+                { key: "today", label: "今日" },
+                { key: "tomorrow", label: "明日" },
+              ]}
+              value={bundleDateMode}
+              onChange={setDateMode}
+            />
           </div>
 
           {error && !showLocationEditor ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+            <div className="rounded-[16px] bg-rose-50 px-4 py-3 text-[13px] font-bold text-rose-700 ring-1 ring-inset ring-rose-200">
               {error}
             </div>
           ) : null}
 
-          <Module className="p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[12px] font-extrabold text-slate-500">
+          {/* 1. 予報スコアパネル */}
+          <Module className="p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                   <IconRadar className="h-5 w-5" />
+                </div>
+                <div className="text-[14px] font-black tracking-tight text-slate-900">
                   {scoreCardTitle}
                 </div>
-                <div className="mt-2 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-extrabold text-slate-700">
-                  📍 {locationDisplayLabel}
-                </div>
               </div>
-
-              <button
-                onClick={() => setShowLocationEditor(true)}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
-              >
-                地域変更
-              </button>
             </div>
 
             <div
               className={[
-                "mt-4 rounded-[1.5rem] border px-4 py-4",
+                "mt-5 rounded-[24px] px-5 py-5 shadow-sm",
                 signalPanelClass(forecast.signal),
               ].join(" ")}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <span
                       className={[
-                        "inline-flex items-center gap-2 rounded-full border bg-white/80 px-3 py-1.5 text-sm font-extrabold",
+                        "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-black shadow-sm",
                         signalBadgeClass(forecast.signal),
                       ].join(" ")}
                     >
@@ -1069,45 +1083,42 @@ export default function RadarPage() {
                       />
                       {forecast.signal_label || signalLabel(forecast.signal)}
                     </span>
-                    <span className="text-[12px] font-bold opacity-80">
-                      {signalPanelSubtext(forecast.signal)}
-                    </span>
                   </div>
 
-                  <div className="mt-4 text-[11px] font-extrabold text-slate-500">
-                    崩れやすさの目安
+                  <div className="mt-3 text-[13px] font-bold leading-5 opacity-90">
+                    {signalPanelSubtext(forecast.signal)}
                   </div>
-                  <div className="mt-1 flex items-end gap-2">
-                    <span className="text-4xl font-extrabold tracking-tight text-slate-900">
+
+                  <div className="mt-6 flex items-end gap-2">
+                    <div className="text-[11px] font-black uppercase tracking-widest opacity-60 mb-1.5">
+                      崩れやすさ
+                    </div>
+                    <span className="text-[44px] font-black tracking-tighter leading-none">
                       {forecast.score_0_10}
                     </span>
-                    <span className="pb-1 text-sm font-extrabold text-slate-500">/ 10</span>
+                    <span className="pb-1.5 text-[15px] font-black opacity-40">/ 10</span>
                   </div>
                 </div>
 
                 {symptomLabel ? (
-                  <div className="rounded-2xl bg-white/80 px-4 py-3">
-                    <div className="text-[11px] font-extrabold text-slate-500">
-                      気になりやすい症状
+                  <div className="shrink-0 rounded-[18px] bg-white/60 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 shadow-sm min-w-[100px] text-center">
+                    <div className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                      気になりやすい
                     </div>
-                    <div className="mt-1 text-sm font-extrabold text-slate-900">
+                    <div className="mt-1 text-[16px] font-black tracking-tight opacity-90">
                       {symptomLabel}
                     </div>
                   </div>
                 ) : null}
               </div>
-
-              <div className="mt-3 text-[11px] font-bold text-slate-500">
-                気象と体質の重なりから見た目安です。
-              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <div className="text-[11px] font-extrabold text-slate-500">
+              <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   気をつけたい時間帯
                 </div>
-                <div className="mt-1 text-lg font-extrabold text-slate-900">
+                <div className="mt-1.5 text-[20px] font-black tracking-tight text-slate-900">
                   {forecast.peak_start && forecast.peak_end
                     ? `${String(forecast.peak_start).slice(0, 5)}–${String(
                         forecast.peak_end
@@ -1116,27 +1127,31 @@ export default function RadarPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <div className="text-[11px] font-extrabold text-slate-500">
+              <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   一番響きやすい要素
                 </div>
-                <div className="mt-1 text-sm font-extrabold text-slate-900">
+                <div className="mt-2 text-[15px] font-black tracking-tight text-slate-900">
                   {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-100 bg-white px-4 py-4">
-              <div className="text-sm font-extrabold text-slate-900">
-                {bundleDateMode === "today" ? "今日、気をつけたいこと" : "明日、気をつけたいこと"}
+            <div className="mt-4 rounded-[24px] bg-white px-5 py-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                 <IconMemo className="h-5 w-5 text-slate-400" />
+                 <div className="text-[15px] font-black tracking-tight text-slate-900">
+                  {sectionLabels.noticeTitle}
+                </div>
               </div>
-              <ul className="mt-3 space-y-2">
+              
+              <ul className="space-y-3">
                 {forecastLines.map((line, idx) => (
                   <li
                     key={`${idx}-${line}`}
-                    className="flex items-start gap-2 text-[13px] font-bold leading-6 text-slate-700"
+                    className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
                   >
-                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
+                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
                     <span>{line}</span>
                   </li>
                 ))}
@@ -1144,140 +1159,128 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-4">
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-4">
-              <div className="min-w-0">
-                <div className="text-[11px] font-extrabold text-slate-500">
-                  あなたの体質
+          {/* 2. 体質ミニカード */}
+          <Module className="p-5 flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
+             <div className="min-w-0 pl-1">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
+                  ベースとなるあなたの体質
                 </div>
-                <div className="mt-1 text-sm font-extrabold text-slate-900">
+                <div className="mt-1 text-[16px] font-black tracking-tight text-[var(--accent-ink)]">
                   {coreLabel?.title || "—"}
                 </div>
-
-                {coreLabel?.short ? (
-                  <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
-                    {coreLabel.short}
-                  </div>
-                ) : null}
-
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {subLabelObjects.slice(0, 2).map((s) => (
-                    <span
-                      key={s.code}
-                      className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-700"
-                    >
-                      {s.short}
-                    </span>
-                  ))}
-                </div>
-
                 {primaryLine ? (
-                  <div className="mt-2 text-[11px] font-bold text-slate-500">
-                    負担が出やすいライン：{primaryLine.title}
+                  <div className="mt-1 text-[11px] font-bold text-[var(--accent-ink)]/80">
+                    負担が出やすい：{primaryLine.title}
                   </div>
                 ) : null}
-              </div>
-
-              <button
+             </div>
+             <Button
+                variant="ghost"
+                size="sm"
                 onClick={openLatestResultDetail}
                 disabled={openingProfileDetail}
-                className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600 disabled:opacity-60"
+                className="shrink-0 bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
               >
                 {openingProfileDetail ? "開いています…" : "詳しく見る"}
-              </button>
-            </div>
+              </Button>
           </Module>
 
-          <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">
-              {sectionLabels.tsuboTitle}
-            </div>
-            <div className="mt-1 text-[12px] font-extrabold text-slate-500">
-              {sectionLabels.tsuboSubtitle}
+          {/* 3. ツボケアパネル */}
+          <Module className="p-6">
+            <div className="flex items-center gap-3 mb-1">
+                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                   <IconCompass className="h-5 w-5" />
+                </div>
+                <div>
+                   <div className="text-[18px] font-black tracking-tight text-slate-900">
+                     {sectionLabels.tsuboTitle}
+                   </div>
+                   <div className="mt-0.5 text-[11px] font-black text-slate-500">
+                     {sectionLabels.tsuboSubtitle}
+                   </div>
+                </div>
             </div>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-6 space-y-4">
               {tsuboPoints.map((p, i) => (
                 <div
                   key={`${p.code}-${i}`}
-                  className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4"
+                  className="relative rounded-[24px] bg-slate-50 p-5 ring-1 ring-inset ring-[var(--ring)] transition-all hover:bg-slate-100 cursor-pointer"
+                  onClick={() => setSelectedPoint(p)}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-extrabold text-slate-700 shadow-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-[14px] font-black text-[var(--accent-ink)] shadow-sm ring-1 ring-black/5">
                       {p.code}
                     </div>
 
-                    <div className="min-w-0 flex-1">
-                      <button
-                        onClick={() => setSelectedPoint(p)}
-                        className="text-left text-base font-extrabold text-slate-900 underline decoration-slate-300 underline-offset-4"
-                      >
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="text-[16px] font-black tracking-tight text-slate-900">
                         {p.name_ja || p.code}
-                      </button>
+                      </div>
 
                       {getPointReading(p) ? (
-                        <div className="mt-1 text-[11px] font-extrabold text-slate-500">
+                        <div className="mt-0.5 text-[11px] font-black tracking-wider text-slate-400">
                           {getPointReading(p)}
                         </div>
                       ) : null}
 
-                      <div className="mt-3 text-[13px] font-bold leading-6 text-slate-800">
+                      <div className="mt-2.5 text-[13px] font-bold leading-6 text-slate-700">
                         {getPointRoleSummary(p)}
                       </div>
-
-                      <div className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
-                        {getPointSelectionReason(p)}
-                      </div>
-
-                      <button
-                        onClick={() => setSelectedPoint(p)}
-                        className="mt-4 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-600"
-                      >
-                        画像と解説を見る
-                      </button>
                     </div>
+                  </div>
+                  
+                  {/* 右端の矢印アイコン */}
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">
+                     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
-              <div className="text-sm font-extrabold text-emerald-900">ひとこと</div>
-              <div className="mt-2 text-[13px] font-bold leading-6 text-emerald-900">
+            <div className="mt-5 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-inset ring-amber-200 shadow-sm">
+              <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">アドバイス</div>
+              <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-amber-900">
                 {carePlan?.night_note || "軽く整えておくと、ぶれを抑えやすくなります。"}
               </div>
             </div>
           </Module>
 
-          <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">
-              {sectionLabels.foodTitle}
+          {/* 4. 食養生パネル */}
+          <Module className="p-6">
+            <div className="flex items-center gap-3 mb-5">
+                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                   <IconBolt className="h-5 w-5" />
+                </div>
+                <div className="text-[18px] font-black tracking-tight text-slate-900">
+                  {sectionLabels.foodTitle}
+                </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-              <div className="text-sm font-extrabold text-slate-900">
+            <div className="rounded-[24px] bg-slate-50 px-5 py-5 ring-1 ring-inset ring-[var(--ring)]">
+              <div className="text-[15px] font-black tracking-tight text-slate-900">
                 {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
               </div>
 
               {food.recommendation || food.focus ? (
-                <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">
+                <div className="mt-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     おすすめ
                   </div>
-                  <div className="mt-1 text-[14px] font-extrabold leading-6 text-slate-900">
+                  <div className="mt-1 text-[15px] font-black leading-6 text-[var(--accent-ink)]">
                     {food.recommendation || food.focus}
                   </div>
                 </div>
               ) : null}
 
               {safeArray(food.examples).length > 0 ? (
-                <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">例</div>
+                <div className="mt-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">具体例</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {food.examples.map((x, idx) => (
                       <span
                         key={`${x}-${idx}`}
-                        className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700"
+                        className="rounded-full bg-white px-3.5 py-1.5 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-black/5"
                       >
                         {x}
                       </span>
@@ -1287,93 +1290,99 @@ export default function RadarPage() {
               ) : null}
 
               {food.how_to ? (
-                <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     取り入れ方
                   </div>
-                  <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                     {food.how_to}
                   </div>
                 </div>
               ) : null}
 
               {food.avoid ? (
-                <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">
+                <div className="mt-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     控えたいこと
                   </div>
-                  <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                     {food.avoid}
                   </div>
                 </div>
               ) : null}
 
               {food.reason ? (
-                <div className="mt-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">
+                <div className="mt-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     ひとこと理由
                   </div>
-                  <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                     {food.reason}
                   </div>
                 </div>
               ) : null}
-
-              {food.lifestyle_tip ? (
-                <div className="mt-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
-                  <div className="text-[11px] font-extrabold text-slate-500">
+            </div>
+            
+            {food.lifestyle_tip ? (
+                <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                     一緒に意識したいこと
                   </div>
-                  <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                     {food.lifestyle_tip}
                   </div>
                 </div>
               ) : null}
-            </div>
           </Module>
         </div>
       ) : (
-        <div className="space-y-5">
-          <Module className="p-5">
+        <div className="space-y-6">
+          <Module className="p-6">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-base font-extrabold text-slate-900">今日の記録</div>
-                <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+                <div className="text-[18px] font-black tracking-tight text-slate-900">今日の記録</div>
+                <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
                   予報を見た日の終わりに1回だけ、実際どうだったかと先回りできたかを残します。
                 </div>
               </div>
-              <button
+            </div>
+            
+            <div className="mt-5">
+              <Button
                 onClick={() => setReviewEditorOpen(true)}
-                className="rounded-full bg-slate-900 px-4 py-2 text-xs font-extrabold text-white"
+                className="w-full shadow-md"
               >
-                {todayReview ? "編集する" : "記録する"}
-              </button>
+                {todayReview ? "記録を編集する" : "記録をつける"}
+              </Button>
             </div>
 
             {loadingTodayReview ? (
-              <div className="mt-4 text-sm font-bold text-slate-600">読み込み中…</div>
+              <div className="mt-6 text-[13px] font-bold text-slate-500">読み込み中…</div>
             ) : todayReviewForecast ? (
-              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+              <div className="mt-6 rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
+                  予報の振り返り
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={[
-                      "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
+                      "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-extrabold shadow-sm ring-1 ring-inset",
                       reviewSignalBadgeClass(todayReviewForecast.signal),
                     ].join(" ")}
                   >
                     {reviewSignalLabel(todayReviewForecast.signal)}
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
-                    {todayReviewForecast.score_0_10}/10
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
+                    {todayReviewForecast.score_0_10} / 10
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
                     {reviewTriggerLabel(
                       todayReviewForecast.main_trigger,
                       todayReviewForecast.trigger_dir
                     )}
                   </span>
                 </div>
-                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-700">
+                <div className="mt-3 text-[12px] font-bold leading-5 text-slate-600">
                   {todayReviewForecast.why_short || "今日の予報と体調の答え合わせを残せます。"}
                 </div>
               </div>
@@ -1381,21 +1390,21 @@ export default function RadarPage() {
 
             {todayReview ? (
               <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">実際どうだった？</div>
-                  <div className="mt-1 text-[15px] font-extrabold text-slate-900">
+                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">実際どうだった？</div>
+                  <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
                     {conditionLabel(todayReview.condition_level)}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">先回りできた？</div>
-                  <div className="mt-1 text-[15px] font-extrabold text-slate-900">
+                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">先回りできた？</div>
+                  <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
                     {preventLabel(todayReview.prevent_level)}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">やったこと</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">やったこと</div>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
                     {safeArray(todayReview.action_tags).length > 0 ? (
                       safeArray(todayReview.action_tags).map((tag) => (
                         <span
@@ -1406,45 +1415,49 @@ export default function RadarPage() {
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm font-bold text-slate-500">記録なし</span>
+                      <span className="text-[13px] font-bold text-slate-500">記録なし</span>
                     )}
                   </div>
                 </div>
                 {todayReview.note ? (
-                  <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">メモ</div>
-                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                  <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">メモ</div>
+                    <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                       {todayReview.note}
                     </div>
                   </div>
                 ) : null}
               </div>
             ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm font-bold leading-6 text-slate-600">
-                {todayRecordDateLabel} の記録はまだありません。しんどかった日だけでも残しておくと、週次レポートで自分の傾向が見えやすくなります。
+              <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center">
+                 <div className="text-[14px] font-black text-slate-700">{todayRecordDateLabel} の記録はありません</div>
+                 <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                    しんどかった日だけでも残しておくと、週次レポートで自分の傾向が見えやすくなります。
+                 </div>
               </div>
             )}
           </Module>
 
-          <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">記録ページで見返す</div>
-            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+          <Module className="p-6">
+            <div className="text-[18px] font-black tracking-tight text-slate-900">記録ページで見返す</div>
+            <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
               記録カレンダーでは日ごとの履歴を、週次レポートでは1週間の傾向をまとめて見返せます。
             </div>
 
-            <div className="mt-4 flex gap-3">
-              <button
+            <div className="mt-6 flex flex-col gap-3">
+              <Button
                 onClick={() => router.push("/records?tab=calendar")}
-                className="flex-1 rounded-2xl bg-slate-900 py-3 text-sm font-extrabold text-white"
+                className="w-full shadow-md"
               >
                 記録カレンダーへ
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => router.push("/records?tab=report")}
-                className="flex-1 rounded-2xl border border-slate-200 bg-white py-3 text-sm font-extrabold text-slate-700"
+                className="w-full"
               >
                 週次レポートへ
-              </button>
+              </Button>
             </div>
           </Module>
         </div>
@@ -1468,7 +1481,7 @@ export default function RadarPage() {
         />
       ) : null}
 
-      <div className="pb-4 text-[11px] font-bold leading-5 text-slate-400">
+      <div className="pb-4 pt-2 text-[10px] font-extrabold leading-5 text-slate-400 text-center px-4">
         ※ 未病レーダーはセルフケア支援です。強い症状がある場合は無理をせず、必要に応じて医療機関に相談してください。
       </div>
     </AppShell>
