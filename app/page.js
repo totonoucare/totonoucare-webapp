@@ -15,8 +15,10 @@ import {
   HeroTitleMark,
   HomeHeaderMenu,
 } from "@/components/illust/home";
-// ★ 新しくアイコンをインポート
 import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
+// ★ イラストと天候アイコンをインポート
+import { CoreIllust } from "@/components/illust/core";
+import { WeatherIcon } from "@/components/illust/icons/weather";
 
 const SESSION_TIMEOUT_MS = 5000;
 
@@ -186,6 +188,13 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
   const location = bundle.location || {};
   const score = forecast.score_0_10 ?? 0;
 
+  // ★ 予報からの天候アイコンのキー判定
+  const exactTrigger = forecast.main_trigger === "pressure" && forecast.trigger_dir === "down" ? "pressure_down" : 
+                       forecast.main_trigger === "pressure" && forecast.trigger_dir === "up" ? "pressure_up" : 
+                       forecast.main_trigger === "temp" && forecast.trigger_dir === "down" ? "cold" : 
+                       forecast.main_trigger === "temp" && forecast.trigger_dir === "up" ? "heat" : 
+                       forecast.main_trigger === "humidity" && forecast.trigger_dir === "up" ? "damp" : "dry";
+
   return (
     <button
       type="button"
@@ -212,7 +221,11 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       <div className="relative z-10 mt-6 flex items-end justify-between gap-3">
         <div>
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">気になりやすい変化</div>
-          <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
+          {/* ★ 天候アイコンをラベルの横に配置 */}
+          <div className="mt-1.5 flex items-center gap-1.5 text-[16px] font-black tracking-tight text-slate-900">
+            <div className="text-[var(--accent-ink)] opacity-90">
+              <WeatherIcon triggerKey={exactTrigger} className="h-5 w-5" />
+            </div>
             {triggerLabel(forecast.main_trigger, forecast.trigger_dir)}
           </div>
         </div>
@@ -224,7 +237,6 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
         </div>
       </div>
       
-      {/* ホバー時に右下に矢印がチラッと見える演出 */}
       <div className="absolute right-4 bottom-4 opacity-0 transition-opacity group-hover:opacity-100 text-slate-400">
          <IconChevron />
       </div>
@@ -517,25 +529,39 @@ export default function HomePage() {
         </div>
 
         {latestResult && core ? (
-          <div className="mt-5 rounded-[24px] bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_50%)] to-[color-mix(in_srgb,var(--mint),white_70%)] p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-            <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">前回のチェック</div>
-            <div className="mt-1.5 text-[22px] font-black tracking-tight text-slate-900">{core.title}</div>
-            <div className="mt-1 text-[13px] font-bold text-slate-700">{core.short}</div>
+          <div className="mt-5 rounded-[32px] bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_30%)] to-[color-mix(in_srgb,var(--mint),white_70%)] p-6 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">前回のチェック</div>
+                <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">{core.title}</div>
+                <div className="mt-1.5 text-[12px] font-bold text-slate-700">{core.short}</div>
 
-            {subs.length ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {subs.map((sub) => (
-                  <span
-                    key={sub.code}
-                    className="rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm"
-                  >
-                    {sub.short}
-                  </span>
-                ))}
+                {subs.length ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {subs.map((sub) => (
+                      <span
+                        key={sub.code}
+                        className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm"
+                      >
+                        {sub.short}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
 
-            <div className="mt-5 text-[11px] font-extrabold tracking-wide text-slate-500">
+              <div className="shrink-0">
+                <div className="grid h-[88px] w-[88px] place-items-center overflow-hidden rounded-[20px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105">
+                  <CoreIllust
+                    code={latestResult.core_code}
+                    title={core.title}
+                    className="h-full w-full scale-[1.25] translate-y-1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 text-[11px] font-extrabold tracking-wide text-slate-500">
               {latestResult.created_at ? `最終更新: ${new Date(latestResult.created_at).toLocaleDateString("ja-JP")}` : "最新の結果です。"}
             </div>
           </div>
