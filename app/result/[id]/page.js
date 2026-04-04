@@ -25,9 +25,10 @@ import {
   IconBody,
   IconCloud,
 } from "@/components/illust/icons/result";
-// ★ 天候別アイコンのインポート
+// ★ 天候別アイコンのインポートを追加
 import { WeatherIcon } from "@/components/illust/icons/weather";
 
+// ✅ Next.js の useSearchParams 対策
 export default function ResultPageWrapper({ params }) {
   return (
     <Suspense
@@ -51,7 +52,7 @@ export default function ResultPageWrapper({ params }) {
 }
 
 /* -----------------------------
- * UI Components (Premium)
+ * UI Components (Premium Refined)
  * ---------------------------- */
 function Card({ children, className = "" }) {
   return (
@@ -199,6 +200,7 @@ function SegmentedTabs({ value, onChange }) {
 
 /* -----------------------------
  * Weather compatibility Logic
+ * （※いただいたコードのロジック・テキストを完全維持）
  * ---------------------------- */
 function clamp(v, min, max) {
   if (!Number.isFinite(v)) return min;
@@ -238,12 +240,18 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
 
   for (const label of subCodes) {
     switch (label) {
-      case "qi_stagnation": scores.pressure_down += 0.14; scores.pressure_up += 0.08; scores.heat += 0.06; scores.damp += 0.04; break;
-      case "qi_deficiency": scores.pressure_down += 0.1; scores.cold += 0.14; scores.damp += 0.1; break;
-      case "blood_deficiency": scores.cold += 0.12; scores.dry += 0.1; scores.pressure_down += 0.06; break;
-      case "blood_stasis": scores.pressure_down += 0.1; scores.pressure_up += 0.04; scores.cold += 0.08; scores.damp += 0.05; break;
-      case "fluid_damp": scores.damp += 0.22; scores.cold += 0.06; scores.pressure_down += 0.04; break;
-      case "fluid_deficiency": scores.dry += 0.22; scores.heat += 0.16; scores.pressure_up += 0.05; break;
+      case "qi_stagnation":
+        scores.pressure_down += 0.14; scores.pressure_up += 0.08; scores.heat += 0.06; scores.damp += 0.04; break;
+      case "qi_deficiency":
+        scores.pressure_down += 0.1; scores.cold += 0.14; scores.damp += 0.1; break;
+      case "blood_deficiency":
+        scores.cold += 0.12; scores.dry += 0.1; scores.pressure_down += 0.06; break;
+      case "blood_stasis":
+        scores.pressure_down += 0.1; scores.pressure_up += 0.04; scores.cold += 0.08; scores.damp += 0.05; break;
+      case "fluid_damp":
+        scores.damp += 0.22; scores.cold += 0.06; scores.pressure_down += 0.04; break;
+      case "fluid_deficiency":
+        scores.dry += 0.22; scores.heat += 0.16; scores.pressure_up += 0.05; break;
       default: break;
     }
   }
@@ -297,13 +305,13 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
   const isBattSmall = coreCode.includes("batt_small");
   const isAccel = coreCode.startsWith("accel");
 
-  if (key === "pressure_down") return symptomKey === "headache" ? "気圧が下がり外圧が緩む日に、体内の膨張感が強まりやすく、巡りの詰まりから頭痛につながりやすくなります。" : "外圧が緩む日に、体内の圧力が相対的に高まり、緊張や巡りの詰まりが出やすくなります。";
-  if (key === "pressure_up") return "外からの圧力が強まり、体がギュッと締め付けられる方向です。無理に詰め込まず、少しゆるめる意識が合います。";
-  if (key === "cold") return (hasBloodDef || isBattSmall) ? "冷え込む日は、血管や筋肉が縮こまり、支える余力が削れやすく、消耗として出やすい方向です。" : "冷え込む日は、体がギュッと縮こまりやすく、こわばりやだるさとして出やすい方向です。";
-  if (key === "heat") return (hasFluidDef || isAccel) ? "気温が上がる日は、熱がこもりやすくのぼせ気味になり、上半身の張りにつながりやすい方向です。" : "暑さや熱こもりで、詰まりや疲れが出やすい方向です。";
+  if (key === "pressure_down") return symptomKey === "headache" ? "変化に押される日に、首肩やこめかみの緊張が強まりやすく、巡りの詰まりから頭痛につながりやすくなります。" : "変化に押される日に、切り替えがうまくいかず、緊張や巡りの詰まりが出やすくなります。";
+  if (key === "pressure_up") return "張りつめた感じや、頭や上半身の詰まりが出やすい方向です。無理に詰め込まず、少しゆるめる意識が合います。";
+  if (key === "cold") return (hasBloodDef || isBattSmall) ? "冷え込む日は、支える余力が削れやすく、首肩のこわばりや消耗として出やすい方向です。" : "冷え込む日は、体が縮こまりやすく、こわばりやだるさとして出やすい方向です。";
+  if (key === "heat") return (hasFluidDef || isAccel) ? "気温が上がる日は、熱や刺激がこもりやすく、上半身の張りやのぼせ感につながりやすい方向です。" : "暑さや熱こもりで、詰まりや疲れが出やすい方向です。";
   if (key === "damp") {
-    if (symptomKey === "headache") return "湿っぽい日は、体に余分な水分が溜まって重みが加わり、頭や体が重く感じやすくなります。";
-    if (hasFluidDamp) return "湿っぽい日は、水分が停滞して重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
+    if (symptomKey === "headache") return "湿っぽい日は、重さが加わって巡りの悪さが増し、頭や体が重く感じやすくなります。";
+    if (hasFluidDamp) return "湿っぽい日は、重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
     return "湿っぽい日は、重さが増して動き出しにくくなりやすい方向です。";
   }
   if (key === "dry") return (hasFluidDef || hasBloodDef) ? "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚や頭の疲れとして出やすい方向です。" : "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
@@ -328,7 +336,6 @@ function buildRadarBridge({ symptomKey }) {
   const symptomText = SYMPTOM_LABELS[symptomKey] || symptomKey;
   return `未病レーダーでは、その日の天気の変化とあなたの体質を組み合わせて、「今日はどの要素が響きやすいか」「日中のどの時間帯に気をつけたいか」「${symptomText}に対してどんなツボや食養生が合いやすいか」を先回りして見られます。`;
 }
-
 
 /* -----------------------------
  * Main Page Component
@@ -460,7 +467,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push(backHref)}
-      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ← 戻る
     </button>
@@ -470,7 +477,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push("/")}
-      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ホーム
     </button>
@@ -520,23 +527,24 @@ function ResultPage({ params }) {
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
-          {/* ヒーローカード */}
+          {/* ヒーローセクションをプレミアム化 */}
           <div className="relative rounded-[36px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
-            {/* 上部グラデーションエリア */}
             <div className="absolute inset-x-0 top-0 h-[160px] bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_30%)] to-[color-mix(in_srgb,var(--mint),white_70%)]" />
             
             <div className="relative z-10 px-7 pt-8 pb-6 text-center">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white/60 backdrop-blur-md px-3.5 py-1.5 ring-1 ring-black/5 shadow-sm">
-                 <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
-                  気になる不調
-                 </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
+                  あなたのお悩み
+                </span>
               </div>
               <div className="mt-4 text-[28px] font-black tracking-tight text-slate-900 truncate">
                 {symptomLabel}
               </div>
+              <div className="mt-2 text-[11px] font-bold text-[var(--accent-ink)]/60">
+                作成日：{event.created_at ? new Date(event.created_at).toLocaleDateString("ja-JP") : "—"}
+              </div>
             </div>
 
-            {/* 体質結果パネル */}
             <div className="relative z-10 px-5 pb-5">
               <div className="rounded-[28px] bg-white/95 backdrop-blur-xl ring-1 ring-[var(--ring)] p-6 shadow-sm">
                 <div className="flex items-center justify-between gap-4">
@@ -669,7 +677,7 @@ function ResultPage({ params }) {
                     <div key={item.key} className="rounded-[28px] bg-white ring-1 ring-slate-200 p-6 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
                       <div className="flex items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-4 min-w-0">
-                          {/* ★ トトノウくん天候アイコン */}
+                          {/* ★ トトノウくん天候アイコンを配置 */}
                           <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 text-[var(--accent-ink)] shadow-sm transition-transform hover:scale-105">
                              <WeatherIcon triggerKey={item.key} className="h-8 w-8" />
                           </div>
@@ -705,7 +713,7 @@ function ResultPage({ params }) {
             </Card>
           ) : null}
 
-          {tab === "save" && (
+          {tab === "save" ? (
             <Card>
               <CardHeader icon={<IconBolt />} title="結果を保存する" sub="今後の予報精度が向上します" />
               <div className="px-6 pb-8 pt-5 space-y-5 text-center">
@@ -733,7 +741,7 @@ function ResultPage({ params }) {
                 </div>
               </div>
             </Card>
-          )}
+          ) : null}
 
           <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300 pb-4">
             Result ID: {id}
