@@ -34,9 +34,9 @@ export default function ResultPageWrapper({ params }) {
         <div className="min-h-screen bg-app">
           <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
             <div className="rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-[var(--ring)] flex items-center gap-3">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
+              <div className="h-9 w-9 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
               <div>
-                <div className="text-[15px] font-black tracking-tight text-slate-900">読み込み中…</div>
+                <div className="text-[15px] font-black tracking-tight text-slate-900">結果を読み込み中…</div>
                 <div className="mt-1 text-[12px] font-bold text-slate-500">少しお待ちください</div>
               </div>
             </div>
@@ -70,11 +70,11 @@ function CardHeader({ icon, title, sub, right }) {
     <div className="px-6 pt-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-4 min-w-0">
-          <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_30%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)] shadow-sm">
+          <div className="grid h-14 w-14 place-items-center rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_30%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)] shadow-sm">
             {icon}
           </div>
           <div className="min-w-0 pt-0.5">
-            <div className="text-[18px] font-black tracking-tight text-slate-900 leading-tight">{title}</div>
+            <div className="text-[19px] font-black tracking-tight text-slate-900 leading-tight">{title}</div>
             {sub ? <div className="mt-1 text-[12px] font-bold text-slate-500">{sub}</div> : null}
           </div>
         </div>
@@ -85,7 +85,6 @@ function CardHeader({ icon, title, sub, right }) {
   );
 }
 
-// ★ 左の太線をなくし、背景色だけで美しく見せるSaaS風パネル
 function SoftPanel({ tone = "mint", title, icon, children }) {
   const tones = {
     mint: {
@@ -126,6 +125,7 @@ function SoftPanel({ tone = "mint", title, icon, children }) {
   );
 }
 
+// ★ 経絡カードも「上部タイトル・下部テキスト」のフル幅レイアウトに改修
 function MeridianPanelContent({ line, tone = "violet" }) {
   const toneClass = {
     violet: "text-[#5b4bb7]",
@@ -136,18 +136,22 @@ function MeridianPanelContent({ line, tone = "violet" }) {
   if (!line) return null;
 
   return (
-    <div className="flex items-start gap-4">
-      <div className="shrink-0">
-        <div className="grid h-[64px] w-[64px] place-items-center rounded-[16px] bg-white ring-1 ring-black/5 shadow-sm overflow-hidden">
-          <MeridianIllust code={line.code} size="lg" className={`${toneClass[tone] || toneClass.violet} scale-110`} />
+    <div className="rounded-[28px] bg-white ring-1 ring-slate-200 p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="shrink-0">
+          <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 shadow-sm overflow-hidden">
+            <MeridianIllust code={line.code} size="lg" className={`${toneClass[tone] || toneClass.violet} scale-125`} />
+          </div>
+        </div>
+        <div className="min-w-0 pt-0.5">
+          <div className="text-[17px] font-black tracking-tight text-slate-900 truncate">{line.title}</div>
+          <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-slate-500 truncate">
+            {line.body_area}（{line.meridians.join("・")}）
+          </div>
         </div>
       </div>
-      <div className="min-w-0 pt-1">
-        <div className="text-[15px] font-black tracking-tight text-slate-900">{line.title}</div>
-        <div className="mt-1 text-[11px] font-extrabold text-slate-500">
-          {line.body_area}（{line.meridians.join("・")}）
-        </div>
-        <div className="mt-2 text-[12px] font-bold leading-relaxed text-slate-700">{line.organs_hint}</div>
+      <div className="text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
+        {line.organs_hint}
       </div>
     </div>
   );
@@ -531,7 +535,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push(backHref)}
-      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ← 戻る
     </button>
@@ -541,7 +545,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push("/")}
-      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ホーム
     </button>
@@ -555,7 +559,7 @@ function ResultPage({ params }) {
           <div className="px-5 pb-6 pt-4">
             <div className="rounded-[32px] bg-white p-8 ring-1 ring-[var(--ring)] flex flex-col items-center gap-4 shadow-sm text-center">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
-              <div className="text-[15px] font-black text-slate-400 tracking-widest">読み込み中…</div>
+              <div className="text-[15px] font-black text-slate-400 tracking-widest">LOADING...</div>
             </div>
           </div>
         </Module>
@@ -591,7 +595,7 @@ function ResultPage({ params }) {
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
-          {/* ★ヒーローセクション改修：「体質の軸」をメインに、「お悩み」をバッジ化 */}
+          {/* ★ヒーローセクション改修：「体質の軸」イラストとテキストを美しく並べる */}
           <div className="relative rounded-[36px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-[180px] bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_30%)] to-[color-mix(in_srgb,var(--mint),white_80%)]" />
             
@@ -604,28 +608,12 @@ function ResultPage({ params }) {
               </div>
             </div>
 
-            {/* 体質結果パネルを堂々と中央へ */}
+            {/* 体質結果パネル（イラストとタイトルを横並び） */}
             <div className="relative z-10 px-5 pb-5">
-              <div className="flex flex-col items-center text-center mt-2 mb-6">
-                <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
-                  あなたの体質の軸
-                </div>
-                <div className="mt-1.5 text-[28px] font-black tracking-tight text-slate-900 leading-[1.1]">
-                  {core?.title || "—"}
-                </div>
-                {core?.short ? (
-                  <div className="mt-2.5">
-                    <span className="inline-flex items-center rounded-lg bg-white px-3 py-1.5 text-[12px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                      {core.short}
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="rounded-[28px] bg-white/95 backdrop-blur-xl ring-1 ring-[var(--ring)] p-5 shadow-sm">
-                <div className="flex items-start gap-4">
+              <div className="rounded-[32px] bg-white/95 backdrop-blur-xl ring-1 ring-[var(--ring)] p-6 shadow-sm mt-3">
+                <div className="flex items-center gap-5 mb-5">
                   <div className="shrink-0">
-                    <div className="grid h-[80px] w-[80px] place-items-center overflow-hidden rounded-[20px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105">
+                    <div className="grid h-[96px] w-[96px] place-items-center overflow-hidden rounded-[24px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105">
                       <CoreIllust
                         code={computed?.core_code}
                         title={core?.title || "体質タイプ"}
@@ -633,11 +621,24 @@ function ResultPage({ params }) {
                       />
                     </div>
                   </div>
-                  <div className="min-w-0 pt-1">
-                    <div className="text-[12px] font-bold leading-relaxed text-slate-600">
-                      {core?.tcm_hint || ""}
+                  <div className="min-w-0 text-left pt-1">
+                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      あなたの体質の軸
                     </div>
+                    <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">
+                      {core?.title || "—"}
+                    </div>
+                    {core?.short ? (
+                      <div className="mt-2.5">
+                        <span className="inline-flex items-center rounded-lg bg-slate-50 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-inset ring-slate-200/60 shadow-sm">
+                          {core.short}
+                        </span>
+                      </div>
+                    ) : null}
                   </div>
+                </div>
+                <div className="text-[13px] leading-relaxed font-bold text-slate-700 bg-slate-50 rounded-[20px] p-5 ring-1 ring-slate-100">
+                  {core?.tcm_hint || ""}
                 </div>
               </div>
             </div>
@@ -652,23 +653,26 @@ function ResultPage({ params }) {
           {tab === "overview" ? (
             <>
               <Card>
-                <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・ほぐしたい場所" />
+                <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   
-                  {/* ★ サブ体質：フラッグを廃止しクリーンなSoftPanelに */}
+                  {/* ★ サブ体質：トップアイコン・ボトムテキストのカードに */}
                   <SoftPanel tone="amber" title="整えたいバランス（気血水）" icon={<IconMemo />}>
                     {subLabels?.length ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {subLabels.map((s) => (
-                          <div key={s.code || s.title} className="rounded-[24px] bg-white ring-1 ring-black/5 p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
-                            <div className="flex gap-4 items-start">
-                              <div className="shrink-0 pt-0.5 text-[var(--accent)]">
+                          <div key={s.code || s.title} className="rounded-[28px] bg-white ring-1 ring-slate-200 p-6 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
+                            <div className="flex items-center gap-4 mb-4">
+                              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 text-[var(--accent-ink)] shadow-sm">
                                 <SubIllust code={s.code} size="md" />
                               </div>
-                              <div className="min-w-0">
-                                <div className="text-[16px] font-black tracking-tight text-slate-900">{s.title}</div>
-                                <div className="mt-2.5 text-[12px] leading-relaxed font-bold text-slate-600">{s.action_hint}</div>
+                              <div className="min-w-0 pt-0.5">
+                                <div className="text-[17px] font-black tracking-tight text-slate-900 truncate">{s.title}</div>
+                                {s.short ? <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{s.short}</div> : null}
                               </div>
+                            </div>
+                            <div className="text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
+                              {s.action_hint || "（ヒントなし）"}
                             </div>
                           </div>
                         ))}
@@ -678,9 +682,9 @@ function ResultPage({ params }) {
                     )}
                   </SoftPanel>
 
-                  {/* ★ 経絡：主・副を一つのカードに統合 */}
+                  {/* ★ 経絡：主・副をフル幅のカードに統合 */}
                   <SoftPanel tone="violet" title="負担がかかりやすい場所（経絡）" icon={<IconBody />}>
-                    <div className="rounded-[24px] bg-white ring-1 ring-black/5 p-5 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] space-y-4">
+                    <div className="space-y-4">
                       {meridianPrimary ? (
                         <MeridianPanelContent line={{ ...meridianPrimary, code: computed?.primary_meridian }} tone="violet" />
                       ) : (
@@ -688,10 +692,7 @@ function ResultPage({ params }) {
                       )}
                       
                       {meridianSecondary && (
-                        <>
-                          <div className="h-px w-full bg-slate-100" />
-                          <MeridianPanelContent line={{ ...meridianSecondary, code: computed?.secondary_meridian }} tone="teal" />
-                        </>
+                        <MeridianPanelContent line={{ ...meridianSecondary, code: computed?.secondary_meridian }} tone="teal" />
                       )}
                     </div>
                   </SoftPanel>
@@ -737,7 +738,7 @@ function ResultPage({ params }) {
             <Card>
               <CardHeader icon={<IconCloud />} title="天気との相性" sub="気象変化による崩れやすさの傾向" />
               <div className="px-6 pb-8 pt-5 space-y-6">
-                <div className="text-[13px] leading-relaxed font-bold text-slate-700 bg-[color-mix(in_srgb,var(--mint),white_80%)] p-6 rounded-[28px] ring-1 ring-black/5 shadow-sm">
+                <div className="text-[13px] leading-relaxed font-bold text-slate-700 bg-[color-mix(in_srgb,var(--mint),white_80%)] p-6 rounded-[28px] ring-1 ring-slate-200 shadow-sm">
                   {weatherCompat.intro}
                 </div>
 
@@ -746,6 +747,7 @@ function ResultPage({ params }) {
                     <div key={item.key} className="rounded-[28px] bg-white ring-1 ring-slate-200 p-6 shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] transition-all hover:shadow-md">
                       <div className="flex items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-4 min-w-0">
+                          {/* ★ トトノウくん天候アイコンを配置 */}
                           <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-slate-50 ring-1 ring-slate-200/60 text-[var(--accent-ink)] shadow-sm transition-transform hover:scale-105">
                              <WeatherIcon triggerKey={item.key} className="h-8 w-8" />
                           </div>
@@ -755,7 +757,7 @@ function ResultPage({ params }) {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-5 text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
+                      <div className="mt-2 text-[13px] leading-relaxed font-bold text-slate-600 bg-slate-50 rounded-[16px] p-4 ring-1 ring-slate-100">
                         {item.body}
                       </div>
                     </div>
