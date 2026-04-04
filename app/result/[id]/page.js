@@ -25,27 +25,18 @@ import {
   IconBody,
   IconCloud,
 } from "@/components/illust/icons/result";
+// ★ 天候別トトノウくんアイコンをインポート
+import { WeatherIcon } from "@/components/illust/icons/weather";
 
-// ★ 追加：天気アイコン
-import {
-  IconPressureUp,
-  IconPressureDown,
-  IconTempUp,
-  IconTempDown,
-  IconHumidUp,
-  IconHumidDown,
-} from "@/components/illust/icons/weather";
-
-// ✅ Next.js の useSearchParams 対策
 export default function ResultPageWrapper({ params }) {
   return (
     <Suspense
       fallback={
         <div className="min-h-screen bg-app">
           <div className="mx-auto w-full max-w-[440px] px-4 pt-10">
-            <div className="rounded-[22px] bg-[var(--panel)] p-5 shadow-sm ring-1 ring-[var(--ring)]">
+            <div className="rounded-[32px] bg-white p-6 shadow-sm ring-1 ring-[var(--ring)]">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
+                <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/10 border-t-[var(--accent)]" />
                 <div>
                   <div className="text-base font-bold text-slate-900">結果を読み込み中…</div>
                   <div className="mt-1 text-xs text-slate-500">少し待ってください。</div>
@@ -62,13 +53,13 @@ export default function ResultPageWrapper({ params }) {
 }
 
 /* -----------------------------
- * UI Components (Refined)
+ * UI Components
  * ---------------------------- */
 function Card({ children, className = "" }) {
   return (
     <section
       className={[
-        "rounded-[32px] bg-white shadow-[0_12px_32px_-12px_rgba(0,0,0,0.06)] ring-1 ring-[var(--ring)] overflow-hidden",
+        "rounded-[32px] bg-white shadow-[0_12px_24px_-12px_rgba(0,0,0,0.05)] ring-1 ring-[var(--ring)] overflow-hidden",
         className,
       ].join(" ")}
     >
@@ -81,13 +72,13 @@ function CardHeader({ icon, title, sub, right }) {
   return (
     <div className="px-6 pt-6">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-4 min-w-0">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_30%)] shadow-sm ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
             {icon}
           </div>
-          <div className="min-w-0 pt-0.5">
-            <div className="text-[19px] font-black tracking-tight text-slate-900 leading-tight">{title}</div>
-            {sub ? <div className="mt-1 text-[12px] font-bold text-slate-500">{sub}</div> : null}
+          <div className="min-w-0">
+            <div className="text-lg font-black tracking-tight text-slate-900">{title}</div>
+            {sub ? <div className="mt-0.5 text-[12px] font-bold text-slate-500">{sub}</div> : null}
           </div>
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}
@@ -127,7 +118,7 @@ function SoftPanel({ tone = "mint", title, icon, children }) {
   const t = tones[tone] || tones.mint;
 
   return (
-    <div className={`relative rounded-[24px] ${t.wrap} ring-1 ring-[var(--ring)] overflow-hidden shadow-sm`}>
+    <div className={`relative rounded-[24px] ${t.wrap} ring-1 ring-inset ring-[var(--ring)] overflow-hidden shadow-sm`}>
       <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${t.bar}`} />
       <div className="p-5 pl-6">
         <div className="flex items-center gap-3">
@@ -192,7 +183,7 @@ function SegmentedTabs({ value, onChange }) {
                 type="button"
                 onClick={() => onChange(t.key)}
                 className={[
-                  "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
+                  "flex-1 h-[34px] rounded-full text-[13px] font-extrabold tracking-tight transition-all duration-200",
                   active
                     ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
                     : "text-slate-500 hover:text-slate-800",
@@ -211,20 +202,6 @@ function SegmentedTabs({ value, onChange }) {
 /* -----------------------------
  * Weather compatibility Logic
  * ---------------------------- */
-
-// ★ 追加：キーからアイコンを取得するヘルパー
-function getWeatherTriggerIcon(key, className) {
-  switch (key) {
-    case "pressure_up": return <IconPressureUp className={className} />;
-    case "pressure_down": return <IconPressureDown className={className} />;
-    case "heat": return <IconTempUp className={className} />;
-    case "cold": return <IconTempDown className={className} />;
-    case "damp": return <IconHumidUp className={className} />;
-    case "dry": return <IconHumidDown className={className} />;
-    default: return <IconPressureDown className={className} />;
-  }
-}
-
 function clamp(v, min, max) {
   if (!Number.isFinite(v)) return min;
   if (v < min) return min;
@@ -263,18 +240,12 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
 
   for (const label of subCodes) {
     switch (label) {
-      case "qi_stagnation":
-        scores.pressure_down += 0.14; scores.pressure_up += 0.08; scores.heat += 0.06; scores.damp += 0.04; break;
-      case "qi_deficiency":
-        scores.pressure_down += 0.1; scores.cold += 0.14; scores.damp += 0.1; break;
-      case "blood_deficiency":
-        scores.cold += 0.12; scores.dry += 0.1; scores.pressure_down += 0.06; break;
-      case "blood_stasis":
-        scores.pressure_down += 0.1; scores.pressure_up += 0.04; scores.cold += 0.08; scores.damp += 0.05; break;
-      case "fluid_damp":
-        scores.damp += 0.22; scores.cold += 0.06; scores.pressure_down += 0.04; break;
-      case "fluid_deficiency":
-        scores.dry += 0.22; scores.heat += 0.16; scores.pressure_up += 0.05; break;
+      case "qi_stagnation": scores.pressure_down += 0.14; scores.pressure_up += 0.08; scores.heat += 0.06; scores.damp += 0.04; break;
+      case "qi_deficiency": scores.pressure_down += 0.1; scores.cold += 0.14; scores.damp += 0.1; break;
+      case "blood_deficiency": scores.cold += 0.12; scores.dry += 0.1; scores.pressure_down += 0.06; break;
+      case "blood_stasis": scores.pressure_down += 0.1; scores.pressure_up += 0.04; scores.cold += 0.08; scores.damp += 0.05; break;
+      case "fluid_damp": scores.damp += 0.22; scores.cold += 0.06; scores.pressure_down += 0.04; break;
+      case "fluid_deficiency": scores.dry += 0.22; scores.heat += 0.16; scores.pressure_up += 0.05; break;
       default: break;
     }
   }
@@ -361,7 +332,7 @@ function buildRadarBridge({ symptomKey }) {
 }
 
 /* -----------------------------
- * Main Page
+ * Main Page Component
  * ---------------------------- */
 function ResultPage({ params }) {
   const router = useRouter();
@@ -389,9 +360,8 @@ function ResultPage({ params }) {
     if (from === "check") return "/check";
     if (from === "home") return "/";
     if (from === "radar") return "/radar";
-    if (attachAfterLogin) return "/check";
     return "/check";
-  }, [from, attachAfterLogin]);
+  }, [from]);
 
   useEffect(() => {
     let mounted = true;
@@ -484,7 +454,7 @@ function ResultPage({ params }) {
   }
 
   function goLoginToRadar() {
-    router.push(`/login?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
+    router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
   const headerLeft = (
@@ -513,11 +483,9 @@ function ResultPage({ params }) {
         <Module>
           <ModuleHeader icon={<IconResult />} title="結果を読み込み中…" sub="少し待ってください" />
           <div className="px-5 pb-6 pt-4">
-            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
-                <div className="text-sm font-bold text-slate-700">読み込み中…</div>
-              </div>
+            <div className="rounded-[24px] bg-white p-6 ring-1 ring-[var(--ring)] flex items-center gap-3">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-black/10 border-t-black/40" />
+              <div className="text-sm font-bold text-slate-700">読み込み中…</div>
             </div>
           </div>
         </Module>
@@ -531,12 +499,12 @@ function ResultPage({ params }) {
         <Module>
           <ModuleHeader icon={<IconResult />} title="結果が見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-4">
-            <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-              <div className="text-sm leading-7 text-slate-700">
-                期限切れ/削除、または保存に失敗した可能性があります。
+            <div className="rounded-[24px] bg-white p-6 ring-1 ring-[var(--ring)]">
+              <div className="text-sm leading-7 text-slate-700 font-bold">
+                診断結果を取得できませんでした。再度チェックをお願いします。
               </div>
             </div>
-            <Button onClick={() => router.push("/check")}>体質チェックをやり直す</Button>
+            <Button onClick={() => router.push("/check")} className="w-full">体質チェックをやり直す</Button>
           </div>
         </Module>
       </AppShell>
@@ -546,7 +514,7 @@ function ResultPage({ params }) {
   return (
     <AppShell title="体質チェック結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
-        <div className="fixed left-1/2 top-3 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-[18px] bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-lg ring-1 ring-[var(--ring)]">
+        <div className="fixed left-1/2 top-4 z-50 w-[92%] max-w-md -translate-x-1/2 rounded-full bg-slate-900 px-5 py-3 text-sm font-bold text-white shadow-xl animate-in fade-in slide-in-from-top-2">
           {toast}
         </div>
       ) : null}
@@ -564,7 +532,7 @@ function ResultPage({ params }) {
                 {symptomLabel}
               </div>
               <div className="mt-1.5 text-[11px] font-bold text-[var(--accent-ink)]/60">
-                チェック作成：{event.created_at ? new Date(event.created_at).toLocaleString("ja-JP") : "—"}
+                作成日：{event.created_at ? new Date(event.created_at).toLocaleDateString("ja-JP") : "—"}
               </div>
             </div>
 
@@ -597,7 +565,6 @@ function ResultPage({ params }) {
                     </div>
                   </div>
                 </div>
-
                 <div className="mt-4 text-[13px] font-bold leading-6 text-slate-600">
                   {core?.tcm_hint || ""}
                 </div>
@@ -610,42 +577,31 @@ function ResultPage({ params }) {
       <SegmentedTabs value={tab} onChange={setTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="space-y-6 pb-6 mt-3">
+        <div className="space-y-6 pb-8 mt-3">
           {tab === "overview" ? (
             <>
               <Card>
                 <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
                 <div className="px-6 pb-7 pt-5 space-y-4">
-                  <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
+                  <SoftPanel tone="amber" title="整えポイント" icon={<IconMemo />}>
                     {subLabels?.length ? (
                       <div className="space-y-3">
                         {subLabels.map((s) => (
-                          <div
-                            key={s.code || s.title}
-                            className="rounded-[20px] bg-slate-50/50 ring-1 ring-slate-100 p-4"
-                          >
+                          <div key={s.code || s.title} className="rounded-[20px] bg-slate-50/50 ring-1 ring-slate-100 p-4">
                             <div className="flex gap-4">
-                              <div className="shrink-0 pt-0.5">
-                                <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-white ring-1 ring-[var(--ring)] shadow-sm text-[var(--accent)]">
-                                  <SubIllust code={s.code} size="md" />
-                                </div>
+                              <div className="shrink-0 pt-0.5 text-[var(--accent)]">
+                                <SubIllust code={s.code} size="md" />
                               </div>
                               <div className="min-w-0">
-                                <div className="text-[15px] font-extrabold text-slate-900">
-                                  {s.title}
-                                </div>
-                                <div className="mt-2 text-[13px] leading-6 font-bold text-slate-600">
-                                  {s.action_hint || "（ヒントなし）"}
-                                </div>
+                                <div className="text-[15px] font-extrabold text-slate-900">{s.title}</div>
+                                <div className="mt-2 text-[13px] leading-6 font-bold text-slate-600">{s.action_hint}</div>
                               </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="rounded-[18px] bg-slate-50/50 ring-1 ring-slate-100 p-4 text-[13px] font-bold text-slate-600">
-                        今回は強い偏りは見られませんでした（バランス良好）。
-                      </div>
+                      <div className="text-[13px] font-bold text-slate-500">良好なバランスです。</div>
                     )}
                   </SoftPanel>
 
@@ -653,87 +609,42 @@ function ResultPage({ params }) {
                     <MeridianPanelContent line={meridianPrimary ? { ...meridianPrimary, code: computed?.primary_meridian } : null} tone="violet" />
                   </SoftPanel>
 
-                  <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconBody />}>
-                    <MeridianPanelContent line={meridianSecondary ? { ...meridianSecondary, code: computed?.secondary_meridian } : null} tone="teal" />
-                  </SoftPanel>
+                  {meridianSecondary && (
+                    <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconBody />}>
+                      <MeridianPanelContent line={{ ...meridianSecondary, code: computed?.secondary_meridian }} tone="teal" />
+                    </SoftPanel>
+                  )}
                 </div>
               </Card>
 
               <Card>
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存 → 今日の予報と対策へ" />
                 <div className="px-6 pb-7 pt-5 space-y-4">
-                  {loadingAuth ? (
-                    <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100">
-                      <div className="text-[13px] font-bold text-slate-600">ログイン状態を確認中…</div>
-                    </div>
-                  ) : isLoggedIn ? (
+                  {isLoggedIn ? (
                     <>
-                      <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100">
-                        <div className="text-[13px] font-bold text-slate-800">
-                          ログイン中：<span className="font-extrabold">{session.user?.email}</span>
-                        </div>
-                        <div className="mt-1 text-[11px] font-bold text-slate-500">
-                          今日の「予報と対策」は無料で見られます。
-                        </div>
+                      <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100 font-bold text-[13px] text-slate-700">
+                        ログイン：{session.user?.email}
                       </div>
-
                       {isAttached ? (
-                        <div className="rounded-[22px] bg-[#ecfdf5] p-5 ring-1 ring-[#a7f3d0]">
-                          <div className="text-[14px] font-extrabold text-[#065f46]">
-                            この結果は保存済みです ✅
-                          </div>
-                          <div className="mt-4">
-                            <Button onClick={() => router.push("/radar")}>今日の予報と対策へ</Button>
-                          </div>
+                        <div className="rounded-[22px] bg-emerald-50 p-5 ring-1 ring-emerald-200">
+                          <div className="text-[14px] font-extrabold text-emerald-800">保存済み ✅</div>
+                          <Button onClick={() => router.push("/radar")} className="mt-4 w-full shadow-md">今日の予報と対策へ</Button>
                         </div>
                       ) : (
-                        <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-[14px] font-extrabold text-slate-900">
-                            この結果を保存して、今日の未病レーダーへ進みましょう。
-                          </div>
-                          <div className="mt-2 text-[11px] font-bold text-slate-600">
-                            登録だけでは課金されません（無料の範囲で使えます）
-                          </div>
-                          <div className="mt-4">
-                            <Button onClick={() => attachToAccount(false)} disabled={attaching}>
-                              {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
-                            </Button>
-                          </div>
-                        </div>
+                        <Button onClick={() => attachToAccount(false)} disabled={attaching} className="w-full shadow-md">
+                          {attaching ? "保存中…" : "結果を保存して予報を見る（無料）"}
+                        </Button>
                       )}
-
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="ghost" onClick={() => router.push("/check")}>
-                          もう一度チェック
-                        </Button>
-                        <Button variant="ghost" onClick={() => setTab("compat")}>
-                          天気との相性を見る
-                        </Button>
-                      </div>
                     </>
                   ) : (
-                    <>
+                    <div className="space-y-4">
                       <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-[15px] font-extrabold tracking-tight text-slate-900">
-                          無料で保存して、今日の「予報と対策」へ。
-                        </div>
-                        <div className="mt-2 text-[11px] font-bold text-slate-600">
-                          登録だけでは課金されません（無料の範囲で使えます）
-                        </div>
+                         <div className="text-[15px] font-extrabold text-slate-900">無料で保存して予報を見ましょう</div>
+                         <div className="mt-1.5 text-[12px] font-bold text-slate-600 leading-5">アカウント作成後、今日のあなたの崩れやすさをチェックできます。</div>
                       </div>
-
-                      <div className="space-y-3 pt-2">
-                        <Button onClick={goSignupToRadar}>
-                          無料で保存して、今日の予報と対策を見る
-                        </Button>
-                        <Button variant="secondary" onClick={goLoginToRadar}>
-                          すでに登録済みの方はこちら（ログイン）
-                        </Button>
-                        <Button variant="ghost" onClick={() => router.push("/check")}>
-                          もう一度チェックする
-                        </Button>
-                      </div>
-                    </>
+                      <Button onClick={goSignupToRadar} className="w-full shadow-md">無料で保存して予報を見る</Button>
+                      <Button variant="secondary" onClick={goLoginToRadar} className="w-full bg-white shadow-sm">ログインはこちら</Button>
+                    </div>
                   )}
                 </div>
               </Card>
@@ -741,157 +652,81 @@ function ResultPage({ params }) {
           ) : null}
 
           {tab === "compat" ? (
-            <>
-              <Card>
-                <CardHeader
-                  icon={<IconCloud />}
-                  title="天気との相性"
-                  sub="体質と天気の変化が重なると、どんな崩れ方をしやすいか"
-                />
-                <div className="px-6 pb-7 pt-5 space-y-4">
-                  <SoftPanel tone="teal" title="影響を受けやすい天気変化" icon={<IconRadar />}>
-                    <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.intro}</div>
-
-                    <div className="mt-5 space-y-3">
-                      {weatherCompat.items.map((item) => (
-                        <div
-                          key={item.key}
-                          className="rounded-[18px] bg-white/80 ring-1 ring-[var(--ring)] p-4"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                              {/* ★ 気象アイコンを配置 */}
-                              <div className="text-[var(--accent-ink)] opacity-80">
-                                {getWeatherTriggerIcon(item.key, "h-6 w-6")}
-                              </div>
-                              <div className="text-[14px] font-extrabold text-slate-900">{item.label}</div>
-                            </div>
-                            <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-black/5 shadow-sm">
-                              {item.rankLabel}
-                            </div>
-                          </div>
-                          <div className="mt-2.5 text-[13px] leading-6 font-bold text-slate-700">{item.body}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </SoftPanel>
-
-                  <SoftPanel tone="amber" title="天気が重なると出やすいサイン" icon={<IconBolt />}>
-                    <ul className="space-y-2">
-                      {weatherCompat.signs.map((s, idx) => (
-                        <li
-                          key={`${s}-${idx}`}
-                          className="rounded-[16px] bg-white/80 ring-1 ring-[var(--ring)] px-4 py-3"
-                        >
-                          <div className="text-[13px] font-extrabold text-slate-700">・{s}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  </SoftPanel>
-
-                  <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconCompass />}>
-                    <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.radarBridge}</div>
-                  </SoftPanel>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="ghost" onClick={() => setTab("overview")}>
-                      概要に戻る
-                    </Button>
-                    <Button onClick={() => setTab("save")}>保存へ進む</Button>
-                  </div>
+            <Card>
+              <CardHeader icon={<IconCloud />} title="天気との相性" sub="気象変化による崩れやすさの傾向" />
+              <div className="px-6 pb-8 pt-5 space-y-6">
+                <div className="text-[13px] leading-7 font-bold text-slate-700 bg-slate-50/50 p-5 rounded-[24px] ring-1 ring-slate-100">
+                  {weatherCompat.intro}
                 </div>
-              </Card>
-            </>
+
+                <div className="space-y-4">
+                  {weatherCompat.items.map((item) => (
+                    <div key={item.key} className="rounded-[24px] bg-white ring-1 ring-slate-200 p-5 shadow-sm transition-all hover:shadow-md">
+                      <div className="flex items-center justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* ★ トトノウくんアイコンを表示 */}
+                          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-slate-50 ring-1 ring-slate-100 text-[var(--accent-ink)] shadow-sm">
+                             <WeatherIcon triggerKey={item.key} className="h-7 w-7" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-[15px] font-black tracking-tight text-slate-900 truncate">{item.label}</div>
+                            <div className="mt-0.5 text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">{item.rankLabel}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[13px] leading-6 font-bold text-slate-600">{item.body}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <SoftPanel tone="amber" title="出やすいサイン" icon={<IconBolt />}>
+                  <ul className="grid gap-2">
+                    {weatherCompat.signs.map((s, idx) => (
+                      <li key={idx} className="flex items-center gap-2.5 rounded-[14px] bg-slate-50 px-4 py-2.5 text-[13px] font-bold text-slate-700 ring-1 ring-inset ring-slate-100">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </SoftPanel>
+
+                <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconCompass />}>
+                  <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.radarBridge}</div>
+                  <Button onClick={() => setTab("save")} className="mt-5 w-full shadow-sm">保存して予報へ進む</Button>
+                </SoftPanel>
+              </div>
+            </Card>
           ) : null}
 
-          {tab === "save" ? (
-            <>
-              <Card>
-                <CardHeader
-                  icon={<IconBolt />}
-                  title="保存してレーダーへ"
-                  sub="結果は“今後の予報”の精度に効きます"
-                />
-                <div className="px-6 pb-7 pt-5 space-y-4">
-                  {loadingAuth ? (
-                    <div className="rounded-[20px] bg-slate-50 p-5 ring-1 ring-slate-100">
-                      <div className="text-[13px] font-bold text-slate-600">ログイン状態を確認中…</div>
+          {tab === "save" && (
+            <Card>
+              <CardHeader icon={<IconBolt />} title="結果を保存する" sub="今後の予報精度が向上します" />
+              <div className="px-6 pb-8 pt-5 space-y-4 text-center">
+                {isLoggedIn ? (
+                   isAttached ? (
+                     <div className="p-5">
+                       <div className="text-sm font-extrabold text-emerald-800">保存済みです ✅</div>
+                       <Button onClick={() => router.push("/radar")} className="mt-4 w-full shadow-md">今日の予報と対策へ</Button>
+                     </div>
+                   ) : (
+                     <Button onClick={() => attachToAccount(false)} disabled={attaching} className="w-full shadow-md py-4">
+                       {attaching ? "保存中…" : "この結果を保存して移動する"}
+                     </Button>
+                   )
+                ) : (
+                  <>
+                    <div className="text-sm font-bold text-slate-600 leading-6 px-2 mb-4">
+                      アカウントを作成して保存すると、毎日の「体調予報」と「先回りケア」を無料で確認できるようになります。
                     </div>
-                  ) : isLoggedIn ? (
-                    <>
-                      <div className="rounded-[22px] bg-white ring-1 ring-slate-200 p-5 shadow-sm">
-                        <div className="text-[13px] font-bold text-slate-800">
-                          ログイン中：<span className="font-extrabold">{session.user?.email}</span>
-                        </div>
-                        <div className="mt-1 text-[11px] font-bold text-slate-500">
-                          保存すると、今日の「予報と対策」にすぐ進めます。
-                        </div>
-                      </div>
+                    <Button onClick={goSignupToRadar} className="w-full shadow-md py-4">無料で保存して予報を見る</Button>
+                  </>
+                )}
+                <Button variant="ghost" onClick={() => router.push("/check")} className="w-full">もう一度チェックし直す</Button>
+              </div>
+            </Card>
+          )}
 
-                      {isAttached ? (
-                        <div className="rounded-[22px] bg-[#ecfdf5] p-5 ring-1 ring-[#a7f3d0]">
-                          <div className="text-[14px] font-extrabold text-[#065f46]">
-                            この結果は保存済みです ✅
-                          </div>
-                          <div className="mt-4">
-                            <Button onClick={() => router.push("/radar")}>今日の予報と対策へ</Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-                          <div className="text-[14px] font-extrabold text-slate-900">
-                            この結果を保存しますか？
-                          </div>
-                          <div className="mt-2 text-[11px] font-bold text-slate-600">
-                            登録だけでは課金されません（無料の範囲で使えます）
-                          </div>
-                          <div className="mt-4">
-                            <Button onClick={() => attachToAccount(false)} disabled={attaching}>
-                              {attaching ? "保存して移動中…" : "保存して、今日の予報と対策を見る（無料）"}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <Button variant="ghost" onClick={() => router.push("/check")}>
-                          もう一度チェックする
-                        </Button>
-                        <Button variant="ghost" onClick={() => setTab("compat")}>
-                          天気との相性を見る
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-5 ring-1 ring-[var(--ring)]">
-                        <div className="text-[15px] font-extrabold tracking-tight text-slate-900">
-                          無料で保存して、今日の「予報と対策」へ。
-                        </div>
-                        <div className="mt-2 text-[11px] font-bold text-slate-600">
-                          登録だけでは課金されません（無料の範囲で使えます）
-                        </div>
-                      </div>
-
-                      <div className="space-y-3 pt-2">
-                        <Button onClick={goSignupToRadar}>
-                          無料で保存して、今日の予報と対策を見る
-                        </Button>
-                        <Button variant="secondary" onClick={goLoginToRadar}>
-                          すでに登録済みの方はこちら（ログイン）
-                        </Button>
-                        <Button variant="ghost" onClick={() => router.push("/check")}>
-                          もう一度チェックする
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Card>
-            </>
-          ) : null}
-
-          <div className="text-center text-[10px] font-extrabold text-slate-300">ID：{id}</div>
+          <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300">Result ID: {id}</div>
         </div>
       </div>
     </AppShell>
