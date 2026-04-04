@@ -1,3 +1,4 @@
+// components/records/reviewConfig.js
 export const CONDITION_OPTIONS = [
   { value: 0, label: "つらかった" },
   { value: 1, label: "少しつらかった" },
@@ -43,9 +44,9 @@ export function signalLabel(signal) {
 }
 
 export function signalBadgeClass(signal) {
-  if (signal === 2) return "bg-rose-50 text-rose-700 border-rose-200";
-  if (signal === 1) return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (signal === 2) return "bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200";
+  if (signal === 1) return "bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200";
+  return "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200";
 }
 
 export function triggerLabel(mainTrigger, triggerDir) {
