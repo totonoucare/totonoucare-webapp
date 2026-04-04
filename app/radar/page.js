@@ -13,8 +13,8 @@ import {
   IconMemo,
   IconRadar,
   IconResult,
-  IconRipple, // ★ 追加
-  IconBowl,   // ★ 追加
+  IconRipple,
+  IconBowl,
 } from "@/components/illust/icons/result";
 import {
   actionTagLabel,
@@ -437,7 +437,8 @@ function PointDetailSheet({ point, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
+      // ★ Zインデックスを100にしてタブバーの上に覆いかぶせる
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -531,7 +532,7 @@ function PointDetailSheet({ point, onClose }) {
           </div>
         ) : null}
 
-        {/* ★ スクロール領域の最下部の見切れを防ぐための見えないスペーサー（余白） */}
+        {/* ★ スクロール領域の最下部の見切れを防ぐための見えないスペーサー */}
         <div className="h-8 w-full sm:h-2" />
       </div>
     </div>
@@ -1105,11 +1106,11 @@ export default function RadarPage() {
                   </div>
                 </div>
 
+                {/* ★ 気になる不調に変更 */}
                 {symptomLabel ? (
                   <div className="shrink-0 rounded-[18px] bg-white/60 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 shadow-sm min-w-[100px] text-center">
-                    {/* ★ 体言止めに修正 */}
                     <div className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                      お困りの不調
+                      気になる不調
                     </div>
                     <div className="mt-1 text-[16px] font-black tracking-tight opacity-90">
                       {symptomLabel}
@@ -1166,7 +1167,7 @@ export default function RadarPage() {
           </Module>
 
           {/* 2. 体質ミニカード */}
-          <Module className="p-5 flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
+          <Module className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
              <div className="min-w-0 pl-1">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
                   ベースとなるあなたの体質
@@ -1179,7 +1180,7 @@ export default function RadarPage() {
                 {subLabelObjects?.length > 0 ? (
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {subLabelObjects.map((s) => (
-                      <span key={s.code} className="rounded-md bg-white/60 px-2 py-0.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5">
+                      <span key={s.code} className="rounded-md bg-white/60 px-2 py-0.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5 shadow-sm">
                         {s.short}
                       </span>
                     ))}
@@ -1187,7 +1188,7 @@ export default function RadarPage() {
                 ) : null}
 
                 {primaryLine ? (
-                  <div className="mt-2 text-[11px] font-bold text-[var(--accent-ink)]/80">
+                  <div className="mt-2.5 text-[11px] font-bold text-[var(--accent-ink)]/80">
                     負担が出やすい：{primaryLine.title}
                   </div>
                 ) : null}
@@ -1197,7 +1198,7 @@ export default function RadarPage() {
                 size="sm"
                 onClick={openLatestResultDetail}
                 disabled={openingProfileDetail}
-                className="shrink-0 bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
+                className="shrink-0 w-full sm:w-auto bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
               >
                 {openingProfileDetail ? "開いています…" : "詳しく見る"}
               </Button>
@@ -1207,7 +1208,7 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
                 <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   {/* ★ 波紋の専用アイコンに変更 */}
+                   {/* ★ 新しい波紋アイコン */}
                    <IconRipple className="h-5 w-5" />
                 </div>
                 <div>
@@ -1249,7 +1250,6 @@ export default function RadarPage() {
                     </div>
                   </div>
                   
-                  {/* 右端の矢印アイコン */}
                   <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">
                      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
                   </div>
@@ -1269,7 +1269,7 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
                 <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   {/* ★ お椀の専用アイコンに変更 */}
+                   {/* ★ 新しいお椀アイコン */}
                    <IconBowl className="h-5 w-5" />
                 </div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">
