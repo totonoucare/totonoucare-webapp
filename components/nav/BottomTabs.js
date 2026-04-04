@@ -12,6 +12,7 @@ function IconHome() {
     </svg>
   );
 }
+
 function IconCheck() {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -19,12 +20,19 @@ function IconCheck() {
     </svg>
   );
 }
+
+// ★ 新しいプレミアムなレーダーアイコン
 function IconRadar() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 12l8-4" />
-      <path d="M12 12a8 8 0 1 0 8 8" />
-      <path d="M12 12V4" />
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {/* レーダーの外周と内周の波紋（透明度を下げて奥行きを出す） */}
+      <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z" opacity="0.3" />
+      <path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" opacity="0.3" />
+      {/* 索敵（スキャン）するビームのライン */}
+      <path d="M12 12V2" />
+      <path d="M12 12l5.5-5.5" strokeDasharray="1 3" opacity="0.8" />
+      {/* 中央の現在地（ターゲット） */}
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -58,7 +66,8 @@ export default function BottomTabs() {
         >
           <Icon />
         </span>
-        <span className={`text-[10px] uppercase tracking-wider ${isActive ? "font-black" : "font-extrabold"}`}>
+        {/* 日本語が綺麗に収まるようにタイポグラフィを調整 */}
+        <span className={`text-[10px] ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
         </span>
       </button>
@@ -70,13 +79,13 @@ export default function BottomTabs() {
       {/* 背景の美しいグラスモーフィズム */}
       <div className="absolute inset-0 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60" />
       {/* タブとコンテンツの境界線 */}
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[var(--ring)] to-transparent" />
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
       
-      <div className="relative mx-auto w-full max-w-[440px] px-6 py-2">
-        <div className="flex items-stretch justify-between gap-2">
-          {item("home", "Home", IconHome, "/")}
-          {item("check", "Check", IconCheck, "/check")}
-          {item("radar", "Radar", IconRadar, "/radar")}
+      <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
+        <div className="flex items-stretch justify-between gap-1">
+          {item("home", "ホーム", IconHome, "/")}
+          {item("check", "体質チェック", IconCheck, "/check")}
+          {item("radar", "体調予報", IconRadar, "/radar")}
         </div>
       </div>
     </div>
