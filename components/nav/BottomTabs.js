@@ -3,10 +3,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 
-// アイコン自体のサイズも h-6 w-6 -> h-5 w-5 に少し絞りました
 function IconHome() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 10.5 12 3l9 7.5" />
       <path d="M5 10v10h14V10" />
       <path d="M9 20v-6h6v6" />
@@ -16,19 +15,23 @@ function IconHome() {
 
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );
 }
 
+// ★ 新しいプレミアムなレーダーアイコン
 function IconRadar() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {/* レーダーの外周と内周の波紋（透明度を下げて奥行きを出す） */}
       <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z" opacity="0.3" />
       <path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" opacity="0.3" />
+      {/* 索敵（スキャン）するビームのライン */}
       <path d="M12 12V2" />
       <path d="M12 12l5.5-5.5" strokeDasharray="1 3" opacity="0.8" />
+      {/* 中央の現在地（ターゲット） */}
       <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
     </svg>
   );
@@ -51,21 +54,20 @@ export default function BottomTabs() {
         type="button"
         onClick={() => router.push(href)}
         className={[
-          // ★高さを抑えるため py-2.5 -> py-1.5、gap-1.5 -> gap-1 に短縮
-          "flex flex-1 flex-col items-center justify-center gap-1 rounded-[16px] py-1.5 transition-all duration-200 active:scale-[0.95]",
+          "flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[20px] py-2.5 transition-all duration-200 active:scale-[0.95]",
           isActive ? "text-[var(--accent-ink)]" : "text-slate-400 hover:text-slate-600",
         ].join(" ")}
       >
         <span
           className={[
-            // ★アイコンの枠を h-10 w-10 -> h-8 w-8 に絞り、角丸を調整
-            "grid h-8 w-8 place-items-center rounded-[10px] transition-all duration-300",
+            "grid h-10 w-10 place-items-center rounded-[14px] transition-all duration-300",
             isActive ? "bg-[var(--mint)] shadow-sm ring-1 ring-[var(--ring)] scale-110" : "bg-transparent",
           ].join(" ")}
         >
           <Icon />
         </span>
-        <span className={`text-[9px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
+        {/* 日本語が綺麗に収まるようにタイポグラフィを調整 */}
+        <span className={`text-[10px] ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
         </span>
       </button>
@@ -73,13 +75,13 @@ export default function BottomTabs() {
   };
 
   return (
-    // ★ z-indexを 50 -> 40 に落とし、モーダル（シート）が上に被さるようにしました
-    <div className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]">
+    <div className="fixed inset-x-0 bottom-0 z-50 pb-[env(safe-area-inset-bottom)]">
+      {/* 背景の美しいグラスモーフィズム */}
       <div className="absolute inset-0 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60" />
+      {/* タブとコンテンツの境界線 */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
       
-      {/* ★ 全体の上下余白を py-2 -> py-1.5 に */}
-      <div className="relative mx-auto w-full max-w-[440px] px-4 py-1.5">
+      <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
           {item("check", "体質チェック", IconCheck, "/check")}
