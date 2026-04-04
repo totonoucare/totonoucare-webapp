@@ -10,10 +10,8 @@ import {
   IconChecklist,
   IconWeather,
   IconCalendar,
-  IconConstitution, // ★ベース体質
-  IconBodyLine,     // ★経絡ライン
-  IconTsubo,        // ★ツボ
-  IconBowl,         // ★食養生
+  IconCore,
+  IconBodyLine,
 } from "@/components/illust/icons/guide";
 
 /* -----------------------------
@@ -99,18 +97,32 @@ export default function GuidePage() {
 
   return (
     <AppShell title="使い方ガイド" noTabs={true} headerLeft={headerLeft}>
-      {/* ヒーローセクション */}
-      <Module className="mb-4">
-        <div className="relative overflow-hidden p-6 bg-[color-mix(in_srgb,var(--mint),white_45%)]">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
-            未病レーダーの目的
-          </div>
-          <div className="mt-1 text-[22px] font-black tracking-tight text-slate-900 leading-[1.3]">
-            不調の波を先読みして、<br />
-            崩れる前に「先回り」する。
-          </div>
-          <div className="mt-3 text-[13px] font-bold leading-6 text-slate-700">
-            自分の「崩れ方のクセ」を知り、気象変化による負担をあらかじめ避けるためのセルフケアアプリです。
+      
+      {/* ヒーローセクション（プレミアム版） */}
+      <Module className="mb-4 overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm">
+        <div className="relative px-6 py-7 bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_35%)] to-[color-mix(in_srgb,var(--mint),white_75%)]">
+          {/* 装飾：ふんわりとした光彩エフェクトで奥行きを出す */}
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/70 blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-[var(--accent)]/10 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10">
+            {/* ピル型の美しいバッジ */}
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3.5 py-1.5 shadow-sm ring-1 ring-black/5 backdrop-blur-md">
+              <IconSpark className="h-4 w-4 text-[var(--accent)]" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
+                未病レーダーの目的
+              </span>
+            </div>
+
+            {/* タイトルのタイポグラフィを強化 */}
+            <div className="mt-5 text-[22px] font-black tracking-tight text-slate-900 leading-[1.35]">
+              不調の波を先読みして、<br />
+              崩れる前に<span className="text-[var(--accent-ink)]">「先回り」</span>する。
+            </div>
+            
+            <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
+              自分の「崩れ方のクセ」を知り、気象変化による負担をあらかじめ避けるためのセルフケアアプリです。
+            </div>
           </div>
         </div>
       </Module>
@@ -156,14 +168,12 @@ export default function GuidePage() {
           </div>
           
           <div className="space-y-4">
-            {/* ★ ここで Constitution を使用 */}
-            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconConstitution />}>
+            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconCore />}>
               バッテリー（余力）の大きさと、アクセル/ブレーキの踏みやすさを掛け合わせた、あなたの根本的な性質です。
             </GuideCard>
             <GuideCard tone="teal" title="気・血・水のバランス" icon={<IconSpark />}>
               エネルギー不足（気虚）や、潤い不足（津液不足）など、今現在どの要素が崩れているか（サブ体質）を表示します。
             </GuideCard>
-            {/* ★ ここで BodyLine を使用 */}
             <GuideCard tone="violet" title="張りやすい場所（経絡）" icon={<IconBodyLine />}>
               動作テストの違和感から、首・肩、背中、体側など、負担が蓄積しやすい「体のライン」を特定します。
             </GuideCard>
@@ -189,12 +199,10 @@ export default function GuidePage() {
             <GuideCard tone="amber" title="崩れやすさ（10段階）" icon={<IconWeather />}>
               気圧低下、寒暖差、湿気などの気象変化に対して、あなたの体質がどれくらいダメージを受けやすいかをスコア化します。
             </GuideCard>
-            {/* ★ ここで Tsubo を使用 */}
-            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconTsubo />}>
+            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconBodyLine />}>
               明日が「崩れやすい日」なら、前夜のうちに押しておきたいツボを提案します。お風呂上がりなどに30秒でOKです。
             </GuideCard>
-            {/* ★ ここで Bowl を使用 */}
-            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconBowl />}>
+            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconSpark />}>
               胃腸に負担をかけない食事や、冷えを防ぐ食材など、その日の天候と体質に合った「食事の取り入れ方」が分かります。
             </GuideCard>
 
