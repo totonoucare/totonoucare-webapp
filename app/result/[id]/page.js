@@ -25,7 +25,7 @@ import {
   IconBody,
   IconCloud,
 } from "@/components/illust/icons/result";
-// ★ 天候別アイコンのインポートを追加
+// ★ 天候別アイコン
 import { WeatherIcon } from "@/components/illust/icons/weather";
 
 // ✅ Next.js の useSearchParams 対策
@@ -199,8 +199,7 @@ function SegmentedTabs({ value, onChange }) {
 }
 
 /* -----------------------------
- * Weather compatibility Logic
- * （※いただいたコードのロジック・テキストを完全維持）
+ * Weather compatibility Logic (全不調対応版)
  * ---------------------------- */
 function clamp(v, min, max) {
   if (!Number.isFinite(v)) return min;
@@ -298,6 +297,7 @@ function weatherLabel(key) {
   return map[key] || key;
 }
 
+// ★ 全8種の不調に合わせた完全対応版
 function weatherBody(key, symptomKey, coreCode, subCodes) {
   const hasBloodDef = subCodes.includes("blood_deficiency");
   const hasFluidDef = subCodes.includes("fluid_deficiency");
@@ -305,31 +305,115 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
   const isBattSmall = coreCode.includes("batt_small");
   const isAccel = coreCode.startsWith("accel");
 
-  if (key === "pressure_down") return symptomKey === "headache" ? "変化に押される日に、首肩やこめかみの緊張が強まりやすく、巡りの詰まりから頭痛につながりやすくなります。" : "変化に押される日に、切り替えがうまくいかず、緊張や巡りの詰まりが出やすくなります。";
-  if (key === "pressure_up") return "張りつめた感じや、頭や上半身の詰まりが出やすい方向です。無理に詰め込まず、少しゆるめる意識が合います。";
-  if (key === "cold") return (hasBloodDef || isBattSmall) ? "冷え込む日は、支える余力が削れやすく、首肩のこわばりや消耗として出やすい方向です。" : "冷え込む日は、体が縮こまりやすく、こわばりやだるさとして出やすい方向です。";
-  if (key === "heat") return (hasFluidDef || isAccel) ? "気温が上がる日は、熱や刺激がこもりやすく、上半身の張りやのぼせ感につながりやすい方向です。" : "暑さや熱こもりで、詰まりや疲れが出やすい方向です。";
+  if (key === "pressure_down") {
+    if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "neck_shoulder") {
+      return "気圧が下がり外圧が緩む日に、体内の膨張感が強まりやすく、巡りの詰まりから頭や首肩の不調につながりやすくなります。";
+    }
+    if (symptomKey === "swelling" || symptomKey === "low_back_pain") {
+      return "気圧が下がり外圧が緩む日に、体内の巡りが滞りやすく、下半身や全体の重だるさにつながりやすい方向です。";
+    }
+    return "気圧が下がり外圧が緩む日に、体内の圧力が相対的に高まり、緊張や巡りの詰まり、だるさが出やすくなります。";
+  }
+
+  if (key === "pressure_up") {
+    if (symptomKey === "mood" || symptomKey === "sleep") {
+      return "外からの圧力が強まり、体がギュッと締め付けられることで、リラックスしにくく切り替えが難しくなる方向です。";
+    }
+    return "外からの圧力が強まり、体がギュッと締め付けられる方向です。無理に詰め込まず、少しゆるめる意識が合います。";
+  }
+
+  if (key === "cold") {
+    if (symptomKey === "neck_shoulder" || symptomKey === "low_back_pain") {
+      return "冷え込む日は、血管や筋肉が縮こまり、首肩や腰のこわばり・痛みとして出やすい方向です。";
+    }
+    if (hasBloodDef || isBattSmall || symptomKey === "fatigue") {
+      return "冷え込む日は、血管や筋肉が縮こまり、体を支える余力が削れやすく、消耗やだるさとして出やすい方向です。";
+    }
+    return "冷え込む日は、体がギュッと縮こまりやすく、こわばりやだるさとして出やすい方向です。";
+  }
+
+  if (key === "heat") {
+    if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "sleep") {
+      return "気温が上がる日は、熱がこもりやすくのぼせ気味になり、上半身の張りや睡眠の質低下につながりやすい方向です。";
+    }
+    if (hasFluidDef || isAccel) {
+      return "気温が上がる日は、熱や刺激がこもりやすく、消耗やのぼせ感につながりやすい方向です。";
+    }
+    return "暑さや熱こもりで、体力が奪われてだるさや疲れが出やすい方向です。";
+  }
+
   if (key === "damp") {
-    if (symptomKey === "headache") return "湿っぽい日は、重さが加わって巡りの悪さが増し、頭や体が重く感じやすくなります。";
-    if (hasFluidDamp) return "湿っぽい日は、重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
+    if (symptomKey === "swelling" || symptomKey === "fatigue" || symptomKey === "headache" || symptomKey === "dizziness") {
+      return "湿っぽい日は、体に余分な水分が溜まって重みが加わり、だるさやむくみ、頭の重さにつながりやすくなります。";
+    }
+    if (hasFluidDamp) {
+      return "湿っぽい日は、水分が停滞して重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
+    }
     return "湿っぽい日は、重さが増して動き出しにくくなりやすい方向です。";
   }
-  if (key === "dry") return (hasFluidDef || hasBloodDef) ? "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚や頭の疲れとして出やすい方向です。" : "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
+
+  if (key === "dry") {
+    if (hasFluidDef || hasBloodDef || symptomKey === "sleep" || symptomKey === "dizziness") {
+      return "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚の乾きや、睡眠の質低下として出やすい方向です。";
+    }
+    return "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
+  }
+
   return "この方向の天気変化で体調が揺れやすい傾向があります。";
 }
 
 function buildCompatIntro({ core, subLabels, symptomKey }) {
   const subShorts = Array.isArray(subLabels) ? subLabels.map((s) => s.short).filter(Boolean) : [];
   const subText = subShorts.length ? subShorts.join("・") : "大きな偏りなし";
-  return `${core?.title || "今回の体質"}は、${subText}の傾向が重なることで、天気の変化を受けた時の崩れ方に特徴が出やすいタイプです。特に「${SYMPTOM_LABELS[symptomKey] || symptomKey}」では、外の変化が首肩・頭まわりや全身の重さとして現れやすくなります。`;
+  return `${core?.title || "今回の体質"}は、${subText}の傾向が重なることで、天気の変化を受けた時の崩れ方に特徴が出やすいタイプです。特に「${SYMPTOM_LABELS[symptomKey] || symptomKey}」では、天候の影響がストレートに現れやすくなります。`;
 }
 
+// ★ 全8種の不調に合わせた完全対応版
 function buildLikelySigns({ symptomKey, subCodes }) {
-  if (symptomKey === "headache") return ["首肩〜こめかみが張ってくる", "頭が重い・すっきりしない", "呼吸が浅い感じになる", "朝の立ち上がりが重い"];
-  if (symptomKey === "sleep") return ["夜に切り替えにくい", "頭や体が緩みにくい", "眠っても疲れが残る"];
-  if (symptomKey === "mood") return ["気分が詰まる", "切り替えに時間がかかる", "重さやだるさが先に来る"];
-  if (subCodes.includes("fluid_damp")) return ["体が重い", "朝が動きにくい", "むくみっぽさが出る"];
-  return ["だるさが出る", "こわばりや重さが残る", "切り替えにくくなる"];
+  let signs = [];
+
+  switch (symptomKey) {
+    case "fatigue":
+      signs = ["だるさが抜けない", "体が重く感じる", "動くのがおっくうになる"];
+      break;
+    case "sleep":
+      signs = ["夜に切り替えにくい", "眠りが浅く感じる", "朝起きても疲れが残る"];
+      break;
+    case "neck_shoulder":
+      signs = ["首から肩にかけて張る", "背中までこわばる", "力が入りっぱなしになる"];
+      break;
+    case "low_back_pain":
+      signs = ["腰のあたりが重だるい", "立ち上がりにこわばる", "下半身が冷えやすい"];
+      break;
+    case "swelling":
+      signs = ["足や顔がむくみやすい", "体が水を含んだように重い", "靴や指輪がきつく感じる"];
+      break;
+    case "headache":
+      signs = ["首肩〜こめかみが張ってくる", "頭が重い・すっきりしない", "呼吸が浅い感じになる"];
+      break;
+    case "dizziness":
+      signs = ["フワフワ・ぐるぐるする", "目の奥が疲れる", "立ちくらみがしやすい"];
+      break;
+    case "mood":
+      signs = ["気分が詰まる・沈む", "イライラしやすくなる", "切り替えに時間がかかる"];
+      break;
+    default:
+      signs = ["だるさが出る", "こわばりや重さが残る", "切り替えにくくなる"];
+  }
+
+  // サブ体質による追加サイン
+  if (subCodes.includes("fluid_damp") && !signs.includes("むくみっぽさが出る")) {
+    signs.push("胃腸が重く感じる");
+  } 
+  if (subCodes.includes("qi_stagnation") && !signs.includes("ため息が出やすくなる")) {
+    signs.push("ため息が出やすくなる");
+  } 
+  if (subCodes.includes("blood_deficiency") && !signs.includes("目が疲れやすくなる")) {
+    signs.push("目が疲れやすくなる");
+  }
+
+  // 最大4つまでに絞る
+  return signs.slice(0, 4);
 }
 
 function buildRadarBridge({ symptomKey }) {
@@ -467,7 +551,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push(backHref)}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
     >
       ← 戻る
     </button>
@@ -477,7 +561,7 @@ function ResultPage({ params }) {
     <button
       type="button"
       onClick={() => router.push("/")}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-[#fdfefc]/90 backdrop-blur-md px-4 py-2 text-[12px] font-extrabold text-slate-700 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.1)] ring-1 ring-[var(--ring)] transition-all hover:bg-white active:scale-95"
     >
       ホーム
     </button>
@@ -713,7 +797,7 @@ function ResultPage({ params }) {
             </Card>
           ) : null}
 
-          {tab === "save" ? (
+          {tab === "save" && (
             <Card>
               <CardHeader icon={<IconBolt />} title="結果を保存する" sub="今後の予報精度が向上します" />
               <div className="px-6 pb-8 pt-5 space-y-5 text-center">
@@ -741,7 +825,7 @@ function ResultPage({ params }) {
                 </div>
               </div>
             </Card>
-          ) : null}
+          )}
 
           <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300 pb-4">
             Result ID: {id}
