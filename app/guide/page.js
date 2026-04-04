@@ -10,8 +10,10 @@ import {
   IconChecklist,
   IconWeather,
   IconCalendar,
-  IconCore,
+  IconConstitution, // ★ IconCoreから変更
   IconBodyLine,
+  IconTsubo,        // ★ 新規追加
+  IconBowl,         // ★ 新規追加
 } from "@/components/illust/icons/guide";
 
 /* -----------------------------
@@ -101,12 +103,10 @@ export default function GuidePage() {
       {/* ヒーローセクション（プレミアム版） */}
       <Module className="mb-4 overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm">
         <div className="relative px-6 py-7 bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_35%)] to-[color-mix(in_srgb,var(--mint),white_75%)]">
-          {/* 装飾：ふんわりとした光彩エフェクトで奥行きを出す */}
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/70 blur-2xl pointer-events-none" />
           <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-[var(--accent)]/10 blur-3xl pointer-events-none" />
 
           <div className="relative z-10">
-            {/* ピル型の美しいバッジ */}
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3.5 py-1.5 shadow-sm ring-1 ring-black/5 backdrop-blur-md">
               <IconSpark className="h-4 w-4 text-[var(--accent)]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
@@ -114,7 +114,6 @@ export default function GuidePage() {
               </span>
             </div>
 
-            {/* タイトルのタイポグラフィを強化 */}
             <div className="mt-5 text-[22px] font-black tracking-tight text-slate-900 leading-[1.35]">
               不調の波を先読みして、<br />
               崩れる前に<span className="text-[var(--accent-ink)]">「先回り」</span>する。
@@ -168,7 +167,7 @@ export default function GuidePage() {
           </div>
           
           <div className="space-y-4">
-            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconCore />}>
+            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconConstitution />}>
               バッテリー（余力）の大きさと、アクセル/ブレーキの踏みやすさを掛け合わせた、あなたの根本的な性質です。
             </GuideCard>
             <GuideCard tone="teal" title="気・血・水のバランス" icon={<IconSpark />}>
@@ -199,10 +198,10 @@ export default function GuidePage() {
             <GuideCard tone="amber" title="崩れやすさ（10段階）" icon={<IconWeather />}>
               気圧低下、寒暖差、湿気などの気象変化に対して、あなたの体質がどれくらいダメージを受けやすいかをスコア化します。
             </GuideCard>
-            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconBodyLine />}>
+            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconTsubo />}>
               明日が「崩れやすい日」なら、前夜のうちに押しておきたいツボを提案します。お風呂上がりなどに30秒でOKです。
             </GuideCard>
-            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconSpark />}>
+            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconBowl />}>
               胃腸に負担をかけない食事や、冷えを防ぐ食材など、その日の天候と体質に合った「食事の取り入れ方」が分かります。
             </GuideCard>
 
