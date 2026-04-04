@@ -1106,11 +1106,11 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                {/* ★ 気になる不調に変更 */}
+                {/* ★ お困りの不調に変更 */}
                 {symptomLabel ? (
                   <div className="shrink-0 rounded-[18px] bg-white/60 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 shadow-sm min-w-[100px] text-center">
                     <div className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                      気になる不調
+                      お困りの不調
                     </div>
                     <div className="mt-1 text-[16px] font-black tracking-tight opacity-90">
                       {symptomLabel}
