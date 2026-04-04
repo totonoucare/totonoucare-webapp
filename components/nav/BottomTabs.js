@@ -1,4 +1,4 @@
-// components/nav/BottomTabs.js
+ // components/nav/BottomTabs.js
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
