@@ -973,7 +973,7 @@ export default function RadarPage() {
             className="mt-8 w-full shadow-md"
           >
             再読み込み
-          </button>
+          </Button>
         </Module>
       </AppShell>
     );
