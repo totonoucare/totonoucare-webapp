@@ -1096,7 +1096,7 @@ export default function RadarPage() {
 
                   <div className="mt-6 flex items-end gap-2">
                     <div className="text-[11px] font-black uppercase tracking-widest opacity-60 mb-1.5">
-                      崩れやすさレベル
+                      崩れやすさ
                     </div>
                     <span className="text-[44px] font-black tracking-tighter leading-none">
                       {forecast.score_0_10}
