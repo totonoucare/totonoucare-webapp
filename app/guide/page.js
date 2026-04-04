@@ -8,11 +8,11 @@ import Button from "@/components/ui/Button";
 import { IconSpark, IconCheck, IconRadar, IconBolt } from "@/components/illust/icons/guide";
 
 /* -----------------------------
- * Segments + Card (軽量UI)
+ * Segments (ピル型タブUI)
  * ---------------------------- */
-function Segments({ items, active, onChange }) {
+function SegmentedTabs({ items, active, onChange }) {
   return (
-    <div className="rounded-[18px] bg-white ring-1 ring-[var(--ring)] p-1 flex gap-1">
+    <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
       {items.map((it) => {
         const a = it.key === active;
         return (
@@ -21,8 +21,10 @@ function Segments({ items, active, onChange }) {
             type="button"
             onClick={() => onChange(it.key)}
             className={[
-              "flex-1 rounded-[14px] px-3 py-2 text-xs font-extrabold transition",
-              a ? "bg-[var(--mint)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)]" : "text-slate-500",
+              "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
+              a
+                ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
+                : "text-slate-500 hover:text-slate-800",
             ].join(" ")}
           >
             {it.label}
@@ -33,16 +35,23 @@ function Segments({ items, active, onChange }) {
   );
 }
 
+/* -----------------------------
+ * MiniCard (SaaS風ソフトパネル)
+ * ---------------------------- */
 function MiniCard({ title, icon, children }) {
   return (
-    <div className="rounded-[20px] bg-white ring-1 ring-[var(--ring)] p-4">
-      <div className="flex items-center gap-3">
-        <div className="grid h-9 w-9 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_55%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
+    <div className="rounded-[24px] bg-slate-50 px-5 py-5 ring-1 ring-inset ring-[var(--ring)] transition-all hover:bg-slate-100/70">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
           {icon}
         </div>
-        <div className="text-sm font-extrabold text-slate-900">{title}</div>
+        <div className="text-[15px] font-black tracking-tight text-slate-900">
+          {title}
+        </div>
       </div>
-      <div className="mt-3 text-sm leading-7 text-slate-700">{children}</div>
+      <div className="text-[13px] font-bold leading-6 text-slate-600">
+        {children}
+      </div>
     </div>
   );
 }
@@ -68,7 +77,7 @@ export default function GuidePage() {
         <button
           type="button"
           onClick={() => router.push("/")}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
           ← 戻る
         </button>
@@ -77,26 +86,34 @@ export default function GuidePage() {
       {/* Hero */}
       <Module>
         <ModuleHeader icon={<IconSpark />} title="未病レーダーの使い方" sub="体質 × 気象で、崩れる前に先回りする" />
-        <div className="px-5 pb-6 pt-4 space-y-4">
-          <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_45%)] p-5 ring-1 ring-[var(--ring)]">
-            <div className="text-xs font-bold text-[var(--accent-ink)]/80">目的</div>
-            <div className="mt-1 text-lg font-extrabold tracking-tight text-slate-900">
-              不調が来る前に「危ないタイミング」を知って、先回りで軽く済ませる
-            </div>
-            <div className="mt-2 text-sm leading-7 text-slate-700">
-              体質チェックで「崩れ方のクセ」を掴み、体調予報で“揺れやすいタイミング”を先回りで備えます。
+        
+        <div className="px-5 pb-6 pt-4 space-y-5">
+          <div className="relative overflow-hidden rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_45%)] ring-1 ring-[var(--ring)] shadow-sm">
+            <div className="relative z-10 p-6">
+              <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+                目的
+              </div>
+              <div className="mt-1.5 text-[18px] font-black tracking-tight text-slate-900 leading-snug">
+                不調が来る前に「危ないタイミング」を知って、先回りで軽く済ませる
+              </div>
+              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-700">
+                体質チェックで「崩れ方のクセ」を掴み、体調予報で“揺れやすいタイミング”を先回りで備えます。
+              </div>
             </div>
           </div>
-
-          <Segments items={tabs} active={tab} onChange={setTab} />
         </div>
       </Module>
 
+      {/* スティッキー（追従）配置のタブ */}
+      <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70 py-2 mb-2">
+        <SegmentedTabs items={tabs} active={tab} onChange={setTab} />
+      </div>
+
       {/* Content */}
       {tab === "start" ? (
-        <Module>
+        <Module className="mb-8">
           <ModuleHeader icon={<IconSpark />} title="全体の流れ（3ステップ）" sub="迷ったらここだけ読めばOK" />
-          <div className="px-5 pb-6 pt-4 space-y-3">
+          <div className="px-5 pb-6 pt-4 space-y-4">
             <MiniCard title="① 体質チェック" icon={<IconCheck />}>
               直近2週間の傾向＋簡単な動作テストで、あなたの「崩れ方のクセ」を整理します。
             </MiniCard>
@@ -109,9 +126,11 @@ export default function GuidePage() {
               まずは「やる/やらない」で迷わない状態を作るのが目的です。
             </MiniCard>
 
-            <div className="grid gap-2 pt-2">
-              <Button onClick={() => router.push("/check")}>体質チェックをはじめる</Button>
-              <Button variant="secondary" onClick={() => router.push("/radar")}>
+            <div className="flex flex-col gap-3 pt-3">
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">
+                体質チェックをはじめる
+              </Button>
+              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">
                 体調予報を見る
               </Button>
             </div>
@@ -120,9 +139,9 @@ export default function GuidePage() {
       ) : null}
 
       {tab === "check" ? (
-        <Module>
+        <Module className="mb-8">
           <ModuleHeader icon={<IconCheck />} title="体質チェックの読み方" sub="何を測って、何が返る？" />
-          <div className="px-5 pb-6 pt-4 space-y-3">
+          <div className="px-5 pb-6 pt-4 space-y-4">
             <MiniCard title="体質の軸（コアタイプ）" icon={<IconSpark />}>
               「性格診断」ではなく、体調の波の出方をまとめた“型”です。覚えやすい名称＋裏の説明で理解できる設計にします。
             </MiniCard>
@@ -133,15 +152,19 @@ export default function GuidePage() {
               動作で違和感が出やすかったパターンを、体の“出やすいライン”として表示します。
             </MiniCard>
 
-            <Button onClick={() => router.push("/check")}>体質チェックへ</Button>
+            <div className="pt-3">
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">
+                体質チェックへ
+              </Button>
+            </div>
           </div>
         </Module>
       ) : null}
 
       {tab === "radar" ? (
-        <Module>
+        <Module className="mb-8">
           <ModuleHeader icon={<IconRadar />} title="体調予報の見方" sub="危険度の意味と使いどころ" />
-          <div className="px-5 pb-6 pt-4 space-y-3">
+          <div className="px-5 pb-6 pt-4 space-y-4">
             <MiniCard title="危険度＝崩れやすさの指標" icon={<IconRadar />}>
               体質と気象の組み合わせで「崩れやすい側か」を見ます。高い日は“攻め”より先に“守り”を入れる日です。
             </MiniCard>
@@ -152,7 +175,11 @@ export default function GuidePage() {
               無料でも使えます。より先の予報や、より細かい提案はプランで拡張されます。まずは見逃さない状態づくりが最優先です。
             </MiniCard>
 
-            <Button onClick={() => router.push("/radar")}>体調予報へ</Button>
+            <div className="pt-3">
+              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
+                体調予報へ
+              </Button>
+            </div>
           </div>
         </Module>
       ) : null}
