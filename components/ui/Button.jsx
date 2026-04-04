@@ -11,21 +11,27 @@ export function Button({
   className = "",
   ...props
 }) {
+  // プレミアムな触り心地：タップ時に少し沈み込む（active:scale-[0.98]）
   const base =
-    "inline-flex items-center justify-center rounded-lg font-medium transition " +
-    "focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center font-extrabold transition-all duration-200 " +
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] " +
+    "disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
 
   const variants = {
-    primary: "bg-slate-900 text-white hover:bg-slate-800",
-    secondary: "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50",
-    ghost: "bg-transparent text-slate-900 hover:bg-slate-100",
-    danger: "bg-rose-600 text-white hover:bg-rose-500",
+    // リッチなシャドウとスレート（墨色）のプライマリー
+    primary: "bg-slate-900 text-white shadow-[0_8px_16px_-6px_rgba(0,0,0,0.2)] hover:bg-slate-800 hover:shadow-[0_10px_20px_-6px_rgba(0,0,0,0.25)]",
+    // 繊細なボーダーとホバーエフェクトのセカンダリー
+    secondary: "bg-white text-slate-800 ring-1 ring-inset ring-[var(--ring)] shadow-sm hover:bg-slate-50 hover:text-slate-900",
+    // 背景が消えるゴーストボタン
+    ghost: "bg-transparent text-slate-600 hover:bg-slate-100/80 hover:text-slate-900",
+    danger: "bg-rose-600 text-white shadow-[0_8px_16px_-6px_rgba(225,29,72,0.2)] hover:bg-rose-500",
   };
 
   const sizes = {
-    sm: "h-9 px-3 text-sm",
-    md: "h-10 px-4 text-sm",
-    lg: "h-11 px-5 text-base",
+    // モバイルで押しやすい高さに調整し、角丸をリッチに
+    sm: "h-9 px-4 text-[13px] rounded-[12px]",
+    md: "h-12 px-6 text-[15px] rounded-[16px]",
+    lg: "h-14 px-8 text-[16px] rounded-[20px]",
   };
 
   return (
@@ -36,5 +42,4 @@ export function Button({
   );
 }
 
-// ここが重要：default export も追加
 export default Button;
