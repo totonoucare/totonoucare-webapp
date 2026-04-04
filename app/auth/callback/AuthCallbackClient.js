@@ -1,3 +1,4 @@
+// app/auth/callback/AuthCallbackClient.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -7,7 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 export default function AuthCallbackClient() {
   const router = useRouter();
   const sp = useSearchParams();
-  const [msg, setMsg] = useState("認証中…");
+  const [msg, setMsg] = useState("安全にログインしています…");
 
   const params = useMemo(() => {
     const resultId = sp?.get("result") || "";
@@ -20,12 +21,11 @@ export default function AuthCallbackClient() {
     (async () => {
       try {
         if (!supabase) {
-          setMsg("Supabaseが初期化できていません（環境変数未反映の可能性）。");
+          setMsg("システムエラー（環境変数未反映の可能性）。");
           return;
         }
 
         const url = new URL(window.location.href);
-
         const code = url.searchParams.get("code");
         const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
         const hashParams = new URLSearchParams(hash);
@@ -55,12 +55,13 @@ export default function AuthCallbackClient() {
         }
 
         if (!session) {
-          setMsg("ログインに失敗しました（リンク期限切れ/認証情報なし）。もう一度お試しください。");
+          setMsg("ログインの期限が切れているか、失敗しました。");
+          setTimeout(() => router.replace("/signup"), 3000);
           return;
         }
 
         if (params.resultId) {
-          setMsg("ログイン成功。結果を保存中…");
+          setMsg("ログイン完了。データを保存しています…");
           const res = await fetch(
             `/api/diagnosis/v2/events/${encodeURIComponent(params.resultId)}/attach`,
             {
@@ -69,12 +70,11 @@ export default function AuthCallbackClient() {
             }
           );
           if (!res.ok) {
-            const j = await res.json().catch(() => ({}));
-            console.warn("attach failed:", j);
+            console.warn("attach failed");
           }
         }
 
-        setMsg("完了。移動します…");
+        setMsg("完了しました。画面を移動します…");
 
         if (params.nextPath) {
           router.replace(params.nextPath);
@@ -85,18 +85,36 @@ export default function AuthCallbackClient() {
         }
       } catch (e) {
         console.error(e);
-        setMsg(`ログインに失敗しました：${e?.message || String(e)}`);
+        setMsg(`エラーが発生しました：${e?.message || String(e)}`);
       }
     })();
   }, [params.resultId, params.nextPath, router]);
 
   return (
-    <div className="space-y-3 p-6">
-      <h1 className="text-lg font-semibold">認証中</h1>
-      <p className="text-sm text-slate-700">{msg}</p>
-      <a className="text-sm underline" href="/signup">
-        登録画面へ戻る
-      </a>
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-white p-6">
+      <div className="flex flex-col items-center text-center animate-in fade-in duration-500">
+        {/* リッチなローディングアニメーション */}
+        <div className="relative flex h-20 w-20 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-[4px] border-slate-100" />
+          <div className="absolute inset-0 rounded-full border-[4px] border-[var(--accent)] border-t-transparent animate-spin" />
+        </div>
+        
+        <h1 className="mt-8 text-[20px] font-black tracking-tight text-slate-900">
+          認証中
+        </h1>
+        <p className="mt-2 text-[13px] font-bold text-slate-500 max-w-[240px]">
+          {msg}
+        </p>
+
+        {msg.includes("失敗") || msg.includes("エラー") ? (
+          <button
+            onClick={() => router.replace("/signup")}
+            className="mt-8 rounded-full bg-slate-100 px-6 py-2.5 text-[12px] font-extrabold text-slate-700 transition hover:bg-slate-200"
+          >
+            ログイン画面へ戻る
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
