@@ -1,3 +1,4 @@
+// app/page.js
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -14,12 +15,14 @@ import {
   HeroTitleMark,
   HomeHeaderMenu,
 } from "@/components/illust/home";
+// ★ 新しくアイコンをインポート
+import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
 
 const SESSION_TIMEOUT_MS = 5000;
 
-function IconChevron() {
+function IconChevron({ className = "h-4 w-4", ...props }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M9 18l6-6-6-6" />
     </svg>
   );
@@ -108,10 +111,16 @@ function signalBadge(signal) {
   return "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200";
 }
 
+function signalDotClass(signal) {
+  if (signal === 2) return "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
+  if (signal === 1) return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+  return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
+}
+
 function signalCardBg(signal) {
-  if (signal === 2) return "bg-[color-mix(in_srgb,var(--rose-50),white_50%)]";
-  if (signal === 1) return "bg-[color-mix(in_srgb,var(--amber-50),white_50%)]";
-  return "bg-[color-mix(in_srgb,var(--emerald-50),white_50%)]";
+  if (signal === 2) return "bg-gradient-to-br from-rose-50 to-[#fff1f2] ring-rose-200";
+  if (signal === 1) return "bg-gradient-to-br from-amber-50 to-[#fffbeb] ring-amber-200";
+  return "bg-gradient-to-br from-emerald-50 to-[#ecfdf5] ring-emerald-200";
 }
 
 function triggerLabel(mainTrigger, triggerDir) {
@@ -129,13 +138,13 @@ function ActionTile({ icon, title, sub, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[24px] bg-white p-5 text-left ring-1 ring-inset ring-[var(--ring)] shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98]"
+      className="rounded-[24px] bg-white p-5 text-left ring-1 ring-inset ring-[var(--ring)] shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] group"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm transition-transform group-hover:scale-105">
           {icon}
         </div>
-        <IconChevron className="text-slate-300" />
+        <IconChevron className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
       </div>
       <div className="mt-4 text-[15px] font-black tracking-tight text-slate-900">{title}</div>
       <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{sub}</div>
@@ -147,7 +156,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-        <div className="h-28 animate-pulse rounded-2xl bg-slate-100" />
+        <div className="h-32 animate-pulse rounded-2xl bg-slate-100" />
       </div>
     );
   }
@@ -158,12 +167,14 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       : (bundle?.error || "予報を読み込めませんでした。");
 
     return (
-      <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black tracking-wider text-slate-500">未設定</span>
+      <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm flex flex-col justify-between">
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black tracking-wider text-slate-500">未設定</span>
+          </div>
+          <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">{message}</div>
         </div>
-        <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">{message}</div>
         <Button className="mt-4 w-full shadow-sm" variant="secondary" onClick={onClick}>
           体調予報を開く
         </Button>
@@ -180,38 +191,42 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "relative rounded-[24px] p-5 text-left ring-1 ring-inset ring-[var(--ring)] shadow-sm transition-all hover:shadow-md active:scale-[0.98] overflow-hidden",
-        signalCardBg(forecast.signal) || "bg-white"
+        "relative rounded-[24px] p-5 text-left ring-1 ring-inset shadow-sm transition-all hover:shadow-md active:scale-[0.98] overflow-hidden flex flex-col justify-between group",
+        signalCardBg(forecast.signal) || "bg-white ring-[var(--ring)]"
       ].join(" ")}
     >
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div>
-          <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
+          <div className="text-[15px] font-black tracking-tight text-slate-900">{title}</div>
           <div className="mt-1 flex items-center gap-1 text-[11px] font-extrabold text-slate-500">
             <IconPin />
             {location.display_name || location.label || "地域未設定"}
           </div>
         </div>
-        <span className={["inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-black shadow-sm", signalBadge(forecast.signal)].join(" ")}>
+        <span className={["inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black shadow-sm", signalBadge(forecast.signal)].join(" ")}>
+          <span className={["h-2 w-2 rounded-full", signalDotClass(forecast.signal)].join(" ")} />
           {signalText(forecast.signal)}
         </span>
       </div>
 
-      <div className="relative z-10 mt-5 flex items-end justify-between gap-3">
+      <div className="relative z-10 mt-6 flex items-end justify-between gap-3">
         <div>
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">気になりやすい変化</div>
           <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
             {triggerLabel(forecast.main_trigger, forecast.trigger_dir)}
           </div>
         </div>
-        <div className="rounded-[16px] bg-white/80 backdrop-blur-sm px-3 py-2 text-right ring-1 ring-black/5 shadow-sm">
-          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">目安スコア</div>
-          <div className="mt-0.5 text-[18px] font-black tracking-tighter text-slate-900 leading-none">{score} <span className="text-[12px] opacity-50">/ 10</span></div>
+        <div className="text-right">
+          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">目安スコア</div>
+          <div className="text-[28px] font-black tracking-tighter text-slate-900 leading-none">
+            {score}<span className="text-[14px] opacity-40 ml-0.5">/10</span>
+          </div>
         </div>
       </div>
-
-      <div className="relative z-10 mt-4 text-[12px] font-bold leading-6 text-slate-700 line-clamp-2">
-        {forecast.why_short || "気象の変化と体質の重なりを見て、崩れやすさを出しています。"}
+      
+      {/* ホバー時に右下に矢印がチラッと見える演出 */}
+      <div className="absolute right-4 bottom-4 opacity-0 transition-opacity group-hover:opacity-100 text-slate-400">
+         <IconChevron />
       </div>
     </button>
   );
@@ -352,11 +367,10 @@ export default function HomePage() {
         title="ホーム"
         subtitle="未病レーダー"
         headerRight={
-          <Button size="sm" variant="ghost" onClick={() => router.push("/guide")} className="font-extrabold">使い方</Button>
+          <Button size="sm" variant="ghost" onClick={() => router.push("/guide")} className="font-extrabold text-slate-600 hover:bg-slate-100">使い方</Button>
         }
       >
         <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-          {/* 上部の美しいグラデーション背景 */}
           <div className="relative bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_20%)] via-[color-mix(in_srgb,var(--mint),white_70%)] to-white px-6 pt-10 pb-6 text-center">
             <HeroTitleMark />
             
@@ -369,23 +383,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ミニカードの装飾 */}
           <div className="px-5 mt-2">
             <HeroMiniCards compact />
           </div>
 
-          {/* アクションエリア */}
           <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
             <div className="grid gap-3">
               <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[15px]">
                 無料で体質チェックをはじめる
               </Button>
-              <Button variant="secondary" onClick={() => router.push("/signup")} className="py-4 shadow-sm text-[15px]">
+              <Button variant="secondary" onClick={() => router.push("/signup")} className="py-4 shadow-sm text-[15px] bg-white">
                 ログインする
               </Button>
             </div>
             
-            {/* チェックマーク付きの補足 */}
             <ul className="mt-6 space-y-2.5">
               <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
                 <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
@@ -417,6 +428,7 @@ export default function HomePage() {
         />
       }
     >
+      {/* ヒーローカード */}
       <Module className="p-8 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-16px_rgba(77,111,85,0.12)] min-h-[180px]">
         <div className="absolute right-[-20px] top-[-10px] z-[1] pointer-events-none opacity-90 scale-[0.8] origin-top-right">
           <HeroDashboardArt />
@@ -433,15 +445,14 @@ export default function HomePage() {
         </div>
       </Module>
 
+      {/* サマリー・ウィジェット群 */}
       <Module className="p-6">
         <div className="flex items-center justify-between gap-3">
-          <div>
+          <div className="flex items-center gap-2">
+            <IconRadar className="h-6 w-6 text-[var(--accent)]" />
             <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日のサマリー</div>
-            <div className="mt-1.5 text-[13px] font-bold leading-5 text-slate-500">
-              詳しい注意点やケアは体調予報で見られます。
-            </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>体調予報へ</Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>すべて見る</Button>
         </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -460,10 +471,11 @@ export default function HomePage() {
         </div>
       </Module>
 
+      {/* 次にやること */}
       <Module className="p-6">
-        <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
-        <div className="mt-1.5 text-[13px] font-bold leading-5 text-slate-500">
-          必要なページへ、ここから短く移動できます。
+        <div className="flex items-center gap-2.5">
+          <IconBolt className="h-6 w-6 text-slate-400" />
+          <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -494,29 +506,28 @@ export default function HomePage() {
         </div>
       </Module>
 
+      {/* あなたの体質 */}
       <Module className="p-6">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="flex items-center gap-2">
+             <IconCompass className="h-6 w-6 text-amber-500" />
             <div className="text-[18px] font-black tracking-tight text-slate-900">あなたの体質</div>
-            <div className="mt-1.5 text-[13px] font-bold leading-5 text-slate-500">
-              前回の結果を短く確認できます。
-            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push(latestResultHref || "/check")}>結果を見る</Button>
         </div>
 
         {latestResult && core ? (
-          <div className="mt-5 rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_50%)] p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+          <div className="mt-5 rounded-[24px] bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_50%)] to-[color-mix(in_srgb,var(--mint),white_70%)] p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
             <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">前回のチェック</div>
-            <div className="mt-1.5 text-[20px] font-black tracking-tight text-slate-900">{core.title}</div>
-            <div className="mt-1 text-[13px] font-bold text-slate-600">{core.short}</div>
+            <div className="mt-1.5 text-[22px] font-black tracking-tight text-slate-900">{core.title}</div>
+            <div className="mt-1 text-[13px] font-bold text-slate-700">{core.short}</div>
 
             {subs.length ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 {subs.map((sub) => (
                   <span
                     key={sub.code}
-                    className="rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700 ring-1 ring-black/5 shadow-sm"
+                    className="rounded-full bg-white/80 px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm"
                   >
                     {sub.short}
                   </span>
@@ -525,7 +536,7 @@ export default function HomePage() {
             ) : null}
 
             <div className="mt-5 text-[11px] font-extrabold tracking-wide text-slate-500">
-              {latestResult.created_at ? `最終チェック: ${new Date(latestResult.created_at).toLocaleDateString("ja-JP")}` : "最新の結果です。"}
+              {latestResult.created_at ? `最終更新: ${new Date(latestResult.created_at).toLocaleDateString("ja-JP")}` : "最新の結果です。"}
             </div>
           </div>
         ) : (
