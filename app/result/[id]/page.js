@@ -15,7 +15,6 @@ import {
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
 import { MeridianIllust } from "@/components/illust/meridian";
-// ★インポートを更新
 import {
   IconMemo,
   IconCompass,
@@ -26,6 +25,16 @@ import {
   IconBody,
   IconCloud,
 } from "@/components/illust/icons/result";
+
+// ★ 追加：天気アイコン
+import {
+  IconPressureUp,
+  IconPressureDown,
+  IconTempUp,
+  IconTempDown,
+  IconHumidUp,
+  IconHumidDown,
+} from "@/components/illust/icons/weather";
 
 // ✅ Next.js の useSearchParams 対策
 export default function ResultPageWrapper({ params }) {
@@ -59,7 +68,7 @@ function Card({ children, className = "" }) {
   return (
     <section
       className={[
-        "rounded-[32px] bg-white shadow-[0_12px_24px_-12px_rgba(0,0,0,0.05)] ring-1 ring-[var(--ring)] overflow-hidden",
+        "rounded-[32px] bg-white shadow-[0_12px_32px_-12px_rgba(0,0,0,0.06)] ring-1 ring-[var(--ring)] overflow-hidden",
         className,
       ].join(" ")}
     >
@@ -72,13 +81,13 @@ function CardHeader({ icon, title, sub, right }) {
   return (
     <div className="px-6 pt-6">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="grid h-12 w-12 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_30%)] shadow-sm ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
             {icon}
           </div>
-          <div className="min-w-0">
-            <div className="text-lg font-black tracking-tight text-slate-900">{title}</div>
-            {sub ? <div className="mt-0.5 text-[12px] font-bold text-slate-500">{sub}</div> : null}
+          <div className="min-w-0 pt-0.5">
+            <div className="text-[19px] font-black tracking-tight text-slate-900 leading-tight">{title}</div>
+            {sub ? <div className="mt-1 text-[12px] font-bold text-slate-500">{sub}</div> : null}
           </div>
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}
@@ -174,7 +183,6 @@ function SegmentedTabs({ value, onChange }) {
   return (
     <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur-md supports-[backdrop-filter]:bg-app/70 py-3">
       <div className="mx-auto w-full max-w-[440px] px-4">
-        {/* iOS風のピル型タブUI */}
         <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
           {tabs.map((t) => {
             const active = value === t.key;
@@ -184,7 +192,7 @@ function SegmentedTabs({ value, onChange }) {
                 type="button"
                 onClick={() => onChange(t.key)}
                 className={[
-                  "flex-1 h-[34px] rounded-full text-[13px] font-extrabold tracking-tight transition-all duration-200",
+                  "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
                   active
                     ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
                     : "text-slate-500 hover:text-slate-800",
@@ -203,6 +211,20 @@ function SegmentedTabs({ value, onChange }) {
 /* -----------------------------
  * Weather compatibility Logic
  * ---------------------------- */
+
+// ★ 追加：キーからアイコンを取得するヘルパー
+function getWeatherTriggerIcon(key, className) {
+  switch (key) {
+    case "pressure_up": return <IconPressureUp className={className} />;
+    case "pressure_down": return <IconPressureDown className={className} />;
+    case "heat": return <IconTempUp className={className} />;
+    case "cold": return <IconTempDown className={className} />;
+    case "damp": return <IconHumidUp className={className} />;
+    case "dry": return <IconHumidDown className={className} />;
+    default: return <IconPressureDown className={className} />;
+  }
+}
+
 function clamp(v, min, max) {
   if (!Number.isFinite(v)) return min;
   if (v < min) return min;
@@ -592,7 +614,6 @@ function ResultPage({ params }) {
           {tab === "overview" ? (
             <>
               <Card>
-                {/* ★ 詳しい見立て のアイコンを IconAnalysis に変更 */}
                 <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
                 <div className="px-6 pb-7 pt-5 space-y-4">
                   <SoftPanel tone="amber" title="整えポイント（最大2つ）" icon={<IconMemo />}>
@@ -628,12 +649,10 @@ function ResultPage({ params }) {
                     )}
                   </SoftPanel>
 
-                  {/* ★ 体の張りやすい場所 のアイコンを IconBody に変更 */}
                   <SoftPanel tone="violet" title="体の張りやすい場所（主）" icon={<IconBody />}>
                     <MeridianPanelContent line={meridianPrimary ? { ...meridianPrimary, code: computed?.primary_meridian } : null} tone="violet" />
                   </SoftPanel>
 
-                  {/* ★ 体の張りやすい場所 のアイコンを IconBody に変更 */}
                   <SoftPanel tone="teal" title="体の張りやすい場所（副）" icon={<IconBody />}>
                     <MeridianPanelContent line={meridianSecondary ? { ...meridianSecondary, code: computed?.secondary_meridian } : null} tone="teal" />
                   </SoftPanel>
@@ -724,7 +743,6 @@ function ResultPage({ params }) {
           {tab === "compat" ? (
             <>
               <Card>
-                {/* ★ 天気との相性 のアイコンを IconCloud に変更 */}
                 <CardHeader
                   icon={<IconCloud />}
                   title="天気との相性"
@@ -738,15 +756,21 @@ function ResultPage({ params }) {
                       {weatherCompat.items.map((item) => (
                         <div
                           key={item.key}
-                          className="rounded-[20px] bg-slate-50/50 ring-1 ring-slate-100 p-4"
+                          className="rounded-[18px] bg-white/80 ring-1 ring-[var(--ring)] p-4"
                         >
                           <div className="flex items-center justify-between gap-3">
-                            <div className="text-[14px] font-extrabold text-slate-900">{item.label}</div>
-                            <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-black/5 shadow-sm">
+                            <div className="flex items-center gap-2.5">
+                              {/* ★ 気象アイコンを配置 */}
+                              <div className="text-[var(--accent-ink)] opacity-80">
+                                {getWeatherTriggerIcon(item.key, "h-6 w-6")}
+                              </div>
+                              <div className="text-[14px] font-extrabold text-slate-900">{item.label}</div>
+                            </div>
+                            <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-black/5 shadow-sm">
                               {item.rankLabel}
                             </div>
                           </div>
-                          <div className="mt-2 text-[13px] leading-6 font-bold text-slate-600">{item.body}</div>
+                          <div className="mt-2.5 text-[13px] leading-6 font-bold text-slate-700">{item.body}</div>
                         </div>
                       ))}
                     </div>
@@ -757,7 +781,7 @@ function ResultPage({ params }) {
                       {weatherCompat.signs.map((s, idx) => (
                         <li
                           key={`${s}-${idx}`}
-                          className="rounded-[16px] bg-slate-50/50 ring-1 ring-slate-100 px-4 py-3"
+                          className="rounded-[16px] bg-white/80 ring-1 ring-[var(--ring)] px-4 py-3"
                         >
                           <div className="text-[13px] font-extrabold text-slate-700">・{s}</div>
                         </li>
@@ -765,7 +789,6 @@ function ResultPage({ params }) {
                     </ul>
                   </SoftPanel>
 
-                  {/* ★ 未病レーダーで分かること のアイコンを IconCompass に変更 */}
                   <SoftPanel tone="mint" title="未病レーダーで分かること" icon={<IconCompass />}>
                     <div className="text-[13px] leading-7 font-bold text-slate-700">{weatherCompat.radarBridge}</div>
                   </SoftPanel>
