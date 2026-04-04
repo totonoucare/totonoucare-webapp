@@ -1,3 +1,4 @@
+// components/records/RecordsPageClient.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -5,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
+import Button from "@/components/ui/Button";
 import {
   actionTagLabel,
   conditionLabel,
@@ -38,11 +40,37 @@ function hasRecorded(review) {
   return !!review;
 }
 
+// カレンダーのセルの色
 function cardTone(row) {
-  if (row?.review?.condition_level === 0) return "border-rose-200 bg-rose-50";
-  if (row?.review?.condition_level === 2) return "border-emerald-200 bg-emerald-50";
-  if (row?.review) return "border-amber-200 bg-amber-50";
-  return "border-slate-200 bg-slate-50";
+  if (row?.review?.condition_level === 0) return "ring-rose-200 bg-rose-50 text-rose-900";
+  if (row?.review?.condition_level === 2) return "ring-emerald-200 bg-emerald-50 text-emerald-900";
+  if (row?.review) return "ring-amber-200 bg-amber-50 text-amber-900";
+  return "ring-[var(--ring)] bg-slate-50 text-slate-400";
+}
+
+function SegmentedTabs({ tabs, value, onChange }) {
+  return (
+    <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
+      {tabs.map((t) => {
+        const active = value === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => onChange(t.key)}
+            className={[
+              "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
+              active
+                ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
+                : "text-slate-500 hover:text-slate-800",
+            ].join(" ")}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function RecordsPageClient({ initialTab = "calendar" }) {
@@ -171,26 +199,28 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
   if (loadingSession) {
     return (
-      <AppShell title="記録" subtitle="読み込み中…">
-        <div className="h-40 animate-pulse rounded-[28px] bg-slate-200" />
+      <AppShell title="記録と振り返り" subtitle="読み込み中…">
+        <div className="space-y-4 pt-2">
+           <div className="h-12 w-full rounded-full bg-slate-200 animate-pulse" />
+           <div className="h-64 w-full rounded-[32px] bg-slate-200 animate-pulse" />
+        </div>
       </AppShell>
     );
   }
 
   if (!session) {
     return (
-      <AppShell title="記録" subtitle="ログインが必要です">
+      <AppShell title="記録と振り返り" subtitle="ログインが必要です">
         <Module className="p-6">
-          <div className="text-xl font-extrabold text-slate-900">ログインが必要です</div>
-          <div className="mt-2 text-sm font-bold leading-6 text-slate-600">
-            記録と週次レポートはログイン後に使えます。
+          <div className="text-[18px] font-black tracking-tight text-slate-900">ログインが必要です</div>
+          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+            記録カレンダーや週次レポートは、ログイン後にご利用いただけます。
           </div>
-          <button
-            onClick={() => router.push("/signup")}
-            className="mt-5 w-full rounded-2xl bg-slate-900 py-3 text-sm font-extrabold text-white"
-          >
-            無料で登録・ログイン
-          </button>
+          <div className="mt-6 space-y-3">
+             <Button onClick={() => router.push("/signup")} className="w-full shadow-md">
+                無料で登録・ログイン
+             </Button>
+          </div>
         </Module>
       </AppShell>
     );
@@ -206,60 +236,43 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
   return (
     <AppShell
-      title="記録"
-      subtitle="記録カレンダーと週次レポート"
+      title="記録と振り返り"
       headerRight={
         <button
           onClick={() => router.push("/radar")}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
+          className="rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] transition-all hover:bg-slate-50 active:scale-95"
         >
           レーダーへ
         </button>
       }
     >
-      <Module className="p-5">
-        <div className="text-lg font-extrabold text-slate-900">記録と振り返り</div>
-        <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-          その日の記録をあとから見返して、1週間の傾向をまとめて確認できます。
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
-          <button
-            onClick={() => changeTab("calendar")}
-            className={[
-              "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-              tab === "calendar" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
-            ].join(" ")}
-          >
-            記録カレンダー
-          </button>
-          <button
-            onClick={() => changeTab("report")}
-            className={[
-              "rounded-[1rem] px-4 py-3 text-sm font-extrabold transition",
-              tab === "report" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
-            ].join(" ")}
-          >
-            週次レポート
-          </button>
-        </div>
-      </Module>
+      <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70 py-2 mb-2">
+        <SegmentedTabs
+          tabs={[
+            { key: "calendar", label: "カレンダー" },
+            { key: "report", label: "週次レポート" },
+          ]}
+          value={tab}
+          onChange={changeTab}
+        />
+      </div>
 
       {tab === "calendar" ? (
-        <>
+        <div className="space-y-6">
+          {/* カレンダーモジュール */}
           <Module className="p-5">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 bg-slate-50 rounded-full ring-1 ring-inset ring-[var(--ring)] p-1">
               <button
                 onClick={() => {
                   const d = new Date(year, month - 2, 1);
                   setYear(d.getFullYear());
                   setMonth(d.getMonth() + 1);
                 }}
-                className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700"
+                className="rounded-full bg-white px-4 py-2.5 text-[12px] font-extrabold text-slate-600 shadow-sm ring-1 ring-black/5 hover:text-slate-900 transition-colors"
               >
-                ← 前月
+                ← 先月
               </button>
-              <div className="text-sm font-extrabold text-slate-900">
+              <div className="text-[15px] font-black tracking-tight text-slate-900">
                 {year}年 {month}月
               </div>
               <button
@@ -268,26 +281,26 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                   setYear(d.getFullYear());
                   setMonth(d.getMonth() + 1);
                 }}
-                className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700"
+                className="rounded-full bg-white px-4 py-2.5 text-[12px] font-extrabold text-slate-600 shadow-sm ring-1 ring-black/5 hover:text-slate-900 transition-colors"
               >
                 次月 →
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-7 gap-2 text-center text-[11px] font-extrabold text-slate-500">
+            <div className="mt-5 grid grid-cols-7 gap-2 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
               {["日", "月", "火", "水", "木", "金", "土"].map((x) => (
                 <div key={x}>{x}</div>
               ))}
             </div>
 
             {monthLoading ? (
-              <div className="mt-4 text-sm font-bold text-slate-600">読み込み中…</div>
+              <div className="mt-6 text-center text-[13px] font-bold text-slate-500">読み込み中…</div>
             ) : monthError ? (
-              <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+              <div className="mt-4 rounded-[16px] bg-rose-50 px-4 py-3 text-[13px] font-bold text-rose-700 ring-1 ring-inset ring-rose-200">
                 {monthError}
               </div>
             ) : (
-              <div className="mt-3 grid grid-cols-7 gap-2">
+              <div className="mt-3 grid grid-cols-7 gap-1.5">
                 {Array.from({ length: first.getDay() }).map((_, i) => (
                   <div key={`blank-${i}`} />
                 ))}
@@ -302,32 +315,27 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                       type="button"
                       onClick={() => setSelectedDate(day.date)}
                       className={[
-                        "aspect-square rounded-2xl border p-2 text-left transition",
+                        "aspect-[4/5] rounded-[16px] p-1.5 text-center transition-all duration-200 flex flex-col items-center ring-1 ring-inset",
                         cardTone(row),
-                        isSelected ? "ring-2 ring-slate-300" : "",
+                        isSelected ? "ring-2 ring-slate-400 scale-105 shadow-md z-10" : "hover:bg-slate-100",
                       ].join(" ")}
                     >
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="text-xs font-extrabold text-slate-900">
-                          {Number(day.date.slice(-2))}
-                        </div>
-                        {row?.forecast ? (
-                          <span
+                      <div className={`text-[13px] font-black ${isSelected ? "text-slate-900" : ""}`}>
+                        {Number(day.date.slice(-2))}
+                      </div>
+                      
+                      <div className="mt-auto w-full flex flex-col items-center gap-0.5">
+                         {row?.forecast ? (
+                          <div
                             className={[
-                              "inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-extrabold",
-                              signalBadgeClass(row.forecast.signal),
+                              "h-1.5 w-1.5 rounded-full",
+                              row.forecast.signal === 2 ? "bg-rose-500" : row.forecast.signal === 1 ? "bg-amber-400" : "bg-emerald-500"
                             ].join(" ")}
-                          >
-                            {signalLabel(row.forecast.signal)}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-4 text-center text-[11px] font-extrabold text-slate-700">
-                        {isRecorded ? conditionLabel(row.review.condition_level) : "未記録"}
-                      </div>
-                      <div className="mt-1 text-center text-[10px] font-bold text-slate-500">
-                        {isRecorded ? preventLabel(row.review.prevent_level) : ""}
+                          />
+                        ) : <div className="h-1.5" />}
+                        <div className="text-[9px] font-extrabold opacity-70 w-full truncate px-0.5">
+                          {isRecorded ? conditionLabel(row.review.condition_level).slice(0, 3) : ""}
+                        </div>
                       </div>
                     </button>
                   );
@@ -336,62 +344,64 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
             )}
           </Module>
 
-          <Module className="p-5">
-            <div className="flex items-start justify-between gap-3">
+          {/* 選択した日の詳細モジュール */}
+          <Module className="p-6">
+            <div className="flex items-start justify-between gap-3 mb-5">
               <div>
-                <div className="text-[11px] font-extrabold text-slate-500">
+                <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
                   {formatDateLabel(selectedDate)}
                 </div>
-                <div className="mt-1 text-lg font-extrabold text-slate-900">その日の記録</div>
+                <div className="mt-1 text-[18px] font-black tracking-tight text-slate-900">その日の記録</div>
               </div>
-              <button
+              <Button
+                size="sm"
+                variant={selectedRow?.review ? "secondary" : "primary"}
                 onClick={() => setEditorOpen(true)}
-                className="rounded-full bg-slate-900 px-4 py-2 text-xs font-extrabold text-white"
               >
                 {selectedRow?.review ? "編集する" : "記録する"}
-              </button>
+              </Button>
             </div>
 
             {selectedRow?.forecast ? (
-              <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+              <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)] mb-4">
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
+                  保存されている予報
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={[
-                      "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold",
+                      "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-extrabold shadow-sm ring-1 ring-inset",
                       signalBadgeClass(selectedRow.forecast.signal),
                     ].join(" ")}
                   >
                     {signalLabel(selectedRow.forecast.signal)}
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
                     {selectedRow.forecast.score_0_10}/10
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
                     {triggerLabel(selectedRow.forecast.main_trigger, selectedRow.forecast.trigger_dir)}
                   </span>
-                </div>
-                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-700">
-                  {selectedRow.forecast.why_short || "その日の予報が保存されています。"}
                 </div>
               </div>
             ) : null}
 
             {selectedRow?.review ? (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">その日の体調</div>
+              <div className="space-y-3">
+                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">体調はどうだった？</div>
                   <div className="mt-1 text-[15px] font-extrabold text-slate-900">
                     {conditionLabel(selectedRow.review.condition_level)}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">先回りできた？</div>
+                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">先回りできた？</div>
                   <div className="mt-1 text-[15px] font-extrabold text-slate-900">
                     {preventLabel(selectedRow.review.prevent_level)}
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">やったこと</div>
+                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">やったこと</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(selectedRow.review.action_tags || []).length ? (
                       selectedRow.review.action_tags.map((tag) => (
@@ -403,55 +413,59 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm font-bold text-slate-500">記録なし</span>
+                      <span className="text-[13px] font-bold text-slate-500">記録なし</span>
                     )}
                   </div>
                 </div>
                 {selectedRow.review.note ? (
-                  <div className="rounded-2xl border border-slate-100 bg-white px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">ひとことメモ</div>
-                    <div className="mt-1 text-[13px] font-bold leading-6 text-slate-700">
+                  <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">メモ</div>
+                    <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                       {selectedRow.review.note}
                     </div>
                   </div>
                 ) : null}
               </div>
             ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm font-bold leading-6 text-slate-600">
-                まだ記録がありません。しんどかった日だけでも残しておくと、週次レポートの精度が上がります。
+              <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center">
+                 <div className="text-[14px] font-black text-slate-700">まだ記録がありません</div>
+                 <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                    しんどかった日だけでも残しておくと、週次レポートの精度が上がります。
+                 </div>
               </div>
             )}
           </Module>
-        </>
+        </div>
       ) : (
-        <>
-          <Module className="p-5">
-            <div className="text-base font-extrabold text-slate-900">今週のふり返り</div>
-            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+        /* 週次レポート */
+        <div className="space-y-6">
+          <Module className="p-6">
+            <div className="text-[18px] font-black tracking-tight text-slate-900">今週のふり返り</div>
+            <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
               この1週間の体調と先回りケアを、ひとことでまとめています。
             </div>
 
             {reportLoading ? (
-              <div className="mt-3 text-sm font-bold text-slate-600">読み込み中…</div>
+              <div className="mt-6 text-[13px] font-bold text-slate-500">読み込み中…</div>
             ) : reportError ? (
-              <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+              <div className="mt-6 rounded-[16px] bg-rose-50 px-4 py-3 text-[13px] font-bold text-rose-700 ring-1 ring-inset ring-rose-200">
                 {reportError}
               </div>
             ) : (
               <>
-                <div className="mt-3 text-lg font-extrabold leading-7 text-slate-900">
+                <div className="mt-6 text-[16px] font-black tracking-tight leading-7 text-[var(--accent-ink)] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-5 rounded-[24px] ring-1 ring-[var(--ring)]">
                   {report?.summary?.weekly_comment || "直近1週間の傾向をまとめます。"}
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">記録できた日</div>
-                    <div className="mt-1 text-2xl font-extrabold text-slate-900">
-                      {report?.summary?.recorded_days || 0}/{report?.summary?.total_days || 7}
+                  <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">記録できた日</div>
+                    <div className="mt-1.5 text-[22px] font-black tracking-tighter text-slate-900">
+                      {report?.summary?.recorded_days || 0} <span className="text-[13px] text-slate-400">/ {report?.summary?.total_days || 7}</span>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">先回りできた日</div>
-                    <div className="mt-1 text-2xl font-extrabold text-slate-900">
+                  <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">先回りできた日</div>
+                    <div className="mt-1.5 text-[22px] font-black tracking-tighter text-slate-900">
                       {report?.summary?.well_prevented_days || 0}
                     </div>
                   </div>
@@ -462,67 +476,67 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
           {!reportLoading && !reportError ? (
             <>
-              <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">今週、影響しやすかったもの</div>
-                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+              <Module className="p-6">
+                <div className="text-[18px] font-black tracking-tight text-slate-900">影響しやすかったもの</div>
+                <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
                   気圧・気温・湿度のうち、今週はどれの影響が出やすかったかを見ています。
                 </div>
 
-                <div className="mt-4 grid gap-3">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">影響が出やすかったもの</div>
-                    <div className="mt-1 text-[15px] font-extrabold text-slate-900">
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-[var(--ring)] shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">一番の要因</div>
+                    <div className="mt-1.5 text-[16px] font-black tracking-tight text-[var(--accent-ink)]">
                       {report?.summary?.top_trigger_label || "まだ判定中"}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <div className="text-[11px] font-extrabold text-slate-500">つらさが出た日</div>
-                    <div className="mt-1 text-[15px] font-extrabold text-slate-900">
+                  <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-[var(--ring)] shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">つらさが出た日</div>
+                    <div className="mt-1.5 text-[16px] font-black tracking-tight text-[var(--accent-ink)]">
                       {report?.summary?.hard_days || 0}日
                     </div>
                   </div>
                 </div>
               </Module>
 
-              <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">予報と体調の答え合わせ</div>
-                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+              <Module className="p-6">
+                <div className="text-[18px] font-black tracking-tight text-slate-900">予報と体調の答え合わせ</div>
+                <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
                   その日の予報と、実際の体調や先回りできたかを見比べられます。
                 </div>
 
-                <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+                <div className="mt-5 flex gap-3 overflow-x-auto pb-4 snap-x">
                   {(report?.rows || []).map((row) => (
                     <div
                       key={row.date}
-                      className="w-[148px] shrink-0 rounded-2xl border border-slate-200 bg-white p-3"
+                      className="w-[160px] shrink-0 snap-center rounded-[24px] bg-slate-50 p-5 ring-1 ring-inset ring-[var(--ring)]"
                     >
-                      <div className="text-[11px] font-extrabold text-slate-500">
+                      <div className="text-[11px] font-black tracking-widest text-[var(--accent-ink)]/70">
                         {formatDateLabel(row.date)}
                       </div>
 
                       {row.forecast ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="mt-3 flex flex-wrap gap-1.5">
                           <span
                             className={[
-                              "inline-flex items-center rounded-full border px-2 py-1 text-[10px] font-extrabold",
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black shadow-sm ring-1 ring-inset",
                               signalBadgeClass(row.forecast.signal),
                             ].join(" ")}
                           >
                             {signalLabel(row.forecast.signal)}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-extrabold text-slate-600">
+                          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
                             {triggerLabel(row.forecast.main_trigger, row.forecast.trigger_dir)}
                           </span>
                         </div>
                       ) : null}
 
-                      <div className="mt-3 text-[11px] font-extrabold text-slate-500">その日の体調</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900">
+                      <div className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">その日の体調</div>
+                      <div className="mt-0.5 text-[14px] font-black text-slate-900">
                         {row.review ? conditionLabel(row.review.condition_level) : "未記録"}
                       </div>
 
-                      <div className="mt-2 text-[11px] font-extrabold text-slate-500">先回りできた？</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900">
+                      <div className="mt-3 text-[10px] font-black uppercase tracking-widest text-slate-400">先回りできた？</div>
+                      <div className="mt-0.5 text-[14px] font-black text-slate-900">
                         {row.review ? preventLabel(row.review.prevent_level) : "—"}
                       </div>
                     </div>
@@ -530,42 +544,42 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                 </div>
               </Module>
 
-              <Module className="p-5">
-                <div className="text-base font-extrabold text-slate-900">今週の先回りケア</div>
-                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+              <Module className="p-6">
+                <div className="text-[18px] font-black tracking-tight text-slate-900">今週の先回りケア</div>
+                <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
                   よくやっていた対策や、来週に活かしたいポイントをまとめています。
                 </div>
 
-                <div className="mt-4">
-                  <div className="text-[11px] font-extrabold text-slate-500">今週よくやったこと</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-5">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">今週よくやったこと</div>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
                     {(report?.summary?.top_action_tags || []).length ? (
                       report.summary.top_action_tags.map((tag) => (
                         <span
                           key={tag.value}
-                          className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
+                          className="rounded-full bg-white px-3.5 py-1.5 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-black/5"
                         >
-                          {actionTagLabel(tag.value)} × {tag.count}
+                          {actionTagLabel(tag.value)} <span className="opacity-50 mx-1">×</span> {tag.count}
                         </span>
                       ))
                     ) : (
-                      <div className="text-sm font-bold text-slate-500">
+                      <div className="text-[13px] font-bold text-slate-500">
                         まだ集計できるほど記録がありません。
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4">
-                  <div className="text-[11px] font-extrabold text-emerald-700">来週の意識ポイント</div>
-                  <div className="mt-1 text-[13px] font-bold leading-6 text-emerald-900">
+                <div className="mt-6 rounded-[24px] bg-amber-50 px-5 py-5 ring-1 ring-inset ring-amber-200 shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-amber-700/80">来週の意識ポイント</div>
+                  <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-amber-900">
                     {report?.summary?.next_tip}
                   </div>
                 </div>
               </Module>
             </>
           ) : null}
-        </>
+        </div>
       )}
 
       <ReviewFormSheet
