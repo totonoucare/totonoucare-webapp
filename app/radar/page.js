@@ -13,6 +13,8 @@ import {
   IconMemo,
   IconRadar,
   IconResult,
+  IconRipple, // ★ 追加
+  IconBowl,   // ★ 追加
 } from "@/components/illust/icons/result";
 import {
   actionTagLabel,
@@ -528,6 +530,9 @@ function PointDetailSheet({ point, onClose }) {
             </ul>
           </div>
         ) : null}
+
+        {/* ★ スクロール領域の最下部の見切れを防ぐための見えないスペーサー（余白） */}
+        <div className="h-8 w-full sm:h-2" />
       </div>
     </div>
   );
@@ -1102,8 +1107,9 @@ export default function RadarPage() {
 
                 {symptomLabel ? (
                   <div className="shrink-0 rounded-[18px] bg-white/60 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 shadow-sm min-w-[100px] text-center">
+                    {/* ★ 体言止めに修正 */}
                     <div className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                      気になりやすい
+                      気になる不調
                     </div>
                     <div className="mt-1 text-[16px] font-black tracking-tight opacity-90">
                       {symptomLabel}
@@ -1168,8 +1174,20 @@ export default function RadarPage() {
                 <div className="mt-1 text-[16px] font-black tracking-tight text-[var(--accent-ink)]">
                   {coreLabel?.title || "—"}
                 </div>
+                
+                {/* ★ サブ体質（気血津液）のバッジを追加 */}
+                {subLabelObjects?.length > 0 ? (
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {subLabelObjects.map((s) => (
+                      <span key={s.code} className="rounded-md bg-white/60 px-2 py-0.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5">
+                        {s.short}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
                 {primaryLine ? (
-                  <div className="mt-1 text-[11px] font-bold text-[var(--accent-ink)]/80">
+                  <div className="mt-2 text-[11px] font-bold text-[var(--accent-ink)]/80">
                     負担が出やすい：{primaryLine.title}
                   </div>
                 ) : null}
@@ -1189,7 +1207,8 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
                 <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   <IconCompass className="h-5 w-5" />
+                   {/* ★ 波紋の専用アイコンに変更 */}
+                   <IconRipple className="h-5 w-5" />
                 </div>
                 <div>
                    <div className="text-[18px] font-black tracking-tight text-slate-900">
@@ -1250,7 +1269,8 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
                 <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   <IconBolt className="h-5 w-5" />
+                   {/* ★ お椀の専用アイコンに変更 */}
+                   <IconBowl className="h-5 w-5" />
                 </div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">
                   {sectionLabels.foodTitle}
