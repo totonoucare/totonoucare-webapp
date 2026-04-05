@@ -177,8 +177,6 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
     ? answers.env_vectors.filter((x) => x && x !== "none")
     : [];
 
-  const thermoAnswer = answers?.thermo || answers?.cold_heat || "neutral";
-
   const scores = {
     pressure_down: 0,
     pressure_up: 0,
@@ -231,9 +229,6 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
   if (coreCode.includes("batt_large")) { for (const k of Object.keys(scores)) scores[k] -= 0.03; }
   if (coreCode.startsWith("accel")) { scores.pressure_down += 0.06; scores.pressure_up += 0.05; scores.heat += 0.05; }
   if (coreCode.startsWith("brake")) { scores.cold += 0.08; scores.damp += 0.10; scores.pressure_down += 0.03; }
-
-  if (thermoAnswer === "heat") scores.heat += 0.08;
-  if (thermoAnswer === "cold") scores.cold += 0.08;
 
   if (envVectors.includes("pressure_shift")) { scores.pressure_down += 0.12; scores.pressure_up += 0.12; }
   if (envVectors.includes("temp_swing")) { scores.cold += 0.14; scores.heat += 0.14; }
