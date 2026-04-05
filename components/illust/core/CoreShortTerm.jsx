@@ -1,128 +1,212 @@
 "use client";
 
-export default function CoreShortTerm({ className = "h-full w-full", title = "短期集中型" }) {
+export default function CoreShortTerm({
+  className = "h-full w-full",
+  title = "短期集中型",
+}) {
   return (
-    <svg viewBox="0 0 200 120" className={className} role="img" aria-label={title}>
+    <svg
+      viewBox="0 0 320 180"
+      className={className}
+      role="img"
+      aria-label={title}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <title>{title}</title>
       <defs>
-        <linearGradient id="coreShortTermBg" x1="18" y1="12" x2="186" y2="104" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#fdf8ef" />
-          <stop offset="58%" stopColor="#f7f1e4" />
-          <stop offset="100%" stopColor="#ecf4ea" />
+        <linearGradient id="cst-card" x1="28" y1="22" x2="292" y2="156" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FBF8F0" />
+          <stop offset="55%" stopColor="#F6F0E4" />
+          <stop offset="100%" stopColor="#EEF3E9" />
+        </linearGradient>
+
+        <linearGradient id="cst-trail" x1="34" y1="84" x2="152" y2="92" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#AFC2B1" stopOpacity="0" />
+          <stop offset="100%" stopColor="#8BA68F" stopOpacity="0.88" />
         </linearGradient>
 
         <radialGradient
-          id="coreShortTermHalo"
+          id="cst-halo"
           cx="0"
           cy="0"
           r="1"
           gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(132 50) rotate(18) scale(56 36)"
+          gradientTransform="translate(214 88) rotate(-8) scale(90 54)"
         >
-          <stop offset="0%" stopColor="#f4b84f" stopOpacity="0.34" />
-          <stop offset="100%" stopColor="#f4b84f" stopOpacity="0" />
+          <stop offset="0%" stopColor="#F0B14B" stopOpacity="0.26" />
+          <stop offset="100%" stopColor="#F0B14B" stopOpacity="0" />
         </radialGradient>
 
-        <linearGradient id="coreShortTermTrail" x1="34" y1="42" x2="98" y2="72" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#98b89d" stopOpacity="0" />
-          <stop offset="100%" stopColor="#73977a" stopOpacity="0.75" />
+        <linearGradient id="cst-fur" x1="102" y1="66" x2="250" y2="126" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#D89A38" />
+          <stop offset="100%" stopColor="#E7AF49" />
+        </linearGradient>
+
+        <linearGradient id="cst-fur-dark" x1="130" y1="58" x2="254" y2="142" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#C9872C" />
+          <stop offset="100%" stopColor="#D99A39" />
         </linearGradient>
       </defs>
 
-      <rect x="10" y="12" width="180" height="96" rx="28" fill="url(#coreShortTermBg)" />
-      <rect x="18" y="20" width="164" height="80" rx="24" fill="none" stroke="#d8e3d5" strokeWidth="2" />
-      <ellipse cx="131" cy="49" rx="54" ry="34" fill="url(#coreShortTermHalo)" />
+      <rect x="18" y="16" width="284" height="148" rx="34" fill="url(#cst-card)" />
+      <rect x="28" y="28" width="264" height="124" rx="28" fill="none" stroke="#D7E1D3" strokeWidth="3" />
+      <ellipse cx="212" cy="88" rx="96" ry="56" fill="url(#cst-halo)" />
 
-      {/* アクセル感：走り抜ける残像 */}
-      <g stroke="url(#coreShortTermTrail)" strokeLinecap="round" fill="none">
-        <path d="M28 72 C52 70, 69 64, 88 55" strokeWidth="7" />
-        <path d="M24 54 C46 54, 63 50, 82 43" strokeWidth="4.5" opacity="0.82" />
-        <path d="M36 88 C58 86, 74 80, 90 69" strokeWidth="3.5" opacity="0.6" />
-      </g>
-      <g stroke="#a7c2ab" strokeWidth="3" strokeLinecap="round" opacity="0.75">
-        <path d="M44 44 L58 42" />
-        <path d="M54 92 L66 88" />
-        <path d="M64 34 L76 32" />
+      <g fill="none" strokeLinecap="round">
+        <path d="M40 112 C78 112, 106 103, 148 86" stroke="url(#cst-trail)" strokeWidth="12" />
+        <path d="M34 90 C76 90, 103 82, 146 67" stroke="url(#cst-trail)" strokeWidth="8" opacity="0.8" />
+        <path d="M58 132 C94 130, 118 121, 152 106" stroke="url(#cst-trail)" strokeWidth="6" opacity="0.56" />
+        <path d="M74 64 L104 58" stroke="#A9BDAA" strokeWidth="5" opacity="0.82" />
+        <path d="M86 142 L112 136" stroke="#A9BDAA" strokeWidth="5" opacity="0.72" />
+        <path d="M58 72 L82 68" stroke="#B9CBBB" strokeWidth="4" opacity="0.7" />
       </g>
 
-      {/* 地面の影 */}
-      <ellipse cx="118" cy="95" rx="54" ry="8" fill="#2f3b33" opacity="0.08" />
+      <ellipse cx="188" cy="140" rx="88" ry="12" fill="#2F3A31" opacity="0.08" />
 
-      {/* チーター本体：瞬発力はあるが、細身で余力は小さい */}
       <g>
-        {/* 尾 */}
-        <path d="M84 67 C73 60, 63 54, 48 48" fill="none" stroke="#d59a39" strokeWidth="7" strokeLinecap="round" />
-        <path d="M50 48 C43 46, 38 49, 36 54" fill="none" stroke="#3a2c22" strokeWidth="4" strokeLinecap="round" />
-
-        {/* 奥の脚 */}
-        <path d="M95 76 C88 86, 81 96, 72 103" fill="none" stroke="#d59a39" strokeWidth="9" strokeLinecap="round" />
-        <path d="M127 76 C138 84, 149 92, 160 101" fill="none" stroke="#d59a39" strokeWidth="9" strokeLinecap="round" opacity="0.82" />
-
-        {/* 胴体 */}
         <path
-          d="M79 64 C84 54, 101 47, 123 49 C141 51, 154 59, 156 67 C157 74, 146 80, 129 83 C110 86, 91 84, 81 76 C77 72, 76 68, 79 64 Z"
-          fill="#e0a33f"
+          d="M103 96 C91 87, 73 77, 53 66"
+          fill="none"
+          stroke="#D99D3C"
+          strokeWidth="11"
+          strokeLinecap="round"
         />
         <path
-          d="M91 68 C96 61, 110 57, 126 58 C138 59, 146 63, 146 68 C145 74, 137 78, 124 80 C110 82, 97 80, 91 75 C88 73, 88 70, 91 68 Z"
-          fill="#f7e8ca"
-          fillOpacity="0.88"
+          d="M55 66 C46 63, 38 67, 35 75"
+          fill="none"
+          stroke="#3B2A20"
+          strokeWidth="6"
+          strokeLinecap="round"
         />
 
-        {/* 頭部 */}
         <path
-          d="M130 53 C136 42, 150 36, 163 38 C172 39, 179 45, 179 51 C179 58, 173 64, 163 67 C151 70, 139 68, 132 61 C128 58, 128 55, 130 53 Z"
-          fill="#e0a33f"
+          d="M130 119 C121 130, 111 142, 96 154"
+          fill="none"
+          stroke="#D89A38"
+          strokeWidth="14"
+          strokeLinecap="round"
+          opacity="0.72"
         />
         <path
-          d="M154 49 C161 48, 168 51, 171 56 C169 62, 161 66, 153 66 C147 66, 142 62, 141 57 C142 53, 147 50, 154 49 Z"
-          fill="#f7e8ca"
+          d="M194 118 C211 128, 228 140, 247 154"
+          fill="none"
+          stroke="#D89A38"
+          strokeWidth="14"
+          strokeLinecap="round"
+          opacity="0.78"
         />
 
-        {/* 耳 */}
-        <path d="M140 40 L147 31 L151 43" fill="#6b4a2a" />
-        <path d="M153 38 L162 31 L163 43" fill="#6b4a2a" />
-        <path d="M142.5 39.5 L147 34.5 L149.5 41.5" fill="#f6d8af" />
-        <path d="M154.5 38.5 L160 33.5 L160.5 41.5" fill="#f6d8af" />
+        <path
+          d="M105 92
+             C112 76, 139 64, 174 64
+             C201 64, 224 72, 236 84
+             C243 91, 244 101, 237 109
+             C228 120, 206 127, 177 129
+             C146 131, 118 126, 107 114
+             C101 108, 100 99, 105 92 Z"
+          fill="url(#cst-fur)"
+        />
 
-        {/* 顔 */}
-        <circle cx="171" cy="57" r="2.8" fill="#2b211b" />
-        <ellipse cx="155" cy="50" rx="2.8" ry="3.6" transform="rotate(-10 155 50)" fill="#2b211b" />
-        <path d="M151 53 C150 58, 148 62, 146 66" fill="none" stroke="#2b211b" strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M155 61 C159 64, 164 65, 167 63" fill="none" stroke="#8a4a34" strokeWidth="2" strokeLinecap="round" />
-        <path d="M154 62 C156 67, 160 69, 164 67" fill="none" stroke="#f08aa2" strokeWidth="2.2" strokeLinecap="round" />
+        <path
+          d="M128 96
+             C136 87, 153 81, 174 81
+             C193 81, 209 86, 219 93
+             C221 101, 212 109, 194 113
+             C172 118, 144 116, 128 109
+             C124 105, 124 100, 128 96 Z"
+          fill="#F7E7C9"
+        />
 
-        {/* 手前の脚 */}
-        <path d="M109 79 C104 88, 98 96, 94 103" fill="none" stroke="#e0a33f" strokeWidth="9" strokeLinecap="round" />
-        <path d="M135 79 C130 89, 124 98, 118 103" fill="none" stroke="#e0a33f" strokeWidth="9" strokeLinecap="round" />
+        <path
+          d="M214 77
+             C223 60, 244 49, 265 50
+             C279 51, 291 59, 294 69
+             C296 80, 290 91, 277 98
+             C262 107, 241 109, 225 102
+             C213 96, 208 86, 214 77 Z"
+          fill="url(#cst-fur-dark)"
+        />
 
-        {/* 斑点 */}
-        <g fill="#2b211b" opacity="0.9">
-          <circle cx="93" cy="58" r="2.4" />
-          <circle cx="101" cy="66" r="2.8" />
-          <circle cx="110" cy="56" r="2.4" />
-          <circle cx="115" cy="72" r="2.3" />
-          <circle cx="124" cy="61" r="2.7" />
-          <circle cx="132" cy="73" r="2.6" />
-          <circle cx="140" cy="61" r="2.2" />
-          <circle cx="146" cy="70" r="2.2" />
-          <circle cx="145" cy="47" r="1.9" />
-          <circle cx="152" cy="43" r="1.8" />
+        <path
+          d="M244 69
+             C255 67, 266 70, 274 78
+             C272 87, 263 93, 251 94
+             C240 94, 231 89, 228 81
+             C230 74, 236 70, 244 69 Z"
+          fill="#F8E7C8"
+        />
+
+        <path d="M224 57 L236 40 L241 60 Z" fill="#6A4A2A" />
+        <path d="M246 54 L263 39 L264 63 Z" fill="#6A4A2A" />
+        <path d="M227 56 L235 46 L238 58 Z" fill="#F7D7AF" />
+        <path d="M249 54 L259 45 L260 60 Z" fill="#F7D7AF" />
+
+        <ellipse cx="256" cy="76" rx="5.2" ry="7" transform="rotate(-8 256 76)" fill="#2A211C" />
+        <circle cx="279" cy="91" r="5.2" fill="#2A211C" />
+        <circle cx="242" cy="71" r="4.1" fill="#2A211C" opacity="0.9" />
+
+        <path
+          d="M251 84 C248 93, 244 101, 240 108"
+          fill="none"
+          stroke="#2A211C"
+          strokeWidth="5.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M259 101 C266 107, 274 109, 280 105"
+          fill="none"
+          stroke="#8B4E37"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M258 102 C261 110, 269 114, 277 111"
+          fill="none"
+          stroke="#F08AA0"
+          strokeWidth="4.6"
+          strokeLinecap="round"
+        />
+
+        <path
+          d="M163 123 C155 135, 146 145, 136 154"
+          fill="none"
+          stroke="#E1A544"
+          strokeWidth="16"
+          strokeLinecap="round"
+        />
+        <path
+          d="M204 121 C198 135, 188 146, 178 154"
+          fill="none"
+          stroke="#E1A544"
+          strokeWidth="16"
+          strokeLinecap="round"
+        />
+
+        <g fill="#2A211C" opacity="0.9">
+          <circle cx="132" cy="78" r="4.2" />
+          <circle cx="144" cy="95" r="5.3" />
+          <circle cx="158" cy="74" r="4.4" />
+          <circle cx="166" cy="105" r="4.4" />
+          <circle cx="178" cy="85" r="5.1" />
+          <circle cx="192" cy="103" r="4.3" />
+          <circle cx="206" cy="85" r="4.7" />
+          <circle cx="220" cy="103" r="4.5" />
+          <circle cx="230" cy="88" r="3.8" />
+          <circle cx="229" cy="66" r="3.2" />
+          <circle cx="246" cy="61" r="3" />
         </g>
       </g>
 
-      {/* バテやすさ：汗 */}
-      <g fill="#67b7f7">
-        <path d="M0 -5 C4 -3, 5 3, 0 10 C-5 3, -4 -3, 0 -5 Z" transform="translate(137 31) rotate(-22)" />
-        <path d="M0 -4 C3 -2, 4 3, 0 8 C-4 3, -3 -2, 0 -4 Z" transform="translate(149 28) rotate(10)" opacity="0.9" />
-        <path d="M0 -4 C3 -2, 4 3, 0 8 C-4 3, -3 -2, 0 -4 Z" transform="translate(121 41) rotate(-38)" opacity="0.75" />
+      <g fill="#6DB7F6">
+        <path d="M0 -8 C6 -5, 7 4, 0 15 C-7 4, -6 -5, 0 -8 Z" transform="translate(221 38) rotate(-22)" />
+        <path d="M0 -7 C5 -4, 6 3, 0 13 C-6 3, -5 -4, 0 -7 Z" transform="translate(242 31) rotate(8)" opacity="0.95" />
+        <path d="M0 -6 C4 -3, 5 3, 0 11 C-5 3, -4 -3, 0 -6 Z" transform="translate(197 52) rotate(-34)" opacity="0.82" />
       </g>
 
-      {/* 息切れ */}
-      <g stroke="#d9e3e7" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.95">
-        <path d="M182 58 C188 56, 191 60, 188 64" />
-        <path d="M186 52 C193 49, 197 54, 194 59" />
-        <path d="M184 64 C191 63, 194 67, 191 71" />
+      <g fill="none" stroke="#D9E3E6" strokeWidth="4" strokeLinecap="round" opacity="0.95">
+        <path d="M289 87 C299 83, 304 90, 299 97" />
+        <path d="M296 78 C307 73, 313 81, 308 89" />
+        <path d="M293 98 C304 96, 309 104, 303 111" />
       </g>
     </svg>
   );
