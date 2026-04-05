@@ -115,7 +115,7 @@ export default function CoreShortTerm({ className = "", ...props }) {
         <circle cx="125" y="45" r="2" />
         <circle cx="140" y="60" r="2.5" />
         <circle cx="130" y="65" r="2" />
-      }
+      </g>
 
     </svg>
   );
