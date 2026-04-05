@@ -188,20 +188,41 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
     dry: 0,
   };
 
+  // ★ personalizeForecast.js と同じロジックに完全同期 ★
   for (const label of subCodes) {
     switch (label) {
       case "qi_stagnation":
-        scores.pressure_down += 0.14; scores.pressure_up += 0.08; scores.heat += 0.06; scores.damp += 0.04; break;
+        scores.pressure_down += 0.10; 
+        scores.pressure_up += 0.08; 
+        scores.heat += 0.06; 
+        scores.damp += 0.04; 
+        break;
       case "qi_deficiency":
-        scores.pressure_down += 0.1; scores.cold += 0.14; scores.damp += 0.1; break;
+        scores.pressure_down += 0.10; 
+        scores.cold += 0.14; 
+        scores.damp += 0.10; 
+        break;
       case "blood_deficiency":
-        scores.cold += 0.12; scores.dry += 0.1; scores.pressure_down += 0.06; break;
+        scores.cold += 0.12; 
+        scores.dry += 0.10; 
+        scores.pressure_down += 0.06; 
+        break;
       case "blood_stasis":
-        scores.pressure_down += 0.1; scores.pressure_up += 0.04; scores.cold += 0.08; scores.damp += 0.05; break;
+        scores.pressure_down += 0.10; 
+        scores.cold += 0.08; 
+        scores.damp += 0.05; 
+        scores.pressure_up += 0.03; 
+        break;
       case "fluid_damp":
-        scores.damp += 0.22; scores.cold += 0.06; scores.pressure_down += 0.04; break;
+        scores.damp += 0.22; 
+        scores.cold += 0.06; 
+        scores.pressure_down += 0.04; 
+        break;
       case "fluid_deficiency":
-        scores.dry += 0.22; scores.heat += 0.16; scores.pressure_up += 0.05; break;
+        scores.dry += 0.22; 
+        scores.heat += 0.18; 
+        scores.pressure_up += 0.05; 
+        break;
       default: break;
     }
   }
@@ -209,15 +230,15 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
   if (coreCode.includes("batt_small")) { for (const k of Object.keys(scores)) scores[k] += 0.08; }
   if (coreCode.includes("batt_large")) { for (const k of Object.keys(scores)) scores[k] -= 0.03; }
   if (coreCode.startsWith("accel")) { scores.pressure_down += 0.06; scores.pressure_up += 0.05; scores.heat += 0.05; }
-  if (coreCode.startsWith("brake")) { scores.cold += 0.08; scores.damp += 0.1; scores.pressure_down += 0.03; }
+  if (coreCode.startsWith("brake")) { scores.cold += 0.08; scores.damp += 0.10; scores.pressure_down += 0.03; }
 
   if (thermoAnswer === "heat") scores.heat += 0.08;
   if (thermoAnswer === "cold") scores.cold += 0.08;
 
   if (envVectors.includes("pressure_shift")) { scores.pressure_down += 0.12; scores.pressure_up += 0.12; }
-  if (envVectors.includes("temp_swing")) { scores.cold += 0.1; scores.heat += 0.1; }
+  if (envVectors.includes("temp_swing")) { scores.cold += 0.14; scores.heat += 0.14; }
   if (envVectors.includes("humidity_up")) { scores.damp += 0.12; }
-  if (envVectors.includes("dryness_up")) { scores.dry += 0.1; }
+  if (envVectors.includes("dryness_up")) { scores.dry += 0.10; }
   if (envVectors.includes("wind_strong")) { scores.pressure_down += 0.03; scores.pressure_up += 0.03; }
 
   for (const k of Object.keys(scores)) {
