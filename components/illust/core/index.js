@@ -1,34 +1,53 @@
-import CoreDefault from "./CoreDefault";
-import CoreShortTerm from "./CoreShortTerm";
-import CoreActive from "./CoreActive";
-import CoreTough from "./CoreTough";
+// components/illust/core/index.js
 
-import CoreSteadySmall from "./CoreSteadySmall";
-import CoreBalance from "./CoreBalance";
-import CoreLongRun from "./CoreLongRun";
+const CORE_IMAGE_SRC = {
+  accel_batt_small: "/illust/core/cheetah.webp",
+  accel_batt_standard: "/illust/core/wolf.webp",
+  accel_batt_large: "/illust/core/orca.webp",
 
-import CoreSlowStart from "./CoreSlowStart";
-import CoreMyPace from "./CoreMyPace";
-import CoreSolid from "./CoreSolid";
-
-/**
- * computed.core_code -> illustration component
- */
-export const CORE_ILLUST = {
-  accel_batt_small: CoreShortTerm,
-  accel_batt_standard: CoreActive,
-  accel_batt_large: CoreTough,
-
-  steady_batt_small: CoreSteadySmall,
-  steady_batt_standard: CoreBalance,
-  steady_batt_large: CoreLongRun,
-
-  brake_batt_small: CoreSlowStart,
-  brake_batt_standard: CoreMyPace,
-  brake_batt_large: CoreSolid,
+  brake_batt_small: "/illust/core/hedgehog.webp",
+  brake_batt_standard: "/illust/core/penguin.webp",
+  brake_batt_large: "/illust/core/elephant.webp",
 };
 
+function CoreFallback({ className = "h-20 w-32", title }) {
+  return (
+    <div
+      className={[
+        "grid place-items-center overflow-hidden rounded-[18px]",
+        "bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)]",
+        "ring-1 ring-inset ring-black/5",
+        className,
+      ].join(" ")}
+      aria-label={title || "体質イラスト"}
+      title={title || "体質イラスト"}
+    >
+      <div className="px-3 text-center text-[10px] font-black tracking-wide text-slate-400">
+        IMAGE
+      </div>
+    </div>
+  );
+}
+
 export function CoreIllust({ code, className = "h-20 w-32", title }) {
-  const Comp = CORE_ILLUST[code] || CoreDefault;
-  return <Comp className={className} title={title} />;
+  const src = CORE_IMAGE_SRC[code];
+
+  if (!src) {
+    return <CoreFallback className={className} title={title} />;
+  }
+
+  return (
+    <div
+      className={["overflow-hidden", className].join(" ")}
+      title={title || code}
+      aria-label={title || code}
+    >
+      <img
+        src={src}
+        alt={title || code}
+        className="h-full w-full object-contain"
+        loading="lazy"
+      />
+    </div>
+  );
 }
