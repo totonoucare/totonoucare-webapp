@@ -602,11 +602,11 @@ function ResultPage({ params }) {
 
               <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-start gap-5">
                 <div className="shrink-0">
-                  <div className="grid h-[100px] w-[100px] place-items-center overflow-hidden rounded-[24px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105">
+                  <div className="grid h-[132px] w-[132px] place-items-center overflow-hidden rounded-[26px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105 p-2">
                     <CoreIllust
                       code={computed?.core_code}
                       title={core?.title || "体質タイプ"}
-                      className="h-full w-full scale-[1.25] translate-y-1"
+                      className="h-full w-full object-contain"
                     />
                   </div>
                 </div>
