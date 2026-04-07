@@ -261,10 +261,29 @@ function getPointPressGuide(point) {
   return `${base}${side} 痛すぎる強さは避けてください。`;
 }
 
-function getPointImageSrc(point) {
-  if (!point?.image_path) return null;
-  const clean = String(point.image_path).replace(/^\/+/, "");
-  return `/${clean}`;
+function getPointImageCandidates(point) {
+  const out = [];
+
+  if (point?.image_path) {
+    const clean = String(point.image_path).replace(/^\/+/, "");
+    if (clean) out.push(`/${clean}`);
+  }
+
+  const rawCode = String(point?.code || "").trim();
+  if (rawCode) {
+    const upper = rawCode.toUpperCase();
+    const lower = rawCode.toLowerCase();
+
+    out.push(`/illust/points/${upper}.webp`);
+    out.push(`/illust/points/${upper}.png`);
+    out.push(`/illust/points/${upper}.jpg`);
+
+    out.push(`/illust/points/${lower}.webp`);
+    out.push(`/illust/points/${lower}.png`);
+    out.push(`/illust/points/${lower}.jpg`);
+  }
+
+  return Array.from(new Set(out));
 }
 
 function getPointCautions(point) {
@@ -425,15 +444,16 @@ function LocationEditor({
 }
 
 function PointDetailSheet({ point, onClose }) {
-  const [imageBroken, setImageBroken] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
 
   useEffect(() => {
-    setImageBroken(false);
+    setImageIndex(0);
   }, [point?.code]);
 
   if (!point) return null;
 
-  const imageSrc = getPointImageSrc(point);
+  const imageCandidates = getPointImageCandidates(point);
+  const imageSrc = imageCandidates[imageIndex] || null;
   const reasonTags = getPointMatchTags(point);
   const cautions = getPointCautions(point);
 
@@ -454,11 +474,15 @@ function PointDetailSheet({ point, onClose }) {
             <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
               {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
             </div>
-            <div id="point-detail-title" className="mt-1 text-[22px] font-black tracking-tight text-slate-900">
+            <div
+              id="point-detail-title"
+              className="mt-1 text-[22px] font-black tracking-tight text-slate-900"
+            >
               {point.name_ja || point.code}
             </div>
             <div className="mt-1 text-[12px] font-bold text-slate-500">
-              {getPointReading(point) ? `${getPointReading(point)} / ` : ""}{point.code}
+              {getPointReading(point) ? `${getPointReading(point)} / ` : ""}
+              {point.code}
             </div>
           </div>
 
@@ -466,19 +490,32 @@ function PointDetailSheet({ point, onClose }) {
             onClick={onClose}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
           >
-            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-5 w-5"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         <div className="mt-6 overflow-hidden rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)]">
-          {imageSrc && !imageBroken ? (
+          {imageSrc ? (
             <img
               src={imageSrc}
               alt={`${point.name_ja || point.code} の位置`}
               className="h-56 w-full object-contain bg-white"
-              onError={() => setImageBroken(true)}
+              onError={() => {
+                if (imageIndex < imageCandidates.length - 1) {
+                  setImageIndex((i) => i + 1);
+                } else {
+                  setImageIndex(imageCandidates.length);
+                }
+              }}
             />
           ) : (
             <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
@@ -488,14 +525,18 @@ function PointDetailSheet({ point, onClose }) {
         </div>
 
         <div className="mt-5 rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_70%)] px-5 py-4 ring-1 ring-[var(--ring)]">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">どんなとき向き？</div>
+          <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">
+            どんなとき向き？
+          </div>
           <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
             {getPointRoleSummary(point)}
           </div>
         </div>
 
         <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-[var(--ring)] shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">このツボを選んだ理由</div>
+          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+            このツボを選んだ理由
+          </div>
           <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
             {getPointSelectionReason(point)}
           </div>
@@ -503,7 +544,10 @@ function PointDetailSheet({ point, onClose }) {
           {reasonTags.length > 0 ? (
             <ul className="mt-4 space-y-2.5">
               {reasonTags.map((label) => (
-                <li key={label} className="flex items-start gap-2.5 text-[12px] font-extrabold leading-5 text-slate-600">
+                <li
+                  key={label}
+                  className="flex items-start gap-2.5 text-[12px] font-extrabold leading-5 text-slate-600"
+                >
                   <span className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
                   <span>{label}</span>
                 </li>
@@ -513,7 +557,9 @@ function PointDetailSheet({ point, onClose }) {
         </div>
 
         <div className="mt-4 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-amber-200/50 shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">押し方の目安</div>
+          <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">
+            押し方の目安
+          </div>
           <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-amber-900">
             {getPointPressGuide(point)}
           </div>
@@ -521,10 +567,15 @@ function PointDetailSheet({ point, onClose }) {
 
         {cautions.length > 0 ? (
           <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-slate-200 shadow-sm">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">注意したいこと</div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+              注意したいこと
+            </div>
             <ul className="mt-3 space-y-2.5">
               {cautions.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-[13px] font-bold leading-6 text-slate-700">
+                <li
+                  key={item}
+                  className="flex items-start gap-2.5 text-[13px] font-bold leading-6 text-slate-700"
+                >
                   <span className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
                   <span>{item}</span>
                 </li>
@@ -532,7 +583,7 @@ function PointDetailSheet({ point, onClose }) {
             </ul>
           </div>
         ) : null}
-        
+
         {/* 下部見切れ防止用スペーサー */}
         <div className="h-8 w-full sm:h-2" />
       </div>
