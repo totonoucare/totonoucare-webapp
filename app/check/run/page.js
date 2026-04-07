@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
-import { getQuestions, getTotalQuestions } from "@/lib/diagnosis/v2/questions";
+import { getQuestions } from "@/lib/diagnosis/v2/questions";
 import { IconCheck } from "@/components/illust/icons/check";
 
 function ProgressBar({ current, total }) {
@@ -19,9 +19,9 @@ function ProgressBar({ current, total }) {
         <div className="text-[11px] font-black text-slate-400">{pct}%</div>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-black/5">
-        <div 
-          className="h-full rounded-full bg-[var(--accent)] transition-all duration-500 ease-out" 
-          style={{ width: `${pct}%` }} 
+        <div
+          className="h-full rounded-full bg-[var(--accent)] transition-all duration-500 ease-out"
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
@@ -32,24 +32,21 @@ const PENDING_KEY = "pending_diagnosis_v2_answers";
 
 export default function CheckRunPage() {
   const router = useRouter();
-  const questions = useMemo(() => getQuestions(), []);
-  const total = useMemo(() => getTotalQuestions(), []);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [hydrated, setHydrated] = useState(false);
 
-  const q = questions[step];
+  const questions = useMemo(() => getQuestions(answers), [answers]);
+  const total = questions.length;
+  const q = questions[step] || null;
   const ansKey = q?.key;
 
   const rawSelected = ansKey ? answers?.[ansKey] : undefined;
   const isMulti = q?.type === "multi";
   const selected = isMulti ? (Array.isArray(rawSelected) ? rawSelected : []) : rawSelected;
-
-  const envSensitivity = answers?.env_sensitivity;
-  const isEnv2 = q?.key === "env_vectors";
-  const shouldSkipEnv2 = isEnv2 && (envSensitivity === "0" || envSensitivity === 0);
 
   function persist(next) {
     try {
@@ -58,40 +55,40 @@ export default function CheckRunPage() {
   }
 
   useEffect(() => {
-    if (!shouldSkipEnv2) return;
-
-    setAnswers((prev) => {
-      const next = { ...prev, env_vectors: ["none"] };
-      persist(next);
-      return next;
-    });
-
-    setError("");
-    setStep((s) => Math.min(s + 1, total - 1));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shouldSkipEnv2]);
-
-  const canGoNext = shouldSkipEnv2 ? true : isMulti ? selected.length > 0 : Boolean(selected);
-  const isLast = step === total - 1;
-
-  useEffect(() => {
     try {
       const raw = sessionStorage.getItem(PENDING_KEY);
-      if (!raw) return;
+      if (!raw) {
+        setHydrated(true);
+        return;
+      }
       const saved = JSON.parse(raw);
       if (saved && typeof saved === "object") {
         setAnswers(saved);
-        const idx = questions.findIndex((qq) => {
-          const k = qq.key;
-          const v = saved?.[k];
-          if (qq.type === "multi") return !Array.isArray(v) || v.length === 0;
-          return !v;
-        });
-        setStep(idx === -1 ? total - 1 : Math.max(0, idx));
       }
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch {
+      // noop
+    } finally {
+      setHydrated(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (step > total - 1) {
+      setStep(Math.max(0, total - 1));
+      return;
+    }
+
+    const idx = questions.findIndex((qq) => {
+      const v = answers?.[qq.key];
+      if (qq.type === "multi") return !Array.isArray(v) || v.length === 0;
+      return v === undefined || v === null || v === "";
+    });
+
+    if (idx !== -1 && step > idx) {
+      setStep(idx);
+    }
+  }, [answers, hydrated, questions, step, total]);
 
   function pick(value) {
     if (!ansKey) return;
@@ -118,15 +115,15 @@ export default function CheckRunPage() {
       }
 
       const next = { ...prev, [ansKey]: value };
-      if (ansKey === "env_sensitivity" && (value === "0" || value === 0)) {
-        next.env_vectors = ["none"];
-      }
       persist(next);
       return next;
     });
 
     setError("");
   }
+
+  const canGoNext = isMulti ? selected.length > 0 : Boolean(selected);
+  const isLast = step === total - 1;
 
   function next() {
     if (!canGoNext) return;
@@ -166,6 +163,16 @@ export default function CheckRunPage() {
     }
   }
 
+  if (!hydrated) {
+    return (
+      <AppShell title="体質チェック">
+        <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
+          <div className="text-sm font-bold text-slate-700">質問を読み込み中…</div>
+        </div>
+      </AppShell>
+    );
+  }
+
   if (!q) {
     return (
       <AppShell title="体質チェック">
@@ -178,16 +185,6 @@ export default function CheckRunPage() {
             <Button onClick={() => router.push("/")}>ホームへ</Button>
           </div>
         </Module>
-      </AppShell>
-    );
-  }
-
-  if (shouldSkipEnv2) {
-    return (
-      <AppShell title="体質チェック">
-        <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
-          <div className="text-sm font-bold text-slate-700">環境の追加質問をスキップ中…</div>
-        </div>
       </AppShell>
     );
   }
@@ -216,7 +213,7 @@ export default function CheckRunPage() {
     >
       <Module className="mb-8">
         <div className="px-5 pb-6 pt-6 space-y-6">
-          <ProgressBar current={step + 1} total={total} />
+          <ProgressBar current={step + 1} total={Math.max(1, total)} />
 
           <div className="rounded-[32px] bg-white ring-1 ring-[var(--ring)] p-6 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.05)]">
             <div className="text-[17px] font-black tracking-tight text-slate-900 leading-[1.6] whitespace-pre-wrap">
@@ -248,12 +245,13 @@ export default function CheckRunPage() {
                           </div>
                         ) : null}
                       </div>
-                      
-                      {/* カスタムラジオ/チェックボックスアイコン */}
-                      <div className={[
-                        "shrink-0 grid h-6 w-6 place-items-center rounded-full ring-1 transition-all duration-200",
-                        isSel ? "bg-[var(--accent)] ring-[var(--accent)] text-white" : "bg-slate-50 ring-slate-200 text-transparent"
-                      ].join(" ")}>
+
+                      <div
+                        className={[
+                          "shrink-0 grid h-6 w-6 place-items-center rounded-full ring-1 transition-all duration-200",
+                          isSel ? "bg-[var(--accent)] ring-[var(--accent)] text-white" : "bg-slate-50 ring-slate-200 text-transparent",
+                        ].join(" ")}
+                      >
                         <svg viewBox="0 0 14 14" fill="none" className="h-3.5 w-3.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 7.5L6 10.5L11 3.5" />
                         </svg>
@@ -294,7 +292,7 @@ export default function CheckRunPage() {
             </div>
 
             <div className="mt-5 text-center text-[10px] font-extrabold text-slate-400">
-              ※ 無理のある動作は避けてOK。違和感が強い場合は中止してください。
+              ※ 回答によって追加質問が出ることがあります
             </div>
           </div>
         </div>
