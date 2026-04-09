@@ -29,7 +29,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
               <stop offset="100%" stopColor="#B9DEC8" />
             </linearGradient>
 
-            <radialGradient id={glowGradId} cx="68%" cy="24%" r="70%">
+            <radialGradient id={glowGradId} cx="70%" cy="20%" r="75%">
               <stop offset="0%" stopColor="#EEF7F1" />
               <stop offset="100%" stopColor="#EEF7F1" stopOpacity="0" />
             </radialGradient>
@@ -38,77 +38,46 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
           <rect x="0" y="0" width="64" height="64" rx="18" fill={`url(#${cardGradId})`} />
           <rect x="0" y="0" width="64" height="64" rx="18" fill={`url(#${glowGradId})`} />
 
-          {/* 右上の電波アーク */}
+          {/* 外周リング：少し右に寄せて左下の重さを軽減 */}
+          <path
+            d="M22.5 52.5
+               A21.5 21.5 0 0 1 12.2 31.5
+               A21.5 21.5 0 0 1 31.8 10.8"
+            fill="none"
+            stroke="#0F173E"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+
+          {/* 電波アーク：受信点の右上に向かって開くよう再設計 */}
           <g fill="none" stroke={`url(#${signalGradId})`} strokeLinecap="round">
             <path
-              d="M31.5 27.5 A8.5 8.5 0 0 1 41 19"
-              strokeWidth="3.2"
+              d="M39.0 23.0 A6.8 6.8 0 0 1 45.2 16.8"
+              strokeWidth="3.0"
             />
             <path
-              d="M27.5 27.8 A13 13 0 0 1 44.5 15.7"
-              strokeWidth="3.2"
+              d="M37.7 20.6 A10.2 10.2 0 0 1 48.4 10.9"
+              strokeWidth="3.0"
             />
             <path
-              d="M23.7 28.4 A17.2 17.2 0 0 1 48.3 12.1"
-              strokeWidth="3.2"
+              d="M36.1 17.9 A13.8 13.8 0 0 1 51.6 6.3"
+              strokeWidth="3.0"
             />
             <path
-              d="M20 29.3 A21.5 21.5 0 0 1 52 8.8"
-              strokeWidth="3.2"
+              d="M34.5 15.1 A17.2 17.2 0 0 1 54.8 3.4"
+              strokeWidth="3.0"
             />
           </g>
 
-          {/* 外周リング */}
-          <path
-            d="M20 54
-               A24 24 0 0 1 8 32.5
-               A24 24 0 0 1 30.5 8"
-            fill="none"
-            stroke="#0F173E"
-            strokeWidth="3.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* 下部の淡いゆらぎ */}
-          <path
-            d="M27.5 50.7
-               C32.3 49.2 37.1 49.7 41.8 51.6
-               C44.3 52.5 46.8 52.7 49.5 52.2"
-            fill="none"
-            stroke="#D9EEE4"
-            strokeWidth="5.6"
-            strokeLinecap="round"
-          />
-
-          {/* 下部の波線 */}
-          <path
-            d="M31 52.4
-               C35.1 50.7 39.4 50.7 43.8 52.2
-               C46.3 53.1 48.7 53.2 51.3 52.6"
-            fill="none"
-            stroke="#0F173E"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-          />
-
-          {/* パラボラアンテナ */}
-          <g transform="rotate(-24 29 33)">
-            {/* 支柱 */}
+          {/* パラボラ本体：少し右上へ */}
+          <g transform="translate(1.8 -1.4) rotate(-24 29 33)">
             <path
               d="M24.9 36.7 L21.6 44.2"
               stroke="#0F173E"
               strokeWidth="3.6"
               strokeLinecap="round"
             />
-
-            {/* 土台 */}
-            <path
-              d="M20.1 44.3 L28.9 44.3 L24.2 37.5 Z"
-              fill="#0F173E"
-            />
-
-            {/* 支柱の抜き */}
+            <path d="M20.1 44.3 L28.9 44.3 L24.2 37.5 Z" fill="#0F173E" />
             <path
               d="M23.1 42.9 L24.9 39.2"
               stroke="#FFFFFF"
@@ -116,7 +85,6 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
               strokeLinecap="round"
             />
 
-            {/* パラボラ本体 */}
             <ellipse
               cx="28.4"
               cy="31.2"
@@ -127,27 +95,42 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
               strokeWidth="3.8"
             />
 
-            {/* パラボラ内側ハイライト */}
             <path
-              d="M22.8 29.4
-                 C21.5 30.4 21.9 32.2 24.2 34.1"
+              d="M22.8 29.4 C21.5 30.4 21.9 32.2 24.2 34.1"
               fill="none"
               stroke="#FFFFFF"
               strokeWidth="1.8"
               strokeLinecap="round"
             />
 
-            {/* 受信アーム */}
             <path
               d="M28.7 31.2 L36.7 26.7"
               stroke="#0F173E"
               strokeWidth="3.1"
               strokeLinecap="round"
             />
-
-            {/* 受信点 */}
             <circle cx="38.9" cy="25.5" r="2.9" fill="#0F173E" />
           </g>
+
+          {/* 下部のゆらぎ：ほんの少し右へ */}
+          <path
+            d="M28.8 50.9
+               C33.5 49.5 38.1 50.0 42.8 51.8
+               C45.1 52.7 47.6 52.9 50.0 52.3"
+            fill="none"
+            stroke="#D9EEE4"
+            strokeWidth="5.4"
+            strokeLinecap="round"
+          />
+          <path
+            d="M31.5 52.4
+               C35.4 50.9 39.6 50.9 43.8 52.2
+               C46.0 52.9 48.2 53.0 50.6 52.5"
+            fill="none"
+            stroke="#0F173E"
+            strokeWidth="3.1"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
 
