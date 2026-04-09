@@ -83,8 +83,8 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             compact ? "text-[20px] leading-none" : "text-[28px] leading-[1.05]",
           ].join(" ")}
         >
-          <span className="text-[#5E8365]">未病</span>
-          <span className="text-[#D9A54A]">レーダー</span>
+          <span className="text-[#172554]">未病</span>
+          <span className="text-[#B8892D]">レーダー</span>
         </div>
 
         {!compact && (
