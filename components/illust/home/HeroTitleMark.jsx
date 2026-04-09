@@ -9,7 +9,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
 
   return (
     <div className={["flex items-center gap-3", className].join(" ")}>
-      {/* 1. アイコン部分：グリーンリング + アンバースウィープ版 */}
+      {/* アイコン部分 */}
       <div
         className={[
           "relative shrink-0 overflow-hidden bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] ring-1 ring-slate-900/5",
@@ -18,13 +18,11 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
       >
         <svg viewBox="0 0 64 64" className="h-full w-full" aria-hidden="true">
           <defs>
-            {/* 背景：白ベースにごく薄いセージ */}
             <linearGradient id={logoBgGradId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#FFFFFF" />
               <stop offset="100%" stopColor="#F4F7F4" />
             </linearGradient>
 
-            {/* スウィープ：アンバーから透明へ */}
             <linearGradient id={radarSweepId} x1="0.5" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#D6A23D" />
               <stop offset="100%" stopColor="#D6A23D" stopOpacity="0" />
@@ -34,13 +32,13 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
           {/* 背景 */}
           <rect width="64" height="64" fill={`url(#${logoBgGradId})`} />
 
-          {/* 背景の波紋（グリーン系） */}
+          {/* 背景の波紋 */}
           <circle
             cx="32"
             cy="32"
             r="22"
             fill="none"
-            stroke="#D5E1D7"
+            stroke="#CCDACC"
             strokeWidth="1.5"
           />
           <circle
@@ -48,12 +46,12 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             cy="32"
             r="14"
             fill="none"
-            stroke="#98AF9C"
+            stroke="#879E8B"
             strokeWidth="1.5"
-            strokeOpacity="0.68"
+            strokeOpacity="0.72"
           />
 
-          {/* レーダーのスウィープ（アンバー） */}
+          {/* レーダーのスウィープ */}
           <path
             d="M32 10 A 22 22 0 0 1 54 32"
             fill="none"
@@ -62,22 +60,22 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             strokeLinecap="round"
           />
 
-          {/* クロスヘア（グリーン系） */}
+          {/* クロスヘア */}
           <path
             d="M32 14 L32 20 M32 44 L32 50 M14 32 L20 32 M44 32 L50 32"
-            stroke="#7D9682"
+            stroke="#6F8774"
             strokeWidth="1.5"
             strokeLinecap="round"
-            strokeOpacity="0.72"
+            strokeOpacity="0.76"
           />
 
-          {/* 中央のコア（アンバー） */}
+          {/* 中央のコア */}
           <circle cx="32" cy="32" r="5" fill="#D6A23D" />
           <circle cx="32" cy="32" r="5" fill="#FFFFFF" fillOpacity="0.22" />
         </svg>
       </div>
 
-      {/* 2. タイポグラフィ部分：現行のまま */}
+      {/* タイポグラフィ部分 */}
       <div className="flex flex-col justify-center">
         <div
           className={[
@@ -85,8 +83,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             compact ? "text-[20px] leading-none" : "text-[28px] leading-[1.05]",
           ].join(" ")}
         >
-          <span className="text-[#5E8365]">未病</span>
-          <span className="text-[#5E8365]">レーダー</span>
+          <span className="text-[#6F8774]">未病レーダー</span>
         </div>
 
         {!compact && (
