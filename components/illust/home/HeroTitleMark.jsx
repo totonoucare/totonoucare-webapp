@@ -70,7 +70,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
           />
 
           {/* 中央のコア */}
-          <circle cx="32" cy="32" r="5" fill="#D6A23D" />
+          <circle cx="32" cy="32" r="5" fill="#C99432" />
           <circle cx="32" cy="32" r="5" fill="#FFFFFF" fillOpacity="0.22" />
         </svg>
       </div>
@@ -88,7 +88,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
 
         {!compact && (
           <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
-            <span className="text-[#D6A23D]">MIBYO RADAR</span>
+            <span className="text-[#C99432]">MIBYO RADAR</span>
             <span className="mx-2 text-slate-300">|</span>
             <span className="text-slate-400">PERSONAL FORECAST</span>
           </p>
