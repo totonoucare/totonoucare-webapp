@@ -4,12 +4,12 @@ import { useId } from "react";
 
 export default function HeroTitleMark({ compact = false, className = "" }) {
   const uid = useId().replace(/:/g, "");
-  const logoBgGrad = `logoBgGrad-${uid}`;
-  const radarSweep = `radarSweep-${uid}`;
+  const logoBgGradId = `logoBgGrad-${uid}`;
+  const radarSweepId = `radarSweep-${uid}`;
 
   return (
-    <div className={["flex items-center gap-3", className].join(" ")}>
-      {/* 1. アイコン部分（旧SVGロゴに戻す） */}
+    <div className={["flex items-center gap-3", className].filter(Boolean).join(" ")}>
+      {/* アイコン部分：旧SVGロゴベース、配色だけネイビー×オレンジへ調整 */}
       <div
         className={[
           "relative shrink-0 overflow-hidden bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] ring-1 ring-slate-900/5",
@@ -18,19 +18,21 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
       >
         <svg viewBox="0 0 64 64" className="h-full w-full" aria-hidden="true">
           <defs>
-            <linearGradient id={logoBgGrad} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="100%" stopColor="#f0f5f1" />
+            {/* 背景はごく薄いニュートラル寄り */}
+            <linearGradient id={logoBgGradId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="100%" stopColor="#F6F8FB" />
             </linearGradient>
 
-            <linearGradient id={radarSweep} x1="0.5" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#6a9770" />
-              <stop offset="100%" stopColor="#6a9770" stopOpacity="0" />
+            {/* スウィープは緑→ネイビーへ */}
+            <linearGradient id={radarSweepId} x1="0.5" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#0F173E" stopOpacity="0.72" />
+              <stop offset="100%" stopColor="#0F173E" stopOpacity="0" />
             </linearGradient>
           </defs>
 
           {/* 背景 */}
-          <rect width="64" height="64" fill={`url(#${logoBgGrad})`} />
+          <rect width="64" height="64" fill={`url(#${logoBgGradId})`} />
 
           {/* 背景の波紋 */}
           <circle
@@ -38,24 +40,25 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             cy="32"
             r="22"
             fill="none"
-            stroke="#d3e2d6"
+            stroke="#0F173E"
             strokeWidth="1.5"
+            strokeOpacity="0.14"
           />
           <circle
             cx="32"
             cy="32"
             r="14"
             fill="none"
-            stroke="#a3c1a8"
+            stroke="#0F173E"
             strokeWidth="1.5"
-            strokeOpacity="0.6"
+            strokeOpacity="0.22"
           />
 
           {/* レーダーのスウィープ */}
           <path
             d="M32 10 A 22 22 0 0 1 54 32"
             fill="none"
-            stroke={`url(#${radarSweep})`}
+            stroke={`url(#${radarSweepId})`}
             strokeWidth="3.5"
             strokeLinecap="round"
           />
@@ -63,33 +66,33 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
           {/* クロスヘア */}
           <path
             d="M32 14 L32 20 M32 44 L32 50 M14 32 L20 32 M44 32 L50 32"
-            stroke="#8cb093"
+            stroke="#0F173E"
             strokeWidth="1.5"
             strokeLinecap="round"
-            strokeOpacity="0.6"
+            strokeOpacity="0.26"
           />
 
           {/* 中央のコア */}
-          <circle cx="32" cy="32" r="5" fill="#d9a54a" />
-          <circle cx="32" cy="32" r="5" fill="#ffffff" fillOpacity="0.2" />
+          <circle cx="32" cy="32" r="5" fill="#E98A15" />
+          <circle cx="32" cy="32" r="5" fill="#FFFFFF" fillOpacity="0.22" />
         </svg>
       </div>
 
-      {/* 2. タイポグラフィ部分（現行デザイン維持、配色だけSVG寄せ） */}
-      <div className="flex flex-col justify-center">
+      {/* タイポグラフィ部分：現行設計を維持 */}
+      <div className="flex min-w-0 flex-col justify-center">
         <div
           className={[
-            "font-black tracking-tighter flex items-baseline",
+            "flex items-baseline font-black tracking-tighter",
             compact ? "text-[20px] leading-none" : "text-[28px] leading-[1.05]",
           ].join(" ")}
         >
-          <span className="text-[#172554]">未病</span>
-          <span className="text-[#B8892D]">レーダー</span>
+          <span className="text-[#0F173E]">未病</span>
+          <span className="text-[#C99432]">レーダー</span>
         </div>
 
         {!compact && (
-          <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
-            <span className="text-[#5E8365]">MIBYO RADAR</span>
+          <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.18em]">
+            <span className="text-[#0F173E]">MIBYO RADAR</span>
             <span className="mx-2 text-slate-300">|</span>
             <span className="text-slate-400">PERSONAL FORECAST</span>
           </p>
