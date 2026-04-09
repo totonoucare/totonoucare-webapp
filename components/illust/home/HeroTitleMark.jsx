@@ -24,8 +24,8 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             </linearGradient>
 
             <linearGradient id={radarSweepId} x1="0.5" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#D6A23D" />
-              <stop offset="100%" stopColor="#D6A23D" stopOpacity="0" />
+              <stop offset="0%" stopColor="#d9a54a" />
+              <stop offset="100%" stopColor="#d9a54a" stopOpacity="0" />
             </linearGradient>
           </defs>
 
