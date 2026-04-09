@@ -1,64 +1,173 @@
 "use client";
 
+import { useId } from "react";
+
 export default function HeroTitleMark({ compact = false, className = "" }) {
+  const uid = useId().replace(/:/g, "");
+  const signalGradId = `signal-grad-${uid}`;
+  const cardGradId = `card-grad-${uid}`;
+  const glowGradId = `glow-grad-${uid}`;
+
   return (
     <div className={["flex items-center gap-3", className].join(" ")}>
-      {/* 1. アイコン部分（シンボルマーク） */}
       <div
         className={[
-          "relative shrink-0 overflow-hidden bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] ring-1 ring-slate-900/5",
-          compact ? "h-10 w-10 rounded-[14px]" : "h-14 w-14 rounded-[20px]",
+          "relative shrink-0 overflow-hidden bg-white shadow-[0_6px_16px_rgba(15,23,62,0.12)] ring-1 ring-slate-900/5",
+          compact ? "h-10 w-10 rounded-[12px]" : "h-14 w-14 rounded-[18px]",
         ].join(" ")}
       >
         <svg viewBox="0 0 64 64" className="h-full w-full" aria-hidden="true">
           <defs>
-            {/* 高級感を出すための極めて繊細な背景グラデーション */}
-            <linearGradient id="logoBgGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="100%" stopColor="#f0f5f1" />
+            <linearGradient id={cardGradId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="100%" stopColor="#FBFCFA" />
             </linearGradient>
-            
-            {/* レーダーの波紋用グラデーション（透明度で奥行きを出す） */}
-            <linearGradient id="radarSweep" x1="0.5" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#6a9770" />
-              <stop offset="100%" stopColor="#6a9770" stopOpacity="0" />
+
+            <linearGradient id={signalGradId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#E8A91A" />
+              <stop offset="55%" stopColor="#E7C64A" />
+              <stop offset="100%" stopColor="#B9DEC8" />
             </linearGradient>
+
+            <radialGradient id={glowGradId} cx="68%" cy="24%" r="70%">
+              <stop offset="0%" stopColor="#EEF7F1" />
+              <stop offset="100%" stopColor="#EEF7F1" stopOpacity="0" />
+            </radialGradient>
           </defs>
 
-          {/* 背景 */}
-          <rect width="64" height="64" fill="url(#logoBgGrad)" />
+          <rect x="0" y="0" width="64" height="64" rx="18" fill={`url(#${cardGradId})`} />
+          <rect x="0" y="0" width="64" height="64" rx="18" fill={`url(#${glowGradId})`} />
 
-          {/* 背景の波紋（気象の変化・広がり） */}
-          <circle cx="32" cy="32" r="22" fill="none" stroke="#d3e2d6" strokeWidth="1.5" />
-          <circle cx="32" cy="32" r="14" fill="none" stroke="#a3c1a8" strokeWidth="1.5" strokeOpacity="0.6" />
+          {/* 右上の電波アーク */}
+          <g fill="none" stroke={`url(#${signalGradId})`} strokeLinecap="round">
+            <path
+              d="M31.5 27.5 A8.5 8.5 0 0 1 41 19"
+              strokeWidth="3.2"
+            />
+            <path
+              d="M27.5 27.8 A13 13 0 0 1 44.5 15.7"
+              strokeWidth="3.2"
+            />
+            <path
+              d="M23.7 28.4 A17.2 17.2 0 0 1 48.3 12.1"
+              strokeWidth="3.2"
+            />
+            <path
+              d="M20 29.3 A21.5 21.5 0 0 1 52 8.8"
+              strokeWidth="3.2"
+            />
+          </g>
 
-          {/* レーダーのスウィープ（先読みする力） */}
-          <path d="M32 10 A 22 22 0 0 1 54 32" fill="none" stroke="url(#radarSweep)" strokeWidth="3.5" strokeLinecap="round" />
-          
-          {/* クロスヘア（正確な分析・ツボの照準） */}
-          <path d="M32 14 L32 20 M32 44 L32 50 M14 32 L20 32 M44 32 L50 32" stroke="#8cb093" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.6" />
+          {/* 外周リング */}
+          <path
+            d="M20 54
+               A24 24 0 0 1 8 32.5
+               A24 24 0 0 1 30.5 8"
+            fill="none"
+            stroke="#0F173E"
+            strokeWidth="3.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
 
-          {/* 中央のコア（ユーザー自身・生命力・ゴールドのアクセント） */}
-          <circle cx="32" cy="32" r="5" fill="#d9a54a" />
-          <circle cx="32" cy="32" r="5" fill="#ffffff" fillOpacity="0.2" filter="blur(1px)" />
+          {/* 下部の淡いゆらぎ */}
+          <path
+            d="M27.5 50.7
+               C32.3 49.2 37.1 49.7 41.8 51.6
+               C44.3 52.5 46.8 52.7 49.5 52.2"
+            fill="none"
+            stroke="#D9EEE4"
+            strokeWidth="5.6"
+            strokeLinecap="round"
+          />
+
+          {/* 下部の波線 */}
+          <path
+            d="M31 52.4
+               C35.1 50.7 39.4 50.7 43.8 52.2
+               C46.3 53.1 48.7 53.2 51.3 52.6"
+            fill="none"
+            stroke="#0F173E"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
+
+          {/* パラボラアンテナ */}
+          <g transform="rotate(-24 29 33)">
+            {/* 支柱 */}
+            <path
+              d="M24.9 36.7 L21.6 44.2"
+              stroke="#0F173E"
+              strokeWidth="3.6"
+              strokeLinecap="round"
+            />
+
+            {/* 土台 */}
+            <path
+              d="M20.1 44.3 L28.9 44.3 L24.2 37.5 Z"
+              fill="#0F173E"
+            />
+
+            {/* 支柱の抜き */}
+            <path
+              d="M23.1 42.9 L24.9 39.2"
+              stroke="#FFFFFF"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
+
+            {/* パラボラ本体 */}
+            <ellipse
+              cx="28.4"
+              cy="31.2"
+              rx="10.6"
+              ry="6.3"
+              fill="#FFFFFF"
+              stroke="#0F173E"
+              strokeWidth="3.8"
+            />
+
+            {/* パラボラ内側ハイライト */}
+            <path
+              d="M22.8 29.4
+                 C21.5 30.4 21.9 32.2 24.2 34.1"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+
+            {/* 受信アーム */}
+            <path
+              d="M28.7 31.2 L36.7 26.7"
+              stroke="#0F173E"
+              strokeWidth="3.1"
+              strokeLinecap="round"
+            />
+
+            {/* 受信点 */}
+            <circle cx="38.9" cy="25.5" r="2.9" fill="#0F173E" />
+          </g>
         </svg>
       </div>
 
-      {/* 2. タイポグラフィ部分（ロゴタイプ） */}
       <div className="flex flex-col justify-center">
-        <h1
+        <div
           className={[
-            "font-black text-slate-900 tracking-tight",
-            // 文字の塊感を出すため、line-height を極限まで詰める
-            compact ? "text-[19px] leading-none" : "text-[26px] leading-[1.1]",
+            "font-black tracking-tighter flex items-baseline",
+            compact ? "text-[20px] leading-none" : "text-[28px] leading-[1.05]",
           ].join(" ")}
         >
-          未病レーダー
-        </h1>
-        {/* 大きいサイズの時だけ、美しい日本語のサブタイトルを表示 */}
+          <span className="text-[#0F173E]">未病</span>
+          <span className="text-[#E8A91A]">レーダー</span>
+        </div>
+
         {!compact && (
-          <p className="mt-1.5 text-[11px] font-black tracking-widest text-slate-400">
-            気象×体質のパーソナル予報
+          <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
+            <span className="text-[#0F173E]">Mibyo</span>
+            <span className="ml-1 text-slate-600">Radar</span>
+            <span className="ml-2 text-slate-300">|</span>
+            <span className="ml-2 text-slate-400">Personal Forecast</span>
           </p>
         )}
       </div>
