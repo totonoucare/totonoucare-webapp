@@ -387,7 +387,7 @@ export default function HomePage() {
             <HeroTitleMark />
             
             <div className="mt-8 text-[26px] sm:text-[30px] font-black tracking-tight leading-[1.35] text-slate-900">
-              気象変化と体質から、<br />
+              体質と気象変化から、<br />
               体調の波を先読み。
             </div>
             <div className="mt-4 text-[14px] font-bold leading-relaxed text-slate-700 max-w-[320px] mx-auto">
