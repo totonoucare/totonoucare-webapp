@@ -3,48 +3,53 @@
 export default function HeroTitleMark({ compact = false, className = "" }) {
   return (
     <div className={["flex items-center gap-3", className].join(" ")}>
-      {/* 1. アイコン部分：キャラ感を排除した精密アンテナ */}
+      {/* 1. アイコン部分：先進的なパラボラ・レーダー（右向きに修正） */}
       <div
         className={[
-          "relative shrink-0 overflow-hidden bg-white shadow-[0_8px_20px_-4px_rgba(15,23,62,0.15)] ring-1 ring-slate-900/5",
-          compact ? "h-10 w-10 rounded-[10px]" : "h-14 w-14 rounded-[16px]",
+          "relative shrink-0 overflow-hidden bg-white shadow-[0_6px_16px_rgba(15,23,62,0.12)] ring-1 ring-slate-900/5",
+          compact ? "h-10 w-10 rounded-[12px]" : "h-14 w-14 rounded-[18px]",
         ].join(" ")}
       >
         <svg viewBox="0 0 64 64" className="h-full w-full" aria-hidden="true">
           <defs>
+            {/* 予報・警告を象徴するアンバーからミントへのグラデーション */}
             <linearGradient id="signalGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#FBBF24" />
-              <stop offset="100%" stopColor="#D97706" />
+              <stop offset="0%" stopColor="#FBBF24" /> {/* Amber */}
+              <stop offset="100%" stopColor="#A3C1A8" /> {/* Mint */}
             </linearGradient>
+            
+            {/* 背景のわずかな奥行き */}
+            <radialGradient id="bgSphere" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#F8F9FA" />
+            </radialGradient>
           </defs>
 
-          {/* 背景のグリッド（精密機器のレティクル感を出す） */}
-          <path d="M32 8 L32 56 M8 32 L56 32" stroke="#f0f0f0" strokeWidth="1" />
-          <circle cx="32" cy="32" r="20" fill="none" stroke="#f0f0f0" strokeWidth="1" />
+          {/* 背景 */}
+          <rect width="64" height="64" fill="url(#bgSphere)" />
 
-          {/* 信号波：右上にオフセットして「顔」に見えるのを防止 */}
-          <g opacity="0.8">
-            <path d="M48 12 A 28 28 0 0 1 60 28" fill="none" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M40 8 A 36 36 0 0 1 60 20" fill="none" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+          {/* 信号波（右上の広がり：先読みと拡散） */}
+          <path d="M42 22 A 18 18 0 0 1 54 38" fill="none" stroke="url(#signalGrad)" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+          <path d="M36 16 A 26 26 0 0 1 54 28" fill="none" stroke="url(#signalGrad)" strokeWidth="3.5" strokeLinecap="round" />
+          <path d="M48 28 A 10 10 0 0 1 54 44" fill="none" stroke="url(#signalGrad)" strokeWidth="2.5" strokeLinecap="round" opacity="0.2" />
+
+          {/* パラボラアンテナ（ネイビー：揺るぎない分析軸。右向きに反転） */}
+          <g transform="translate(48, 46) rotate(40) scale(-1, 1)">
+            {/* アンテナの軸 */}
+            <path d="M12 -2 L12 -12" stroke="#0F173E" strokeWidth="4" strokeLinecap="round" />
+            {/* パラボラ部分 */}
+            <path d="M0 -14 C0 -4, 24 -4, 24 -14 L20 -16 C20 -10, 4 -10, 4 -16 Z" fill="#0F173E" />
+            {/* 受信機先端 */}
+            <circle cx="12" cy="-22" r="2.5" fill="#0F173E" />
+            <path d="M12 -12 L12 -20" stroke="#0F173E" strokeWidth="1.5" />
           </g>
 
-          {/* パラボラアンテナ：厚みを抑え、エッジを鋭く（ネイビー） */}
-          <g transform="translate(12, 50) rotate(-35)">
-            {/* 支柱 */}
-            <rect x="11" y="-8" width="2" height="10" fill="#0F173E" rx="1" />
-            {/* アンテナ本体（シャープな半円に変更） */}
-            <path d="M0 -14 A 12 6 0 0 0 24 -14" fill="none" stroke="#0F173E" strokeWidth="4" strokeLinecap="round" />
-            {/* 受信コア */}
-            <path d="M12 -12 L12 -22" stroke="#0F173E" strokeWidth="1.5" />
-            <circle cx="12" cy="-24" r="2.5" fill="#FBBF24" />
-          </g>
-          
-          {/* 未病のゆらぎ（下部のライン） */}
-          <path d="M4 56 Q 32 48, 60 56" fill="none" stroke="#0F173E" strokeWidth="1.5" strokeOpacity="0.1" />
+          {/* 下部の波（体調のゆらぎ） */}
+          <path d="M10 52 Q 22 46, 34 52 T 58 52" fill="none" stroke="#0F173E" strokeWidth="2" strokeOpacity="0.1" />
         </svg>
       </div>
 
-      {/* 2. タイポグラフィ部分：未病（重厚）× レーダー（警告） */}
+      {/* 2. タイポグラフィ部分：ビジネス仕様の2トーン（変更なし） */}
       <div className="flex flex-col justify-center">
         <div
           className={[
@@ -57,10 +62,11 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
         </div>
         
         {!compact && (
-          <p className="mt-1 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+          <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] text-slate-500 uppercase">
             <span className="text-[#0F173E]">Mibyo</span>
-            <span className="mx-1">×</span>
-            <span className="text-[#FBBF24]">Weather Intelligence</span>
+            <span className="ml-1">Radar</span>
+            <span className="ml-2 text-slate-300">|</span>
+            <span className="ml-2 text-slate-400">Personal Forecast</span>
           </p>
         )}
       </div>
