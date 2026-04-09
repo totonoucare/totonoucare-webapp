@@ -73,7 +73,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
           />
 
           {/* 中央のコア */}
-          <circle cx="32" cy="32" r="5" fill="#C99432" />
+          <circle cx="32" cy="32" r="5" fill="#F59E0B" />
           <circle cx="32" cy="32" r="5" fill="#FFFFFF" fillOpacity="0.22" />
         </svg>
       </div>
