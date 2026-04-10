@@ -91,6 +91,11 @@ export default function CheckRunPage() {
     }
   }
 
+  useEffect(() => {
+    if (!hydrated) return;
+    window.scrollTo(0, 0);
+  }, [step, hydrated]);
+
   const q = questions[step];
   const ansKey = q?.key;
 
