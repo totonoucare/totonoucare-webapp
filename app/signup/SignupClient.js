@@ -311,17 +311,21 @@ export default function SignupClient() {
               </div>
             ) : null}
 
-            <Button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={status.state === "loading" || status.state === "loading_oauth" || status.state === "sent"}
-              className="w-full py-3.5 shadow-md bg-white text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50"
-            >
-              <span className="inline-flex items-center gap-2">
-                <IconGoogle />
-                {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleでログイン"}
-              </span>
-            </Button>
+            <button
+  type="button"
+  onClick={handleGoogleLogin}
+  disabled={
+    status.state === "loading" ||
+    status.state === "loading_oauth" ||
+    status.state === "sent"
+  }
+  className="w-full rounded-[18px] border border-slate-200 bg-white px-5 py-4 shadow-md transition hover:bg-slate-50 disabled:opacity-60"
+>
+  <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
+    <IconGoogle />
+    {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleでログイン"}
+  </span>
+</button>
 
             <div className="relative py-1">
               <div className="h-px w-full bg-slate-200" />
