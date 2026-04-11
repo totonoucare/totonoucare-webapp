@@ -1,119 +1,157 @@
-// app/auth/callback/AuthCallbackClient.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+
+function normalizeNextPath(v) {
+  if (!v || typeof v !== "string") return "/radar";
+  return v.startsWith("/") ? v : "/radar";
+}
+
+function decodeMaybe(v) {
+  if (!v) return "";
+  try {
+    return decodeURIComponent(v.replace(/\+/g, " "));
+  } catch {
+    return v;
+  }
+}
 
 export default function AuthCallbackClient() {
   const router = useRouter();
-  const sp = useSearchParams();
-  const [msg, setMsg] = useState("安全にログインしています…");
-
-  const params = useMemo(() => {
-    const resultId = sp?.get("result") || "";
-    const nextRaw = sp?.get("next") || "";
-    const nextPath = nextRaw && nextRaw.startsWith("/") ? nextRaw : "";
-    return { resultId, nextPath };
-  }, [sp]);
+  const [msg, setMsg] = useState("ログイン情報を確認しています…");
 
   useEffect(() => {
-    (async () => {
+    let active = true;
+
+    async function attachResultIfNeeded(resultId, accessToken) {
+      if (!resultId) return;
+
+      const res = await fetch(
+        `/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(json?.error || "診断結果の保存に失敗しました");
+      }
+    }
+
+    async function getStableSession() {
+      if (!supabase) return null;
+
+      for (let i = 0; i < 8; i += 1) {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) return data.session;
+        await new Promise((r) => setTimeout(r, 300));
+      }
+
+      return null;
+    }
+
+    async function run() {
       try {
         if (!supabase) {
-          setMsg("システムエラー（環境変数未反映の可能性）。");
-          return;
+          throw new Error("Supabase client が初期化されていません");
         }
 
         const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
-        const hash = url.hash?.startsWith("#") ? url.hash.slice(1) : "";
-        const hashParams = new URLSearchParams(hash);
-        const access_token = hashParams.get("access_token");
-        const refresh_token = hashParams.get("refresh_token");
+        const sp = url.searchParams;
+        const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+
+        const nextPath = normalizeNextPath(sp.get("next"));
+        const resultId = sp.get("result") || "";
+
+        const oauthError =
+          sp.get("error_description") ||
+          sp.get("error") ||
+          hash.get("error_description") ||
+          hash.get("error");
+
+        if (oauthError) {
+          throw new Error(decodeMaybe(oauthError));
+        }
 
         let session = null;
 
-        const { data: s0 } = await supabase.auth.getSession();
-        session = s0?.session || null;
+        // まず既存セッション確認
+        session = await getStableSession();
 
+        // まだ無ければ PKCE code を交換
         if (!session) {
+          const code = sp.get("code");
           if (code) {
+            setMsg("ログインを確定しています…");
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw new Error(`exchangeCodeForSession: ${error.message}`);
-            session = data?.session || null;
-          } else if (access_token && refresh_token) {
-            const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
-            if (error) throw new Error(`setSession: ${error.message}`);
+            if (error) throw error;
             session = data?.session || null;
           }
         }
 
+        // implicit/hash 系や遅延反映も考慮して再確認
         if (!session) {
-          const { data: s1 } = await supabase.auth.getSession();
-          session = s1?.session || null;
+          setMsg("セッションを確認しています…");
+          session = await getStableSession();
         }
 
         if (!session) {
-          setMsg("ログインの期限が切れているか、失敗しました。");
-          setTimeout(() => router.replace("/signup"), 3000);
-          return;
+          throw new Error("セッションを確立できませんでした");
         }
 
-        if (params.resultId) {
-          setMsg("ログイン完了。データを保存しています…");
-          const res = await fetch(
-            `/api/diagnosis/v2/events/${encodeURIComponent(params.resultId)}/attach`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${session.access_token}` },
-            }
-          );
-          if (!res.ok) {
-            console.warn("attach failed");
-          }
+        // result 引き継ぎがある場合は attach
+        if (resultId) {
+          setMsg("体質チェック結果を保存しています…");
+          await attachResultIfNeeded(resultId, session.access_token);
         }
 
-        setMsg("完了しました。画面を移動します…");
-
-        if (params.nextPath) {
-          router.replace(params.nextPath);
-        } else if (params.resultId) {
-          router.replace(`/result/${encodeURIComponent(params.resultId)}?attach=1`);
-        } else {
-          router.replace("/radar");
-        }
+        if (!active) return;
+        router.replace(nextPath || "/radar");
       } catch (e) {
-        console.error(e);
-        setMsg(`エラーが発生しました：${e?.message || String(e)}`);
+        console.error("Auth callback failed:", e);
+        if (!active) return;
+
+        setMsg(
+          e?.message
+            ? `ログインに失敗しました: ${e.message}`
+            : "ログインの期限が切れているか、失敗しました。"
+        );
       }
-    })();
-  }, [params.resultId, params.nextPath, router]);
+    }
+
+    run();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-white p-6">
-      <div className="flex flex-col items-center text-center animate-in fade-in duration-500">
-        {/* リッチなローディングアニメーション */}
-        <div className="relative flex h-20 w-20 items-center justify-center">
-          <div className="absolute inset-0 rounded-full border-[4px] border-slate-100" />
-          <div className="absolute inset-0 rounded-full border-[4px] border-[var(--accent)] border-t-transparent animate-spin" />
-        </div>
-        
-        <h1 className="mt-8 text-[20px] font-black tracking-tight text-slate-900">
-          認証中
-        </h1>
-        <p className="mt-2 text-[13px] font-bold text-slate-500 max-w-[240px]">
-          {msg}
-        </p>
+    <div className="min-h-screen bg-app">
+      <div className="mx-auto flex min-h-screen w-full max-w-[440px] items-center justify-center px-6">
+        <div className="w-full rounded-[32px] bg-white p-8 text-center shadow-sm ring-1 ring-[var(--ring)]">
+          <div className="mx-auto h-20 w-20 animate-spin rounded-full border-[6px] border-slate-200 border-t-[var(--accent)]" />
+          <div className="mt-6 text-[28px] font-black tracking-tight text-slate-900">
+            認証中
+          </div>
+          <div className="mt-3 whitespace-pre-line text-[15px] font-bold leading-7 text-slate-500">
+            {msg}
+          </div>
 
-        {msg.includes("失敗") || msg.includes("エラー") ? (
           <button
+            type="button"
             onClick={() => router.replace("/signup")}
-            className="mt-8 rounded-full bg-slate-100 px-6 py-2.5 text-[12px] font-extrabold text-slate-700 transition hover:bg-slate-200"
+            className="mt-8 inline-flex items-center justify-center rounded-full bg-slate-100 px-6 py-3 text-[14px] font-extrabold text-slate-700"
           >
             ログイン画面へ戻る
           </button>
-        ) : null}
+        </div>
       </div>
     </div>
   );
