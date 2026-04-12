@@ -45,39 +45,6 @@ function triggerLabel(mainTrigger) {
   return null;
 }
 
-function buildWeeklyComment(summary) {
-  if (summary.recorded_days === 0) {
-    return "まずは1日でも記録してみると、自分の崩れ方が見えやすくなります。";
-  }
-
-  if (summary.top_trigger_label && summary.hard_days >= 2) {
-    return `今週は${summary.top_trigger_label}が重なった日に崩れやすい傾向がありました。`;
-  }
-
-  if (
-    summary.strong_forecast_days > 0 &&
-    summary.well_prevented_days >= Math.ceil(summary.strong_forecast_days / 2)
-  ) {
-    return "警戒日があっても、先回りできた日は軽く済みやすい週でした。";
-  }
-
-  if (summary.recorded_days >= 3 && summary.hard_days === 0) {
-    return "今週は大きく崩れずに過ごせた日が多めでした。";
-  }
-
-  return "今週の記録から、崩れやすい日と耐えやすい日の差が少しずつ見えてきています。";
-}
-
-function buildNextTip(summary) {
-  if (summary.top_trigger_label) {
-    return `${summary.top_trigger_label}が強い日は、早めにケアを入れる意識が合いそうです。`;
-  }
-  if (summary.top_action_tags?.length) {
-    return "続けやすかった対策から先に使うと、記録も続けやすくなります。";
-  }
-  return "まずはつらかった日だけでも記録すると、次の週次レポートが濃くなります。";
-}
-
 export async function GET(req) {
   try {
     const { user, error } = await requireUser(req);
@@ -149,7 +116,14 @@ export async function GET(req) {
 
     const recordedRows = rows.filter((row) => row.review);
     const scoredRows = rows.filter((row) => row.forecast?.score_0_10 != null);
-    const topTrigger = mostFrequent(rows.map((row) => row.forecast?.main_trigger || null));
+    const badRows = recordedRows.filter(
+      (row) => row.review?.condition_level === 0 || row.review?.condition_level === 1
+    );
+
+    const topTriggerOnBadDays = mostFrequent(
+      badRows.map((row) => row.forecast?.main_trigger || null)
+    );
+
     const topActionTags = topItems(
       recordedRows.flatMap((row) => row.review?.action_tags || []),
       3
@@ -163,18 +137,21 @@ export async function GET(req) {
     const summary = {
       recorded_days: recordedRows.length,
       total_days: days,
+
       hard_days: recordedRows.filter((row) => row.review?.condition_level === 0).length,
-      stable_days: recordedRows.filter((row) => row.review?.condition_level === 2).length,
+      mild_bad_days: recordedRows.filter((row) => row.review?.condition_level === 1).length,
+      good_days: recordedRows.filter((row) => row.review?.condition_level === 2).length,
+
       well_prevented_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
       strong_forecast_days: rows.filter((row) => (row.forecast?.signal ?? 0) >= 2).length,
+
       avg_score: avgScore,
-      top_trigger: topTrigger,
-      top_trigger_label: triggerLabel(topTrigger),
+
+      top_trigger_on_bad_days: topTriggerOnBadDays,
+      top_trigger_on_bad_days_label: triggerLabel(topTriggerOnBadDays),
+
       top_action_tags: topActionTags,
     };
-
-    summary.weekly_comment = buildWeeklyComment(summary);
-    summary.next_tip = buildNextTip(summary);
 
     return NextResponse.json({ data: { start, end, days, rows, summary } });
   } catch (e) {
