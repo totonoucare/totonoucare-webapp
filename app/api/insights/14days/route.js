@@ -17,6 +17,21 @@ function addDays(ymd, delta) {
   return `${yy}-${mm}-${dd}`;
 }
 
+function getPreviousClosedWeekRangeJst() {
+  const today = jstDateString(new Date());
+  const [y, m, d] = today.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = dt.getUTCDay(); // 0=Sun ... 6=Sat
+
+  const diffToCurrentMonday = day === 0 ? -6 : 1 - day;
+  const currentMonday = addDays(today, diffToCurrentMonday);
+
+  const start = addDays(currentMonday, -7); // previous Monday
+  const end = addDays(currentMonday, -1); // previous Sunday
+
+  return { start, end, days: 7 };
+}
+
 function mostFrequent(values) {
   const counts = new Map();
   for (const value of values) {
@@ -51,10 +66,20 @@ export async function GET(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
 
     const url = new URL(req.url);
-    const days = Math.min(Math.max(Number(url.searchParams.get("days") || 7), 7), 28);
+    const weekStartParam = url.searchParams.get("week_start");
 
-    const end = jstDateString(new Date());
-    const start = addDays(end, -(days - 1));
+    let range;
+    if (weekStartParam && /^\d{4}-\d{2}-\d{2}$/.test(weekStartParam)) {
+      range = {
+        start: weekStartParam,
+        end: addDays(weekStartParam, 6),
+        days: 7,
+      };
+    } else {
+      range = getPreviousClosedWeekRangeJst();
+    }
+
+    const { start, end, days } = range;
 
     const [{ data: forecasts, error: forecastErr }, { data: reviews, error: reviewErr }] =
       await Promise.all([
