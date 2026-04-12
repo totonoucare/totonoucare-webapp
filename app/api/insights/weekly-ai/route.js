@@ -11,7 +11,10 @@ export const runtime = "nodejs";
 
 const REPORT_TYPE = "weekly_radar";
 const MAX_GENERATIONS_PER_WEEK = 2;
-const MODEL = process.env.OPENAI_WEEKLY_REPORT_MODEL || process.env.OPENAI_RADAR_MODEL || "gpt-5.4";
+const MODEL =
+  process.env.OPENAI_WEEKLY_REPORT_MODEL ||
+  process.env.OPENAI_RADAR_MODEL ||
+  "gpt-5.4";
 
 function addDays(ymd, delta) {
   const [y, m, d] = ymd.split("-").map(Number);
@@ -23,25 +26,27 @@ function addDays(ymd, delta) {
   return `${yy}-${mm}-${dd}`;
 }
 
-function getWeekRangeJst(weekStartInput = null) {
-  if (weekStartInput && /^\d{4}-\d{2}-\d{2}$/.test(weekStartInput)) {
-    return {
-      week_start: weekStartInput,
-      week_end: addDays(weekStartInput, 6),
-    };
-  }
-
+function getPreviousClosedWeekRangeJst() {
   const today = jstDateString(new Date());
   const [y, m, d] = today.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
-  const day = dt.getUTCDay(); // 0 Sun ... 6 Sat
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-  const monday = addDays(today, diffToMonday);
+  const day = dt.getUTCDay(); // 0=Sun ... 6=Sat
 
-  return {
-    week_start: monday,
-    week_end: addDays(monday, 6),
-  };
+  const diffToCurrentMonday = day === 0 ? -6 : 1 - day;
+  const currentMonday = addDays(today, diffToCurrentMonday);
+
+  const week_start = addDays(currentMonday, -7);
+  const week_end = addDays(currentMonday, -1);
+
+  return { week_start, week_end };
+}
+
+function safeArr(v) {
+  return Array.isArray(v) ? v : [];
+}
+
+function trimText(v) {
+  return String(v || "").trim();
 }
 
 function mostFrequent(values) {
@@ -72,18 +77,8 @@ function triggerLabel(mainTrigger) {
   return null;
 }
 
-function safeArr(v) {
-  return Array.isArray(v) ? v : [];
-}
-
-function trimText(v) {
-  return String(v || "").trim();
-}
-
 function stableValue(value) {
-  if (Array.isArray(value)) {
-    return value.map(stableValue);
-  }
+  if (Array.isArray(value)) return value.map(stableValue);
   if (value && typeof value === "object") {
     return Object.keys(value)
       .sort()
@@ -127,7 +122,7 @@ function extractJson(text) {
   throw new Error("Failed to parse OpenAI JSON");
 }
 
-function buildRows({ start, end, forecasts, reviews }) {
+function buildRows({ weekStart, forecasts, reviews }) {
   const forecastMap = new Map((forecasts || []).map((row) => [String(row.target_date), row]));
   const reviewMap = new Map();
 
@@ -140,10 +135,8 @@ function buildRows({ start, end, forecasts, reviews }) {
   }
 
   const rows = [];
-  const days = 7;
-
-  for (let i = 0; i < days; i += 1) {
-    const date = addDays(start, i);
+  for (let i = 0; i < 7; i += 1) {
+    const date = addDays(weekStart, i);
     const forecast = forecastMap.get(date) || null;
     const review = reviewMap.get(date) || null;
 
@@ -200,7 +193,7 @@ function buildSummary(rows) {
     mild_bad_days: recordedRows.filter((row) => row.review?.condition_level === 1).length,
     good_days: recordedRows.filter((row) => row.review?.condition_level === 2).length,
     well_prevented_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
-    strong_forecast_days: rows.filter((row) => (row.forecast?.signal ?? 0) >= 2).length,
+    attention_forecast_days: rows.filter((row) => (row.forecast?.signal ?? 0) >= 1).length,
     avg_score: avgScore,
     top_trigger_on_bad_days: topTriggerOnBadDays,
     top_trigger_on_bad_days_label: triggerLabel(topTriggerOnBadDays),
@@ -253,10 +246,10 @@ function buildInputPayload({ weekStart, weekEnd, profile, rows, summary }) {
 
 function reportTextFromJson(report) {
   const parts = [
-    report?.summary ? `今週の傾向\n${report.summary}` : "",
+    report?.summary ? `先週の傾向\n${report.summary}` : "",
     report?.patterns ? `響きやすかった条件\n${report.patterns}` : "",
-    report?.wins ? `今週うまくいったこと\n${report.wins}` : "",
-    report?.next_week ? `来週の一言\n${report.next_week}` : "",
+    report?.wins ? `先週うまくいったこと\n${report.wins}` : "",
+    report?.next_week ? `今週の一言\n${report.next_week}` : "",
   ].filter(Boolean);
 
   return parts.join("\n\n");
@@ -294,19 +287,20 @@ async function generateWeeklyAiReport({ weekStart, weekEnd, profile, rows, summa
   };
 
   const prompt = `
-あなたは未病レーダーの週次レポート作成AIです。
+あなたは未病レーダーの締めレポート作成AIです。
 
 # 役割
-- このレポートは「今週の記録を意味づける」ためのものです
-- 数字の言い換えではなく、今週どんな傾向があったかを短く整理してください
+- このレポートは「先週（月〜日）」の記録をふり返るためのものです
+- 今週の途中経過ではなく、すでに締まった週の意味づけをしてください
+- 数字の言い換えではなく、先週どんな傾向があったかを短く整理してください
 - 診断や治療の断定はしません
 - 動物名などの比喩タイトルは使わず、体の反応として表現してください
 
 # 重要ルール
-- summary は「今週全体の流れ」
+- summary は「先週全体の流れ」
 - patterns は「何が響きやすかったか」「予報との一致やズレ」
 - wins は「先回りできたこと」「比較的保てたこと」
-- next_week は「来週の意識ポイント」
+- next_week は「今週の意識ポイント」
 - 記録が少ない場合は、無理に断定せず「まだ傾向は仮説段階」と書いてください
 - 一般ユーザー向けの自然な日本語で、やさしいが甘すぎない文体にしてください
 - 各項目は2〜4文以内、簡潔にしてください
@@ -363,19 +357,23 @@ async function getSourceBundle(userId, weekStart, weekEnd) {
         .maybeSingle(),
     ]);
 
-  if (forecastErr) throw forecastErr;
-  if (reviewErr) throw reviewErr;
-  if (profileErr) throw profileErr;
+    if (forecastErr) throw forecastErr;
+    if (reviewErr) throw reviewErr;
+    if (profileErr) throw profileErr;
 
-  const rows = buildRows({ start: weekStart, end: weekEnd, forecasts: forecasts || [], reviews: reviews || [] });
-  const summary = buildSummary(rows);
+    const rows = buildRows({
+      weekStart,
+      forecasts: forecasts || [],
+      reviews: reviews || [],
+    });
+    const summary = buildSummary(rows);
 
-  return {
-    profile: profile || null,
-    rows,
-    summary,
-    latest_source_at: latestSourceAt({ reviews: reviews || [], profile }),
-  };
+    return {
+      profile: profile || null,
+      rows,
+      summary,
+      latest_source_at: latestSourceAt({ reviews: reviews || [], profile }),
+    };
 }
 
 function makeResponseData({ status, weekStart, weekEnd, record }) {
@@ -399,7 +397,13 @@ export async function GET(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
 
     const url = new URL(req.url);
-    const { week_start, week_end } = getWeekRangeJst(url.searchParams.get("week_start"));
+    const weekStartParam = url.searchParams.get("week_start");
+    const range =
+      weekStartParam && /^\d{4}-\d{2}-\d{2}$/.test(weekStartParam)
+        ? { week_start: weekStartParam, week_end: addDays(weekStartParam, 6) }
+        : getPreviousClosedWeekRangeJst();
+
+    const { week_start, week_end } = range;
 
     const { data: record, error: reportErr } = await supabaseServer
       .from("weekly_ai_reports")
@@ -443,7 +447,13 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const { week_start, week_end } = getWeekRangeJst(body?.week_start || null);
+    const weekStartParam = body?.week_start;
+    const range =
+      weekStartParam && /^\d{4}-\d{2}-\d{2}$/.test(weekStartParam)
+        ? { week_start: weekStartParam, week_end: addDays(weekStartParam, 6) }
+        : getPreviousClosedWeekRangeJst();
+
+    const { week_start, week_end } = range;
 
     const source = await getSourceBundle(user.id, week_start, week_end);
     const inputPayload = buildInputPayload({
@@ -465,7 +475,6 @@ export async function POST(req) {
 
     if (reportErr) throw reportErr;
 
-    // 同内容ならキャッシュ返却
     if (existing && existing.input_hash === inputHash) {
       return NextResponse.json({
         data: makeResponseData({
@@ -477,7 +486,6 @@ export async function POST(req) {
       });
     }
 
-    // 上限到達なら保存済み返却
     if (existing && Number(existing.generation_count || 0) >= MAX_GENERATIONS_PER_WEEK) {
       return NextResponse.json({
         data: makeResponseData({
