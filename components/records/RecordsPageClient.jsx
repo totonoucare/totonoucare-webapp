@@ -540,7 +540,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
                   <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-inset ring-[var(--ring)]">
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      強い予報
+                      注意以上の予報
                     </div>
                     <div className="mt-1 text-[18px] font-black tracking-tight text-slate-900">
                       {report?.summary?.strong_forecast_days ?? 0}日
