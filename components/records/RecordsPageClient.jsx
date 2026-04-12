@@ -493,7 +493,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
                   今週のふり返り
                 </div>
                 <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
-                  記録の数字は小さく、ふり返りはAIを主役にしています。
+                  今週の記録をもとに、傾向を振り返れます。
                 </div>
               </div>
             </div>
