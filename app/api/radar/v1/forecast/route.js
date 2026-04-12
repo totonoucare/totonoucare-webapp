@@ -9,6 +9,7 @@ import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
 import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
 import { getRadarConstitutionProfile } from "@/lib/radar_v1/profileRepo";
+import { getReviewFeedback } from "@/lib/radar_v1/reviewFeedback";
 import { buildRiskContext } from "@/lib/radar_v1/buildRiskContext";
 import { pickTcmPoints } from "@/lib/radar_v1/pickTcmPoints";
 import { selectMtestPoint } from "@/lib/radar_v1/selectMtestPoint";
@@ -189,6 +190,7 @@ export async function GET(req) {
           radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.4",
           summary_error: null,
           food_error: null,
+          review_feedback: null,
           from_cache: true,
         },
       });
@@ -201,6 +203,16 @@ export async function GET(req) {
         404
       );
     }
+
+    const reviewFeedback = await getReviewFeedback({
+      userId: user.id,
+      beforeDate: targetDate,
+    });
+
+    const profileWithFeedback = {
+      ...profile,
+      review_feedback: reviewFeedback,
+    };
 
     const { data: metnoData, meta: metnoMeta } =
       await fetchMetnoLocationForecast({
@@ -229,7 +241,7 @@ export async function GET(req) {
     const weatherStress = buildWeatherStress({ points: normalized.points });
 
     const riskContext = buildRiskContext({
-      profile,
+      profile: profileWithFeedback,
       weatherStress,
     });
 
@@ -266,6 +278,7 @@ export async function GET(req) {
       radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.4",
       summary_error: null,
       food_error: null,
+      review_feedback: reviewFeedback,
     };
 
     try {
@@ -320,6 +333,7 @@ export async function GET(req) {
       point_count: normalized.points.length,
       partial_day: normalized.points.length < 24,
       previous_mtest_point_code: previousPointCode || null,
+      review_feedback: reviewFeedback,
     };
 
     const forecast = await saveForecast({
