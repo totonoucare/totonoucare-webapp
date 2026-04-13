@@ -2,11 +2,28 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
+import { hasValidGuestToken } from "@/lib/diagnosisGuestAccess";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET(_req, { params }) {
+function getBearer(req) {
+  const h = req.headers.get("authorization") || req.headers.get("Authorization");
+  if (!h) return null;
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1] : null;
+}
+
+async function getAuthedUser(req) {
+  const token = getBearer(req);
+  if (!token) return null;
+
+  const { data, error } = await supabaseServer.auth.getUser(token);
+  if (error || !data?.user) return null;
+  return data.user;
+}
+
+export async function GET(req, { params }) {
   try {
     const id = params?.id;
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
@@ -32,6 +49,19 @@ export async function GET(_req, { params }) {
 
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const authedUser = await getAuthedUser(req);
+
+    if (data.user_id) {
+      if (!authedUser || authedUser.id !== data.user_id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const guestOk = await hasValidGuestToken({ req, supabase: supabaseServer, eventId: id });
+      if (!guestOk) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const answers = data.answers || {};
     const computed = scoreDiagnosis(answers); // always recompute from answers
