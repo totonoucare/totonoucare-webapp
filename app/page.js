@@ -475,20 +475,33 @@ export default function HomePage() {
         />
       }
     >
-      {/* ヒーローカード */}
-      <Module className="p-8 overflow-hidden relative rounded-[32px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-16px_rgba(77,111,85,0.12)] min-h-[180px]">
-        <div className="absolute right-[-20px] top-[-10px] z-[1] pointer-events-none opacity-90 scale-[0.8] origin-top-right">
-          <HeroDashboardArt />
+      {/* ヒーローヘッダー */}
+      <Module className="relative overflow-hidden px-7 pb-5 pt-7 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(251,250,246,0.96)_100%)] ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_18%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.14)]">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute inset-x-0 top-0 h-20 bg-[radial-gradient(circle_at_top_right,rgba(226,189,99,0.16),transparent_42%)]" />
+          <div className="absolute right-[-24px] top-[-16px] z-[1] opacity-55 scale-[0.74] origin-top-right">
+            <HeroDashboardArt />
+          </div>
         </div>
-        <div className="relative z-[2]">
-          <HeroTitleMark compact />
-        </div>
-        <div className="absolute right-6 bottom-2 z-[3]">
-            <HeroGuideBot 
-              compact 
-              message="体調予報と、次の一歩をまとめています。" 
-              bubbleSide="left-belly" 
-            />
+
+        <div className="relative z-[2] flex min-h-[190px] items-start justify-between gap-4">
+          <div className="min-w-0 flex-1 pr-2 sm:max-w-[360px]">
+            <div className="flex items-center gap-3">
+              <HeroTitleMark compact />
+            </div>
+            <div className="mt-2 pl-[58px] text-[11px] font-black uppercase tracking-[0.28em] text-[#c89d47]">
+              MIBYO RADAR
+            </div>
+
+            <div className="mt-5 max-w-[320px]">
+              <HeroGuideBot
+                compact
+                message="体調予報の要約と、次の一歩をまとめています"
+                bubbleSide="left-belly"
+              />
+            </div>
+          </div>
+
         </div>
       </Module>
 
@@ -547,7 +560,7 @@ export default function HomePage() {
           <ActionTile
             icon={<IconReportCard />}
             title="週次レポートを見る"
-            sub={weeklySummary?.recorded_days != null ? `先週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
+            sub={weeklySummary?.recorded_days != null ? `今週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
             onClick={() => router.push("/records?tab=report")}
           />
         </div>
