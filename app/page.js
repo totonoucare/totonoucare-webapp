@@ -125,6 +125,18 @@ function signalCardBg(signal) {
   return "bg-gradient-to-br from-emerald-50 to-[#ecfdf5] ring-emerald-200";
 }
 
+function signalScoreTextClass(signal) {
+  if (signal === 2) return "text-rose-700";
+  if (signal === 1) return "text-amber-700";
+  return "text-emerald-700";
+}
+
+function signalDecorClass(signal) {
+  if (signal === 2) return "from-rose-200/45 to-rose-100/10 border-rose-200/40";
+  if (signal === 1) return "from-amber-200/45 to-amber-100/10 border-amber-200/45";
+  return "from-emerald-200/45 to-emerald-100/10 border-emerald-200/40";
+}
+
 function triggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "down") return "気圧低下";
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
@@ -133,6 +145,16 @@ function triggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿度";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
+}
+
+function exactTriggerKey(mainTrigger, triggerDir) {
+  if (mainTrigger === "pressure" && triggerDir === "down") return "pressure_down";
+  if (mainTrigger === "pressure" && triggerDir === "up") return "pressure_up";
+  if (mainTrigger === "temp" && triggerDir === "down") return "cold";
+  if (mainTrigger === "temp" && triggerDir === "up") return "heat";
+  if (mainTrigger === "humidity" && triggerDir === "up") return "damp";
+  if (mainTrigger === "humidity" && triggerDir === "down") return "dry";
+  return "pressure_down";
 }
 
 function ActionTile({ icon, title, sub, onClick }) {
@@ -158,7 +180,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-        <div className="h-32 animate-pulse rounded-2xl bg-slate-100" />
+        <div className="h-36 animate-pulse rounded-[22px] bg-slate-100" />
       </div>
     );
   }
@@ -187,23 +209,32 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
   const forecast = bundle.forecast || {};
   const location = bundle.location || {};
   const score = forecast.score_0_10 ?? 0;
-
-  // ★ 予報からの天候アイコンのキー判定
-  const exactTrigger = forecast.main_trigger === "pressure" && forecast.trigger_dir === "down" ? "pressure_down" : 
-                       forecast.main_trigger === "pressure" && forecast.trigger_dir === "up" ? "pressure_up" : 
-                       forecast.main_trigger === "temp" && forecast.trigger_dir === "down" ? "cold" : 
-                       forecast.main_trigger === "temp" && forecast.trigger_dir === "up" ? "heat" : 
-                       forecast.main_trigger === "humidity" && forecast.trigger_dir === "up" ? "damp" : "dry";
+  const exactTrigger = exactTriggerKey(forecast.main_trigger, forecast.trigger_dir);
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={[
-        "relative rounded-[24px] p-5 text-left ring-1 ring-inset shadow-sm transition-all hover:shadow-md active:scale-[0.98] overflow-hidden flex flex-col justify-between group",
-        signalCardBg(forecast.signal) || "bg-white ring-[var(--ring)]"
+        "relative overflow-hidden rounded-[24px] p-5 text-left ring-1 ring-inset shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.98] group",
+        signalCardBg(forecast.signal) || "bg-white ring-[var(--ring)]",
       ].join(" ")}
     >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className={[
+          "absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl",
+          signalDecorClass(forecast.signal),
+        ].join(" ")} />
+        <div className={[
+          "absolute right-8 top-12 h-28 w-28 rounded-full border",
+          signalDecorClass(forecast.signal),
+        ].join(" ")} />
+        <div className={[
+          "absolute right-16 top-4 h-20 w-20 rounded-full border",
+          signalDecorClass(forecast.signal),
+        ].join(" ")} />
+      </div>
+
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div>
           <div className="text-[15px] font-black tracking-tight text-slate-900">{title}</div>
@@ -212,33 +243,37 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
             {location.display_name || location.label || "地域未設定"}
           </div>
         </div>
-        <span className={["inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black shadow-sm", signalBadge(forecast.signal)].join(" ")}>
+        <span className={[
+          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black shadow-sm",
+          signalBadge(forecast.signal),
+        ].join(" ")}>
           <span className={["h-2 w-2 rounded-full", signalDotClass(forecast.signal)].join(" ")} />
           {signalText(forecast.signal)}
         </span>
       </div>
 
-      <div className="relative z-10 mt-6 flex items-end justify-between gap-3">
-        <div>
+      <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">気になりやすい変化</div>
-          {/* ★ 天候アイコンをラベルの横に配置 */}
-          <div className="mt-1.5 flex items-center gap-1.5 text-[16px] font-black tracking-tight text-slate-900">
-            <div className="text-[var(--accent-ink)] opacity-90">
-              <WeatherIcon triggerKey={exactTrigger} className="h-5 w-5" />
+          <div className="mt-1.5 flex items-center gap-2 text-[20px] font-black tracking-tight text-slate-900">
+            <div className="text-[var(--accent-ink)] opacity-95">
+              <WeatherIcon triggerKey={exactTrigger} className="h-6 w-6" />
             </div>
-            {triggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+            <span>{triggerLabel(forecast.main_trigger, forecast.trigger_dir)}</span>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">目安スコア</div>
-          <div className="text-[28px] font-black tracking-tighter text-slate-900 leading-none">
-            {score}<span className="text-[14px] opacity-40 ml-0.5">/10</span>
+
+        <div className="shrink-0 text-right">
+          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">目安スコア</div>
+          <div className="flex items-end justify-end gap-1 leading-none">
+            <span className={["text-[42px] font-black tracking-[-0.04em]", signalScoreTextClass(forecast.signal)].join(" ")}>{score}</span>
+            <span className="pb-1 text-[16px] font-black text-slate-400">/10</span>
           </div>
         </div>
       </div>
-      
+
       <div className="absolute right-4 bottom-4 opacity-0 transition-opacity group-hover:opacity-100 text-slate-400">
-         <IconChevron />
+        <IconChevron />
       </div>
     </button>
   );
