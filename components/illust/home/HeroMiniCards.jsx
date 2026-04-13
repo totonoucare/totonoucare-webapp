@@ -49,10 +49,6 @@ export default function HeroMiniCards({ compact = false }) {
     strokeLinecap="round"
     strokeOpacity="0.18"
   />
-
-  {/* 小さい基準点 */}
-  <circle cx="30" cy="250" r="3" fill="#d9a54a" fillOpacity="0.55" />
-  <circle cx="118" cy="214" r="2.5" fill="#6a9770" fillOpacity="0.28" />
 </svg>
 
           <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
