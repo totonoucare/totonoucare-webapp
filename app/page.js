@@ -489,14 +489,18 @@ export default function HomePage() {
           <HeroTitleMark compact={false} className="max-w-full" />
         </div>
 
-        <div className="absolute left-8 top-[112px] z-[3] max-w-[340px]">
-          <div className="relative rounded-[24px] border border-[var(--ring)] bg-[linear-gradient(180deg,#ffffff_0%,#fafaf7_100%)] px-5 py-4 text-left shadow-[0_10px_24px_-16px_rgba(77,111,85,0.28)]">
-            <div className="absolute right-[-7px] top-[50%] h-4 w-4 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
-            <div className="text-[14px] font-bold leading-7 text-slate-600">
-              体調予報の要約と、次の一歩をまとめています
-            </div>
-          </div>
-        </div>
+<div className="absolute left-8 top-[132px] z-[3] w-[250px] sm:w-[280px]">
+  <div className="relative rounded-[20px] border border-[var(--ring)] bg-[linear-gradient(180deg,#ffffff_0%,#fafaf7_100%)] px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
+    <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+    <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+      体調予報の要約と、次の一歩をまとめています
+    </div>
+  </div>
+</div>
+
+<div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+  <HeroGuideBot compact showBubble={false} />
+</div>
 
         <div className="absolute right-6 bottom-4 z-[3]">
           <HeroGuideBot compact showBubble={false} />
