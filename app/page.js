@@ -547,7 +547,7 @@ export default function HomePage() {
           <ActionTile
             icon={<IconReportCard />}
             title="週次レポートを見る"
-            sub={weeklySummary?.recorded_days != null ? `今週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
+            sub={weeklySummary?.recorded_days != null ? `先週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
             onClick={() => router.push("/records?tab=report")}
           />
         </div>
