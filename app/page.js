@@ -407,57 +407,113 @@ export default function HomePage() {
   /* ==============================================================
    * 未ログイン時（ランディングページ風の洗練されたUI）
    * ============================================================== */
-  if (!isLoggedIn) {
-    return (
-      <AppShell
-        title="ホーム"
-        subtitle="未病レーダー"
-        headerRight={
-          <Button size="sm" variant="ghost" onClick={() => router.push("/guide")} className="font-extrabold text-slate-600 hover:bg-slate-100">使い方</Button>
-        }
-      >
-        <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-          <div className="relative bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_20%)] via-[color-mix(in_srgb,var(--mint),white_70%)] to-white px-6 pt-10 pb-6 text-center">
-            <HeroTitleMark />
-            
-            <div className="mt-8 text-[26px] sm:text-[30px] font-black tracking-tight leading-[1.35] text-slate-900">
-              体質と気象変化から、<br />
-              体調の波を先読み。
+if (!isLoggedIn) {
+  return (
+    <AppShell
+      title="ホーム"
+      subtitle="未病レーダー"
+      headerRight={
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => router.push("/guide")}
+          className="font-extrabold text-slate-600 hover:bg-slate-100"
+        >
+          使い方
+        </Button>
+      }
+    >
+      <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
+        {/* 1. ブランド名 */}
+        <div className="px-6 pt-8 text-center">
+          <div className="mx-auto max-w-[340px]">
+            <HeroTitleMark compact={false} className="max-w-full" />
+          </div>
+        </div>
+
+        {/* 2. ヒーロー絵エリア */}
+        <div className="mt-6 px-5">
+          <div className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(180deg,rgba(248,250,245,0.95)_0%,rgba(255,255,255,0.98)_100%)] px-4 py-5 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_12%)] shadow-[0_18px_36px_-24px_rgba(77,111,85,0.12)]">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute right-6 top-6 h-40 w-40 rounded-full border border-[rgba(200,157,71,0.14)]" />
+              <div className="absolute right-14 top-14 h-28 w-28 rounded-full border border-[rgba(94,131,101,0.12)]" />
+              <div className="absolute right-0 bottom-0 h-48 w-48 rounded-full border border-[rgba(94,131,101,0.08)]" />
+              <div className="absolute left-[18%] top-[56%] h-px w-[46%] rotate-[18deg] bg-[linear-gradient(90deg,transparent,rgba(94,131,101,0.10),transparent)]" />
+              <div className="absolute right-20 top-24 h-2.5 w-2.5 rounded-full bg-[rgba(200,157,71,0.22)]" />
             </div>
-            <div className="mt-4 text-[14px] font-bold leading-relaxed text-slate-700 max-w-[320px] mx-auto">
-              あなたの「崩れ方のクセ」を分析し、日々の気圧や気温の変化に対する先回りケアを提案します。
+
+            <div className="relative z-10">
+              <HeroMiniCards compact />
             </div>
+          </div>
+        </div>
+
+        {/* 3. タイトルコピー */}
+        <div className="mt-8 px-6 text-center">
+          <div className="text-[28px] sm:text-[32px] font-black tracking-tight leading-[1.3] text-slate-900">
+            体質と気象変化から、<br />
+            体調の波を先読み。
+          </div>
+        </div>
+
+        {/* 4. 本文コピー */}
+        <div className="mt-5 px-6">
+          <div className="mx-auto max-w-[340px] text-center text-[14px] font-bold leading-8 text-slate-700">
+            あなたの「崩れ方のクセ」を分析し、日々の気圧や気温の変化に対する先回りケアを提案します。
+          </div>
+        </div>
+
+        {/* 5. CTA */}
+        <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
+          <div className="grid gap-3">
+            <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[15px]">
+              無料で体質チェックをはじめる
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => router.push("/signup")}
+              className="py-4 shadow-sm text-[15px] bg-white"
+            >
+              ログインする
+            </Button>
           </div>
 
-          <div className="px-5 mt-2">
-            <HeroMiniCards compact />
-          </div>
-
-          <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
-            <div className="grid gap-3">
-              <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[15px]">
-                無料で体質チェックをはじめる
-              </Button>
-              <Button variant="secondary" onClick={() => router.push("/signup")} className="py-4 shadow-sm text-[15px] bg-white">
-                ログインする
-              </Button>
-            </div>
-            
-            <ul className="mt-6 space-y-2.5">
-              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                体質チェックと結果閲覧は<span className="font-extrabold text-slate-700">ずっと無料</span>
-              </li>
-              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                体調予報と記録はログイン後に利用可能
-              </li>
-            </ul>
-          </div>
-        </Module>
-      </AppShell>
-    );
-  }
+          <ul className="mt-6 space-y-2.5">
+            <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4 w-4 text-[var(--accent)]"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              体質チェックと結果閲覧は
+              <span className="font-extrabold text-slate-700">ずっと無料</span>
+            </li>
+            <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4 w-4 text-[var(--accent)]"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              体調予報と記録はログイン後に利用可能
+            </li>
+          </ul>
+        </div>
+      </Module>
+    </AppShell>
+  );
+}
 
   /* ==============================================================
    * ログイン後（ダッシュボード）
