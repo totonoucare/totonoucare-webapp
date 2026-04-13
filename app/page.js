@@ -429,7 +429,7 @@ if (!isLoggedIn) {
           <HeroTitleMark />
 
           {/* 2. ヒーロー絵エリア */}
-          <div className="px-5 mt-8">
+          <div className="mt-8 -mx-1">
             <HeroMiniCards compact />
           </div>
 
