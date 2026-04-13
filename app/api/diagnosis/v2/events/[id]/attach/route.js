@@ -2,6 +2,10 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { buildConstitutionProfilePayload, scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
+import {
+  clearGuestTokenCookie,
+  hasValidGuestToken,
+} from "@/lib/diagnosisGuestAccess";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,10 +20,11 @@ function getBearer(req) {
 /**
  * Attach flow:
  * 1) validate bearer -> user
- * 2) load diagnosis_events
- * 3) upsert constitution_events by source_event_id
- * 4) upsert constitution_profiles (latest cache)
- * 5) finally set diagnosis_events.user_id
+ * 2) validate guest token cookie
+ * 3) load diagnosis_events
+ * 4) upsert constitution_events by source_event_id
+ * 5) upsert constitution_profiles (latest cache)
+ * 6) finally set diagnosis_events.user_id
  */
 export async function POST(req, { params }) {
   try {
@@ -38,6 +43,14 @@ export async function POST(req, { params }) {
       );
     }
     const user = userData.user;
+
+    const guestOk = await hasValidGuestToken({ req, supabase: supabaseServer, eventId: id });
+    if (!guestOk) {
+      return NextResponse.json(
+        { error: "この診断結果を引き継ぐ権限がありません。結果ページからもう一度お試しください。" },
+        { status: 403 }
+      );
+    }
 
     // --- Load diagnosis_events
     const { data: ev, error: e0 } = await supabaseServer
@@ -74,16 +87,14 @@ export async function POST(req, { params }) {
     const computed = scoreDiagnosis(answers);
 
     // --- Upsert constitution_events by source_event_id
-    // Note: ideally DB has UNIQUE(source_event_id). If not, we still do find->update/insert.
     const eventRow = {
       user_id: user.id,
       symptom_focus: computed.symptom_focus,
       answers,
 
-      // repurposed tri-state fields
-      thermo: computed.thermo,         // yin_yang tri
-      resilience: computed.resilience, // drive tri
-      is_mixed: computed.is_mixed,     // false
+      thermo: computed.thermo,
+      resilience: computed.resilience,
+      is_mixed: computed.is_mixed,
 
       qi: computed.qi,
       blood: computed.blood,
@@ -92,7 +103,7 @@ export async function POST(req, { params }) {
       primary_meridian: computed.primary_meridian,
       secondary_meridian: computed.secondary_meridian,
 
-      core_code: computed.core_code, // 9 types
+      core_code: computed.core_code,
       sub_labels: computed.sub_labels,
 
       engine_version: "v2",
@@ -100,7 +111,6 @@ export async function POST(req, { params }) {
       source_event_id: id,
       notes: { source_event_id: id },
 
-      // copy AI explain cache if exists
       ai_explain_text: ev.ai_explain_text || null,
       ai_explain_model: ev.ai_explain_model || null,
       ai_explain_created_at: ev.ai_explain_created_at || null,
@@ -169,7 +179,14 @@ export async function POST(req, { params }) {
       if (eAttach) throw eAttach;
     }
 
-    return NextResponse.json({
+    const { error: eGuest } = await supabaseServer
+      .from("diagnosis_guest_access")
+      .update({ claimed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("event_id", id);
+
+    if (eGuest) throw eGuest;
+
+    const res = NextResponse.json({
       data: {
         ok: true,
         attached: true,
@@ -178,8 +195,12 @@ export async function POST(req, { params }) {
         latest_event_id: ceId,
       },
     });
+
+    clearGuestTokenCookie(res, id);
+    return res;
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
   }
 }
+
