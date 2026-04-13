@@ -502,9 +502,6 @@ export default function HomePage() {
   <HeroGuideBot compact showBubble={false} />
 </div>
 
-        <div className="absolute right-6 bottom-4 z-[3]">
-          <HeroGuideBot compact showBubble={false} />
-        </div>
       </Module>
 
       {/* サマリー・ウィジェット群 */}
