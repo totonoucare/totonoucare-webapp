@@ -426,11 +426,16 @@ function ResultPage({ params }) {
   }, []);
 
   useEffect(() => {
+    if (loadingAuth) return;
+
     let mounted = true;
     (async () => {
       try {
         setLoadingEvent(true);
-        const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`);
+        const token = session?.access_token;
+        const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         const json = await res.json().catch(() => ({}));
         if (!mounted) return;
         if (!res.ok || !json?.data) { setEvent({ notFound: true }); return; }
@@ -445,7 +450,7 @@ function ResultPage({ params }) {
       }
     })();
     return () => { mounted = false; };
-  }, [id]);
+  }, [id, loadingAuth, session?.access_token]);
 
   useEffect(() => {
     if (!attachAfterLogin || loadingAuth || !session || !event || event?.notFound || autoAttachRan.current) return;
@@ -828,3 +833,4 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
