@@ -36,7 +36,7 @@ export default function HeroMiniCards({ compact = false }) {
   <path
     d="M30 98 A152 152 0 0 1 166 188"
     fill="none"
-    stroke="#d9a54a"
+    stroke="#6a9770"
     strokeWidth="2"
     strokeLinecap="round"
     strokeOpacity="0.24"
