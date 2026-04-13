@@ -476,7 +476,7 @@ if (!isLoggedIn) {
               >
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              体質チェックと結果閲覧は
+              体質チェック・ログイン後の体調予報は
               <span className="font-extrabold text-slate-700">ずっと無料</span>
             </li>
             <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
@@ -491,7 +491,7 @@ if (!isLoggedIn) {
               >
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              体調予報と記録はログイン後に利用可能
+              記録による予報精度UP・週次AIレポートはサブスク登録後にのみ利用可能
             </li>
           </ul>
         </div>
