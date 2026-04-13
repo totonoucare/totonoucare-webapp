@@ -96,7 +96,7 @@ function getDateModeLabel(mode) {
 }
 
 function buildScoreCardTitle(mode, targetDate) {
-  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の崩れやすさ`;
+  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の予報`;
 }
 
 function getSectionLabels(mode) {
@@ -262,12 +262,12 @@ function getMoodHeadline(triggerKey, signal, mode) {
 
 function getHeroPanelClass(signal) {
   if (signal === 2) {
-    return "bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.55),transparent_35%),linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)] ring-1 ring-rose-200/70";
+    return "bg-[linear-gradient(135deg,#fff7f7_0%,#fff8ef_100%)] ring-1 ring-rose-200/70";
   }
   if (signal === 1) {
-    return "bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.6),transparent_35%),linear-gradient(135deg,#fff8e8_0%,#fffdf4_100%)] ring-1 ring-amber-200/70";
+    return "bg-[linear-gradient(135deg,#fffaf0_0%,#fffdf7_100%)] ring-1 ring-amber-200/70";
   }
-  return "bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.6),transparent_35%),linear-gradient(135deg,#effcf5_0%,#f7fffb_100%)] ring-1 ring-emerald-200/70";
+  return "bg-[linear-gradient(135deg,#f3fcf7_0%,#fbfffd_100%)] ring-1 ring-emerald-200/70";
 }
 
 function getHeroAccentClass(signal) {
@@ -1006,7 +1006,6 @@ export default function RadarPage() {
     () => getMoodHeadline(triggerKey, forecast?.signal ?? 0, bundleDateMode),
     [triggerKey, forecast?.signal, bundleDateMode]
   );
-  const heroLead = forecastLines[0] || signalPanelSubtext(forecast.signal);
   const primaryTsubo = tsuboPoints[0] || null;
   const extraTsuboPoints = tsuboPoints.slice(1);
   const foodExamples = safeArray(food.examples);
@@ -1178,7 +1177,7 @@ export default function RadarPage() {
             </div>
           ) : null}
 
-          {/* 1. 明日のムードカード */}
+          {/* 1. 予報カード */}
           <Module className="relative overflow-hidden p-6">
             <div
               className={[
@@ -1186,24 +1185,20 @@ export default function RadarPage() {
                 getHeroPanelClass(forecast.signal),
               ].join(" ")}
             >
-              <div className="pointer-events-none absolute -right-6 -top-6 opacity-[0.12]">
-                <WeatherIcon triggerKey={triggerKey} className="h-28 w-28" />
-              </div>
-              <div className="pointer-events-none absolute -left-10 bottom-[-38px] h-28 w-28 rounded-full bg-white/40 blur-2xl" />
-              <div className="pointer-events-none absolute right-[18%] top-[18%] h-24 w-24 rounded-full border border-white/35" />
-              <div className="pointer-events-none absolute right-[10%] top-[10%] h-36 w-36 rounded-full border border-white/25" />
+              <div className="pointer-events-none absolute -right-6 -top-8 h-36 w-36 rounded-full border border-white/40 opacity-70" />
+              <div className="pointer-events-none absolute right-8 top-6 h-24 w-24 rounded-full border border-white/35 opacity-80" />
+              <div className="pointer-events-none absolute -left-12 bottom-[-40px] h-32 w-40 rounded-full bg-white/30 blur-2xl" />
+              <div className="pointer-events-none absolute left-[8%] top-[26%] h-px w-[44%] bg-white/40" />
+              <div className="pointer-events-none absolute left-[12%] top-[30%] h-px w-[30%] bg-white/25" />
 
               <div className="relative">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-white/70 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-white/72 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
                       <IconRadar className="h-5 w-5" />
                     </div>
-                    <div>
-                      <div className="text-[11px] font-black uppercase tracking-widest text-slate-500/80">
-                        明日のムード
-                      </div>
-                      <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
+                    <div className="min-w-0">
+                      <div className="text-[14px] font-black tracking-tight text-slate-900">
                         {scoreCardTitle}
                       </div>
                     </div>
@@ -1211,7 +1206,7 @@ export default function RadarPage() {
 
                   <span
                     className={[
-                      "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-black shadow-sm",
+                      "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-black shadow-sm shrink-0",
                       signalBadgeClass(forecast.signal),
                     ].join(" ")}
                   >
@@ -1225,16 +1220,11 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="mt-5">
-                  <div className="text-[25px] font-black tracking-tight text-slate-900">
-                    {moodHeadline}
-                  </div>
-                  <div className="mt-2 max-w-[80%] text-[14px] font-bold leading-6 text-slate-700">
-                    {heroLead}
-                  </div>
+                <div className="mt-5 text-[26px] font-black tracking-tight text-slate-900 leading-[1.35]">
+                  {moodHeadline}
                 </div>
 
-                <div className="mt-6 flex items-end gap-2">
+                <div className="mt-5 flex items-end gap-2">
                   <div className="pb-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500/80">
                     崩れやすさ
                   </div>
@@ -1244,7 +1234,7 @@ export default function RadarPage() {
                   <span className="pb-1.5 text-[18px] font-black text-slate-400">/10</span>
                 </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm">
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       一番響きやすい要素
@@ -1271,37 +1261,53 @@ export default function RadarPage() {
                         : "—"}
                     </div>
                   </div>
+                </div>
 
+                <div className="mt-4 rounded-[20px] bg-white/70 ring-1 ring-black/5 backdrop-blur-sm overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setNoticeOpen((v) => !v)}
-                    className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm text-left transition-all hover:bg-white"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-all hover:bg-white/60"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {sectionLabels.noticeTitle}
-                        </div>
-                        <div className="mt-2 text-[15px] font-black tracking-tight text-slate-900">
-                          くわしく見る
-                        </div>
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        {sectionLabels.noticeTitle}
                       </div>
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className={[
-                          "h-5 w-5 text-slate-400 transition-transform",
-                          noticeOpen ? "rotate-180" : "",
-                        ].join(" ")}
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
+                      <div className="mt-2 text-[15px] font-black tracking-tight text-slate-900">
+                        くわしく見る
+                      </div>
                     </div>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className={[
+                        "h-5 w-5 text-slate-400 transition-transform",
+                        noticeOpen ? "rotate-180" : "",
+                      ].join(" ")}
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
                   </button>
+
+                  {noticeOpen ? (
+                    <div className="border-t border-slate-200/80 px-4 py-4 bg-white/55">
+                      <ul className="space-y-3">
+                        {forecastLines.map((line, idx) => (
+                          <li
+                            key={`${idx}-${line}`}
+                            className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
+                          >
+                            <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -1585,8 +1591,8 @@ export default function RadarPage() {
                   ベースとなるあなたの体質
                 </div>
 
-                <div className="mt-2 flex items-center gap-4">
-                  <div className="grid h-[84px] w-[84px] place-items-center overflow-hidden rounded-[22px] bg-white/75 p-2 ring-1 ring-black/5 shadow-sm">
+                <div className="mt-3 flex items-start gap-3">
+                  <div className="grid h-[74px] w-[74px] place-items-center overflow-hidden rounded-[20px] bg-white/75 p-2 ring-1 ring-black/5 shadow-sm shrink-0">
                     <CoreIllust
                       code={coreCode}
                       title={coreLabel?.title || "体質タイプ"}
@@ -1595,7 +1601,7 @@ export default function RadarPage() {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="text-[24px] font-black tracking-tight text-[var(--accent-ink)]">
+                    <div className="text-[22px] font-black tracking-tight text-[var(--accent-ink)] leading-[1.15]">
                       {coreLabel?.title || "—"}
                     </div>
 
@@ -1651,59 +1657,6 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          {/* 5. 注意点（折りたたみ） */}
-          <Module className="p-5">
-            <button
-              type="button"
-              onClick={() => setNoticeOpen((v) => !v)}
-              className="flex w-full items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-slate-50 text-slate-500 ring-1 ring-[var(--ring)] shadow-sm">
-                  <IconMemo className="h-5 w-5" />
-                </div>
-                <div className="text-left">
-                  <div className="text-[16px] font-black tracking-tight text-slate-900">
-                    {sectionLabels.noticeTitle}
-                  </div>
-                  <div className="mt-0.5 text-[11px] font-black text-slate-500">
-                    くわしい過ごし方を見る
-                  </div>
-                </div>
-              </div>
-
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className={[
-                  "h-5 w-5 text-slate-400 transition-transform",
-                  noticeOpen ? "rotate-180" : "",
-                ].join(" ")}
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            {noticeOpen ? (
-              <div className="mt-5 rounded-[24px] bg-white px-5 py-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                <ul className="space-y-3">
-                  {forecastLines.map((line, idx) => (
-                    <li
-                      key={`${idx}-${line}`}
-                      className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
-                    >
-                      <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </Module>
         </div>
       ) : (
         <div className="space-y-6">
