@@ -276,6 +276,18 @@ function getHeroAccentClass(signal) {
   return "text-emerald-700";
 }
 
+function getHeroScoreClass(signal) {
+  if (signal === 2) return "text-rose-700";
+  if (signal === 1) return "text-amber-700";
+  return "text-emerald-700";
+}
+
+function getHeroDecorClass(signal) {
+  if (signal === 2) return "from-rose-200/35 to-rose-100/5 border-rose-200/45";
+  if (signal === 1) return "from-amber-200/35 to-amber-100/5 border-amber-200/45";
+  return "from-emerald-200/35 to-emerald-100/5 border-emerald-200/45";
+}
+
 function getTsuboRoleLabel(point, index) {
   if (index === 0) {
     return point?.source === "mtest" ? "まず整えたいラインケア" : "まず整えたい体質ケア";
@@ -1185,11 +1197,28 @@ export default function RadarPage() {
                 getHeroPanelClass(forecast.signal),
               ].join(" ")}
             >
-              <div className="pointer-events-none absolute -right-6 -top-8 h-36 w-36 rounded-full border border-white/40 opacity-70" />
-              <div className="pointer-events-none absolute right-8 top-6 h-24 w-24 rounded-full border border-white/35 opacity-80" />
-              <div className="pointer-events-none absolute -left-12 bottom-[-40px] h-32 w-40 rounded-full bg-white/30 blur-2xl" />
-              <div className="pointer-events-none absolute left-[8%] top-[26%] h-px w-[44%] bg-white/40" />
-              <div className="pointer-events-none absolute left-[12%] top-[30%] h-px w-[30%] bg-white/25" />
+              <div
+                className={[
+                  "pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full border bg-gradient-to-br opacity-80 blur-[1px]",
+                  getHeroDecorClass(forecast.signal),
+                ].join(" ")}
+              />
+              <div
+                className={[
+                  "pointer-events-none absolute right-10 top-10 h-28 w-28 rounded-full border opacity-70",
+                  getHeroDecorClass(forecast.signal),
+                ].join(" ")}
+              />
+              <div
+                className={[
+                  "pointer-events-none absolute left-[-28px] bottom-[-56px] h-40 w-48 rounded-full bg-gradient-to-tr opacity-65 blur-2xl",
+                  getHeroDecorClass(forecast.signal),
+                ].join(" ")}
+              />
+              <div className="pointer-events-none absolute right-[18%] top-[16%] h-[140px] w-[140px] rounded-full border border-white/35 opacity-90" />
+              <div className="pointer-events-none absolute right-[12%] top-[8%] h-[220px] w-[220px] rounded-full border border-white/22 opacity-75" />
+              <div className="pointer-events-none absolute left-[10%] top-[34%] h-px w-[48%] bg-white/45" />
+              <div className="pointer-events-none absolute left-[14%] top-[38%] h-px w-[34%] bg-white/30" />
 
               <div className="relative">
                 <div className="flex items-start justify-between gap-3">
@@ -1220,18 +1249,23 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="mt-5 text-[26px] font-black tracking-tight text-slate-900 leading-[1.35]">
-                  {moodHeadline}
-                </div>
-
                 <div className="mt-5 flex items-end gap-2">
                   <div className="pb-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500/80">
                     崩れやすさ
                   </div>
-                  <span className="text-[58px] font-black leading-none tracking-[-0.04em] text-slate-900">
+                  <span
+                    className={[
+                      "text-[58px] font-black leading-none tracking-[-0.04em]",
+                      getHeroScoreClass(forecast.signal),
+                    ].join(" ")}
+                  >
                     {forecast.score_0_10}
                   </span>
                   <span className="pb-1.5 text-[18px] font-black text-slate-400">/10</span>
+                </div>
+
+                <div className="mt-4 text-[23px] font-black tracking-tight text-slate-900 leading-[1.35]">
+                  {moodHeadline}
                 </div>
 
                 <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
