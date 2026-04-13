@@ -240,24 +240,24 @@ function getMoodHeadline(triggerKey, signal, mode) {
   const day = mode === "today" ? "今日は" : "明日は";
 
   if (signal === 2) {
-    if (triggerKey === "pressure_down") return `${day}重さをためない日`;
-    if (triggerKey === "damp") return `${day}湿に飲まれない日`;
-    if (triggerKey === "cold") return `${day}冷えを入れない日`;
-    if (triggerKey === "heat") return `${day}熱をこもらせない日`;
-    if (triggerKey === "dry") return `${day}乾きすぎに注意の日`;
-    if (triggerKey === "pressure_up") return `${day}張りつめすぎ注意の日`;
+    if (triggerKey === "pressure_down") return `${day}低気圧で重だるさが出やすい日`;
+    if (triggerKey === "damp") return `${day}湿気でだるさ・むくみが出やすい日`;
+    if (triggerKey === "cold") return `${day}冷えで固まりやすい日`;
+    if (triggerKey === "heat") return `${day}熱がこもって消耗しやすい日`;
+    if (triggerKey === "dry") return `${day}乾燥で潤いを削りやすい日`;
+    if (triggerKey === "pressure_up") return `${day}張りつめやすく、力みが抜けにくい日`;
   }
 
   if (signal === 1) {
-    if (triggerKey === "pressure_down") return `${day}重だるさを流したい日`;
-    if (triggerKey === "damp") return `${day}むくみをためたくない日`;
-    if (triggerKey === "cold") return `${day}冷えに先回りしたい日`;
-    if (triggerKey === "heat") return `${day}熱を抜いておきたい日`;
-    if (triggerKey === "dry") return `${day}潤いを削りたくない日`;
-    if (triggerKey === "pressure_up") return `${day}詰め込みすぎ注意の日`;
+    if (triggerKey === "pressure_down") return `${day}低気圧による重だるさに注意したい日`;
+    if (triggerKey === "damp") return `${day}湿気でむくみや重さをためやすい日`;
+    if (triggerKey === "cold") return `${day}冷えをためないようにしたい日`;
+    if (triggerKey === "heat") return `${day}熱をこもらせないようにしたい日`;
+    if (triggerKey === "dry") return `${day}乾燥から守りたい日`;
+    if (triggerKey === "pressure_up") return `${day}詰め込みすぎに注意したい日`;
   }
 
-  return `${day}無理なく整える日`;
+  return `${day}大きく崩れにくい日`;
 }
 
 function getHeroPanelClass(signal) {
