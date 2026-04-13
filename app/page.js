@@ -10,7 +10,6 @@ import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 import {
   HeroDashboardArt,
-  HeroGuideBot,
   HeroMiniCards,
   HeroTitleMark,
   HomeHeaderMenu,
@@ -476,16 +475,16 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      <Module className="relative overflow-hidden px-7 pb-5 pt-7 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.92)_0%,rgba(251,250,246,0.96)_100%)] ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_18%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.14)]">
+      <Module className="relative overflow-hidden px-7 pb-6 pt-7 rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(251,250,246,0.98)_100%)] ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_18%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.12)]">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-x-0 top-0 h-20 bg-[radial-gradient(circle_at_top_right,rgba(226,189,99,0.16),transparent_42%)]" />
-          <div className="absolute right-[-24px] top-[-16px] z-[1] opacity-55 scale-[0.74] origin-top-right">
-            <HeroDashboardArt />
-          </div>
+          <div className="absolute right-0 top-0 h-28 w-40 bg-[radial-gradient(circle_at_top_right,rgba(226,189,99,0.18),transparent_58%)]" />
+          <div className="absolute right-6 top-5 h-2 w-2 rounded-full bg-[rgba(77,111,85,0.08)]" />
+          <div className="absolute right-16 top-14 h-1.5 w-1.5 rounded-full bg-[rgba(77,111,85,0.06)]" />
+          <div className="absolute left-10 bottom-6 h-20 w-28 rounded-full bg-[radial-gradient(circle_at_center,rgba(233,241,236,0.8),transparent_72%)]" />
         </div>
 
-        <div className="relative z-[2] flex min-h-[190px] items-start justify-between gap-4">
-          <div className="min-w-0 flex-1 pr-2 sm:max-w-[360px]">
+        <div className="relative z-[2] min-h-[210px] sm:min-h-[220px]">
+          <div className="max-w-[310px] pr-[92px] sm:max-w-[360px] sm:pr-[120px]">
             <div className="flex items-center gap-3">
               <HeroTitleMark compact />
             </div>
@@ -493,15 +492,15 @@ export default function HomePage() {
               MIBYO RADAR
             </div>
 
-            <div className="mt-5 max-w-[320px]">
-              <HeroGuideBot
-                compact
-                message="体調予報の要約と、次の一歩をまとめています"
-                bubbleSide="left-belly"
-              />
+            <div className="relative mt-5 max-w-[270px] rounded-[24px] bg-white/92 px-5 py-4 text-[15px] font-extrabold leading-7 text-slate-700 shadow-[0_14px_28px_-18px_rgba(26,34,56,0.22)] ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_22%)]">
+              <div className="absolute right-[-8px] top-1/2 h-4 w-4 -translate-y-1/2 rotate-45 bg-white/92 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_22%)]" />
+              体調予報の要約と、次の一歩をまとめています
             </div>
           </div>
 
+          <div className="pointer-events-none absolute bottom-[-6px] right-[8px] z-[1] w-[132px] opacity-95 sm:bottom-[-2px] sm:right-[18px] sm:w-[148px]">
+            <HeroDashboardArt />
+          </div>
         </div>
       </Module>
 
@@ -628,3 +627,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
