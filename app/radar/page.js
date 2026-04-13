@@ -238,21 +238,21 @@ function getForecastTriggerKey(forecast) {
 
 function getMoodHeadline(triggerKey, signal) {
   if (signal === 2) {
-    if (triggerKey === "pressure_down") return "低気圧で重だるさが強まりやすい";
-    if (triggerKey === "damp") return "湿気で重さ・むくみが出やすい";
-    if (triggerKey === "cold") return "冷えで体がこわばりやすい";
-    if (triggerKey === "heat") return "熱がこもって消耗しやすい";
-    if (triggerKey === "dry") return "乾燥で喉や肌が荒れやすい";
-    if (triggerKey === "pressure_up") return "高気圧で張りつめやすい";
+    if (triggerKey === "pressure_down") return "低気圧で重だるさが強まりやすい日";
+    if (triggerKey === "damp") return "湿気で重さ・むくみが出やすい日";
+    if (triggerKey === "cold") return "冷えで体がこわばりやすい日";
+    if (triggerKey === "heat") return "熱がこもって消耗しやすい日";
+    if (triggerKey === "dry") return "乾燥で喉や肌が荒れやすい日";
+    if (triggerKey === "pressure_up") return "高気圧で張りつめやすい日";
   }
 
   if (signal === 1) {
-    if (triggerKey === "pressure_down") return "低気圧で重だるさが出やすい";
-    if (triggerKey === "damp") return "湿気で重さ・むくみが出やすい";
-    if (triggerKey === "cold") return "冷えで体が固まりやすい";
-    if (triggerKey === "heat") return "熱がこもりやすい";
-    if (triggerKey === "dry") return "乾燥の影響が出やすい";
-    if (triggerKey === "pressure_up") return "高気圧で張りつめやすい";
+    if (triggerKey === "pressure_down") return "低気圧で重だるさが出やすい日";
+    if (triggerKey === "damp") return "湿気で重さ・むくみが出やすい日";
+    if (triggerKey === "cold") return "冷えで体が固まりやすい日";
+    if (triggerKey === "heat") return "熱がこもりやすい日";
+    if (triggerKey === "dry") return "乾燥の影響が出やすい日";
+    if (triggerKey === "pressure_up") return "高気圧で張りつめやすい日";
   }
 
   return "大きな気象負荷は少なめ";
@@ -318,7 +318,7 @@ function getPointMatchTags(point) {
 function getPointPressGuide(point) {
   const base =
     point?.point_region === "abdomen"
-      ? "仰向けでお腹の力を抜き、吐く息に合わせてやさしく押します。"
+      ? "仰向けでお腹の力を抜き、吐く息に合わせて中指でやさしく押します。"
       : "息を吐きながら、じんわり気持ちいい強さで押します。";
 
   const side =
