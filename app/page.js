@@ -9,7 +9,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 import {
-  HeroDashboardArt,
   HeroMiniCards,
   HeroTitleMark,
   HomeHeaderMenu,
@@ -476,22 +475,31 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      <Module className="p-8 overflow-hidden relative rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(251,250,246,0.98)_100%)] ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[196px]">
-        <div className="absolute right-[-20px] top-[-10px] z-[1] pointer-events-none opacity-90 scale-[0.8] origin-top-right">
-          <HeroDashboardArt />
+      <Module className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(251,250,246,0.98)_100%)] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[46%] overflow-hidden">
+          <div className="absolute right-8 top-7 h-36 w-36 rounded-full border border-[rgba(200,157,71,0.14)]" />
+          <div className="absolute right-16 top-14 h-24 w-24 rounded-full border border-[rgba(94,131,101,0.12)]" />
+          <div className="absolute right-0 bottom-2 h-44 w-44 rounded-full border border-[rgba(94,131,101,0.08)]" />
+          <div className="absolute right-10 top-3 h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(217,165,74,0.10)_0%,rgba(217,165,74,0.04)_36%,transparent_72%)]" />
+          <div className="absolute right-[112px] top-[86px] h-[220px] w-[220px] rounded-full border border-[rgba(94,131,101,0.08)]" />
+          <div className="absolute right-24 top-20 h-2 w-2 rounded-full bg-[rgba(200,157,71,0.24)]" />
         </div>
-        <div className="relative z-[2]">
-          <HeroTitleMark compact />
-          <div className="mt-1 pl-[58px] text-[11px] font-black uppercase tracking-[0.28em] text-[#c89d47]">
-            MIBYO RADAR
+
+        <div className="relative z-[2] max-w-[420px]">
+          <HeroTitleMark compact={false} className="max-w-full" />
+        </div>
+
+        <div className="absolute left-8 top-[112px] z-[3] max-w-[340px]">
+          <div className="relative rounded-[24px] border border-[var(--ring)] bg-[linear-gradient(180deg,#ffffff_0%,#fafaf7_100%)] px-5 py-4 text-left shadow-[0_10px_24px_-16px_rgba(77,111,85,0.28)]">
+            <div className="absolute right-[-7px] top-[50%] h-4 w-4 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+            <div className="text-[14px] font-bold leading-7 text-slate-600">
+              体調予報の要約と、次の一歩をまとめています
+            </div>
           </div>
         </div>
-        <div className="absolute right-6 bottom-2 z-[3]">
-          <HeroGuideBot
-            compact
-            message="体調予報の要約と、次の一歩をまとめています"
-            bubbleSide="left-belly"
-          />
+
+        <div className="absolute right-6 bottom-4 z-[3]">
+          <HeroGuideBot compact showBubble={false} />
         </div>
       </Module>
 
