@@ -23,9 +23,37 @@ export default function HeroMiniCards({ compact = false }) {
       <div className="rounded-[32px] border border-[var(--ring)] bg-white p-2 shadow-[0_22px_48px_-24px_rgba(77,111,85,0.25)]">
         <div className="relative h-[320px] overflow-hidden rounded-[26px] bg-[#fdfefc] ring-1 ring-inset ring-black/5">
           <svg viewBox="0 0 320 320" className="absolute inset-0 h-full w-full" aria-hidden="true">
-             <circle cx="30" cy="250" r="180" fill="#eef4eb" fillOpacity="0.5" />
-             <circle cx="30" cy="250" r="100" fill="#eef4eb" fillOpacity="0.3" />
-          </svg>
+  {/* もとのやわらかい面 */}
+  <circle cx="30" cy="250" r="180" fill="#eef4eb" fillOpacity="0.5" />
+  <circle cx="30" cy="250" r="100" fill="#eef4eb" fillOpacity="0.3" />
+
+  {/* 波紋リング */}
+  <circle cx="30" cy="250" r="72" fill="none" stroke="#c7d9c5" strokeWidth="1.5" strokeOpacity="0.55" />
+  <circle cx="30" cy="250" r="112" fill="none" stroke="#c7d9c5" strokeWidth="1.5" strokeOpacity="0.38" />
+  <circle cx="30" cy="250" r="152" fill="none" stroke="#c7d9c5" strokeWidth="1.5" strokeOpacity="0.24" />
+
+  {/* レーダーっぽい弧 */}
+  <path
+    d="M30 98 A152 152 0 0 1 166 188"
+    fill="none"
+    stroke="#d9a54a"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeOpacity="0.24"
+  />
+  <path
+    d="M30 138 A112 112 0 0 1 128 206"
+    fill="none"
+    stroke="#6a9770"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeOpacity="0.18"
+  />
+
+  {/* 小さい基準点 */}
+  <circle cx="30" cy="250" r="3" fill="#d9a54a" fillOpacity="0.55" />
+  <circle cx="118" cy="214" r="2.5" fill="#6a9770" fillOpacity="0.28" />
+</svg>
 
           <div className="absolute left-4 top-6 w-[190px] rounded-[22px] bg-white p-4 shadow-[0_12px_32px_-8px_rgba(0,0,0,0.12)] ring-1 ring-black/5 z-20 transition-all hover:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.16)]">
             <div className="flex items-center justify-between">
