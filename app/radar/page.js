@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
+import { CoreIllust } from "@/components/illust/core";
 import Button from "@/components/ui/Button";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
 import {
@@ -223,6 +224,63 @@ function getCompatTriggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿度";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
+}
+
+function getForecastTriggerKey(forecast) {
+  if (!forecast) return "pressure_down";
+  if (forecast.main_trigger === "pressure" && forecast.trigger_dir === "down") return "pressure_down";
+  if (forecast.main_trigger === "pressure" && forecast.trigger_dir === "up") return "pressure_up";
+  if (forecast.main_trigger === "temp" && forecast.trigger_dir === "down") return "cold";
+  if (forecast.main_trigger === "temp" && forecast.trigger_dir === "up") return "heat";
+  if (forecast.main_trigger === "humidity" && forecast.trigger_dir === "up") return "damp";
+  return "dry";
+}
+
+function getMoodHeadline(triggerKey, signal, mode) {
+  const day = mode === "today" ? "今日は" : "明日は";
+
+  if (signal === 2) {
+    if (triggerKey === "pressure_down") return `${day}重さをためない日`;
+    if (triggerKey === "damp") return `${day}湿に飲まれない日`;
+    if (triggerKey === "cold") return `${day}冷えを入れない日`;
+    if (triggerKey === "heat") return `${day}熱をこもらせない日`;
+    if (triggerKey === "dry") return `${day}乾きすぎに注意の日`;
+    if (triggerKey === "pressure_up") return `${day}張りつめすぎ注意の日`;
+  }
+
+  if (signal === 1) {
+    if (triggerKey === "pressure_down") return `${day}重だるさを流したい日`;
+    if (triggerKey === "damp") return `${day}むくみをためたくない日`;
+    if (triggerKey === "cold") return `${day}冷えに先回りしたい日`;
+    if (triggerKey === "heat") return `${day}熱を抜いておきたい日`;
+    if (triggerKey === "dry") return `${day}潤いを削りたくない日`;
+    if (triggerKey === "pressure_up") return `${day}詰め込みすぎ注意の日`;
+  }
+
+  return `${day}無理なく整える日`;
+}
+
+function getHeroPanelClass(signal) {
+  if (signal === 2) {
+    return "bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.55),transparent_35%),linear-gradient(135deg,#fff1f2_0%,#fff7ed_100%)] ring-1 ring-rose-200/70";
+  }
+  if (signal === 1) {
+    return "bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.6),transparent_35%),linear-gradient(135deg,#fff8e8_0%,#fffdf4_100%)] ring-1 ring-amber-200/70";
+  }
+  return "bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.6),transparent_35%),linear-gradient(135deg,#effcf5_0%,#f7fffb_100%)] ring-1 ring-emerald-200/70";
+}
+
+function getHeroAccentClass(signal) {
+  if (signal === 2) return "text-rose-700";
+  if (signal === 1) return "text-amber-700";
+  return "text-emerald-700";
+}
+
+function getTsuboRoleLabel(point, index) {
+  if (index === 0) {
+    return point?.source === "mtest" ? "まず整えたいラインケア" : "まず整えたい体質ケア";
+  }
+  return point?.source === "mtest" ? "ラインケア" : "体質ケア";
 }
 
 function getPointRoleSummary(point) {
@@ -618,6 +676,9 @@ export default function RadarPage() {
   const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [tsuboExtraOpen, setTsuboExtraOpen] = useState(false);
+  const [foodDetailOpen, setFoodDetailOpen] = useState(false);
   
   const [todayReview, setTodayReview] = useState(null);
   const [todayReviewForecast, setTodayReviewForecast] = useState(null);
@@ -940,6 +1001,18 @@ export default function RadarPage() {
   );
 
   const forecastLines = useMemo(() => getForecastLines(bundle), [bundle]);
+  const triggerKey = useMemo(() => getForecastTriggerKey(forecast), [forecast]);
+  const moodHeadline = useMemo(
+    () => getMoodHeadline(triggerKey, forecast?.signal ?? 0, bundleDateMode),
+    [triggerKey, forecast?.signal, bundleDateMode]
+  );
+  const heroLead = forecastLines[0] || signalPanelSubtext(forecast.signal);
+  const primaryTsubo = tsuboPoints[0] || null;
+  const extraTsuboPoints = tsuboPoints.slice(1);
+  const foodExamples = safeArray(food.examples);
+  const hasFoodDetails =
+    !!food.how_to || !!food.avoid || !!food.reason || !!food.lifestyle_tip;
+
   const todayRecordDate = getJstTodayTomorrow().today;
   const todayRecordDateLabel = formatTargetDate(todayRecordDate);
 
@@ -1089,7 +1162,7 @@ export default function RadarPage() {
         <div className="space-y-6">
           {/* サブタブ (今日 / 明日) */}
           <div className="mx-auto w-[60%]">
-             <SegmentedTabs
+            <SegmentedTabs
               tabs={[
                 { key: "today", label: "今日" },
                 { key: "tomorrow", label: "明日" },
@@ -1105,239 +1178,286 @@ export default function RadarPage() {
             </div>
           ) : null}
 
-          {/* 1. 予報スコアパネル */}
-          <Module className="p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   <IconRadar className="h-5 w-5" />
-                </div>
-                <div className="text-[14px] font-black tracking-tight text-slate-900">
-                  {scoreCardTitle}
-                </div>
-              </div>
-            </div>
-
+          {/* 1. 明日のムードカード */}
+          <Module className="relative overflow-hidden p-6">
             <div
               className={[
-                "mt-5 rounded-[24px] px-5 py-5 shadow-sm",
-                signalPanelClass(forecast.signal),
+                "relative overflow-hidden rounded-[30px] px-5 py-5 shadow-sm",
+                getHeroPanelClass(forecast.signal),
               ].join(" ")}
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2.5">
+              <div className="pointer-events-none absolute -right-6 -top-6 opacity-[0.12]">
+                <WeatherIcon triggerKey={triggerKey} className="h-28 w-28" />
+              </div>
+              <div className="pointer-events-none absolute -left-10 bottom-[-38px] h-28 w-28 rounded-full bg-white/40 blur-2xl" />
+              <div className="pointer-events-none absolute right-[18%] top-[18%] h-24 w-24 rounded-full border border-white/35" />
+              <div className="pointer-events-none absolute right-[10%] top-[10%] h-36 w-36 rounded-full border border-white/25" />
+
+              <div className="relative">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-white/70 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                      <IconRadar className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-black uppercase tracking-widest text-slate-500/80">
+                        明日のムード
+                      </div>
+                      <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
+                        {scoreCardTitle}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    className={[
+                      "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-black shadow-sm",
+                      signalBadgeClass(forecast.signal),
+                    ].join(" ")}
+                  >
                     <span
                       className={[
-                        "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-black shadow-sm",
-                        signalBadgeClass(forecast.signal),
+                        "h-2.5 w-2.5 rounded-full",
+                        signalDotClass(forecast.signal),
                       ].join(" ")}
-                    >
-                      <span
-                        className={[
-                          "h-2.5 w-2.5 rounded-full",
-                          signalDotClass(forecast.signal),
-                        ].join(" ")}
-                      />
-                      {forecast.signal_label || signalLabel(forecast.signal)}
-                    </span>
-                  </div>
+                    />
+                    {forecast.signal_label || signalLabel(forecast.signal)}
+                  </span>
+                </div>
 
-                  <div className="mt-3 text-[13px] font-bold leading-5 opacity-90">
-                    {signalPanelSubtext(forecast.signal)}
+                <div className="mt-5">
+                  <div className="text-[25px] font-black tracking-tight text-slate-900">
+                    {moodHeadline}
                   </div>
+                  <div className="mt-2 max-w-[80%] text-[14px] font-bold leading-6 text-slate-700">
+                    {heroLead}
+                  </div>
+                </div>
 
-                  <div className="mt-6 flex items-end gap-2">
-                    <div className="text-[11px] font-black uppercase tracking-widest opacity-60 mb-1.5">
-                      崩れやすさ
+                <div className="mt-6 flex items-end gap-2">
+                  <div className="pb-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500/80">
+                    崩れやすさ
+                  </div>
+                  <span className="text-[58px] font-black leading-none tracking-[-0.04em] text-slate-900">
+                    {forecast.score_0_10}
+                  </span>
+                  <span className="pb-1.5 text-[18px] font-black text-slate-400">/10</span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      一番響きやすい要素
                     </div>
-                    <span className="text-[44px] font-black tracking-tighter leading-none">
-                      {forecast.score_0_10}
-                    </span>
-                    <span className="pb-1.5 text-[15px] font-black opacity-40">/ 10</span>
-                  </div>
-                </div>
-
-                {symptomLabel ? (
-                  <div className="shrink-0 rounded-[18px] bg-white/60 backdrop-blur-md px-4 py-3.5 ring-1 ring-inset ring-black/5 shadow-sm min-w-[100px] text-center">
-                    <div className="text-[10px] font-black uppercase tracking-widest opacity-60">
-                      お困りの不調
-                    </div>
-                    <div className="mt-1 text-[16px] font-black tracking-tight opacity-90">
-                      {symptomLabel}
+                    <div className="mt-2 flex items-center gap-2.5">
+                      <div className={getHeroAccentClass(forecast.signal)}>
+                        <WeatherIcon triggerKey={triggerKey} className="h-8 w-8" />
+                      </div>
+                      <div className="text-[16px] font-black tracking-tight text-slate-900">
+                        {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                      </div>
                     </div>
                   </div>
-                ) : null}
-              </div>
-            </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  気をつけたい時間帯
-                </div>
-                <div className="mt-1.5 text-[20px] font-black tracking-tight text-slate-900">
-                  {forecast.peak_start && forecast.peak_end
-                    ? `${String(forecast.peak_start).slice(0, 5)}–${String(
-                        forecast.peak_end
-                      ).slice(0, 5)}`
-                    : "—"}
-                </div>
-              </div>
+                  <div className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      気をつけたい時間帯
+                    </div>
+                    <div className="mt-2 text-[20px] font-black tracking-tight text-slate-900">
+                      {forecast.peak_start && forecast.peak_end
+                        ? `${String(forecast.peak_start).slice(0, 5)}–${String(
+                            forecast.peak_end
+                          ).slice(0, 5)}`
+                        : "—"}
+                    </div>
+                  </div>
 
-              {/* ★ ここに天候アイコンを追加！ */}
-              <div className="rounded-[20px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  一番響きやすい要素
-                </div>
-                <div className="mt-2 flex items-center gap-2.5">
-                   <div className="text-[var(--accent-ink)]">
-                      <WeatherIcon 
-                        triggerKey={
-                          forecast.main_trigger === "pressure" && forecast.trigger_dir === "down" ? "pressure_down" : 
-                          forecast.main_trigger === "pressure" && forecast.trigger_dir === "up" ? "pressure_up" : 
-                          forecast.main_trigger === "temp" && forecast.trigger_dir === "down" ? "cold" : 
-                          forecast.main_trigger === "temp" && forecast.trigger_dir === "up" ? "heat" : 
-                          forecast.main_trigger === "humidity" && forecast.trigger_dir === "up" ? "damp" : "dry"
-                        } 
-                        className="h-6 w-6" 
-                      />
-                   </div>
-                   <div className="text-[15px] font-black tracking-tight text-slate-900">
-                    {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
-                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-[24px] bg-white px-5 py-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                 <IconMemo className="h-5 w-5 text-slate-400" />
-                 <div className="text-[15px] font-black tracking-tight text-slate-900">
-                  {sectionLabels.noticeTitle}
-                </div>
-              </div>
-              
-              <ul className="space-y-3">
-                {forecastLines.map((line, idx) => (
-                  <li
-                    key={`${idx}-${line}`}
-                    className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
+                  <button
+                    type="button"
+                    onClick={() => setNoticeOpen((v) => !v)}
+                    className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm text-left transition-all hover:bg-white"
                   >
-                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          {sectionLabels.noticeTitle}
+                        </div>
+                        <div className="mt-2 text-[15px] font-black tracking-tight text-slate-900">
+                          くわしく見る
+                        </div>
+                      </div>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className={[
+                          "h-5 w-5 text-slate-400 transition-transform",
+                          noticeOpen ? "rotate-180" : "",
+                        ].join(" ")}
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              </div>
             </div>
           </Module>
 
-          {/* 2. 体質ミニカード */}
-          <Module className="p-5 flex items-center justify-between gap-4 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
-             <div className="min-w-0 pl-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
-                  ベースとなるあなたの体質
+          {/* 2. 今夜の先回りツボ */}
+          <Module className="p-6">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                <IconRipple className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-[18px] font-black tracking-tight text-slate-900">
+                  {sectionLabels.tsuboTitle}
                 </div>
-                <div className="mt-1 text-[16px] font-black tracking-tight text-[var(--accent-ink)]">
-                  {coreLabel?.title || "—"}
+                <div className="mt-0.5 text-[11px] font-black text-slate-500">
+                  {sectionLabels.tsuboSubtitle}
                 </div>
-                
-                {subLabelObjects?.length > 0 ? (
-                  <div className="mt-2.5 flex flex-wrap gap-1.5">
-                    {subLabelObjects.map((s) => (
-                      <span key={s.code} className="rounded-md bg-white/60 px-2 py-0.5 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5">
-                        {s.short}
-                      </span>
+              </div>
+            </div>
+
+            {primaryTsubo ? (
+              <div
+                className="mt-6 relative overflow-hidden rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_78%)] p-5 ring-1 ring-[var(--ring)] shadow-sm cursor-pointer"
+                onClick={() => setSelectedPoint(primaryTsubo)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="inline-flex rounded-full bg-white/80 px-3 py-1 text-[11px] font-black tracking-wide text-[var(--accent-ink)] ring-1 ring-black/5">
+                      {getTsuboRoleLabel(primaryTsubo, 0)}
+                    </div>
+
+                    <div className="mt-3 flex items-start gap-4">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-white text-[16px] font-black text-[var(--accent-ink)] shadow-sm ring-1 ring-black/5">
+                        {primaryTsubo.code}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[21px] font-black tracking-tight text-slate-900">
+                          {primaryTsubo.name_ja || primaryTsubo.code}
+                        </div>
+                        {getPointReading(primaryTsubo) ? (
+                          <div className="mt-0.5 text-[12px] font-black tracking-wider text-slate-400">
+                            {getPointReading(primaryTsubo)}
+                          </div>
+                        ) : null}
+                        <div className="mt-3 text-[14px] font-extrabold leading-6 text-slate-700">
+                          {getPointRoleSummary(primaryTsubo)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <svg viewBox="0 0 24 24" fill="none" className="mt-8 h-5 w-5 shrink-0 text-slate-300" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </div>
+              </div>
+            ) : null}
+
+            {extraTsuboPoints.length > 0 ? (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setTsuboExtraOpen((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-inset ring-[var(--ring)] text-left"
+                >
+                  <div>
+                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      あわせて整えたい
+                    </div>
+                    <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
+                      あと{extraTsuboPoints.length}点を見る
+                    </div>
+                  </div>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className={[
+                      "h-5 w-5 text-slate-400 transition-transform",
+                      tsuboExtraOpen ? "rotate-180" : "",
+                    ].join(" ")}
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+
+                {tsuboExtraOpen ? (
+                  <div className="mt-3 space-y-3">
+                    {extraTsuboPoints.map((p, i) => (
+                      <div
+                        key={`${p.code}-${i + 1}`}
+                        className="relative rounded-[22px] bg-slate-50 p-5 ring-1 ring-inset ring-[var(--ring)] transition-all hover:bg-slate-100 cursor-pointer"
+                        onClick={() => setSelectedPoint(p)}
+                      >
+                        <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black tracking-wide text-slate-600 ring-1 ring-black/5">
+                          {getTsuboRoleLabel(p, i + 1)}
+                        </div>
+
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-[14px] font-black text-[var(--accent-ink)] shadow-sm ring-1 ring-black/5">
+                            {p.code}
+                          </div>
+
+                          <div className="min-w-0 flex-1 pt-0.5">
+                            <div className="text-[16px] font-black tracking-tight text-slate-900">
+                              {p.name_ja || p.code}
+                            </div>
+
+                            {getPointReading(p) ? (
+                              <div className="mt-0.5 text-[11px] font-black tracking-wider text-slate-400">
+                                {getPointReading(p)}
+                              </div>
+                            ) : null}
+
+                            <div className="mt-2.5 text-[13px] font-bold leading-6 text-slate-700">
+                              {getPointRoleSummary(p)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">
+                          <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : null}
-
-                {primaryLine ? (
-                  <div className="mt-2 text-[11px] font-bold text-[var(--accent-ink)]/80">
-                    負担が出やすい：{primaryLine.title}
-                  </div>
-                ) : null}
-             </div>
-             <Button
-                variant="ghost"
-                size="sm"
-                onClick={openLatestResultDetail}
-                disabled={openingProfileDetail}
-                className="shrink-0 bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
-              >
-                {openingProfileDetail ? "開いています…" : "詳しく見る"}
-              </Button>
-          </Module>
-
-          {/* 3. ツボケアパネル */}
-          <Module className="p-6">
-            <div className="flex items-center gap-3 mb-1">
-                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   <IconRipple className="h-5 w-5" />
-                </div>
-                <div>
-                   <div className="text-[18px] font-black tracking-tight text-slate-900">
-                     {sectionLabels.tsuboTitle}
-                   </div>
-                   <div className="mt-0.5 text-[11px] font-black text-slate-500">
-                     {sectionLabels.tsuboSubtitle}
-                   </div>
-                </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {tsuboPoints.map((p, i) => (
-                <div
-                  key={`${p.code}-${i}`}
-                  className="relative rounded-[24px] bg-slate-50 p-5 ring-1 ring-inset ring-[var(--ring)] transition-all hover:bg-slate-100 cursor-pointer"
-                  onClick={() => setSelectedPoint(p)}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-[14px] font-black text-[var(--accent-ink)] shadow-sm ring-1 ring-black/5">
-                      {p.code}
-                    </div>
-
-                    <div className="min-w-0 flex-1 pt-0.5">
-                      <div className="text-[16px] font-black tracking-tight text-slate-900">
-                        {p.name_ja || p.code}
-                      </div>
-
-                      {getPointReading(p) ? (
-                        <div className="mt-0.5 text-[11px] font-black tracking-wider text-slate-400">
-                          {getPointReading(p)}
-                        </div>
-                      ) : null}
-
-                      <div className="mt-2.5 text-[13px] font-bold leading-6 text-slate-700">
-                        {getPointRoleSummary(p)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">
-                     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                  </div>
-                </div>
-              ))}
-            </div>
+              </div>
+            ) : null}
 
             <div className="mt-5 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-inset ring-amber-200 shadow-sm">
-              <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">アドバイス</div>
+              <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">
+                アドバイス
+              </div>
               <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-amber-900">
                 {carePlan?.night_note || "軽く整えておくと、ぶれを抑えやすくなります。"}
               </div>
             </div>
           </Module>
 
-          {/* 4. 食養生パネル */}
+          {/* 3. 食養生 */}
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
-                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                   <IconBowl className="h-5 w-5" />
-                </div>
-                <div className="text-[18px] font-black tracking-tight text-slate-900">
-                  {sectionLabels.foodTitle}
-                </div>
+              <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                <IconBowl className="h-5 w-5" />
+              </div>
+              <div className="text-[18px] font-black tracking-tight text-slate-900">
+                {sectionLabels.foodTitle}
+              </div>
             </div>
 
             <div className="rounded-[24px] bg-slate-50 px-5 py-5 ring-1 ring-inset ring-[var(--ring)]">
@@ -1356,11 +1476,13 @@ export default function RadarPage() {
                 </div>
               ) : null}
 
-              {safeArray(food.examples).length > 0 ? (
+              {foodExamples.length > 0 ? (
                 <div className="mt-4">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">具体例</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    具体例
+                  </div>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {food.examples.map((x, idx) => (
+                    {foodExamples.map((x, idx) => (
                       <span
                         key={`${x}-${idx}`}
                         className="rounded-full bg-white px-3.5 py-1.5 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-black/5"
@@ -1372,50 +1494,215 @@ export default function RadarPage() {
                 </div>
               ) : null}
 
-              {food.how_to ? (
-                <div className="mt-4 pt-4 border-t border-slate-200">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    取り入れ方
-                  </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    {food.how_to}
-                  </div>
-                </div>
-              ) : null}
+              {hasFoodDetails ? (
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    onClick={() => setFoodDetailOpen((v) => !v)}
+                    className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-black/5 text-left"
+                  >
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        もっと見る
+                      </div>
+                      <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
+                        取り入れ方や控えたいこと
+                      </div>
+                    </div>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className={[
+                        "h-5 w-5 text-slate-400 transition-transform",
+                        foodDetailOpen ? "rotate-180" : "",
+                      ].join(" ")}
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </button>
 
-              {food.avoid ? (
-                <div className="mt-4">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    控えたいこと
-                  </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    {food.avoid}
-                  </div>
-                </div>
-              ) : null}
+                  {foodDetailOpen ? (
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      {food.how_to ? (
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            取り入れ方
+                          </div>
+                          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                            {food.how_to}
+                          </div>
+                        </div>
+                      ) : null}
 
-              {food.reason ? (
-                <div className="mt-4">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    ひとこと理由
-                  </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    {food.reason}
-                  </div>
+                      {food.avoid ? (
+                        <div className="mt-4">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            控えたいこと
+                          </div>
+                          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                            {food.avoid}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {food.reason ? (
+                        <div className="mt-4">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            ひとこと理由
+                          </div>
+                          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                            {food.reason}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {food.lifestyle_tip ? (
+                        <div className="mt-4 rounded-[18px] bg-white px-4 py-4 ring-1 ring-[var(--ring)] shadow-sm">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            一緒に意識したいこと
+                          </div>
+                          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                            {food.lifestyle_tip}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
-            
-            {food.lifestyle_tip ? (
-                <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                    一緒に意識したいこと
+          </Module>
+
+          {/* 4. 体質カード */}
+          <Module className="p-5 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
+                  ベースとなるあなたの体質
+                </div>
+
+                <div className="mt-2 flex items-center gap-4">
+                  <div className="grid h-[84px] w-[84px] place-items-center overflow-hidden rounded-[22px] bg-white/75 p-2 ring-1 ring-black/5 shadow-sm">
+                    <CoreIllust
+                      code={coreCode}
+                      title={coreLabel?.title || "体質タイプ"}
+                      className="h-full w-full object-contain"
+                    />
                   </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    {food.lifestyle_tip}
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[24px] font-black tracking-tight text-[var(--accent-ink)]">
+                      {coreLabel?.title || "—"}
+                    </div>
+
+                    {subLabelObjects?.length > 0 ? (
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
+                        {subLabelObjects.map((s) => (
+                          <span
+                            key={s.code}
+                            className="rounded-md bg-white/70 px-2.5 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-black/5"
+                          >
+                            {s.short}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              ) : null}
+
+                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {symptomLabel ? (
+                    <div className="rounded-[16px] bg-white/70 px-4 py-3 ring-1 ring-black/5">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        お困りの不調
+                      </div>
+                      <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
+                        {symptomLabel}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {primaryLine ? (
+                    <div className="rounded-[16px] bg-white/70 px-4 py-3 ring-1 ring-black/5">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        負担が出やすいライン
+                      </div>
+                      <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
+                        {primaryLine.title}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={openLatestResultDetail}
+                disabled={openingProfileDetail}
+                className="shrink-0 bg-white ring-1 ring-black/5 shadow-sm text-slate-700"
+              >
+                {openingProfileDetail ? "開いています…" : "詳しく見る"}
+              </Button>
+            </div>
+          </Module>
+
+          {/* 5. 注意点（折りたたみ） */}
+          <Module className="p-5">
+            <button
+              type="button"
+              onClick={() => setNoticeOpen((v) => !v)}
+              className="flex w-full items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-slate-50 text-slate-500 ring-1 ring-[var(--ring)] shadow-sm">
+                  <IconMemo className="h-5 w-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-[16px] font-black tracking-tight text-slate-900">
+                    {sectionLabels.noticeTitle}
+                  </div>
+                  <div className="mt-0.5 text-[11px] font-black text-slate-500">
+                    くわしい過ごし方を見る
+                  </div>
+                </div>
+              </div>
+
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className={[
+                  "h-5 w-5 text-slate-400 transition-transform",
+                  noticeOpen ? "rotate-180" : "",
+                ].join(" ")}
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {noticeOpen ? (
+              <div className="mt-5 rounded-[24px] bg-white px-5 py-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                <ul className="space-y-3">
+                  {forecastLines.map((line, idx) => (
+                    <li
+                      key={`${idx}-${line}`}
+                      className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
+                    >
+                      <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </Module>
         </div>
       ) : (
