@@ -1,83 +1,42 @@
+// app/api/stripe/checkout/route.js
 import { NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
+import { requireUser } from "@/lib/requireUser";
 
-import { getStripeServer } from "@/lib/stripe";
-import { createClient } from "@/lib/supabaseServer";
-
-function normalizeReturnPath(value) {
-  if (typeof value !== "string") return "/records";
-  if (!value.startsWith("/")) return "/records";
-  if (value.startsWith("//")) return "/records";
-  return value;
-}
-
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.getUser();
-
-    if (error || !data?.user) {
-      return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
-    }
+    const { user, errorResponse } = await requireUser(req);
+    if (!user) return errorResponse;
 
     const priceId = process.env.STRIPE_PREMIUM_PRICE_ID;
-
     if (!priceId) {
       return NextResponse.json(
-        { error: "STRIPE_PREMIUM_PRICE_ID が未設定です。" },
-        { status: 500 },
+        { error: "STRIPE_PREMIUM_PRICE_ID is not set" },
+        { status: 500 }
       );
     }
 
-    const body = await request.json().catch(() => ({}));
-    const returnPath = normalizeReturnPath(body?.returnPath);
-    const origin = request.nextUrl.origin;
+    const origin = req.headers.get("origin") || req.nextUrl.origin;
 
-    const successUrl = new URL(returnPath, origin);
-    successUrl.searchParams.set("checkout", "success");
-
-    const cancelUrl = new URL(returnPath, origin);
-    cancelUrl.searchParams.set("checkout", "cancel");
-
-    const stripe = getStripeServer();
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: successUrl.toString(),
-      cancel_url: cancelUrl.toString(),
-      allow_promotion_codes: true,
-      locale: "ja",
-      client_reference_id: data.user.id,
-      customer_email: data.user.email ?? undefined,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/records?premium=success`,
+      cancel_url: `${origin}/records?premium=cancel`,
+      customer_email: user.email ?? undefined,
+      client_reference_id: user.id,
       metadata: {
-        supabase_user_id: data.user.id,
-        plan_key: "mibyo_radar_premium",
+        user_id: user.id,
       },
-      subscription_data: {
-        metadata: {
-          supabase_user_id: data.user.id,
-          plan_key: "mibyo_radar_premium",
-        },
-      },
+      allow_promotion_codes: true,
     });
-
-    if (!session.url) {
-      return NextResponse.json(
-        { error: "Checkout URL の作成に失敗しました。" },
-        { status: 500 },
-      );
-    }
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("stripe checkout create error", error);
+    console.error("stripe checkout error", error);
     return NextResponse.json(
-      { error: "Checkout セッションの作成に失敗しました。" },
-      { status: 500 },
+      { error: "Failed to create checkout session" },
+      { status: 500 }
     );
   }
 }
