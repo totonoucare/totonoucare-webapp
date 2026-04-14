@@ -192,7 +192,8 @@ function buildSummary(rows) {
     hard_days: recordedRows.filter((row) => row.review?.condition_level === 0).length,
     mild_bad_days: recordedRows.filter((row) => row.review?.condition_level === 1).length,
     good_days: recordedRows.filter((row) => row.review?.condition_level === 2).length,
-    well_prevented_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
+    care_done_days: recordedRows.filter((row) => (row.review?.prevent_level ?? 0) >= 1).length,
+    full_care_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
     attention_forecast_days: rows.filter((row) => (row.forecast?.signal ?? 0) >= 1).length,
     avg_score: avgScore,
     top_trigger_on_bad_days: topTriggerOnBadDays,
@@ -248,7 +249,7 @@ function reportTextFromJson(report) {
   const parts = [
     report?.summary ? `先週の傾向\n${report.summary}` : "",
     report?.patterns ? `響きやすかった条件\n${report.patterns}` : "",
-    report?.wins ? `先週うまくいったこと\n${report.wins}` : "",
+    report?.wins ? `先週できたこと\n${report.wins}` : "",
     report?.next_week ? `今週の一言\n${report.next_week}` : "",
   ].filter(Boolean);
 
@@ -299,7 +300,8 @@ async function generateWeeklyAiReport({ weekStart, weekEnd, profile, rows, summa
 # 重要ルール
 - summary は「先週全体の流れ」
 - patterns は「何が響きやすかったか」「予報との一致やズレ」
-- wins は「先回りできたこと」「比較的保てたこと」
+- wins は「ケアできたこと」「比較的保てたこと」
+- condition_level と prevent_level の組み合わせから、ケアをした日の傾向も必要に応じて拾ってよい
 - next_week は「今週の意識ポイント」
 - 記録が少ない場合は、無理に断定せず「まだ傾向は仮説段階」と書いてください
 - 一般ユーザー向けの自然な日本語で、やさしいが甘すぎない文体にしてください
