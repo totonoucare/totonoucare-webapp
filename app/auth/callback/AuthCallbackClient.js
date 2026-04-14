@@ -32,9 +32,11 @@ export default function AuthCallbackClient() {
         `/api/diagnosis/v2/events/${encodeURIComponent(resultId)}/attach`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
+          cache: "no-store",
         }
       );
 
@@ -44,13 +46,13 @@ export default function AuthCallbackClient() {
       }
     }
 
-    async function getStableSession() {
+    async function getStableSession({ attempts = 5, delayMs = 200 } = {}) {
       if (!supabase) return null;
 
-      for (let i = 0; i < 8; i += 1) {
+      for (let i = 0; i < attempts; i += 1) {
         const { data } = await supabase.auth.getSession();
         if (data?.session) return data.session;
-        await new Promise((r) => setTimeout(r, 300));
+        await new Promise((r) => setTimeout(r, delayMs));
       }
 
       return null;
@@ -80,25 +82,20 @@ export default function AuthCallbackClient() {
         }
 
         let session = null;
+        const code = sp.get("code");
 
-        // まず既存セッション確認
-        session = await getStableSession();
-
-        // まだ無ければ PKCE code を交換
-        if (!session) {
-          const code = sp.get("code");
-          if (code) {
-            setMsg("ログインを確定しています…");
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
-            session = data?.session || null;
-          }
+        // PKCE callback なら先に code を即交換する
+        if (code) {
+          setMsg("ログインを確定しています…");
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          session = data?.session || null;
         }
 
-        // implicit/hash 系や遅延反映も考慮して再確認
+        // code が無いケースや、反映が少し遅いケースだけ短めに再確認
         if (!session) {
           setMsg("セッションを確認しています…");
-          session = await getStableSession();
+          session = await getStableSession({ attempts: 5, delayMs: 200 });
         }
 
         if (!session) {
@@ -112,7 +109,7 @@ export default function AuthCallbackClient() {
         }
 
         if (!active) return;
-        router.replace(nextPath || "/radar");
+        window.location.replace(nextPath || "/radar");
       } catch (e) {
         console.error("Auth callback failed:", e);
         if (!active) return;
