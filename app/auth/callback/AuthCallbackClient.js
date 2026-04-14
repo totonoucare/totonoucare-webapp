@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  clearPendingDiagnosisAttach,
+  getPendingDiagnosisAttach,
+} from "@/lib/pendingDiagnosisAttach";
 
 function normalizeNextPath(v) {
   if (!v || typeof v !== "string") return "/radar";
@@ -68,8 +72,11 @@ export default function AuthCallbackClient() {
         const sp = url.searchParams;
         const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
 
-        const nextPath = normalizeNextPath(sp.get("next"));
-        const resultId = sp.get("result") || "";
+        const pending = getPendingDiagnosisAttach();
+        const nextPath = normalizeNextPath(
+          sp.get("next") || pending?.nextPath || "/radar"
+        );
+        const resultId = sp.get("result") || pending?.resultId || "";
 
         const oauthError =
           sp.get("error_description") ||
@@ -106,6 +113,7 @@ export default function AuthCallbackClient() {
         if (resultId) {
           setMsg("体質チェック結果を保存しています…");
           await attachResultIfNeeded(resultId, session.access_token);
+          clearPendingDiagnosisAttach();
         }
 
         if (!active) return;
