@@ -4,6 +4,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  clearPendingDiagnosisAttach,
+  getPendingDiagnosisAttach,
+  setPendingDiagnosisAttach,
+} from "@/lib/pendingDiagnosisAttach";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 
@@ -61,21 +66,40 @@ export default function SignupClient() {
   const router = useRouter();
   const sp = useSearchParams();
 
-  const params = useMemo(() => {
-    const resultId = sp?.get("result") || "";
-    const nextRaw = sp?.get("next") || "";
+  const [fallbackPending, setFallbackPending] = useState(null);
 
+  const params = useMemo(() => {
+    const urlResultId = sp?.get("result") || "";
+    const urlNextRaw = sp?.get("next") || "";
+
+    const resultId = urlResultId || fallbackPending?.resultId || "";
     const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
-    const nextPath = nextRaw && nextRaw.startsWith("/") ? nextRaw : fallbackNext;
+    const nextPathSource = urlNextRaw || fallbackPending?.nextPath || "";
+    const nextPath =
+      nextPathSource && nextPathSource.startsWith("/")
+        ? nextPathSource
+        : fallbackNext;
 
     return { resultId, nextPath };
-  }, [sp]);
+  }, [sp, fallbackPending]);
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const autoAttachKeyRef = useRef("");
+
+  useEffect(() => {
+    setFallbackPending(getPendingDiagnosisAttach());
+  }, []);
+
+  useEffect(() => {
+    if (!params.resultId) return;
+    setPendingDiagnosisAttach({
+      resultId: params.resultId,
+      nextPath: params.nextPath,
+    });
+  }, [params.resultId, params.nextPath]);
 
   useEffect(() => {
     let mounted = true;
@@ -124,6 +148,11 @@ export default function SignupClient() {
     }
 
     try {
+      setPendingDiagnosisAttach({
+        resultId: params.resultId,
+        nextPath: params.nextPath,
+      });
+
       const redirectTo = buildCallbackUrl();
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -154,6 +183,11 @@ export default function SignupClient() {
     }
 
     try {
+      setPendingDiagnosisAttach({
+        resultId: params.resultId,
+        nextPath: params.nextPath,
+      });
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { emailRedirectTo: buildCallbackUrl() },
@@ -191,6 +225,7 @@ export default function SignupClient() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
 
+      clearPendingDiagnosisAttach();
       setStatus({ state: "idle", message: "" });
       return true;
     } catch (e) {
