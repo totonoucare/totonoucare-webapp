@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -22,9 +22,30 @@ function decodeMaybe(v) {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export default function AuthCallbackClient() {
   const router = useRouter();
   const [msg, setMsg] = useState("ログイン情報を確認しています…");
+  const [fatalError, setFatalError] = useState("");
+  const finishedRef = useRef(false);
+
+  const fallbackSignupHref = useMemo(() => {
+    if (typeof window === "undefined") return "/signup";
+
+    const url = new URL(window.location.href);
+    const sp = url.searchParams;
+    const pending = getPendingDiagnosisAttach();
+    const resultId = sp.get("result") || pending?.resultId || "";
+    const nextPath = normalizeNextPath(sp.get("next") || pending?.nextPath || "/radar");
+
+    const signupUrl = new URL(`${window.location.origin}/signup`);
+    if (resultId) signupUrl.searchParams.set("result", resultId);
+    if (nextPath) signupUrl.searchParams.set("next", nextPath);
+    return `${signupUrl.pathname}${signupUrl.search}`;
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -50,13 +71,19 @@ export default function AuthCallbackClient() {
       }
     }
 
-    async function getStableSession({ attempts = 5, delayMs = 200 } = {}) {
+    async function getStableSession({ attempts = 20, delayMs = 300 } = {}) {
       if (!supabase) return null;
 
       for (let i = 0; i < attempts; i += 1) {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session) return data.session;
-        await new Promise((r) => setTimeout(r, delayMs));
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          return session;
+        }
+
+        await sleep(delayMs);
       }
 
       return null;
@@ -90,43 +117,51 @@ export default function AuthCallbackClient() {
 
         let session = null;
         const code = sp.get("code");
+        let exchangeError = null;
 
-        // PKCE callback なら先に code を即交換する
         if (code) {
           setMsg("ログインを確定しています…");
+
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-          session = data?.session || null;
+          if (error) {
+            exchangeError = error;
+            console.warn("exchangeCodeForSession failed, fallback to session polling:", error);
+          } else {
+            session = data?.session || null;
+          }
         }
 
-        // code が無いケースや、反映が少し遅いケースだけ短めに再確認
         if (!session) {
           setMsg("セッションを確認しています…");
-          session = await getStableSession({ attempts: 5, delayMs: 200 });
+          session = await getStableSession({ attempts: 20, delayMs: 300 });
         }
 
         if (!session) {
+          if (exchangeError) {
+            throw new Error(exchangeError.message || "セッションを確立できませんでした");
+          }
           throw new Error("セッションを確立できませんでした");
         }
 
-        // result 引き継ぎがある場合は attach
         if (resultId) {
           setMsg("体質チェック結果を保存しています…");
           await attachResultIfNeeded(resultId, session.access_token);
           clearPendingDiagnosisAttach();
         }
 
-        if (!active) return;
+        if (!active || finishedRef.current) return;
+        finishedRef.current = true;
         window.location.replace(nextPath || "/radar");
       } catch (e) {
         console.error("Auth callback failed:", e);
-        if (!active) return;
+        if (!active || finishedRef.current) return;
 
-        setMsg(
+        setFatalError(
           e?.message
             ? `ログインに失敗しました: ${e.message}`
             : "ログインの期限が切れているか、失敗しました。"
         );
+        setMsg("ログイン画面へ戻って、もう一度お試しください。");
       }
     }
 
@@ -135,7 +170,7 @@ export default function AuthCallbackClient() {
     return () => {
       active = false;
     };
-  }, [router]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-app">
@@ -146,12 +181,12 @@ export default function AuthCallbackClient() {
             認証中
           </div>
           <div className="mt-3 whitespace-pre-line text-[15px] font-bold leading-7 text-slate-500">
-            {msg}
+            {fatalError || msg}
           </div>
 
           <button
             type="button"
-            onClick={() => router.replace("/signup")}
+            onClick={() => router.replace(fallbackSignupHref)}
             className="mt-8 inline-flex items-center justify-center rounded-full bg-slate-100 px-6 py-3 text-[14px] font-extrabold text-slate-700"
           >
             ログイン画面へ戻る
