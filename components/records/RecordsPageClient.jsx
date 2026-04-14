@@ -2,11 +2,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
 import Button from "@/components/ui/Button";
+import CheckoutButton from "@/components/billing/CheckoutButton";
 import {
   actionTagLabel,
   conditionLabel,
@@ -74,6 +75,7 @@ function SegmentedTabs({ tabs, value, onChange }) {
 
 export default function RecordsPageClient({ initialTab = "calendar" }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -294,6 +296,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
   const canGenerateWeeklyAi = (report?.summary?.recorded_days ?? 0) > 0;
   const hasWeeklyAiReport = !!weeklyAi?.report;
+  const checkoutStatus = searchParams.get("checkout");
 
   return (
     <AppShell
@@ -307,6 +310,35 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
         </button>
       }
     >
+      {checkoutStatus === "success" ? (
+        <Module className="border-emerald-200 bg-emerald-50 p-4 text-[13px] font-bold leading-6 text-emerald-800">
+          決済が完了しました。プレミアム反映には少し時間がかかる場合があります。
+        </Module>
+      ) : null}
+
+      {checkoutStatus === "cancel" ? (
+        <Module className="p-4 text-[13px] font-bold leading-6 text-slate-700">
+          決済は完了していません。必要になったタイミングで、また登録できます。
+        </Module>
+      ) : null}
+
+      <Module className="p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">PREMIUM</div>
+            <div className="mt-1 text-[20px] font-black tracking-tight text-slate-900">
+              記録・週次AIレポートを使うならプレミアム
+            </div>
+            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+              記録・週次AIレポート・予報精度のパーソナライズ・広告非表示を利用できるプランです。
+            </div>
+            <div className="mt-2 text-[13px] font-black text-slate-900">月額 580円</div>
+          </div>
+
+          <CheckoutButton returnPath="/records">プレミアムに登録する</CheckoutButton>
+        </div>
+      </Module>
+
       <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70 py-2 mb-2">
         <SegmentedTabs
           tabs={[
