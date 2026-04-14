@@ -6,9 +6,9 @@ export const CONDITION_OPTIONS = [
 ];
 
 export const PREVENT_OPTIONS = [
-  { value: 0, label: "あまりできなかった" },
-  { value: 1, label: "ある程度できた" },
-  { value: 2, label: "かなりできた" },
+  { value: 0, label: "していない" },
+  { value: 1, label: "少しした" },
+  { value: 2, label: "しっかりした" },
 ];
 
 export const ACTION_TAG_OPTIONS = [
