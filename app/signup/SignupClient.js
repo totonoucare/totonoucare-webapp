@@ -122,11 +122,35 @@ export default function SignupClient() {
         return;
       }
 
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
 
-      setSession(data.session || null);
-      setLoadingSession(false);
+        if (code) {
+          setStatus({ state: "loading", message: "ログインを確定しています…" });
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          if (!mounted) return;
+          setSession(data?.session || null);
+          cleanupOAuthParams();
+          setLoadingSession(false);
+          return;
+        }
+
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+
+        setSession(data.session || null);
+        setLoadingSession(false);
+      } catch (err) {
+        console.error(err);
+        if (!mounted) return;
+        setStatus({
+          state: "error",
+          message: "ログインの確定に失敗しました: " + (err?.message || "時間を置いて再度お試しください。"),
+        });
+        setLoadingSession(false);
+      }
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
@@ -146,6 +170,48 @@ export default function SignupClient() {
     cb.searchParams.set("next", params.nextPath);
     if (params.resultId) cb.searchParams.set("result", params.resultId);
     return cb.toString();
+  }
+
+
+  function cleanupOAuthParams() {
+    if (typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    [
+      "code",
+      "error",
+      "error_code",
+      "error_description",
+      "access_token",
+      "refresh_token",
+      "token_type",
+      "expires_at",
+      "expires_in",
+      "provider_token",
+      "provider_refresh_token",
+    ].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+
+    if (url.hash) {
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      [
+        "error",
+        "error_code",
+        "error_description",
+        "access_token",
+        "refresh_token",
+        "token_type",
+        "expires_at",
+        "expires_in",
+        "provider_token",
+        "provider_refresh_token",
+      ].forEach((key) => hash.delete(key));
+      const nextHash = hash.toString();
+      url.hash = nextHash ? `#${nextHash}` : "";
+    }
+
+    window.history.replaceState({}, "", url.toString());
   }
 
   async function handleGoogleLogin() {
