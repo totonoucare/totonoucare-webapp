@@ -1697,7 +1697,7 @@ export default function RadarPage() {
               <div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">今日の記録</div>
                 <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
-                  予報を見た日の終わりに1回だけ、実際どうだったかと先回りできたかを残します。
+                  予報を見た日の終わりに1回だけ、不調の度合いと前日〜当日に対策ケアをしたかを残します。
                 </div>
               </div>
             </div>
@@ -1752,7 +1752,7 @@ export default function RadarPage() {
                   </div>
                 </div>
                 <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">先回りできた？</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">前日〜当日の対策ケア</div>
                   <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
                     {preventLabel(todayReview.prevent_level)}
                   </div>
