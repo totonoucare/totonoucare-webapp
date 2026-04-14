@@ -224,7 +224,7 @@ export default function GuidePage() {
 
           <div className="space-y-4">
             <GuideCard tone="indigo" title="1日1回の簡単な記録" icon={<IconChecklist />}>
-              体調予報の画面から、「実際どうだったか」「先回りできたか」を数タップで記録できます。
+              体調予報の画面から、「実際どうだったか」「前日〜当日に対策ケアをしたか」を数タップで記録できます。
             </GuideCard>
             <GuideCard tone="violet" title="記録カレンダー" icon={<IconCalendar />}>
               月ごとのカレンダーで、予報の危険度と実際の体調を一覧できます。自分の不調の波が可視化されます。
