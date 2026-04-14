@@ -833,4 +833,3 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
