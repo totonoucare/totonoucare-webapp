@@ -113,12 +113,12 @@ export default function SignupClient() {
   }
 
   async function handleGoogleLogin() {
-    setStatus({ state: "loading_oauth", message: "Googleã­ã°ã¤ã³ã¸ç§»åãã¦ãã¾ãâ¦" });
+    setStatus({ state: "loading_oauth", message: "Googleログインへ移動しています…" });
 
     if (!supabase) {
       setStatus({
         state: "error",
-        message: "ã·ã¹ãã ã¨ã©ã¼ï¼ç°å¢å¤æ°ãåæ ããã¦ãªãå¯è½æ§ãããã¾ãï¼ã",
+        message: "システムエラー（環境変数が反映されてない可能性があります）。",
       });
       return;
     }
@@ -136,19 +136,19 @@ export default function SignupClient() {
       console.error(err);
       setStatus({
         state: "error",
-        message: "Googleã­ã°ã¤ã³ã®éå§ã«å¤±æãã¾ãã: " + (err?.message || "æéãç½®ãã¦ååº¦ãè©¦ããã ããã"),
+        message: "Googleログインの開始に失敗しました: " + (err?.message || "時間を置いて再度お試しください。"),
       });
     }
   }
 
   async function handleSendLink(e) {
     e.preventDefault();
-    setStatus({ state: "loading", message: "ã­ã°ã¤ã³ãªã³ã¯ãéä¿¡ãã¦ãã¾ãâ¦" });
+    setStatus({ state: "loading", message: "ログインリンクを送信しています…" });
 
     if (!supabase) {
       setStatus({
         state: "error",
-        message: "ã·ã¹ãã ã¨ã©ã¼ï¼ç°å¢å¤æ°ãåæ ããã¦ãªãå¯è½æ§ãããã¾ãï¼ã",
+        message: "システムエラー（環境変数が反映されてない可能性があります）。",
       });
       return;
     }
@@ -163,13 +163,13 @@ export default function SignupClient() {
       setStatus({
         state: "sent",
         message:
-          "ã¡ã¼ã«ãéä¿¡ãã¾ããï¼\nåä¿¡ç®±ï¼è¿·æã¡ã¼ã«ãã©ã«ãå«ãï¼ã®ãªã³ã¯ãéãã¦ã­ã°ã¤ã³ãã¦ãã ããã",
+          "メールを送信しました！\n受信箱（迷惑メールフォルダ含む）のリンクを開いてログインしてください。",
       });
     } catch (err) {
       console.error(err);
       setStatus({
         state: "error",
-        message: "éä¿¡ã«å¤±æãã¾ãã: " + (err?.message || "æéãç½®ãã¦ååº¦ãè©¦ããã ããã"),
+        message: "送信に失敗しました: " + (err?.message || "時間を置いて再度お試しください。"),
       });
     }
   }
@@ -178,18 +178,18 @@ export default function SignupClient() {
     if (!params.resultId) return true;
 
     try {
-      setStatus({ state: "loading", message: "çµæãã¢ã«ã¦ã³ãã«ä¿å­ãã¦ãã¾ãâ¦" });
+      setStatus({ state: "loading", message: "結果をアカウントに保存しています…" });
 
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) throw new Error("ã­ã°ã¤ã³æå ±ãåå¾ã§ãã¾ããã§ãã");
+      if (!token) throw new Error("ログイン情報が取得できませんでした");
 
       const res = await fetch(
         `/api/diagnosis/v2/events/${encodeURIComponent(params.resultId)}/attach`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` } }
       );
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || "ä¿å­ã«å¤±æãã¾ãã");
+      if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
 
       setStatus({ state: "idle", message: "" });
       return true;
@@ -197,7 +197,7 @@ export default function SignupClient() {
       console.error(e);
       setStatus({
         state: "error",
-        message: "ä¿å­ã«å¤±æãã¾ãã: " + (e?.message || String(e)),
+        message: "保存に失敗しました: " + (e?.message || String(e)),
       });
       return false;
     }
@@ -231,7 +231,7 @@ export default function SignupClient() {
 
   return (
     <AppShell
-      title="ã­ã°ã¤ã³ / ç»é²"
+      title="ログイン / 登録"
       noTabs={true}
       headerLeft={
         <button
@@ -239,7 +239,7 @@ export default function SignupClient() {
           onClick={() => router.back()}
           className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
-          â æ»ã
+          ← 戻る
         </button>
       }
     >
@@ -250,10 +250,10 @@ export default function SignupClient() {
           </div>
           <div>
             <div className="text-[18px] font-black tracking-tight text-slate-900">
-              ã­ã°ã¤ã³ / ç»é²
+              ログイン / 登録
             </div>
             <div className="mt-1 text-[11px] font-extrabold text-slate-500">
-              Google ã¾ãã¯ã¡ã¼ã«ã§ã­ã°ã¤ã³
+              Google またはメールでログイン
             </div>
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function SignupClient() {
         {session ? (
           <div className="space-y-4">
             <div className="rounded-[24px] bg-slate-50 p-5 ring-1 ring-inset ring-[var(--ring)] text-center">
-              <div className="text-[13px] font-bold text-slate-600">ç¾å¨ã­ã°ã¤ã³ä¸­ã®ã¢ã«ã¦ã³ã</div>
+              <div className="text-[13px] font-bold text-slate-600">現在ログイン中のアカウント</div>
               <div className="mt-1.5 text-[16px] font-black text-slate-900">
                 {session.user?.email}
               </div>
@@ -269,7 +269,7 @@ export default function SignupClient() {
 
             {params.resultId ? (
               <div className="rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="text-[11px] font-extrabold text-slate-600">å¼ãç¶ãäºå®ã®ãã¼ã¿</div>
+                <div className="text-[11px] font-extrabold text-slate-600">引き継ぎ予定のデータ</div>
                 <div className="mt-1 font-mono break-all text-[10px] text-slate-500">
                   {params.resultId}
                 </div>
@@ -282,14 +282,14 @@ export default function SignupClient() {
                 disabled={status.state === "loading"}
                 className="w-full py-3.5 shadow-md"
               >
-                {status.state === "loading" ? "å¦çä¸­â¦" : "ãã®ã¾ã¾ã¢ããªã¸é²ã"}
+                {status.state === "loading" ? "処理中…" : "このままアプリへ進む"}
               </Button>
               <Button
                 variant="secondary"
                 onClick={logout}
                 className="w-full bg-white py-3.5 shadow-sm"
               >
-                å¥ã®ã¢ã«ã¦ã³ãã«ããï¼ã­ã°ã¢ã¦ãï¼
+                別のアカウントにする（ログアウト）
               </Button>
             </div>
 
@@ -302,7 +302,7 @@ export default function SignupClient() {
         ) : (
           <div className="space-y-4">
             <div className="mb-6 text-[13px] font-bold leading-6 text-slate-600">
-              Google ã¢ã«ã¦ã³ãã§ããå§ããããã¡ã¼ã«ã¢ãã¬ã¹ã«å±ãã­ã°ã¤ã³ãªã³ã¯ã§ãç»é²ã§ãã¾ãã
+              Google アカウントですぐ始めるか、メールアドレスに届くログインリンクでも登録できます。
             </div>
 
             {params.resultId ? (
@@ -319,7 +319,7 @@ export default function SignupClient() {
                   >
                     <path d="M20 6L9 17l-5-5" />
                   </svg>
-                  ã­ã°ã¤ã³å¾ãä½è³ªãã§ãã¯ã®çµæãä¿å­ããã¾ã
+                  ログイン後、体質チェックの結果が保存されます
                 </div>
               </div>
             ) : null}
@@ -336,7 +336,7 @@ export default function SignupClient() {
 >
   <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
     <IconGoogle />
-    {status.state === "loading_oauth" ? "Googleã¸ç§»åä¸­â¦" : "Googleã§ã­ã°ã¤ã³"}
+    {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleでログイン"}
   </span>
 </button>
 
@@ -350,14 +350,14 @@ export default function SignupClient() {
             <form onSubmit={handleSendLink} className="space-y-5">
               <div>
                 <label className="mb-2 block text-[11px] font-extrabold text-slate-500">
-                  ã¡ã¼ã«ã¢ãã¬ã¹
+                  メールアドレス
                 </label>
                 <input
                   className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)]"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="ä¾ï¼mail@example.com"
+                  placeholder="例）mail@example.com"
                   disabled={
                     status.state === "loading" ||
                     status.state === "loading_oauth" ||
@@ -377,7 +377,7 @@ export default function SignupClient() {
                 }
                 className="w-full py-3.5 shadow-md"
               >
-                {status.state === "loading" ? "éä¿¡ä¸­â¦" : "ã­ã°ã¤ã³ãªã³ã¯ãéã"}
+                {status.state === "loading" ? "送信中…" : "ログインリンクを送る"}
               </Button>
             </form>
 
@@ -392,10 +392,10 @@ export default function SignupClient() {
                 }`}
               >
                 {status.state === "sent"
-                  ? "ð© "
+                  ? "📩 "
                   : status.state === "loading_oauth"
-                    ? "ð "
-                    : "â ï¸ "}
+                    ? "🔐 "
+                    : "⚠️ "}
                 {status.message}
               </div>
             ) : null}
