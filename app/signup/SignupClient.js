@@ -89,6 +89,18 @@ export default function SignupClient() {
   const [loadingSession, setLoadingSession] = useState(true);
   const autoAttachKeyRef = useRef("");
 
+  async function getStableAccessToken(currentSession) {
+    if (currentSession?.access_token) return currentSession.access_token;
+
+    for (let i = 0; i < 6; i += 1) {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) return data.session.access_token;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    return "";
+  }
+
   useEffect(() => {
     setFallbackPending(getPendingDiagnosisAttach());
   }, []);
@@ -208,19 +220,23 @@ export default function SignupClient() {
     }
   }
 
-  async function attachNowIfNeeded() {
+  async function attachNowIfNeeded(currentSession = session) {
     if (!params.resultId) return true;
 
     try {
       setStatus({ state: "loading", message: "結果をアカウントに保存しています…" });
 
-      const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token;
+      const token = await getStableAccessToken(currentSession);
       if (!token) throw new Error("ログイン情報が取得できませんでした");
 
       const res = await fetch(
         `/api/diagnosis/v2/events/${encodeURIComponent(params.resultId)}/attach`,
-        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+          cache: "no-store",
+        }
       );
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
@@ -238,8 +254,8 @@ export default function SignupClient() {
     }
   }
 
-  async function goNext() {
-    const ok = await attachNowIfNeeded();
+  async function goNext(currentSession = session) {
+    const ok = await attachNowIfNeeded(currentSession);
     if (!ok) return;
     window.location.replace(params.nextPath || "/radar");
   }
@@ -259,7 +275,7 @@ export default function SignupClient() {
     if (autoAttachKeyRef.current === key) return;
 
     autoAttachKeyRef.current = key;
-    goNext();
+    goNext(session);
   }, [loadingSession, session?.user?.id, params.resultId]);
 
   if (loadingSession) return null;
