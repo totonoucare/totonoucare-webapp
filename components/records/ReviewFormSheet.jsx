@@ -146,7 +146,7 @@ export default function ReviewFormSheet({
           </div>
 
           <div className="rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">先回りできた？</div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">前日〜当日の対策ケア</div>
             <div className="flex flex-wrap gap-2">
               {PREVENT_OPTIONS.map((opt) => (
                 <TogglePill
