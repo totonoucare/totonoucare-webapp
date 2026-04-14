@@ -167,7 +167,8 @@ export async function GET(req) {
       mild_bad_days: recordedRows.filter((row) => row.review?.condition_level === 1).length,
       good_days: recordedRows.filter((row) => row.review?.condition_level === 2).length,
 
-      well_prevented_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
+      care_done_days: recordedRows.filter((row) => (row.review?.prevent_level ?? 0) >= 1).length,
+      full_care_days: recordedRows.filter((row) => row.review?.prevent_level === 2).length,
       attention_forecast_days: rows.filter((row) => (row.forecast?.signal ?? 0) >= 1).length,
 
       avg_score: avgScore,
