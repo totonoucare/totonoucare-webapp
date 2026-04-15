@@ -6,10 +6,47 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const PREMIUM_PRODUCT = "radar_subscription";
+
+function isPremiumActive(entitlement) {
+  if (!entitlement) return false;
+
+  const now = Date.now();
+  const startsAt = entitlement.starts_at ? Date.parse(entitlement.starts_at) : null;
+  const endsAt = entitlement.ends_at ? Date.parse(entitlement.ends_at) : null;
+
+  if (Number.isFinite(startsAt) && startsAt > now) return false;
+  if (Number.isFinite(endsAt) && endsAt < now) return false;
+
+  return entitlement.status === "active";
+}
+
+async function hasRadarPremium(userId) {
+  const { data, error } = await supabaseServer
+    .from("entitlements")
+    .select("status, starts_at, ends_at, created_at")
+    .eq("user_id", userId)
+    .eq("product", PREMIUM_PRODUCT)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).some(isPremiumActive);
+}
+
+
 export async function GET(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
+
+    const premium = await hasRadarPremium(user.id);
+    if (!premium) {
+      return NextResponse.json(
+        { error: "プレミアム登録が必要です", code: "premium_required" },
+        { status: 402 }
+      );
+    }
 
     const url = new URL(req.url);
     const year = Number(url.searchParams.get("year"));
