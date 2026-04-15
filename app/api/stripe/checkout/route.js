@@ -1,34 +1,39 @@
 // app/api/stripe/checkout/route.js
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { requireUser } from "@/lib/requireUser";
+import { getStripeServer } from "@/lib/stripe";
 
-export async function POST(request) {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function POST(req) {
   try {
-    const priceId = process.env.STRIPE_PREMIUM_PRICE_ID;
+    const { user, error } = await requireUser(req);
 
+    if (error || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const stripe = getStripeServer();
+    const body = await req.json().catch(() => ({}));
+
+    const returnPath =
+      typeof body?.returnPath === "string" && body.returnPath.startsWith("/")
+        ? body.returnPath
+        : "/records";
+
+    const origin =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      req.headers.get("origin") ||
+      "http://localhost:3000";
+
+    const priceId = process.env.STRIPE_PREMIUM_PRICE_ID;
     if (!priceId) {
       return NextResponse.json(
         { error: "STRIPE_PREMIUM_PRICE_ID is not set" },
         { status: 500 }
       );
     }
-
-    const supabase = supabaseServer();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const origin =
-      request.headers.get("origin") ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "https://totonoucare.com";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -39,28 +44,32 @@ export async function POST(request) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/records?tab=report&checkout=success`,
-      cancel_url: `${origin}/records?tab=report&checkout=cancel`,
-      customer_email: user.email ?? undefined,
+
+      success_url: `${origin}${returnPath}?checkout=success`,
+      cancel_url: `${origin}${returnPath}?checkout=cancel`,
+
       client_reference_id: user.id,
-      allow_promotion_codes: true,
+
       metadata: {
-        user_id: user.id,
-        plan: "premium",
+        supabase_user_id: user.id,
+        product: "radar_subscription",
       },
+
       subscription_data: {
         metadata: {
-          user_id: user.id,
-          plan: "premium",
+          supabase_user_id: user.id,
+          product: "radar_subscription",
         },
       },
+
+      allow_promotion_codes: true,
     });
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("[stripe.checkout]", error);
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: error?.message || "Failed to create checkout session" },
       { status: 500 }
     );
   }
