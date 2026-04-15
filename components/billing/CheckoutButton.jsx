@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabaseBrowser";
 
 export default function CheckoutButton({
-  className = "",
   returnPath = "/records",
+  className = "",
   children = "プレミアムに登録する",
+  onStart,
+  onComplete,
+  onError,
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,39 +21,59 @@ export default function CheckoutButton({
     setError("");
 
     try {
+      onStart?.();
+
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error("ログイン状態を確認できませんでした。もう一度ログインしてください。");
+      }
+
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ returnPath }),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const json = await res.json().catch(() => ({}));
 
-      if (!res.ok || !data?.url) {
-        throw new Error(data?.error || "決済ページを開けませんでした。");
+      if (!res.ok) {
+        throw new Error(json?.error || "Checkout の作成に失敗しました");
       }
 
-      window.location.assign(data.url);
-    } catch (err) {
-      setError(err?.message || "決済ページを開けませんでした。");
+      if (!json?.url) {
+        throw new Error("Stripe Checkout URL が返ってきませんでした");
+      }
+
+      onComplete?.(json);
+      window.location.href = json.url;
+    } catch (e) {
+      const message = e?.message || "プレミアム登録を開始できませんでした";
+      setError(message);
+      onError?.(e);
+    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-2">
+    <div>
       <button
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className={`inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+        className={className}
       >
-        {loading ? "決済ページへ移動中…" : children}
+        {loading ? "遷移中…" : children}
       </button>
-
-      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
     </div>
   );
 }
