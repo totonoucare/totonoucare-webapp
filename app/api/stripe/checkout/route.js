@@ -1,43 +1,15 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getStripeServer } from "@/lib/stripe";
+import { requireUser } from "@/lib/requireUser";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function createAuthedSupabase(req) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const authHeader = req.headers.get("authorization") || "";
-
-  if (!supabaseUrl) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
-  }
-
-  if (!supabaseAnonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set");
-  }
-
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: authHeader ? { Authorization: authHeader } : {},
-    },
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-}
-
 export async function POST(req) {
   try {
-    const supabase = createAuthedSupabase(req);
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { user, error } = await requireUser(req);
 
-    if (userError || !user) {
+    if (error || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -65,12 +37,7 @@ export async function POST(req) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}${returnPath}?checkout=success`,
       cancel_url: `${origin}${returnPath}?checkout=cancel`,
       client_reference_id: user.id,
@@ -96,4 +63,3 @@ export async function POST(req) {
     );
   }
 }
-
