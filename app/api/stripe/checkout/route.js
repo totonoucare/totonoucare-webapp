@@ -23,8 +23,14 @@ export async function POST(req) {
 
     const origin =
       process.env.NEXT_PUBLIC_APP_URL ||
-      req.headers.get("origin") ||
-      "http://localhost:3000";
+      req.headers.get("origin");
+
+    if (!origin) {
+      return NextResponse.json(
+        { error: "App URL is not configured" },
+        { status: 500 }
+      );
+    }
 
     const priceId = process.env.STRIPE_PREMIUM_PRICE_ID;
     if (!priceId) {
@@ -37,7 +43,12 @@ export async function POST(req) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
       success_url: `${origin}${returnPath}?checkout=success`,
       cancel_url: `${origin}${returnPath}?checkout=cancel`,
       client_reference_id: user.id,
