@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
@@ -75,10 +75,10 @@ function SegmentedTabs({ tabs, value, onChange }) {
 
 export default function RecordsPageClient({ initialTab = "calendar" }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [checkoutStatus, setCheckoutStatus] = useState(null);
 
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(ym(today).y);
@@ -108,6 +108,14 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
   useEffect(() => {
     setTab(initialTab === "report" ? "report" : "calendar");
   }, [initialTab]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get("checkout");
+    setCheckoutStatus(checkout);
+  }, []);
 
   async function authedFetch(path, opts = {}) {
     const { data } = await supabase.auth.getSession();
@@ -296,7 +304,6 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
   const canGenerateWeeklyAi = (report?.summary?.recorded_days ?? 0) > 0;
   const hasWeeklyAiReport = !!weeklyAi?.report;
-  const checkoutStatus = searchParams.get("checkout");
 
   return (
     <AppShell
