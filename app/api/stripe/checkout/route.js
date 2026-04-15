@@ -1,22 +1,49 @@
-// app/api/stripe/checkout/route.js
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/requireUser";
+import { createClient } from "@supabase/supabase-js";
 import { getStripeServer } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function createAuthedSupabase(req) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const authHeader = req.headers.get("authorization") || "";
+
+  if (!supabaseUrl) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
+  }
+
+  if (!supabaseAnonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set");
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
 export async function POST(req) {
   try {
-    const { user, error } = await requireUser(req);
+    const supabase = createAuthedSupabase(req);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (error || !user) {
+    if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const stripe = getStripeServer();
-    const body = await req.json().catch(() => ({}));
 
+    const body = await req.json().catch(() => ({}));
     const returnPath =
       typeof body?.returnPath === "string" && body.returnPath.startsWith("/")
         ? body.returnPath
@@ -44,24 +71,19 @@ export async function POST(req) {
           quantity: 1,
         },
       ],
-
       success_url: `${origin}${returnPath}?checkout=success`,
       cancel_url: `${origin}${returnPath}?checkout=cancel`,
-
       client_reference_id: user.id,
-
       metadata: {
         supabase_user_id: user.id,
         product: "radar_subscription",
       },
-
       subscription_data: {
         metadata: {
           supabase_user_id: user.id,
           product: "radar_subscription",
         },
       },
-
       allow_promotion_codes: true,
     });
 
@@ -74,3 +96,4 @@ export async function POST(req) {
     );
   }
 }
+
