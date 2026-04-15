@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabaseBrowser";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function CheckoutButton({
   returnPath = "/records",
@@ -23,7 +23,10 @@ export default function CheckoutButton({
     try {
       onStart?.();
 
-      const supabase = createClient();
+      if (!supabase) {
+        throw new Error("Supabase client が初期化されていません。");
+      }
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
