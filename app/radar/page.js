@@ -172,6 +172,12 @@ const MATCH_TAG_LABELS = {
   "体質ケア": "体質に合わせたケア",
   "ラインケア": "動きの負担に向くケア",
 };
+const RADAR_LOADING_HINTS = [
+  "体質データを読み込んでいます…",
+  "今日の気圧・気温・湿度の変化を照合しています…",
+  "あなた向けの注意ポイントをまとめています…",
+];
+
 
 function humanizeMatchTag(tag) {
   const raw = String(tag || "").trim();
@@ -671,6 +677,9 @@ export default function RadarPage() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
+  const [loadingHintIndex, setLoadingHintIndex] = useState(0);
+  const [enrichingForecast, setEnrichingForecast] = useState(false);
 
   const [bundle, setBundle] = useState(null);
   const [error, setError] = useState("");
@@ -697,6 +706,8 @@ export default function RadarPage() {
   const [reviewEditorOpen, setReviewEditorOpen] = useState(false);
 
   const requestSeqRef = useRef(0);
+  const slowLoadingTimerRef = useRef(null);
+  const loadingHintIntervalRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
@@ -710,6 +721,12 @@ export default function RadarPage() {
 
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearLoadingHintTimers();
     };
   }, []);
 
@@ -731,6 +748,70 @@ export default function RadarPage() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
     return json;
+  }
+
+  function clearLoadingHintTimers() {
+    if (slowLoadingTimerRef.current) {
+      clearTimeout(slowLoadingTimerRef.current);
+      slowLoadingTimerRef.current = null;
+    }
+    if (loadingHintIntervalRef.current) {
+      clearInterval(loadingHintIntervalRef.current);
+      loadingHintIntervalRef.current = null;
+    }
+  }
+
+  function startSlowLoadingHints(requestSeq) {
+    clearLoadingHintTimers();
+    setShowSlowLoadingMessage(false);
+    setLoadingHintIndex(0);
+
+    slowLoadingTimerRef.current = setTimeout(() => {
+      if (requestSeq !== requestSeqRef.current) return;
+      setShowSlowLoadingMessage(true);
+      setLoadingHintIndex(0);
+
+      loadingHintIntervalRef.current = setInterval(() => {
+        if (requestSeq !== requestSeqRef.current) return;
+        setLoadingHintIndex((prev) => (prev + 1) % RADAR_LOADING_HINTS.length);
+      }, 1800);
+    }, 1200);
+  }
+
+  async function enrichForecastAfterRender(targetDate, requestSeq) {
+    if (!targetDate) return;
+
+    try {
+      setEnrichingForecast(true);
+      const json = await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}`);
+
+      if (requestSeq !== requestSeqRef.current) return;
+
+      setBundle((prev) => {
+        if (!prev) return json;
+        if (prev?.target_date && json?.target_date && prev.target_date !== json.target_date) {
+          return prev;
+        }
+        return {
+          ...prev,
+          ...json,
+          forecast: {
+            ...(prev?.forecast || {}),
+            ...(json?.forecast || {}),
+          },
+          care_plan: {
+            ...(prev?.care_plan || {}),
+            ...(json?.care_plan || {}),
+          },
+        };
+      });
+    } catch (e) {
+      console.error('enrichForecastAfterRender failed:', e);
+    } finally {
+      if (requestSeq === requestSeqRef.current) {
+        setEnrichingForecast(false);
+      }
+    }
   }
 
   async function fetchTodayReview() {
@@ -779,7 +860,10 @@ export default function RadarPage() {
     try {
       setError("");
       if (force) setRefreshing(true);
-      if (!bundle) setLoading(true);
+      if (!bundle) {
+        setLoading(true);
+        startSlowLoadingHints(requestSeq);
+      }
 
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
@@ -821,6 +905,12 @@ export default function RadarPage() {
       setNeedsLocation(false);
       setBundle(json);
 
+      if (json?.gpt_pending && json?.target_date) {
+        enrichForecastAfterRender(json.target_date, requestSeq);
+      } else {
+        setEnrichingForecast(false);
+      }
+
       const returnedMode = inferModeFromTargetDate(json?.target_date);
       if (returnedMode) {
         setDateMode(returnedMode);
@@ -834,6 +924,8 @@ export default function RadarPage() {
       setError(e?.message || "予報の取得に失敗しました。");
     } finally {
       if (requestSeq === requestSeqRef.current) {
+        clearLoadingHintTimers();
+        setShowSlowLoadingMessage(false);
         setLoading(false);
         setRefreshing(false);
       }
@@ -1029,6 +1121,23 @@ export default function RadarPage() {
     return (
       <AppShell title="体調予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
         <div className="space-y-6 pt-4">
+          {showSlowLoadingMessage ? (
+            <div className="rounded-[32px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_74%)] px-6 py-7 shadow-sm">
+              <div className="inline-flex rounded-full bg-white/80 px-3 py-1 text-[11px] font-black tracking-wide text-[var(--accent-ink)] ring-1 ring-black/5">
+                未病レーダーを作成中
+              </div>
+              <div className="mt-4 text-[20px] font-black tracking-tight text-slate-900">
+                {RADAR_LOADING_HINTS[loadingHintIndex] || RADAR_LOADING_HINTS[0]}
+              </div>
+              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
+                体質と気象の重なりを見て、今日の崩れやすさと先回りケアを組み立てています。
+              </div>
+              <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5">
+                <div className="h-full w-1/3 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-[var(--accent-ink)]/55" />
+              </div>
+            </div>
+          ) : null}
+
           <div className="h-10 w-full rounded-full bg-slate-100 animate-pulse" />
           <div className="h-48 rounded-[32px] bg-slate-100 animate-pulse" />
           <div className="h-24 rounded-[32px] bg-slate-100 animate-pulse" />
@@ -1327,6 +1436,11 @@ export default function RadarPage() {
 
                   {noticeOpen ? (
                     <div className="border-t border-slate-200/80 px-4 py-4 bg-white/55">
+                      {enrichingForecast && !forecast?.gpt_summary ? (
+                        <div className="mb-3 rounded-[16px] bg-slate-50 px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
+                          説明文を読みやすく整えています…
+                        </div>
+                      ) : null}
                       <ul className="space-y-3">
                         {forecastLines.map((line, idx) => (
                           <li
@@ -1502,6 +1616,12 @@ export default function RadarPage() {
               <div className="text-[15px] font-black tracking-tight text-slate-900">
                 {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
               </div>
+
+              {enrichingForecast && !forecast?.gpt_summary ? (
+                <div className="mt-3 rounded-[16px] bg-white px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
+                  食養生の説明を整えています…
+                </div>
+              ) : null}
 
               {food.recommendation || food.focus ? (
                 <div className="mt-4">
