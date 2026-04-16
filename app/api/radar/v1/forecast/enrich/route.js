@@ -98,121 +98,130 @@ export async function GET(req) {
     const user = await getAuthenticatedUser(req);
 
     if (!user?.id) {
-      return jsonUtf8({ error: "Unauthorized" }, 401);
+      return jsonUtf8({ ok: false, error: "Unauthorized" }, 401);
     }
 
-    const url = new URL(req.url);
-    const dateParam = url.searchParams.get("date");
-    const targetDate = dateParam || decideTargetDateJST();
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get("date");
+    const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
     const location = await getPrimaryRadarLocation({ userId: user.id });
     if (!location) {
       return jsonUtf8(
         {
-          error: "No radar location found. Save a location first.",
+          ok: false,
+          error:
+            "No radar location found. Pass lat/lon once to set a primary location.",
         },
         400
       );
     }
 
-    const existing = await getForecastBundle({ userId: user.id, targetDate });
-    if (existing && hasCompletedGpt(existing)) {
-      return jsonUtf8({
-        ...existing,
-        target_date: targetDate,
-        relative_target_mode: relativeTargetMode,
-        now_jst: nowJstParts(new Date()),
-        location: serializeLocation(location),
-        cached: true,
-        gpt_pending: false,
-      });
-    }
-
-    const { radarPlan } = await buildFastRadarBundle({
+    const existing = await getForecastBundle({
       userId: user.id,
       targetDate,
-      lat: location.lat,
-      lon: location.lon,
-      timezone: location.timezone || "Asia/Tokyo",
-      relativeTargetMode,
     });
 
-    const promptContext = {
-      date_mode: relativeTargetMode,
-      target_date: targetDate,
-      timezone: location.timezone || "Asia/Tokyo",
-      weather: radarPlan.forecast.weather,
-      forecast: radarPlan.forecast,
-      care_plan: radarPlan.care_plan,
-      risk_context: radarPlan.forecast.computed?.radar_plan_meta?.risk_context || null,
-    };
-
-    let gptSummary = String(existing?.forecast?.gpt_summary || "").trim() || null;
-
-    if (!gptSummary) {
-      try {
-        gptSummary = await generateRadarSummary({
-          radarPlan,
-          relativeTargetMode,
-        });
-      } catch (error) {
-        console.error("forecast enrich summary generation failed:", error);
-      }
-    }
-
-    let tomorrowFood = radarPlan.care_plan?.tomorrow_food_context || null;
-    try {
-      tomorrowFood = await generateTomorrowFood({
-        promptContext,
-        fallback: radarPlan.care_plan?.tomorrow_food_context || null,
+    if (existing?.forecast && existing?.care_plan && hasCompletedGpt(existing)) {
+      return jsonUtf8({
+        ok: true,
+        cached: true,
+        gpt_pending: false,
+        target_date: targetDate,
+        target_mode: mode,
+        relative_target_mode: relativeTargetMode,
+        location: serializeLocation(location),
+        forecast: existing.forecast,
+        care_plan: existing.care_plan,
       });
+    }
+
+    let { radarPlan, vendorMeta, normalized, riskContext } = await buildFastRadarBundle({
+      userId: user.id,
+      targetDate,
+      location,
+    });
+
+    let gptSummaryText = "";
+
+    try {
+      const summary = await generateRadarSummary({
+        riskContext,
+        radarPlan,
+        targetDate,
+        relativeTargetMode,
+      });
+
+      if (summary?.text) {
+        gptSummaryText = summary.text;
+        radarPlan = {
+          ...radarPlan,
+          forecast: {
+            ...radarPlan.forecast,
+            gpt_summary: summary.text,
+            gpt_model: summary.model || null,
+            gpt_generated_at: summary.generated_at || new Date().toISOString(),
+          },
+        };
+      }
     } catch (error) {
-      console.error("forecast enrich food generation failed:", error);
+      console.error("generateRadarSummary failed:", error);
     }
 
-    if (gptSummary) {
-      radarPlan.forecast.gpt_summary = gptSummary;
+    try {
+      const generatedFood = await generateTomorrowFood({
+        riskContext,
+        radarPlan,
+        targetDate,
+        relativeTargetMode,
+      });
+
+      if (generatedFood?.food) {
+        radarPlan = {
+          ...radarPlan,
+          tomorrow_food: {
+            ...radarPlan.tomorrow_food,
+            ...generatedFood.food,
+          },
+        };
+      }
+    } catch (error) {
+      console.error("generateTomorrowFood failed:", error);
     }
 
-    if (tomorrowFood) {
-      radarPlan.care_plan.tomorrow_food_context = tomorrowFood;
-    }
-
-    const savedForecast = await saveForecast({
+    const forecast = await saveForecast({
       userId: user.id,
       targetDate,
       locationId: location.id,
       radarPlan,
+      vendor: "metno",
+      vendorMeta,
     });
 
-    await saveCarePlan({
-      forecastId: savedForecast.id,
+    const carePlan = await saveCarePlan({
+      forecastId: forecast.id,
       radarPlan,
     });
 
-    const freshBundle = await getForecastBundle({ userId: user.id, targetDate });
-
     return jsonUtf8({
-      ...(freshBundle || {
-        target_date: targetDate,
-        forecast: radarPlan.forecast,
-        care_plan: radarPlan.care_plan,
-      }),
-      target_date: targetDate,
-      relative_target_mode: relativeTargetMode,
-      now_jst: nowJstParts(new Date()),
-      location: serializeLocation(location),
+      ok: true,
       cached: false,
-      gpt_pending: !gptSummary,
+      gpt_pending: !gptSummaryText,
+      target_date: targetDate,
+      target_mode: mode,
+      relative_target_mode: relativeTargetMode,
+      location: serializeLocation(location),
+      forecast,
+      care_plan: carePlan,
+      debug: {
+        point_count: normalized.points.length,
+        partial_day: normalized.points.length < 24,
+        from_cache: false,
+      },
     });
   } catch (error) {
     console.error("/api/radar/v1/forecast/enrich GET error:", error);
-    return jsonUtf8(
-      {
-        error: error?.message || "Unknown error",
-      },
-      500
-    );
+    return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
