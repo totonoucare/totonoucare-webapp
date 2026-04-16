@@ -109,106 +109,112 @@ export async function GET(req) {
     const user = await getAuthenticatedUser(req);
 
     if (!user?.id) {
-      return jsonUtf8({ error: "Unauthorized" }, 401);
+      return jsonUtf8({ ok: false, error: "Unauthorized" }, 401);
     }
 
-    const url = new URL(req.url);
-    const latParam = url.searchParams.get("lat");
-    const lonParam = url.searchParams.get("lon");
-    const dateParam = url.searchParams.get("date");
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get("date");
+    const latParam = searchParams.get("lat");
+    const lonParam = searchParams.get("lon");
 
-    const overrideLat = latParam != null && latParam !== "" ? Number(latParam) : null;
-    const overrideLon = lonParam != null && lonParam !== "" ? Number(lonParam) : null;
+    const lat = latParam !== null ? Number(latParam) : null;
+    const lon = lonParam !== null ? Number(lonParam) : null;
 
-    if (
-      (overrideLat != null && Number.isNaN(overrideLat)) ||
-      (overrideLon != null && Number.isNaN(overrideLon))
-    ) {
-      return jsonUtf8({ error: "lat/lon must be numbers" }, 400);
-    }
-
-    const targetDate = dateParam || decideTargetDateJST();
+    const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
     let location = null;
 
-    if (overrideLat != null && overrideLon != null) {
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
       location = await enrichAndSaveLocation({
         userId: user.id,
-        lat: overrideLat,
-        lon: overrideLon,
+        lat,
+        lon,
         timezone: "Asia/Tokyo",
         labelHint: "primary",
       });
     } else {
       location = await getPrimaryRadarLocation({ userId: user.id });
+
+      if (location && (!location.display_name || !location.region_name)) {
+        location = await enrichAndSaveLocation({
+          userId: user.id,
+          lat: Number(location.lat),
+          lon: Number(location.lon),
+          timezone: location.timezone || "Asia/Tokyo",
+          labelHint: location.label || "primary",
+        });
+      }
     }
 
     if (!location) {
       return jsonUtf8(
         {
-          error: "No radar location found. Save a location first.",
+          ok: false,
+          error:
+            "No radar location found. Pass lat/lon once to set a primary location.",
         },
         400
       );
     }
 
-    const existing = await getForecastBundle({ userId: user.id, targetDate });
-    if (existing) {
+    const existing = await getForecastBundle({
+      userId: user.id,
+      targetDate,
+    });
+
+    if (existing?.forecast && existing?.care_plan) {
       return jsonUtf8({
-        ...existing,
-        target_date: targetDate,
-        relative_target_mode: relativeTargetMode,
-        now_jst: nowJstParts(new Date()),
-        location: serializeLocation(location),
+        ok: true,
         cached: true,
         gpt_pending: !hasCompletedGpt(existing),
+        target_date: targetDate,
+        target_mode: mode,
+        relative_target_mode: relativeTargetMode,
+        location: serializeLocation(location),
+        forecast: existing.forecast,
+        care_plan: existing.care_plan,
       });
     }
 
-    const { radarPlan } = await buildFastRadarBundle({
+    const { radarPlan, vendorMeta, normalized } = await buildFastRadarBundle({
       userId: user.id,
       targetDate,
-      lat: location.lat,
-      lon: location.lon,
-      timezone: location.timezone || "Asia/Tokyo",
-      relativeTargetMode,
+      location,
     });
 
-    const savedForecast = await saveForecast({
+    const forecast = await saveForecast({
       userId: user.id,
       targetDate,
       locationId: location.id,
       radarPlan,
+      vendor: "metno",
+      vendorMeta,
     });
 
-    await saveCarePlan({
-      forecastId: savedForecast.id,
+    const carePlan = await saveCarePlan({
+      forecastId: forecast.id,
       radarPlan,
     });
 
-    const freshBundle = await getForecastBundle({ userId: user.id, targetDate });
-
     return jsonUtf8({
-      ...(freshBundle || {
-        target_date: targetDate,
-        forecast: radarPlan.forecast,
-        care_plan: radarPlan.care_plan,
-      }),
-      target_date: targetDate,
-      relative_target_mode: relativeTargetMode,
-      now_jst: nowJstParts(new Date()),
-      location: serializeLocation(location),
+      ok: true,
       cached: false,
       gpt_pending: true,
+      target_date: targetDate,
+      target_mode: mode,
+      relative_target_mode: relativeTargetMode,
+      location: serializeLocation(location),
+      forecast,
+      care_plan: carePlan,
+      debug: {
+        point_count: normalized.points.length,
+        partial_day: normalized.points.length < 24,
+        from_cache: false,
+      },
     });
   } catch (error) {
     console.error("/api/radar/v1/forecast GET error:", error);
-    return jsonUtf8(
-      {
-        error: error?.message || "Unknown error",
-      },
-      500
-    );
+    return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
