@@ -106,7 +106,7 @@ export async function GET(req) {
     const targetDate = dateParam || decideTargetDateJST();
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
-    const location = await getPrimaryRadarLocation(user.id);
+    const location = await getPrimaryRadarLocation({ userId: user.id });
     if (!location) {
       return jsonUtf8(
         {
@@ -116,7 +116,7 @@ export async function GET(req) {
       );
     }
 
-    const existing = await getForecastBundle(user.id, targetDate);
+    const existing = await getForecastBundle({ userId: user.id, targetDate });
     if (existing && hasCompletedGpt(existing)) {
       return jsonUtf8({
         ...existing,
@@ -191,7 +191,7 @@ export async function GET(req) {
       carePlanPayload: radarPlan.care_plan,
     });
 
-    const freshBundle = await getForecastBundle(user.id, targetDate);
+    const freshBundle = await getForecastBundle({ userId: user.id, targetDate });
 
     return jsonUtf8({
       ...(freshBundle || {
