@@ -337,7 +337,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
               記録・週次AIレポートを使うならプレミアム
             </div>
             <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-              記録・週次AIレポート・予報精度のパーソナライズ・広告非表示を利用できるプランです。
+              記録・週次AIレポート・予報精度のパーソナライズを利用できるプランです。
             </div>
             <div className="mt-2 text-[13px] font-black text-slate-900">月額 580円</div>
           </div>
