@@ -175,16 +175,16 @@ export async function GET(req) {
       relativeTargetMode,
     });
 
-    await saveForecast({
+    const savedForecast = await saveForecast({
       userId: user.id,
       targetDate,
-      forecastPayload: radarPlan.forecast,
+      locationId: location.id,
+      radarPlan,
     });
 
     await saveCarePlan({
-      userId: user.id,
-      targetDate,
-      carePlanPayload: radarPlan.care_plan,
+      forecastId: savedForecast.id,
+      radarPlan,
     });
 
     const freshBundle = await getForecastBundle({ userId: user.id, targetDate });
