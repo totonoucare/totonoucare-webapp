@@ -7,15 +7,13 @@ import {
 } from "@/lib/radar_v1/timeJST";
 import { buildFastRadarBundle } from "@/lib/radar_v1/buildFastRadarBundle";
 import {
-  generateRadarSummary,
-  generateTomorrowFood,
-} from "@/lib/radar_v1/gptRadar";
-import {
   getPrimaryRadarLocation,
+  upsertPrimaryRadarLocation,
   getForecastBundle,
   saveForecast,
   saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
+import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
 
 export const runtime = "nodejs";
 
@@ -89,6 +87,19 @@ function serializeLocation(location) {
   };
 }
 
+async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) {
+  const meta = await resolveRadarLocationMeta({ lat, lon, labelHint });
+  return upsertPrimaryRadarLocation({
+    userId,
+    lat,
+    lon,
+    timezone,
+    label: meta.label || labelHint || "primary",
+    displayName: meta.display_name,
+    regionName: meta.region_name,
+  });
+}
+
 function hasCompletedGpt(bundle) {
   return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
 }
@@ -102,11 +113,37 @@ export async function GET(req) {
     }
 
     const url = new URL(req.url);
+    const latParam = url.searchParams.get("lat");
+    const lonParam = url.searchParams.get("lon");
     const dateParam = url.searchParams.get("date");
+
+    const overrideLat = latParam != null && latParam !== "" ? Number(latParam) : null;
+    const overrideLon = lonParam != null && lonParam !== "" ? Number(lonParam) : null;
+
+    if (
+      (overrideLat != null && Number.isNaN(overrideLat)) ||
+      (overrideLon != null && Number.isNaN(overrideLon))
+    ) {
+      return jsonUtf8({ error: "lat/lon must be numbers" }, 400);
+    }
+
     const targetDate = dateParam || decideTargetDateJST();
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
-    const location = await getPrimaryRadarLocation({ userId: user.id });
+    let location = null;
+
+    if (overrideLat != null && overrideLon != null) {
+      location = await enrichAndSaveLocation({
+        userId: user.id,
+        lat: overrideLat,
+        lon: overrideLon,
+        timezone: "Asia/Tokyo",
+        labelHint: "primary",
+      });
+    } else {
+      location = await getPrimaryRadarLocation({ userId: user.id });
+    }
+
     if (!location) {
       return jsonUtf8(
         {
@@ -117,7 +154,7 @@ export async function GET(req) {
     }
 
     const existing = await getForecastBundle({ userId: user.id, targetDate });
-    if (existing && hasCompletedGpt(existing)) {
+    if (existing) {
       return jsonUtf8({
         ...existing,
         target_date: targetDate,
@@ -125,7 +162,7 @@ export async function GET(req) {
         now_jst: nowJstParts(new Date()),
         location: serializeLocation(location),
         cached: true,
-        gpt_pending: false,
+        gpt_pending: !hasCompletedGpt(existing),
       });
     }
 
@@ -138,57 +175,16 @@ export async function GET(req) {
       relativeTargetMode,
     });
 
-    const promptContext = {
-      date_mode: relativeTargetMode,
-      target_date: targetDate,
-      timezone: location.timezone || "Asia/Tokyo",
-      weather: radarPlan.forecast.weather,
-      forecast: radarPlan.forecast,
-      care_plan: radarPlan.care_plan,
-      risk_context: radarPlan.forecast.computed?.radar_plan_meta?.risk_context || null,
-    };
-
-    let gptSummary = String(existing?.forecast?.gpt_summary || "").trim() || null;
-
-    if (!gptSummary) {
-      try {
-        gptSummary = await generateRadarSummary({
-          radarPlan,
-          relativeTargetMode,
-        });
-      } catch (error) {
-        console.error("forecast enrich summary generation failed:", error);
-      }
-    }
-
-    let tomorrowFood = radarPlan.care_plan?.tomorrow_food_context || null;
-    try {
-      tomorrowFood = await generateTomorrowFood({
-        promptContext,
-        fallback: radarPlan.care_plan?.tomorrow_food_context || null,
-      });
-    } catch (error) {
-      console.error("forecast enrich food generation failed:", error);
-    }
-
-    if (gptSummary) {
-      radarPlan.forecast.gpt_summary = gptSummary;
-    }
-
-    if (tomorrowFood) {
-      radarPlan.care_plan.tomorrow_food_context = tomorrowFood;
-    }
-
-    await saveForecast({
+    const savedForecast = await saveForecast({
       userId: user.id,
       targetDate,
-      forecastPayload: radarPlan.forecast,
+      locationId: location.id,
+      radarPlan,
     });
 
     await saveCarePlan({
-      userId: user.id,
-      targetDate,
-      carePlanPayload: radarPlan.care_plan,
+      forecastId: savedForecast.id,
+      radarPlan,
     });
 
     const freshBundle = await getForecastBundle({ userId: user.id, targetDate });
@@ -204,10 +200,10 @@ export async function GET(req) {
       now_jst: nowJstParts(new Date()),
       location: serializeLocation(location),
       cached: false,
-      gpt_pending: !gptSummary,
+      gpt_pending: true,
     });
   } catch (error) {
-    console.error("/api/radar/v1/forecast/enrich GET error:", error);
+    console.error("/api/radar/v1/forecast GET error:", error);
     return jsonUtf8(
       {
         error: error?.message || "Unknown error",
