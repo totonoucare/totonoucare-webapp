@@ -5,24 +5,11 @@ import {
   nowJstParts,
   toJstISODate,
 } from "@/lib/radar_v1/timeJST";
-import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
-import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
-import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
-import { getRadarConstitutionProfile } from "@/lib/radar_v1/profileRepo";
-import { getReviewFeedback } from "@/lib/radar_v1/reviewFeedback";
-import { buildRiskContext } from "@/lib/radar_v1/buildRiskContext";
-import { pickTcmPoints } from "@/lib/radar_v1/pickTcmPoints";
-import { selectMtestPoint } from "@/lib/radar_v1/selectMtestPoint";
-import { buildRadarPlan } from "@/lib/radar_v1/buildRadarPlan";
-import {
-  generateRadarSummary,
-  generateTomorrowFood,
-} from "@/lib/radar_v1/gptRadar";
+import { buildFastRadarBundle } from "@/lib/radar_v1/buildFastRadarBundle";
 import {
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
   getForecastBundle,
-  getPreviousMtestPointCode,
   saveForecast,
   saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
@@ -113,260 +100,115 @@ async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) 
   });
 }
 
+function hasCompletedGpt(bundle) {
+  return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
 
     if (!user?.id) {
-      return jsonUtf8({ ok: false, error: "Unauthorized" }, 401);
+      return jsonUtf8({ error: "Unauthorized" }, 401);
     }
 
-    const { searchParams } = new URL(req.url);
+    const url = new URL(req.url);
+    const latParam = url.searchParams.get("lat");
+    const lonParam = url.searchParams.get("lon");
+    const dateParam = url.searchParams.get("date");
 
-    const date = searchParams.get("date");
-    const latParam = searchParams.get("lat");
-    const lonParam = searchParams.get("lon");
+    const overrideLat = latParam != null && latParam !== "" ? Number(latParam) : null;
+    const overrideLon = lonParam != null && lonParam !== "" ? Number(lonParam) : null;
 
-    const lat = latParam !== null ? Number(latParam) : null;
-    const lon = lonParam !== null ? Number(lonParam) : null;
+    if (
+      (overrideLat != null && Number.isNaN(overrideLat)) ||
+      (overrideLon != null && Number.isNaN(overrideLon))
+    ) {
+      return jsonUtf8({ error: "lat/lon must be numbers" }, 400);
+    }
 
-    const { targetDate, mode } = decideTargetDateJST({ date: date || null });
+    const targetDate = dateParam || decideTargetDateJST();
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
     let location = null;
 
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    if (overrideLat != null && overrideLon != null) {
       location = await enrichAndSaveLocation({
         userId: user.id,
-        lat,
-        lon,
+        lat: overrideLat,
+        lon: overrideLon,
         timezone: "Asia/Tokyo",
         labelHint: "primary",
       });
     } else {
-      location = await getPrimaryRadarLocation({ userId: user.id });
-
-      if (location && (!location.display_name || !location.region_name)) {
-        location = await enrichAndSaveLocation({
-          userId: user.id,
-          lat: Number(location.lat),
-          lon: Number(location.lon),
-          timezone: location.timezone || "Asia/Tokyo",
-          labelHint: location.label || "primary",
-        });
-      }
+      location = await getPrimaryRadarLocation(user.id);
     }
 
     if (!location) {
       return jsonUtf8(
         {
-          ok: false,
-          error:
-            "No radar location found. Pass lat/lon once to set a primary location.",
+          error: "No radar location found. Save a location first.",
         },
         400
       );
     }
 
-    const existing = await getForecastBundle({
-      userId: user.id,
-      targetDate,
-    });
-
-    if (existing?.forecast && existing?.care_plan) {
+    const existing = await getForecastBundle(user.id, targetDate);
+    if (existing) {
       return jsonUtf8({
-        ok: true,
-        cached: true,
+        ...existing,
         target_date: targetDate,
-        target_mode: mode,
         relative_target_mode: relativeTargetMode,
+        now_jst: nowJstParts(new Date()),
         location: serializeLocation(location),
-        forecast: existing.forecast,
-        care_plan: existing.care_plan,
-        debug: {
-          point_count: null,
-          partial_day: null,
-          used_openai: !!process.env.OPENAI_API_KEY,
-          radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.4",
-          summary_error: null,
-          food_error: null,
-          review_feedback: null,
-          from_cache: true,
-        },
+        cached: true,
+        gpt_pending: !hasCompletedGpt(existing),
       });
     }
 
-    const profile = await getRadarConstitutionProfile({ userId: user.id });
-    if (!profile) {
-      return jsonUtf8(
-        { ok: false, error: "constitution_profile not found" },
-        404
-      );
-    }
-
-    const reviewFeedback = await getReviewFeedback({
-      userId: user.id,
-      beforeDate: targetDate,
-    });
-
-    const profileWithFeedback = {
-      ...profile,
-      review_feedback: reviewFeedback,
-    };
-
-    const { data: metnoData, meta: metnoMeta } =
-      await fetchMetnoLocationForecast({
-        lat: location.lat,
-        lon: location.lon,
-      });
-
-    const normalized = normalizeMetnoForTargetDate({
-      metnoJson: metnoData,
-      targetDate,
-    });
-
-    if (!normalized.points.length) {
-      return jsonUtf8(
-        {
-          ok: false,
-          error: "No forecast points for target_date",
-          target_date: targetDate,
-          target_mode: mode,
-          relative_target_mode: relativeTargetMode,
-        },
-        500
-      );
-    }
-
-    const weatherStress = buildWeatherStress({ points: normalized.points });
-
-    const riskContext = buildRiskContext({
-      profile: profileWithFeedback,
-      weatherStress,
-    });
-
-    const tcmPoints = await pickTcmPoints({
-      differentiation: riskContext.tcm_context,
-    });
-
-    const previousPointCode = await getPreviousMtestPointCode({
-      userId: user.id,
-      beforeDate: targetDate,
-    });
-
-    const mtestPoint = await selectMtestPoint({
-      selectedLine: riskContext.mtest_context.selected_line,
-      motherChild: { mode: riskContext.mtest_context.mode },
-      weatherStress: {
-        main_trigger: riskContext.summary.main_trigger,
-        trigger_dir: riskContext.summary.trigger_dir,
-        pressure_down_strength: riskContext.weather_context.pressure_down_strength,
-        cold_strength: riskContext.weather_context.cold_strength,
-        damp_strength: riskContext.weather_context.damp_strength,
-      },
-      previousPointCode,
-    });
-
-    let radarPlan = buildRadarPlan({
-      riskContext,
-      tcmPoints,
-      mtestPoint,
-    });
-
-    let openaiDebug = {
-      used_openai: !!process.env.OPENAI_API_KEY,
-      radar_model: process.env.OPENAI_RADAR_MODEL || "gpt-5.4",
-      summary_error: null,
-      food_error: null,
-      review_feedback: reviewFeedback,
-    };
-
-    try {
-      const summary = await generateRadarSummary({
-        riskContext,
-        radarPlan,
-        targetDate,
-        relativeTargetMode,
-      });
-
-      if (summary?.text) {
-        radarPlan = {
-          ...radarPlan,
-          forecast: {
-            ...radarPlan.forecast,
-            gpt_summary: summary.text,
-            gpt_model: summary.model || null,
-            gpt_generated_at:
-              summary.generated_at || new Date().toISOString(),
-          },
-        };
-      }
-    } catch (e) {
-      console.error("generateRadarSummary failed:", e);
-      openaiDebug.summary_error = String(e);
-    }
-
-    try {
-      const generatedFood = await generateTomorrowFood({
-        riskContext,
-        radarPlan,
-        targetDate,
-        relativeTargetMode,
-      });
-
-      if (generatedFood?.food) {
-        radarPlan = {
-          ...radarPlan,
-          tomorrow_food: {
-            ...radarPlan.tomorrow_food,
-            ...generatedFood.food,
-          },
-        };
-      }
-    } catch (e) {
-      console.error("generateTomorrowFood failed:", e);
-      openaiDebug.food_error = String(e);
-    }
-
-    const vendorMeta = {
-      metno: metnoMeta,
-      point_count: normalized.points.length,
-      partial_day: normalized.points.length < 24,
-      previous_mtest_point_code: previousPointCode || null,
-      review_feedback: reviewFeedback,
-    };
-
-    const forecast = await saveForecast({
+    const { radarPlan } = await buildFastRadarBundle({
       userId: user.id,
       targetDate,
-      locationId: location.id,
-      radarPlan,
-      vendor: "metno",
-      vendorMeta,
+      lat: location.lat,
+      lon: location.lon,
+      timezone: location.timezone || "Asia/Tokyo",
+      relativeTargetMode,
     });
 
-    const carePlan = await saveCarePlan({
-      forecastId: forecast.id,
-      radarPlan,
+    await saveForecast({
+      userId: user.id,
+      targetDate,
+      forecastPayload: radarPlan.forecast,
     });
+
+    await saveCarePlan({
+      userId: user.id,
+      targetDate,
+      carePlanPayload: radarPlan.care_plan,
+    });
+
+    const freshBundle = await getForecastBundle(user.id, targetDate);
 
     return jsonUtf8({
-      ok: true,
-      cached: false,
+      ...(freshBundle || {
+        target_date: targetDate,
+        forecast: radarPlan.forecast,
+        care_plan: radarPlan.care_plan,
+      }),
       target_date: targetDate,
-      target_mode: mode,
       relative_target_mode: relativeTargetMode,
+      now_jst: nowJstParts(new Date()),
       location: serializeLocation(location),
-      forecast,
-      care_plan: carePlan,
-      debug: {
-        point_count: normalized.points.length,
-        partial_day: normalized.points.length < 24,
-        ...openaiDebug,
-        from_cache: false,
-      },
+      cached: false,
+      gpt_pending: true,
     });
-  } catch (e) {
-    return jsonUtf8({ ok: false, error: String(e) }, 500);
+  } catch (error) {
+    console.error("/api/radar/v1/forecast GET error:", error);
+    return jsonUtf8(
+      {
+        error: error?.message || "Unknown error",
+      },
+      500
+    );
   }
 }
