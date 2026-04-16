@@ -19,8 +19,7 @@ export function Button({
 
 const variants = {
   primary:
-    "bg-[var(--accent)] text-white shadow-[0_10px_20px_-10px_rgba(49,84,58,0.45)] hover:bg-[var(--accent-ink)] hover:shadow-[0_14px_24px_-10px_rgba(49,84,58,0.5)]",
-  secondary:
+    "bg-[var(--accent)] text-white shadow-[0_10px_20px_-10px_rgba(49,84,58,0.45)] hover:bg-[var(--accent-ink)] hover:shadow-[0_14px_24px_-10px_rgba(49,84,58,0.5)]",  secondary:
     "bg-white text-slate-800 ring-1 ring-inset ring-[var(--ring)] shadow-sm hover:bg-slate-50 hover:text-slate-900",
   ghost:
     "bg-transparent text-slate-600 hover:bg-slate-100/80 hover:text-slate-900",
