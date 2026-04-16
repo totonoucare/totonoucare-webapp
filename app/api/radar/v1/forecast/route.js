@@ -141,7 +141,7 @@ export async function GET(req) {
         labelHint: "primary",
       });
     } else {
-      location = await getPrimaryRadarLocation(user.id);
+      location = await getPrimaryRadarLocation({ userId: user.id });
     }
 
     if (!location) {
@@ -153,7 +153,7 @@ export async function GET(req) {
       );
     }
 
-    const existing = await getForecastBundle(user.id, targetDate);
+    const existing = await getForecastBundle({ userId: user.id, targetDate });
     if (existing) {
       return jsonUtf8({
         ...existing,
@@ -187,7 +187,7 @@ export async function GET(req) {
       carePlanPayload: radarPlan.care_plan,
     });
 
-    const freshBundle = await getForecastBundle(user.id, targetDate);
+    const freshBundle = await getForecastBundle({ userId: user.id, targetDate });
 
     return jsonUtf8({
       ...(freshBundle || {
