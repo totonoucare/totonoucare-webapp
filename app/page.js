@@ -392,12 +392,14 @@ export default function HomePage() {
           const bundle = await authedFetch(`/api/radar/v1/forecast?date=${targetDate}`);
           if (cancelled) return;
           setBundle(bundle);
+          setLoading(false);
 
           if (bundle?.gpt_pending) {
-            const enriched = await enrichForecastBundle(targetDate);
-            if (!cancelled && enriched) {
-              setBundle(enriched);
-            }
+            enrichForecastBundle(targetDate).then((enriched) => {
+              if (!cancelled && enriched) {
+                setBundle(enriched);
+              }
+            });
           }
         } catch (e) {
           console.error(`forecast card load failed for ${targetDate}:`, e);
