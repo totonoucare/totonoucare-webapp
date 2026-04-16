@@ -285,6 +285,8 @@ export default function HomePage() {
   const [session, setSession] = useState(null);
 
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [todayLoading, setTodayLoading] = useState(false);
+  const [tomorrowLoading, setTomorrowLoading] = useState(false);
   const [todayBundle, setTodayBundle] = useState(null);
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
   const [latestResult, setLatestResult] = useState(null);
@@ -305,6 +307,16 @@ export default function HomePage() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
     return json;
+  }
+
+  async function enrichForecastBundle(targetDate) {
+    if (!targetDate) return null;
+    try {
+      return await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}`);
+    } catch (e) {
+      console.error(`forecast enrich failed for ${targetDate}:`, e);
+      return null;
+    }
   }
 
   async function handleLogout() {
@@ -354,37 +366,73 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       if (!session) {
         setTodayBundle(null);
         setTomorrowBundle(null);
         setLatestResult(null);
         setWeeklySummary(null);
+        setTodayLoading(false);
+        setTomorrowLoading(false);
+        setDashboardLoading(false);
         return;
       }
 
+      const today = getJstDateString(0);
+      const tomorrow = getJstDateString(1);
+
+      async function loadForecastCard(targetDate, setBundle, setLoading) {
+        try {
+          setLoading(true);
+          const bundle = await authedFetch(`/api/radar/v1/forecast?date=${targetDate}`);
+          if (cancelled) return;
+          setBundle(bundle);
+
+          if (bundle?.gpt_pending) {
+            const enriched = await enrichForecastBundle(targetDate);
+            if (!cancelled && enriched) {
+              setBundle(enriched);
+            }
+          }
+        } catch (e) {
+          console.error(`forecast card load failed for ${targetDate}:`, e);
+          if (!cancelled) {
+            setBundle({
+              ok: false,
+              error: e?.message || '予報を読み込めませんでした。',
+            });
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      }
+
+      loadForecastCard(today, setTodayBundle, setTodayLoading);
+      loadForecastCard(tomorrow, setTomorrowBundle, setTomorrowLoading);
+
       try {
         setDashboardLoading(true);
-        const today = getJstDateString(0);
-        const tomorrow = getJstDateString(1);
-
-        const [todayRes, tomorrowRes, historyRes, reportRes] = await Promise.allSettled([
-          authedFetch(`/api/radar/v1/forecast?date=${today}`),
-          authedFetch(`/api/radar/v1/forecast?date=${tomorrow}`),
+        const [historyRes, reportRes] = await Promise.allSettled([
           authedFetch(`/api/diagnosis/v2/events/list?limit=1`),
           authedFetch(`/api/insights/14days?days=7`),
         ]);
 
-        setTodayBundle(todayRes.status === "fulfilled" ? todayRes.value : { ok: false, error: todayRes.reason?.message || "予報を読み込めませんでした。" });
-        setTomorrowBundle(tomorrowRes.status === "fulfilled" ? tomorrowRes.value : { ok: false, error: tomorrowRes.reason?.message || "予報を読み込めませんでした。" });
+        if (cancelled) return;
+
         setLatestResult(historyRes.status === "fulfilled" ? historyRes.value?.data?.[0] || null : null);
         setWeeklySummary(reportRes.status === "fulfilled" ? reportRes.value?.data?.summary || null : null);
       } catch (e) {
         console.error(e);
       } finally {
-        setDashboardLoading(false);
+        if (!cancelled) setDashboardLoading(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [session?.access_token]);
 
   const latestResultHref = latestResult?.source_event_id
@@ -558,13 +606,13 @@ if (!isLoggedIn) {
           <ForecastMiniCard
             title={`今日 ${formatYmdJP(getJstDateString(0))}`}
             bundle={todayBundle}
-            loading={dashboardLoading}
+            loading={todayLoading}
             onClick={() => router.push("/radar?tab=today")}
           />
           <ForecastMiniCard
             title={`明日 ${formatYmdJP(getJstDateString(1))}`}
             bundle={tomorrowBundle}
-            loading={dashboardLoading}
+            loading={tomorrowLoading}
             onClick={() => router.push("/radar?tab=tomorrow")}
           />
         </div>
