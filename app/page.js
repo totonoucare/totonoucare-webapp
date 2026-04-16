@@ -383,6 +383,9 @@ export default function HomePage() {
       const today = getJstDateString(0);
       const tomorrow = getJstDateString(1);
 
+      setTodayLoading(true);
+      setTomorrowLoading(true);
+
       async function loadForecastCard(targetDate, setBundle, setLoading) {
         try {
           setLoading(true);
@@ -606,13 +609,13 @@ if (!isLoggedIn) {
           <ForecastMiniCard
             title={`今日 ${formatYmdJP(getJstDateString(0))}`}
             bundle={todayBundle}
-            loading={todayLoading}
+            loading={Boolean(session) && (todayLoading || !todayBundle)}
             onClick={() => router.push("/radar?tab=today")}
           />
           <ForecastMiniCard
             title={`明日 ${formatYmdJP(getJstDateString(1))}`}
             bundle={tomorrowBundle}
-            loading={tomorrowLoading}
+            loading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
             onClick={() => router.push("/radar?tab=tomorrow")}
           />
         </div>
