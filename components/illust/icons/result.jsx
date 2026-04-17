@@ -174,20 +174,25 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
   );
 }
 
-// B案：指で押すアイコン
-export function IconCareTsuboFinger({ className = "h-12 w-12", ...props }) {
+
+// A案：ツボ（壺）のアイコン
+export function IconCareTsuboPot({ className = "h-12 w-12", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
-      {/* 押されているツボ（波紋と中心点） */}
-      <circle cx="12" cy="16" r="8" fill="#5c8465" fillOpacity="0.15" />
-      <circle cx="12" cy="16" r="3" fill="#5c8465" />
-      <path d="M4 16 A 8 8 0 0 1 20 16" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
+      {/* 壺のボディ（丸みのある有機的な形） */}
+      <path d="M10 12 C 6 16 6 24 10 28 C 13 30 19 30 22 28 C 26 24 26 16 22 12 C 19 10 13 10 10 12 Z" fill="#e6eee8" stroke="#5c8465" strokeWidth="2" strokeLinejoin="round" />
+      
+      {/* 壺の首と口 */}
+      <path d="M13 6 L 19 6 L 20 9 L 12 9 Z" fill="#e6eee8" stroke="#5c8465" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M12 4 L 20 4 C 21 4 21.5 5 21.5 6 L 10.5 6 C 10.5 5 11 4 12 4 Z" fill="#5c8465" opacity="0.8" />
 
-      {/* 押し込む手（人差し指） */}
-      <path d="M18 6 C 16 6 15 7 15 9 V 15 L 12.5 13.5 C 11 12 9 13 9.5 15 L 14 24 C 15 26 17 28 20 28 C 24 28 27 25 27 21 V 13 C 27 11 25 11 25 13 V 18 M 25 13 C 25 10 22 10 22 13 V 18 M 22 13 C 22 9 18 9 18 12 V 15" fill="#ffffff" stroke="#3a5741" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* 壺の真ん中にある「ツボ（経穴）」の輝き */}
+      <circle cx="16" cy="20" r="3" fill="#dca855" />
+      <path d="M16 14 V 16 M16 24 V 26 M10 20 H 12 M20 20 H 22" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
     </svg>
   );
 }
+
 
 // ★ 新規追加（お椀・食養生用 / テラコッタ×湯気）
 export function IconBowl({ className = "h-7 w-7", ...props }) {
