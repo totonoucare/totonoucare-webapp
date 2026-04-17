@@ -67,6 +67,60 @@ export function IconWeatherPressureUp({ className = "h-10 w-10", ...props }) {
   );
 }
 
+// 3. 冷え（収縮・氷 / アイスブルー系）
+export function IconWeatherCold({ className = "h-10 w-10", ...props }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <radialGradient id="grad-cold" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#e0f2fe" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#0284c7" stopOpacity="0.15" />
+        </radialGradient>
+        <linearGradient id="line-cold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#0369a1" />
+        </linearGradient>
+      </defs>
+      {/* 芯に冷えを溜め込んだ背景 */}
+      <circle cx="16" cy="16" r="13" fill="url(#grad-cold)" />
+      <circle cx="16" cy="16" r="13" fill="none" stroke="url(#line-cold)" strokeWidth="1.5" strokeOpacity="0.3" />
+      {/* 氷の結晶のディテール */}
+      <path d="M16 6v20 M6 16h20 M8.5 8.5l15 15 M8.5 23.5l15-15" fill="none" stroke="url(#line-cold)" strokeWidth="2" strokeLinecap="round" />
+      {/* 結晶の枝 */}
+      <path d="M16 9l2 2 M16 9l-2 2 M16 23l2-2 M16 23l-2-2 M23 16l-2 2 M23 16l-2-2 M9 16l2 2 M9 16l2-2" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <circle cx="16" cy="16" r="3" fill="#bae6fd" />
+    </svg>
+  );
+}
+
+// 4. 暑さ（発散・熱 / オレンジレッド系）
+export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <radialGradient id="grad-heat" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ea580c" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#ffedd5" stopOpacity="0.05" />
+        </radialGradient>
+        <linearGradient id="line-heat" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stopColor="#ea580c" />
+          <stop offset="100%" stopColor="#f97316" />
+        </linearGradient>
+      </defs>
+      {/* 熱が放射される背景 */}
+      <circle cx="16" cy="16" r="14" fill="url(#grad-heat)" />
+      {/* 太陽のコア */}
+      <circle cx="16" cy="16" r="6" fill="url(#line-heat)" opacity="0.9" />
+      <circle cx="16" cy="16" r="6" fill="none" stroke="#c2410c" strokeWidth="1.5" />
+      {/* 揺らめく熱線 */}
+      <path d="M16 4v3 M16 25v3 M4 16h3 M25 16h3" fill="none" stroke="url(#line-heat)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M7.5 7.5l2.5 2.5 M22 22l2.5 2.5 M7.5 24.5l2.5-2.5 M22 7.5l2.5 2.5" fill="none" stroke="#fb923c" strokeWidth="2" strokeLinecap="round" strokeDasharray="1 3" opacity="0.8" />
+      {/* コアのハイライト */}
+      <path d="M14 14a2.5 2.5 0 0 1 3.5 0" fill="none" stroke="#ffedd5" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+    </svg>
+  );
+}
+
 // 5. 湿気（スレート：どんより波線＋重い水滴）
 export function IconWeatherDamp({ className = "h-10 w-10", ...props }) {
   return (
@@ -111,4 +165,17 @@ export function IconWeatherDry({ className = "h-10 w-10", ...props }) {
       <path d="M12 20 l 2 4 l -1 3 M18 23 l 3 4 M24 21 l 1 3" fill="none" stroke="#92400e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
     </svg>
   );
+}
+
+// トリガーに応じたアイコンを返すラッパーコンポーネント
+export function WeatherIcon({ triggerKey, className = "h-10 w-10" }) {
+  switch (triggerKey) {
+    case "pressure_down": return <IconWeatherPressureDown className={className} />;
+    case "pressure_up": return <IconWeatherPressureUp className={className} />;
+    case "cold": return <IconWeatherCold className={className} />;
+    case "heat": return <IconWeatherHeat className={className} />;
+    case "damp": return <IconWeatherDamp className={className} />;
+    case "dry": return <IconWeatherDry className={className} />;
+    default: return null;
+  }
 }
