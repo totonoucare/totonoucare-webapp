@@ -189,7 +189,6 @@ export function IconCareTsuboFinger({ className = "h-12 w-12", ...props }) {
   );
 }
 
-
 // ★ 新規追加（お椀・食養生用 / テラコッタ×湯気）
 export function IconBowl({ className = "h-7 w-7", ...props }) {
   return (
