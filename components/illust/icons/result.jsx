@@ -174,19 +174,76 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
   );
 }
 
-export function IconRipple({ className = "h-12 w-12", ...props }) {
+export function IconRipple({ className = "h-16 w-16", ...props }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
-      {/* 押されているツボ（波紋と中心点） */}
-      <circle cx="12" cy="16" r="8" fill="#5c8465" fillOpacity="0.15" />
-      <circle cx="12" cy="16" r="3" fill="#5c8465" />
-      <path d="M4 16 A 8 8 0 0 1 20 16" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
+    <svg viewBox="0 0 48 48" className={className} aria-hidden="true" {...props}>
+      <defs>
+        {/* ツボの中心から放たれる黄金の光 */}
+        <radialGradient id="tsubo-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#dca855" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#dca855" stopOpacity="0" />
+        </radialGradient>
+        {/* 指の立体感を出す微かなグラデーション */}
+        <linearGradient id="finger-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#eef4ef" />
+        </linearGradient>
+        {/* 指に落とす柔らかい影（リッチなUIの秘訣） */}
+        <filter id="finger-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#173126" floodOpacity="0.15" />
+        </filter>
+      </defs>
 
-      {/* 押し込む手（人差し指） */}
-      <path d="M18 6 C 16 6 15 7 15 9 V 15 L 12.5 13.5 C 11 12 9 13 9.5 15 L 14 24 C 15 26 17 28 20 28 C 24 28 27 25 27 21 V 13 C 27 11 25 11 25 13 V 18 M 25 13 C 25 10 22 10 22 13 V 18 M 22 13 C 22 9 18 9 18 12 V 15" fill="#ffffff" stroke="#3a5741" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* --- LAYER 1: ツボの波及エフェクト（背景） --- */}
+      {/* 黄金のグロウ（発光） */}
+      <circle cx="24" cy="32" r="14" fill="url(#tsubo-glow)" />
+      
+      {/* 波及する波紋（外側） */}
+      <circle cx="24" cy="32" r="12" fill="none" stroke="#dca855" strokeWidth="1.5" strokeDasharray="3 4" opacity="0.6" />
+      {/* 波及する波紋（内側） */}
+      <circle cx="24" cy="32" r="7" fill="none" stroke="#5c8465" strokeWidth="2" opacity="0.5" />
+      
+      {/* ツボの中心点（コア） */}
+      <circle cx="24" cy="32" r="3" fill="#dca855" />
+      <circle cx="24" cy="32" r="1.5" fill="#ffffff" />
+
+      {/* キラキラ・効いてるエフェクト */}
+      <path d="M 8 18 v 4 m -2 -2 h 4" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M 40 24 v 4 m -2 -2 h 4" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+
+      {/* --- LAYER 2: 押し込む指（前面） --- */}
+      {/* 右上から斜めに指が入ってくる角度（-25度回転） */}
+      <g transform="translate(24, 32) rotate(-25) translate(-24, -32)" filter="url(#finger-shadow)">
+        {/* 指の本体（ふっくらとしたカプセル形状） */}
+        <path 
+          d="M 17 -10 V 25 C 17 29.5 20 32 24 32 C 28 32 31 29.5 31 25 V -10 Z" 
+          fill="url(#finger-grad)" 
+          stroke="#3a5741" 
+          strokeWidth="2" 
+          strokeLinejoin="round" 
+        />
+        {/* 爪のディテール（リアリティと愛嬌） */}
+        <path 
+          d="M 20.5 23 C 20.5 21.5 27.5 21.5 27.5 23 V 26 C 27.5 28 20.5 28 20.5 26 Z" 
+          fill="#ffffff" 
+          stroke="#a0aba5" 
+          strokeWidth="1.5" 
+          opacity="0.8" 
+        />
+        {/* 指の関節のシワ */}
+        <path 
+          d="M 20 12 Q 24 14 28 12" 
+          fill="none" 
+          stroke="#a0aba5" 
+          strokeWidth="1.5" 
+          strokeLinecap="round" 
+          opacity="0.6" 
+        />
+      </g>
     </svg>
   );
 }
+
 
 
 
