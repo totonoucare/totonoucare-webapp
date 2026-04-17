@@ -174,7 +174,7 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
   );
 }
 
-// ▼ ツボ指圧
+// ▼ ツボ：指で正確にツボを押さえる波紋アイコン
 export function IconRipple({ className = "h-12 w-12", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
@@ -184,10 +184,31 @@ export function IconRipple({ className = "h-12 w-12", ...props }) {
       <path d="M4 16 A 8 8 0 0 1 20 16" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
 
       {/* 押し込む手（人差し指） */}
-      <path d="M18 6 C 16 6 15 7 15 9 V 15 L 12.5 13.5 C 11 12 9 13 9.5 15 L 14 24 C 15 26 17 28 20 28 C 24 28 27 25 27 21 V 13 C 27 11 25 11 25 13 V 18 M 25 13 C 25 10 22 10 22 13 V 18 M 22 13 C 22 9 18 9 18 12 V 15" fill="#ffffff" stroke="#3a5741" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* ツボの中心(12, 16)を軸に-45度回転させ、右下から正確に押し込む角度を作る */}
+      <g transform="translate(12, 16) rotate(-45) scale(0.9) translate(-12, -16)">
+        {/* 手のアウトライン（完璧な幾何学曲線で再構築） */}
+        <path
+          d="M10 16 a2 2 0 0 1 4 0 v3 h3 a2.5 2.5 0 0 1 0 5 a2.5 2.5 0 0 1 0 5 a2 2 0 0 1 0 4 v2 h-11 v-7 c-4-2-4-8 0-9 l4-3 z"
+          fill="#ffffff"
+          stroke="#3a5741"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* 折りたたんだ指の隙間と、親指の付け根のシワ */}
+        <path
+          d="M17 24 h-4 M17 29 h-4 M14 19 v16 M6 19 c 3 2 4 4 3 7"
+          fill="none"
+          stroke="#3a5741"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
     </svg>
   );
 }
+
 
 
 
