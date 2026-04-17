@@ -174,26 +174,21 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
   );
 }
 
-// ★ 新規追加（波紋・ツボ用 / セージグリーン×ゴールドの光）
-export function IconRipple({ className = "h-7 w-7", ...props }) {
+// B案：指で押すアイコン
+export function IconCareTsuboFinger({ className = "h-12 w-12", ...props }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
-      <defs>
-        <radialGradient id="grad-ripple" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#5c8465" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#5c8465" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      {/* じんわり広がる波紋 */}
-      <circle cx="12" cy="12" r="10" fill="url(#grad-ripple)" />
-      <circle cx="12" cy="12" r="10" fill="none" stroke="#5c8465" strokeWidth="1" opacity="0.3" />
-      <circle cx="12" cy="12" r="6" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="2 3" opacity="0.7" />
-      {/* 中心で光るツボ */}
-      <circle cx="12" cy="12" r="3" fill="#dca855" />
-      <circle cx="12" cy="12" r="3" fill="none" stroke="#b48332" strokeWidth="1" opacity="0.5" />
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      {/* 押されているツボ（波紋と中心点） */}
+      <circle cx="12" cy="16" r="8" fill="#5c8465" fillOpacity="0.15" />
+      <circle cx="12" cy="16" r="3" fill="#5c8465" />
+      <path d="M4 16 A 8 8 0 0 1 20 16" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
+
+      {/* 押し込む手（人差し指） */}
+      <path d="M18 6 C 16 6 15 7 15 9 V 15 L 12.5 13.5 C 11 12 9 13 9.5 15 L 14 24 C 15 26 17 28 20 28 C 24 28 27 25 27 21 V 13 C 27 11 25 11 25 13 V 18 M 25 13 C 25 10 22 10 22 13 V 18 M 22 13 C 22 9 18 9 18 12 V 15" fill="#ffffff" stroke="#3a5741" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
+
 
 // ★ 新規追加（お椀・食養生用 / テラコッタ×湯気）
 export function IconBowl({ className = "h-7 w-7", ...props }) {
