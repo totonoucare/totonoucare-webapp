@@ -121,32 +121,39 @@ export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
   );
 }
 
-// 5. 湿気（スレート：どんより波線＋重みのある水滴クラスター）
+// 5. 湿気（スレート：どんより太い波線＋非対称で重たい水たまり）
 export function IconWeatherDamp({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
         <linearGradient id="grad-drop-main" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#64748b" />
+          <stop offset="100%" stopColor="#334155" />
+        </linearGradient>
+        <linearGradient id="grad-drop-sub" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#94a3b8" />
           <stop offset="100%" stopColor="#475569" />
         </linearGradient>
       </defs>
       
-      {/* まとわりつく湿気（どんよりした波線） */}
-      <path d="M4 9 Q 8 5, 12 9 T 20 9 T 28 9" fill="none" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-      <path d="M6 14 Q 10 10, 14 14 T 22 14 T 28 14" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-      
-      {/* 左のしずく（中） */}
-      <path d="M10 24 C13 24 14 21.5 14 18 C14 14 10 10 10 10 C10 10 6 14 6 18 C6 21.5 7 24 10 24 Z" fill="#64748b" opacity="0.8" />
-      
-      {/* 右のしずく（小） */}
-      <path d="M23 25 C25.5 25 26.5 23 26.5 20 C26.5 16.5 23 12 23 12 C23 12 19.5 16.5 19.5 20 C19.5 23 20.5 25 23 25 Z" fill="#475569" opacity="0.7" />
-      
-      {/* 中央のしずく（大・メイン） */}
-      <path d="M16 28 C20.5 28 22.5 24 22.5 19 C22.5 13 16 7 16 7 C16 7 9.5 13 9.5 19 C9.5 24 11.5 28 16 28 Z" fill="url(#grad-drop-main)" opacity="0.95" />
-      
-      {/* メインしずくのハイライト */}
-      <path d="M12 22 A 4 4 0 0 1 14 16.5" fill="none" stroke="#f1f5f9" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      {/* どんよりした重たい空気（波線） ※太く、色を濃くして存在感をアップ */}
+      <path d="M-2 10 Q 4 5, 10 10 T 22 10 T 34 10" fill="none" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+      <path d="M2 16 Q 7 12, 12 16 T 22 16 T 32 16" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
+
+      {/* 右側のしずく（中） ※メインの横で合体して溜まっている */}
+      <path d="M22 14 C 22 14, 16 21, 16 25 C 16 28, 18.5 29.5, 22 29.5 C 25.5 29.5, 28 28, 28 25 C 28 21, 22 14, 22 14 Z" fill="url(#grad-drop-sub)" opacity="0.8" />
+
+      {/* 落ちてくる小さな水滴（上部・非対称のアクセント） */}
+      <path d="M24 5 C 24 5, 22 8, 22 10 C 22 11.5, 23 12.5, 24 12.5 C 25 12.5, 26 11.5, 26 10 C 26 8, 24 5, 24 5 Z" fill="#94a3b8" opacity="0.7" />
+
+      {/* 左側・メインの重たい水滴（大） ※一番大きく、下にずっしり溜まる */}
+      <path d="M13 7 C 13 7, 5 16, 5 23 C 5 27.5, 8.5 30, 13 30 C 17.5 30, 21 27.5, 21 23 C 21 16, 13 7, 13 7 Z" fill="url(#grad-drop-main)" opacity="0.95" />
+
+      {/* メインしずくのハイライト（液体のぬめり感） */}
+      <path d="M9 24 A 4.5 4.5 0 0 1 11 17.5" fill="none" stroke="#f8fafc" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+
+      {/* 底に広がる水たまりのライン（重力と停滞感） */}
+      <path d="M 8 31 H 25" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
     </svg>
   );
 }
