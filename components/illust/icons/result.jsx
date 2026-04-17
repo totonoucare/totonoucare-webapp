@@ -175,9 +175,6 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
 }
 
 // ▼ ツボ指圧
-// components/illust/icons/care.jsx (または該当ファイル)
-"use client";
-
 export function IconRipple({ className = "h-12 w-12", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
