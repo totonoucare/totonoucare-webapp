@@ -562,12 +562,12 @@ function PointDetailSheet({ point, onClose }) {
 
           <button
             onClick={onClose}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
           >
             <svg
               viewBox="0 0 24 24"
               fill="none"
-              className="h-5 w-5"
+              className="h-6 w-6"
               stroke="currentColor"
               strokeWidth="2.5"
               strokeLinecap="round"
@@ -698,7 +698,7 @@ export default function RadarPage() {
   const [noticeOpen, setNoticeOpen] = useState(false);
   const [tsuboExtraOpen, setTsuboExtraOpen] = useState(false);
   const [foodDetailOpen, setFoodDetailOpen] = useState(false);
-  
+
   const [todayReview, setTodayReview] = useState(null);
   const [todayReviewForecast, setTodayReviewForecast] = useState(null);
   const [loadingTodayReview, setLoadingTodayReview] = useState(false);
@@ -1330,8 +1330,8 @@ export default function RadarPage() {
               <div className="relative">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-white/72 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
-                      <IconRadar className="h-5 w-5" />
+                    <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-white/72 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
+                      <IconRadar className="h-7 w-7" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[14px] font-black tracking-tight text-slate-900">
@@ -1382,7 +1382,7 @@ export default function RadarPage() {
                     </div>
                     <div className="mt-2 flex items-center gap-2.5">
                       <div className={getHeroAccentClass(forecast.signal)}>
-                        <WeatherIcon triggerKey={triggerKey} className="h-8 w-8" />
+                        <WeatherIcon triggerKey={triggerKey} className="h-10 w-10" />
                       </div>
                       <div className="text-[16px] font-black tracking-tight text-slate-900">
                         {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
@@ -1422,7 +1422,7 @@ export default function RadarPage() {
                       viewBox="0 0 24 24"
                       fill="none"
                       className={[
-                        "h-5 w-5 text-slate-400 transition-transform",
+                        "h-7 w-7 text-slate-400 transition-transform",
                         noticeOpen ? "rotate-180" : "",
                       ].join(" ")}
                       stroke="currentColor"
@@ -1462,8 +1462,8 @@ export default function RadarPage() {
           {/* 2. 今夜の先回りツボ */}
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
-              <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconRipple className="h-5 w-5" />
+              <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                <IconRipple className="h-7 w-7" />
               </div>
               <div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">
@@ -1507,7 +1507,7 @@ export default function RadarPage() {
                     </div>
                   </div>
 
-                  <svg viewBox="0 0 24 24" fill="none" className="mt-8 h-5 w-5 shrink-0 text-slate-300" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg viewBox="0 0 24 24" fill="none" className="mt-8 h-7 w-7 shrink-0 text-slate-300" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </div>
@@ -1533,7 +1533,7 @@ export default function RadarPage() {
                     viewBox="0 0 24 24"
                     fill="none"
                     className={[
-                      "h-5 w-5 text-slate-400 transition-transform",
+                      "h-7 w-7 text-slate-400 transition-transform",
                       tsuboExtraOpen ? "rotate-180" : "",
                     ].join(" ")}
                     stroke="currentColor"
@@ -1580,7 +1580,7 @@ export default function RadarPage() {
                         </div>
 
                         <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300">
-                          <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M9 18l6-6-6-6" />
                           </svg>
                         </div>
@@ -1604,8 +1604,8 @@ export default function RadarPage() {
           {/* 3. 食養生 */}
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
-              <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconBowl className="h-5 w-5" />
+              <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                <IconBowl className="h-7 w-7" />
               </div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">
                 {sectionLabels.foodTitle}
@@ -1671,7 +1671,7 @@ export default function RadarPage() {
                       viewBox="0 0 24 24"
                       fill="none"
                       className={[
-                        "h-5 w-5 text-slate-400 transition-transform",
+                        "h-7 w-7 text-slate-400 transition-transform",
                         foodDetailOpen ? "rotate-180" : "",
                       ].join(" ")}
                       stroke="currentColor"
@@ -1821,7 +1821,7 @@ export default function RadarPage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-5">
               <Button
                 onClick={() => setReviewEditorOpen(true)}
@@ -1962,3 +1962,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
