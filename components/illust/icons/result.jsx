@@ -197,23 +197,26 @@ export function IconRipple({ className = "h-12 w-12", ...props }) {
   );
 }
 
-// 食養生：温かいスープの入ったお椀（新規）
-export function IconBowl({ className = "h-12 w-12", ...props }) {
+// ★ 新規追加（お椀・食養生用 / テラコッタ×湯気）
+export function IconBowl({ className = "h-7 w-7", ...props }) {
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
-      {/* 背景の温かいハイライト */}
-      <circle cx="16" cy="16" r="12" fill="#dca855" fillOpacity="0.12" />
-      
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <linearGradient id="grad-bowl" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#e07a5f" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#c85a4b" stopOpacity="0.3" />
+        </linearGradient>
+      </defs>
+      {/* 立ち上る湯気（温かい食事のニュアンス） */}
+      <path d="M8 6 Q 9 8, 8 10 M12 4 Q 13 6, 12 8 M16 6 Q 15 8, 16 10" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
       {/* お椀の本体 */}
-      <path d="M5 17 C 5 24 10 27 16 27 C 22 27 27 24 27 17 Z" fill="#ffffff" stroke="#5c8465" strokeWidth="2" strokeLinejoin="round" />
-      {/* お椀のフチ（上部） */}
-      <ellipse cx="16" cy="17" rx="11" ry="3.5" fill="#e6eee8" stroke="#5c8465" strokeWidth="2" />
-      
-      {/* 湯気 */}
-      <path d="M12 12 C 12 10 10 8 12 6" fill="none" stroke="#dca855" strokeWidth="2" strokeLinecap="round" />
-      <path d="M16 11 C 16 9 14 7 16 5" fill="none" stroke="#dca855" strokeWidth="2" strokeLinecap="round" />
-      <path d="M20 12 C 20 10 18 8 20 6" fill="none" stroke="#dca855" strokeWidth="2" strokeLinecap="round" />
+      <path d="M3 12h18v2c0 4.5-3.5 7-9 7s-9-2.5-9-7v-2z" fill="url(#grad-bowl)" />
+      <path d="M3 12h18v2c0 4.5-3.5 7-9 7s-9-2.5-9-7v-2z" fill="none" stroke="#c85a4b" strokeWidth="1.5" strokeLinejoin="round" />
+      {/* お椀のフチ */}
+      <line x1="2" y1="12" x2="22" y2="12" stroke="#c85a4b" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
+
+
 
