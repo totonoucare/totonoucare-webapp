@@ -121,31 +121,36 @@ export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
   );
 }
 
-// 5. 湿気（スレート：どんより波線＋重い水滴）
+// 5. 湿気（スレート：どんより波線＋重みのある水滴クラスター）
 export function IconWeatherDamp({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="grad-drop" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id="grad-drop-main" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#94a3b8" />
           <stop offset="100%" stopColor="#475569" />
         </linearGradient>
       </defs>
+      
       {/* まとわりつく湿気（どんよりした波線） */}
-      <path d="M4 10 Q 8 6, 12 10 T 20 10 T 28 10" fill="none" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
-      <path d="M6 16 Q 10 12, 14 16 T 22 16 T 28 16" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+      <path d="M4 9 Q 8 5, 12 9 T 20 9 T 28 9" fill="none" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
+      <path d="M6 14 Q 10 10, 14 14 T 22 14 T 28 14" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
       
-      {/* メインの重たい水滴 */}
-      <path d="M16 26 C20 26 22 23 22 19 C22 14 16 10 16 10 C16 10 10 14 10 19 C10 23 12 26 16 26 Z" fill="url(#grad-drop)" opacity="0.9" />
-      {/* 水滴のハイライト */}
-      <path d="M13 20 A 3 3 0 0 1 15 17" fill="none" stroke="#f1f5f9" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      {/* 左のしずく（中） */}
+      <path d="M10 24 C13 24 14 21.5 14 18 C14 14 10 10 10 10 C10 10 6 14 6 18 C6 21.5 7 24 10 24 Z" fill="#64748b" opacity="0.8" />
       
-      {/* 小さな水滴 */}
-      <circle cx="24" cy="22" r="2" fill="#64748b" opacity="0.6" />
-      <circle cx="8" cy="24" r="1.5" fill="#64748b" opacity="0.5" />
+      {/* 右のしずく（小） */}
+      <path d="M23 25 C25.5 25 26.5 23 26.5 20 C26.5 16.5 23 12 23 12 C23 12 19.5 16.5 19.5 20 C19.5 23 20.5 25 23 25 Z" fill="#475569" opacity="0.7" />
+      
+      {/* 中央のしずく（大・メイン） */}
+      <path d="M16 28 C20.5 28 22.5 24 22.5 19 C22.5 13 16 7 16 7 C16 7 9.5 13 9.5 19 C9.5 24 11.5 28 16 28 Z" fill="url(#grad-drop-main)" opacity="0.95" />
+      
+      {/* メインしずくのハイライト */}
+      <path d="M12 22 A 4 4 0 0 1 14 16.5" fill="none" stroke="#f1f5f9" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   );
 }
+
 
 // 6. 乾燥（マスタード：ひび割れた大地＋蒸発）
 export function IconWeatherDry({ className = "h-10 w-10", ...props }) {
