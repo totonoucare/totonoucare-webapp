@@ -175,41 +175,23 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
 }
 
 // ▼ ツボ指圧
+// components/illust/icons/care.jsx (または該当ファイル)
+"use client";
+
 export function IconRipple({ className = "h-12 w-12", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
-      {/* ツボの波紋（じんわり広がる効果） */}
-      <circle cx="11" cy="20" r="10" fill="#5c8465" fillOpacity="0.1" />
-      <circle cx="11" cy="20" r="16" fill="none" stroke="#5c8465" strokeWidth="1" strokeDasharray="2 4" opacity="0.5" />
-      
-      {/* ツボの中心点（輝き） */}
-      <circle cx="11" cy="20" r="3" fill="#dca855" />
-      <circle cx="11" cy="20" r="5" fill="none" stroke="#dca855" strokeWidth="1.5" opacity="0.6" />
+      {/* 押されているツボ（波紋と中心点） */}
+      <circle cx="12" cy="16" r="8" fill="#5c8465" fillOpacity="0.15" />
+      <circle cx="12" cy="16" r="3" fill="#5c8465" />
+      <path d="M4 16 A 8 8 0 0 1 20 16" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
 
-      {/* 指と手（幾何学的に完璧に設計された形） */}
-      {/* ツボの中心(11,20)に向けて、斜め上から指を配置 */}
-      <g transform="translate(11, 20) rotate(35)">
-        {/* 手のひら（ベースの箱） */}
-        <rect x="-4" y="-6" width="18" height="16" rx="4" fill="#ffffff" stroke="#3a5741" strokeWidth="1.5" strokeLinejoin="round" />
-        
-        {/* 人差し指（まっすぐ伸びるカプセル型） */}
-        <rect x="-4" y="-20" width="8" height="18" rx="4" fill="#ffffff" stroke="#3a5741" strokeWidth="1.5" strokeLinejoin="round" />
-        
-        {/* 人差し指と手のひらの境界線を白で塗りつぶし、シームレスに結合 */}
-        <rect x="-2.5" y="-8" width="5" height="4" fill="#ffffff" />
-        
-        {/* 爪のディテール（指らしさの強調） */}
-        <path d="M -2 -17 v -1 a 2 2 0 0 1 4 0 v 1 z" fill="#e6eee8" stroke="#3a5741" strokeWidth="1" />
-
-        {/* 握り込んだ他の指の線（中指・薬指・小指） */}
-        <path d="M 4 0 h 10 M 4 4 h 10 M 4 8 h 8" fill="none" stroke="#3a5741" strokeWidth="1.5" strokeLinecap="round" />
-        
-        {/* 親指（横に添えて丸まっているカーブ） */}
-        <path d="M -4 2 C -9 2, -9 6, -5 8 C -3 9, -1 8, 2 6" fill="none" stroke="#3a5741" strokeWidth="1.5" strokeLinecap="round" />
-      </g>
+      {/* 押し込む手（人差し指） */}
+      <path d="M18 6 C 16 6 15 7 15 9 V 15 L 12.5 13.5 C 11 12 9 13 9.5 15 L 14 24 C 15 26 17 28 20 28 C 24 28 27 25 27 21 V 13 C 27 11 25 11 25 13 V 18 M 25 13 C 25 10 22 10 22 13 V 18 M 22 13 C 22 9 18 9 18 12 V 15" fill="#ffffff" stroke="#3a5741" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
+
 
 
 // ★ 新規追加（お椀・食養生用 / テラコッタ×湯気）
