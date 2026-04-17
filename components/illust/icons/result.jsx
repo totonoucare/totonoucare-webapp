@@ -178,21 +178,13 @@ export function IconCloud({ className = "h-7 w-7", ...props }) {
 export function IconRipple({ className = "h-12 w-12", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
-      {/* ツボ（経穴）の波紋と中心 */}
-      <circle cx="11" cy="11" r="9" fill="#5c8465" fillOpacity="0.12" />
-      <circle cx="11" cy="11" r="3.5" fill="#5c8465" opacity="0.9" />
-      <circle cx="11" cy="11" r="6" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="2 3" opacity="0.7" />
+      {/* 押されているツボ（波紋と中心点） */}
+      <circle cx="12" cy="16" r="8" fill="#5c8465" fillOpacity="0.15" />
+      <circle cx="12" cy="16" r="3" fill="#5c8465" />
+      <path d="M4 16 A 8 8 0 0 1 20 16" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
 
-      {/* 指（カプセル型の抽象表現で美しく） */}
-      {/* ツボの中心(11,11)に向かって、右下から斜めに押し込む */}
-      <g transform="translate(14, 14) rotate(-45)">
-        <rect x="-3.5" y="0" width="7" height="18" rx="3.5" fill="#ffffff" stroke="#3a5741" strokeWidth="2" />
-        {/* 関節のシワ */}
-        <line x1="-3.5" y1="8" x2="3.5" y2="8" stroke="#3a5741" strokeWidth="1.5" opacity="0.3" />
-        <line x1="-3.5" y1="13" x2="3.5" y2="13" stroke="#3a5741" strokeWidth="1.5" opacity="0.3" />
-        {/* 爪の丸み */}
-        <path d="M -1.5 3 Q 0 1.5 1.5 3" fill="none" stroke="#3a5741" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-      </g>
+      {/* 押し込む手（人差し指） */}
+      <path d="M18 6 C 16 6 15 7 15 9 V 15 L 12.5 13.5 C 11 12 9 13 9.5 15 L 14 24 C 15 26 17 28 20 28 C 24 28 27 25 27 21 V 13 C 27 11 25 11 25 13 V 18 M 25 13 C 25 10 22 10 22 13 V 18 M 22 13 C 22 9 18 9 18 12 V 15" fill="#ffffff" stroke="#3a5741" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
