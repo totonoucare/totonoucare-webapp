@@ -257,7 +257,7 @@ function getMoodHeadline(triggerKey, signal) {
     if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識";
   }
 
-  return "影響は小さいものの、いつも通りの対策を";
+  return "影響は小さいですが、いつも通りの対策を";
 }
 
 function getHeroPanelClass(signal) {
@@ -439,51 +439,51 @@ function getGaugeModeLabel() {
 function getGaugeTone(signal) {
   if (signal === 2) {
     return {
-      stroke: "#E58AA0",
-      ring: "#F0AABD",
-      ringSoft: "rgba(229, 138, 160, 0.16)",
-      inner: "#FDEEF2",
-      fillStart: "rgba(253, 238, 242, 0.98)",
-      fillEnd: "rgba(229, 138, 160, 0.88)",
-      shadow: "rgba(229, 138, 160, 0.10)",
-      main: "#C85F79",
-      labelText: "#A94B63",
-      labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(229, 138, 160, 0.22)",
-      labelShadow: "rgba(229, 138, 160, 0.06)",
+      stroke: "#E78FA1",
+      ring: "#EFA8B7",
+      ringSoft: "rgba(231, 143, 161, 0.14)",
+      inner: "#FCECEF",
+      fillStart: "rgba(252, 236, 239, 0.98)",
+      fillEnd: "rgba(231, 143, 161, 0.88)",
+      shadow: "rgba(231, 143, 161, 0.08)",
+      main: "#B85C71",
+      labelText: "#9F4E61",
+      labelBg: "rgba(255,255,255,0.98)",
+      labelBorder: "rgba(231, 143, 161, 0.22)",
+      labelShadow: "rgba(231, 143, 161, 0.06)",
     };
   }
 
   if (signal === 1) {
     return {
-      stroke: "#E9B56B",
-      ring: "#F2C98C",
-      ringSoft: "rgba(233, 181, 107, 0.16)",
-      inner: "#FEF4E8",
-      fillStart: "rgba(254, 244, 232, 0.98)",
-      fillEnd: "rgba(233, 181, 107, 0.88)",
-      shadow: "rgba(233, 181, 107, 0.10)",
-      main: "#C98A33",
-      labelText: "#A96E1F",
-      labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(233, 181, 107, 0.22)",
-      labelShadow: "rgba(233, 181, 107, 0.06)",
+      stroke: "#E8BC68",
+      ring: "#F0CB84",
+      ringSoft: "rgba(232, 188, 104, 0.14)",
+      inner: "#FCF4E3",
+      fillStart: "rgba(252, 244, 227, 0.98)",
+      fillEnd: "rgba(232, 188, 104, 0.88)",
+      shadow: "rgba(232, 188, 104, 0.08)",
+      main: "#A56E1E",
+      labelText: "#8B5C16",
+      labelBg: "rgba(255,255,255,0.98)",
+      labelBorder: "rgba(232, 188, 104, 0.22)",
+      labelShadow: "rgba(232, 188, 104, 0.06)",
     };
   }
 
   return {
-    stroke: "#69CDB1",
-    ring: "#95DEC9",
-    ringSoft: "rgba(105, 205, 177, 0.16)",
-    inner: "#ECFAF5",
-    fillStart: "rgba(236, 250, 245, 0.98)",
-    fillEnd: "rgba(105, 205, 177, 0.88)",
-    shadow: "rgba(105, 205, 177, 0.10)",
-    main: "#2F9E82",
-    labelText: "#267C66",
-    labelBg: "rgba(255,255,255,0.96)",
-    labelBorder: "rgba(105, 205, 177, 0.22)",
-    labelShadow: "rgba(105, 205, 177, 0.06)",
+    stroke: "#63CBB3",
+    ring: "#88D9C7",
+    ringSoft: "rgba(99, 203, 179, 0.14)",
+    inner: "#EAF8F4",
+    fillStart: "rgba(234, 248, 244, 0.98)",
+    fillEnd: "rgba(99, 203, 179, 0.88)",
+    shadow: "rgba(99, 203, 179, 0.08)",
+    main: "#238A74",
+    labelText: "#1F7563",
+    labelBg: "rgba(255,255,255,0.98)",
+    labelBorder: "rgba(99, 203, 179, 0.22)",
+    labelShadow: "rgba(99, 203, 179, 0.06)",
   };
 }
 
@@ -576,21 +576,21 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <path
             d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
             fill="none"
-            stroke="rgba(16,185,129,0.68)"
+            stroke="rgba(99,203,179,0.78)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
             fill="none"
-            stroke="rgba(245,158,11,0.68)"
+            stroke="rgba(232,188,104,0.78)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, cautionEnd, gaugeEnd)}
             fill="none"
-            stroke="rgba(244,63,94,0.64)"
+            stroke="rgba(231,143,161,0.76)"
             strokeWidth="5"
             strokeLinecap="round"
           />
