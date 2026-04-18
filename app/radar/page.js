@@ -2010,8 +2010,8 @@ export default function RadarPage() {
           {/* 3. 食養生 */}
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
-              <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconBowl className="h-7 w-7" />
+              <div className="grid h-14 w-14 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
+                <IconBowl className="h-9 w-9" />
               </div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">
                 {sectionLabels.foodTitle}
