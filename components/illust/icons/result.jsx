@@ -92,7 +92,7 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
 
 
 // ▼ アプリアイコン 案1：音叉（Tuning Fork）- 「環境と体の共鳴・チューニング」
-export function IconTuningFork({ className = "h-[22px] w-[22px]", ...props }) {
+export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <defs>
