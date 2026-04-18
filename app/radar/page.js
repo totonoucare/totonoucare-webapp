@@ -509,9 +509,9 @@ function getGaugeShadow(signal) {
 function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
   const normalized = Math.max(0, Math.min(10, Number(score) || 0));
   const sweep = (normalized / 10) * 270;
-  const startAngle = -225;
-  const endAngle = 45;
-  const valueAngle = startAngle + sweep;
+  const startAngle = 210;
+  const endAngle = -30;
+  const valueAngle = gaugeStart + ((gaugeEnd - gaugeStart) * safeScore) / 10;
 
   const center = 160;
   const mainTrackRadius = 108;
