@@ -452,61 +452,56 @@ function getGaugeModeLabel() {
   return "影響度スコア";
 }
 
-// 改善されたgetGaugeTone関数
 function getGaugeTone(signal) {
-  // 警戒 (6〜10)
   if (signal === 2) {
     return {
-      stroke: "#e57a8f", // 警戒リングのメインカラー（より鮮やかで、かつ落ち着いた赤へ）
-      ring: "#f1a8b5",  // リングのより明るい部分
-      ringSoft: "rgba(229,122,143,0.14)", // 柔らかな外側の光
-      inner: "#fbf2f4", // 中央円の内側
-      fillStart: "rgba(251,242,244,0.96)", // ゲージのグラデーション開始
-      fillEnd: "rgba(229,122,143,0.92)",  // ゲージのグラデーション終了（透明度を微調整）
-      shadow: "rgba(229,122,143,0.08)",   // ゲージの影
-      main: "#b54e60", // 警戒のテキスト/アイコンのメインカラー（彩度と明度を調整）
-      labelText: "#8f3a4b", // ラベルテキストの色
-      labelBg: "rgba(251,242,244,0.98)", // ラベルの背景色（超明るい警戒色。見やすさ向上）
-      labelBorder: "rgba(229,122,143,0.22)", // ラベルのボーダー
-      labelShadow: "rgba(229,122,143,0.06)", // ラベルの影
+      stroke: "#D96C7C",
+      ring: "#E7A8B3",
+      ringSoft: "rgba(217,108,124,0.24)",
+      inner: "#FAECEF",
+      fillStart: "rgba(250,236,239,0.96)",
+      fillEnd: "rgba(217,108,124,0.92)",
+      shadow: "rgba(217,108,124,0.15)",
+      main: "#B34F61",
+      labelText: "#8F4150",
+      labelBg: "rgba(255,255,255,0.90)",
+      labelBorder: "rgba(217,108,124,0.26)",
+      labelShadow: "rgba(217,108,124,0.10)",
     };
   }
 
-  // 注意 (4〜5)
   if (signal === 1) {
     return {
-      stroke: "#f2bc6a", // 注意リングのメインカラー（より明るく、温かみのあるオレンジゴールドへ）
-      ring: "#fbd496",  // リングのより明るい部分
-      ringSoft: "rgba(242,188,106,0.14)", // 柔らかな外側の光
-      inner: "#fdf8ef", // 中央円の内側
-      fillStart: "rgba(253,248,239,0.96)", // ゲージのグラデーション開始
-      fillEnd: "rgba(242,188,106,0.92)",  // ゲージのグラデーション終了
-      shadow: "rgba(242,188,106,0.08)",   // ゲージの影
-      main: "#c18f3d", // 注意のテキスト/アイコンのメインカラー
-      labelText: "#9a6c2f", // ラベルテキストの色
-      labelBg: "rgba(253,248,239,0.98)", // ラベルの背景色（超明るい注意色）
-      labelBorder: "rgba(242,188,106,0.22)", // ラベルのボーダー
-      labelShadow: "rgba(242,188,106,0.06)", // ラベルの影
+      stroke: "#DFA640",
+      ring: "#E9C67A",
+      ringSoft: "rgba(223,166,64,0.24)",
+      inner: "#FCF5E8",
+      fillStart: "rgba(252,245,232,0.96)",
+      fillEnd: "rgba(223,166,64,0.92)",
+      shadow: "rgba(223,166,64,0.15)",
+      main: "#AF7D21",
+      labelText: "#8B6419",
+      labelBg: "rgba(255,255,255,0.90)",
+      labelBorder: "rgba(223,166,64,0.26)",
+      labelShadow: "rgba(223,166,64,0.10)",
     };
   }
 
-  // 安定 (1〜3)
   return {
-    stroke: "#5db7a1", // 安定リングのメインカラー（より鮮やかで、健康的なミントグリーンへ）
-    ring: "#83c9b7",  // リングのより明るい部分
-    ringSoft: "rgba(93,183,161,0.14)", // 柔らかな外側の光
-    inner: "#f1f8f6", // 中央円の内側
-    fillStart: "rgba(241,248,246,0.96)", // ゲージのグラデーション開始
-    fillEnd: "rgba(93,183,161,0.92)",  // ゲージのグラデーション終了
-    shadow: "rgba(93,183,161,0.08)",   // ゲージの影
-    main: "#3d8b7a", // 安定のテキスト/アイコンのメインカラー
-    labelText: "#2f6c5e", // ラベルテキストの色
-    labelBg: "rgba(241,248,246,0.98)", // ラベルの背景色（超明るい安定色）
-    labelBorder: "rgba(93,183,161,0.22)", // ラベルのボーダー
-    labelShadow: "rgba(93,183,161,0.06)", // ラベルの影
+    stroke: "#5AAE97",
+    ring: "#95CFBF",
+    ringSoft: "rgba(90,174,151,0.24)",
+    inner: "#ECF7F3",
+    fillStart: "rgba(236,247,243,0.96)",
+    fillEnd: "rgba(90,174,151,0.92)",
+    shadow: "rgba(90,174,151,0.14)",
+    main: "#327F6D",
+    labelText: "#295F53",
+    labelBg: "rgba(255,255,255,0.90)",
+    labelBorder: "rgba(90,174,151,0.24)",
+    labelShadow: "rgba(90,174,151,0.10)",
   };
 }
-
 
 
 function getGaugeModePillTone(signal) {
