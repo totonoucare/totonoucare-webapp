@@ -673,7 +673,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             strokeWidth="2"
             paintOrder="stroke"
           >
-            警戒度スコア
+            崩れやすさ
           </text>
 
           <text
