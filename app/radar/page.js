@@ -444,49 +444,51 @@ function getGaugeModeLabel(triggerKey) {
 function getGaugeTone(signal) {
   if (signal === 2) {
     return {
-      stroke: "#ef4444",
-      ring: "#fecdd3",
-      ringSoft: "rgba(254, 205, 211, 0.55)",
+      stroke: "#e11d48",
+      ring: "#fb7185",
+      ringSoft: "rgba(251, 113, 133, 0.30)",
       inner: "#ffe4e6",
-      fillStart: "rgba(255, 241, 242, 0.96)",
-      fillEnd: "rgba(255, 247, 237, 0.90)",
-      shadow: "rgba(239, 68, 68, 0.22)",
-      main: "#b91c1c",
+      fillStart: "rgba(255, 228, 230, 0.98)",
+      fillEnd: "rgba(251, 113, 133, 0.98)",
+      shadow: "rgba(225, 29, 72, 0.18)",
+      main: "#be123c",
       labelText: "#9f1239",
-      labelBg: "rgba(255,255,255,0.92)",
-      labelBorder: "rgba(251, 113, 133, 0.22)",
-      labelShadow: "rgba(239, 68, 68, 0.12)",
+      labelBg: "rgba(255,255,255,0.96)",
+      labelBorder: "rgba(251, 113, 133, 0.42)",
+      labelShadow: "rgba(225, 29, 72, 0.16)",
     };
   }
+
   if (signal === 1) {
     return {
       stroke: "#f59e0b",
-      ring: "#fde68a",
-      ringSoft: "rgba(253, 230, 138, 0.56)",
+      ring: "#fbbf24",
+      ringSoft: "rgba(245, 158, 11, 0.30)",
       inner: "#fef3c7",
-      fillStart: "rgba(255, 251, 235, 0.97)",
-      fillEnd: "rgba(255, 247, 237, 0.92)",
-      shadow: "rgba(245, 158, 11, 0.24)",
+      fillStart: "rgba(254, 243, 199, 0.98)",
+      fillEnd: "rgba(245, 158, 11, 0.98)",
+      shadow: "rgba(217, 119, 6, 0.18)",
       main: "#b45309",
       labelText: "#92400e",
-      labelBg: "rgba(255,255,255,0.92)",
-      labelBorder: "rgba(245, 158, 11, 0.20)",
-      labelShadow: "rgba(245, 158, 11, 0.12)",
+      labelBg: "rgba(255,255,255,0.96)",
+      labelBorder: "rgba(245, 158, 11, 0.42)",
+      labelShadow: "rgba(217, 119, 6, 0.16)",
     };
   }
+
   return {
     stroke: "#10b981",
-    ring: "#a7f3d0",
-    ringSoft: "rgba(167, 243, 208, 0.55)",
+    ring: "#34d399",
+    ringSoft: "rgba(16, 185, 129, 0.30)",
     inner: "#d1fae5",
-    fillStart: "rgba(236, 253, 245, 0.98)",
-    fillEnd: "rgba(240, 253, 250, 0.92)",
-    shadow: "rgba(16, 185, 129, 0.22)",
+    fillStart: "rgba(209, 250, 229, 0.98)",
+    fillEnd: "rgba(16, 185, 129, 0.98)",
+    shadow: "rgba(5, 150, 105, 0.16)",
     main: "#047857",
     labelText: "#065f46",
-    labelBg: "rgba(255,255,255,0.92)",
-    labelBorder: "rgba(16, 185, 129, 0.20)",
-    labelShadow: "rgba(16, 185, 129, 0.12)",
+    labelBg: "rgba(255,255,255,0.96)",
+    labelBorder: "rgba(16, 185, 129, 0.40)",
+    labelShadow: "rgba(5, 150, 105, 0.15)",
   };
 }
 
@@ -523,13 +525,13 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
   const rangeRadius = 138;
   const needleRadius = 105;
 
-  const centerFill = signal === 2 ? "#fffaf7" : signal === 1 ? "#fffdf7" : "#f8fffb";
+  const centerFill = "#ffffff";
   const scoreShadow =
     signal === 2
-      ? "rgba(234,88,12,0.22)"
+      ? "rgba(225,29,72,0.18)"
       : signal === 1
-      ? "rgba(217,119,6,0.2)"
-      : "rgba(5,150,105,0.18)";
+      ? "rgba(217,119,6,0.18)"
+      : "rgba(5,150,105,0.16)";
 
   const stableEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 3) / 10;
   const cautionEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 5) / 10;
