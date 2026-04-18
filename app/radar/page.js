@@ -14,6 +14,7 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
+import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
   conditionLabel,
@@ -256,7 +257,7 @@ function getMoodHeadline(triggerKey, signal) {
     if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識したい日";
   }
 
-  return "大きくは崩れにくい日";
+  return "※大きくは崩れにくい見込み";
 }
 
 function getHeroPanelClass(signal) {
@@ -414,68 +415,6 @@ function getGaugeFill(signal) {
   if (signal === 2) return "rgba(255,241,242,0.96)";
   if (signal === 1) return "rgba(255,251,235,0.96)";
   return "rgba(236,253,245,0.96)";
-}
-
-function polarToCartesian(cx, cy, r, angleDeg) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  };
-}
-
-function describeArc(cx, cy, r, startAngle, endAngle) {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return ["M", start.x, start.y, "A", r, r, 0, largeArcFlag, 0, end.x, end.y].join(" ");
-}
-
-function getGaugeModeLabel(triggerKey) {
-  if (triggerKey === "pressure_down") return "低気圧モード";
-  if (triggerKey === "pressure_up") return "高気圧モード";
-  if (triggerKey === "cold") return "冷えモード";
-  if (triggerKey === "heat") return "暑さモード";
-  if (triggerKey === "damp") return "湿気モード";
-  return "乾燥モード";
-}
-
-function getGaugeTone(signal) {
-  if (signal === 2) {
-    return {
-      stroke: "#e11d48",
-      ring: "rgba(251,113,133,0.28)",
-      inner: "rgba(254,205,211,0.92)",
-    };
-  }
-  if (signal === 1) {
-    return {
-      stroke: "#d97706",
-      ring: "rgba(251,191,36,0.26)",
-      inner: "rgba(253,230,138,0.92)",
-    };
-  }
-  return {
-    stroke: "#2f855a",
-    ring: "rgba(110,231,183,0.28)",
-    inner: "rgba(187,247,208,0.92)",
-  };
-}
-
-function getGaugeModePillTone(signal) {
-  if (signal === 2) {
-    return "border-rose-200 bg-white/92 text-rose-700 shadow-[0_10px_24px_-18px_rgba(225,29,72,0.42)]";
-  }
-  if (signal === 1) {
-    return "border-amber-200 bg-white/92 text-amber-700 shadow-[0_10px_24px_-18px_rgba(217,119,6,0.42)]";
-  }
-  return "border-emerald-200 bg-white/92 text-emerald-700 shadow-[0_10px_24px_-18px_rgba(16,185,129,0.38)]";
-}
-
-function getGaugeShadow(signal) {
-  if (signal === 2) return "rgba(225,29,72,0.42)";
-  if (signal === 1) return "rgba(217,119,6,0.40)";
-  return "rgba(16,185,129,0.34)";
 }
 
 function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
@@ -639,6 +578,11 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
     </div>
   );
 }
+
+
+/* -----------------------------
+ * Components
+ * ---------------------------- */
 
 function SegmentedTabs({ tabs, value, onChange }) {
   return (
@@ -1605,7 +1549,7 @@ export default function RadarPage() {
                         signal={forecast.signal}
                         triggerKey={triggerKey}
                       />
-                      <div className="-mt-1 text-center text-[12px] font-bold leading-6 text-slate-500">
+                      <div className="mt-2 text-center text-[13px] font-bold leading-7 text-slate-500">
                         スコアが高いほど、無理を重ねると崩れやすい目安です。
                       </div>
                     </div>
@@ -1616,12 +1560,23 @@ export default function RadarPage() {
                           一番響きやすい要素
                         </div>
 
-                        <div className="mt-3 min-w-0">
-                          <div className="text-[22px] font-black tracking-tight text-slate-900">
-                            {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                        <div className="mt-3 flex items-start gap-3">
+                          <div
+                            className={[
+                              "grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-black/5",
+                              getHeroAccentClass(forecast.signal),
+                            ].join(" ")}
+                          >
+                            <WeatherIcon triggerKey={triggerKey} className="h-10 w-10" />
                           </div>
-                          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-                            {moodHeadline}
+
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[22px] font-black tracking-tight text-slate-900">
+                              {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                            </div>
+                            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+                              {moodHeadline}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1709,7 +1664,7 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
               <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconRipple className="h-7 w-7" />
+                <IconRipple className="h-10 w-10" />
               </div>
               <div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">
@@ -1851,7 +1806,7 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconBowl className="h-7 w-7" />
+                <IconBowl className="h-10 w-10" />
               </div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">
                 {sectionLabels.foodTitle}
