@@ -14,6 +14,7 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
+import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
   conditionLabel,
