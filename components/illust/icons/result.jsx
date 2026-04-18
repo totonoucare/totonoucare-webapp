@@ -91,50 +91,57 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
 }
 
 // ▼ アプリアイコン・レーダー（洗練されたスキャンと検知のエフェクト）
+// components/illust/icons/radar.jsx
+"use client";
+
+// ▼ アプリアイコン・レーダー（洗練されたスキャンと検知のエフェクト）
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <defs>
-        {/* レーダー画面のベースとなるほのかな光 */}
-        <radialGradient id="grad-radar-bg" cx="50%" cy="50%" r="50%">
+        {/* レーダー画面のベースとなる、深いグリーンの光（野菜っぽさを消すため深く） */}
+        <radialGradient id="grad-radar-bg-deep" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#5c8465" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#5c8465" stopOpacity="0.0" />
         </radialGradient>
         
-        {/* スイープ（走査）する光の残像グラデーション */}
-        <linearGradient id="grad-radar-scan" x1="0%" y1="100%" x2="100%" y2="0%">
+        {/* スイープ（走査）が通過した後に残る、光の軌跡（トレイル）のグラデーション */}
+        <linearGradient id="grad-radar-scan-trail" x1="0%" y1="100%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#dca855" stopOpacity="0.0" />
-          <stop offset="100%" stopColor="#dca855" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#dca855" stopOpacity="0.5" />
         </linearGradient>
       </defs>
 
       {/* ディスプレイのベース（外枠と背景） */}
-      <circle cx="12" cy="12" r="10" fill="url(#grad-radar-bg)" />
+      <circle cx="12" cy="12" r="10" fill="url(#grad-radar-bg-deep)" />
       <circle cx="12" cy="12" r="10" fill="none" stroke="#4a7253" strokeWidth="1.5" />
       
-      {/* 内部の目盛り（十字の照準線を足すことで「計器」感を出す） */}
-      <path d="M 12 4 V 20 M 4 12 H 20" fill="none" stroke="#5c8465" strokeWidth="1" opacity="0.3" strokeDasharray="2 3" />
-      <circle cx="12" cy="12" r="5.5" fill="none" stroke="#5c8465" strokeWidth="1" strokeDasharray="2 3" opacity="0.5" />
+      {/* 内部の目盛り（十字の照準線のみ残し、点線の円は削除して細胞感を消す） */}
+      <path d="M 12 4.5 V 19.5 M 4.5 12 H 19.5" fill="none" stroke="#5c8465" strokeWidth="1" opacity="0.3" strokeDasharray="2 3" strokeLinecap="round" />
 
-      {/* レーダーのスイープ（光の残像を示す扇形） */}
-      <path d="M 12 12 L 2 12 A 10 10 0 0 1 12 2 Z" fill="url(#grad-radar-scan)" opacity="0.9" />
+      {/* レーダーのスイープ（光の残像を示す扇形） ※滑らかなグラデーションへ */}
+      <path d="M 12 12 L 2.5 9 A 10 10 0 0 1 12 2 Z" fill="url(#grad-radar-scan-trail)" opacity="0.9" />
       
-      {/* スキャンバー（現在走査している一番強い光の線） */}
+      {/* スキャンバー（現在走査している鋭い光の線） */}
       <path d="M 12 12 L 12 2" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" />
 
-      {/* 中心点（自機・現在地） */}
+      {/* 中心点（自機・現在地。からしっぽさを消すため、白いコアを重ねる） */}
       <circle cx="12" cy="12" r="2.5" fill="#4a7253" />
-      <circle cx="12" cy="12" r="1.5" fill="#ffffff" />
+      <circle cx="12" cy="12" r="1" fill="#ffffff" opacity="0.9" />
 
-      {/* 検知したターゲット（不調の波の予兆）と波紋 */}
-      <circle cx="17.5" cy="6.5" r="3" fill="none" stroke="#dca855" strokeWidth="1" opacity="0.6" />
-      <circle cx="17.5" cy="6.5" r="1.5" fill="#dca855" />
+      {/* 検知したターゲット（不調の兆し）と、動的な波紋（Ripple） */}
+      {/* メインターゲット（ピコーンと検知） */}
+      <circle cx="18" cy="7" r="3.5" fill="none" stroke="#dca855" strokeWidth="1.5" opacity="0.4">
+        {/* CSSアニメーション用の余白（Next.js側でアニメーションを当てる場合） */}
+      </circle>
+      <circle cx="18" cy="7" r="1.5" fill="#dca855" />
       
-      {/* サブターゲット（小さな検知） */}
-      <circle cx="6" cy="16" r="1" fill="#5c8465" opacity="0.7" />
+      {/* サブターゲット（検知の予兆） */}
+      <circle cx="6.5" cy="15.5" r="1" fill="#5c8465" opacity="0.7" />
     </svg>
   );
 }
+
 
 
 
