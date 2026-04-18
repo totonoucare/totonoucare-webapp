@@ -257,7 +257,7 @@ function getMoodHeadline(triggerKey, signal) {
     if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識したい日";
   }
 
-  return "あまり大きくは崩れにくい日";
+  return "※ただし比較的安定";
 }
 
 function getHeroPanelClass(signal) {
