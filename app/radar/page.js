@@ -433,7 +433,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 }
 
 function getGaugeModeLabel() {
-  return "崩れやすさ指数";
+  return "影響度スコア";
 }
 
 // 改善されたgetGaugeTone関数
