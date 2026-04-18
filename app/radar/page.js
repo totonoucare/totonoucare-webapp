@@ -437,56 +437,53 @@ function getGaugeModeLabel() {
 }
 
 function getGaugeTone(signal) {
-  // 警戒 (6〜10): ダスティローズ（くすんだ赤紫系）
   if (signal === 2) {
     return {
-      stroke: "#ab7b83",
-      ring: "#c3989f",
-      ringSoft: "rgba(171,123,131,0.14)",
-      inner: "#f5f0f1",
-      fillStart: "rgba(245,240,241,0.96)",
-      fillEnd: "rgba(171,123,131,0.90)",
-      shadow: "rgba(171,123,131,0.08)",
-      main: "#8c5f66",
-      labelText: "#6b464c",
-      labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(171,123,131,0.20)",
-      labelShadow: "rgba(171,123,131,0.06)",
+      stroke: "#D96C7C",
+      ring: "#E7A8B3",
+      ringSoft: "rgba(217,108,124,0.24)",
+      inner: "#FAECEF",
+      fillStart: "rgba(250,236,239,0.96)",
+      fillEnd: "rgba(217,108,124,0.92)",
+      shadow: "rgba(217,108,124,0.15)",
+      main: "#B34F61",
+      labelText: "#8F4150",
+      labelBg: "rgba(255,255,255,0.90)",
+      labelBorder: "rgba(217,108,124,0.26)",
+      labelShadow: "rgba(217,108,124,0.10)",
     };
   }
 
-  // 注意 (4〜5): アッシュベージュ（くすんだ黄褐色系）
   if (signal === 1) {
     return {
-      stroke: "#b59a7f",
-      ring: "#cbb399",
-      ringSoft: "rgba(181,154,127,0.14)",
-      inner: "#f6f4f2",
-      fillStart: "rgba(246,244,242,0.96)",
-      fillEnd: "rgba(181,154,127,0.90)",
-      shadow: "rgba(181,154,127,0.08)",
-      main: "#967d64",
-      labelText: "#735e49",
-      labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(181,154,127,0.20)",
-      labelShadow: "rgba(181,154,127,0.06)",
+      stroke: "#D39A2F",
+      ring: "#E3BD72",
+      ringSoft: "rgba(211,154,47,0.24)",
+      inner: "#FBF4E5",
+      fillStart: "rgba(251,244,229,0.96)",
+      fillEnd: "rgba(211,154,47,0.92)",
+      shadow: "rgba(211,154,47,0.15)",
+      main: "#A9781E",
+      labelText: "#875F16",
+      labelBg: "rgba(255,255,255,0.90)",
+      labelBorder: "rgba(211,154,47,0.26)",
+      labelShadow: "rgba(211,154,47,0.10)",
     };
   }
 
-  // 安定 (1〜3): セージグリーン（くすんだ薄緑系）
   return {
-    stroke: "#7b8d82",
-    ring: "#9baea2",
-    ringSoft: "rgba(123,141,130,0.14)",
-    inner: "#f0f3f1",
-    fillStart: "rgba(240,243,241,0.96)",
-    fillEnd: "rgba(123,141,130,0.90)",
-    shadow: "rgba(123,141,130,0.08)",
-    main: "#5a6e62",
-    labelText: "#415247",
-    labelBg: "rgba(255,255,255,0.96)",
-    labelBorder: "rgba(123,141,130,0.20)",
-    labelShadow: "rgba(123,141,130,0.06)",
+    stroke: "#4FA38C",
+    ring: "#8BC8B6",
+    ringSoft: "rgba(79,163,140,0.24)",
+    inner: "#EAF5F1",
+    fillStart: "rgba(234,245,241,0.96)",
+    fillEnd: "rgba(79,163,140,0.92)",
+    shadow: "rgba(79,163,140,0.14)",
+    main: "#2F7C69",
+    labelText: "#276455",
+    labelBg: "rgba(255,255,255,0.90)",
+    labelBorder: "rgba(79,163,140,0.24)",
+    labelShadow: "rgba(79,163,140,0.10)",
   };
 }
 
