@@ -120,15 +120,23 @@ function signalLabel(signal) {
 }
 
 function signalBadgeClass(signal) {
-  if (signal === 2) return "bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200";
-  if (signal === 1) return "bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200";
-  return "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200";
+  if (signal === 2) {
+    return "bg-[#FFF5F7] text-[#8F4150] ring-1 ring-inset ring-[#EAB4BE]";
+  }
+  if (signal === 1) {
+    return "bg-[#FFF9EE] text-[#8A641B] ring-1 ring-inset ring-[#F0D498]";
+  }
+  return "bg-[#F5FBF8] text-[#2F7F6C] ring-1 ring-inset ring-[#B9E0D1]";
 }
 
 function signalDotClass(signal) {
-  if (signal === 2) return "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
-  if (signal === 1) return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
-  return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
+  if (signal === 2) {
+    return "bg-[#D96C7C] shadow-[0_0_8px_rgba(217,108,124,0.28)]";
+  }
+  if (signal === 1) {
+    return "bg-[#E2AB43] shadow-[0_0_8px_rgba(226,171,67,0.26)]";
+  }
+  return "bg-[#63B89E] shadow-[0_0_8px_rgba(99,184,158,0.24)]";
 }
 
 function signalPanelClass(signal) {
