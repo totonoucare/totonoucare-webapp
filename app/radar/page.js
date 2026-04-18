@@ -444,22 +444,49 @@ function getGaugeModeLabel(triggerKey) {
 function getGaugeTone(signal) {
   if (signal === 2) {
     return {
-      stroke: "#e11d48",
-      ring: "rgba(251,113,133,0.28)",
-      inner: "rgba(254,205,211,0.92)",
+      stroke: "#ef4444",
+      ring: "#fecdd3",
+      ringSoft: "rgba(254, 205, 211, 0.55)",
+      inner: "#ffe4e6",
+      fillStart: "rgba(255, 241, 242, 0.96)",
+      fillEnd: "rgba(255, 247, 237, 0.90)",
+      shadow: "rgba(239, 68, 68, 0.22)",
+      main: "#b91c1c",
+      labelText: "#9f1239",
+      labelBg: "rgba(255,255,255,0.92)",
+      labelBorder: "rgba(251, 113, 133, 0.22)",
+      labelShadow: "rgba(239, 68, 68, 0.12)",
     };
   }
   if (signal === 1) {
     return {
-      stroke: "#d97706",
-      ring: "rgba(251,191,36,0.26)",
-      inner: "rgba(253,230,138,0.92)",
+      stroke: "#f59e0b",
+      ring: "#fde68a",
+      ringSoft: "rgba(253, 230, 138, 0.56)",
+      inner: "#fef3c7",
+      fillStart: "rgba(255, 251, 235, 0.97)",
+      fillEnd: "rgba(255, 247, 237, 0.92)",
+      shadow: "rgba(245, 158, 11, 0.24)",
+      main: "#b45309",
+      labelText: "#92400e",
+      labelBg: "rgba(255,255,255,0.92)",
+      labelBorder: "rgba(245, 158, 11, 0.20)",
+      labelShadow: "rgba(245, 158, 11, 0.12)",
     };
   }
   return {
-    stroke: "#2f855a",
-    ring: "rgba(110,231,183,0.28)",
-    inner: "rgba(187,247,208,0.92)",
+    stroke: "#10b981",
+    ring: "#a7f3d0",
+    ringSoft: "rgba(167, 243, 208, 0.55)",
+    inner: "#d1fae5",
+    fillStart: "rgba(236, 253, 245, 0.98)",
+    fillEnd: "rgba(240, 253, 250, 0.92)",
+    shadow: "rgba(16, 185, 129, 0.22)",
+    main: "#047857",
+    labelText: "#065f46",
+    labelBg: "rgba(255,255,255,0.92)",
+    labelBorder: "rgba(16, 185, 129, 0.20)",
+    labelShadow: "rgba(16, 185, 129, 0.12)",
   };
 }
 
