@@ -90,9 +90,6 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
   );
 }
 
-// components/illust/icons/radar.jsx
-"use client";
-
 // ▼ アプリアイコン・レーダー（洗練されたスキャンと検知のエフェクト）
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
