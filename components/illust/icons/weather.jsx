@@ -1,67 +1,65 @@
 // components/illust/icons/weather.jsx
 "use client";
 
-// 1. 気圧低下（パープル：膨張・外へ向かう遠心力）
+// 1. 気圧低下（寒色系：膨張・ふにゃふにゃ・血管拡張の偏頭痛イメージ）
 export function IconWeatherPressureDown({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
         <radialGradient id="grad-pressure-down" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
         </radialGradient>
       </defs>
-      {/* 膨張を示す背景のグラデーション */}
-      <circle cx="16" cy="16" r="14" fill="url(#grad-pressure-down)" />
       
-      {/* 広がる破線の円（パンパンに張る感覚） */}
-      <circle cx="16" cy="16" r="11" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.8" />
+      {/* 力なく膨張して境界が曖昧になった背景 */}
+      <path d="M16 4 C24 4 28 9 27 16 C26 24 21 28 16 27 C9 26 5 23 5 16 C5 9 8 4 16 4 Z" fill="url(#grad-pressure-down)" />
       
-      {/* 遠心（外向き）の4方向矢印 */}
-      <g stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {/* 上 */}
-        <path d="M16 10 V4 M13 7 l3-3 3 3" />
-        {/* 下 */}
-        <path d="M16 22 V28 M13 25 l3 3 3-3" />
-        {/* 左 */}
-        <path d="M10 16 H4 M7 13 l-3 3 3 3" />
-        {/* 右 */}
-        <path d="M22 16 H28 M25 13 l3 3 -3 3" />
+      {/* 血管が緩んでふにゃふにゃに広がる破線 */}
+      <path d="M16 7 C19 10 23 10 25 16 C23 22 19 22 16 25 C13 22 9 22 7 16 C9 10 13 10 16 7 Z" fill="none" stroke="#818cf8" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.8" strokeLinejoin="round" />
+      
+      {/* だらんと張りを失った内部の波線（弛緩のイメージ） */}
+      <path d="M11 14 Q 13.5 11 16 14 T 21 14" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+      <path d="M11 18 Q 13.5 15 16 18 T 21 18" fill="none" stroke="#6366f1" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
+      
+      {/* 遠心（外向き）の4方向矢印（力なさを出すため少し細め） */}
+      <g stroke="#4f46e5" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 8 V2 M13.5 4.5 L16 2 L18.5 4.5" />
+        <path d="M16 24 V30 M13.5 27.5 L16 30 L18.5 27.5" />
+        <path d="M8 16 H2 M4.5 13.5 L2 16 L4.5 18.5" />
+        <path d="M24 16 H30 M27.5 13.5 L30 16 L27.5 18.5" />
       </g>
-      
-      {/* 中心は軽く抜いておく */}
-      <circle cx="16" cy="16" r="3" fill="#c4b5fd" opacity="0.5" />
     </svg>
   );
 }
 
-// 2. 気圧上昇（ティール：圧縮・内へ向かう求心力）
+// 2. 気圧上昇（暖色系：圧縮・ギュウギュウ・血管収縮の緊張性頭痛イメージ）
 export function IconWeatherPressureUp({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
         <radialGradient id="grad-pressure-up" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#0f766e" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#0f766e" stopOpacity="0.0" />
+          <stop offset="0%" stopColor="#e11d48" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#e11d48" stopOpacity="0.0" />
         </radialGradient>
       </defs>
-      {/* 圧縮を示す背景 */}
-      <circle cx="16" cy="16" r="12" fill="url(#grad-pressure-up)" />
       
-      {/* ギュッと詰まった中心核 */}
-      <circle cx="16" cy="16" r="5" fill="#14b8a6" opacity="0.9" />
-      <circle cx="16" cy="16" r="5" fill="none" stroke="#0f766e" strokeWidth="1.5" />
+      {/* 圧縮されて密度が高まった背景 */}
+      <circle cx="16" cy="16" r="10" fill="url(#grad-pressure-up)" />
       
-      {/* 求心（内向き）の4方向矢印 */}
-      <g stroke="#0f766e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {/* 上から下へ */}
-        <path d="M16 2 v7 M13 6 l3 3 3-3" />
-        {/* 下から上へ */}
-        <path d="M16 30 v-7 M13 26 l3-3 3 3" />
-        {/* 左から右へ */}
-        <path d="M2 16 h7 M6 13 l3 3 -3 3" />
-        {/* 右から左へ */}
-        <path d="M30 16 h-7 M26 13 l-3 3 3 3" />
+      {/* ギュウギュウに締め付けられる二重の枠線（角ばった緊張感） */}
+      <rect x="9" y="9" width="14" height="14" rx="2" fill="none" stroke="#fb7185" strokeWidth="1.5" opacity="0.9" />
+      <rect x="12" y="12" width="8" height="8" rx="1" fill="none" stroke="#e11d48" strokeWidth="1.5" opacity="0.8" />
+      
+      {/* 内部の緊張（血管収縮のピリピリしたギザギザ） */}
+      <path d="M13 16 L 14.5 14 L 17.5 18 L 19 16" fill="none" stroke="#be123c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      
+      {/* 求心（内向き）の4方向矢印（力強く圧迫する太さ） */}
+      <g stroke="#be123c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 2 V7 M13 4.5 L16 7 L19 4.5" />
+        <path d="M16 30 V25 M13 27.5 L16 25 L19 27.5" />
+        <path d="M2 16 H7 M4.5 13 L7 16 L4.5 19" />
+        <path d="M30 16 H25 M27.5 13 L25 16 L27.5 19" />
       </g>
     </svg>
   );
