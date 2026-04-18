@@ -140,9 +140,13 @@ function signalDotClass(signal) {
 }
 
 function signalPanelClass(signal) {
-  if (signal === 2) return "ring-1 ring-rose-200 bg-gradient-to-br from-rose-50 to-[#fff1f2] text-rose-900";
-  if (signal === 1) return "ring-1 ring-amber-200 bg-gradient-to-br from-amber-50 to-[#fffbeb] text-amber-900";
-  return "ring-1 ring-emerald-200 bg-gradient-to-br from-emerald-50 to-[#ecfdf5] text-emerald-900";
+  if (signal === 2) {
+    return "ring-1 ring-[#E7C3CB] bg-[linear-gradient(135deg,#FFF8FA_0%,#FAEEF1_100%)] text-[#8F4150]";
+  }
+  if (signal === 1) {
+    return "ring-1 ring-[#E8D2A0] bg-[linear-gradient(135deg,#FFFDF7_0%,#FAF3E3_100%)] text-[#8A641B]";
+  }
+  return "ring-1 ring-[#C9E6DB] bg-[linear-gradient(135deg,#F8FCFA_0%,#EEF7F3_100%)] text-[#2F7F6C]";
 }
 
 function signalPanelSubtext(signal) {
@@ -270,30 +274,34 @@ function getMoodHeadline(triggerKey, signal) {
 
 function getHeroPanelClass(signal) {
   if (signal === 2) {
-    return "bg-[linear-gradient(135deg,#fff7f7_0%,#fff8ef_100%)] ring-1 ring-rose-200/70";
+    return "bg-[linear-gradient(135deg,rgba(255,248,250,0.96)_0%,rgba(250,238,241,0.92)_100%)] ring-1 ring-[rgba(231,195,203,0.78)]";
   }
   if (signal === 1) {
-    return "bg-[linear-gradient(135deg,#fffaf0_0%,#fffdf7_100%)] ring-1 ring-amber-200/70";
+    return "bg-[linear-gradient(135deg,rgba(255,253,247,0.96)_0%,rgba(250,243,227,0.92)_100%)] ring-1 ring-[rgba(232,210,160,0.8)]";
   }
-  return "bg-[linear-gradient(135deg,#f3fcf7_0%,#fbfffd_100%)] ring-1 ring-emerald-200/70";
+  return "bg-[linear-gradient(135deg,rgba(248,252,250,0.96)_0%,rgba(238,247,243,0.92)_100%)] ring-1 ring-[rgba(201,230,219,0.82)]";
 }
 
 function getHeroAccentClass(signal) {
-  if (signal === 2) return "text-rose-700";
-  if (signal === 1) return "text-amber-700";
-  return "text-emerald-700";
+  if (signal === 2) return "text-[#8F4150]";
+  if (signal === 1) return "text-[#8A641B]";
+  return "text-[#2F7F6C]";
 }
 
 function getHeroScoreClass(signal) {
-  if (signal === 2) return "text-rose-700";
-  if (signal === 1) return "text-amber-700";
-  return "text-emerald-700";
+  if (signal === 2) return "text-[#8F4150]";
+  if (signal === 1) return "text-[#8A641B]";
+  return "text-[#2F7F6C]";
 }
 
 function getHeroDecorClass(signal) {
-  if (signal === 2) return "from-rose-200/35 to-rose-100/5 border-rose-200/45";
-  if (signal === 1) return "from-amber-200/35 to-amber-100/5 border-amber-200/45";
-  return "from-emerald-200/35 to-emerald-100/5 border-emerald-200/45";
+  if (signal === 2) {
+    return "from-[#D96C7C24] to-[#D96C7C08] border-[#D96C7C33]";
+  }
+  if (signal === 1) {
+    return "from-[#E2AB4326] to-[#E2AB4308] border-[#E2AB4333]";
+  }
+  return "from-[#63B89E24] to-[#63B89E08] border-[#63B89E30]";
 }
 
 function getTsuboRoleLabel(point, index) {
