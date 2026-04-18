@@ -439,51 +439,51 @@ function getGaugeModeLabel() {
 function getGaugeTone(signal) {
   if (signal === 2) {
     return {
-      stroke: "#E86F8B",
-      ring: "#E86F8B",
-      ringSoft: "rgba(232,111,139,0.14)",
-      inner: "#FFF4F7",
-      fillStart: "rgba(236,125,150,0.96)",
-      fillEnd: "rgba(232,111,139,0.96)",
-      shadow: "rgba(232,111,139,0.08)",
-      main: "#B54463",
-      labelText: "#9D3552",
+      stroke: "#d46a7f",
+      ring: "#de8a9b",
+      ringSoft: "rgba(212,106,127,0.14)",
+      inner: "#f8ecef",
+      fillStart: "rgba(248,236,239,0.96)",
+      fillEnd: "rgba(212,106,127,0.90)",
+      shadow: "rgba(212,106,127,0.08)",
+      main: "#ad4d63",
+      labelText: "#8e4153",
       labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(232,111,139,0.22)",
-      labelShadow: "rgba(232,111,139,0.06)",
+      labelBorder: "rgba(212,106,127,0.20)",
+      labelShadow: "rgba(212,106,127,0.06)",
     };
   }
 
   if (signal === 1) {
     return {
-      stroke: "#E3A72F",
-      ring: "#E3A72F",
-      ringSoft: "rgba(227,167,47,0.14)",
-      inner: "#FFF8EB",
-      fillStart: "rgba(232,176,67,0.96)",
-      fillEnd: "rgba(227,167,47,0.96)",
-      shadow: "rgba(227,167,47,0.08)",
-      main: "#A46C00",
-      labelText: "#8D5D00",
+      stroke: "#d59a47",
+      ring: "#e1b46d",
+      ringSoft: "rgba(213,154,71,0.14)",
+      inner: "#faf1e3",
+      fillStart: "rgba(250,241,227,0.96)",
+      fillEnd: "rgba(213,154,71,0.90)",
+      shadow: "rgba(213,154,71,0.08)",
+      main: "#a8742f",
+      labelText: "#8a5f22",
       labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(227,167,47,0.22)",
-      labelShadow: "rgba(227,167,47,0.06)",
+      labelBorder: "rgba(213,154,71,0.20)",
+      labelShadow: "rgba(213,154,71,0.06)",
     };
   }
 
   return {
-    stroke: "#2DBE8D",
-    ring: "#2DBE8D",
-    ringSoft: "rgba(45,190,141,0.14)",
-    inner: "#F1FCF8",
-    fillStart: "rgba(62,197,151,0.96)",
-    fillEnd: "rgba(45,190,141,0.96)",
-    shadow: "rgba(45,190,141,0.08)",
-    main: "#0F8F66",
-    labelText: "#0D7C59",
+    stroke: "#46a690",
+    ring: "#6dc0ac",
+    ringSoft: "rgba(70,166,144,0.14)",
+    inner: "#eaf4f1",
+    fillStart: "rgba(234,244,241,0.96)",
+    fillEnd: "rgba(70,166,144,0.90)",
+    shadow: "rgba(70,166,144,0.08)",
+    main: "#2e7f6d",
+    labelText: "#256657",
     labelBg: "rgba(255,255,255,0.96)",
-    labelBorder: "rgba(45,190,141,0.22)",
-    labelShadow: "rgba(45,190,141,0.06)",
+    labelBorder: "rgba(70,166,144,0.20)",
+    labelShadow: "rgba(70,166,144,0.06)",
   };
 }
 
@@ -576,21 +576,21 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <path
             d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
             fill="none"
-            stroke="rgba(45,190,141,0.72)"
+            stroke="rgba(70,166,144,0.54)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
             fill="none"
-            stroke="rgba(227,167,47,0.72)"
+            stroke="rgba(213,154,71,0.54)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, cautionEnd, gaugeEnd)}
             fill="none"
-            stroke="rgba(232,111,139,0.72)"
+            stroke="rgba(212,106,127,0.52)"
             strokeWidth="5"
             strokeLinecap="round"
           />
