@@ -91,29 +91,34 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
 }
 
 
-// ▼ アプリアイコン 案1：音叉（Tuning Fork）- 「環境と体の共鳴・チューニング」
+// 案2：羅針盤（Compass）- 「明日の体調とケアの方向を指し示す」
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <defs>
-        <radialGradient id="grad-resonance" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#dca855" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#dca855" stopOpacity="0.0" />
-        </radialGradient>
+        <linearGradient id="grad-needle-gold" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#dca855" />
+          <stop offset="100%" stopColor="#fcd34d" />
+        </linearGradient>
       </defs>
-      {/* 共鳴して広がる波（未病のシグナル） */}
-      <circle cx="16" cy="8" r="8" fill="url(#grad-resonance)" />
-      <path d="M 15 3 A 5 5 0 0 1 21 9" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" opacity="0.9" />
-      <path d="M 13 1 A 9 9 0 0 1 23 11" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 3" opacity="0.6" />
+      {/* 羅針盤のベース */}
+      <circle cx="12" cy="12" r="10" fill="#f8f9f6" stroke="#5c8465" strokeWidth="1.5" />
+      {/* 方位の目盛り（抽象的） */}
+      <path d="M 12 3 V 4 M 12 20 V 21 M 3 12 H 4 M 20 12 H 21" stroke="#5c8465" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <circle cx="12" cy="12" r="7" fill="none" stroke="#5c8465" strokeWidth="1" strokeDasharray="1 3" opacity="0.4" />
       
-      {/* 音叉の本体（斜めに配置して動きを出す） */}
-      <g transform="translate(10, 14) rotate(45) translate(-12, -12)">
-        {/* U字部分 */}
-        <path d="M 8 4 V 12 A 4 4 0 0 0 16 12 V 4" fill="none" stroke="#4a7253" strokeWidth="2" strokeLinecap="round" />
-        {/* 持ち手 */}
-        <path d="M 12 16 V 22" fill="none" stroke="#4a7253" strokeWidth="2" strokeLinecap="round" />
-        <circle cx="12" cy="16" r="1.5" fill="#5c8465" />
+      {/* 針（右上＝明日・未来を指し示す） */}
+      <g transform="translate(12, 12) rotate(45) translate(-12, -12)">
+        {/* 北（ゴールド） */}
+        <path d="M 12 4 L 14 12 L 12 12 Z" fill="url(#grad-needle-gold)" />
+        <path d="M 12 4 L 10 12 L 12 12 Z" fill="#b45309" opacity="0.8" />
+        {/* 南（グリーン） */}
+        <path d="M 12 20 L 14 12 L 12 12 Z" fill="#4a7253" />
+        <path d="M 12 20 L 10 12 L 12 12 Z" fill="#2c4a34" opacity="0.8" />
       </g>
+      
+      {/* 中心のピン */}
+      <circle cx="12" cy="12" r="2" fill="#ffffff" stroke="#2c4a34" strokeWidth="1" />
     </svg>
   );
 }
