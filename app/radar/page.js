@@ -14,7 +14,6 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
-import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
   conditionLabel,
@@ -444,49 +443,22 @@ function getGaugeModeLabel(triggerKey) {
 function getGaugeTone(signal) {
   if (signal === 2) {
     return {
-      stroke: "#ef4444",
-      ring: "#fecdd3",
-      ringSoft: "rgba(254, 205, 211, 0.55)",
-      inner: "#ffe4e6",
-      fillStart: "rgba(255, 241, 242, 0.96)",
-      fillEnd: "rgba(255, 247, 237, 0.90)",
-      shadow: "rgba(239, 68, 68, 0.22)",
-      main: "#b91c1c",
-      labelText: "#9f1239",
-      labelBg: "rgba(255,255,255,0.92)",
-      labelBorder: "rgba(251, 113, 133, 0.22)",
-      labelShadow: "rgba(239, 68, 68, 0.12)",
+      stroke: "#e11d48",
+      ring: "rgba(251,113,133,0.28)",
+      inner: "rgba(254,205,211,0.92)",
     };
   }
   if (signal === 1) {
     return {
-      stroke: "#f59e0b",
-      ring: "#fde68a",
-      ringSoft: "rgba(253, 230, 138, 0.56)",
-      inner: "#fef3c7",
-      fillStart: "rgba(255, 251, 235, 0.97)",
-      fillEnd: "rgba(255, 247, 237, 0.92)",
-      shadow: "rgba(245, 158, 11, 0.24)",
-      main: "#b45309",
-      labelText: "#92400e",
-      labelBg: "rgba(255,255,255,0.92)",
-      labelBorder: "rgba(245, 158, 11, 0.20)",
-      labelShadow: "rgba(245, 158, 11, 0.12)",
+      stroke: "#d97706",
+      ring: "rgba(251,191,36,0.26)",
+      inner: "rgba(253,230,138,0.92)",
     };
   }
   return {
-    stroke: "#10b981",
-    ring: "#a7f3d0",
-    ringSoft: "rgba(167, 243, 208, 0.55)",
-    inner: "#d1fae5",
-    fillStart: "rgba(236, 253, 245, 0.98)",
-    fillEnd: "rgba(240, 253, 250, 0.92)",
-    shadow: "rgba(16, 185, 129, 0.22)",
-    main: "#047857",
-    labelText: "#065f46",
-    labelBg: "rgba(255,255,255,0.92)",
-    labelBorder: "rgba(16, 185, 129, 0.20)",
-    labelShadow: "rgba(16, 185, 129, 0.12)",
+    stroke: "#2f855a",
+    ring: "rgba(110,231,183,0.28)",
+    inner: "rgba(187,247,208,0.92)",
   };
 }
 
@@ -507,167 +479,252 @@ function getGaugeShadow(signal) {
 }
 
 function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
-  const normalized = Math.max(0, Math.min(10, Number(score) || 0));
-  const sweep = (normalized / 10) * 270;
-  const startAngle = 210;
-  const endAngle = -30;
+  const safeScore = Math.max(0, Math.min(10, Number(score) || 0));
+  const tone = getGaugeTone(signal);
+
+  const cx = 170;
+  const cy = 172;
+
+  const gaugeStart = 210;
+  const gaugeEnd = -30;
   const valueAngle = gaugeStart + ((gaugeEnd - gaugeStart) * safeScore) / 10;
 
-  const center = 160;
-  const mainTrackRadius = 108;
-  const valueRadius = 108;
-  const zoneRadius = 124;
+  const outerRadius = 112;
+  const innerRadius = 80;
+  const guideRadius = 126;
+  const rangeRadius = 138;
+  const needleRadius = 105;
 
-  const stableEndAngle = startAngle + 270 * 0.3;
-  const cautionEndAngle = startAngle + 270 * 0.5;
+  const centerFill = signal === 2 ? "#fffaf7" : signal === 1 ? "#fffdf7" : "#f8fffb";
+  const scoreShadow =
+    signal === 2
+      ? "rgba(234,88,12,0.22)"
+      : signal === 1
+      ? "rgba(217,119,6,0.2)"
+      : "rgba(5,150,105,0.18)";
 
-  const tip = polarToCartesian(center, center, valueRadius, valueAngle);
-  const tipShadow = polarToCartesian(center, center, valueRadius + 10, valueAngle);
-  const startTickLabel = polarToCartesian(center, center, zoneRadius + 22, startAngle);
-  const endTickLabel = polarToCartesian(center, center, zoneRadius + 22, endAngle);
+  const stableEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 3) / 10;
+  const cautionEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 5) / 10;
 
-  const gaugeTone = getGaugeTone(signal);
-  const modePillTone = getGaugeModePillTone(signal);
+  const needleTip = polarToCartesian(cx, cy, needleRadius, valueAngle);
+  const needleTail = polarToCartesian(cx, cy, 18, valueAngle + 180);
+  const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
+  const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="relative mx-auto h-[330px] w-full max-w-[340px]">
-        <svg viewBox="0 0 320 320" className="h-full w-full overflow-visible" aria-hidden="true">
+    <div className="relative mx-auto w-full max-w-[360px]">
+      <div className="relative aspect-[1/1.04]">
+        <svg viewBox="0 0 340 352" className="h-full w-full overflow-visible" aria-hidden="true">
           <defs>
-            <linearGradient id="gauge-face" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.98)" />
-              <stop offset="100%" stopColor="rgba(248,250,252,0.94)" />
+            <linearGradient id={`gauge-track-${signal}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#eef2ff" />
+              <stop offset="100%" stopColor="#e2e8f0" />
             </linearGradient>
-            <linearGradient id="gauge-shadow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(15,23,42,0.16)" />
-              <stop offset="100%" stopColor="rgba(15,23,42,0)" />
+
+            <linearGradient id={`gauge-fill-${signal}`} x1="18%" y1="18%" x2="82%" y2="82%">
+              <stop offset="0%" stopColor={tone.fillStart} />
+              <stop offset="100%" stopColor={tone.fillEnd} />
             </linearGradient>
-            <linearGradient id="zone-stable" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(16,185,129,0.30)" />
-              <stop offset="100%" stopColor="rgba(16,185,129,0.10)" />
+
+            <linearGradient id={`needle-${signal}`} x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor={tone.fillStart} />
+              <stop offset="100%" stopColor={tone.fillEnd} />
             </linearGradient>
-            <linearGradient id="zone-caution" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(245,158,11,0.28)" />
-              <stop offset="100%" stopColor="rgba(245,158,11,0.10)" />
-            </linearGradient>
-            <linearGradient id="zone-alert" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(244,63,94,0.28)" />
-              <stop offset="100%" stopColor="rgba(244,63,94,0.10)" />
-            </linearGradient>
-            <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor={getGaugeShadow(signal)} floodOpacity="0.22" />
-            </filter>
-            <filter id="gauge-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="rgba(15,23,42,0.10)" floodOpacity="1" />
+
+            <filter id={`gauge-shadow-${signal}`} x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="10" stdDeviation="11" floodColor={scoreShadow} />
             </filter>
           </defs>
 
-          <ellipse cx={160} cy={285} rx={80} ry={16} fill="url(#gauge-shadow)" opacity="0.32" />
+          <ellipse cx={170} cy={286} rx={104} ry={18} fill={tone.shadow} />
+          <ellipse cx={170} cy={286} rx={76} ry={10} fill="rgba(255,255,255,0.66)" />
 
-          <circle cx={160} cy={160} r={124} fill="url(#gauge-face)" stroke={gaugeTone.ring} strokeWidth="2.5" filter="url(#gauge-soft-shadow)" />
-          <circle cx={160} cy={160} r={98} fill="none" stroke={gaugeTone.inner} strokeWidth="4" opacity="0.9" />
+          <path
+            d={describeArc(cx, cy, guideRadius, gaugeStart, gaugeEnd)}
+            fill="none"
+            stroke={tone.ring}
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            opacity="0.95"
+          />
 
-          <path d={describeArc(center, center, zoneRadius, startAngle, stableEndAngle)} fill="none" stroke="url(#zone-stable)" strokeWidth="7" strokeLinecap="round" />
-          <path d={describeArc(center, center, zoneRadius, stableEndAngle + 1.5, cautionEndAngle)} fill="none" stroke="url(#zone-caution)" strokeWidth="7" strokeLinecap="round" />
-          <path d={describeArc(center, center, zoneRadius, cautionEndAngle + 1.5, endAngle)} fill="none" stroke="url(#zone-alert)" strokeWidth="7" strokeLinecap="round" />
+          <path
+            d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
+            fill="none"
+            stroke="rgba(16,185,129,0.28)"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+          <path
+            d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
+            fill="none"
+            stroke="rgba(245,158,11,0.30)"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+          <path
+            d={describeArc(cx, cy, rangeRadius, cautionEnd, gaugeEnd)}
+            fill="none"
+            stroke="rgba(244,63,94,0.28)"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
 
-          <path d={describeArc(center, center, mainTrackRadius, startAngle, endAngle)} fill="none" stroke="rgba(210,216,228,0.72)" strokeWidth="26" strokeLinecap="round" />
+          <path
+            d={describeArc(cx, cy, outerRadius, gaugeStart, gaugeEnd)}
+            fill="none"
+            stroke={`url(#gauge-track-${signal})`}
+            strokeWidth="22"
+            strokeLinecap="round"
+          />
 
-          {normalized > 0 ? (
-            <path
-              d={describeArc(center, center, valueRadius, startAngle, valueAngle)}
-              fill="none"
-              stroke={gaugeTone.stroke}
-              strokeWidth="28"
-              strokeLinecap="round"
-              filter="url(#gauge-glow)"
-            />
-          ) : null}
+          <path
+            d={describeArc(cx, cy, outerRadius, gaugeStart, valueAngle)}
+            fill="none"
+            stroke={`url(#gauge-fill-${signal})`}
+            strokeWidth="24"
+            strokeLinecap="round"
+            filter={`url(#gauge-shadow-${signal})`}
+          />
 
-          {[-225, -180, -135, -90, -45, 0, 45].map((angle) => {
-            const outer = polarToCartesian(center, center, 116, angle);
-            const inner = polarToCartesian(center, center, 98, angle);
+          {[gaugeStart, gaugeStart + 48, gaugeStart + 96, gaugeStart + 144, gaugeEnd].map((angle, idx) => {
+            const inner = polarToCartesian(cx, cy, innerRadius + 4, angle);
+            const outer = polarToCartesian(cx, cy, guideRadius - 4, angle);
+            const strong = idx === 0 || idx === 2 || idx === 4;
             return (
               <line
                 key={angle}
-                x1={outer.x}
-                y1={outer.y}
-                x2={inner.x}
-                y2={inner.y}
-                stroke="rgba(148,163,184,0.24)"
-                strokeWidth="3.5"
+                x1={inner.x}
+                y1={inner.y}
+                x2={outer.x}
+                y2={outer.y}
+                stroke={strong ? "rgba(148,163,184,0.42)" : "rgba(203,213,225,0.7)"}
+                strokeWidth={strong ? "3" : "2"}
                 strokeLinecap="round"
               />
             );
           })}
 
-          <text x={160} y={98} textAnchor="middle" className="fill-slate-400 text-[13px] font-black tracking-[0.26em]">
+          <circle cx={170} cy={172} r={94} fill={centerFill} stroke={tone.ringSoft} strokeWidth="4" />
+          <circle cx={170} cy={172} r={58} fill="#ffffff" stroke={tone.ring} strokeWidth="2.5" />
+
+          <line
+            x1={needleTail.x}
+            y1={needleTail.y}
+            x2={needleTip.x}
+            y2={needleTip.y}
+            stroke={`url(#needle-${signal})`}
+            strokeWidth="5.5"
+            strokeLinecap="round"
+            opacity="0.95"
+          />
+
+          <circle
+            cx={needleTip.x}
+            cy={needleTip.y}
+            r={14}
+            fill="#ffffff"
+            stroke={tone.fillEnd}
+            strokeWidth="4"
+            filter={`url(#gauge-shadow-${signal})`}
+          />
+          <circle cx={170} cy={172} r={10} fill="#ffffff" stroke="rgba(226,232,240,0.95)" strokeWidth="2.5" />
+          <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
+
+          <text
+            x={170}
+            y={107}
+            textAnchor="middle"
+            fontSize="17"
+            fontWeight="900"
+            letterSpacing="0.18em"
+            fill="rgba(100,116,139,0.88)"
+            stroke="rgba(255,255,255,0.92)"
+            strokeWidth="2"
+            paintOrder="stroke"
+          >
             SCORE
           </text>
 
-          <circle cx={160} cy={160} r={66} fill="rgba(255,255,255,0.98)" stroke={gaugeTone.inner} strokeWidth="1.75" />
-
-          <text x={160} y={184} textAnchor="middle">
-            <tspan className="fill-slate-900 text-[56px] font-black" style={{ fill: gaugeTone.stroke }}>
-              {normalized}
-            </tspan>
-            <tspan className="fill-slate-400 text-[22px] font-black">/10</tspan>
+          <text
+            x={170}
+            y={203}
+            textAnchor="middle"
+            fontSize="58"
+            fontWeight="900"
+            fill={tone.main}
+            stroke="rgba(255,255,255,0.95)"
+            strokeWidth="5"
+            paintOrder="stroke"
+          >
+            {safeScore}
+          </text>
+          <text
+            x={209}
+            y={203}
+            textAnchor="start"
+            fontSize="26"
+            fontWeight="900"
+            fill="rgba(100,116,139,0.76)"
+            stroke="rgba(255,255,255,0.95)"
+            strokeWidth="3"
+            paintOrder="stroke"
+          >
+            /10
           </text>
 
-          <text x={startTickLabel.x} y={startTickLabel.y} textAnchor="middle" dominantBaseline="central" className="fill-slate-300 text-[12px] font-black tracking-[0.08em]">
+          <text
+            x={startLabelPos.x}
+            y={startLabelPos.y + 6}
+            textAnchor="middle"
+            fontSize="14"
+            fontWeight="900"
+            fill="rgba(148,163,184,0.88)"
+          >
             0
           </text>
-          <text x={endTickLabel.x} y={endTickLabel.y} textAnchor="middle" dominantBaseline="central" className="fill-slate-300 text-[12px] font-black tracking-[0.08em]">
+          <text
+            x={endLabelPos.x}
+            y={endLabelPos.y + 6}
+            textAnchor="middle"
+            fontSize="14"
+            fontWeight="900"
+            fill="rgba(148,163,184,0.88)"
+          >
             10
           </text>
-
-          {normalized > 0 ? (
-            <g>
-              <line
-                x1={160}
-                y1={160}
-                x2={tip.x}
-                y2={tip.y}
-                stroke={gaugeTone.stroke}
-                strokeWidth="5"
-                strokeLinecap="round"
-                opacity="0.3"
-              />
-              <circle cx={160} cy={160} r={11} fill={gaugeTone.stroke} opacity="0.14" />
-              <circle cx={160} cy={160} r={5.5} fill={gaugeTone.stroke} />
-              <circle cx={tipShadow.x} cy={tipShadow.y} r={15} fill={getGaugeShadow(signal)} opacity="0.18" />
-              <circle cx={tip.x} cy={tip.y} r={13} fill="white" stroke={gaugeTone.stroke} strokeWidth="5" />
-            </g>
-          ) : (
-            <g>
-              <circle cx={160} cy={160} r={10} fill={gaugeTone.stroke} opacity="0.16" />
-              <circle cx={160} cy={160} r={5} fill={gaugeTone.stroke} />
-            </g>
-          )}
         </svg>
 
-        <div className="pointer-events-none absolute bottom-[44px] left-1/2 -translate-x-1/2">
-          <div className={["rounded-full border px-4 py-2 text-[11px] font-black tracking-wide shadow-sm backdrop-blur-sm", modePillTone].join(" ")}>
-            {getGaugeModeLabel(triggerKey)}
-          </div>
+        <div
+          className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-5 py-2 text-[12px] font-black shadow-sm backdrop-blur-sm"
+          style={{
+            color: tone.labelText,
+            background: tone.labelBg,
+            borderColor: tone.labelBorder,
+            boxShadow: `0 12px 24px ${tone.labelShadow}`,
+          }}
+        >
+          {getGaugeModeLabel(triggerKey)}
         </div>
       </div>
 
-      <div className="-mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-black tracking-wide text-slate-500">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 ring-1 ring-emerald-100">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />1〜3 安定
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[12px] font-black text-emerald-700">
+          <span className="h-3 w-3 rounded-full bg-emerald-400" />
+          1〜3 安定
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 ring-1 ring-amber-100">
-          <span className="h-2 w-2 rounded-full bg-amber-400" />4〜5 注意
+        <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[12px] font-black text-amber-700">
+          <span className="h-3 w-3 rounded-full bg-amber-400" />
+          4〜5 注意
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 ring-1 ring-rose-100">
-          <span className="h-2 w-2 rounded-full bg-rose-400" />6〜10 警戒
+        <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-black text-rose-700">
+          <span className="h-3 w-3 rounded-full bg-rose-400" />
+          6〜10 警戒
         </span>
       </div>
     </div>
   );
 }
-
 function SegmentedTabs({ tabs, value, onChange }) {
   return (
     <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
