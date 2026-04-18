@@ -436,54 +436,58 @@ function getGaugeModeLabel() {
   return "崩れやすさ";
 }
 
+// 改善されたgetGaugeTone関数
 function getGaugeTone(signal) {
+  // 警戒 (6〜10)
   if (signal === 2) {
     return {
-      stroke: "#d46a7f",
-      ring: "#de8a9b",
-      ringSoft: "rgba(212,106,127,0.14)",
-      inner: "#f8ecef",
-      fillStart: "rgba(248,236,239,0.96)",
-      fillEnd: "rgba(212,106,127,0.90)",
-      shadow: "rgba(212,106,127,0.08)",
-      main: "#ad4d63",
-      labelText: "#8e4153",
-      labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(212,106,127,0.20)",
-      labelShadow: "rgba(212,106,127,0.06)",
+      stroke: "#e57a8f", // 警戒リングのメインカラー（より鮮やかで、かつ落ち着いた赤へ）
+      ring: "#f1a8b5",  // リングのより明るい部分
+      ringSoft: "rgba(229,122,143,0.14)", // 柔らかな外側の光
+      inner: "#fbf2f4", // 中央円の内側
+      fillStart: "rgba(251,242,244,0.96)", // ゲージのグラデーション開始
+      fillEnd: "rgba(229,122,143,0.92)",  // ゲージのグラデーション終了（透明度を微調整）
+      shadow: "rgba(229,122,143,0.08)",   // ゲージの影
+      main: "#b54e60", // 警戒のテキスト/アイコンのメインカラー（彩度と明度を調整）
+      labelText: "#8f3a4b", // ラベルテキストの色
+      labelBg: "rgba(251,242,244,0.98)", // ラベルの背景色（超明るい警戒色。見やすさ向上）
+      labelBorder: "rgba(229,122,143,0.22)", // ラベルのボーダー
+      labelShadow: "rgba(229,122,143,0.06)", // ラベルの影
     };
   }
 
+  // 注意 (4〜5)
   if (signal === 1) {
     return {
-      stroke: "#d59a47",
-      ring: "#e1b46d",
-      ringSoft: "rgba(213,154,71,0.14)",
-      inner: "#faf1e3",
-      fillStart: "rgba(250,241,227,0.96)",
-      fillEnd: "rgba(213,154,71,0.90)",
-      shadow: "rgba(213,154,71,0.08)",
-      main: "#a8742f",
-      labelText: "#8a5f22",
-      labelBg: "rgba(255,255,255,0.96)",
-      labelBorder: "rgba(213,154,71,0.20)",
-      labelShadow: "rgba(213,154,71,0.06)",
+      stroke: "#f2bc6a", // 注意リングのメインカラー（より明るく、温かみのあるオレンジゴールドへ）
+      ring: "#fbd496",  // リングのより明るい部分
+      ringSoft: "rgba(242,188,106,0.14)", // 柔らかな外側の光
+      inner: "#fdf8ef", // 中央円の内側
+      fillStart: "rgba(253,248,239,0.96)", // ゲージのグラデーション開始
+      fillEnd: "rgba(242,188,106,0.92)",  // ゲージのグラデーション終了
+      shadow: "rgba(242,188,106,0.08)",   // ゲージの影
+      main: "#c18f3d", // 注意のテキスト/アイコンのメインカラー
+      labelText: "#9a6c2f", // ラベルテキストの色
+      labelBg: "rgba(253,248,239,0.98)", // ラベルの背景色（超明るい注意色）
+      labelBorder: "rgba(242,188,106,0.22)", // ラベルのボーダー
+      labelShadow: "rgba(242,188,106,0.06)", // ラベルの影
     };
   }
 
+  // 安定 (1〜3)
   return {
-    stroke: "#46a690",
-    ring: "#6dc0ac",
-    ringSoft: "rgba(70,166,144,0.14)",
-    inner: "#eaf4f1",
-    fillStart: "rgba(234,244,241,0.96)",
-    fillEnd: "rgba(70,166,144,0.90)",
-    shadow: "rgba(70,166,144,0.08)",
-    main: "#2e7f6d",
-    labelText: "#256657",
-    labelBg: "rgba(255,255,255,0.96)",
-    labelBorder: "rgba(70,166,144,0.20)",
-    labelShadow: "rgba(70,166,144,0.06)",
+    stroke: "#5db7a1", // 安定リングのメインカラー（より鮮やかで、健康的なミントグリーンへ）
+    ring: "#83c9b7",  // リングのより明るい部分
+    ringSoft: "rgba(93,183,161,0.14)", // 柔らかな外側の光
+    inner: "#f1f8f6", // 中央円の内側
+    fillStart: "rgba(241,248,246,0.96)", // ゲージのグラデーション開始
+    fillEnd: "rgba(93,183,161,0.92)",  // ゲージのグラデーション終了
+    shadow: "rgba(93,183,161,0.08)",   // ゲージの影
+    main: "#3d8b7a", // 安定のテキスト/アイコンのメインカラー
+    labelText: "#2f6c5e", // ラベルテキストの色
+    labelBg: "rgba(241,248,246,0.98)", // ラベルの背景色（超明るい安定色）
+    labelBorder: "rgba(93,183,161,0.22)", // ラベルのボーダー
+    labelShadow: "rgba(93,183,161,0.06)", // ラベルの影
   };
 }
 
@@ -576,21 +580,21 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <path
             d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
             fill="none"
-            stroke="rgba(70,166,144,0.54)"
+            stroke="rgba(93,183,161,0.54)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
             fill="none"
-            stroke="rgba(213,154,71,0.54)"
+            stroke="rgba(242,188,106,0.54)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, cautionEnd, gaugeEnd)}
             fill="none"
-            stroke="rgba(212,106,127,0.52)"
+            stroke="rgba(229,122,143,0.52)"
             strokeWidth="5"
             strokeLinecap="round"
           />
