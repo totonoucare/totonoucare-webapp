@@ -513,8 +513,8 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
   const cx = 170;
   const cy = 172;
 
-  const gaugeStart = -210;
-  const gaugeEnd = 30;
+  const gaugeStart = 210;
+  const gaugeEnd = -30;
   const valueAngle = gaugeStart + ((gaugeEnd - gaugeStart) * safeScore) / 10;
 
   const outerRadius = 112;
@@ -536,8 +536,8 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
 
   const needleTip = polarToCartesian(cx, cy, needleRadius, valueAngle);
   const needleTail = polarToCartesian(cx, cy, 18, valueAngle + 180);
-  const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
-  const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
+  const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 12, gaugeStart);
+  const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 12, gaugeEnd);
 
   return (
     <div className="relative mx-auto w-full max-w-[360px]">
