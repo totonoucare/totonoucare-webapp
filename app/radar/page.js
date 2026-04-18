@@ -577,14 +577,14 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <path
             d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
             fill="none"
-            stroke="rgba(79,163,140,0.62)"
+            stroke="rgba(90,174,151,0.62)"
             strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
             fill="none"
-            stroke="rgba(211,154,47,0.64)"
+            stroke="rgba(223,166,64,0.64)"
             strokeWidth="5"
             strokeLinecap="round"
           />
