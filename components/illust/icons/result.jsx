@@ -90,11 +90,7 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
   );
 }
 
-// ▼ アプリアイコン・レーダー（洗練されたスキャンと検知のエフェクト）
-// components/illust/icons/radar.jsx
-"use client";
-
-// ▼ アプリアイコン・レーダー（洗練されたスキャンと検知のエフェクト）
+// ▼ アプリアイコン・レーダー（洗練されたスキャンと検知のエフェクト)
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
