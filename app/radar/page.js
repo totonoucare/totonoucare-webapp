@@ -481,8 +481,8 @@ function getGaugeShadow(signal) {
 function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
   const normalized = Math.max(0, Math.min(10, Number(score) || 0));
   const sweep = (normalized / 10) * 270;
-  const startAngle = -225;
-  const endAngle = 45;
+  const startAngle = -135;
+  const endAngle = 135;
   const valueAngle = startAngle + sweep;
 
   const center = 160;
@@ -556,7 +556,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             />
           ) : null}
 
-          {[-225, -180, -135, -90, -45, 0, 45].map((angle) => {
+          {[-135, -90, -45, 0, 45, 90, 135].map((angle) => {
             const outer = polarToCartesian(center, center, 116, angle);
             const inner = polarToCartesian(center, center, 98, angle);
             return (
