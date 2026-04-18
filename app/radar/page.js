@@ -1734,7 +1734,7 @@ export default function RadarPage() {
                         <div className="mt-3 flex items-start gap-3">
                           <div
                             className={[
-                              "grid h-13 w-13 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-black/5",
+                              "grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-black/5",
                               getHeroAccentClass(forecast.signal),
                             ].join(" ")}
                           >
