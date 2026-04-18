@@ -257,7 +257,7 @@ function getMoodHeadline(triggerKey, signal) {
     if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識したい日";
   }
 
-  return "大きくは崩れにくい日";
+  return "あまり大きくは崩れにくい日";
 }
 
 function getHeroPanelClass(signal) {
@@ -1509,11 +1509,6 @@ export default function RadarPage() {
                 <div className="relative mt-5 rounded-[28px] bg-white/62 px-4 py-5 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)]">
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center">
                     <div className="relative">
-                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08]">
-                        <div className={getHeroAccentClass(forecast.signal)}>
-                          <WeatherIcon triggerKey={triggerKey} className="h-[178px] w-[178px]" />
-                        </div>
-                      </div>
                       <ForecastGauge
                         score={forecast.score_0_10}
                         signal={forecast.signal}
@@ -1537,7 +1532,7 @@ export default function RadarPage() {
                               getHeroAccentClass(forecast.signal),
                             ].join(" ")}
                           >
-                            <WeatherIcon triggerKey={triggerKey} className="h-12 w-12" />
+                            <WeatherIcon triggerKey={triggerKey} className="h-10 w-10" />
                           </div>
 
                           <div className="min-w-0 flex-1">
