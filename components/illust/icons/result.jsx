@@ -90,33 +90,40 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
   );
 }
 
-
-// 案3：波と予兆の星（Wave & Spark）- 「体調の波を先読みする」
+// ▼ アプリアイコン・レーダー（おしゃれでミニマルな洗練デザイン）
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="grad-wave" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#5c8465" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="#5c8465" stopOpacity="0.9" />
+        {/* スイープ（走査）の透明感ある上品なグラデーション */}
+        <linearGradient id="grad-radar-scan-minimal" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#dca855" stopOpacity="0.0" />
+          <stop offset="100%" stopColor="#dca855" stopOpacity="0.7" />
         </linearGradient>
       </defs>
-      {/* 過去から未来へ続く体調の波（バイオリズム） */}
-      <path d="M 2 16 C 5 16, 7 8, 12 8 C 17 8, 19 18, 23 18" fill="none" stroke="url(#grad-wave)" strokeWidth="2" strokeLinecap="round" />
-      
-      {/* 予測される波の背景エリア（うっすらとした塗り） */}
-      <path d="M 2 16 C 5 16, 7 8, 12 8 C 17 8, 19 18, 23 18 V 22 H 2 Z" fill="#5c8465" opacity="0.05" />
 
-      {/* 先読みしたピーク（未病のサイン）を捉える輝き */}
-      <path d="M 12 3 L 13 6 L 16 7 L 13 8 L 12 11 L 11 8 L 8 7 L 11 6 Z" fill="#dca855" />
-      <circle cx="12" cy="7" r="5" fill="none" stroke="#dca855" strokeWidth="1" opacity="0.5" strokeDasharray="1 2" />
+      {/* 外枠（極めてシンプルで細い線、抜け感を作るために背景塗りは無し） */}
+      <circle cx="12" cy="12" r="10" fill="none" stroke="#5c8465" strokeWidth="1" opacity="0.4" />
       
-      {/* 小さなキラキラ */}
-      <circle cx="17" cy="4" r="1" fill="#dca855" opacity="0.8" />
-      <circle cx="8" cy="11" r="0.7" fill="#5c8465" opacity="0.6" />
+      {/* 内側のガイドライン（極細の薄い実線でミニマルに） */}
+      <circle cx="12" cy="12" r="5" fill="none" stroke="#5c8465" strokeWidth="0.5" opacity="0.3" />
+
+      {/* レーダーのスキャン（余計なものを削ぎ落とした扇形の光） */}
+      <path d="M 12 12 L 4.93 4.93 A 10 10 0 0 1 12 2 Z" fill="url(#grad-radar-scan-minimal)" />
+      
+      {/* スキャンバー（現在位置を示すシャープな線） */}
+      <path d="M 12 12 L 12 2" fill="none" stroke="#dca855" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 検知したターゲット（繊細な光の点と、1本だけの波紋） */}
+      <circle cx="16.5" cy="6.5" r="1.5" fill="#dca855" />
+      <circle cx="16.5" cy="6.5" r="4" fill="none" stroke="#dca855" strokeWidth="0.5" opacity="0.6" />
+
+      {/* 中心点（自機・現在地。小さくソリッドに） */}
+      <circle cx="12" cy="12" r="2" fill="#4a7253" />
     </svg>
   );
 }
+
 
 // ▼ 結果・チェック（クリアなグリーン）
 export function IconResult({ className = "h-7 w-7", ...props }) {
