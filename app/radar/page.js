@@ -439,6 +439,8 @@ function ForecastGauge({ score, signal, triggerKey }) {
   const angleRad = ((sweepAngle - 90) * Math.PI) / 180;
   const tipX = center + Math.cos(angleRad) * (radius - 6);
   const tipY = center + Math.sin(angleRad) * (radius - 6);
+  const needleInnerX = center + Math.cos(angleRad) * 58;
+  const needleInnerY = center + Math.sin(angleRad) * 58;
 
   const iconMap = {
     pressure_down: "低気圧",
@@ -504,8 +506,8 @@ function ForecastGauge({ score, signal, triggerKey }) {
         <circle cx={tipX} cy={tipY} r="5.5" fill={accent} />
 
         <line
-          x1={center}
-          y1={center}
+          x1={needleInnerX}
+          y1={needleInnerY}
           x2={tipX}
           y2={tipY}
           stroke={accent}
@@ -513,7 +515,15 @@ function ForecastGauge({ score, signal, triggerKey }) {
           strokeLinecap="round"
         />
         <circle cx={center} cy={center} r={innerRadius} fill="white" fillOpacity="0.95" stroke={accentSoft} strokeWidth="3" />
-        <circle cx={center} cy={center} r="10" fill={accent} />
+        <circle
+                  cx={center}
+                  cy={center}
+                  r="5.5"
+                  fill="white"
+                  stroke={accent}
+                  strokeWidth="2.5"
+                  opacity="0.24"
+                />
       </svg>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -1497,10 +1507,6 @@ export default function RadarPage() {
                 </div>
 
                 <div className="relative mt-5 rounded-[28px] bg-white/62 px-4 py-5 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)]">
-                  <div className="pointer-events-none absolute right-4 top-[84px] rounded-full bg-white/55 px-3 py-1 text-[10px] font-black tracking-[0.16em] text-slate-400 shadow-sm ring-1 ring-black/5">
-                    毎日の目安
-                  </div>
-
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center">
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08]">
