@@ -721,20 +721,55 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[12px] font-black text-emerald-700">
-          <span className="h-3 w-3 rounded-full bg-emerald-400" />
-          1〜3 安定
-        </span>
-        <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[12px] font-black text-amber-700">
-          <span className="h-3 w-3 rounded-full bg-amber-400" />
-          4〜5 注意
-        </span>
-        <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[12px] font-black text-rose-700">
-          <span className="h-3 w-3 rounded-full bg-rose-400" />
-          6〜10 警戒
-        </span>
-      </div>
+<div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
+  <span
+    className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm"
+    style={{
+      color: "#327F6D",
+      background: "rgba(255,255,255,0.82)",
+      border: "1px solid rgba(90,174,151,0.24)",
+      boxShadow: "0 8px 20px rgba(90,174,151,0.08)",
+    }}
+  >
+    <span
+      className="h-3 w-3 rounded-full"
+      style={{ background: "#5AAE97" }}
+    />
+    1〜3 安定
+  </span>
+
+  <span
+    className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm"
+    style={{
+      color: "#8B6419",
+      background: "rgba(255,255,255,0.82)",
+      border: "1px solid rgba(223,166,64,0.26)",
+      boxShadow: "0 8px 20px rgba(223,166,64,0.08)",
+    }}
+  >
+    <span
+      className="h-3 w-3 rounded-full"
+      style={{ background: "#DFA640" }}
+    />
+    4〜5 注意
+  </span>
+
+  <span
+    className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm"
+    style={{
+      color: "#8F4150",
+      background: "rgba(255,255,255,0.82)",
+      border: "1px solid rgba(217,108,124,0.26)",
+      boxShadow: "0 8px 20px rgba(217,108,124,0.08)",
+    }}
+  >
+    <span
+      className="h-3 w-3 rounded-full"
+      style={{ background: "#D96C7C" }}
+    />
+    6〜10 警戒
+  </span>
+</div>
     </div>
   );
 }
