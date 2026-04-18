@@ -10,14 +10,10 @@ import Button from "@/components/ui/Button";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
 import {
   IconBolt,
-  IconCompass,
-  IconMemo,
   IconRadar,
-  IconResult,
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
-// ★ 天候別トトノウくんアイコンをインポート
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
@@ -395,6 +391,149 @@ function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
+
+function clampScore(score) {
+  const n = Number(score);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(10, n));
+}
+
+function getGaugeStroke(signal) {
+  if (signal === 2) return "#dc2626";
+  if (signal === 1) return "#d97706";
+  return "#2f7a57";
+}
+
+function getGaugeSoftStroke(signal) {
+  if (signal === 2) return "rgba(244,63,94,0.18)";
+  if (signal === 1) return "rgba(245,158,11,0.18)";
+  return "rgba(16,185,129,0.18)";
+}
+
+function getGaugeFill(signal) {
+  if (signal === 2) return "rgba(255,241,242,0.96)";
+  if (signal === 1) return "rgba(255,251,235,0.96)";
+  return "rgba(236,253,245,0.96)";
+}
+
+function ForecastGauge({ score, signal, triggerKey }) {
+  const safeScore = clampScore(score);
+  const progress = safeScore / 10;
+
+  const size = 220;
+  const center = 110;
+  const radius = 76;
+  const innerRadius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const arcRatio = 0.8;
+  const arcLength = circumference * arcRatio;
+  const rotation = 126;
+  const accent = getGaugeStroke(signal);
+  const accentSoft = getGaugeSoftStroke(signal);
+  const panelFill = getGaugeFill(signal);
+
+  const sweepStart = 136;
+  const sweepRange = 288;
+  const sweepAngle = sweepStart + sweepRange * progress;
+  const angleRad = ((sweepAngle - 90) * Math.PI) / 180;
+  const tipX = center + Math.cos(angleRad) * (radius - 6);
+  const tipY = center + Math.sin(angleRad) * (radius - 6);
+
+  const iconMap = {
+    pressure_down: "低気圧",
+    pressure_up: "高気圧",
+    cold: "冷え",
+    heat: "暑さ",
+    damp: "湿気",
+    dry: "乾燥",
+  };
+
+  return (
+    <div className="relative mx-auto h-[220px] w-[220px]">
+      <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full">
+        <defs>
+          <filter id="forecastGaugeGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="10" result="coloredBlur" />
+          </filter>
+          <radialGradient id="forecastGaugeBg" cx="50%" cy="42%" r="72%">
+            <stop offset="0%" stopColor="white" stopOpacity="0.98" />
+            <stop offset="100%" stopColor={panelFill} stopOpacity="0.95" />
+          </radialGradient>
+          <linearGradient id="forecastGaugeProgress" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.72" />
+            <stop offset="100%" stopColor={accent} stopOpacity="1" />
+          </linearGradient>
+        </defs>
+
+        <circle cx={center} cy={center} r="99" fill="url(#forecastGaugeBg)" />
+        <circle cx={center} cy={center} r="92" fill="none" stroke={accentSoft} strokeWidth="1.5" />
+        <circle cx={center} cy={center} r="72" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="1.2" />
+        <circle cx={center} cy={center} r="52" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="1.2" />
+        <circle cx={center} cy={center} r="32" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="1.2" />
+
+        <line x1={center} y1="24" x2={center} y2="48" stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1={center} y1="172" x2={center} y2="196" stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1="24" y1={center} x2="48" y2={center} stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1="172" y1={center} x2="196" y2={center} stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="rgba(226,232,240,0.95)"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeDasharray={`${arcLength} ${circumference}`}
+          transform={`rotate(${rotation} ${center} ${center})`}
+        />
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="url(#forecastGaugeProgress)"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeDasharray={`${arcLength * progress} ${circumference}`}
+          transform={`rotate(${rotation} ${center} ${center})`}
+        />
+
+        <circle cx={tipX} cy={tipY} r="11" fill={accent} opacity="0.16" filter="url(#forecastGaugeGlow)" />
+        <circle cx={tipX} cy={tipY} r="5.5" fill={accent} />
+
+        <line
+          x1={center}
+          y1={center}
+          x2={tipX}
+          y2={tipY}
+          stroke={accent}
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        <circle cx={center} cy={center} r={innerRadius} fill="white" fillOpacity="0.95" stroke={accentSoft} strokeWidth="3" />
+        <circle cx={center} cy={center} r="10" fill={accent} />
+      </svg>
+
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <div className="text-[11px] font-black tracking-[0.18em] text-slate-400">
+          SCORE
+        </div>
+        <div className="mt-1 flex items-end gap-1.5">
+          <span className="text-[54px] font-black leading-none tracking-[-0.06em]" style={{ color: accent }}>
+            {safeScore}
+          </span>
+          <span className="pb-2 text-[19px] font-black text-slate-400">/10</span>
+        </div>
+        <div className="mt-2 rounded-full bg-white/90 px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
+          {iconMap[triggerKey] || "気象変化"}モード
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 /* -----------------------------
  * Components
@@ -1297,45 +1436,46 @@ export default function RadarPage() {
           ) : null}
 
           {/* 1. 予報カード */}
-          <Module className="relative overflow-hidden p-6">
+          <Module className="relative overflow-hidden p-4 sm:p-6">
             <div
               className={[
-                "relative overflow-hidden rounded-[30px] px-5 py-5 shadow-sm",
+                "relative overflow-hidden rounded-[32px] px-4 py-5 shadow-[0_18px_50px_-22px_rgba(15,23,42,0.28)] sm:px-5 sm:py-5",
                 getHeroPanelClass(forecast.signal),
               ].join(" ")}
             >
               <div
                 className={[
-                  "pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full border bg-gradient-to-br opacity-80 blur-[1px]",
+                  "pointer-events-none absolute -right-12 -top-14 h-48 w-48 rounded-full border bg-gradient-to-br opacity-80 blur-[1px]",
                   getHeroDecorClass(forecast.signal),
                 ].join(" ")}
               />
               <div
                 className={[
-                  "pointer-events-none absolute right-10 top-10 h-28 w-28 rounded-full border opacity-70",
+                  "pointer-events-none absolute right-6 top-8 h-28 w-28 rounded-full border opacity-70",
                   getHeroDecorClass(forecast.signal),
                 ].join(" ")}
               />
               <div
                 className={[
-                  "pointer-events-none absolute left-[-28px] bottom-[-56px] h-40 w-48 rounded-full bg-gradient-to-tr opacity-65 blur-2xl",
+                  "pointer-events-none absolute left-[-36px] bottom-[-80px] h-48 w-56 rounded-full bg-gradient-to-tr opacity-65 blur-2xl",
                   getHeroDecorClass(forecast.signal),
                 ].join(" ")}
               />
-              <div className="pointer-events-none absolute right-[18%] top-[16%] h-[140px] w-[140px] rounded-full border border-white/35 opacity-90" />
-              <div className="pointer-events-none absolute right-[12%] top-[8%] h-[220px] w-[220px] rounded-full border border-white/22 opacity-75" />
-              <div className="pointer-events-none absolute left-[10%] top-[34%] h-px w-[48%] bg-white/45" />
-              <div className="pointer-events-none absolute left-[14%] top-[38%] h-px w-[34%] bg-white/30" />
+              <div className="pointer-events-none absolute left-1/2 top-[110px] h-[260px] w-[260px] -translate-x-1/2 rounded-full border border-white/35 opacity-80" />
+              <div className="pointer-events-none absolute left-1/2 top-[142px] h-[180px] w-[180px] -translate-x-1/2 rounded-full border border-white/20 opacity-70" />
 
               <div className="relative">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-white/72 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
-                      <IconRadar className="h-7 w-7" />
+                    <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-white/78 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
+                      <IconRadar className="h-9 w-9" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[14px] font-black tracking-tight text-slate-900">
+                      <div className="text-[15px] font-black tracking-tight text-slate-900">
                         {scoreCardTitle}
+                      </div>
+                      <div className="mt-1 text-[11px] font-black tracking-[0.16em] text-slate-400">
+                        DAILY FORECAST
                       </div>
                     </div>
                   </div>
@@ -1356,55 +1496,80 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="mt-5 flex items-end gap-2">
-                  <div className="pb-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500/80">
-                    崩れやすさ
+                <div className="relative mt-5 rounded-[28px] bg-white/62 px-4 py-5 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)]">
+                  <div className="pointer-events-none absolute right-4 top-[84px] rounded-full bg-white/55 px-3 py-1 text-[10px] font-black tracking-[0.16em] text-slate-400 shadow-sm ring-1 ring-black/5">
+                    毎日の目安
                   </div>
-                  <span
-                    className={[
-                      "text-[58px] font-black leading-none tracking-[-0.04em]",
-                      getHeroScoreClass(forecast.signal),
-                    ].join(" ")}
-                  >
-                    {forecast.score_0_10}
-                  </span>
-                  <span className="pb-1.5 text-[18px] font-black text-slate-400">/10</span>
-                </div>
 
-                <div className="mt-4 text-[23px] font-black tracking-tight text-slate-900 leading-[1.35]">
-                  {moodHeadline}
-                </div>
-
-                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      一番響きやすい要素
-                    </div>
-                    <div className="mt-2 flex items-center gap-2.5">
-                      <div className={getHeroAccentClass(forecast.signal)}>
-                        <WeatherIcon triggerKey={triggerKey} className="h-10 w-10" />
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center">
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.08]">
+                        <div className={getHeroAccentClass(forecast.signal)}>
+                          <WeatherIcon triggerKey={triggerKey} className="h-[178px] w-[178px]" />
+                        </div>
                       </div>
-                      <div className="text-[16px] font-black tracking-tight text-slate-900">
-                        {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                      <ForecastGauge
+                        score={forecast.score_0_10}
+                        signal={forecast.signal}
+                        triggerKey={triggerKey}
+                      />
+                      <div className="-mt-1 text-center text-[12px] font-bold leading-6 text-slate-500">
+                        スコアが高いほど、無理を重ねると崩れやすい目安です。
                       </div>
                     </div>
-                  </div>
 
-                  <div className="rounded-[20px] bg-white/70 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      気をつけたい時間帯
-                    </div>
-                    <div className="mt-2 text-[20px] font-black tracking-tight text-slate-900">
-                      {forecast.peak_start && forecast.peak_end
-                        ? `${String(forecast.peak_start).slice(0, 5)}–${String(
-                            forecast.peak_end
-                          ).slice(0, 5)}`
-                        : "—"}
+                    <div className="grid gap-3">
+                      <div className="rounded-[24px] bg-white/82 px-4 py-4 ring-1 ring-black/5 shadow-sm">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          一番響きやすい要素
+                        </div>
+
+                        <div className="mt-3 flex items-start gap-3">
+                          <div
+                            className={[
+                              "grid h-16 w-16 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-black/5",
+                              getHeroAccentClass(forecast.signal),
+                            ].join(" ")}
+                          >
+                            <WeatherIcon triggerKey={triggerKey} className="h-12 w-12" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[22px] font-black tracking-tight text-slate-900">
+                              {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                            </div>
+                            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+                              {moodHeadline}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[24px] bg-white/74 px-4 py-4 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
+                        <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                            <IconBolt className="h-5 w-5" />
+                          </span>
+                          気をつけたい時間帯
+                        </div>
+
+                        <div className="mt-3 text-[33px] font-black leading-none tracking-[-0.04em] text-slate-900">
+                          {forecast.peak_start && forecast.peak_end
+                            ? `${String(forecast.peak_start).slice(0, 5)}–${String(
+                                forecast.peak_end
+                              ).slice(0, 5)}`
+                            : "—"}
+                        </div>
+
+                        <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                          {signalPanelSubtext(forecast.signal)}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-[20px] bg-white/70 ring-1 ring-black/5 backdrop-blur-sm overflow-hidden">
+                <div className="mt-4 rounded-[22px] bg-white/72 ring-1 ring-black/5 backdrop-blur-sm overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setNoticeOpen((v) => !v)}
@@ -1414,7 +1579,7 @@ export default function RadarPage() {
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         {sectionLabels.noticeTitle}
                       </div>
-                      <div className="mt-2 text-[15px] font-black tracking-tight text-slate-900">
+                      <div className="mt-1.5 text-[15px] font-black tracking-tight text-slate-900">
                         くわしく見る
                       </div>
                     </div>
@@ -1422,7 +1587,7 @@ export default function RadarPage() {
                       viewBox="0 0 24 24"
                       fill="none"
                       className={[
-                        "h-7 w-7 text-slate-400 transition-transform",
+                        "h-6 w-6 text-slate-400 transition-transform",
                         noticeOpen ? "rotate-180" : "",
                       ].join(" ")}
                       stroke="currentColor"
@@ -1435,7 +1600,7 @@ export default function RadarPage() {
                   </button>
 
                   {noticeOpen ? (
-                    <div className="border-t border-slate-200/80 px-4 py-4 bg-white/55">
+                    <div className="border-t border-slate-200/80 px-4 py-4 bg-white/60">
                       {enrichingForecast && !forecast?.gpt_summary ? (
                         <div className="mb-3 rounded-[16px] bg-slate-50 px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
                           説明文を読みやすく整えています…
@@ -1962,4 +2127,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
