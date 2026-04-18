@@ -240,24 +240,24 @@ function getForecastTriggerKey(forecast) {
 
 function getMoodHeadline(triggerKey, signal) {
   if (signal === 2) {
-    if (triggerKey === "pressure_down") return "低気圧による重だるさ対策を優先する日";
-    if (triggerKey === "damp") return "湿気による重さ・むくみ対策を優先する日";
-    if (triggerKey === "cold") return "冷えによるこわばり対策を優先する日";
-    if (triggerKey === "heat") return "熱こもりによる消耗対策を優先する日";
-    if (triggerKey === "dry") return "乾燥による荒れ対策を優先する日";
-    if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を優先する日";
+    if (triggerKey === "pressure_down") return "低気圧による重だるさ対策を優先";
+    if (triggerKey === "damp") return "湿気による重さ・むくみ対策を優先";
+    if (triggerKey === "cold") return "冷えによるこわばり対策を優先";
+    if (triggerKey === "heat") return "熱こもりによる消耗対策を優先";
+    if (triggerKey === "dry") return "乾燥による荒れ対策を優先";
+    if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を優先";
   }
 
   if (signal === 1) {
-    if (triggerKey === "pressure_down") return "低気圧による重だるさ対策を意識したい日";
-    if (triggerKey === "damp") return "湿気による重さ・むくみ対策を意識したい日";
-    if (triggerKey === "cold") return "冷えによるこわばり対策を意識したい日";
-    if (triggerKey === "heat") return "熱こもり対策を意識したい日";
-    if (triggerKey === "dry") return "乾燥対策を意識したい日";
-    if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識したい日";
+    if (triggerKey === "pressure_down") return "低気圧による重だるさ対策を意識";
+    if (triggerKey === "damp") return "湿気による重さ・むくみ対策を意識";
+    if (triggerKey === "cold") return "冷えによるこわばり対策を意識";
+    if (triggerKey === "heat") return "熱こもり対策を意識";
+    if (triggerKey === "dry") return "乾燥対策を意識";
+    if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識";
   }
 
-  return "大きくは崩れにくい日";
+  return "影響は小さいものの、いつも通りの対策を";
 }
 
 function getHeroPanelClass(signal) {
@@ -661,20 +661,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <circle cx={170} cy={172} r={10} fill="#ffffff" stroke="rgba(226,232,240,0.95)" strokeWidth="2.5" />
           <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
 
-          <text
-            x={170}
-            y={107}
-            textAnchor="middle"
-            fontSize="17"
-            fontWeight="900"
-            letterSpacing="0.18em"
-            fill="rgba(71,85,105,0.96)"
-            stroke="rgba(255,255,255,0.92)"
-            strokeWidth="2"
-            paintOrder="stroke"
-          >
-            崩れやすさ
-          </text>
+
 
           <text
             x={170}
