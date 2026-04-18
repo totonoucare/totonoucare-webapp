@@ -567,7 +567,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           </defs>
 
           <ellipse cx={170} cy={286} rx={104} ry={18} fill={tone.shadow} />
-          <ellipse cx={170} cy={286} rx={76} ry={10} fill="rgba(255,255,255,0.66)" />
+          <ellipse cx={170} cy={286} rx={76} ry={10} fill="rgba(255,255,255,0.82)" />
 
           <path
             d={describeArc(cx, cy, guideRadius, gaugeStart, gaugeEnd)}
@@ -581,22 +581,22 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <path
             d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
             fill="none"
-            stroke="rgba(16,185,129,0.28)"
-            strokeWidth="4"
+            stroke="rgba(16,185,129,0.68)"
+            strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
             fill="none"
-            stroke="rgba(245,158,11,0.30)"
-            strokeWidth="4"
+            stroke="rgba(245,158,11,0.68)"
+            strokeWidth="5"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, cautionEnd, gaugeEnd)}
             fill="none"
-            stroke="rgba(244,63,94,0.28)"
-            strokeWidth="4"
+            stroke="rgba(244,63,94,0.64)"
+            strokeWidth="5"
             strokeLinecap="round"
           />
 
@@ -628,15 +628,15 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
                 y1={inner.y}
                 x2={outer.x}
                 y2={outer.y}
-                stroke={strong ? "rgba(148,163,184,0.42)" : "rgba(203,213,225,0.7)"}
-                strokeWidth={strong ? "3" : "2"}
+                stroke={strong ? "rgba(100,116,139,0.58)" : "rgba(148,163,184,0.52)"}
+                strokeWidth={strong ? "3.5" : "2.5"}
                 strokeLinecap="round"
               />
             );
           })}
 
-          <circle cx={170} cy={172} r={94} fill={centerFill} stroke={tone.ringSoft} strokeWidth="4" />
-          <circle cx={170} cy={172} r={58} fill="#ffffff" stroke={tone.ring} strokeWidth="2.5" />
+          <circle cx={170} cy={172} r={94} fill={centerFill} stroke={tone.ringSoft} strokeWidth="5" />
+          <circle cx={170} cy={172} r={58} fill="#ffffff" stroke={tone.ring} strokeWidth="3" />
 
           <line
             x1={needleTail.x}
@@ -668,7 +668,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             fontSize="17"
             fontWeight="900"
             letterSpacing="0.18em"
-            fill="rgba(100,116,139,0.88)"
+            fill="rgba(71,85,105,0.96)"
             stroke="rgba(255,255,255,0.92)"
             strokeWidth="2"
             paintOrder="stroke"
@@ -695,7 +695,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             textAnchor="start"
             fontSize="26"
             fontWeight="900"
-            fill="rgba(100,116,139,0.76)"
+            fill="rgba(100,116,139,0.92)"
             stroke="rgba(255,255,255,0.95)"
             strokeWidth="3"
             paintOrder="stroke"
@@ -719,7 +719,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             textAnchor="middle"
             fontSize="14"
             fontWeight="900"
-            fill="rgba(148,163,184,0.88)"
+            fill="rgba(100,116,139,0.82)"
           >
             10
           </text>
