@@ -90,25 +90,58 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
   );
 }
 
-// ▼ アプリアイコン・レーダー（ブランドカラー）
+// ▼ アプリアイコン・レーダー（ブランドロゴの意匠を完全再現）
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
+  // ※コンポーネントが複数並んでもグラデーションIDが衝突しないよう、ユニークな接尾辞をつけてもOKです
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <defs>
-        <radialGradient id="grad-radar" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#5c8465" stopOpacity="0.05" />
-          <stop offset="100%" stopColor="#5c8465" stopOpacity="0.2" />
-        </radialGradient>
+        {/* レーダーのスウィープ用グラデーション（ブランドのゴールド〜透明グリーン） */}
+        <linearGradient id="grad-icon-sweep" x1="0.5" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#d9a54a" />
+          <stop offset="100%" stopColor="#879E8B" stopOpacity="0" />
+        </linearGradient>
+        {/* 背景の柔らかな白〜グレー */}
+        <linearGradient id="grad-icon-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="100%" stopColor="#F4F7F4" />
+        </linearGradient>
       </defs>
-      <circle cx="12" cy="12" r="10" fill="url(#grad-radar)" />
-      <circle cx="12" cy="12" r="10" fill="none" stroke="#4a7253" strokeWidth="1.5" />
-      <circle cx="12" cy="12" r="6" fill="none" stroke="#5c8465" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
-      {/* 走査線とターゲット */}
-      <path d="M12 12 L18 6" fill="none" stroke="#dca855" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="2.5" fill="#dca855" />
+
+      {/* ほんのり浮かび上がる背景 */}
+      <circle cx="12" cy="12" r="11" fill="url(#grad-icon-bg)" />
+
+      {/* 二重の波紋（ロゴの比率を24x24に最適化） */}
+      <circle cx="12" cy="12" r="10" fill="none" stroke="#CCDACC" strokeWidth="1" />
+      <circle cx="12" cy="12" r="6.5" fill="none" stroke="#879E8B" strokeWidth="1" opacity="0.72" />
+
+      {/* クロスヘア（上下左右の照準線） */}
+      {/* 外周と内周の間にピタッと収まる長さに調整 */}
+      <path
+        d="M12 3.5 V 5.5 M12 18.5 V 20.5 M3.5 12 H 5.5 M18.5 12 H 20.5"
+        fill="none"
+        stroke="#6F8774"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        opacity="0.76"
+      />
+
+      {/* レーダーのスウィープ（右上1/4の美しい弧） */}
+      <path
+        d="M12 2 A 10 10 0 0 1 22 12"
+        fill="none"
+        stroke="url(#grad-icon-sweep)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* 中央のコア（ゴールド＋光沢のハイライト） */}
+      <circle cx="12" cy="12" r="2.5" fill="#d9a54a" />
+      <circle cx="12" cy="12" r="2.5" fill="#FFFFFF" fillOpacity="0.22" />
     </svg>
   );
 }
+
 
 // ▼ 結果・チェック（クリアなグリーン）
 export function IconResult({ className = "h-7 w-7", ...props }) {
