@@ -432,13 +432,8 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
   return ["M", start.x, start.y, "A", r, r, 0, largeArcFlag, 0, end.x, end.y].join(" ");
 }
 
-function getGaugeModeLabel(triggerKey) {
-  if (triggerKey === "pressure_down") return "低気圧モード";
-  if (triggerKey === "pressure_up") return "高気圧モード";
-  if (triggerKey === "cold") return "冷えモード";
-  if (triggerKey === "heat") return "暑さモード";
-  if (triggerKey === "damp") return "湿気モード";
-  return "乾燥モード";
+function getGaugeModeLabel() {
+  return "崩れやすさ";
 }
 
 function getGaugeTone(signal) {
