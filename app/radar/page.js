@@ -14,6 +14,7 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
+import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
   conditionLabel,
@@ -256,7 +257,7 @@ function getMoodHeadline(triggerKey, signal) {
     if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識したい日";
   }
 
-  return "大きくは崩れにくい日";
+  return "※大きくは崩れにくい見込み";
 }
 
 function getHeroPanelClass(signal) {
@@ -416,167 +417,137 @@ function getGaugeFill(signal) {
   return "rgba(236,253,245,0.96)";
 }
 
-function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
-  const normalized = Math.max(0, Math.min(10, Number(score) || 0));
-  const sweep = (normalized / 10) * 270;
-  const startAngle = -225;
-  const endAngle = 45;
-  const valueAngle = startAngle + sweep;
+function ForecastGauge({ score, signal, triggerKey }) {
+  const safeScore = clampScore(score);
+  const progress = safeScore / 10;
 
-  const center = 160;
-  const mainTrackRadius = 108;
-  const valueRadius = 108;
-  const zoneRadius = 124;
+  const size = 220;
+  const center = 110;
+  const radius = 76;
+  const innerRadius = 54;
+  const circumference = 2 * Math.PI * radius;
+  const arcRatio = 0.8;
+  const arcLength = circumference * arcRatio;
+  const rotation = 126;
+  const accent = getGaugeStroke(signal);
+  const accentSoft = getGaugeSoftStroke(signal);
+  const panelFill = getGaugeFill(signal);
 
-  const stableEndAngle = startAngle + 270 * 0.3;
-  const cautionEndAngle = startAngle + 270 * 0.5;
+  const sweepStart = 136;
+  const sweepRange = 288;
+  const sweepAngle = sweepStart + sweepRange * progress;
+  const angleRad = ((sweepAngle - 90) * Math.PI) / 180;
+  const tipX = center + Math.cos(angleRad) * (radius - 6);
+  const tipY = center + Math.sin(angleRad) * (radius - 6);
+  const needleInnerX = center + Math.cos(angleRad) * 58;
+  const needleInnerY = center + Math.sin(angleRad) * 58;
 
-  const tip = polarToCartesian(center, center, valueRadius, valueAngle);
-  const tipShadow = polarToCartesian(center, center, valueRadius + 10, valueAngle);
-  const startTickLabel = polarToCartesian(center, center, zoneRadius + 22, startAngle);
-  const endTickLabel = polarToCartesian(center, center, zoneRadius + 22, endAngle);
-
-  const gaugeTone = getGaugeTone(signal);
-  const modePillTone = getGaugeModePillTone(signal);
+  const iconMap = {
+    pressure_down: "低気圧",
+    pressure_up: "高気圧",
+    cold: "冷え",
+    heat: "暑さ",
+    damp: "湿気",
+    dry: "乾燥",
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="relative mx-auto h-[330px] w-full max-w-[340px]">
-        <svg viewBox="0 0 320 320" className="h-full w-full overflow-visible" aria-hidden="true">
-          <defs>
-            <linearGradient id="gauge-face" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.98)" />
-              <stop offset="100%" stopColor="rgba(248,250,252,0.94)" />
-            </linearGradient>
-            <linearGradient id="gauge-shadow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgba(15,23,42,0.16)" />
-              <stop offset="100%" stopColor="rgba(15,23,42,0)" />
-            </linearGradient>
-            <linearGradient id="zone-stable" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(16,185,129,0.30)" />
-              <stop offset="100%" stopColor="rgba(16,185,129,0.10)" />
-            </linearGradient>
-            <linearGradient id="zone-caution" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(245,158,11,0.28)" />
-              <stop offset="100%" stopColor="rgba(245,158,11,0.10)" />
-            </linearGradient>
-            <linearGradient id="zone-alert" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="rgba(244,63,94,0.28)" />
-              <stop offset="100%" stopColor="rgba(244,63,94,0.10)" />
-            </linearGradient>
-            <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor={getGaugeShadow(signal)} floodOpacity="0.22" />
-            </filter>
-            <filter id="gauge-soft-shadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="rgba(15,23,42,0.10)" floodOpacity="1" />
-            </filter>
-          </defs>
+    <div className="relative mx-auto h-[220px] w-[220px]">
+      <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full">
+        <defs>
+          <filter id="forecastGaugeGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="10" result="coloredBlur" />
+          </filter>
+          <radialGradient id="forecastGaugeBg" cx="50%" cy="42%" r="72%">
+            <stop offset="0%" stopColor="white" stopOpacity="0.98" />
+            <stop offset="100%" stopColor={panelFill} stopOpacity="0.95" />
+          </radialGradient>
+          <linearGradient id="forecastGaugeProgress" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.72" />
+            <stop offset="100%" stopColor={accent} stopOpacity="1" />
+          </linearGradient>
+        </defs>
 
-          <ellipse cx={160} cy={285} rx={80} ry={16} fill="url(#gauge-shadow)" opacity="0.32" />
+        <circle cx={center} cy={center} r="99" fill="url(#forecastGaugeBg)" />
+        <circle cx={center} cy={center} r="92" fill="none" stroke={accentSoft} strokeWidth="1.5" />
+        <circle cx={center} cy={center} r="72" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="1.2" />
+        <circle cx={center} cy={center} r="52" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="1.2" />
+        <circle cx={center} cy={center} r="32" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="1.2" />
 
-          <circle cx={160} cy={160} r={124} fill="url(#gauge-face)" stroke={gaugeTone.ring} strokeWidth="2.5" filter="url(#gauge-soft-shadow)" />
-          <circle cx={160} cy={160} r={98} fill="none" stroke={gaugeTone.inner} strokeWidth="4" opacity="0.9" />
+        <line x1={center} y1="24" x2={center} y2="48" stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1={center} y1="172" x2={center} y2="196" stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1="24" y1={center} x2="48" y2={center} stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
+        <line x1="172" y1={center} x2="196" y2={center} stroke="rgba(148,163,184,0.22)" strokeWidth="2.4" strokeLinecap="round" />
 
-          <path d={describeArc(center, center, zoneRadius, startAngle, stableEndAngle)} fill="none" stroke="url(#zone-stable)" strokeWidth="7" strokeLinecap="round" />
-          <path d={describeArc(center, center, zoneRadius, stableEndAngle + 1.5, cautionEndAngle)} fill="none" stroke="url(#zone-caution)" strokeWidth="7" strokeLinecap="round" />
-          <path d={describeArc(center, center, zoneRadius, cautionEndAngle + 1.5, endAngle)} fill="none" stroke="url(#zone-alert)" strokeWidth="7" strokeLinecap="round" />
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="rgba(226,232,240,0.95)"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeDasharray={`${arcLength} ${circumference}`}
+          transform={`rotate(${rotation} ${center} ${center})`}
+        />
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="url(#forecastGaugeProgress)"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeDasharray={`${arcLength * progress} ${circumference}`}
+          transform={`rotate(${rotation} ${center} ${center})`}
+        />
 
-          <path d={describeArc(center, center, mainTrackRadius, startAngle, endAngle)} fill="none" stroke="rgba(210,216,228,0.72)" strokeWidth="26" strokeLinecap="round" />
+        <circle cx={tipX} cy={tipY} r="11" fill={accent} opacity="0.16" filter="url(#forecastGaugeGlow)" />
+        <circle cx={tipX} cy={tipY} r="5.5" fill={accent} />
 
-          {normalized > 0 ? (
-            <path
-              d={describeArc(center, center, valueRadius, startAngle, valueAngle)}
-              fill="none"
-              stroke={gaugeTone.stroke}
-              strokeWidth="28"
-              strokeLinecap="round"
-              filter="url(#gauge-glow)"
-            />
-          ) : null}
+        <line
+          x1={needleInnerX}
+          y1={needleInnerY}
+          x2={tipX}
+          y2={tipY}
+          stroke={accent}
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+        <circle cx={center} cy={center} r={innerRadius} fill="white" fillOpacity="0.95" stroke={accentSoft} strokeWidth="3" />
+        <circle
+                  cx={center}
+                  cy={center}
+                  r="5.5"
+                  fill="white"
+                  stroke={accent}
+                  strokeWidth="2.5"
+                  opacity="0.24"
+                />
+      </svg>
 
-          {[-225, -180, -135, -90, -45, 0, 45].map((angle) => {
-            const outer = polarToCartesian(center, center, 116, angle);
-            const inner = polarToCartesian(center, center, 98, angle);
-            return (
-              <line
-                key={angle}
-                x1={outer.x}
-                y1={outer.y}
-                x2={inner.x}
-                y2={inner.y}
-                stroke="rgba(148,163,184,0.24)"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-            );
-          })}
-
-          <text x={160} y={98} textAnchor="middle" className="fill-slate-400 text-[13px] font-black tracking-[0.26em]">
-            SCORE
-          </text>
-
-          <circle cx={160} cy={160} r={66} fill="rgba(255,255,255,0.98)" stroke={gaugeTone.inner} strokeWidth="1.75" />
-
-          <text x={160} y={184} textAnchor="middle">
-            <tspan className="fill-slate-900 text-[56px] font-black" style={{ fill: gaugeTone.stroke }}>
-              {normalized}
-            </tspan>
-            <tspan className="fill-slate-400 text-[22px] font-black">/10</tspan>
-          </text>
-
-          <text x={startTickLabel.x} y={startTickLabel.y} textAnchor="middle" dominantBaseline="central" className="fill-slate-300 text-[12px] font-black tracking-[0.08em]">
-            0
-          </text>
-          <text x={endTickLabel.x} y={endTickLabel.y} textAnchor="middle" dominantBaseline="central" className="fill-slate-300 text-[12px] font-black tracking-[0.08em]">
-            10
-          </text>
-
-          {normalized > 0 ? (
-            <g>
-              <line
-                x1={160}
-                y1={160}
-                x2={tip.x}
-                y2={tip.y}
-                stroke={gaugeTone.stroke}
-                strokeWidth="5"
-                strokeLinecap="round"
-                opacity="0.3"
-              />
-              <circle cx={160} cy={160} r={11} fill={gaugeTone.stroke} opacity="0.14" />
-              <circle cx={160} cy={160} r={5.5} fill={gaugeTone.stroke} />
-              <circle cx={tipShadow.x} cy={tipShadow.y} r={15} fill={getGaugeShadow(signal)} opacity="0.18" />
-              <circle cx={tip.x} cy={tip.y} r={13} fill="white" stroke={gaugeTone.stroke} strokeWidth="5" />
-            </g>
-          ) : (
-            <g>
-              <circle cx={160} cy={160} r={10} fill={gaugeTone.stroke} opacity="0.16" />
-              <circle cx={160} cy={160} r={5} fill={gaugeTone.stroke} />
-            </g>
-          )}
-        </svg>
-
-        <div className="pointer-events-none absolute bottom-[44px] left-1/2 -translate-x-1/2">
-          <div className={["rounded-full border px-4 py-2 text-[11px] font-black tracking-wide shadow-sm backdrop-blur-sm", modePillTone].join(" ")}>
-            {getGaugeModeLabel(triggerKey)}
-          </div>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <div className="text-[11px] font-black tracking-[0.18em] text-slate-400">
+          SCORE
         </div>
-      </div>
-
-      <div className="-mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-black tracking-wide text-slate-500">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 ring-1 ring-emerald-100">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />1〜3 安定
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 ring-1 ring-amber-100">
-          <span className="h-2 w-2 rounded-full bg-amber-400" />4〜5 注意
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 ring-1 ring-rose-100">
-          <span className="h-2 w-2 rounded-full bg-rose-400" />6〜10 警戒
-        </span>
+        <div className="mt-1 flex items-end gap-1.5">
+          <span className="text-[54px] font-black leading-none tracking-[-0.06em]" style={{ color: accent }}>
+            {safeScore}
+          </span>
+          <span className="pb-2 text-[19px] font-black text-slate-400">/10</span>
+        </div>
+        <div className="mt-2 rounded-full bg-white/90 px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
+          {iconMap[triggerKey] || "気象変化"}モード
+        </div>
       </div>
     </div>
   );
 }
+
+
+/* -----------------------------
+ * Components
+ * ---------------------------- */
 
 function SegmentedTabs({ tabs, value, onChange }) {
   return (
@@ -1554,12 +1525,23 @@ export default function RadarPage() {
                           一番響きやすい要素
                         </div>
 
-                        <div className="mt-3 min-w-0">
-                          <div className="text-[22px] font-black tracking-tight text-slate-900">
-                            {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                        <div className="mt-3 flex items-start gap-3">
+                          <div
+                            className={[
+                              "grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-black/5",
+                              getHeroAccentClass(forecast.signal),
+                            ].join(" ")}
+                          >
+                            <WeatherIcon triggerKey={triggerKey} className="h-10 w-10" />
                           </div>
-                          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-                            {moodHeadline}
+
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[22px] font-black tracking-tight text-slate-900">
+                              {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                            </div>
+                            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+                              {moodHeadline}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1647,7 +1629,7 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
               <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconRipple className="h-7 w-7" />
+                <IconRipple className="h-10 w-10" />
               </div>
               <div>
                 <div className="text-[18px] font-black tracking-tight text-slate-900">
@@ -1789,7 +1771,7 @@ export default function RadarPage() {
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-                <IconBowl className="h-7 w-7" />
+                <IconBowl className="h-10 w-10" />
               </div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">
                 {sectionLabels.foodTitle}
@@ -2146,3 +2128,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
