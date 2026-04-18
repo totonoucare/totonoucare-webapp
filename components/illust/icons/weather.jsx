@@ -119,42 +119,46 @@ export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
   );
 }
 
-// 5. 湿気（スレート：どんより太い波線＋非対称で重たい水たまり）
+
+// 5. 湿気（濃紺：どんより太い波線＋非対称で重たい水たまり）
 export function IconWeatherDamp({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
         <linearGradient id="grad-drop-main" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#64748b" />
-          <stop offset="100%" stopColor="#334155" />
+          {/* メイン水滴：深い紺色から、墨汁にならないギリギリの超濃紺へ */}
+          <stop offset="0%" stopColor="#1e3153" />
+          <stop offset="100%" stopColor="#0f1b33" />
         </linearGradient>
         <linearGradient id="grad-drop-sub" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#94a3b8" />
-          <stop offset="100%" stopColor="#475569" />
+          {/* サブ水滴：少し明るめの紺から深い紺へ */}
+          <stop offset="0%" stopColor="#31466b" />
+          <stop offset="100%" stopColor="#1e3153" />
         </linearGradient>
       </defs>
       
       {/* どんよりした重たい空気（波線） ※太く、色を濃くして存在感をアップ */}
-      <path d="M-2 10 Q 4 5, 10 10 T 22 10 T 34 10" fill="none" stroke="#94a3b8" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
-      <path d="M2 16 Q 7 12, 12 16 T 22 16 T 32 16" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
+      <path d="M-2 10 Q 4 5, 10 10 T 22 10 T 34 10" fill="none" stroke="#475c82" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+      <path d="M2 16 Q 7 12, 12 16 T 22 16 T 32 16" fill="none" stroke="#31466b" strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
 
       {/* 右側のしずく（中） ※メインの横で合体して溜まっている */}
       <path d="M22 14 C 22 14, 16 21, 16 25 C 16 28, 18.5 29.5, 22 29.5 C 25.5 29.5, 28 28, 28 25 C 28 21, 22 14, 22 14 Z" fill="url(#grad-drop-sub)" opacity="0.8" />
 
       {/* 落ちてくる小さな水滴（上部・非対称のアクセント） */}
-      <path d="M24 5 C 24 5, 22 8, 22 10 C 22 11.5, 23 12.5, 24 12.5 C 25 12.5, 26 11.5, 26 10 C 26 8, 24 5, 24 5 Z" fill="#94a3b8" opacity="0.7" />
+      <path d="M24 5 C 24 5, 22 8, 22 10 C 22 11.5, 23 12.5, 24 12.5 C 25 12.5, 26 11.5, 26 10 C 26 8, 24 5, 24 5 Z" fill="#475c82" opacity="0.7" />
 
       {/* 左側・メインの重たい水滴（大） ※一番大きく、下にずっしり溜まる */}
       <path d="M13 7 C 13 7, 5 16, 5 23 C 5 27.5, 8.5 30, 13 30 C 17.5 30, 21 27.5, 21 23 C 21 16, 13 7, 13 7 Z" fill="url(#grad-drop-main)" opacity="0.95" />
 
-      {/* メインしずくのハイライト（液体のぬめり感） */}
+      {/* メインしずくのハイライト（液体のぬめり感）※ここは白のまま維持 */}
       <path d="M9 24 A 4.5 4.5 0 0 1 11 17.5" fill="none" stroke="#f8fafc" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
 
       {/* 底に広がる水たまりのライン（重力と停滞感） */}
-      <path d="M 8 31 H 25" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
+      <path d="M 8 31 H 25" fill="none" stroke="#0f1b33" strokeWidth="2" strokeLinecap="round" opacity="0.3" />
     </svg>
   );
 }
+
 
 
 // 6. 乾燥（マスタード：ひび割れた大地＋蒸発）
