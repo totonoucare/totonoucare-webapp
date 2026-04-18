@@ -513,8 +513,8 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
   const cx = 170;
   const cy = 172;
 
-  const gaugeStart = 210;
-  const gaugeEnd = -30;
+  const gaugeStart = -210;
+  const gaugeEnd = 30;
   const valueAngle = gaugeStart + ((gaugeEnd - gaugeStart) * safeScore) / 10;
 
   const outerRadius = 112;
