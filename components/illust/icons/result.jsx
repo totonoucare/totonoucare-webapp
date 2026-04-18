@@ -91,38 +91,32 @@ export function IconBolt({ className = "h-7 w-7", ...props }) {
 }
 
 
-// 案2：羅針盤（Compass）- 「明日の体調とケアの方向を指し示す」
+// 案3：波と予兆の星（Wave & Spark）- 「体調の波を先読みする」
 export function IconRadar({ className = "h-[22px] w-[22px]", ...props }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" {...props}>
       <defs>
-        <linearGradient id="grad-needle-gold" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#dca855" />
-          <stop offset="100%" stopColor="#fcd34d" />
+        <linearGradient id="grad-wave" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#5c8465" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#5c8465" stopOpacity="0.9" />
         </linearGradient>
       </defs>
-      {/* 羅針盤のベース */}
-      <circle cx="12" cy="12" r="10" fill="#f8f9f6" stroke="#5c8465" strokeWidth="1.5" />
-      {/* 方位の目盛り（抽象的） */}
-      <path d="M 12 3 V 4 M 12 20 V 21 M 3 12 H 4 M 20 12 H 21" stroke="#5c8465" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-      <circle cx="12" cy="12" r="7" fill="none" stroke="#5c8465" strokeWidth="1" strokeDasharray="1 3" opacity="0.4" />
+      {/* 過去から未来へ続く体調の波（バイオリズム） */}
+      <path d="M 2 16 C 5 16, 7 8, 12 8 C 17 8, 19 18, 23 18" fill="none" stroke="url(#grad-wave)" strokeWidth="2" strokeLinecap="round" />
       
-      {/* 針（右上＝明日・未来を指し示す） */}
-      <g transform="translate(12, 12) rotate(45) translate(-12, -12)">
-        {/* 北（ゴールド） */}
-        <path d="M 12 4 L 14 12 L 12 12 Z" fill="url(#grad-needle-gold)" />
-        <path d="M 12 4 L 10 12 L 12 12 Z" fill="#b45309" opacity="0.8" />
-        {/* 南（グリーン） */}
-        <path d="M 12 20 L 14 12 L 12 12 Z" fill="#4a7253" />
-        <path d="M 12 20 L 10 12 L 12 12 Z" fill="#2c4a34" opacity="0.8" />
-      </g>
+      {/* 予測される波の背景エリア（うっすらとした塗り） */}
+      <path d="M 2 16 C 5 16, 7 8, 12 8 C 17 8, 19 18, 23 18 V 22 H 2 Z" fill="#5c8465" opacity="0.05" />
+
+      {/* 先読みしたピーク（未病のサイン）を捉える輝き */}
+      <path d="M 12 3 L 13 6 L 16 7 L 13 8 L 12 11 L 11 8 L 8 7 L 11 6 Z" fill="#dca855" />
+      <circle cx="12" cy="7" r="5" fill="none" stroke="#dca855" strokeWidth="1" opacity="0.5" strokeDasharray="1 2" />
       
-      {/* 中心のピン */}
-      <circle cx="12" cy="12" r="2" fill="#ffffff" stroke="#2c4a34" strokeWidth="1" />
+      {/* 小さなキラキラ */}
+      <circle cx="17" cy="4" r="1" fill="#dca855" opacity="0.8" />
+      <circle cx="8" cy="11" r="0.7" fill="#5c8465" opacity="0.6" />
     </svg>
   );
 }
-
 
 // ▼ 結果・チェック（クリアなグリーン）
 export function IconResult({ className = "h-7 w-7", ...props }) {
