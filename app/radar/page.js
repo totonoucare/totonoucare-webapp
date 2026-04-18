@@ -547,8 +547,8 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
         <svg viewBox="0 0 340 352" className="h-full w-full overflow-visible" aria-hidden="true">
           <defs>
             <linearGradient id={`gauge-track-${signal}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#eef2ff" />
-              <stop offset="100%" stopColor="#e2e8f0" />
+              <stop offset="0%" stopColor="#e5e7eb" />
+              <stop offset="100%" stopColor="#cbd5e1" />
             </linearGradient>
 
             <linearGradient id={`gauge-fill-${signal}`} x1="18%" y1="18%" x2="82%" y2="82%">
