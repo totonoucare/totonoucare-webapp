@@ -449,7 +449,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 }
 
 function getGaugeModeLabel() {
-  return "影響度スコア";
+  return "影響度センサー";
 }
 
 function getGaugeTone(signal) {
