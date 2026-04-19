@@ -186,7 +186,6 @@ const RADAR_LOADING_HINTS = [
   "あなた向けの注意ポイントをまとめています…",
 ];
 
-
 function humanizeMatchTag(tag) {
   const raw = String(tag || "").trim();
   if (!raw) return "";
@@ -408,7 +407,6 @@ function getLocationDisplayLabel(location) {
   return "設定中の地域";
 }
 
-
 function clampScore(score) {
   const n = Number(score);
   if (!Number.isFinite(n)) return 0;
@@ -503,7 +501,6 @@ function getGaugeTone(signal) {
   };
 }
 
-
 function getGaugeModePillTone(signal) {
   if (signal === 2) {
     return "border-rose-200 bg-white/92 text-rose-700 shadow-[0_10px_24px_-18px_rgba(225,29,72,0.42)]";
@@ -529,7 +526,11 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
 
   const gaugeStart = -120;
   const gaugeEnd = 120;
-  const valueAngle = gaugeStart + ((gaugeEnd - gaugeStart) * safeScore) / 10;
+
+  const scoreToAngle = (value) =>
+    gaugeStart + ((gaugeEnd - gaugeStart) * value) / 10;
+
+  const valueAngle = scoreToAngle(safeScore);
 
   const outerRadius = 112;
   const innerRadius = 80;
@@ -545,8 +546,8 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
       ? "rgba(226,174,69,0.14)"
       : "rgba(102,185,163,0.13)";
 
-  const stableEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 3) / 10;
-  const cautionEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 5) / 10;
+  const stableEnd = scoreToAngle(3);
+  const cautionEnd = scoreToAngle(5);
 
   const needleTip = polarToCartesian(cx, cy, needleRadius, valueAngle);
   const needleTail = polarToCartesian(cx, cy, 18, valueAngle + 180);
@@ -629,19 +630,20 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             filter={`url(#gauge-shadow-${signal})`}
           />
 
-          {[gaugeStart, gaugeStart + 48, gaugeStart + 96, gaugeStart + 144, gaugeEnd].map((angle, idx) => {
+          {[0, 3, 5, 10].map((value) => {
+            const angle = scoreToAngle(value);
             const inner = polarToCartesian(cx, cy, innerRadius + 4, angle);
             const outer = polarToCartesian(cx, cy, guideRadius - 4, angle);
-            const strong = idx === 0 || idx === 2 || idx === 4;
+
             return (
               <line
-                key={angle}
+                key={value}
                 x1={inner.x}
                 y1={inner.y}
                 x2={outer.x}
                 y2={outer.y}
-                stroke={strong ? "rgba(100,116,139,0.58)" : "rgba(148,163,184,0.52)"}
-                strokeWidth={strong ? "3.5" : "2.5"}
+                stroke="rgba(100,116,139,0.58)"
+                strokeWidth="3.5"
                 strokeLinecap="round"
               />
             );
@@ -672,8 +674,6 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           />
           <circle cx={170} cy={172} r={10} fill="#ffffff" stroke="rgba(226,232,240,0.95)" strokeWidth="2.5" />
           <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
-
-
 
           <text
             x={170}
@@ -737,24 +737,24 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
         </div>
       </div>
 
-<div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-  <span className="inline-flex items-center gap-2 rounded-full border border-[#C8E4DB] bg-[#F3FBF8] px-3 py-1 text-[12px] font-black text-[#2F816E] shadow-[0_8px_24px_-18px_rgba(102,185,163,0.24)]">
-    <span className="h-3 w-3 rounded-full bg-[#66B9A3]" />
-    1〜3 安定
-  </span>
-  <span className="inline-flex items-center gap-2 rounded-full border border-[#EAD8A6] bg-[#FFF9ED] px-3 py-1 text-[12px] font-black text-[#AD7A18] shadow-[0_8px_24px_-18px_rgba(226,174,69,0.24)]">
-    <span className="h-3 w-3 rounded-full bg-[#E2AE45]" />
-    4〜5 注意
-  </span>
-  <span className="inline-flex items-center gap-2 rounded-full border border-[#ECD6C5] bg-[#FFF6EF] px-3 py-1 text-[12px] font-black text-[#B86430] shadow-[0_8px_24px_-18px_rgba(227,137,73,0.24)]">
-    <span className="h-3 w-3 rounded-full bg-[#E38949]" />
-    6〜10 警戒
-  </span>
-</div>
-      
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#C8E4DB] bg-[#F3FBF8] px-3 py-1 text-[12px] font-black text-[#2F816E] shadow-[0_8px_24px_-18px_rgba(102,185,163,0.24)]">
+          <span className="h-3 w-3 rounded-full bg-[#66B9A3]" />
+          1〜3 安定
+        </span>
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#EAD8A6] bg-[#FFF9ED] px-3 py-1 text-[12px] font-black text-[#AD7A18] shadow-[0_8px_24px_-18px_rgba(226,174,69,0.24)]">
+          <span className="h-3 w-3 rounded-full bg-[#E2AE45]" />
+          4〜5 注意
+        </span>
+        <span className="inline-flex items-center gap-2 rounded-full border border-[#ECD6C5] bg-[#FFF6EF] px-3 py-1 text-[12px] font-black text-[#B86430] shadow-[0_8px_24px_-18px_rgba(227,137,73,0.24)]">
+          <span className="h-3 w-3 rounded-full bg-[#E38949]" />
+          6〜10 警戒
+        </span>
+      </div>
     </div>
   );
 }
+
 function SegmentedTabs({ tabs, value, onChange }) {
   return (
     <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
@@ -1013,7 +1013,6 @@ function PointDetailSheet({ point, onClose }) {
           </div>
         ) : null}
 
-        {/* 下部見切れ防止用スペーサー */}
         <div className="h-8 w-full sm:h-2" />
       </div>
     </div>
@@ -1161,7 +1160,7 @@ export default function RadarPage() {
         };
       });
     } catch (e) {
-      console.error('enrichForecastAfterRender failed:', e);
+      console.error("enrichForecastAfterRender failed:", e);
     } finally {
       if (requestSeq === requestSeqRef.current) {
         setEnrichingForecast(false);
@@ -1619,7 +1618,6 @@ export default function RadarPage() {
         />
       ) : null}
 
-      {/* メインタブ (予報・対策 / 記録) */}
       <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70 py-2 mb-2">
         <SegmentedTabs
           tabs={[
@@ -1633,7 +1631,6 @@ export default function RadarPage() {
 
       {tab === "forecast" ? (
         <div className="space-y-6">
-          {/* サブタブ (今日 / 明日) */}
           <div className="mx-auto w-[60%]">
             <SegmentedTabs
               tabs={[
@@ -1651,7 +1648,6 @@ export default function RadarPage() {
             </div>
           ) : null}
 
-          {/* 1. 予報カード */}
           <Module className="relative overflow-hidden p-4 sm:p-6">
             <div
               className={[
@@ -1831,7 +1827,6 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          {/* 2. 今夜の先回りツボ */}
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-1">
               <div className="grid h-14 w-14 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
@@ -1973,7 +1968,6 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          {/* 3. 食養生 */}
           <Module className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="grid h-14 w-14 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
@@ -2107,7 +2101,6 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          {/* 4. 体質カード */}
           <Module className="p-5 bg-[color-mix(in_srgb,var(--mint),white_70%)]">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
@@ -2180,7 +2173,6 @@ export default function RadarPage() {
               </Button>
             </div>
           </Module>
-
         </div>
       ) : (
         <div className="space-y-6">
@@ -2277,10 +2269,10 @@ export default function RadarPage() {
               </div>
             ) : (
               <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center">
-                 <div className="text-[14px] font-black text-slate-700">{todayRecordDateLabel} の記録はありません</div>
-                 <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                    しんどかった日だけでも残しておくと、週次レポートで自分の傾向が見えやすくなります。
-                 </div>
+                <div className="text-[14px] font-black text-slate-700">{todayRecordDateLabel} の記録はありません</div>
+                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+                  しんどかった日だけでも残しておくと、週次レポートで自分の傾向が見えやすくなります。
+                </div>
               </div>
             )}
           </Module>
