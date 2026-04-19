@@ -517,8 +517,52 @@ function getGaugeShadow(signal) {
   return "rgba(16,185,129,0.34)";
 }
 
-function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
+function useResetAnimatedNumber(target, duration = 700, animationKey = "") {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    const to = Math.max(0, Number(target) || 0);
+
+    cancelAnimationFrame(rafRef.current);
+
+    setValue(0);
+
+    const start = performance.now();
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = easeOutCubic(progress);
+      const next = to * eased;
+
+      setValue(next);
+
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        setValue(to);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [target, duration, animationKey]);
+
+  return value;
+}
+
+function ForecastGauge({
+  score = 0,
+  signal = 0,
+  triggerKey = "pressure_down",
+  animationKey = "",
+}) {
   const safeScore = Math.max(0, Math.min(10, Number(score) || 0));
+  const animatedScore = useResetAnimatedNumber(safeScore, 700, animationKey);
   const tone = getGaugeTone(signal);
 
   const cx = 170;
@@ -530,7 +574,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
   const scoreToAngle = (value) =>
     gaugeStart + ((gaugeEnd - gaugeStart) * value) / 10;
 
-  const valueAngle = scoreToAngle(safeScore);
+  const valueAngle = scoreToAngle(animatedScore);
 
   const outerRadius = 112;
   const innerRadius = 80;
@@ -676,18 +720,18 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
           <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
 
           <text
-            x={170}
-            y={203}
-            textAnchor="middle"
-            fontSize="58"
-            fontWeight="900"
-            fill={tone.main}
-            stroke="rgba(255,255,255,0.95)"
-            strokeWidth="5"
-            paintOrder="stroke"
-          >
-            {safeScore}
-          </text>
+  x={170}
+  y={203}
+  textAnchor="middle"
+  fontSize="58"
+  fontWeight="900"
+  fill={tone.main}
+  stroke="rgba(255,255,255,0.95)"
+  strokeWidth="5"
+  paintOrder="stroke"
+>
+  {Math.round(animatedScore)}
+</text>
           <text
             x={209}
             y={203}
@@ -1715,6 +1759,7 @@ export default function RadarPage() {
                         score={forecast.score_0_10}
                         signal={forecast.signal}
                         triggerKey={triggerKey}
+                        animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                       />
                       <div className="-mt-1 text-center text-[12px] font-bold leading-6 text-slate-500">
                         スコアが高いほど、無理を重ねると崩れやすい目安です。
