@@ -121,32 +121,32 @@ function signalLabel(signal) {
 
 function signalBadgeClass(signal) {
   if (signal === 2) {
-    return "bg-[#FFF5F7] text-[#8F4150] ring-1 ring-inset ring-[#EAB4BE]";
+    return "bg-[#FFF6EF] text-[#B86430] ring-1 ring-inset ring-[#ECD6C5]";
   }
   if (signal === 1) {
-    return "bg-[#FFF9EE] text-[#8A641B] ring-1 ring-inset ring-[#F0D498]";
+    return "bg-[#FFF9ED] text-[#AD7A18] ring-1 ring-inset ring-[#EAD8A6]";
   }
-  return "bg-[#F5FBF8] text-[#2F7F6C] ring-1 ring-inset ring-[#B9E0D1]";
+  return "bg-[#F3FBF8] text-[#2F816E] ring-1 ring-inset ring-[#C8E4DB]";
 }
 
 function signalDotClass(signal) {
   if (signal === 2) {
-    return "bg-[#D96C7C] shadow-[0_0_8px_rgba(217,108,124,0.28)]";
+    return "bg-[#E38949] shadow-[0_0_10px_rgba(227,137,73,0.20)]";
   }
   if (signal === 1) {
-    return "bg-[#E2AB43] shadow-[0_0_8px_rgba(226,171,67,0.26)]";
+    return "bg-[#E2AE45] shadow-[0_0_10px_rgba(226,174,69,0.20)]";
   }
-  return "bg-[#63B89E] shadow-[0_0_8px_rgba(99,184,158,0.24)]";
+  return "bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.18)]";
 }
 
 function signalPanelClass(signal) {
   if (signal === 2) {
-    return "ring-1 ring-[#E7C3CB] bg-[linear-gradient(135deg,#FFF8FA_0%,#FAEEF1_100%)] text-[#8F4150]";
+    return "ring-1 ring-[#ECD6C5] bg-[linear-gradient(135deg,#FFF9F5_0%,#FFF4EC_100%)] text-[#8E522B]";
   }
   if (signal === 1) {
-    return "ring-1 ring-[#E8D2A0] bg-[linear-gradient(135deg,#FFFDF7_0%,#FAF3E3_100%)] text-[#8A641B]";
+    return "ring-1 ring-[#E9D8A9] bg-[linear-gradient(135deg,#FFFCF4_0%,#FFF7E8_100%)] text-[#8C6215]";
   }
-  return "ring-1 ring-[#C9E6DB] bg-[linear-gradient(135deg,#F8FCFA_0%,#EEF7F3_100%)] text-[#2F7F6C]";
+  return "ring-1 ring-[#CBE5DC] bg-[linear-gradient(135deg,#F6FCF9_0%,#EFF9F5_100%)] text-[#2F7767]";
 }
 
 function signalPanelSubtext(signal) {
@@ -274,24 +274,24 @@ function getMoodHeadline(triggerKey, signal) {
 
 function getHeroPanelClass(signal) {
   if (signal === 2) {
-    return "bg-[linear-gradient(135deg,rgba(255,248,250,0.96)_0%,rgba(250,238,241,0.92)_100%)] ring-1 ring-[rgba(231,195,203,0.78)]";
+    return "bg-[linear-gradient(135deg,#FFF9F5_0%,#FFF5EE_100%)] ring-1 ring-[#EBD7C8]";
   }
   if (signal === 1) {
-    return "bg-[linear-gradient(135deg,rgba(255,253,247,0.96)_0%,rgba(250,243,227,0.92)_100%)] ring-1 ring-[rgba(232,210,160,0.8)]";
+    return "bg-[linear-gradient(135deg,#FFFDF5_0%,#FFF8EC_100%)] ring-1 ring-[#E9DAB0]";
   }
-  return "bg-[linear-gradient(135deg,rgba(248,252,250,0.96)_0%,rgba(238,247,243,0.92)_100%)] ring-1 ring-[rgba(201,230,219,0.82)]";
+  return "bg-[linear-gradient(135deg,#F6FCF9_0%,#FBFFFD_100%)] ring-1 ring-[#CCE6DD]";
 }
 
 function getHeroAccentClass(signal) {
-  if (signal === 2) return "text-[#8F4150]";
-  if (signal === 1) return "text-[#8A641B]";
-  return "text-[#2F7F6C]";
+  if (signal === 2) return "text-[#C06A34]";
+  if (signal === 1) return "text-[#B37D18]";
+  return "text-[#3C8C78]";
 }
 
 function getHeroScoreClass(signal) {
-  if (signal === 2) return "text-[#8F4150]";
-  if (signal === 1) return "text-[#8A641B]";
-  return "text-[#2F7F6C]";
+  if (signal === 2) return "text-[#C06A34]";
+  if (signal === 1) return "text-[#B37D18]";
+  return "text-[#3C8C78]";
 }
 
 function getHeroDecorClass(signal) {
