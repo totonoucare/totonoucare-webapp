@@ -416,21 +416,21 @@ function clampScore(score) {
 }
 
 function getGaugeStroke(signal) {
-  if (signal === 2) return "#dc2626";
-  if (signal === 1) return "#d97706";
-  return "#2f7a57";
+  if (signal === 2) return "#E38949";
+  if (signal === 1) return "#E2AE45";
+  return "#66B9A3";
 }
 
 function getGaugeSoftStroke(signal) {
-  if (signal === 2) return "rgba(244,63,94,0.18)";
-  if (signal === 1) return "rgba(245,158,11,0.18)";
-  return "rgba(16,185,129,0.18)";
+  if (signal === 2) return "rgba(227,137,73,0.15)";
+  if (signal === 1) return "rgba(226,174,69,0.15)";
+  return "rgba(102,185,163,0.15)";
 }
 
 function getGaugeFill(signal) {
-  if (signal === 2) return "rgba(255,241,242,0.96)";
-  if (signal === 1) return "rgba(255,251,235,0.96)";
-  return "rgba(236,253,245,0.96)";
+  if (signal === 2) return "rgba(255,246,239,0.96)";
+  if (signal === 1) return "rgba(255,249,237,0.96)";
+  return "rgba(243,251,248,0.96)";
 }
 
 function polarToCartesian(cx, cy, r, angleDeg) {
@@ -540,10 +540,10 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
   const centerFill = "#ffffff";
   const scoreShadow =
     signal === 2
-      ? "rgba(225,29,72,0.18)"
+      ? "rgba(227,137,73,0.14)"
       : signal === 1
-      ? "rgba(217,119,6,0.18)"
-      : "rgba(5,150,105,0.16)";
+      ? "rgba(226,174,69,0.14)"
+      : "rgba(102,185,163,0.13)";
 
   const stableEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 3) / 10;
   const cautionEnd = gaugeStart + ((gaugeEnd - gaugeStart) * 5) / 10;
@@ -737,55 +737,21 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
         </div>
       </div>
 
-<div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
-  <span
-    className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm"
-    style={{
-      color: "#327F6D",
-      background: "rgba(255,255,255,0.82)",
-      border: "1px solid rgba(90,174,151,0.24)",
-      boxShadow: "0 8px 20px rgba(90,174,151,0.08)",
-    }}
-  >
-    <span
-      className="h-3 w-3 rounded-full"
-      style={{ background: "#5AAE97" }}
-    />
+<div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+  <span className="inline-flex items-center gap-2 rounded-full border border-[#C8E4DB] bg-[#F3FBF8] px-3 py-1 text-[12px] font-black text-[#2F816E] shadow-[0_8px_24px_-18px_rgba(102,185,163,0.24)]">
+    <span className="h-3 w-3 rounded-full bg-[#66B9A3]" />
     1〜3 安定
   </span>
-
-  <span
-    className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm"
-    style={{
-      color: "#8B6419",
-      background: "rgba(255,255,255,0.82)",
-      border: "1px solid rgba(223,166,64,0.26)",
-      boxShadow: "0 8px 20px rgba(223,166,64,0.08)",
-    }}
-  >
-    <span
-      className="h-3 w-3 rounded-full"
-      style={{ background: "#DFA640" }}
-    />
+  <span className="inline-flex items-center gap-2 rounded-full border border-[#EAD8A6] bg-[#FFF9ED] px-3 py-1 text-[12px] font-black text-[#AD7A18] shadow-[0_8px_24px_-18px_rgba(226,174,69,0.24)]">
+    <span className="h-3 w-3 rounded-full bg-[#E2AE45]" />
     4〜5 注意
   </span>
-
-  <span
-    className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm"
-    style={{
-      color: "#8F4150",
-      background: "rgba(255,255,255,0.82)",
-      border: "1px solid rgba(217,108,124,0.26)",
-      boxShadow: "0 8px 20px rgba(217,108,124,0.08)",
-    }}
-  >
-    <span
-      className="h-3 w-3 rounded-full"
-      style={{ background: "#D96C7C" }}
-    />
+  <span className="inline-flex items-center gap-2 rounded-full border border-[#ECD6C5] bg-[#FFF6EF] px-3 py-1 text-[12px] font-black text-[#B86430] shadow-[0_8px_24px_-18px_rgba(227,137,73,0.24)]">
+    <span className="h-3 w-3 rounded-full bg-[#E38949]" />
     6〜10 警戒
   </span>
 </div>
+      
     </div>
   );
 }
