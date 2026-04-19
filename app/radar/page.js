@@ -1833,25 +1833,41 @@ export default function RadarPage() {
                   </button>
 
                   {noticeOpen ? (
-                    <div className="border-t border-slate-200/80 px-4 py-4 bg-white/60">
-                      {enrichingForecast && !forecast?.gpt_summary ? (
-                        <div className="mb-3 rounded-[16px] bg-slate-50 px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
-                          説明文を読みやすく整えています…
-                        </div>
-                      ) : null}
-                      <ul className="space-y-3">
-                        {forecastLines.map((line, idx) => (
-                          <li
-                            key={`${idx}-${line}`}
-                            className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
-                          >
-                            <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
-                            <span>{line}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
+  <div className="border-t border-slate-200/80 px-4 py-4 bg-white/60">
+    {enrichingForecast && !forecast?.gpt_summary ? (
+      <div className="mb-3 rounded-[16px] bg-slate-50 px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
+        説明文を読みやすく整えています…
+      </div>
+    ) : null}
+
+    <ul className="space-y-3">
+      {forecastLines.map((line, idx) => (
+        <li
+          key={`${idx}-${line}`}
+          className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
+        >
+          <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
+          <span>{line}</span>
+        </li>
+      ))}
+    </ul>
+
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <span className="inline-flex items-center gap-2 rounded-full border border-[#C8E4DB] bg-[#F3FBF8] px-3 py-1 text-[12px] font-black text-[#2F816E] shadow-[0_8px_24px_-18px_rgba(102,185,163,0.24)]">
+        <span className="h-3 w-3 rounded-full bg-[#66B9A3]" />
+        1〜3 安定
+      </span>
+      <span className="inline-flex items-center gap-2 rounded-full border border-[#EAD8A6] bg-[#FFF9ED] px-3 py-1 text-[12px] font-black text-[#AD7A18] shadow-[0_8px_24px_-18px_rgba(226,174,69,0.24)]">
+        <span className="h-3 w-3 rounded-full bg-[#E2AE45]" />
+        4〜5 注意
+      </span>
+      <span className="inline-flex items-center gap-2 rounded-full border border-[#ECD6C5] bg-[#FFF6EF] px-3 py-1 text-[12px] font-black text-[#B86430] shadow-[0_8px_24px_-18px_rgba(227,137,73,0.24)]">
+        <span className="h-3 w-3 rounded-full bg-[#E38949]" />
+        6〜10 警戒
+      </span>
+    </div>
+  </div>
+) : null}
                 </div>
               </div>
             </div>
