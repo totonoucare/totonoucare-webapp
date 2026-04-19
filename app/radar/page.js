@@ -1853,20 +1853,6 @@ export default function RadarPage() {
   </div>
 ) : null}
                 </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-[#C8E4DB] bg-[#F3FBF8] px-3 py-1 text-[12px] font-black text-[#2F816E] shadow-[0_8px_24px_-18px_rgba(102,185,163,0.24)]">
-                      <span className="h-3 w-3 rounded-full bg-[#66B9A3]" />
-                      1〜3 安定
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-[#EAD8A6] bg-[#FFF9ED] px-3 py-1 text-[12px] font-black text-[#AD7A18] shadow-[0_8px_24px_-18px_rgba(226,174,69,0.24)]">
-                      <span className="h-3 w-3 rounded-full bg-[#E2AE45]" />
-                      4〜5 注意
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full border border-[#ECD6C5] bg-[#FFF6EF] px-3 py-1 text-[12px] font-black text-[#B86430] shadow-[0_8px_24px_-18px_rgba(227,137,73,0.24)]">
-                      <span className="h-3 w-3 rounded-full bg-[#E38949]" />
-                      6〜10 警戒
-                    </span>
-                  </div>
               </div>
             </div>
           </Module>
