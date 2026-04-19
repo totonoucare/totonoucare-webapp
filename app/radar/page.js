@@ -1746,6 +1746,9 @@ export default function RadarPage() {
                         triggerKey={triggerKey}
                         animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                       />
+                      <div className="-mt-1 text-center text-[12px] font-bold leading-6 text-slate-500">
+                        スコアが高いほど、無理を重ねると崩れやすい目安です。
+                      </div>                        
                     </div>
 
                     <div className="grid gap-3">
@@ -1850,11 +1853,6 @@ export default function RadarPage() {
   </div>
 ) : null}
                 </div>
-                <div className="mt-4 rounded-[20px] bg-white/68 px-4 py-4 ring-1 ring-black/5 backdrop-blur-sm">
-                  <div className="text-center text-[12px] font-bold leading-6 text-slate-500">
-                    スコアが高いほど、無理を重ねると崩れやすい目安です。
-                  </div>
-
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                     <span className="inline-flex items-center gap-2 rounded-full border border-[#C8E4DB] bg-[#F3FBF8] px-3 py-1 text-[12px] font-black text-[#2F816E] shadow-[0_8px_24px_-18px_rgba(102,185,163,0.24)]">
                       <span className="h-3 w-3 rounded-full bg-[#66B9A3]" />
@@ -1869,7 +1867,6 @@ export default function RadarPage() {
                       6〜10 警戒
                     </span>
                   </div>
-                </div>
               </div>
             </div>
           </Module>
