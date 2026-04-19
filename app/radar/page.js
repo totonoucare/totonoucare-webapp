@@ -517,47 +517,8 @@ function getGaugeShadow(signal) {
   return "rgba(16,185,129,0.34)";
 }
 
-function useAnimatedNumber(target, duration = 650) {
-  const [value, setValue] = useState(0);
-  const valueRef = useRef(0);
-
-  useEffect(() => {
-    const to = clampScore(target);
-    const from = valueRef.current;
-
-    if (from === to) return;
-
-    let rafId = 0;
-    const start = performance.now();
-
-    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-
-    const tick = (now) => {
-      const progress = Math.min(1, (now - start) / duration);
-      const eased = easeOutCubic(progress);
-      const next = from + (to - from) * eased;
-
-      valueRef.current = next;
-      setValue(next);
-
-      if (progress < 1) {
-        rafId = requestAnimationFrame(tick);
-      } else {
-        valueRef.current = to;
-        setValue(to);
-      }
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [target, duration]);
-
-  return value;
-}
-
 function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) {
-  const targetScore = clampScore(score);
-  const animatedScore = useAnimatedNumber(targetScore, 650);
+  const safeScore = Math.max(0, Math.min(10, Number(score) || 0));
   const tone = getGaugeTone(signal);
 
   const cx = 170;
@@ -569,7 +530,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
   const scoreToAngle = (value) =>
     gaugeStart + ((gaugeEnd - gaugeStart) * value) / 10;
 
-  const valueAngle = scoreToAngle(animatedScore);
+  const valueAngle = scoreToAngle(safeScore);
 
   const outerRadius = 112;
   const innerRadius = 80;
@@ -725,7 +686,7 @@ function ForecastGauge({ score = 0, signal = 0, triggerKey = "pressure_down" }) 
             strokeWidth="5"
             paintOrder="stroke"
           >
-            {Math.round(animatedScore)}
+            {safeScore}
           </text>
           <text
             x={209}
