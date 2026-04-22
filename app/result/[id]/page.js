@@ -26,6 +26,7 @@ import {
   IconCloud,
 } from "@/components/illust/icons/result";
 import { WeatherIcon } from "@/components/illust/icons/weather";
+import { buildPersonalWeatherAffinities } from "@/lib/radar_v1/personalizeForecast";
 
 export default function ResultPageWrapper({ params }) {
   return (
@@ -170,85 +171,24 @@ function getImpactRankLabel(index) {
 }
 
 function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels }) {
-  const subCodes = Array.isArray(computed?.sub_labels) ? computed.sub_labels : [];
-  const coreCode = computed?.core_code || "";
-  const envSensitivity = clamp(Number(answers?.env_sensitivity ?? 0) || 0, 0, 3);
-  const envVectors = Array.isArray(answers?.env_vectors)
-    ? answers.env_vectors.filter((x) => x && x !== "none")
-    : [];
-
-  const scores = {
-    pressure_down: 0,
-    pressure_up: 0,
-    cold: 0,
-    heat: 0,
-    damp: 0,
-    dry: 0,
+  const normalizedProfile = {
+    constitution_core: computed?.core_code || "",
+    sub_constitution_1: computed?.sub_labels?.[0] || "",
+    sub_constitution_2: computed?.sub_labels?.[1] || "",
   };
+  const coreCode = String(normalizedProfile.constitution_core || core?.key || "");
+  const subCodes = [normalizedProfile.sub_constitution_1, normalizedProfile.sub_constitution_2].filter(Boolean);
+  const reserveBucket = core?.reserve_label === "小" ? "small" : core?.reserve_label === "大" ? "large" : "standard";
+  const { affinities } = buildPersonalWeatherAffinities(normalizedProfile);
 
-  // ★ personalizeForecast.js と同じロジックに完全同期 ★
-  for (const label of subCodes) {
-    switch (label) {
-      case "qi_stagnation":
-        scores.pressure_down += 0.10; 
-        scores.pressure_up += 0.08; 
-        scores.heat += 0.06; 
-        scores.damp += 0.04; 
-        break;
-      case "qi_deficiency":
-        scores.pressure_down += 0.10; 
-        scores.cold += 0.14; 
-        scores.damp += 0.10; 
-        break;
-      case "blood_deficiency":
-        scores.cold += 0.12; 
-        scores.dry += 0.10; 
-        scores.pressure_down += 0.06; 
-        break;
-      case "blood_stasis":
-        scores.pressure_down += 0.10; 
-        scores.cold += 0.08; 
-        scores.damp += 0.05; 
-        scores.pressure_up += 0.03; 
-        break;
-      case "fluid_damp":
-        scores.damp += 0.22; 
-        scores.cold += 0.06; 
-        scores.pressure_down += 0.04; 
-        break;
-      case "fluid_deficiency":
-        scores.dry += 0.22; 
-        scores.heat += 0.18; 
-        scores.pressure_up += 0.05; 
-        break;
-      default: break;
-    }
-  }
-
-  if (coreCode.includes("batt_small")) { for (const k of Object.keys(scores)) scores[k] += 0.08; }
-  if (coreCode.includes("batt_large")) { for (const k of Object.keys(scores)) scores[k] -= 0.03; }
-  if (coreCode.startsWith("accel")) { scores.pressure_down += 0.06; scores.pressure_up += 0.05; scores.heat += 0.05; }
-  if (coreCode.startsWith("brake")) { scores.cold += 0.08; scores.damp += 0.10; scores.pressure_down += 0.03; }
-
-  if (envVectors.includes("pressure_shift")) { scores.pressure_down += 0.12; scores.pressure_up += 0.12; }
-  if (envVectors.includes("temp_swing")) { scores.cold += 0.14; scores.heat += 0.14; }
-  if (envVectors.includes("humidity_up")) { scores.damp += 0.12; }
-  if (envVectors.includes("dryness_up")) { scores.dry += 0.10; }
-  if (envVectors.includes("wind_strong")) { scores.pressure_down += 0.03; scores.pressure_up += 0.03; }
-
-  for (const k of Object.keys(scores)) {
-    scores[k] += envSensitivity * 0.03;
-    scores[k] = round2(Math.max(0, scores[k]));
-  }
-
-  const items = Object.entries(scores)
+  const items = Object.entries(affinities || {})
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
+    .slice(0, 6)
     .map(([key], index) => ({
       key,
       label: weatherLabel(key),
       rankLabel: getImpactRankLabel(index),
-      body: weatherBody(key, symptomKey, coreCode, subCodes),
+      body: weatherBody(key, symptomKey, coreCode, subCodes, reserveBucket),
     }));
 
   return {
@@ -260,69 +200,88 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
 }
 
 function weatherLabel(key) {
-  const map = { pressure_down: "気圧が下がる日", pressure_up: "気圧が上がる日", cold: "冷え込む日", heat: "気温が上がりやすい日", damp: "湿っぽい日", dry: "乾燥しやすい日" };
+  const map = {
+    pressure_down: "気圧が下がる日",
+    pressure_up: "気圧が上がる日",
+    cold: "冷え込む日",
+    heat: "気温が上がりやすい日",
+    damp: "湿っぽい日",
+    dry: "乾燥しやすい日",
+  };
   return map[key] || key;
 }
 
-function weatherBody(key, symptomKey, coreCode, subCodes) {
+function weatherBody(key, symptomKey, coreCode, subCodes, reserveBucket) {
   const hasBloodDef = subCodes.includes("blood_deficiency");
   const hasFluidDef = subCodes.includes("fluid_deficiency");
   const hasFluidDamp = subCodes.includes("fluid_damp");
-  const isBattSmall = coreCode.includes("batt_small");
+  const hasQiDef = subCodes.includes("qi_deficiency");
+  const hasQiStag = subCodes.includes("qi_stagnation");
+  const hasBloodStasis = subCodes.includes("blood_stasis");
+  const isBrake = coreCode.startsWith("brake");
   const isAccel = coreCode.startsWith("accel");
+  const isLowReserve = reserveBucket === "small";
+  const isHighReserve = reserveBucket === "large";
 
   if (key === "pressure_down") {
-    if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "neck_shoulder") {
-      return "気圧が下がり外圧が緩む日に、体内の膨張感が強まりやすく、巡りの詰まりから頭や首肩の不調につながりやすくなります。";
+    if (symptomKey === "low_back_pain" || symptomKey === "fatigue" || symptomKey === "swelling") {
+      return "気圧が下がる日は、体を下から支える力が抜けやすく、重さやだるさが腰や下半身に集まりやすい方向です。";
     }
-    if (symptomKey === "swelling" || symptomKey === "low_back_pain") {
-      return "気圧が下がり外圧が緩む日に、体内の巡りが滞りやすく、下半身や全体の重だるさにつながりやすい方向です。";
+    if (hasBloodStasis || symptomKey === "headache" || symptomKey === "neck_shoulder") {
+      return "気圧が下がる日は、巡りの鈍さが表に出やすく、詰まり感や重い不快感として感じやすい方向です。";
     }
-    return "気圧が下がり外圧が緩む日に、体内の圧力が相対的に高まり、緊張や巡りの詰まり、だるさが出やすくなります。";
+    return "気圧が下がる日は、外の支えがゆるんだぶん体の内側がまとまりにくく、だるさや不調が出やすい方向です。";
   }
 
   if (key === "pressure_up") {
-    if (symptomKey === "mood" || symptomKey === "sleep") {
-      return "外からの圧力が強まり、体がギュッと締め付けられることで、リラックスしにくく切り替えが難しくなる方向です。";
+    if (hasQiStag || symptomKey === "mood" || symptomKey === "sleep") {
+      return "気圧が上がる日は、体が内にこもって張りつめやすく、気分の波や切り替えにくさとして出やすい方向です。";
     }
-    return "外からの圧力が強まり、体がギュッと締め付けられる方向です。無理に詰め込まず、少しゆるめる意識が合います。";
+    return "気圧が上がる日は、体が少しかたまりやすく、詰め込みすぎると息苦しさや落ち着かなさにつながりやすい方向です。";
   }
 
   if (key === "cold") {
-    if (symptomKey === "neck_shoulder" || symptomKey === "low_back_pain") {
-      return "冷え込む日は、血管や筋肉が縮こまり、首肩や腰のこわばり・痛みとして出やすい方向です。";
+    if (symptomKey === "low_back_pain" || symptomKey === "neck_shoulder") {
+      return "冷え込む日は、筋肉や巡りが縮こまりやすく、腰や首肩のこわばりとして表に出やすい方向です。";
     }
-    if (hasBloodDef || isBattSmall || symptomKey === "fatigue") {
-      return "冷え込む日は、血管や筋肉が縮こまり、体を支える余力が削れやすく、消耗やだるさとして出やすい方向です。";
+    if (hasQiDef || hasBloodDef || isLowReserve) {
+      return "冷え込む日は、体を支える余力が削られやすく、いつもより消耗や動き出しの鈍さとして感じやすい方向です。";
     }
-    return "冷え込む日は、体がギュッと縮こまりやすく、こわばりやだるさとして出やすい方向です。";
+    return "冷え込む日は、体全体の動きが鈍りやすく、重さやこわばりが残りやすい方向です。";
   }
 
   if (key === "heat") {
-    if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "sleep") {
-      return "気温が上がる日は、熱がこもりやすくのぼせ気味になり、上半身の張りや睡眠の質低下につながりやすい方向です。";
+    if (hasQiStag || symptomKey === "mood" || symptomKey === "headache" || symptomKey === "sleep") {
+      return "気温が上がる日は、熱や刺激が上にこもりやすく、落ち着かなさや上半身の張りとして出やすい方向です。";
     }
     if (hasFluidDef || isAccel) {
-      return "気温が上がる日は、熱や刺激がこもりやすく、消耗やのぼせ感につながりやすい方向です。";
+      return "気温が上がる日は、体のうるおいや余裕が削れやすく、のぼせ感や消耗として響きやすい方向です。";
     }
-    return "暑さや熱こもりで、体力が奪われてだるさや疲れが出やすい方向です。";
+    return "暑さが強い日は、熱疲れのように体力を持っていかれやすい方向です。";
   }
 
   if (key === "damp") {
-    if (symptomKey === "swelling" || symptomKey === "fatigue" || symptomKey === "headache" || symptomKey === "dizziness") {
-      return "湿っぽい日は、体に余分な水分が溜まって重みが加わり、だるさやむくみ、頭の重さにつながりやすくなります。";
+    if (symptomKey === "swelling" || symptomKey === "fatigue" || symptomKey === "low_back_pain") {
+      return "湿っぽい日は、体に重さがたまりやすく、むくみ感や重だるさが腰や下半身まで響きやすい方向です。";
     }
-    if (hasFluidDamp) {
-      return "湿っぽい日は、水分が停滞して重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
+    if (hasFluidDamp || isBrake) {
+      return "湿っぽい日は、水分や重さをさばく力が追いつきにくく、全身がどんよりしやすい方向です。";
     }
-    return "湿っぽい日は、重さが増して動き出しにくくなりやすい方向です。";
+    return "湿っぽい日は、体が重くまとわりつくようなだるさを感じやすい方向です。";
   }
 
   if (key === "dry") {
-    if (hasFluidDef || hasBloodDef || symptomKey === "sleep" || symptomKey === "dizziness") {
-      return "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚の乾きや、睡眠の質低下として出やすい方向です。";
+    if (hasFluidDef || hasBloodDef || symptomKey === "sleep") {
+      return "乾燥しやすい日は、うるおいと休息の余裕が削られやすく、乾きや消耗として表に出やすい方向です。";
     }
-    return "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
+    if (isAccel) {
+      return "乾燥しやすい日は、熱っぽさや焦りが抜けにくく、体の内側が空回りしやすい方向です。";
+    }
+    return "乾燥しやすい日は、体のしっとり感が不足して、疲れやすさやこわばりとして出やすい方向です。";
+  }
+
+  if (isHighReserve) {
+    return "影響は受けても持ち直しやすいほうですが、重なる日は早めに整えると楽です。";
   }
 
   return "この方向の天気変化で体調が揺れやすい傾向があります。";
