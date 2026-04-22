@@ -321,6 +321,30 @@ function getPointSelectionReason(point) {
   );
 }
 
+function hasAiPointSelectionReason(point) {
+  const explanation = point?.explanation || {};
+  return Boolean(explanation.selection_reason_rule_based);
+}
+
+function PointReasonLoadingBlock() {
+  return (
+    <div className="rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_82%)] p-4 ring-1 ring-[var(--ring)]">
+      <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[10px] font-black text-[var(--accent-ink)] ring-1 ring-black/5">
+        <span className="h-2 w-2 rounded-full bg-[var(--accent-ink)] animate-pulse" />
+        AIが理由を整えています…
+      </div>
+      <div className="mt-4 space-y-2.5">
+        <div className="h-3.5 w-full rounded-full bg-white/90 animate-pulse" />
+        <div className="h-3.5 w-[92%] rounded-full bg-white/90 animate-pulse" />
+        <div className="h-3.5 w-[74%] rounded-full bg-white/90 animate-pulse" />
+      </div>
+      <p className="mt-4 text-[12px] font-bold leading-5 text-slate-600">
+        このツボが今の不調や天気とどうつながるかを、わかりやすい言葉にまとめています。
+      </p>
+    </div>
+  );
+}
+
 function getPointMatchTags(point) {
   return Array.from(
     new Set(
@@ -901,7 +925,7 @@ function LocationEditor({
   );
 }
 
-function PointDetailSheet({ point, onClose }) {
+function PointDetailSheet({ point, onClose, reasonLoading = false }) {
   const [imageIndex, setImageIndex] = useState(0);
 
   useEffect(() => {
@@ -992,11 +1016,26 @@ function PointDetailSheet({ point, onClose }) {
         </div>
 
         <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-[var(--ring)] shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-            このツボを選んだ理由
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+              このツボを選んだ理由
+            </div>
+            {reasonLoading ? (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mint),white_55%)] px-2.5 py-1 text-[10px] font-black text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-ink)] animate-pulse" />
+                AI生成中
+              </div>
+            ) : null}
           </div>
-          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-            {getPointSelectionReason(point)}
+
+          <div className="mt-2.5">
+            {reasonLoading ? (
+              <PointReasonLoadingBlock />
+            ) : (
+              <div className="text-[13px] font-bold leading-6 text-slate-700">
+                {getPointSelectionReason(point)}
+              </div>
+            )}
           </div>
 
           {reasonTags.length > 0 ? (
@@ -1496,6 +1535,19 @@ export default function RadarPage() {
   const foodExamples = safeArray(food.examples);
   const hasFoodDetails =
     !!food.how_to || !!food.avoid || !!food.reason || !!food.lifestyle_tip;
+  const pointReasonLoading =
+    !!selectedPoint && enrichingForecast && !hasAiPointSelectionReason(selectedPoint);
+
+  useEffect(() => {
+    if (!selectedPoint) return;
+
+    const currentPoints = safeArray(bundle?.care_plan?.night_tsubo_set?.points);
+    const refreshedPoint = currentPoints.find((p) => p?.code === selectedPoint?.code);
+
+    if (refreshedPoint && refreshedPoint !== selectedPoint) {
+      setSelectedPoint(refreshedPoint);
+    }
+  }, [bundle?.care_plan?.night_tsubo_set?.points, selectedPoint]);
 
   const todayRecordDate = getJstTodayTomorrow().today;
   const todayRecordDateLabel = formatTargetDate(todayRecordDate);
@@ -2346,6 +2398,7 @@ export default function RadarPage() {
       {selectedPoint ? (
         <PointDetailSheet
           point={selectedPoint}
+          reasonLoading={pointReasonLoading}
           onClose={() => setSelectedPoint(null)}
         />
       ) : null}
