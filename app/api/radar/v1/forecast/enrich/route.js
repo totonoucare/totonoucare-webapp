@@ -9,6 +9,7 @@ import { buildFastRadarBundle } from "@/lib/radar_v1/buildFastRadarBundle";
 import {
   generateRadarSummary,
   generateTomorrowFood,
+  generateTsuboSelectionReasons,
 } from "@/lib/radar_v1/gptRadar";
 import {
   getPrimaryRadarLocation,
@@ -188,6 +189,34 @@ export async function GET(req) {
       }
     } catch (error) {
       console.error("generateTomorrowFood failed:", error);
+    }
+
+    try {
+      const generatedTsuboReasons = await generateTsuboSelectionReasons({
+        riskContext,
+        radarPlan,
+        targetDate,
+        relativeTargetMode,
+        section: "tonight",
+      });
+
+      if (generatedTsuboReasons?.tsubo_set) {
+        radarPlan = {
+          ...radarPlan,
+          tonight: {
+            ...radarPlan.tonight,
+            tsubo_set: generatedTsuboReasons.tsubo_set,
+            note: generatedTsuboReasons.overall_reason
+              ? {
+                  ...radarPlan.tonight?.note,
+                  body: generatedTsuboReasons.overall_reason,
+                }
+              : radarPlan.tonight?.note,
+          },
+        };
+      }
+    } catch (error) {
+      console.error("generateTsuboSelectionReasons failed:", error);
     }
 
     const forecast = await saveForecast({
