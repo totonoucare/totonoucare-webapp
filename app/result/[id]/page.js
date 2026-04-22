@@ -12,6 +12,10 @@ import {
   getSubLabels,
   getMeridianLine,
 } from "@/lib/diagnosis/v2/labels";
+import {
+  buildPersonalWeatherAffinityProfile,
+  rankExactWeatherAffinity,
+} from "@/lib/radar_v1/weatherAffinityProfile";
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
 import { MeridianIllust } from "@/components/illust/meridian";
@@ -172,79 +176,24 @@ function getImpactRankLabel(index) {
 function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels }) {
   const subCodes = Array.isArray(computed?.sub_labels) ? computed.sub_labels : [];
   const coreCode = computed?.core_code || "";
-  const envSensitivity = clamp(Number(answers?.env_sensitivity ?? 0) || 0, 0, 3);
-  const envVectors = Array.isArray(answers?.env_vectors)
-    ? answers.env_vectors.filter((x) => x && x !== "none")
-    : [];
 
-  const scores = {
-    pressure_down: 0,
-    pressure_up: 0,
-    cold: 0,
-    heat: 0,
-    damp: 0,
-    dry: 0,
-  };
+  const affinityProfile = buildPersonalWeatherAffinityProfile({
+    coreType: coreCode,
+    subRiskWeights: subCodes,
+    envVectors: Array.isArray(answers?.env_vectors)
+      ? answers.env_vectors.filter((x) => x && x !== "none")
+      : [],
+    sensitivity:
+      Number(answers?.env_sensitivity ?? 1) >= 2
+        ? "high"
+        : Number(answers?.env_sensitivity ?? 1) <= 0
+          ? "low"
+          : "normal",
+  });
 
-  // ★ personalizeForecast.js と同じロジックに完全同期 ★
-  for (const label of subCodes) {
-    switch (label) {
-      case "qi_stagnation":
-        scores.pressure_down += 0.10; 
-        scores.pressure_up += 0.08; 
-        scores.heat += 0.06; 
-        scores.damp += 0.04; 
-        break;
-      case "qi_deficiency":
-        scores.pressure_down += 0.10; 
-        scores.cold += 0.14; 
-        scores.damp += 0.10; 
-        break;
-      case "blood_deficiency":
-        scores.cold += 0.12; 
-        scores.dry += 0.10; 
-        scores.pressure_down += 0.06; 
-        break;
-      case "blood_stasis":
-        scores.pressure_down += 0.10; 
-        scores.cold += 0.08; 
-        scores.damp += 0.05; 
-        scores.pressure_up += 0.03; 
-        break;
-      case "fluid_damp":
-        scores.damp += 0.22; 
-        scores.cold += 0.06; 
-        scores.pressure_down += 0.04; 
-        break;
-      case "fluid_deficiency":
-        scores.dry += 0.22; 
-        scores.heat += 0.18; 
-        scores.pressure_up += 0.05; 
-        break;
-      default: break;
-    }
-  }
-
-  if (coreCode.includes("batt_small")) { for (const k of Object.keys(scores)) scores[k] += 0.08; }
-  if (coreCode.includes("batt_large")) { for (const k of Object.keys(scores)) scores[k] -= 0.03; }
-  if (coreCode.startsWith("accel")) { scores.pressure_down += 0.06; scores.pressure_up += 0.05; scores.heat += 0.05; }
-  if (coreCode.startsWith("brake")) { scores.cold += 0.08; scores.damp += 0.10; scores.pressure_down += 0.03; }
-
-  if (envVectors.includes("pressure_shift")) { scores.pressure_down += 0.12; scores.pressure_up += 0.12; }
-  if (envVectors.includes("temp_swing")) { scores.cold += 0.14; scores.heat += 0.14; }
-  if (envVectors.includes("humidity_up")) { scores.damp += 0.12; }
-  if (envVectors.includes("dryness_up")) { scores.dry += 0.10; }
-  if (envVectors.includes("wind_strong")) { scores.pressure_down += 0.03; scores.pressure_up += 0.03; }
-
-  for (const k of Object.keys(scores)) {
-    scores[k] += envSensitivity * 0.03;
-    scores[k] = round2(Math.max(0, scores[k]));
-  }
-
-  const items = Object.entries(scores)
-    .sort((a, b) => b[1] - a[1])
+  const items = rankExactWeatherAffinity(affinityProfile.weights)
     .slice(0, 3)
-    .map(([key], index) => ({
+    .map(({ key }, index) => ({
       key,
       label: weatherLabel(key),
       rankLabel: getImpactRankLabel(index),
@@ -833,4 +782,5 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
 
