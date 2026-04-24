@@ -587,7 +587,7 @@ if (!isLoggedIn) {
   <div className="relative rounded-[20px] border border-[var(--ring)] bg-[linear-gradient(180deg,#ffffff_0%,#fafaf7_100%)] px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
     <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
     <div className="text-[13px] font-extrabold leading-6 text-slate-600">
-      体調予報の要約と、次の一歩をまとめています
+      体調予報の概要と、次の一歩をまとめています
     </div>
   </div>
 </div>
@@ -602,9 +602,9 @@ if (!isLoggedIn) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <IconRadar className="h-6 w-6 text-[var(--accent)]" />
-            <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日のサマリー</div>
+            <div className="text-[18px] font-black tracking-tight text-slate-900">予報の概要</div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>すべて見る</Button>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
         </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
