@@ -232,9 +232,9 @@ function getRiskContext(bundle) {
 function getCompatTriggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "down") return "気圧低下";
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
-  if (mainTrigger === "temp" && triggerDir === "down") return "冷え";
-  if (mainTrigger === "temp" && triggerDir === "up") return "暑さ";
-  if (mainTrigger === "humidity" && triggerDir === "up") return "湿度";
+  if (mainTrigger === "temp" && triggerDir === "down") return "冷え込み";
+  if (mainTrigger === "temp" && triggerDir === "up") return "気温上昇";
+  if (mainTrigger === "humidity" && triggerDir === "up") return "湿気";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
 }
