@@ -2,6 +2,7 @@
 import "./globals.css";
 import { Zen_Kaku_Gothic_New } from "next/font/google";
 import RegisterServiceWorker from "@/components/pwa/RegisterServiceWorker";
+import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
 
 const zen = Zen_Kaku_Gothic_New({
   weight: ["400", "500", "700", "900"],
@@ -51,7 +52,9 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen bg-app text-slate-900 font-app antialiased">
         <RegisterServiceWorker />
         {children}
+        <PwaInstallPrompt />
       </body>
     </html>
   );
 }
+
