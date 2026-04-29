@@ -3,6 +3,7 @@ import "./globals.css";
 import { Zen_Kaku_Gothic_New } from "next/font/google";
 import RegisterServiceWorker from "@/components/pwa/RegisterServiceWorker";
 import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
+import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
 
 const zen = Zen_Kaku_Gothic_New({
   weight: ["400", "500", "700", "900"],
@@ -53,7 +54,9 @@ export default function RootLayout({ children }) {
         <RegisterServiceWorker />
         {children}
         <PwaInstallPrompt />
+        <PushNotificationPrompt />
       </body>
     </html>
   );
 }
+
