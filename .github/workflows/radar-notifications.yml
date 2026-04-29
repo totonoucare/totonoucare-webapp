@@ -1,0 +1,75 @@
+name: Radar notifications
+
+on:
+  schedule:
+    # JST 19:07 / 前日夜通知
+    - cron: "7 10 * * *"
+    # JST 07:37 / 当日朝通知
+    - cron: "37 22 * * *"
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "night or morning"
+        required: true
+        default: "night"
+        type: choice
+        options:
+          - night
+          - morning
+      dry_run:
+        description: "1 = send no push, only compute"
+        required: false
+        default: "0"
+      limit:
+        description: "max users per run"
+        required: false
+        default: "25"
+      base_url:
+        description: "optional override. default: PROD_BASE_URL secret or https://app.totonoucare.com"
+        required: false
+        default: ""
+
+jobs:
+  call-cron-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call notification cron endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PROD_BASE_URL: ${{ secrets.PROD_BASE_URL }}
+          INPUT_KIND: ${{ inputs.kind }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+          INPUT_BASE_URL: ${{ inputs.base_url }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "CRON_SECRET GitHub secret is not set" >&2
+            exit 1
+          fi
+
+          KIND="${INPUT_KIND:-}"
+          DRY_RUN="${INPUT_DRY_RUN:-0}"
+          LIMIT="${INPUT_LIMIT:-25}"
+          BASE_URL="${INPUT_BASE_URL:-}"
+
+          if [ -z "$KIND" ]; then
+            case "${EVENT_SCHEDULE:-}" in
+              "7 10 * * *") KIND="night" ;;
+              "37 22 * * *") KIND="morning" ;;
+              *) KIND="night" ;;
+            esac
+          fi
+
+          if [ -z "$BASE_URL" ]; then
+            BASE_URL="${PROD_BASE_URL:-https://app.totonoucare.com}"
+          fi
+
+          URL="${BASE_URL%/}/api/cron/radar-notifications/${KIND}?limit=${LIMIT}&dry_run=${DRY_RUN}"
+          echo "Calling: $URL"
+
+          curl -fSs "$URL" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Accept: application/json"
