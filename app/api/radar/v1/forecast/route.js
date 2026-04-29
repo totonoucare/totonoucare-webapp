@@ -5,13 +5,10 @@ import {
   nowJstParts,
   toJstISODate,
 } from "@/lib/radar_v1/timeJST";
-import { buildFastRadarBundle } from "@/lib/radar_v1/buildFastRadarBundle";
+import { ensureForecastBundle } from "@/lib/radar_v1/ensureForecastBundle";
 import {
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
-  getForecastBundle,
-  saveForecast,
-  saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
 
@@ -158,63 +155,27 @@ export async function GET(req) {
       );
     }
 
-    const existing = await getForecastBundle({
-      userId: user.id,
-      targetDate,
-    });
-
-    if (existing?.forecast && existing?.care_plan) {
-      return jsonUtf8({
-        ok: true,
-        cached: true,
-        gpt_pending: !hasCompletedGpt(existing),
-        target_date: targetDate,
-        target_mode: mode,
-        relative_target_mode: relativeTargetMode,
-        location: serializeLocation(location),
-        forecast: existing.forecast,
-        care_plan: existing.care_plan,
-      });
-    }
-
-    const { radarPlan, vendorMeta, normalized } = await buildFastRadarBundle({
+    const bundle = await ensureForecastBundle({
       userId: user.id,
       targetDate,
       location,
     });
 
-    const forecast = await saveForecast({
-      userId: user.id,
-      targetDate,
-      locationId: location.id,
-      radarPlan,
-      vendor: "metno",
-      vendorMeta,
-    });
-
-    const carePlan = await saveCarePlan({
-      forecastId: forecast.id,
-      radarPlan,
-    });
-
     return jsonUtf8({
       ok: true,
-      cached: false,
-      gpt_pending: true,
+      cached: bundle.cached,
+      gpt_pending: !hasCompletedGpt(bundle),
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
       location: serializeLocation(location),
-      forecast,
-      care_plan: carePlan,
-      debug: {
-        point_count: normalized.points.length,
-        partial_day: normalized.points.length < 24,
-        from_cache: false,
-      },
+      forecast: bundle.forecast,
+      care_plan: bundle.care_plan,
+      debug: bundle.debug,
     });
   } catch (error) {
     console.error("/api/radar/v1/forecast GET error:", error);
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
