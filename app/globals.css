@@ -3,39 +3,57 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 
-/* Design tokens */
-:root{
-  --bg: #f7fbf8;
+/*
+  Design tokens
+  v1: 新アイコンのティール〜ピーコックグリーンに合わせた雰囲気確認版。
+  まずは globals.css の変数だけを差し替えて、全体の空気感を見るための調整。
+*/
+:root {
+  /* Base */
+  --bg: #f3faf7;
   --panel: #ffffff;
-  --mint: #e7f7f3;
-  --mint-2: #d5f0e9;
-  --teal: #31b8a4;
-  --teal-ink: #166f64;
-  --amber: #f4b638;
-  --amber-soft: #fff4d8;
-  --amber-ink: #9a6611;
-  --accent: var(--teal);
-  --accent-ink: var(--teal-ink);
-  --ring: rgba(22, 111, 100, 0.12);
-  --shadow: 0 8px 30px -18px rgba(22,111,100,0.28);
+
+  /* Legacy token name: UI全体では「ミント」ではなく淡いティール面として扱う */
+  --mint: #d8f0ea;
+
+  /* Brand */
+  --accent: #2f9c8e;
+  --accent-ink: #1f5f55;
+
+  /* Support */
+  --gold: #f2b632;
+  --gold-soft: #fff3cf;
+
+  /* Lines / elevation */
+  --ring: rgba(24, 86, 77, 0.1);
+  --shadow: 0 12px 34px -20px rgba(25, 91, 80, 0.3);
 }
 
 @layer base {
   body {
+    background: var(--bg);
     font-family: var(--font-zenkaku), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--mint), white 18%);
+    color: var(--accent-ink);
   }
 }
 
 @layer utilities {
   .bg-app {
-    background:
-      radial-gradient(circle at 0% 0%, rgba(49, 184, 164, 0.13), transparent 34%),
-      radial-gradient(circle at 100% 0%, rgba(244, 182, 56, 0.15), transparent 32%),
-      linear-gradient(180deg, #fbfefa 0%, var(--bg) 46%, #f3faf6 100%);
+    background: var(--bg);
   }
-  .font-app { font-family: var(--font-zenkaku), ui-sans-serif, system-ui, sans-serif; }
+
+  .font-app {
+    font-family: var(--font-zenkaku), ui-sans-serif, system-ui, sans-serif;
+  }
 
   .app-panel {
     background: var(--panel);
@@ -43,4 +61,3 @@ html, body { height: 100%; }
     ring-color: var(--ring);
   }
 }
-
