@@ -10,28 +10,28 @@ body {
 
 /*
   Design tokens
-  v1: 新アイコンのティール〜ピーコックグリーンに合わせた雰囲気確認版。
-  まずは globals.css の変数だけを差し替えて、全体の空気感を見るための調整。
+  v2: 新アイコンのティール感は残しつつ、v1より青みを抑えたウォームティール版。
+  背景はミントではなく、ほんのり青緑を含んだアイボリー寄りにして寒さを軽減。
 */
 :root {
   /* Base */
-  --bg: #f3faf7;
-  --panel: #ffffff;
+  --bg: #f7faf3;
+  --panel: #fffefb;
 
-  /* Legacy token name: UI全体では「ミント」ではなく淡いティール面として扱う */
-  --mint: #d8f0ea;
+  /* Legacy token name: UI全体では淡いセージ〜ウォームティール面として扱う */
+  --mint: #e4f2e6;
 
   /* Brand */
-  --accent: #2f9c8e;
-  --accent-ink: #1f5f55;
+  --accent: #3f9677;
+  --accent-ink: #255f4f;
 
   /* Support */
-  --gold: #f2b632;
-  --gold-soft: #fff3cf;
+  --gold: #f1b63a;
+  --gold-soft: #fff3d1;
 
   /* Lines / elevation */
-  --ring: rgba(24, 86, 77, 0.1);
-  --shadow: 0 12px 34px -20px rgba(25, 91, 80, 0.3);
+  --ring: rgba(47, 103, 84, 0.1);
+  --shadow: 0 12px 34px -20px rgba(45, 94, 78, 0.28);
 }
 
 @layer base {
@@ -41,7 +41,7 @@ body {
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--mint), white 18%);
+    background: color-mix(in srgb, var(--mint), white 16%);
     color: var(--accent-ink);
   }
 }
