@@ -691,7 +691,7 @@ if (!isLoggedIn) {
               </div>
 
               <div className="shrink-0">
-                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105 p-1.5">
+                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-[#fbfefa] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105 p-1.5">
                   <CoreIllust
                     code={latestResult.core_code}
                     title={core.title}
@@ -720,3 +720,4 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
+
