@@ -10,28 +10,28 @@ body {
 
 /*
   Design tokens
-  v2: 新アイコンのティール感は残しつつ、v1より青みを抑えたウォームティール版。
-  背景はミントではなく、ほんのり青緑を含んだアイボリー寄りにして寒さを軽減。
+  v3: 新アイコンの背景色に合わせたティールグリーン版。
+  v2のセージ寄りのやわらかさは残しつつ、アイコンに近い鮮度とアプリ感を戻す。
 */
 :root {
   /* Base */
-  --bg: #f7faf3;
+  --bg: #f6fbf7;
   --panel: #fffefb;
 
-  /* Legacy token name: UI全体では淡いセージ〜ウォームティール面として扱う */
-  --mint: #e4f2e6;
+  /* Legacy token name: アイコン背景に寄せた淡いティール面 */
+  --mint: #ddf3e8;
 
   /* Brand */
-  --accent: #3f9677;
-  --accent-ink: #255f4f;
+  --accent: #2f9b84;
+  --accent-ink: #1f6b5c;
 
   /* Support */
-  --gold: #f1b63a;
+  --gold: #f2b334;
   --gold-soft: #fff3d1;
 
   /* Lines / elevation */
-  --ring: rgba(47, 103, 84, 0.1);
-  --shadow: 0 12px 34px -20px rgba(45, 94, 78, 0.28);
+  --ring: rgba(31, 107, 92, 0.11);
+  --shadow: 0 12px 34px -20px rgba(31, 107, 92, 0.3);
 }
 
 @layer base {
