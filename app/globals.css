@@ -7,13 +7,19 @@ html, body { height: 100%; }
 
 /* Design tokens */
 :root{
-  --bg: #f6f7f2;
+  --bg: #f7fbf8;
   --panel: #ffffff;
-  --mint: #E9EDDD;
-  --accent: #6a9770;
-  --accent-ink: #31543a;
-  --ring: rgba(15, 23, 42, 0.06);
-  --shadow: 0 8px 30px -18px rgba(0,0,0,0.28);
+  --mint: #e7f7f3;
+  --mint-2: #d5f0e9;
+  --teal: #31b8a4;
+  --teal-ink: #166f64;
+  --amber: #f4b638;
+  --amber-soft: #fff4d8;
+  --amber-ink: #9a6611;
+  --accent: var(--teal);
+  --accent-ink: var(--teal-ink);
+  --ring: rgba(22, 111, 100, 0.12);
+  --shadow: 0 8px 30px -18px rgba(22,111,100,0.28);
 }
 
 @layer base {
@@ -23,7 +29,12 @@ html, body { height: 100%; }
 }
 
 @layer utilities {
-  .bg-app { background: var(--bg); }
+  .bg-app {
+    background:
+      radial-gradient(circle at 0% 0%, rgba(49, 184, 164, 0.13), transparent 34%),
+      radial-gradient(circle at 100% 0%, rgba(244, 182, 56, 0.15), transparent 32%),
+      linear-gradient(180deg, #fbfefa 0%, var(--bg) 46%, #f3faf6 100%);
+  }
   .font-app { font-family: var(--font-zenkaku), ui-sans-serif, system-ui, sans-serif; }
 
   .app-panel {
@@ -32,3 +43,4 @@ html, body { height: 100%; }
     ring-color: var(--ring);
   }
 }
+
