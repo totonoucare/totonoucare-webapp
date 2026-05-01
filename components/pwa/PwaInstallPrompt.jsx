@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
-const DISMISS_UNTIL_KEY = "mibyo-radar-pwa-install-dismiss-until";
+const DISMISS_KEY = "mibyo-radar-push-dismissed-at";
 const DISMISS_DAYS = 14;
-const INSTALLED_DISMISS_DAYS = 365;
 
-function isStandaloneMode() {
+function isStandalonePwa() {
   if (typeof window === "undefined") return false;
-
   return (
     window.matchMedia?.("(display-mode: standalone)")?.matches ||
     window.matchMedia?.("(display-mode: fullscreen)")?.matches ||
@@ -19,42 +18,19 @@ function isStandaloneMode() {
 
 function isProbablyIos() {
   if (typeof window === "undefined") return false;
-
   const ua = window.navigator.userAgent || "";
   const platform = window.navigator.platform || "";
-
   return (
     /iPhone|iPad|iPod/i.test(ua) ||
     (platform === "MacIntel" && Number(window.navigator.maxTouchPoints || 0) > 1)
   );
 }
 
-function isProbablySafari() {
-  if (typeof window === "undefined") return false;
-
-  const ua = window.navigator.userAgent || "";
-  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Android/i.test(ua);
-}
-
-function getDismissUntil() {
-  try {
-    return Number(window.localStorage.getItem(DISMISS_UNTIL_KEY) || 0);
-  } catch (_) {
-    return 0;
-  }
-}
-
-function dismissForDays(days) {
-  try {
-    const until = Date.now() + days * 24 * 60 * 60 * 1000;
-    window.localStorage.setItem(DISMISS_UNTIL_KEY, String(until));
-  } catch (_) {}
-}
-
 function isQuietPage(pathname) {
   if (!pathname) return false;
-
   return (
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/signup") ||
     pathname.startsWith("/privacy") ||
     pathname.startsWith("/terms") ||
     pathname.startsWith("/legal") ||
@@ -62,177 +38,225 @@ function isQuietPage(pathname) {
   );
 }
 
-export default function PwaInstallPrompt() {
-  const pathname = usePathname();
-  const deferredPromptRef = useRef(null);
+function shouldSuppressByDismissal() {
+  if (typeof window === "undefined") return true;
+  const raw = window.localStorage.getItem(DISMISS_KEY);
+  if (!raw) return false;
+  const at = Number(raw);
+  if (!Number.isFinite(at)) return false;
+  return Date.now() - at < DISMISS_DAYS * 24 * 60 * 60 * 1000;
+}
 
-  const [canPrompt, setCanPrompt] = useState(false);
-  const [isIosSafari, setIsIosSafari] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
+function dismissForNow() {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(DISMISS_KEY, String(Date.now()));
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+async function getAccessToken() {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getSession();
+  return data?.session?.access_token || null;
+}
+
+async function fetchVapidPublicKey() {
+  const res = await fetch("/api/push/register", { cache: "no-store" });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json?.public_key) {
+    throw new Error(json?.error || "通知用の公開キーを取得できませんでした");
+  }
+  return json.public_key;
+}
+
+async function postSubscription(subscription) {
+  const token = await getAccessToken();
+  if (!token) throw new Error("ログイン後に通知を設定できます");
+
+  const res = await fetch("/api/push/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ subscription: subscription.toJSON() }),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json?.ok) {
+    throw new Error(json?.error || "通知設定の保存に失敗しました");
+  }
+  return json;
+}
+
+async function postSettings(settings) {
+  const token = await getAccessToken();
+  if (!token) throw new Error("ログイン後に通知を設定できます");
+
+  const res = await fetch("/api/push/settings", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(settings),
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !json?.ok) {
+    throw new Error(json?.error || "通知設定の更新に失敗しました");
+  }
+  return json;
+}
+
+export default function PushNotificationPrompt() {
+  const pathname = usePathname();
+  const [visible, setVisible] = useState(false);
+  const [status, setStatus] = useState("idle");
+  const [message, setMessage] = useState("");
+
+  const supported = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return Boolean(
+      "Notification" in window &&
+        "serviceWorker" in navigator &&
+        "PushManager" in window
+    );
+  }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (isQuietPage(pathname)) return;
-    if (isStandaloneMode()) return;
-    if (getDismissUntil() > Date.now()) return;
+    let cancelled = false;
 
-    const shouldShowIosGuide = isProbablyIos() && isProbablySafari();
-    setIsIosSafari(shouldShowIosGuide);
+    async function init() {
+      if (!supported) return;
+      if (isQuietPage(pathname)) return;
+      if (shouldSuppressByDismissal()) return;
+      if (window.Notification?.permission === "denied") return;
 
-    const showTimer = window.setTimeout(() => {
-      if (shouldShowIosGuide) setIsVisible(true);
-    }, 1200);
+      // iPhone / iPad はホーム画面追加後のPWAでのみ Push 通知が使える。
+      // 通常のSafariタブでは通知案内を出さない。
+      if (isProbablyIos() && !isStandalonePwa()) return;
 
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault();
-      deferredPromptRef.current = event;
-      setCanPrompt(true);
-      setIsVisible(true);
-    };
+      const token = await getAccessToken();
+      if (!token) return;
 
-    const handleAppInstalled = () => {
-      deferredPromptRef.current = null;
-      setCanPrompt(false);
-      setIsVisible(false);
-      setIsGuideOpen(false);
-      dismissForDays(INSTALLED_DISMISS_DAYS);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("appinstalled", handleAppInstalled);
-
-    return () => {
-      window.clearTimeout(showTimer);
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", handleAppInstalled);
-    };
-  }, [pathname]);
-
-  const hideBanner = () => {
-    dismissForDays(DISMISS_DAYS);
-    setIsVisible(false);
-    setIsGuideOpen(false);
-  };
-
-  const handlePrimaryAction = async () => {
-    const deferredPrompt = deferredPromptRef.current;
-
-    if (!deferredPrompt) {
-      setIsGuideOpen(true);
-      return;
-    }
-
-    try {
-      deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      deferredPromptRef.current = null;
-      setCanPrompt(false);
-
-      if (choice?.outcome === "accepted") {
-        dismissForDays(INSTALLED_DISMISS_DAYS);
-      } else {
-        dismissForDays(DISMISS_DAYS);
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const existing = await registration.pushManager.getSubscription();
+        if (existing) {
+          await postSubscription(existing).catch(() => {});
+          return;
+        }
+      } catch (_) {
+        return;
       }
 
-      setIsVisible(false);
-    } catch (_) {
-      setIsGuideOpen(true);
+      if (!cancelled) setVisible(true);
     }
-  };
 
-  if (!isVisible || (!canPrompt && !isIosSafari)) return null;
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, supported]);
+
+  const handleDismiss = useCallback(() => {
+    dismissForNow();
+    setVisible(false);
+  }, []);
+
+  const handleEnable = useCallback(async () => {
+    try {
+      setStatus("loading");
+      setMessage("");
+
+      if (!supported) throw new Error("この端末では通知に対応していません");
+      if (isProbablyIos() && !isStandalonePwa()) {
+        throw new Error("iPhoneでは、ホーム画面に追加したアプリから通知を設定してください");
+      }
+
+      const token = await getAccessToken();
+      if (!token) throw new Error("ログイン後に通知を設定できます");
+
+      const permission = await window.Notification.requestPermission();
+      if (permission !== "granted") {
+        throw new Error("通知が許可されませんでした");
+      }
+
+      const [registration, publicKey] = await Promise.all([
+        navigator.serviceWorker.ready,
+        fetchVapidPublicKey(),
+      ]);
+
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing ||
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        }));
+
+      await postSubscription(subscription);
+      await postSettings({
+        enabled: true,
+        night_enabled: true,
+        morning_enabled: true,
+        min_score: 6,
+      });
+
+      setStatus("done");
+      setMessage("通知をオンにしました。スコア6以上の警戒日だけお知らせします。");
+      setTimeout(() => setVisible(false), 2800);
+    } catch (error) {
+      setStatus("error");
+      setMessage(String(error?.message || error));
+    }
+  }, [supported]);
+
+  if (!visible) return null;
 
   return (
-    <>
-      <div
-        className="pointer-events-none fixed inset-x-0 z-[80] px-4"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 88px)" }}
-      >
-        <div className="pointer-events-auto mx-auto flex w-full max-w-[390px] items-center gap-3 rounded-[24px] border border-emerald-900/10 bg-white/95 p-3 shadow-[0_18px_44px_rgba(15,23,42,0.14)] backdrop-blur">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#F7FBF4] text-xl shadow-inner">
-            🎯
+    <div className="fixed inset-x-0 bottom-24 z-50 px-4 sm:bottom-6">
+      <div className="mx-auto max-w-md rounded-[28px] border border-[#DCE7DE] bg-[linear-gradient(145deg,rgba(255,255,255,0.98)_0%,rgba(248,250,244,0.97)_56%,rgba(237,245,239,0.97)_100%)] p-4 shadow-[0_18px_60px_rgba(40,55,48,0.16)] backdrop-blur-xl">
+        <div className="flex items-start gap-3">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(145deg,#EAF6EF_0%,#F9FBF5_58%,#FFF1CF_100%)] text-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_18px_rgba(53,95,82,0.12)] ring-1 ring-[#C9DED4]">
+            🔔
           </div>
-
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-black leading-snug text-slate-900">
-              ホーム画面に追加できます
+            <p className="text-sm font-black text-[#101827]">警戒日の通知を受け取る</p>
+            <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#536477]">
+              前日夜と当日朝に、スコア6以上の日だけお知らせします。通知文は短く、予報スコア・主因・時間帯だけで作ります。
             </p>
-            <p className="mt-0.5 text-[11px] font-bold leading-snug text-slate-500">
-              毎朝の体調予報を、アプリみたいにすぐ開けます。
-            </p>
+            {message ? (
+              <p className={`mt-2 text-xs font-black ${status === "error" ? "text-rose-600" : "text-[#2F7668]"}`}>
+                {message}
+              </p>
+            ) : null}
           </div>
-
+        </div>
+        <div className="mt-4 flex gap-2">
           <button
             type="button"
-            onClick={handlePrimaryAction}
-            className="shrink-0 rounded-full bg-[#244235] px-3 py-2 text-[12px] font-black text-white shadow-sm active:scale-[0.98]"
+            onClick={handleEnable}
+            disabled={status === "loading" || status === "done"}
+            className="flex-1 rounded-full bg-[#5C9F88] px-4 py-3 text-sm font-black text-white shadow-[0_11px_24px_rgba(53,95,82,0.23)] ring-1 ring-[#4F8F7C]/20 active:scale-[0.99] disabled:opacity-60"
           >
-            {canPrompt ? "追加" : "手順"}
+            {status === "loading" ? "設定中…" : status === "done" ? "設定しました" : "通知をオンにする"}
           </button>
-
           <button
             type="button"
-            onClick={hideBanner}
-            aria-label="ホーム画面追加の案内を閉じる"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            onClick={handleDismiss}
+            className="rounded-full bg-white px-4 py-3 text-sm font-black text-[#536477] shadow-sm ring-1 ring-[#DCE7DE] active:scale-[0.99]"
           >
-            ×
+            あとで
           </button>
         </div>
       </div>
-
-      {isGuideOpen && (
-        <div className="fixed inset-0 z-[90] grid place-items-end bg-slate-950/35 px-4 pb-4 backdrop-blur-[2px]">
-          <div className="w-full max-w-[430px] rounded-[28px] bg-white p-5 shadow-[0_24px_72px_rgba(15,23,42,0.24)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-black text-slate-900">ホーム画面に追加する手順</p>
-                <p className="mt-1 text-xs font-bold leading-relaxed text-slate-500">
-                  iPhone / iPad では、Safari の共有メニューから追加します。
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsGuideOpen(false)}
-                aria-label="手順を閉じる"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500"
-              >
-                ×
-              </button>
-            </div>
-
-            <ol className="mt-4 space-y-3 text-sm font-bold leading-relaxed text-slate-700">
-              <li className="flex gap-3">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F7FBF4] text-xs font-black text-[#244235]">
-                  1
-                </span>
-                <span>Safari で未病レーダーを開く</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F7FBF4] text-xs font-black text-[#244235]">
-                  2
-                </span>
-                <span>共有ボタンを押す</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#F7FBF4] text-xs font-black text-[#244235]">
-                  3
-                </span>
-                <span>「ホーム画面に追加」を選ぶ</span>
-              </li>
-            </ol>
-
-            <button
-              type="button"
-              onClick={hideBanner}
-              className="mt-5 w-full rounded-full bg-[#244235] px-4 py-3 text-sm font-black text-white"
-            >
-              わかった
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
+
