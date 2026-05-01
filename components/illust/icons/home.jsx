@@ -123,34 +123,21 @@ export function IconUser({ className = "h-6 w-6", ...props }) {
 export function HeroArt({ className = "h-[110px] w-full", ...props }) {
   return (
     <svg viewBox="0 0 320 140" className={className} aria-hidden="true" {...props}>
-      <defs>
-        <linearGradient id="home_g1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#EEF8F2" />
-          <stop offset="0.52" stopColor="#DDF1E7" />
-          <stop offset="1" stopColor="#3E9D83" stopOpacity="0.46" />
-        </linearGradient>
-        <linearGradient id="home_g2" x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#256B59" stopOpacity="0.12" />
-          <stop offset="1" stopColor="#256B59" stopOpacity="0" />
-        </linearGradient>
-      </defs>
       <path
         d="M18,88 C42,18 138,6 190,28 C238,48 272,38 302,18 C312,72 272,132 190,136 C108,140 34,120 18,88Z"
-        fill="url(#home_g1)"
+        fill="#E2F1EA"
       />
       <path
         d="M20 108c40-14 86-10 120-26s60-40 156-44"
-        stroke="#2D806B"
-        strokeOpacity="0.2"
+        stroke="#2F7468"
+        strokeOpacity="0.22"
         strokeWidth="2.2"
         fill="none"
       />
-      <circle cx="78" cy="58" r="10" fill="#3EA586" fillOpacity="0.26" />
-      <circle cx="214" cy="52" r="14" fill="#3EA586" fillOpacity="0.2" />
-      <circle cx="246" cy="32" r="5" fill="#2F806B" fillOpacity="0.34" />
-      <rect x="210" y="16" width="92" height="48" rx="18" fill="url(#home_g2)" />
+      <circle cx="78" cy="58" r="10" fill="#5C9F88" fillOpacity="0.30" />
+      <circle cx="214" cy="52" r="14" fill="#5C9F88" fillOpacity="0.22" />
+      <circle cx="246" cy="32" r="5" fill="#E2AA3B" fillOpacity="0.42" />
+      <rect x="210" y="16" width="92" height="48" rx="18" fill="#D7EADF" opacity="0.92" />
     </svg>
   );
 }
-
-
