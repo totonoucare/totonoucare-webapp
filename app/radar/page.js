@@ -1558,7 +1558,7 @@ export default function RadarPage() {
         <div className="space-y-6 pt-4">
           {showSlowLoadingMessage ? (
             <div className="rounded-[32px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_74%)] px-6 py-7 shadow-sm">
-              <div className="inline-flex rounded-full bg-white/90 px-3 py-1 text-[11px] font-black tracking-wide text-[#2F7468] ring-1 ring-[#D8E4DA]">
+              <div className="inline-flex rounded-full bg-white/90 px-3 py-1 text-[11px] font-black tracking-wide text-[#255F4F] ring-1 ring-[#CFE0D3]">
                 未病レーダーを作成中
               </div>
               <div className="mt-4 text-[20px] font-black tracking-tight text-slate-900">
@@ -1670,7 +1670,7 @@ export default function RadarPage() {
       headerRight={
         <button
           onClick={() => setShowLocationEditor(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(47,111,98,0.42)] ring-1 ring-inset ring-[#D8E4DA] hover:bg-[#FBFCF8] transition-all active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(47,111,98,0.42)] ring-1 ring-inset ring-[#CFE0D3] hover:bg-[#FBFCF8] transition-all active:scale-95"
         >
           <span className="text-[14px]">📍</span> {locationDisplayLabel}
         </button>
@@ -1909,9 +1909,9 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#DDE6DF] shadow-[0_18px_42px_-32px_rgba(47,111,98,0.32)]">
+          <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
             <div className="flex items-center gap-3 mb-1">
-              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#E2F5EC_0%,#FFFFFF_72%,#FFF4D8_100%)] text-[#2F7468] ring-1 ring-[#CFE2D7] shadow-sm">
+              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#E2F5EC_0%,#FFFFFF_72%,#F4F8EF_100%)] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
                 <IconRipple className="h-9 w-9" />
               </div>
               <div>
@@ -1926,17 +1926,17 @@ export default function RadarPage() {
 
             {primaryTsubo ? (
               <div
-                className="mt-6 relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#F0FAF5_0%,#FFFFFF_58%,#FFF6DF_100%)] p-5 ring-1 ring-[#CFE2D7] shadow-[0_16px_34px_-24px_rgba(47,111,98,0.34)] cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-24px_rgba(47,111,98,0.38)]"
+                className="mt-6 relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#F1F9F4_0%,#FFFFFF_58%,#F7F5EA_100%)] p-5 ring-1 ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.34)] cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-24px_rgba(47,111,98,0.38)]"
                 onClick={() => setSelectedPoint(primaryTsubo)}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="inline-flex rounded-full bg-white/90 px-3 py-1 text-[11px] font-black tracking-wide text-[#2F7468] ring-1 ring-[#D8E4DA]">
+                    <div className="inline-flex rounded-full bg-white/90 px-3 py-1 text-[11px] font-black tracking-wide text-[#255F4F] ring-1 ring-[#CFE0D3]">
                       {getTsuboRoleLabel(primaryTsubo, 0)}
                     </div>
 
                     <div className="mt-3 flex items-start gap-4">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-white text-[16px] font-black text-[#2F7468] shadow-sm ring-1 ring-[#D8E4DA]">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-white text-[16px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]">
                         {primaryTsubo.code}
                       </div>
 
@@ -1968,7 +1968,7 @@ export default function RadarPage() {
                 <button
                   type="button"
                   onClick={() => setTsuboExtraOpen((v) => !v)}
-                  className="flex w-full items-center justify-between rounded-[18px] bg-[#F7FAF7] px-4 py-3 ring-1 ring-inset ring-[#DDE6DF] text-left transition-all hover:bg-white"
+                  className="flex w-full items-center justify-between rounded-[18px] bg-[#F7FAF7] px-4 py-3 ring-1 ring-inset ring-[#D3E1D5] text-left transition-all hover:bg-white"
                 >
                   <div>
                     <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
@@ -1999,15 +1999,15 @@ export default function RadarPage() {
                     {extraTsuboPoints.map((p, i) => (
                       <div
                         key={`${p.code}-${i + 1}`}
-                        className="relative rounded-[22px] bg-[#F7FAF7] p-5 ring-1 ring-inset ring-[#DDE6DF] transition-all hover:bg-white cursor-pointer"
+                        className="relative rounded-[22px] bg-[#F7FAF7] p-5 ring-1 ring-inset ring-[#D3E1D5] transition-all hover:bg-white cursor-pointer"
                         onClick={() => setSelectedPoint(p)}
                       >
-                        <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black tracking-wide text-[#2F7468] ring-1 ring-[#D8E4DA]">
+                        <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black tracking-wide text-[#255F4F] ring-1 ring-[#CFE0D3]">
                           {getTsuboRoleLabel(p, i + 1)}
                         </div>
 
                         <div className="flex items-start gap-4">
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-[14px] font-black text-[#2F7468] shadow-sm ring-1 ring-[#D8E4DA]">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-white text-[14px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]">
                             {p.code}
                           </div>
 
@@ -2050,9 +2050,9 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#DDE6DF] shadow-[0_18px_42px_-32px_rgba(47,111,98,0.32)]">
+          <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
             <div className="flex items-center gap-3 mb-5">
-              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#E2F5EC_0%,#FFFFFF_72%,#FFF4D8_100%)] text-[#2F7468] ring-1 ring-[#CFE2D7] shadow-sm">
+              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#E2F5EC_0%,#FFFFFF_72%,#F4F8EF_100%)] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
                 <IconBowl className="h-9 w-9" />
               </div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">
@@ -2060,7 +2060,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className="rounded-[24px] bg-[#F7FAF7] px-5 py-5 ring-1 ring-inset ring-[#DDE6DF] shadow-[0_14px_30px_-26px_rgba(47,111,98,0.26)]">
+            <div className="rounded-[24px] bg-[#F7FAF7] px-5 py-5 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(37,95,79,0.26)]">
               <div className="text-[15px] font-black tracking-tight text-slate-900">
                 {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
               </div>
@@ -2105,7 +2105,7 @@ export default function RadarPage() {
                   <button
                     type="button"
                     onClick={() => setFoodDetailOpen((v) => !v)}
-                    className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#DDE6DF] text-left shadow-sm"
+                    className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#D3E1D5] text-left shadow-sm"
                   >
                     <div>
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -2183,7 +2183,7 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-5 bg-[linear-gradient(135deg,#EAF8F1_0%,#F9FCF8_58%,#FFF5DC_100%)] ring-1 ring-[#CFE2D7] shadow-[0_18px_42px_-32px_rgba(47,111,98,0.34)]">
+          <Module className="p-5 bg-[linear-gradient(135deg,#EAF8F1_0%,#F9FCF8_58%,#F7F5EA_100%)] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
@@ -2191,7 +2191,7 @@ export default function RadarPage() {
                 </div>
 
                 <div className="mt-3 flex items-start gap-3">
-                  <div className="grid h-[74px] w-[74px] place-items-center overflow-hidden rounded-[20px] bg-white p-2 ring-1 ring-[#D8E4DA] shadow-sm shrink-0">
+                  <div className="grid h-[74px] w-[74px] place-items-center overflow-hidden rounded-[20px] bg-white p-2 ring-1 ring-[#CFE0D3] shadow-sm shrink-0">
                     <CoreIllust
                       code={coreCode}
                       title={coreLabel?.title || "体質タイプ"}
@@ -2209,7 +2209,7 @@ export default function RadarPage() {
                         {subLabelObjects.map((s) => (
                           <span
                             key={s.code}
-                            className="rounded-md bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#2F7468] ring-1 ring-inset ring-[#D8E4DA]"
+                            className="rounded-md bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-inset ring-[#CFE0D3]"
                           >
                             {s.short}
                           </span>
@@ -2221,7 +2221,7 @@ export default function RadarPage() {
 
                 <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {symptomLabel ? (
-                    <div className="rounded-[16px] bg-white/90 px-4 py-3 ring-1 ring-[#D8E4DA] shadow-sm">
+                    <div className="rounded-[16px] bg-white/90 px-4 py-3 ring-1 ring-[#CFE0D3] shadow-sm">
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         お困りの不調
                       </div>
@@ -2232,7 +2232,7 @@ export default function RadarPage() {
                   ) : null}
 
                   {primaryLine ? (
-                    <div className="rounded-[16px] bg-white/90 px-4 py-3 ring-1 ring-[#D8E4DA] shadow-sm">
+                    <div className="rounded-[16px] bg-white/90 px-4 py-3 ring-1 ring-[#CFE0D3] shadow-sm">
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         負担が出やすいライン
                       </div>
@@ -2249,7 +2249,7 @@ export default function RadarPage() {
                 size="sm"
                 onClick={openLatestResultDetail}
                 disabled={openingProfileDetail}
-                className="shrink-0 bg-white ring-1 ring-[#D8E4DA] shadow-sm text-slate-700"
+                className="shrink-0 bg-white ring-1 ring-[#CFE0D3] shadow-sm text-slate-700"
               >
                 {openingProfileDetail ? "開いています…" : "詳しく見る"}
               </Button>
@@ -2409,3 +2409,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
