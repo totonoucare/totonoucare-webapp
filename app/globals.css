@@ -10,32 +10,44 @@ body {
 
 /*
   Design tokens
-  Original-jade tuned theme:
-  - restored jade icon colorに合わせた再調整版
-  - 青みを抑え、やや翡翠・セージ寄り
-  - 半透明感を減らし、面とコントラストを少し強める
+  新アイコンの背景色に合わせたティール〜ピーコックグリーン版。
+  青みで冷たくなりすぎないよう、背景は黄みのある白、アクセントは少し深めに調整。
 */
 :root {
-  --bg: #f7f7f1;
+  /* Base */
+  --bg: #f6fbf7;
   --panel: #fffefb;
-  --mint: #edf3eb;
-  --accent: #6f9785;
-  --accent-ink: #47675c;
-  --gold: #d9a54a;
-  --gold-soft: #f6eed3;
-  --ring: rgba(74, 94, 85, 0.12);
-  --shadow: 0 12px 34px -20px rgba(52, 64, 58, 0.22);
+  --surface: #ffffff;
+  --surface-soft: #fbfdfa;
+
+  /* Legacy token name: 既存コンポーネント互換の淡いブランド面 */
+  --mint: #ddf3e8;
+
+  /* Brand */
+  --accent: #2f9b84;
+  --accent-rgb: 47, 155, 132;
+  --accent-ink: #1f6b5c;
+  --accent-ink-rgb: 31, 107, 92;
+  --brand-title: #3f7d68;
+
+  /* Support */
+  --gold: #f2b334;
+  --gold-soft: #fff3d1;
+
+  /* Lines / elevation */
+  --ring: rgba(31, 107, 92, 0.11);
+  --ring-strong: rgba(31, 107, 92, 0.18);
+  --shadow: 0 12px 34px -20px rgba(31, 107, 92, 0.3);
 }
 
 @layer base {
   body {
     background: var(--bg);
-    color: #0f172a;
     font-family: var(--font-zenkaku), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--mint), white 8%);
+    background: color-mix(in srgb, var(--mint), white 16%);
     color: var(--accent-ink);
   }
 }
@@ -52,7 +64,5 @@ body {
   .app-panel {
     background: var(--panel);
     box-shadow: var(--shadow);
-    ring-color: var(--ring);
   }
 }
-
