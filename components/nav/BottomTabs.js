@@ -58,7 +58,7 @@ export default function BottomTabs() {
           className={[
             "grid h-10 w-10 place-items-center rounded-[14px] transition-all duration-300",
             isActive
-              ? "scale-110 bg-[linear-gradient(145deg,#DFF2E8_0%,#FFFFFF_55%,#F4F8EF_100%)] shadow-[0_12px_28px_-16px_rgba(39,111,98,0.55)] ring-1 ring-[#BFD9CC]"
+              ? "scale-110 bg-[#E2F1EA] shadow-[0_12px_28px_-16px_rgba(39,111,98,0.55)] ring-1 ring-[#BFD9CC]"
               : "bg-transparent",
           ].join(" ")}
         >
@@ -74,7 +74,7 @@ export default function BottomTabs() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]">
       <div className="absolute inset-0 bg-white/90 backdrop-blur-xl supports-[backdrop-filter]:bg-white/72" />
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#D3E1D5] to-transparent" />
+      <div className="absolute top-0 inset-x-0 h-px bg-[#D3E1D5]" />
 
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
@@ -86,3 +86,4 @@ export default function BottomTabs() {
     </div>
   );
 }
+
