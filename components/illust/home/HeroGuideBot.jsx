@@ -35,7 +35,7 @@ export default function HeroGuideBot({
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
         <div
-          className={`absolute z-20 rounded-2xl border border-[var(--ring)] bg-[var(--surface)] px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-slate-600 shadow-[0_12px_24px_-18px_rgba(var(--accent-ink-rgb),0.28)] transition-all ${bubbleStyles}`}
+          className={`absolute z-20 rounded-2xl border border-[var(--ring)] bg-[var(--surface)] px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-[#536255] shadow-[0_12px_24px_-18px_rgba(var(--accent-ink-rgb),0.28)] transition-all ${bubbleStyles}`}
         >
           {/* 吹き出しのしっぽ */}
           {tailStyles}
@@ -44,7 +44,7 @@ export default function HeroGuideBot({
         </div>
       ) : null}
 
-      {/* キャラクターSVG：形・サイズ・座標は元コードのまま、色だけ新テーマへ寄せる */}
+      {/* キャラクターSVG：形・サイズ・座標は元コードのまま、色だけウォームティールへ寄せる */}
       <div className={["relative ml-auto", compact ? "mt-8 h-[92px] w-[92px]" : "mt-12 h-[112px] w-[112px]"].join(" ")}>
         <svg viewBox="0 0 120 120" className="absolute inset-0 h-full w-full" aria-hidden="true">
           <defs>
@@ -54,11 +54,11 @@ export default function HeroGuideBot({
             </linearGradient>
             <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--surface-soft)" />
-              <stop offset="100%" stopColor="#b9dcd5" />
+              <stop offset="100%" stopColor="#c4dcc6" />
             </linearGradient>
             <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.82" />
-              <stop offset="100%" stopColor="var(--gold)" stopOpacity="0.22" />
+              <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.84" />
+              <stop offset="100%" stopColor="var(--gold)" stopOpacity="0.24" />
             </linearGradient>
             <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
               <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="var(--accent-ink)" floodOpacity="0.12" />
@@ -69,17 +69,16 @@ export default function HeroGuideBot({
           <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.9" />
           <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.6" />
           <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
-          <path d="M60 28 L60 18" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" opacity="0.68" />
-          <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#9fcfc7" />
+          <path d="M60 28 L60 18" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
+          <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#9fc79f" />
           <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" />
-          <circle cx="44" cy="50" r="4.5" fill="var(--accent-ink)" opacity="0.82" />
-          <circle cx="76" cy="50" r="4.5" fill="var(--accent-ink)" opacity="0.82" />
+          <circle cx="44" cy="50" r="4.5" fill="var(--accent-ink)" opacity="0.84" />
+          <circle cx="76" cy="50" r="4.5" fill="var(--accent-ink)" opacity="0.84" />
           <ellipse cx="36" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.4" />
           <ellipse cx="84" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.4" />
-          <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="var(--accent-ink)" strokeWidth="2.2" strokeLinecap="round" opacity="0.82" />
+          <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="var(--accent-ink)" strokeWidth="2.2" strokeLinecap="round" opacity="0.84" />
         </svg>
       </div>
     </div>
   );
 }
-
