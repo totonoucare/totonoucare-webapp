@@ -37,20 +37,20 @@ export default function HomeHeaderMenu({ onGuide, onRegionSettings, onLogout }) 
         type="button"
         aria-label="メニュー"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--ring)] bg-[var(--panel)] text-slate-700 shadow-[0_10px_22px_-16px_rgba(var(--accent-ink-rgb),0.34)] transition-colors hover:text-[var(--accent-ink)]"
       >
         <IconMenuDots />
       </button>
 
       {open ? (
-        <div className="absolute right-0 mt-2 w-44 overflow-hidden rounded-2xl border border-[var(--ring)] bg-white shadow-[0_18px_38px_-24px_rgba(0,0,0,0.28)]">
+        <div className="absolute right-0 mt-2 w-44 overflow-hidden rounded-2xl border border-[var(--ring)] bg-[var(--panel)] shadow-[0_18px_38px_-24px_rgba(var(--accent-ink-rgb),0.36)]">
           <button
             type="button"
             onClick={() => {
               setOpen(false);
               onGuide?.();
             }}
-            className="w-full px-4 py-3 text-left text-sm font-bold text-slate-700 hover:bg-slate-50"
+            className="w-full px-4 py-3 text-left text-sm font-bold text-slate-700 hover:bg-[color-mix(in_srgb,var(--mint),white_56%)]"
           >
             使い方
           </button>
@@ -60,7 +60,7 @@ export default function HomeHeaderMenu({ onGuide, onRegionSettings, onLogout }) 
               setOpen(false);
               onRegionSettings?.();
             }}
-            className="w-full border-t border-slate-100 px-4 py-3 text-left text-sm font-bold text-slate-700 hover:bg-slate-50"
+            className="w-full border-t border-[var(--ring)] px-4 py-3 text-left text-sm font-bold text-slate-700 hover:bg-[color-mix(in_srgb,var(--mint),white_56%)]"
           >
             地域設定
           </button>
@@ -70,7 +70,7 @@ export default function HomeHeaderMenu({ onGuide, onRegionSettings, onLogout }) 
               setOpen(false);
               onLogout?.();
             }}
-            className="w-full border-t border-slate-100 px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
+            className="w-full border-t border-[var(--ring)] px-4 py-3 text-left text-sm font-bold text-rose-600 hover:bg-rose-50"
           >
             ログアウト
           </button>
