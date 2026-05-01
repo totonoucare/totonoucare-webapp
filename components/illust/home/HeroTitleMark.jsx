@@ -32,10 +32,11 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
           <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
             <span className="text-[var(--gold)]">MIBYO RADAR</span>
             <span className="mx-2 text-[#d8d3c4]">|</span>
-            <span className="text-[#9aa2b0]">PERSONAL FORECAST</span>
+            <span className="text-[#959fb0]">PERSONAL FORECAST</span>
           </p>
         )}
       </div>
     </div>
   );
 }
+
