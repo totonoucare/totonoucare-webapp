@@ -10,47 +10,37 @@ body {
 
 /*
   Design tokens
-  v15: brand strength pass
-  - 最新のジェード系アイコンに負けないよう、アクセントの彩度と濃度を上げる
-  - 白っぽさは抑えつつ、背景の清潔感は維持
-  - 影・境界線は残して、ベタ塗りにならない立体感を維持
+  v14: saturation and contrast recovery
+  - globals だけでは変化が弱かったため、ブランドカラーの芯を強める前提の値に更新
+  - 白っぽさを減らすため、mint / accent / ring を一段濃くする
+  - 温度感は維持しつつ、アイコンに負けない出力へ
 */
 :root {
-  --bg: #f5f6ef;
+  --bg: #f6f6f1;
   --panel: #ffffff;
-  --mint: #dcefe4;
-  --mint-strong: #c7e8d8;
+  --mint: #e7f1ea;
 
-  --accent: #22aa8a;
-  --accent-strong: #119374;
-  --accent-deep: #176d58;
-  --accent-ink: #1f6f5d;
-  --accent-soft: #e0f3ea;
+  --accent: #4ea789;
+  --accent-ink: #2a6350;
+  --gold: #dfa42d;
+  --gold-soft: #f6e8bc;
 
-  --gold: #eda928;
-  --gold-strong: #d78d16;
-  --gold-soft: #f7e7b9;
-
-  --text-main: #081225;
-  --text-sub: #3f4b5f;
-  --text-muted: #667386;
-
-  --ring: rgba(31, 111, 93, 0.18);
-  --ring-strong: rgba(31, 111, 93, 0.28);
-  --shadow: 0 18px 38px -24px rgba(28, 64, 54, 0.28);
-  --shadow-soft: 0 12px 24px -17px rgba(28, 64, 54, 0.18);
+  --ring: rgba(42, 99, 80, 0.18);
+  --ring-strong: rgba(42, 99, 80, 0.26);
+  --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
+  --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
 }
 
 @layer base {
   body {
     background: var(--bg);
-    color: var(--text-main);
+    color: #0f172a;
     font-family: var(--font-zenkaku), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--accent-soft), white 4%);
-    color: var(--accent-deep);
+    background: color-mix(in srgb, var(--mint), white 6%);
+    color: var(--accent-ink);
   }
 }
 
@@ -69,3 +59,4 @@ body {
     ring-color: var(--ring);
   }
 }
+
