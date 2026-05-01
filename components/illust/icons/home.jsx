@@ -8,7 +8,9 @@ export function IconSpark({ className = "h-7 w-7", ...props }) {
       className={className}
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.15"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
       {...props}
     >
@@ -25,7 +27,7 @@ export function IconCheck({ className = "h-6 w-6", ...props }) {
       className={className}
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.2"
+      strokeWidth="2.35"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -52,6 +54,7 @@ export function IconRadar({ className = "h-6 w-6", ...props }) {
       <path d="M12 12l8-4" />
       <path d="M12 12a8 8 0 1 0 8 8" />
       <path d="M12 12V4" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -116,18 +119,19 @@ export function IconUser({ className = "h-6 w-6", ...props }) {
   );
 }
 
-/** home hero art (外部SVG差し替え前提の仮アート) */
+/** home hero art */
 export function HeroArt({ className = "h-[110px] w-full", ...props }) {
   return (
     <svg viewBox="0 0 320 140" className={className} aria-hidden="true" {...props}>
       <defs>
         <linearGradient id="home_g1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#E9EDDD" />
-          <stop offset="1" stopColor="#6a9770" stopOpacity="0.38" />
+          <stop offset="0" stopColor="#E2F4EC" />
+          <stop offset="0.52" stopColor="#D6EFE5" />
+          <stop offset="1" stopColor="#4FB09B" stopOpacity="0.46" />
         </linearGradient>
         <linearGradient id="home_g2" x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#111827" stopOpacity="0.08" />
-          <stop offset="1" stopColor="#111827" stopOpacity="0.0" />
+          <stop offset="0" stopColor="#2A7D6F" stopOpacity="0.12" />
+          <stop offset="1" stopColor="#2A7D6F" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path
@@ -136,14 +140,16 @@ export function HeroArt({ className = "h-[110px] w-full", ...props }) {
       />
       <path
         d="M20 108c40-14 86-10 120-26s60-40 156-44"
-        stroke="#0f172a"
-        strokeOpacity="0.18"
-        strokeWidth="2"
+        stroke="#2F7F70"
+        strokeOpacity="0.2"
+        strokeWidth="2.2"
         fill="none"
       />
-      <circle cx="78" cy="58" r="10" fill="#6a9770" fillOpacity="0.22" />
-      <circle cx="214" cy="52" r="14" fill="#6a9770" fillOpacity="0.18" />
+      <circle cx="78" cy="58" r="10" fill="#45B49E" fillOpacity="0.26" />
+      <circle cx="214" cy="52" r="14" fill="#45B49E" fillOpacity="0.2" />
+      <circle cx="246" cy="32" r="5" fill="#E3A63A" fillOpacity="0.34" />
       <rect x="210" y="16" width="92" height="48" rx="18" fill="url(#home_g2)" />
     </svg>
   );
 }
+
