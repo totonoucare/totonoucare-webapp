@@ -10,21 +10,22 @@ body {
 
 /*
   Design tokens
-  v11: brand-strength pass
-  - v10 の構造感・影・面の設計は維持
-  - ブランドカラーの出力強度だけ一段引き上げる
-  - アイコンに負けない文字色 / ボタン色 / キャラ色へ調整
+  v12: saturation lift pass
+  - v11 の色味バランスは維持
+  - 全体の彩度だけ少し引き上げる
+  - アイコンに負けないよう、accent / mint / gold / ring をやや鮮やかに
+  - 明るさや雰囲気は崩さず、ぼんやり感だけ減らす
 */
 :root {
-  --bg: #f6f6f1;
+  --bg: #f6f6f0;
   --panel: #ffffff;
-  --mint: #edf3ee;
-  --accent: #5c9f88;
-  --accent-ink: #355f52;
-  --gold: #e2aa3b;
-  --gold-soft: #f6ebc7;
-  --ring: rgba(53, 95, 82, 0.16);
-  --ring-strong: rgba(53, 95, 82, 0.22);
+  --mint: #e9f3ed;
+  --accent: #55a186;
+  --accent-ink: #2f6252;
+  --gold: #e3ac34;
+  --gold-soft: #f8edc5;
+  --ring: rgba(47, 98, 82, 0.18);
+  --ring-strong: rgba(47, 98, 82, 0.25);
   --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
   --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
 }
