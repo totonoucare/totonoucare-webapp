@@ -153,3 +153,4 @@ export function HeroArt({ className = "h-[110px] w-full", ...props }) {
   );
 }
 
+
