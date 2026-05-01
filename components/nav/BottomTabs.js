@@ -1,4 +1,4 @@
- // components/nav/BottomTabs.js
+// components/nav/BottomTabs.js
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
@@ -60,7 +60,9 @@ export default function BottomTabs() {
           className={[
             // ★ 枠を h-8 w-8 -> h-10 w-10 に戻し、角丸も自然な比率に
             "grid h-10 w-10 place-items-center rounded-[12px] transition-all duration-300",
-            isActive ? "bg-[var(--mint)] shadow-sm ring-1 ring-[var(--ring)] scale-110" : "bg-transparent",
+            isActive
+              ? "bg-[color-mix(in_srgb,var(--mint),white_16%)] shadow-[0_10px_24px_-16px_rgba(var(--accent-rgb),0.55)] ring-1 ring-[var(--ring)] scale-110"
+              : "bg-transparent",
           ].join(" ")}
         >
           <Icon />
@@ -75,9 +77,9 @@ export default function BottomTabs() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]">
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60" />
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
-      
+      <div className="absolute inset-0 bg-[var(--panel)]/86 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--panel)]/68" />
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[var(--ring-strong)] to-transparent" />
+
       {/* ★ 全体の上下余白を py-1.5 -> py-2 に戻しました */}
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
@@ -89,3 +91,4 @@ export default function BottomTabs() {
     </div>
   );
 }
+
