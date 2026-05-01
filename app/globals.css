@@ -10,22 +10,26 @@ body {
 
 /*
   Design tokens
-  v12: saturation lift pass
-  - v11 の色味バランスは維持
-  - 全体の彩度だけ少し引き上げる
-  - アイコンに負けないよう、accent / mint / gold / ring をやや鮮やかに
-  - 明るさや雰囲気は崩さず、ぼんやり感だけ減らす
+  v13: saturation-up pass
+  - v11 の方向性は維持
+  - 全体の彩度を少しだけ引き上げ
+  - 特にタイトル文字・ボタン色がアイコンに負けないよう補正
+  - 派手にしすぎず、温度感と上品さは残す
 */
 :root {
-  --bg: #f6f6f0;
+  --bg: #f6f6f1;
   --panel: #ffffff;
-  --mint: #e9f3ed;
-  --accent: #55a186;
-  --accent-ink: #2f6252;
-  --gold: #e3ac34;
-  --gold-soft: #f8edc5;
-  --ring: rgba(47, 98, 82, 0.18);
-  --ring-strong: rgba(47, 98, 82, 0.25);
+  --mint: #edf4ee;
+
+  /* brand */
+  --accent: #54a78c;
+  --accent-ink: #2f6b59;
+  --gold: #e4ab37;
+  --gold-soft: #f7edc8;
+
+  /* structure */
+  --ring: rgba(47, 107, 89, 0.17);
+  --ring-strong: rgba(47, 107, 89, 0.24);
   --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
   --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
 }
@@ -58,3 +62,4 @@ body {
     ring-color: var(--ring);
   }
 }
+
