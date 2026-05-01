@@ -5,7 +5,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
     <div className={["flex items-center gap-3", className].join(" ")}>
       <div
         className={[
-          "relative shrink-0 overflow-hidden bg-white shadow-[0_14px_28px_-16px_rgba(40,55,48,0.24)] ring-1 ring-[color:var(--ring)]",
+          "relative shrink-0 overflow-hidden bg-white shadow-[0_14px_28px_-16px_rgba(28,64,54,0.28)] ring-1 ring-[color:var(--ring)]",
           compact ? "h-10 w-10 rounded-[14px]" : "h-14 w-14 rounded-[20px]",
         ].join(" ")}
       >
@@ -25,18 +25,17 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             compact ? "text-[20px] leading-none" : "text-[28px] leading-[1.05]",
           ].join(" ")}
         >
-          <span className="text-[var(--accent)]">未病レーダー</span>
+          <span className="text-[var(--accent-strong)]">未病レーダー</span>
         </div>
 
         {!compact && (
           <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
-            <span className="text-[var(--gold)]">MIBYO RADAR</span>
-            <span className="mx-2 text-[#d8d3c4]">|</span>
-            <span className="text-[#8f98aa]">PERSONAL FORECAST</span>
+            <span className="text-[var(--gold-strong)]">MIBYO RADAR</span>
+            <span className="mx-2 text-[#cfc6b0]">|</span>
+            <span className="text-[#707b8d]">PERSONAL FORECAST</span>
           </p>
         )}
       </div>
     </div>
   );
 }
-
