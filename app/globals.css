@@ -10,40 +10,47 @@ body {
 
 /*
   Design tokens
-  v13: saturation-up pass
-  - v11 の方向性は維持
-  - 全体の彩度を少しだけ引き上げ
-  - 特にタイトル文字・ボタン色がアイコンに負けないよう補正
-  - 派手にしすぎず、温度感と上品さは残す
+  v15: brand strength pass
+  - 最新のジェード系アイコンに負けないよう、アクセントの彩度と濃度を上げる
+  - 白っぽさは抑えつつ、背景の清潔感は維持
+  - 影・境界線は残して、ベタ塗りにならない立体感を維持
 */
 :root {
-  --bg: #f6f6f1;
+  --bg: #f5f6ef;
   --panel: #ffffff;
-  --mint: #edf4ee;
+  --mint: #dcefe4;
+  --mint-strong: #c7e8d8;
 
-  /* brand */
-  --accent: #54a78c;
-  --accent-ink: #2f6b59;
-  --gold: #e4ab37;
-  --gold-soft: #f7edc8;
+  --accent: #22aa8a;
+  --accent-strong: #119374;
+  --accent-deep: #176d58;
+  --accent-ink: #1f6f5d;
+  --accent-soft: #e0f3ea;
 
-  /* structure */
-  --ring: rgba(47, 107, 89, 0.17);
-  --ring-strong: rgba(47, 107, 89, 0.24);
-  --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
-  --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
+  --gold: #eda928;
+  --gold-strong: #d78d16;
+  --gold-soft: #f7e7b9;
+
+  --text-main: #081225;
+  --text-sub: #3f4b5f;
+  --text-muted: #667386;
+
+  --ring: rgba(31, 111, 93, 0.18);
+  --ring-strong: rgba(31, 111, 93, 0.28);
+  --shadow: 0 18px 38px -24px rgba(28, 64, 54, 0.28);
+  --shadow-soft: 0 12px 24px -17px rgba(28, 64, 54, 0.18);
 }
 
 @layer base {
   body {
     background: var(--bg);
-    color: #0f172a;
+    color: var(--text-main);
     font-family: var(--font-zenkaku), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--mint), white 6%);
-    color: var(--accent-ink);
+    background: color-mix(in srgb, var(--accent-soft), white 4%);
+    color: var(--accent-deep);
   }
 }
 
@@ -62,4 +69,3 @@ body {
     ring-color: var(--ring);
   }
 }
-
