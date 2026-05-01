@@ -18,13 +18,13 @@ export function Button({
 
   const variants = {
     primary:
-      "bg-[var(--accent)] text-white shadow-[0_12px_22px_-10px_rgba(49,115,100,0.42)] hover:bg-[var(--accent-ink)] hover:shadow-[0_16px_28px_-10px_rgba(49,115,100,0.48)]",
+      "bg-[var(--accent)] text-white shadow-[0_14px_28px_-12px_rgba(42,99,80,0.46)] hover:bg-[var(--accent-ink)] hover:shadow-[0_18px_34px_-12px_rgba(42,99,80,0.52)]",
     secondary:
-      "bg-white text-[#4f5968] ring-1 ring-inset ring-[color:var(--ring)] shadow-sm hover:bg-[#fafaf7] hover:text-slate-900",
+      "bg-white text-[#425264] ring-1 ring-inset ring-[color:var(--ring)] shadow-[0_8px_18px_-14px_rgba(40,55,48,0.18)] hover:bg-[#fafaf7] hover:text-slate-900",
     ghost:
-      "bg-transparent text-[#6b7481] hover:bg-[color-mix(in_srgb,var(--mint),white_12%)] hover:text-slate-900",
+      "bg-transparent text-[#5c6c7e] hover:bg-[color-mix(in_srgb,var(--mint),white_12%)] hover:text-slate-900",
     danger:
-      "bg-rose-600 text-white shadow-[0_8px_16px_-6px_rgba(225,29,72,0.2)] hover:bg-rose-500",
+      "bg-rose-600 text-white shadow-[0_10px_20px_-8px_rgba(225,29,72,0.22)] hover:bg-rose-500",
   };
 
   const sizes = {
@@ -42,5 +42,3 @@ export function Button({
 }
 
 export default Button;
-
-
