@@ -1,3 +1,4 @@
+// components/illust/home/HeroTitleMark.jsx
 "use client";
 
 export default function HeroTitleMark({ compact = false, className = "" }) {
@@ -6,7 +7,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
       {/* アイコン部分 */}
       <div
         className={[
-          "relative shrink-0 overflow-hidden bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] ring-1 ring-slate-900/5",
+          "relative shrink-0 overflow-hidden bg-white shadow-[0_8px_18px_-10px_rgba(var(--accent-ink-rgb),0.55)] ring-1 ring-[var(--ring)]",
           compact ? "h-10 w-10 rounded-[14px]" : "h-14 w-14 rounded-[20px]",
         ].join(" ")}
       >
@@ -27,12 +28,12 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
             compact ? "text-[20px] leading-none" : "text-[28px] leading-[1.05]",
           ].join(" ")}
         >
-          <span className="text-[#5E8365]">未病レーダー</span>
+          <span className="text-[var(--brand-title)]">未病レーダー</span>
         </div>
 
         {!compact && (
           <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
-            <span className="text-[#d9a54a]">MIBYO RADAR</span>
+            <span className="text-[var(--gold)]">MIBYO RADAR</span>
             <span className="mx-2 text-slate-300">|</span>
             <span className="text-slate-400">PERSONAL FORECAST</span>
           </p>
@@ -41,4 +42,3 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
     </div>
   );
 }
-
