@@ -3,10 +3,17 @@
 
 import { usePathname, useRouter } from "next/navigation";
 
-// アイコンサイズを h-5 w-5 から h-6 w-6 に戻しました
 function IconHome() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3 10.5 12 3l9 7.5" />
       <path d="M5 10v10h14V10" />
       <path d="M9 20v-6h6v6" />
@@ -16,7 +23,15 @@ function IconHome() {
 
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.35"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M20 6L9 17l-5-5" />
     </svg>
   );
@@ -24,12 +39,20 @@ function IconCheck() {
 
 function IconRadar() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z" opacity="0.3" />
-      <path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" opacity="0.3" />
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.05"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z" opacity="0.32" />
+      <path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" opacity="0.32" />
       <path d="M12 12V2" />
-      <path d="M12 12l5.5-5.5" strokeDasharray="1 3" opacity="0.8" />
-      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+      <path d="M12 12l5.5-5.5" strokeDasharray="1 3" opacity="0.82" />
+      <circle cx="12" cy="12" r="2.55" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -39,36 +62,46 @@ export default function BottomTabs() {
   const pathname = usePathname();
 
   const active =
-    pathname === "/" ? "home" :
-    pathname.startsWith("/check") ? "check" :
-    pathname.startsWith("/radar") ? "radar" :
-    "home";
+    pathname === "/"
+      ? "home"
+      : pathname.startsWith("/check")
+        ? "check"
+        : pathname.startsWith("/radar")
+          ? "radar"
+          : "home";
 
   const item = (key, label, Icon, href) => {
     const isActive = active === key;
+
     return (
       <button
         type="button"
         onClick={() => router.push(href)}
+        aria-current={isActive ? "page" : undefined}
         className={[
-          // ★ py-1.5 -> py-2 に戻して少しゆったりと
-          "flex flex-1 flex-col items-center justify-center gap-1 rounded-[16px] py-2 transition-all duration-200 active:scale-[0.95]",
-          isActive ? "text-[var(--accent-ink)]" : "text-slate-400 hover:text-slate-600",
+          "flex flex-1 flex-col items-center justify-center gap-1 rounded-[18px] py-2 transition-all duration-200 active:scale-[0.96]",
+          isActive
+            ? "text-[var(--accent-ink)]"
+            : "text-[#95A1B2] hover:text-[#647386]",
         ].join(" ")}
       >
         <span
           className={[
-            // ★ 枠を h-8 w-8 -> h-10 w-10 に戻し、角丸も自然な比率に
-            "grid h-10 w-10 place-items-center rounded-[12px] transition-all duration-300",
+            "grid h-10 w-10 place-items-center rounded-[14px] transition-all duration-300",
             isActive
-              ? "bg-[color-mix(in_srgb,var(--mint),white_16%)] shadow-[0_10px_24px_-16px_rgba(var(--accent-rgb),0.55)] ring-1 ring-[var(--ring)] scale-110"
+              ? "scale-110 bg-[color-mix(in_srgb,var(--accent),white_78%)] shadow-[0_14px_28px_-18px_rgba(41,85,72,0.58)] ring-1 ring-[color-mix(in_srgb,var(--accent),white_58%)]"
               : "bg-transparent",
           ].join(" ")}
         >
           <Icon />
         </span>
-        {/* ★ 文字サイズを text-[9px] -> text-[10px] に戻して視認性アップ */}
-        <span className={`text-[10px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
+
+        <span
+          className={[
+            "text-[10px] tracking-wide transition-colors duration-200",
+            isActive ? "font-black" : "font-extrabold",
+          ].join(" ")}
+        >
           {label}
         </span>
       </button>
@@ -77,10 +110,9 @@ export default function BottomTabs() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]">
-      <div className="absolute inset-0 bg-[var(--panel)]/86 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--panel)]/68" />
-      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[var(--ring-strong)] to-transparent" />
+      <div className="absolute inset-0 bg-[color-mix(in_srgb,var(--panel),white_10%)]/90 backdrop-blur-xl supports-[backdrop-filter]:bg-[color-mix(in_srgb,var(--panel),white_10%)]/74" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[color-mix(in_srgb,var(--accent),white_74%)] to-transparent" />
 
-      {/* ★ 全体の上下余白を py-1.5 -> py-2 に戻しました */}
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
@@ -91,4 +123,5 @@ export default function BottomTabs() {
     </div>
   );
 }
+
 
