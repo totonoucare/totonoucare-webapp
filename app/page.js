@@ -119,9 +119,9 @@ function signalDotClass(signal) {
 }
 
 function signalCardBg(signal) {
-  if (signal === 2) return "bg-[#FFF1F3] ring-rose-200";
-  if (signal === 1) return "bg-[#FFF5DE] ring-amber-200";
-  return "bg-[#ECF8F1] ring-emerald-200";
+  if (signal === 2) return "bg-gradient-to-br from-rose-50 to-[#fff1f2] ring-rose-200";
+  if (signal === 1) return "bg-gradient-to-br from-amber-50 to-[#fffbeb] ring-amber-200";
+  return "bg-gradient-to-br from-emerald-50 to-[#ecfdf5] ring-emerald-200";
 }
 
 function signalScoreTextClass(signal) {
@@ -131,9 +131,9 @@ function signalScoreTextClass(signal) {
 }
 
 function signalDecorClass(signal) {
-  if (signal === 2) return "bg-rose-200/25 border-rose-200/40";
-  if (signal === 1) return "bg-amber-200/28 border-amber-200/45";
-  return "bg-emerald-200/26 border-emerald-200/40";
+  if (signal === 2) return "from-rose-200/45 to-rose-100/10 border-rose-200/40";
+  if (signal === 1) return "from-amber-200/45 to-amber-100/10 border-amber-200/45";
+  return "from-emerald-200/45 to-emerald-100/10 border-emerald-200/40";
 }
 
 function triggerLabel(mainTrigger, triggerDir) {
@@ -161,10 +161,10 @@ function ActionTile({ icon, title, sub, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[24px] bg-white p-5 text-left ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.34)] transition-all hover:-translate-y-0.5 hover:bg-[#FBFCF8] hover:shadow-[0_18px_36px_-22px_rgba(37,95,79,0.38)] active:scale-[0.98] group"
+      className="rounded-[24px] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] p-5 text-left ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-22px_rgba(37,95,79,0.38)] active:scale-[0.98] group"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm transition-transform group-hover:scale-105">
+        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[linear-gradient(145deg,#DFF2E8_0%,#FBFCF8_72%,#FFF2D2_100%)] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm transition-transform group-hover:scale-105">
           {icon}
         </div>
         <IconChevron className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
@@ -178,7 +178,7 @@ function ActionTile({ icon, title, sub, onClick }) {
 function ForecastMiniCard({ title, bundle, loading, onClick }) {
   if (loading) {
     return (
-      <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)]">
+      <div className="rounded-[24px] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)]">
         <div className="h-36 animate-pulse rounded-[22px] bg-slate-100" />
       </div>
     );
@@ -190,7 +190,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       : (bundle?.error || "予報を読み込めませんでした。");
 
     return (
-      <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)] flex flex-col justify-between">
+      <div className="rounded-[24px] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)] flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
@@ -215,13 +215,13 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "relative overflow-hidden rounded-[24px] p-5 text-left ring-1 ring-inset shadow-[0_16px_32px_-24px_rgba(47,111,98,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-22px_rgba(47,111,98,0.36)] active:scale-[0.98] group",
+        "relative overflow-hidden rounded-[24px] p-5 text-left ring-1 ring-inset shadow-[0_16px_32px_-24px_rgba(47,111,98,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-22px_rgba(37,95,79,0.36)] active:scale-[0.98] group",
         signalCardBg(forecast.signal) || "bg-white ring-[var(--ring)]",
       ].join(" ")}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className={[
-          "absolute -right-10 -top-10 h-32 w-32 rounded-full blur-2xl",
+          "absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl",
           signalDecorClass(forecast.signal),
         ].join(" ")} />
         <div className={[
@@ -477,7 +477,7 @@ if (!isLoggedIn) {
       }
     >
       <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-        <div className="relative bg-[#EEF5EF] px-6 pt-10 pb-6 text-center">
+        <div className="relative bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_20%)] via-[color-mix(in_srgb,var(--mint),white_70%)] to-white px-6 pt-10 pb-6 text-center">
           {/* 1. ブランド名 */}
           <HeroTitleMark />
 
@@ -569,12 +569,12 @@ if (!isLoggedIn) {
       }
     >
       {/* ヒーローヘッダー */}
-      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
+      <Module className="relative overflow-hidden rounded-[32px] bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(251,250,246,0.98)_100%)] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
         <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[46%] overflow-hidden">
           <div className="absolute right-8 top-7 h-36 w-36 rounded-full border border-[rgba(200,157,71,0.14)]" />
           <div className="absolute right-16 top-14 h-24 w-24 rounded-full border border-[rgba(94,131,101,0.12)]" />
           <div className="absolute right-0 bottom-2 h-44 w-44 rounded-full border border-[rgba(94,131,101,0.08)]" />
-          <div className="absolute right-10 top-3 h-28 w-28 rounded-full bg-[#E2AA3B]/10" />
+          <div className="absolute right-10 top-3 h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(217,165,74,0.10)_0%,rgba(217,165,74,0.04)_36%,transparent_72%)]" />
           <div className="absolute right-[112px] top-[86px] h-[220px] w-[220px] rounded-full border border-[rgba(94,131,101,0.08)]" />
           <div className="absolute right-24 top-20 h-2 w-2 rounded-full bg-[rgba(200,157,71,0.24)]" />
         </div>
@@ -584,7 +584,7 @@ if (!isLoggedIn) {
         </div>
 
 <div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
-  <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
+  <div className="relative rounded-[20px] border border-[var(--ring)] bg-[linear-gradient(180deg,#ffffff_0%,#fafaf7_100%)] px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
     <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
     <div className="text-[13px] font-extrabold leading-6 text-slate-600">
       体調予報の概要と、次の一歩をまとめています
@@ -598,10 +598,10 @@ if (!isLoggedIn) {
       </Module>
 
       {/* サマリー・ウィジェット群 */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+      <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] ring-1 ring-[#BFD9CC] shadow-sm">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#F4FAF5] ring-1 ring-[#CFE0D3] shadow-sm">
               <IconRadar className="h-5 w-5 text-[#255F4F]" />
             </span>
             <div className="text-[18px] font-black tracking-tight text-slate-900">予報の概要</div>
@@ -626,9 +626,9 @@ if (!isLoggedIn) {
       </Module>
 
       {/* 次にやること */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+      <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#F7F5EA] text-[#2F816E] ring-1 ring-[#BFD9CC] shadow-sm">
             <IconBolt className="h-5 w-5" />
           </span>
           <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
@@ -663,10 +663,10 @@ if (!isLoggedIn) {
       </Module>
 
       {/* あなたの体質 */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+      <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
+             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#F7F5EA] text-[#2F816E] ring-1 ring-[#BFD9CC] shadow-sm">
                <IconCompass className="h-5 w-5" />
              </span>
             <div className="text-[18px] font-black tracking-tight text-slate-900">あなたの体質</div>
@@ -675,7 +675,7 @@ if (!isLoggedIn) {
         </div>
 
         {latestResult && core ? (
-          <div className="mt-5 rounded-[32px] bg-[#EEF6F0] p-6 ring-1 ring-inset ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.32)]">
+          <div className="mt-5 rounded-[32px] bg-[linear-gradient(135deg,#E8F6EF_0%,#F8FBF5_58%,#F7F5EA_100%)] p-6 ring-1 ring-inset ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.32)]">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/85">前回のチェック</div>
@@ -726,4 +726,3 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
-
