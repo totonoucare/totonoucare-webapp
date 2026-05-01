@@ -5,10 +5,10 @@ import HeroGuideBot from "./HeroGuideBot";
 function StatusChip({ label, tone }) {
   const toneClass =
     tone === "warn"
-      ? "bg-[var(--gold-soft)] text-[#9f6f1f] ring-1 ring-inset ring-[#e8d495] shadow-[0_4px_10px_-8px_rgba(128,93,27,0.25)]"
+      ? "bg-[var(--gold-soft)] text-[#9a6b1b] ring-1 ring-inset ring-[#e7d18e] shadow-[0_4px_10px_-8px_rgba(128,93,27,0.25)]"
       : tone === "danger"
         ? "bg-rose-100 text-rose-700"
-        : "bg-[color-mix(in_srgb,var(--mint),white_8%)] text-[var(--accent-ink)] ring-1 ring-inset ring-[color:var(--ring)] shadow-[0_4px_10px_-8px_rgba(40,55,48,0.18)]";
+        : "bg-[color-mix(in_srgb,var(--mint),white_6%)] text-[var(--accent-ink)] ring-1 ring-inset ring-[color:var(--ring)] shadow-[0_4px_10px_-8px_rgba(40,55,48,0.18)]";
 
   return (
     <span className={["inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-wider", toneClass].join(" ")}>
@@ -23,28 +23,28 @@ export default function HeroMiniCards({ compact = false }) {
       <div className="rounded-[32px] border border-[color:var(--ring)] bg-white p-2 shadow-[0_26px_56px_-26px_rgba(40,55,48,0.22)]">
         <div className="relative h-[320px] overflow-hidden rounded-[26px] bg-[#fcfcf8] ring-1 ring-inset ring-[color:var(--ring)]">
           <svg viewBox="0 0 320 320" className="absolute inset-0 h-full w-full" aria-hidden="true">
-            <circle cx="30" cy="250" r="180" fill="#edf3ee" fillOpacity="0.97" />
-            <circle cx="30" cy="250" r="102" fill="#edf3ee" fillOpacity="0.77" />
+            <circle cx="30" cy="250" r="180" fill="#e7f1ea" fillOpacity="0.98" />
+            <circle cx="30" cy="250" r="102" fill="#e7f1ea" fillOpacity="0.8" />
 
-            <circle cx="30" cy="250" r="72" fill="none" stroke="#c7d8d0" strokeWidth="1.6" strokeOpacity="0.82" />
-            <circle cx="30" cy="250" r="112" fill="none" stroke="#c7d8d0" strokeWidth="1.5" strokeOpacity="0.58" />
-            <circle cx="30" cy="250" r="152" fill="none" stroke="#c7d8d0" strokeWidth="1.5" strokeOpacity="0.36" />
+            <circle cx="30" cy="250" r="72" fill="none" stroke="#c2d7cb" strokeWidth="1.6" strokeOpacity="0.84" />
+            <circle cx="30" cy="250" r="112" fill="none" stroke="#c2d7cb" strokeWidth="1.5" strokeOpacity="0.6" />
+            <circle cx="30" cy="250" r="152" fill="none" stroke="#c2d7cb" strokeWidth="1.5" strokeOpacity="0.38" />
 
             <path
               d="M30 96 A154 154 0 0 1 170 190"
               fill="none"
-              stroke="#5c9f88"
-              strokeWidth="2.2"
+              stroke="#4ea789"
+              strokeWidth="2.25"
               strokeLinecap="round"
-              strokeOpacity="0.38"
+              strokeOpacity="0.42"
             />
             <path
               d="M30 138 A112 112 0 0 1 128 206"
               fill="none"
-              stroke="#e2aa3b"
-              strokeWidth="2.1"
+              stroke="#dfa42d"
+              strokeWidth="2.15"
               strokeLinecap="round"
-              strokeOpacity="0.3"
+              strokeOpacity="0.32"
             />
           </svg>
 
@@ -107,7 +107,7 @@ export default function HeroMiniCards({ compact = false }) {
         </div>
       </div>
 
-      <div className="group relative overflow-hidden rounded-[30px] border border-[color:var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_28%)] p-5 shadow-[0_18px_34px_-14px_rgba(40,55,48,0.12)]">
+      <div className="group relative overflow-hidden rounded-[30px] border border-[color:var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_24%)] p-5 shadow-[0_18px_34px_-14px_rgba(40,55,48,0.12)]">
         <div className="relative z-10">
           <div className="text-[11px] font-black uppercase tracking-widest text-[#77818e]">セルフケアガイド</div>
           <div className="mt-1 text-base font-black leading-tight text-slate-900">今日のうちに整えておく</div>
@@ -122,8 +122,8 @@ export default function HeroMiniCards({ compact = false }) {
 
           <div className="mt-8 h-12 w-full overflow-hidden rounded-xl bg-white/88 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] ring-1 ring-[color:var(--ring)]">
             <svg viewBox="0 0 200 40" className="h-full w-full">
-              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#5c9f88" strokeOpacity="0.52" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="90" cy="20" r="3" fill="#e2aa3b" />
+              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#4ea789" strokeOpacity="0.56" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="90" cy="20" r="3" fill="#dfa42d" />
             </svg>
           </div>
         </div>
@@ -131,4 +131,5 @@ export default function HeroMiniCards({ compact = false }) {
     </div>
   );
 }
+
 
