@@ -161,16 +161,16 @@ function ActionTile({ icon, title, sub, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[24px] bg-white p-5 text-left ring-1 ring-inset ring-[var(--ring)] shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] group"
+      className="rounded-[24px] bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] p-5 text-left ring-1 ring-inset ring-[#D8E4DA] shadow-[0_16px_32px_-24px_rgba(47,111,98,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-22px_rgba(47,111,98,0.38)] active:scale-[0.98] group"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm transition-transform group-hover:scale-105">
+        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[linear-gradient(145deg,#DDF4EA_0%,#F8FBF4_72%,#FFF2D2_100%)] text-[#2F7468] ring-1 ring-[#CADFD5] shadow-sm transition-transform group-hover:scale-105">
           {icon}
         </div>
         <IconChevron className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
       </div>
-      <div className="mt-4 text-[15px] font-black tracking-tight text-slate-900">{title}</div>
-      <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{sub}</div>
+      <div className="mt-4 text-[15px] font-black tracking-tight text-slate-950">{title}</div>
+      <div className="mt-1 text-[12px] font-extrabold leading-5 text-slate-600">{sub}</div>
     </button>
   );
 }
@@ -178,7 +178,7 @@ function ActionTile({ icon, title, sub, onClick }) {
 function ForecastMiniCard({ title, bundle, loading, onClick }) {
   if (loading) {
     return (
-      <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+      <div className="rounded-[24px] bg-[linear-gradient(180deg,#FFFFFF_0%,#FAFCF8_100%)] p-5 ring-1 ring-inset ring-[#D8E4DA] shadow-[0_16px_32px_-24px_rgba(47,111,98,0.3)]">
         <div className="h-36 animate-pulse rounded-[22px] bg-slate-100" />
       </div>
     );
@@ -190,7 +190,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       : (bundle?.error || "予報を読み込めませんでした。");
 
     return (
-      <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm flex flex-col justify-between">
+      <div className="rounded-[24px] bg-[linear-gradient(180deg,#FFFFFF_0%,#FAFCF8_100%)] p-5 ring-1 ring-inset ring-[#D8E4DA] shadow-[0_16px_32px_-24px_rgba(47,111,98,0.3)] flex flex-col justify-between">
         <div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
@@ -215,7 +215,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "relative overflow-hidden rounded-[24px] p-5 text-left ring-1 ring-inset shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.98] group",
+        "relative overflow-hidden rounded-[24px] p-5 text-left ring-1 ring-inset shadow-[0_16px_32px_-24px_rgba(47,111,98,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-22px_rgba(47,111,98,0.36)] active:scale-[0.98] group",
         signalCardBg(forecast.signal) || "bg-white ring-[var(--ring)]",
       ].join(" ")}
     >
@@ -236,8 +236,8 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
 
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div>
-          <div className="text-[15px] font-black tracking-tight text-slate-900">{title}</div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] font-extrabold text-slate-500">
+          <div className="text-[15px] font-black tracking-tight text-slate-950">{title}</div>
+          <div className="mt-1 flex items-center gap-1 text-[11px] font-extrabold text-slate-600">
             <IconPin />
             {location.display_name || location.label || "地域未設定"}
           </div>
@@ -253,8 +253,8 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
 
       <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">気になりやすい変化</div>
-          <div className="mt-1.5 flex items-center gap-2 text-[20px] font-black tracking-tight text-slate-900">
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">気になりやすい変化</div>
+          <div className="mt-1.5 flex items-center gap-2 text-[20px] font-black tracking-tight text-slate-950">
             <div className="text-[var(--accent-ink)] opacity-95">
               <WeatherIcon triggerKey={exactTrigger} className="h-6 w-6" />
             </div>
@@ -598,10 +598,12 @@ if (!isLoggedIn) {
       </Module>
 
       {/* サマリー・ウィジェット群 */}
-      <Module className="p-6">
+      <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#DDE6DF] shadow-[0_18px_42px_-32px_rgba(47,111,98,0.32)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <IconRadar className="h-6 w-6 text-[var(--accent)]" />
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#F2F8F3] ring-1 ring-[#D8E4DA] shadow-sm">
+              <IconRadar className="h-5 w-5 text-[#2F7468]" />
+            </span>
             <div className="text-[18px] font-black tracking-tight text-slate-900">予報の概要</div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
@@ -624,9 +626,11 @@ if (!isLoggedIn) {
       </Module>
 
       {/* 次にやること */}
-      <Module className="p-6">
+      <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#DDE6DF] shadow-[0_18px_42px_-32px_rgba(47,111,98,0.32)]">
         <div className="flex items-center gap-2.5">
-          <IconBolt className="h-6 w-6 text-slate-400" />
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF5DC] text-[#DE7A22] ring-1 ring-[#F0DCA7] shadow-sm">
+            <IconBolt className="h-5 w-5" />
+          </span>
           <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
         </div>
 
@@ -659,20 +663,22 @@ if (!isLoggedIn) {
       </Module>
 
       {/* あなたの体質 */}
-      <Module className="p-6">
+      <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#DDE6DF] shadow-[0_18px_42px_-32px_rgba(47,111,98,0.32)]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-             <IconCompass className="h-6 w-6 text-amber-500" />
+             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF5DC] text-[#D89A30] ring-1 ring-[#F0DCA7] shadow-sm">
+               <IconCompass className="h-5 w-5" />
+             </span>
             <div className="text-[18px] font-black tracking-tight text-slate-900">あなたの体質</div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push(latestResultHref || "/check")}>結果を見る</Button>
         </div>
 
         {latestResult && core ? (
-          <div className="mt-5 rounded-[32px] bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_30%)] to-[color-mix(in_srgb,var(--mint),white_70%)] p-6 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+          <div className="mt-5 rounded-[32px] bg-[linear-gradient(135deg,#E9F8F1_0%,#F7FBF5_58%,#FFF5DC_100%)] p-6 ring-1 ring-inset ring-[#CFE2D7] shadow-[0_16px_34px_-24px_rgba(47,111,98,0.32)]">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">前回のチェック</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#2F7468]/85">前回のチェック</div>
                 <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">{core.title}</div>
                 <div className="mt-1.5 text-[12px] font-bold text-slate-700">{core.short}</div>
 
@@ -681,7 +687,7 @@ if (!isLoggedIn) {
                     {subs.map((sub) => (
                       <span
                         key={sub.code}
-                        className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm"
+                        className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#2F7468] ring-1 ring-[#D8E4DA] shadow-sm"
                       >
                         {sub.short}
                       </span>
@@ -691,7 +697,7 @@ if (!isLoggedIn) {
               </div>
 
               <div className="shrink-0">
-                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105 p-1.5">
+                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-white ring-1 ring-[#D8E4DA] shadow-[0_14px_28px_-22px_rgba(47,111,98,0.36)] transition-transform hover:scale-105 p-1.5">
                   <CoreIllust
                     code={latestResult.core_code}
                     title={core.title}
@@ -720,3 +726,4 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
+
