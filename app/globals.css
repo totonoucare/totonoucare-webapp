@@ -10,21 +10,23 @@ body {
 
 /*
   Design tokens
-  v9: latest bright-jade icon matched theme
-  - アイコンの明るいジェイドグリーンに合わせて再調整
-  - 青みは強くしすぎず、鮮度を少し上げる
-  - 透明感を減らし、面をはっきり見せる
+  v10: refined scalable app theme
+  - latest jade icon を起点に再設計
+  - 淡すぎる印象を避け、コントラストと面の存在感を回復
+  - 影・境界線・カードの層をきちんと残し、上品さは維持
 */
 :root {
-  --bg: #f7f8f2;
-  --panel: #fffefb;
-  --mint: #e8f3ea;
-  --accent: #52a88e;
-  --accent-ink: #317364;
-  --gold: #f0b337;
-  --gold-soft: #fff0c9;
-  --ring: rgba(49, 115, 100, 0.13);
-  --shadow: 0 12px 34px -20px rgba(49, 115, 100, 0.24);
+  --bg: #f6f6f1;
+  --panel: #ffffff;
+  --mint: #edf3ee;
+  --accent: #6ba08d;
+  --accent-ink: #446e61;
+  --gold: #e6ae40;
+  --gold-soft: #f7edcc;
+  --ring: rgba(68, 110, 97, 0.14);
+  --ring-strong: rgba(68, 110, 97, 0.2);
+  --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
+  --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
 }
 
 @layer base {
@@ -35,7 +37,7 @@ body {
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--mint), white 8%);
+    background: color-mix(in srgb, var(--mint), white 6%);
     color: var(--accent-ink);
   }
 }
@@ -55,3 +57,4 @@ body {
     ring-color: var(--ring);
   }
 }
+
