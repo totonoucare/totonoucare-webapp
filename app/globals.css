@@ -10,34 +10,34 @@ body {
 
 /*
   Design tokens
-  v5: 最新アイコンの少し淡く落ち着いたティールに合わせた版。
-  v4の深いピーコック感を少し抑え、やわらかい青磁〜ティール寄りに調整。
+  新アイコンの背景色に合わせたティール〜ピーコックグリーン版。
+  青みで冷たくなりすぎないよう、背景は黄みのある白、アクセントは少し深めに調整。
 */
 :root {
   /* Base */
-  --bg: #f7fbf8;
+  --bg: #f6fbf7;
   --panel: #fffefb;
   --surface: #ffffff;
   --surface-soft: #fbfdfa;
 
   /* Legacy token name: 既存コンポーネント互換の淡いブランド面 */
-  --mint: #e4f1ed;
+  --mint: #ddf3e8;
 
   /* Brand */
-  --accent: #3f8f82;
-  --accent-rgb: 63, 143, 130;
-  --accent-ink: #286b62;
-  --accent-ink-rgb: 40, 107, 98;
-  --brand-title: #5a8272;
+  --accent: #2f9b84;
+  --accent-rgb: 47, 155, 132;
+  --accent-ink: #1f6b5c;
+  --accent-ink-rgb: 31, 107, 92;
+  --brand-title: #3f7d68;
 
   /* Support */
   --gold: #f2b334;
   --gold-soft: #fff3d1;
 
   /* Lines / elevation */
-  --ring: rgba(40, 107, 98, 0.11);
-  --ring-strong: rgba(40, 107, 98, 0.18);
-  --shadow: 0 12px 34px -20px rgba(40, 107, 98, 0.3);
+  --ring: rgba(31, 107, 92, 0.11);
+  --ring-strong: rgba(31, 107, 92, 0.18);
+  --shadow: 0 12px 34px -20px rgba(31, 107, 92, 0.3);
 }
 
 @layer base {
