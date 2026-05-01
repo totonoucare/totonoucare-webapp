@@ -221,18 +221,18 @@ export default function PushNotificationPrompt() {
 
   return (
     <div className="fixed inset-x-0 bottom-24 z-50 px-4 sm:bottom-6">
-      <div className="mx-auto max-w-md rounded-[28px] border border-emerald-100 bg-white/95 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur">
+      <div className="mx-auto max-w-md rounded-[28px] border border-[#DCE7DE] bg-[linear-gradient(145deg,rgba(255,255,255,0.98)_0%,rgba(248,250,244,0.97)_56%,rgba(237,245,239,0.97)_100%)] p-4 shadow-[0_18px_60px_rgba(40,55,48,0.16)] backdrop-blur-xl">
         <div className="flex items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-xl">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(145deg,#EAF6EF_0%,#F9FBF5_58%,#FFF1CF_100%)] text-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_18px_rgba(53,95,82,0.12)] ring-1 ring-[#C9DED4]">
             🔔
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-black text-slate-900">警戒日の通知を受け取る</p>
-            <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">
+            <p className="text-sm font-black text-[#101827]">警戒日の通知を受け取る</p>
+            <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#536477]">
               前日夜と当日朝に、スコア6以上の日だけお知らせします。通知文は短く、予報スコア・主因・時間帯だけで作ります。
             </p>
             {message ? (
-              <p className={`mt-2 text-xs font-black ${status === "error" ? "text-rose-600" : "text-emerald-700"}`}>
+              <p className={`mt-2 text-xs font-black ${status === "error" ? "text-rose-600" : "text-[#2F7668]"}`}>
                 {message}
               </p>
             ) : null}
@@ -243,14 +243,14 @@ export default function PushNotificationPrompt() {
             type="button"
             onClick={handleEnable}
             disabled={status === "loading" || status === "done"}
-            className="flex-1 rounded-full bg-[#244235] px-4 py-3 text-sm font-black text-white disabled:opacity-60"
+            className="flex-1 rounded-full bg-[#5C9F88] px-4 py-3 text-sm font-black text-white shadow-[0_11px_24px_rgba(53,95,82,0.23)] ring-1 ring-[#4F8F7C]/20 active:scale-[0.99] disabled:opacity-60"
           >
             {status === "loading" ? "設定中…" : status === "done" ? "設定しました" : "通知をオンにする"}
           </button>
           <button
             type="button"
             onClick={handleDismiss}
-            className="rounded-full bg-slate-100 px-4 py-3 text-sm font-black text-slate-600"
+            className="rounded-full bg-white px-4 py-3 text-sm font-black text-[#536477] shadow-sm ring-1 ring-[#DCE7DE] active:scale-[0.99]"
           >
             あとで
           </button>
