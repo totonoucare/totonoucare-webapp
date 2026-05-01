@@ -10,34 +10,34 @@ body {
 
 /*
   Design tokens
-  新アイコンの背景色に合わせたティール〜ピーコックグリーン版。
-  青みで冷たくなりすぎないよう、背景は黄みのある白、アクセントは少し深めに調整。
+  v6: v5の淡い青磁ティールを少し温めた版。
+  青み・淡さを抑え、アイコンの清潔感は残しつつ、セルフケアらしい温度感を足す。
 */
 :root {
   /* Base */
-  --bg: #f6fbf7;
-  --panel: #fffefb;
-  --surface: #ffffff;
-  --surface-soft: #fbfdfa;
+  --bg: #fafaf3;
+  --panel: #fffdf7;
+  --surface: #fffefb;
+  --surface-soft: #fbfaf1;
 
-  /* Legacy token name: 既存コンポーネント互換の淡いブランド面 */
-  --mint: #ddf3e8;
+  /* Legacy token name: 既存コンポーネント互換の淡いウォームティール面 */
+  --mint: #e9f1df;
 
   /* Brand */
-  --accent: #2f9b84;
-  --accent-rgb: 47, 155, 132;
-  --accent-ink: #1f6b5c;
-  --accent-ink-rgb: 31, 107, 92;
-  --brand-title: #3f7d68;
+  --accent: #469878;
+  --accent-rgb: 70, 152, 120;
+  --accent-ink: #2b6a53;
+  --accent-ink-rgb: 43, 106, 83;
+  --brand-title: #607e63;
 
   /* Support */
-  --gold: #f2b334;
-  --gold-soft: #fff3d1;
+  --gold: #efaa30;
+  --gold-soft: #fff1cc;
 
   /* Lines / elevation */
-  --ring: rgba(31, 107, 92, 0.11);
-  --ring-strong: rgba(31, 107, 92, 0.18);
-  --shadow: 0 12px 34px -20px rgba(31, 107, 92, 0.3);
+  --ring: rgba(43, 106, 83, 0.12);
+  --ring-strong: rgba(43, 106, 83, 0.19);
+  --shadow: 0 12px 34px -20px rgba(43, 106, 83, 0.28);
 }
 
 @layer base {
@@ -47,7 +47,7 @@ body {
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--mint), white 16%);
+    background: color-mix(in srgb, var(--mint), white 12%);
     color: var(--accent-ink);
   }
 }
@@ -66,4 +66,5 @@ body {
     box-shadow: var(--shadow);
   }
 }
+
 
