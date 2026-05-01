@@ -18,11 +18,11 @@ export function Button({
 
   const variants = {
     primary:
-      "bg-[var(--accent)] text-white shadow-[0_14px_28px_-12px_rgba(42,99,80,0.46)] hover:bg-[var(--accent-ink)] hover:shadow-[0_18px_34px_-12px_rgba(42,99,80,0.52)]",
+      "bg-[linear-gradient(135deg,var(--accent)_0%,var(--accent-strong)_100%)] text-white shadow-[0_14px_28px_-11px_rgba(17,147,116,0.58)] hover:brightness-[0.96] hover:shadow-[0_18px_34px_-12px_rgba(17,147,116,0.66)]",
     secondary:
-      "bg-white text-[#425264] ring-1 ring-inset ring-[color:var(--ring)] shadow-[0_8px_18px_-14px_rgba(40,55,48,0.18)] hover:bg-[#fafaf7] hover:text-slate-900",
+      "bg-white text-[var(--text-sub)] ring-1 ring-inset ring-[color:var(--ring)] shadow-[0_8px_18px_-14px_rgba(28,64,54,0.2)] hover:bg-[#fbfaf5] hover:text-[var(--text-main)]",
     ghost:
-      "bg-transparent text-[#5c6c7e] hover:bg-[color-mix(in_srgb,var(--mint),white_12%)] hover:text-slate-900",
+      "bg-transparent text-[var(--text-sub)] hover:bg-[color-mix(in_srgb,var(--mint),white_8%)] hover:text-[var(--text-main)]",
     danger:
       "bg-rose-600 text-white shadow-[0_10px_20px_-8px_rgba(225,29,72,0.22)] hover:bg-rose-500",
   };
@@ -42,3 +42,4 @@ export function Button({
 }
 
 export default Button;
+
