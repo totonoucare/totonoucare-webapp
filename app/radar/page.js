@@ -810,7 +810,7 @@ function ForecastGauge({
 
 function SegmentedTabs({ tabs, value, onChange }) {
   return (
-    <div className="flex rounded-full bg-[#EEF2EF] p-1 ring-1 ring-inset ring-[#DDE5DE] shadow-inner">
+    <div className="flex rounded-full bg-[#E7F1EA] p-1 ring-1 ring-inset ring-[#CFE0D3] shadow-inner">
       {tabs.map((t) => {
         const active = value === t.key;
         return (
@@ -821,7 +821,7 @@ function SegmentedTabs({ tabs, value, onChange }) {
             className={[
               "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
               active
-                ? "bg-white text-slate-950 shadow-[0_8px_22px_-16px_rgba(47,111,98,0.52)] ring-1 ring-[#D8E4DA]"
+                ? "bg-white text-[#255F4F] shadow-[0_8px_22px_-16px_rgba(37,95,79,0.52)] ring-1 ring-[#BFD9CC]"
                 : "text-slate-500 hover:text-slate-800",
             ].join(" ")}
           >
@@ -1909,9 +1909,9 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+          <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
             <div className="flex items-center gap-3 mb-1">
-              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#E2F5EC_0%,#FFFFFF_72%,#F4F8EF_100%)] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
+              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
                 <IconRipple className="h-9 w-9" />
               </div>
               <div>
@@ -1926,7 +1926,7 @@ export default function RadarPage() {
 
             {primaryTsubo ? (
               <div
-                className="mt-6 relative overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,#F1F9F4_0%,#FFFFFF_58%,#F7F5EA_100%)] p-5 ring-1 ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.34)] cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-24px_rgba(47,111,98,0.38)]"
+                className="mt-6 relative overflow-hidden rounded-[28px] bg-[#F1F8F4] p-5 ring-1 ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.34)] cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-24px_rgba(47,111,98,0.38)]"
                 onClick={() => setSelectedPoint(primaryTsubo)}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -2050,9 +2050,9 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-6 bg-[linear-gradient(180deg,#FFFFFF_0%,#FBFCF8_100%)] ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+          <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
             <div className="flex items-center gap-3 mb-5">
-              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[linear-gradient(145deg,#E2F5EC_0%,#FFFFFF_72%,#F4F8EF_100%)] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
+              <div className="grid h-14 w-14 place-items-center rounded-[16px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
                 <IconBowl className="h-9 w-9" />
               </div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">
@@ -2060,7 +2060,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className="rounded-[24px] bg-[#F7FAF7] px-5 py-5 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(37,95,79,0.26)]">
+            <div className="rounded-[24px] bg-[#F7FAF7] px-5 py-5 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(47,111,98,0.26)]">
               <div className="text-[15px] font-black tracking-tight text-slate-900">
                 {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
               </div>
@@ -2183,7 +2183,7 @@ export default function RadarPage() {
             </div>
           </Module>
 
-          <Module className="p-5 bg-[linear-gradient(135deg,#EAF8F1_0%,#F9FCF8_58%,#F7F5EA_100%)] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
+          <Module className="p-5 bg-[#EEF6F0] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
@@ -2409,4 +2409,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
