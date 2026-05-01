@@ -726,3 +726,4 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
+
