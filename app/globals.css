@@ -10,28 +10,34 @@ body {
 
 /*
   Design tokens
-  v3: 新アイコンの背景色に合わせたティールグリーン版。
-  v2のセージ寄りのやわらかさは残しつつ、アイコンに近い鮮度とアプリ感を戻す。
+  v5: 最新アイコンの少し淡く落ち着いたティールに合わせた版。
+  v4の深いピーコック感を少し抑え、やわらかい青磁〜ティール寄りに調整。
 */
 :root {
   /* Base */
-  --bg: #f6fbf7;
+  --bg: #f7fbf8;
   --panel: #fffefb;
+  --surface: #ffffff;
+  --surface-soft: #fbfdfa;
 
-  /* Legacy token name: アイコン背景に寄せた淡いティール面 */
-  --mint: #ddf3e8;
+  /* Legacy token name: 既存コンポーネント互換の淡いブランド面 */
+  --mint: #e4f1ed;
 
   /* Brand */
-  --accent: #2f9b84;
-  --accent-ink: #1f6b5c;
+  --accent: #3f8f82;
+  --accent-rgb: 63, 143, 130;
+  --accent-ink: #286b62;
+  --accent-ink-rgb: 40, 107, 98;
+  --brand-title: #5a8272;
 
   /* Support */
   --gold: #f2b334;
   --gold-soft: #fff3d1;
 
   /* Lines / elevation */
-  --ring: rgba(31, 107, 92, 0.11);
-  --shadow: 0 12px 34px -20px rgba(31, 107, 92, 0.3);
+  --ring: rgba(40, 107, 98, 0.11);
+  --ring-strong: rgba(40, 107, 98, 0.18);
+  --shadow: 0 12px 34px -20px rgba(40, 107, 98, 0.3);
 }
 
 @layer base {
@@ -58,6 +64,6 @@ body {
   .app-panel {
     background: var(--panel);
     box-shadow: var(--shadow);
-    ring-color: var(--ring);
   }
 }
+
