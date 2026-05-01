@@ -32,7 +32,7 @@ export default function HeroGuideBot({
   return (
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
-        <div className={`absolute rounded-2xl border border-[color:var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-[var(--text-sub)] shadow-[0_12px_24px_-12px_rgba(28,64,54,0.22)] z-20 transition-all ${bubbleStyles}`}>
+        <div className={`absolute rounded-2xl border border-[color:var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-[#586372] shadow-[0_12px_24px_-12px_rgba(40,55,48,0.2)] z-20 transition-all ${bubbleStyles}`}>
           {tailStyles}
           <div className="relative z-10">{message}</div>
         </div>
@@ -43,40 +43,38 @@ export default function HeroGuideBot({
           <defs>
             <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="100%" stopColor="#e8f8ef" />
+              <stop offset="100%" stopColor="#eef7f2" />
             </linearGradient>
             <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#c5ead6" />
-              <stop offset="100%" stopColor="#8fd0ad" />
+              <stop offset="0%" stopColor="#dcefe6" />
+              <stop offset="100%" stopColor="#bfdacb" />
             </linearGradient>
             <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#eda928" stopOpacity="0.94" />
-              <stop offset="100%" stopColor="#f7c75f" stopOpacity="0.3" />
+              <stop offset="0%" stopColor="#e2aa3b" stopOpacity="0.92" />
+              <stop offset="100%" stopColor="#efbf56" stopOpacity="0.28" />
             </linearGradient>
             <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#176d58" floodOpacity="0.18" />
+              <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#355f52" floodOpacity="0.16" />
             </filter>
           </defs>
 
-          <circle cx="60" cy="70" r="40" fill="#ffffff" fillOpacity="0.42" filter="blur(10px)" />
+          <circle cx="60" cy="70" r="40" fill="#ffffff" fillOpacity="0.4" filter="blur(10px)" />
           <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" />
           <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.98" />
-          <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.78" />
+          <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.76" />
           <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
 
-          <path d="M60 28 L60 18" stroke="#36a987" strokeWidth="2.8" strokeLinecap="round" />
-          <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#4fbb93" />
+          <path d="M60 28 L60 18" stroke="#6eab90" strokeWidth="2.7" strokeLinecap="round" />
+          <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#8fc7aa" />
 
           <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" />
-          <circle cx="44" cy="50" r="4.5" fill="#226f5a" />
-          <circle cx="76" cy="50" r="4.5" fill="#226f5a" />
-          <ellipse cx="36" cy="56" rx="5" ry="3" fill="#e0a7a2" opacity="0.46" />
-          <ellipse cx="84" cy="56" rx="5" ry="3" fill="#e0a7a2" opacity="0.46" />
-          <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="#226f5a" strokeWidth="2.35" strokeLinecap="round" />
+          <circle cx="44" cy="50" r="4.5" fill="#4f7a64" />
+          <circle cx="76" cy="50" r="4.5" fill="#4f7a64" />
+          <ellipse cx="36" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.46" />
+          <ellipse cx="84" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.46" />
+          <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="#4f7a64" strokeWidth="2.3" strokeLinecap="round" />
         </svg>
       </div>
     </div>
   );
 }
-
-
