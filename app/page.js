@@ -570,13 +570,43 @@ if (!isLoggedIn) {
     >
       {/* ヒーローヘッダー */}
       <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[46%] overflow-hidden">
-          <div className="absolute right-8 top-7 h-36 w-36 rounded-full border border-[rgba(200,157,71,0.14)]" />
-          <div className="absolute right-16 top-14 h-24 w-24 rounded-full border border-[rgba(94,131,101,0.12)]" />
-          <div className="absolute right-0 bottom-2 h-44 w-44 rounded-full border border-[rgba(94,131,101,0.08)]" />
-          <div className="absolute right-10 top-3 h-28 w-28 rounded-full bg-[#E2AA3B]/10" />
-          <div className="absolute right-[112px] top-[86px] h-[220px] w-[220px] rounded-full border border-[rgba(94,131,101,0.08)]" />
-          <div className="absolute right-24 top-20 h-2 w-2 rounded-full bg-[rgba(200,157,71,0.24)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
+          <svg
+            viewBox="0 0 260 220"
+            className="absolute -right-9 top-2 h-[218px] w-[260px]"
+            aria-hidden="true"
+          >
+            <circle cx="154" cy="86" r="54" fill="#E8D59A" opacity="0.18" />
+            <circle cx="154" cy="86" r="81" fill="none" stroke="#D8C58E" strokeWidth="1.4" strokeOpacity="0.22" />
+            <circle cx="154" cy="86" r="118" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.14" />
+            <circle cx="154" cy="86" r="41" fill="none" stroke="#5C9F88" strokeWidth="1.3" strokeOpacity="0.18" />
+            <path
+              d="M48 92 A108 108 0 0 1 211 25"
+              fill="none"
+              stroke="#5C9F88"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeOpacity="0.2"
+            />
+            <path
+              d="M64 129 A90 90 0 0 1 225 95"
+              fill="none"
+              stroke="#D2A43A"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeOpacity="0.28"
+            />
+            <circle cx="214" cy="91" r="4.6" fill="#D2A43A" opacity="0.2" />
+            <circle cx="111" cy="138" r="3.3" fill="#5C9F88" opacity="0.22" />
+            <path
+              d="M118 188 C 139 175, 174 175, 195 188"
+              fill="none"
+              stroke="#5C9F88"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeOpacity="0.12"
+            />
+          </svg>
         </div>
 
         <div className="relative z-[2] max-w-[420px]">
@@ -726,5 +756,3 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
-
-
