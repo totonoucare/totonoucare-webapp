@@ -8,6 +8,27 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { IconCheck, IconHistory, IconInfo } from "@/components/illust/icons/check";
 
+function MiniBadge({ children }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[11px] font-black tracking-tight text-[#526070] shadow-[0_8px_16px_-14px_rgba(40,55,48,0.18)] ring-1 ring-inset ring-[var(--ring)]">
+      {children}
+    </span>
+  );
+}
+
+function CheckOrbitMark() {
+  return (
+    <svg viewBox="0 0 160 160" className="absolute -right-5 -top-6 h-40 w-40 opacity-90" aria-hidden="true">
+      <circle cx="82" cy="78" r="46" fill="none" stroke="#d7e8dd" strokeWidth="1.8" />
+      <circle cx="82" cy="78" r="68" fill="none" stroke="#edf2ee" strokeWidth="1.5" />
+      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#6bb69a" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
+      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#dfa42d" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
+      <circle cx="122" cy="32" r="5" fill="#dfa42d" opacity="0.48" />
+      <circle cx="45" cy="109" r="4" fill="#4ea789" opacity="0.58" />
+    </svg>
+  );
+}
+
 export default function CheckLandingPage() {
   const router = useRouter();
 
@@ -42,77 +63,88 @@ export default function CheckLandingPage() {
   return (
     <AppShell title="体質チェック">
       <Module className="mb-8">
-        <ModuleHeader icon={<IconCheck />} title="体質チェック" sub="未病のクセをサクッと見える化" />
-        
-        <div className="px-5 pb-8 pt-4 space-y-5">
-          
-          {/* 1. プレミアム・メインカード（チェック開始） */}
-          <div className="relative overflow-hidden rounded-[28px] bg-white ring-1 ring-[var(--ring)] shadow-[0_16px_32px_-12px_rgba(0,0,0,0.06)] transition-all hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.1)]">
-            {/* 上部の美しいグラデーション帯 */}
-            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_40%)] to-white opacity-90" />
-            
-            <div className="relative z-10 p-6">
+        <ModuleHeader
+          icon={<IconCheck />}
+          title="体質チェック"
+          sub="未病のクセをサクッと見える化"
+        />
+
+        <div className="space-y-5 px-5 pb-8 pt-4">
+          <section className="relative overflow-hidden rounded-[28px] bg-[#fbfcf8] p-5 shadow-[0_18px_38px_-26px_rgba(40,55,48,0.24)] ring-1 ring-[color:var(--ring)]">
+            <CheckOrbitMark />
+
+            <div className="relative z-10">
               <div className="flex items-start gap-4">
-                {/* アイコンもブランドカラーに */}
-                <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-[var(--ring)] text-[var(--accent-ink)]">
+                <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white text-[var(--accent-ink)] shadow-[0_12px_24px_-18px_rgba(40,55,48,0.22)] ring-1 ring-[color:var(--ring)]">
                   <IconInfo className="h-7 w-7" />
                 </div>
-                <div className="min-w-0 pt-1">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
-                    New Check
+
+                <div className="min-w-0 pt-0.5">
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">
+                    NEW CHECK
                   </div>
-                  <div className="mt-1 text-[22px] font-black tracking-tight text-slate-900 leading-tight">
-                    今の状態を<br />チェックする
-                  </div>
+                  <h1 className="mt-1 text-[25px] font-black leading-[1.18] tracking-tight text-slate-950">
+                    今の状態を
+                    <br />
+                    チェックする
+                  </h1>
                 </div>
               </div>
 
-              <div className="mt-5 text-[13px] font-bold leading-6 text-slate-600">
-                約1〜2分で終わる簡単な質問です。<br />回答は途中保存されるので、気軽に進めてOKです。
+              <p className="mt-5 text-[13px] font-bold leading-7 text-[#536072]">
+                約1〜2分で終わる簡単な質問です。回答は途中保存されるので、気軽に進めてOKです。
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <MiniBadge>約1〜2分</MiniBadge>
+                <MiniBadge>途中保存</MiniBadge>
+                <MiniBadge>無料</MiniBadge>
               </div>
 
               <div className="mt-6">
-                <Button 
+                <Button
                   onClick={() => router.push("/check/run")}
-                  className="w-full shadow-md py-3.5 text-[15px]"
+                  className="h-14 w-full rounded-[20px] text-[16px] shadow-[0_16px_28px_-16px_rgba(42,99,80,0.52)]"
                 >
                   チェックを始める
                 </Button>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* 2. 履歴カード (ブランドカラー統一版) */}
-          <div className="relative overflow-hidden rounded-[24px] bg-slate-50 ring-1 ring-[var(--ring)] shadow-sm">
-            {/* アクセントバーを落ち着いたスレートに変更 */}
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-300" />
-            <div className="p-5 pl-6">
+          <section className="relative overflow-hidden rounded-[24px] bg-[#f7f8f5] p-5 shadow-[0_14px_30px_-26px_rgba(40,55,48,0.18)] ring-1 ring-[color:var(--ring)]">
+            <div className="absolute inset-y-5 left-0 w-1 rounded-r-full bg-[#cad8cf]" />
+
+            <div className="relative z-10">
               <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  {/* アイコン背景もモノトーン寄りに */}
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white shadow-sm ring-1 ring-slate-200/50 text-slate-600">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[15px] bg-white text-[#5d6b7c] shadow-[0_8px_18px_-16px_rgba(40,55,48,0.18)] ring-1 ring-inset ring-slate-200/80">
                     <IconHistory className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[15px] font-extrabold text-slate-800">
+                    <div className="text-[16px] font-black tracking-tight text-slate-900">
                       過去の履歴
+                    </div>
+                    <div className="mt-0.5 text-[11px] font-bold text-slate-500">
+                      体質の変化を見返す
                     </div>
                   </div>
                 </div>
+
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => router.push("/history")}
                   disabled={loadingAuth || !isLoggedIn}
-                  className="shrink-0 bg-white shadow-sm"
+                  className="shrink-0 bg-white px-5 shadow-[0_8px_18px_-16px_rgba(40,55,48,0.18)]"
                 >
                   見る
                 </Button>
               </div>
 
-              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
+              <p className="mt-4 text-[13px] font-bold leading-7 text-[#536072]">
                 保存した過去の診断結果を見返して、体質の変化を確認できます。
-              </div>
+              </p>
 
               {!loadingAuth && !isLoggedIn ? (
                 <div className="mt-4">
@@ -122,10 +154,10 @@ export default function CheckLandingPage() {
                 </div>
               ) : null}
             </div>
-          </div>
-
+          </section>
         </div>
       </Module>
     </AppShell>
   );
 }
+
