@@ -810,7 +810,7 @@ function ForecastGauge({
 
 function SegmentedTabs({ tabs, value, onChange }) {
   return (
-    <div className="flex rounded-full bg-[#E7F1EA] p-1 ring-1 ring-inset ring-[#CFE0D3] shadow-inner">
+    <div className="flex rounded-full bg-slate-200/55 p-1 ring-1 ring-inset ring-slate-200/70 shadow-inner">
       {tabs.map((t) => {
         const active = value === t.key;
         return (
@@ -821,7 +821,7 @@ function SegmentedTabs({ tabs, value, onChange }) {
             className={[
               "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
               active
-                ? "bg-white text-[#255F4F] shadow-[0_8px_22px_-16px_rgba(37,95,79,0.52)] ring-1 ring-[#BFD9CC]"
+                ? "bg-white text-slate-950 shadow-[0_8px_22px_-18px_rgba(15,23,42,0.28)] ring-1 ring-black/5"
                 : "text-slate-500 hover:text-slate-800",
             ].join(" ")}
           >
@@ -1670,7 +1670,7 @@ export default function RadarPage() {
       headerRight={
         <button
           onClick={() => setShowLocationEditor(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(47,111,98,0.42)] ring-1 ring-inset ring-[#CFE0D3] hover:bg-[#FBFCF8] transition-all active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
         >
           <span className="text-[14px]">📍</span> {locationDisplayLabel}
         </button>
