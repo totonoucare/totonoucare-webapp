@@ -4,6 +4,14 @@ import { createAdminClient } from "@/lib/supabaseAdmin";
 import { hasValidGuestToken } from "@/lib/diagnosisGuestAccess";
 import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
 import { buildPersonalKarte, getKartePreviewSections } from "@/lib/personalKarte";
+import {
+  buildKarteSourcePayload,
+  generatePersonalKarteAi,
+  getPersonalKarteModel,
+  getPersonalKartePromptVersion,
+  hashKarteSource,
+  isPersonalKarteAiEnabled,
+} from "@/lib/personalKarteAi";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +30,11 @@ function jsonNoStore(body, init = {}) {
       ...(init.headers || {}),
     },
   });
+}
+
+function isMissingReportTableError(error) {
+  const message = String(error?.message || "");
+  return error?.code === "42P01" || error?.code === "PGRST205" || message.includes("personal_karte_reports");
 }
 
 async function getUserFromRequest(req) {
@@ -78,6 +91,95 @@ async function hasAnyUnlockedKarteForEvent(admin, diagnosisEventId) {
   return Array.isArray(data) && data.length > 0;
 }
 
+async function loadSavedAiKarte(admin, { diagnosisEventId, sourceHash }) {
+  const { data, error } = await admin
+    .from("personal_karte_reports")
+    .select("id,report_json,model,prompt_version,generation_status,created_at,updated_at")
+    .eq("diagnosis_event_id", diagnosisEventId)
+    .eq("source_hash", sourceHash)
+    .eq("generation_status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingReportTableError(error)) {
+      console.warn("[api.karte] personal_karte_reports table is not available yet. Falling back to rules.");
+      return null;
+    }
+    throw error;
+  }
+
+  return data?.report_json || null;
+}
+
+async function saveAiKarte(admin, { userId, diagnosisEventId, sourceHash, karte }) {
+  const { error } = await admin.from("personal_karte_reports").upsert(
+    {
+      user_id: userId,
+      diagnosis_event_id: diagnosisEventId,
+      prompt_version: getPersonalKartePromptVersion(),
+      model: getPersonalKarteModel(),
+      source_hash: sourceHash,
+      generation_status: "completed",
+      report_json: karte,
+      generated_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "diagnosis_event_id,source_hash" }
+  );
+
+  if (error) {
+    if (isMissingReportTableError(error)) {
+      console.warn("[api.karte] personal_karte_reports save skipped. Table not found.");
+      return;
+    }
+    throw error;
+  }
+}
+
+async function getOrCreatePurchasedKarte({ admin, event, computed, baseKarte, userId }) {
+  if (!isPersonalKarteAiEnabled()) {
+    return { karte: baseKarte, source: "rules", aiEnabled: false };
+  }
+
+  const sourcePayload = buildKarteSourcePayload({ event, computed, baseKarte });
+  const sourceHash = hashKarteSource(sourcePayload);
+
+  const saved = await loadSavedAiKarte(admin, {
+    diagnosisEventId: event.id,
+    sourceHash,
+  });
+
+  if (saved) {
+    return { karte: saved, source: "openai-cache", aiEnabled: true };
+  }
+
+  try {
+    const generated = await generatePersonalKarteAi({ source: sourcePayload, baseKarte });
+    await saveAiKarte(admin, {
+      userId: userId || event.user_id,
+      diagnosisEventId: event.id,
+      sourceHash,
+      karte: generated,
+    });
+    return { karte: generated, source: "openai-generated", aiEnabled: true };
+  } catch (error) {
+    console.error("[api.karte.ai] generation failed; falling back to rules", error);
+    return {
+      karte: {
+        ...baseKarte,
+        meta: {
+          ...(baseKarte.meta || {}),
+          aiFallbackReason: error?.message || "generation failed",
+        },
+      },
+      source: "rules-ai-fallback",
+      aiEnabled: true,
+    };
+  }
+}
+
 export async function GET(req, { params }) {
   try {
     const id = params?.id;
@@ -113,11 +215,6 @@ export async function GET(req, { params }) {
       ? await hasValidGuestToken({ req, supabase: admin, eventId: id })
       : false;
 
-    // 1. ログインユーザー本人の購入レコードを見る。
-    // 2. event.user_id がある場合、本人確認済みなら event.user_id でも見る。
-    // 3. 本人確認済みの保存済み診断 or ゲストトークン保有中の匿名診断では、
-    //    diagnosis_event_id に紐づく active/paid unlock があればアンロック扱いにする。
-    //    これにより、決済後に auth session の取得タイミングやキャッシュで判定がズレる問題を避ける。
     const userUnlocked = await hasUnlockedKarte(admin, user?.id, id);
     const ownerUnlocked = event.user_id
       ? await hasUnlockedKarte(admin, event.user_id, id)
@@ -142,27 +239,51 @@ export async function GET(req, { params }) {
       computed,
       symptom_focus: computed.symptom_focus || event.symptom_focus,
     };
-    const karte = buildPersonalKarte(eventForKarte);
+    const baseKarte = buildPersonalKarte(eventForKarte);
+
+    if (!unlocked) {
+      return jsonNoStore({
+        unlocked,
+        generation: { source: "preview", aiEnabled: isPersonalKarteAiEnabled() },
+        event: {
+          id: event.id,
+          user_id: event.user_id,
+          created_at: event.created_at,
+          computed,
+        },
+        karte: {
+          productName: baseKarte.productName,
+          subtitle: baseKarte.subtitle,
+          coreTitle: baseKarte.coreTitle,
+          coreShort: baseKarte.coreShort,
+          symptomLabel: baseKarte.symptomLabel,
+          heroLead: baseKarte.heroLead,
+          sections: getKartePreviewSections(baseKarte),
+        },
+      });
+    }
+
+    const purchased = await getOrCreatePurchasedKarte({
+      admin,
+      event,
+      computed,
+      baseKarte,
+      userId: user?.id,
+    });
 
     return jsonNoStore({
       unlocked,
+      generation: {
+        source: purchased.source,
+        aiEnabled: purchased.aiEnabled,
+      },
       event: {
         id: event.id,
         user_id: event.user_id,
         created_at: event.created_at,
         computed,
       },
-      karte: unlocked
-        ? karte
-        : {
-            productName: karte.productName,
-            subtitle: karte.subtitle,
-            coreTitle: karte.coreTitle,
-            coreShort: karte.coreShort,
-            symptomLabel: karte.symptomLabel,
-            heroLead: karte.heroLead,
-            sections: getKartePreviewSections(karte),
-          },
+      karte: purchased.karte,
     });
   } catch (error) {
     console.error("[api.karte]", error);
@@ -172,4 +293,5 @@ export async function GET(req, { params }) {
     );
   }
 }
+
 
