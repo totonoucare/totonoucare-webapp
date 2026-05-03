@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-const PRICE_LABEL = "¥1,500";
+const PRICE_LABEL = "¥1,980";
 
 function cn(...values) {
   return values.filter(Boolean).join(" ");
@@ -146,6 +146,7 @@ export default function KarteClient() {
 
   const karte = data?.karte;
   const locked = data ? !data.unlocked : true;
+  const generation = data?.generation || {};
 
   const completionLabel = useMemo(() => {
     if (!karte?.sections?.length) return "8項目＋ボーナス";
@@ -269,7 +270,7 @@ export default function KarteClient() {
                   あなた専用の仕様書をアンロック
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  無料結果では見えない「崩れる順番」「逆効果ケア」「季節別の先回り」「相談時に伝えるメモ」「HP10%の日のレスキュー行動」まで、いつでも見返せます。
+                  無料結果では見えない「崩れる順番」「天気で崩れやすい日の見分け方」「逆効果ケア」「しんどい日の最低限ケア」「相談時に伝えるメモ」まで、いつでも見返せます。
                 </p>
               </div>
               <button
@@ -287,7 +288,7 @@ export default function KarteClient() {
           </section>
         ) : (
           <section className="rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-6 text-[15px] font-black leading-7 text-[#2f7567]">
-            ✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。
+            ✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。{generation.aiEnabled ? ` 生成状態：${generation.source === "openai-cache" ? "AI生成済み" : generation.source === "openai-generated" ? "AI生成しました" : generation.source === "rules-ai-fallback" ? "標準本文で表示中" : "標準本文"}` : ""}
           </section>
         )}
 
@@ -300,7 +301,7 @@ export default function KarteClient() {
             <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
             <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケア指南書</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
-              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。相談メモも含めて見返せます。PDF出力・共有リンクは次フェーズで拡張予定です。
+              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。相談メモも含めて見返せます。AI生成を有効化した環境では、購入後の初回表示で個別本文を生成して保存します。
             </p>
             <button
               type="button"
@@ -316,3 +317,4 @@ export default function KarteClient() {
     </main>
   );
 }
+
