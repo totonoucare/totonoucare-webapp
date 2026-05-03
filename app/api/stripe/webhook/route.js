@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabaseAdmin";
+import { PERSONAL_KARTE_PRODUCT } from "@/lib/personalKarte";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,7 +84,75 @@ async function upsertEntitlement({
   if (error) throw error;
 }
 
+async function upsertPersonalKarteUnlock(session) {
+  const supabase = createAdminClient();
+
+  const userId =
+    session?.metadata?.supabase_user_id ||
+    session?.metadata?.user_id ||
+    session?.client_reference_id ||
+    null;
+
+  const diagnosisEventId =
+    session?.metadata?.diagnosis_event_id ||
+    session?.metadata?.result_id ||
+    null;
+
+  if (!userId || !diagnosisEventId) {
+    throw new Error("personal_mibyo_karte metadata is missing user/result id");
+  }
+
+  const { data: diagnosisEvent, error: diagnosisError } = await supabase
+    .from("diagnosis_events")
+    .select("id,user_id")
+    .eq("id", diagnosisEventId)
+    .maybeSingle();
+
+  if (diagnosisError) throw diagnosisError;
+  if (!diagnosisEvent?.id) {
+    throw new Error("diagnosis_event was not found for personal_mibyo_karte");
+  }
+
+  if (diagnosisEvent.user_id && diagnosisEvent.user_id !== userId) {
+    throw new Error("diagnosis_event owner does not match checkout user");
+  }
+
+  const status = session.payment_status === "paid" ? "active" : session.payment_status || "pending";
+  const paymentIntentId =
+    typeof session.payment_intent === "string"
+      ? session.payment_intent
+      : session.payment_intent?.id || null;
+  const customerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : session.customer?.id || null;
+
+  const { error } = await supabase.from("personal_karte_unlocks").upsert(
+    {
+      user_id: userId,
+      diagnosis_event_id: diagnosisEventId,
+      status,
+      stripe_checkout_session_id: session.id,
+      stripe_payment_intent_id: paymentIntentId,
+      stripe_customer_id: customerId,
+      price_id: process.env.STRIPE_PERSONAL_KARTE_PRICE_ID || null,
+      currency: session.currency || null,
+      amount_total: session.amount_total || null,
+      purchased_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,diagnosis_event_id" }
+  );
+
+  if (error) throw error;
+}
+
 async function handleCheckoutCompleted(session) {
+  if (session?.metadata?.product === PERSONAL_KARTE_PRODUCT) {
+    await upsertPersonalKarteUnlock(session);
+    return;
+  }
+
   if (session.mode !== "subscription") return;
 
   const userId =
@@ -229,3 +298,4 @@ export async function POST(req) {
     );
   }
 }
+
