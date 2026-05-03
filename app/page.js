@@ -446,6 +446,9 @@ export default function HomePage() {
       ? `/result/${encodeURIComponent(latestResult.notes.source_event_id)}?from=history`
       : null;
 
+  const latestKarteId = latestResult?.source_event_id || latestResult?.notes?.source_event_id || latestResult?.id || null;
+  const latestKarteHref = latestKarteId ? `/karte/${encodeURIComponent(latestKarteId)}` : null;
+
   const core = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
   const subs = getSubLabels(latestResult?.sub_labels || []);
 
@@ -678,6 +681,12 @@ if (!isLoggedIn) {
             onClick={() => router.push(latestResultHref || "/check")}
           />
           <ActionTile
+            icon={<IconJournalCard />}
+            title="未病カルテを見る"
+            sub={latestKarteHref ? "購入・閲覧できる個別カルテへ" : "体質チェック後に作成できます"}
+            onClick={() => router.push(latestKarteHref || "/check")}
+          />
+          <ActionTile
             icon={<IconHistoryCard />}
             title="履歴を見る"
             sub="過去の結果を一覧で見返す。"
@@ -756,3 +765,4 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
+
