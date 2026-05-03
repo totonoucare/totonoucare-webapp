@@ -118,6 +118,7 @@ export default function KarteClient() {
       const token = sessionData?.session?.access_token;
       const res = await fetch(`/api/karte/${id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: "no-store",
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "カルテの取得に失敗しました。");
@@ -149,8 +150,8 @@ export default function KarteClient() {
   const generation = data?.generation || {};
 
   const completionLabel = useMemo(() => {
-    if (!karte?.sections?.length) return "8項目＋ボーナス";
-    return `${Math.max(0, karte.sections.length - 1)}項目＋ボーナス`;
+    if (!karte?.sections?.length) return "8項目";
+    return `${karte.sections.length}項目`;
   }, [karte]);
 
   async function startCheckout() {
@@ -317,4 +318,3 @@ export default function KarteClient() {
     </main>
   );
 }
-
