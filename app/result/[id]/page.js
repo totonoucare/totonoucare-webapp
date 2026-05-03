@@ -327,6 +327,57 @@ function buildRadarBridge({ symptomKey }) {
   return `未病レーダーでは、その日の天気の変化とあなたの体質を組み合わせて、「今日はどの要素が響きやすいか」「日中のどの時間帯に気をつけたいか」「${symptomText}に対してどんなツボや食養生が合いやすいか」を先回りして見られます。`;
 }
 
+
+function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
+  return (
+    <section className="rounded-[34px] border border-[#d7e6df] bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+      <div className="flex items-start gap-4">
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-[#d7e6df] bg-[#eff8f4] text-[24px]">
+          🔒
+        </div>
+        <div className="min-w-0">
+          <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">ONE TIME KARTE</div>
+          <h2 className="mt-2 text-[24px] font-black leading-[1.35] tracking-[-0.04em] text-[#10182d]">
+            パーソナル未病カルテ
+          </h2>
+          <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
+            あなたの「崩れ方」を先読みする、未病ケア指南書
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {[
+          `なぜいつもここで無理がたたるのか。${coreTitle || "あなた"}の崩れ方の設計図`,
+          `あの「${symptomLabel || "不調"}」が強くなるまでの裏ルート解析`,
+          "休んでるのに重いのはナゼ？やりがちな逆効果ケア",
+          "季節の変わり目で崩れない。未病シーズンマップ",
+          "鍼灸院・整体・漢方相談でそのまま使える相談メモ",
+          "HP10%の夜に。コンビニで買えるレスキュー飯",
+        ].map((title) => (
+          <div key={title} className="flex items-center gap-3 rounded-[22px] border border-[#e6eee9] bg-[#f8fbf9] px-4 py-3">
+            <span className="h-2 w-2 rounded-full bg-[#f4b73d]" />
+            <span className="text-[13px] font-black leading-6 text-[#334155]">{title}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
+        <p className="text-[13px] font-black leading-7 text-[#8a4b1d]">
+          無料結果では見えない「崩れる順番」「NGケア」「季節別の先回り行動」「相談時に伝えるメモ」まで、アプリ上でいつでも見返せます。
+        </p>
+      </div>
+
+      <a
+        href={`/karte/${resultId}`}
+        className="mt-5 flex w-full items-center justify-center rounded-full bg-[#2f7567] px-6 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.26)]"
+      >
+        チラ見せを見る
+      </a>
+    </section>
+  );
+}
+
 /* -----------------------------
  * Main Page Component
  * ---------------------------- */
@@ -774,6 +825,8 @@ function ResultPage({ params }) {
             </Card>
           )}
 
+          <PersonalKarteTeaser resultId={id} coreTitle={core.title} symptomLabel={symptomLabel} />
+
           <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300 pb-4">
             Result ID: {id}
           </div>
@@ -782,5 +835,3 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
-
