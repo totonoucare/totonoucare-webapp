@@ -258,6 +258,9 @@ export async function GET(req, { params }) {
           coreShort: baseKarte.coreShort,
           symptomLabel: baseKarte.symptomLabel,
           heroLead: baseKarte.heroLead,
+          quickTakeaways: baseKarte.quickTakeaways,
+          mapFlow: baseKarte.mapFlow,
+          forecastUsage: baseKarte.forecastUsage,
           sections: getKartePreviewSections(baseKarte),
         },
       });
