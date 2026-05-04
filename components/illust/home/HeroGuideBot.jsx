@@ -94,8 +94,16 @@ export default function HeroGuideBot({
           </defs>
 
           <circle cx="60" cy="70" r="40" fill="#ffffff" fillOpacity="0.4" filter="blur(10px)" />
-          {/* ★ 体にもごく薄い枠線をつけて背景に溶けないように */}
-          <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" stroke="#a1c4b2" strokeWidth="1" />
+          
+          {/* ★ 体にもごく薄い枠線をつけて背景に溶けないように + softShadowを追加 */}
+          <path 
+            d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" 
+            fill="url(#bodyGrad)" 
+            stroke="#a1c4b2" 
+            strokeWidth="1" 
+            filter="url(#softShadow)" 
+          />
+          
           <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.98" />
           <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.76" />
           <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
@@ -120,3 +128,4 @@ export default function HeroGuideBot({
     </div>
   );
 }
+
