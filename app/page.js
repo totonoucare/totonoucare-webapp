@@ -463,102 +463,137 @@ export default function HomePage() {
   /* ==============================================================
    * 未ログイン時（ランディングページ風の洗練されたUI）
    * ============================================================== */
-if (!isLoggedIn) {
-  return (
-    <AppShell
-      title="ホーム"
-      subtitle="未病レーダー"
-      headerRight={
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => router.push("/guide")}
-          className="font-extrabold text-slate-600 hover:bg-slate-100"
-        >
-          使い方
-        </Button>
-      }
-    >
-      <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-        <div className="relative bg-[#EEF5EF] px-6 pt-10 pb-6 text-center">
-          {/* 1. ブランド名 */}
-          <HeroTitleMark />
+  if (!isLoggedIn) {
+    return (
+      <AppShell
+        title="ホーム"
+        subtitle="未病レーダー"
+        headerRight={
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => router.push("/guide")}
+            className="font-extrabold text-slate-600 hover:bg-slate-100"
+          >
+            使い方
+          </Button>
+        }
+      >
+        <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
+          <div className="relative bg-[#EEF5EF] px-6 pt-10 pb-6 text-center">
+            {/* 1. ブランド名 */}
+            <HeroTitleMark />
 
-          {/* 2. ヒーロー絵エリア */}
-          <div className="mt-8 -mx-1">
-            <HeroMiniCards compact />
+            {/* 2. ヒーロー絵エリア */}
+            <div className="mt-8 -mx-1">
+              <HeroMiniCards compact />
+            </div>
+
+            {/* 3. タイトルコピー */}
+            <div className="mt-8 text-[26px] sm:text-[30px] font-black tracking-tight leading-[1.35] text-slate-900">
+              体質と気象変化から、<br />
+              体調の波を先読み。
+            </div>
+
+            {/* 4. 本文コピー */}
+            <div className="mt-4 text-[14px] font-bold leading-relaxed text-slate-700 max-w-[320px] mx-auto">
+              あなたの「崩れ方のクセ」を分析し、日々の気圧や気温の変化に対する先回りケアを提案します。
+            </div>
           </div>
 
-          {/* 3. タイトルコピー */}
-          <div className="mt-8 text-[26px] sm:text-[30px] font-black tracking-tight leading-[1.35] text-slate-900">
-            体質と気象変化から、<br />
-            体調の波を先読み。
-          </div>
-
-          {/* 4. 本文コピー */}
-          <div className="mt-4 text-[14px] font-bold leading-relaxed text-slate-700 max-w-[320px] mx-auto">
-            あなたの「崩れ方のクセ」を分析し、日々の気圧や気温の変化に対する先回りケアを提案します。
-          </div>
-        </div>
-
-        {/* 5. CTA */}
-        <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
-          <div className="grid gap-3">
-            <Button
-              onClick={() => router.push("/check")}
-              className="py-4 shadow-md text-[15px]"
-            >
-              無料で体質チェックをはじめる
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => router.push("/signup")}
-              className="py-4 shadow-sm text-[15px] bg-white"
-            >
-              ログインする
-            </Button>
-          </div>
-
-          <ul className="mt-6 space-y-2.5">
-            <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-4 w-4 text-[var(--accent)]"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+          {/* 5. CTA */}
+          <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
+            <div className="grid gap-3">
+              <Button
+                onClick={() => router.push("/check")}
+                className="py-4 shadow-md text-[15px]"
               >
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-              体質チェック・ログイン後の体調予報は
-              <span className="font-extrabold text-slate-700">ずっと無料</span>
-            </li>
-            <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-4 w-4 text-[var(--accent)]"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                無料で体質チェックをはじめる
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => router.push("/signup")}
+                className="py-4 shadow-sm text-[15px] bg-white"
               >
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-              記録機能および予報精度の個別学習・週次AIレポート作成はサブスク登録後にのみ利用可能
-            </li>
-          </ul>
-        </div>
-      </Module>
-    </AppShell>
-  );
-}
+                ログインする
+              </Button>
+            </div>
+
+            <ul className="mt-6 space-y-2.5">
+              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-4 w-4 text-[var(--accent)]"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                体質チェック・ログイン後の体調予報は
+                <span className="font-extrabold text-slate-700">ずっと無料</span>
+              </li>
+              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-4 w-4 text-[var(--accent)]"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+                記録機能および予報精度の個別学習・週次AIレポート作成はサブスク登録後にのみ利用可能
+              </li>
+            </ul>
+          </div>
+        </Module>
+      </AppShell>
+    );
+  }
 
   /* ==============================================================
    * ログイン後（ダッシュボード）
    * ============================================================== */
+
+  // ★ 18時を境に「今日」か「明日」のどちらを主役にするか判定
+  const currentHour = new Date().getHours();
+  const isEvening = currentHour >= 18;
+
+  // 判定したターゲットのシグナル（安定=0, 注意=1, 警戒=2）を取得。ローディング中は null
+  const targetSignal = isEvening
+    ? (!tomorrowLoading && tomorrowBundle?.ok ? (tomorrowBundle.forecast?.signal ?? 0) : null)
+    : (!todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null);
+  
+  // ★ 時間帯とシグナルに応じたボットのセリフを決定
+  let guideBotText = "体調予報の概要と、次の一歩をまとめています";
+
+  if (targetSignal !== null) {
+    if (isEvening) {
+      // 18時以降（明日の予報について）
+      if (targetSignal === 2) {
+        guideBotText = "明日は警戒の日。今日は湯船に浸かって、早めに休もうね。";
+      } else if (targetSignal === 1) {
+        guideBotText = "明日は少し波があるかも。今のうちに明日の準備をしておくと安心だよ。";
+      } else if (targetSignal === 0) {
+        guideBotText = "明日はおだやかな日になりそう。安心して眠ってね！";
+      }
+    } else {
+      // 18時未満（今日の予報について）
+      if (targetSignal === 2) {
+        guideBotText = "今日は警戒の日。無理せず自分を甘やかす一日にしようね。";
+      } else if (targetSignal === 1) {
+        guideBotText = "今日は少し波があるかも。こまめな休憩を意識してね。";
+      } else if (targetSignal === 0) {
+        guideBotText = "今日はおだやかな日。自分のペースで進んでいこう！";
+      }
+    }
+  }
+
   return (
     <AppShell
       title="ホーム"
@@ -616,18 +651,20 @@ if (!isLoggedIn) {
           <HeroTitleMark compact={false} className="max-w-full" />
         </div>
 
-<div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
-  <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
-    <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
-    <div className="text-[13px] font-extrabold leading-6 text-slate-600">
-      体調予報の概要と、次の一歩をまとめています
-    </div>
-  </div>
-</div>
+        <div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
+          <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
+            <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+            <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+              {/* ★ 動的に変わるセリフを配置 */}
+              {guideBotText}
+            </div>
+          </div>
+        </div>
 
-<div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
-  <HeroGuideBot compact showBubble={false} />
-</div>
+        <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+          {/* ★ targetSignal プロパティを渡す */}
+          <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
+        </div>
       </Module>
 
       {/* サマリー・ウィジェット群 */}
@@ -765,4 +802,5 @@ if (!isLoggedIn) {
     </AppShell>
   );
 }
+
 
