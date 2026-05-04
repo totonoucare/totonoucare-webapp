@@ -122,12 +122,58 @@ function ForecastCTA({ usage }) {
   );
 }
 
+function LockedPreview({ karte }) {
+  const weather = karte?.mainWeatherLabel || "注意天気";
+  const symptom = karte?.symptomLabel || "今お困りの不調";
+  const core = karte?.coreTitle || "あなたの体質";
+  const sections = [
+    {
+      label: "1｜天気の見方",
+      title: `${weather}の日に、何が先に出やすいか`,
+      body: "湿気・冷え・気圧などを、体質とつなげて読みます。点数だけでなく、崩れ始めのサインまで見返せます。",
+    },
+    {
+      label: "2｜内側のくせ",
+      title: "気血津液（きけつしんえき）を生活の言葉に翻訳",
+      body: "気虚・痰湿などの東洋医学語を、眠気・重さ・張り・乾きなど日常で気づける体感に置き換えます。",
+    },
+    {
+      label: "3｜経絡ライン",
+      title: `${symptom}と動作チェックをつなげる`,
+      body: "負担がかかりやすい経絡ラインを整理し、予報ページのツボ提案や日々のセルフチェックにつなげます。",
+    },
+  ];
+
+  return (
+    <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-7">
+      <div className="mb-5">
+        <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">PREVIEW</div>
+        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める内容</h2>
+        <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">
+          {core}の結果をもとに、8項目のカルテ本文を開きます。未アンロック状態では本文の代わりに、内容の方向性だけを表示しています。
+        </p>
+      </div>
+      <div className="grid gap-3">
+        {sections.map((item) => (
+          <div key={item.label} className="rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+            <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
+            <div className="mt-2 text-[17px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{item.title}</div>
+            <p className="mt-2 text-[13px] font-bold leading-6 text-[#64748b]">{item.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function SectionCard({ section, locked, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   const body = Array.isArray(section.body) ? section.body : [];
   const bullets = Array.isArray(section.bullets) ? section.bullets : [];
   const steps = Array.isArray(section.steps) ? section.steps : [];
-  const hasDetail = body.length || bullets.length || steps.length;
+  const showSteps = steps.length > 0;
+  const showBullets = bullets.length > 0 && !showSteps;
+  const hasDetail = body.length || showBullets || showSteps;
 
   return (
     <section className="relative overflow-hidden rounded-[34px] border border-[#d9e3dc] bg-white shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
@@ -191,7 +237,7 @@ function SectionCard({ section, locked, defaultOpen = false }) {
             </div>
           ) : null}
 
-          {bullets.length ? (
+          {showBullets ? (
             <div className="mt-6 rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
               <div className="mb-3 text-[12px] font-black tracking-[0.14em] text-[#9aa7b8]">見るポイント</div>
               <div className="flex flex-wrap gap-2">
@@ -204,7 +250,7 @@ function SectionCard({ section, locked, defaultOpen = false }) {
             </div>
           ) : null}
 
-          {steps.length ? (
+          {showSteps ? (
             <div className="mt-5 grid gap-3">
               {steps.slice(0, 2).map((item, index) => (
                 <div key={`${section.id}-s-${index}`} className="flex gap-4 rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] px-5 py-4 text-[14px] font-black leading-7 text-[#334155]">
@@ -420,7 +466,7 @@ export default function KarteClient() {
                   あなた専用の体調パターンをアンロック
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  体質・気血津液・六淫・経絡ラインをつなげて、天気で出やすい体調サインと先回りの判断基準まで見返せます。
+                  体質・気血津液・天気シグナル・経絡ラインをつなげて、天気で出やすい体調サインと先回りの判断基準まで見返せます。
                 </p>
               </div>
               <button
@@ -443,11 +489,15 @@ export default function KarteClient() {
           </section>
         )}
 
-        <div className="grid gap-5">
-          {(karte.sections || []).map((section, index) => (
-            <SectionCard key={section.id || index} section={section} locked={locked} defaultOpen={!locked && index === 0} />
-          ))}
-        </div>
+        {locked ? (
+          <LockedPreview karte={karte} />
+        ) : (
+          <div className="grid gap-5">
+            {(karte.sections || []).map((section, index) => (
+              <SectionCard key={section.id || index} section={section} locked={locked} defaultOpen={index === 0} />
+            ))}
+          </div>
+        )}
 
         {!locked ? <ForecastCTA usage={karte.forecastUsage} /> : null}
 
@@ -472,3 +522,4 @@ export default function KarteClient() {
     </main>
   );
 }
+
