@@ -69,11 +69,11 @@ function MapFlow({ items = [] }) {
     <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-6">
       <div className="mb-5 flex items-end justify-between gap-3">
         <div>
-          <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">BODY WEATHER MAP</div>
+          <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">KARTE GUIDE</div>
           <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">カルテの読み方</h2>
         </div>
         <span className="hidden rounded-full border border-[#ead7a5] bg-[#fffaf0] px-3 py-2 text-[11px] font-black text-[#b17425] md:inline-flex">
-          地図として読む
+          順番で読む
         </span>
       </div>
 
@@ -158,10 +158,12 @@ function SectionCard({ section, locked, defaultOpen = false }) {
           ) : null}
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
-          <div className="mb-2 text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">要点</div>
-          <p className="text-[15px] font-black leading-[1.9] text-[#39475a]">{section.preview || body[0]}</p>
-        </div>
+        {(!open || locked) ? (
+          <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+            <div className="mb-2 text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">要点</div>
+            <p className="text-[15px] font-black leading-[1.9] text-[#39475a]">{section.preview || body[0]}</p>
+          </div>
+        ) : null}
 
         {locked ? (
           <div className="relative mt-4 rounded-[28px] border border-[#e4ebe6] bg-[#f7faf8] p-5">
@@ -181,8 +183,8 @@ function SectionCard({ section, locked, defaultOpen = false }) {
         <div className="border-t border-[#edf2ef] bg-white px-6 pb-6 md:px-8 md:pb-8">
           {body.length ? (
             <div className="space-y-4 pt-6">
-              {body.map((text, index) => (
-                <p key={`${section.id}-p-${index}`} className="text-[16px] font-bold leading-[2.02] text-[#334155]">
+              {body.slice(0, 2).map((text, index) => (
+                <p key={`${section.id}-p-${index}`} className="text-[15px] font-bold leading-[1.9] text-[#334155]">
                   {text}
                 </p>
               ))}
@@ -193,7 +195,7 @@ function SectionCard({ section, locked, defaultOpen = false }) {
             <div className="mt-6 rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
               <div className="mb-3 text-[12px] font-black tracking-[0.14em] text-[#9aa7b8]">見るポイント</div>
               <div className="flex flex-wrap gap-2">
-                {bullets.map((item, index) => (
+                {bullets.slice(0, 2).map((item, index) => (
                   <span key={`${section.id}-b-${index}`} className="rounded-full border border-[#d7e6df] bg-white px-4 py-2 text-[13px] font-black leading-6 text-[#334155]">
                     {item}
                   </span>
@@ -204,7 +206,7 @@ function SectionCard({ section, locked, defaultOpen = false }) {
 
           {steps.length ? (
             <div className="mt-5 grid gap-3">
-              {steps.map((item, index) => (
+              {steps.slice(0, 2).map((item, index) => (
                 <div key={`${section.id}-s-${index}`} className="flex gap-4 rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] px-5 py-4 text-[14px] font-black leading-7 text-[#334155]">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f7567] text-[12px] text-white">{index + 1}</span>
                   <span>{item}</span>
@@ -391,7 +393,7 @@ export default function KarteClient() {
             <div className="pointer-events-none absolute right-10 top-20 h-28 w-28 rounded-full border border-[#d9e3dc]" />
             <div className="relative">
               <span className="inline-flex rounded-full border border-[#d9e3dc] bg-[#f8fbf9] px-4 py-2 text-[12px] font-black tracking-[0.16em] text-[#2f7567]">
-                WEATHER BODY MAP
+                PERSONAL MIBYO FILE
               </span>
               <h1 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.06em] text-[#10182d] md:text-[44px]">
                 {karte.productName}
@@ -399,7 +401,7 @@ export default function KarteClient() {
               <p className="mt-4 text-[17px] font-black leading-[1.8] text-[#475569]">{karte.subtitle}</p>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 <MiniStat label="体質軸" value={karte.coreTitle} />
-                <MiniStat label="入口の不調" value={karte.symptomLabel} tone="green" />
+                <MiniStat label="今お困りの不調" value={karte.symptomLabel} tone="green" />
                 <MiniStat label="収録" value={completionLabel} tone="amber" />
               </div>
               <p className="mt-6 rounded-[26px] border border-[#e6eee9] bg-white/78 p-5 text-[15px] font-bold leading-[1.9] text-[#475569]">
@@ -415,10 +417,10 @@ export default function KarteClient() {
               <div>
                 <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">LOCKED</div>
                 <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">
-                  あなた専用の体調地図をアンロック
+                  あなた専用の体調パターンをアンロック
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  体質・気血津液・六淫・経絡ラインをつなげて、天気で揺れやすい体調サインと先回りの判断基準まで見返せます。
+                  体質・気血津液・六淫・経絡ラインをつなげて、天気で出やすい体調サインと先回りの判断基準まで見返せます。
                 </p>
               </div>
               <button
@@ -441,9 +443,6 @@ export default function KarteClient() {
           </section>
         )}
 
-        <TakeawayCards items={quickTakeaways} />
-        <MapFlow items={karte.mapFlow} />
-
         <div className="grid gap-5">
           {(karte.sections || []).map((section, index) => (
             <SectionCard key={section.id || index} section={section} locked={locked} defaultOpen={!locked && index === 0} />
@@ -455,7 +454,7 @@ export default function KarteClient() {
         {locked ? (
           <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 text-center shadow-sm">
             <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
-            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの地図</h2>
+            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立て</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
               一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。購入後は本文が開き、AI生成を有効化した環境では個別本文を生成して保存します。
             </p>
