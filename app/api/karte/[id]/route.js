@@ -257,6 +257,14 @@ export async function GET(req, { params }) {
           coreTitle: baseKarte.coreTitle,
           coreShort: baseKarte.coreShort,
           symptomLabel: baseKarte.symptomLabel,
+          // 未アンロックのプレビューでも、本人の実データを反映するために必要な表示用メタデータ。
+          // ここを落とすと、フロント側が「気血津液の偏り」「注意天気」などの汎用文言にフォールバックする。
+          primarySub: baseKarte.primarySub,
+          secondarySub: baseKarte.secondarySub,
+          mainWeather: baseKarte.mainWeather,
+          mainWeatherLabel: baseKarte.mainWeatherLabel,
+          weatherRankings: baseKarte.weatherRankings,
+          envVectors: baseKarte.envVectors,
           heroLead: baseKarte.heroLead,
           quickTakeaways: baseKarte.quickTakeaways,
           mapFlow: baseKarte.mapFlow,
@@ -296,3 +304,4 @@ export async function GET(req, { params }) {
     );
   }
 }
+
