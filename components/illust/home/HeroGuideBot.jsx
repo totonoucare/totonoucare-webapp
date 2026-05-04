@@ -5,6 +5,7 @@ export default function HeroGuideBot({
   compact = false,
   bubbleSide = "left",
   showBubble = true,
+  signal = 0, // ★ 0:安定, 1:注意, 2:警戒
 }) {
   const widthClass = compact ? "w-[110px]" : "w-[150px]";
 
@@ -27,6 +28,39 @@ export default function HeroGuideBot({
     }
   } else {
     bubbleStyles = "right-[130px] top-4 w-[180px]";
+  }
+
+  // ★ 表情のパーツを定義（コントラストを高めるために色を濃く調整）
+  const darkGreen = "#3a5c4b"; // 元の #4f7a64 より濃い緑
+  const blushColor = "#d69e9e"; // 元の #e2b4b4 より濃いピンク
+
+  let eyes = (
+    <>
+      <circle cx="44" cy="50" r="4.5" fill={darkGreen} />
+      <circle cx="76" cy="50" r="4.5" fill={darkGreen} />
+    </>
+  );
+  
+  let mouth = (
+    <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />
+  );
+  
+  let accessory = null;
+
+  // シグナルに応じた表情の変化
+  if (signal === 1) {
+    // 注意: 口を少し真っ直ぐに（すんっ、とした顔）
+    mouth = <path d="M54 59 C 58 58, 62 58, 66 59" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+  } else if (signal === 2) {
+    // 警戒: 少し心配そうな顔（目を閉じる ＋ 汗マーク ＋ ハの字の口）
+    eyes = (
+      <>
+        <path d="M40 51 Q 44 48 48 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M72 51 Q 76 48 80 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+      </>
+    );
+    mouth = <path d="M54 60 C 58 57, 62 57, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+    accessory = <path d="M 85 40 Q 88 45 85 48 Q 82 45 85 40 Z" fill="#90b1e0" opacity="0.8" />; // 水色の汗
   }
 
   return (
@@ -53,13 +87,15 @@ export default function HeroGuideBot({
               <stop offset="0%" stopColor="#e2aa3b" stopOpacity="0.92" />
               <stop offset="100%" stopColor="#efbf56" stopOpacity="0.28" />
             </linearGradient>
+            {/* ★ shadowOpacity を 0.16 -> 0.28 に上げて輪郭をはっきりさせる */}
             <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#355f52" floodOpacity="0.16" />
+              <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#355f52" floodOpacity="0.28" />
             </filter>
           </defs>
 
           <circle cx="60" cy="70" r="40" fill="#ffffff" fillOpacity="0.4" filter="blur(10px)" />
-          <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" />
+          {/* ★ 体にもごく薄い枠線をつけて背景に溶けないように */}
+          <path d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z" fill="url(#bodyGrad)" stroke="#a1c4b2" strokeWidth="1" />
           <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.98" />
           <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.76" />
           <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
@@ -67,12 +103,18 @@ export default function HeroGuideBot({
           <path d="M60 28 L60 18" stroke="#6eab90" strokeWidth="2.7" strokeLinecap="round" />
           <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#8fc7aa" />
 
-          <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" />
-          <circle cx="44" cy="50" r="4.5" fill="#4f7a64" />
-          <circle cx="76" cy="50" r="4.5" fill="#4f7a64" />
-          <ellipse cx="36" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.46" />
-          <ellipse cx="84" cy="56" rx="5" ry="3" fill="#e2b4b4" opacity="0.46" />
-          <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke="#4f7a64" strokeWidth="2.3" strokeLinecap="round" />
+          {/* 頭部 */}
+          <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" stroke="#d9e8df" strokeWidth="1" />
+          
+          {/* ほっぺた（不透明度を 0.46 -> 0.65 にして血色良く） */}
+          <ellipse cx="36" cy="56" rx="5" ry="3" fill={blushColor} opacity="0.65" />
+          <ellipse cx="84" cy="56" rx="5" ry="3" fill={blushColor} opacity="0.65" />
+          
+          {/* 動的な表情パーツ */}
+          {eyes}
+          {mouth}
+          {accessory}
+
         </svg>
       </div>
     </div>
