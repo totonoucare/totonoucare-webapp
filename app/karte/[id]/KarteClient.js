@@ -11,63 +11,209 @@ function cn(...values) {
   return values.filter(Boolean).join(" ");
 }
 
-function SectionCard({ section, locked }) {
+function GenerationLabel({ generation }) {
+  if (!generation?.aiEnabled) return null;
+  const label =
+    generation.source === "openai-generated"
+      ? "AI生成しました"
+      : generation.source === "openai-cache"
+        ? "AI生成済み"
+        : generation.source === "rules-ai-fallback"
+          ? "標準本文で表示中"
+          : "標準本文";
+
   return (
-    <section className="relative overflow-hidden rounded-[34px] border border-[#d9e3dc] bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.07)] md:p-8">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="rounded-full border border-[#ead7a5] bg-[#fff8df] px-3 py-1 text-[11px] font-black tracking-[0.18em] text-[#b17425]">
-          {section.badge}
+    <span className="rounded-full border border-[#d7e6df] bg-white/80 px-3 py-1 text-[11px] font-black text-[#2f7567]">
+      {label}
+    </span>
+  );
+}
+
+function MiniStat({ label, value, tone = "green" }) {
+  const toneClass =
+    tone === "amber"
+      ? "border-[#ead7a5] bg-[#fffaf0] text-[#9a5b1e]"
+      : "border-[#e6eee9] bg-[#f8fbf9] text-[#2f7567]";
+
+  return (
+    <div className={cn("rounded-[24px] border p-4", toneClass)}>
+      <div className="text-[11px] font-black tracking-[0.14em] opacity-70">{label}</div>
+      <div className="mt-2 text-[18px] font-black tracking-[-0.03em]">{value || "—"}</div>
+    </div>
+  );
+}
+
+function TakeawayCards({ items = [] }) {
+  if (!items.length) return null;
+
+  return (
+    <section className="grid gap-3 md:grid-cols-3">
+      {items.slice(0, 3).map((item, index) => (
+        <div key={`${item.label}-${index}`} className="rounded-[28px] border border-[#e6eee9] bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+          <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eff8f4] text-[16px] font-black text-[#2f7567]">
+            {index + 1}
+          </div>
+          <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
+          <div className="mt-2 text-[18px] font-black leading-[1.45] tracking-[-0.04em] text-[#10182d]">{item.value}</div>
+          {item.note ? <p className="mt-3 text-[13px] font-bold leading-6 text-[#64748b]">{item.note}</p> : null}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function MapFlow({ items = [] }) {
+  if (!items.length) return null;
+
+  return (
+    <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-6">
+      <div className="mb-5 flex items-end justify-between gap-3">
+        <div>
+          <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">BODY WEATHER MAP</div>
+          <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">カルテの読み方</h2>
+        </div>
+        <span className="hidden rounded-full border border-[#ead7a5] bg-[#fffaf0] px-3 py-2 text-[11px] font-black text-[#b17425] md:inline-flex">
+          地図として読む
         </span>
-        <span className="text-[11px] font-black tracking-[0.18em] text-[#9aa7b8]">PERSONAL FILE</span>
       </div>
 
-      <h2 className="text-[25px] font-black leading-[1.42] tracking-[-0.04em] text-[#10182d] md:text-[30px]">
-        {section.title}
-      </h2>
-      {section.teaser ? <p className="mt-3 text-[14px] font-black text-[#64748b]">{section.teaser}</p> : null}
-
-      {locked ? (
-        <div className="relative mt-6 rounded-[28px] border border-[#e4ebe6] bg-[#f7faf8] p-5">
-          <p className="text-[16px] font-black leading-[2] text-[#39475a]">{section.preview}</p>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f7faf8] via-[#f7faf8]/90 to-transparent" />
-          <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[#d7e6df] bg-white px-4 py-3 text-[13px] font-black text-[#2f7567] shadow-sm">
-            <span>🔒</span>
-            <span>続きはアンロック後に表示</span>
+      <div className="grid gap-3 md:grid-cols-4">
+        {items.map((item, index) => (
+          <div key={`${item.label}-${index}`} className="relative rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-4">
+            {index < items.length - 1 ? (
+              <div className="absolute -right-[11px] top-1/2 z-10 hidden h-[2px] w-[20px] bg-[#d9e3dc] md:block" />
+            ) : null}
+            <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
+            <div className="mt-2 text-[16px] font-black leading-[1.55] text-[#10182d]">{item.title}</div>
+            <p className="mt-2 text-[12px] font-bold leading-6 text-[#64748b]">{item.description}</p>
           </div>
-        </div>
-      ) : (
-        <div className="mt-6 space-y-5">
-          {(section.body || []).map((text, index) => (
-            <p key={`${section.id}-p-${index}`} className="text-[16px] font-bold leading-[2.05] text-[#334155]">
-              {text}
-            </p>
-          ))}
+        ))}
+      </div>
+    </section>
+  );
+}
 
-          {section.bullets?.length ? (
-            <div className="rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
-              <div className="mb-3 text-[12px] font-black tracking-[0.14em] text-[#9aa7b8]">見るポイント</div>
-              <ul className="space-y-3">
-                {section.bullets.map((item, index) => (
-                  <li key={`${section.id}-b-${index}`} className="flex gap-3 text-[15px] font-black leading-[1.8] text-[#334155]">
-                    <span className="mt-[0.55em] h-2 w-2 shrink-0 rounded-full bg-[#f4b73d]" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
+function ForecastCTA({ usage }) {
+  if (!usage) return null;
+  const bullets = Array.isArray(usage.bullets) ? usage.bullets : [];
+
+  return (
+    <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 shadow-[0_14px_34px_rgba(180,116,37,0.08)]">
+      <div className="text-[12px] font-black tracking-[0.18em] text-[#b17425]">DAILY FORECAST</div>
+      <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">{usage.title || "今日のケアは予報ページで確認"}</h2>
+      {usage.body ? <p className="mt-3 text-[14px] font-bold leading-7 text-[#6b4a2a]">{usage.body}</p> : null}
+      {bullets.length ? (
+        <div className="mt-5 grid gap-2">
+          {bullets.slice(0, 3).map((item, index) => (
+            <div key={`${item}-${index}`} className="flex gap-3 rounded-[22px] border border-[#ead7a5] bg-white/70 px-4 py-3 text-[13px] font-black leading-6 text-[#6b4a2a]">
+              <span>☀️</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <Link
+        href={usage.href || "/radar"}
+        className="mt-5 inline-flex rounded-full bg-[#2f7567] px-6 py-3 text-[14px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.24)]"
+      >
+        予報ページを見る
+      </Link>
+    </section>
+  );
+}
+
+function SectionCard({ section, locked, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const body = Array.isArray(section.body) ? section.body : [];
+  const bullets = Array.isArray(section.bullets) ? section.bullets : [];
+  const steps = Array.isArray(section.steps) ? section.steps : [];
+  const hasDetail = body.length || bullets.length || steps.length;
+
+  return (
+    <section className="relative overflow-hidden rounded-[34px] border border-[#d9e3dc] bg-white shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
+      <div className="p-6 md:p-8">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="rounded-full border border-[#ead7a5] bg-[#fff8df] px-3 py-1 text-[11px] font-black tracking-[0.18em] text-[#b17425]">
+            {section.badge}
+          </span>
+          <span className="text-[11px] font-black tracking-[0.18em] text-[#9aa7b8]">PERSONAL FILE</span>
+        </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-[24px] font-black leading-[1.45] tracking-[-0.05em] text-[#10182d] md:text-[29px]">
+              {section.title}
+            </h2>
+            {section.teaser ? <p className="mt-3 text-[14px] font-black leading-7 text-[#64748b]">{section.teaser}</p> : null}
+          </div>
+
+          {!locked && hasDetail ? (
+            <button
+              type="button"
+              onClick={() => setOpen((value) => !value)}
+              className="shrink-0 rounded-full border border-[#d9e3dc] bg-[#f8fbf9] px-5 py-3 text-[13px] font-black text-[#2f7567] shadow-sm"
+            >
+              {open ? "閉じる" : "詳しく読む"}
+            </button>
+          ) : null}
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+          <div className="mb-2 text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">要点</div>
+          <p className="text-[15px] font-black leading-[1.9] text-[#39475a]">{section.preview || body[0]}</p>
+        </div>
+
+        {locked ? (
+          <div className="relative mt-4 rounded-[28px] border border-[#e4ebe6] bg-[#f7faf8] p-5">
+            <p className="line-clamp-3 text-[15px] font-bold leading-[2] text-[#64748b]">
+              {body[0] || section.preview || "続きでは、具体的な見分け方と戻し方まで整理します。"}
+            </p>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#f7faf8] via-[#f7faf8]/90 to-transparent" />
+            <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[#d7e6df] bg-white px-4 py-3 text-[13px] font-black text-[#2f7567] shadow-sm">
+              <span>🔒</span>
+              <span>続きはアンロック後に表示</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {!locked && open ? (
+        <div className="border-t border-[#edf2ef] bg-white px-6 pb-6 md:px-8 md:pb-8">
+          {body.length ? (
+            <div className="space-y-4 pt-6">
+              {body.map((text, index) => (
+                <p key={`${section.id}-p-${index}`} className="text-[16px] font-bold leading-[2.02] text-[#334155]">
+                  {text}
+                </p>
+              ))}
             </div>
           ) : null}
 
-          {section.steps?.length ? (
-            <div className="space-y-3">
-              {section.steps.map((item, index) => (
-                <div key={`${section.id}-s-${index}`} className="rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] px-5 py-4 text-[15px] font-black leading-[1.8] text-[#334155]">
-                  {item}
+          {bullets.length ? (
+            <div className="mt-6 rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+              <div className="mb-3 text-[12px] font-black tracking-[0.14em] text-[#9aa7b8]">見るポイント</div>
+              <div className="flex flex-wrap gap-2">
+                {bullets.map((item, index) => (
+                  <span key={`${section.id}-b-${index}`} className="rounded-full border border-[#d7e6df] bg-white px-4 py-2 text-[13px] font-black leading-6 text-[#334155]">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {steps.length ? (
+            <div className="mt-5 grid gap-3">
+              {steps.map((item, index) => (
+                <div key={`${section.id}-s-${index}`} className="flex gap-4 rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] px-5 py-4 text-[14px] font-black leading-7 text-[#334155]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f7567] text-[12px] text-white">{index + 1}</span>
+                  <span>{item}</span>
                 </div>
               ))}
             </div>
           ) : null}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }
@@ -154,6 +300,16 @@ export default function KarteClient() {
     return `${karte.sections.length}項目`;
   }, [karte]);
 
+  const quickTakeaways = useMemo(() => {
+    if (karte?.quickTakeaways?.length) return karte.quickTakeaways;
+    const firstSections = Array.isArray(karte?.sections) ? karte.sections.slice(0, 3) : [];
+    return firstSections.map((section) => ({
+      label: section.badge || "要点",
+      value: section.title,
+      note: section.preview || section.teaser,
+    }));
+  }, [karte]);
+
   async function startCheckout() {
     setCheckoutLoading(true);
     try {
@@ -194,7 +350,7 @@ export default function KarteClient() {
   return (
     <main className="min-h-screen bg-[#f7f7f1] pb-16 text-[#10182d]">
       <div className="sticky top-0 z-20 border-b border-[#eef1ed] bg-white/88 px-5 py-4 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
+        <div className="mx-auto flex max-w-[780px] items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => router.back()}
@@ -213,7 +369,7 @@ export default function KarteClient() {
       </div>
 
       {checkoutState === "success" && !data?.unlocked ? (
-        <div className="mx-auto mt-5 max-w-[760px] px-5">
+        <div className="mx-auto mt-5 max-w-[780px] px-5">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[#eff8f4] px-5 py-4 text-[14px] font-black leading-7 text-[#2f7567]">
             決済を確認中です。数秒後にカルテが開かない場合は、ページを再読み込みしてください。
           </div>
@@ -221,39 +377,30 @@ export default function KarteClient() {
       ) : null}
 
       {error ? (
-        <div className="mx-auto mt-5 max-w-[760px] px-5">
+        <div className="mx-auto mt-5 max-w-[780px] px-5">
           <div className="rounded-[24px] border border-[#f6d4c5] bg-[#fff7ed] px-5 py-4 text-[14px] font-black leading-7 text-[#9a4b20]">
             {error}
           </div>
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-[760px] space-y-7 px-5 pt-8">
+      <div className="mx-auto max-w-[780px] space-y-7 px-5 pt-8">
         <section className="overflow-hidden rounded-[38px] border border-[#d9e3dc] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
           <div className="relative p-7 md:p-9">
             <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full bg-[#f7e8b9] opacity-60" />
             <div className="pointer-events-none absolute right-10 top-20 h-28 w-28 rounded-full border border-[#d9e3dc]" />
             <div className="relative">
               <span className="inline-flex rounded-full border border-[#d9e3dc] bg-[#f8fbf9] px-4 py-2 text-[12px] font-black tracking-[0.16em] text-[#2f7567]">
-                ONE TIME UNLOCK
+                WEATHER BODY MAP
               </span>
               <h1 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.06em] text-[#10182d] md:text-[44px]">
                 {karte.productName}
               </h1>
               <p className="mt-4 text-[17px] font-black leading-[1.8] text-[#475569]">{karte.subtitle}</p>
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] p-4">
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#9aa7b8]">体質軸</div>
-                  <div className="mt-2 text-[18px] font-black text-[#2f7567]">{karte.coreTitle}</div>
-                </div>
-                <div className="rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] p-4">
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#9aa7b8]">お困りの不調</div>
-                  <div className="mt-2 text-[18px] font-black text-[#10182d]">{karte.symptomLabel}</div>
-                </div>
-                <div className="rounded-[24px] border border-[#ead7a5] bg-[#fffaf0] p-4">
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#b17425]">収録</div>
-                  <div className="mt-2 text-[18px] font-black text-[#9a5b1e]">{completionLabel}</div>
-                </div>
+                <MiniStat label="体質軸" value={karte.coreTitle} />
+                <MiniStat label="入口の不調" value={karte.symptomLabel} tone="green" />
+                <MiniStat label="収録" value={completionLabel} tone="amber" />
               </div>
               <p className="mt-6 rounded-[26px] border border-[#e6eee9] bg-white/78 p-5 text-[15px] font-bold leading-[1.9] text-[#475569]">
                 {karte.heroLead}
@@ -268,10 +415,10 @@ export default function KarteClient() {
               <div>
                 <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">LOCKED</div>
                 <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">
-                  あなた専用の仕様書をアンロック
+                  あなた専用の体調地図をアンロック
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  無料結果では見えない「崩れる順番」「天気で崩れやすい日の見分け方」「逆効果ケア」「しんどい日の最低限ケア」「相談時に伝えるメモ」まで、いつでも見返せます。
+                  体質・気血津液・六淫・経絡ラインをつなげて、天気で揺れやすい体調サインと先回りの判断基準まで見返せます。
                 </p>
               </div>
               <button
@@ -288,21 +435,29 @@ export default function KarteClient() {
             </div>
           </section>
         ) : (
-          <section className="rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-6 text-[15px] font-black leading-7 text-[#2f7567]">
-            ✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。{generation.aiEnabled ? ` 生成状態：${generation.source === "openai-cache" ? "AI生成済み" : generation.source === "openai-generated" ? "AI生成しました" : generation.source === "rules-ai-fallback" ? "標準本文で表示中" : "標準本文"}` : ""}
+          <section className="flex flex-wrap items-center gap-3 rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-5 text-[15px] font-black leading-7 text-[#2f7567]">
+            <span>✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。</span>
+            <GenerationLabel generation={generation} />
           </section>
         )}
 
-        {(karte.sections || []).map((section) => (
-          <SectionCard key={section.id} section={section} locked={locked} />
-        ))}
+        <TakeawayCards items={quickTakeaways} />
+        <MapFlow items={karte.mapFlow} />
+
+        <div className="grid gap-5">
+          {(karte.sections || []).map((section, index) => (
+            <SectionCard key={section.id || index} section={section} locked={locked} defaultOpen={!locked && index === 0} />
+          ))}
+        </div>
+
+        {!locked ? <ForecastCTA usage={karte.forecastUsage} /> : null}
 
         {locked ? (
           <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 text-center shadow-sm">
             <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
-            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケア指南書</h2>
+            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの地図</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
-              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。相談メモも含めて見返せます。AI生成を有効化した環境では、購入後の初回表示で個別本文を生成して保存します。
+              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。購入後は本文が開き、AI生成を有効化した環境では個別本文を生成して保存します。
             </p>
             <button
               type="button"
