@@ -122,42 +122,87 @@ function ForecastCTA({ usage }) {
   );
 }
 
+const SUB_TERM_LABELS = {
+  qi_stagnation: "気滞（きたい）",
+  qi_deficiency: "気虚（ききょ）",
+  blood_deficiency: "血虚（けっきょ）",
+  blood_stasis: "血瘀（けつお）",
+  fluid_damp: "痰湿（たんしつ）",
+  fluid_deficiency: "津液不足（しんえきぶそく）",
+};
+
+const LOCKED_SECTION_COPY = {
+  "weather-map": {
+    label: "全体像",
+    body: ({ core, symptom, weatherText }) => `${core}の体質軸から、${symptom}と${weatherText}の日に出やすいサインをひとつながりで整理します。`,
+  },
+  "inner-pattern": {
+    label: "内側のくせ",
+    body: ({ patternText }) => `${patternText}など、気血津液（きけつしんえき）の偏りを生活の体感に翻訳します。`,
+  },
+  "weather-rokuin": {
+    label: "注意天気",
+    body: ({ weatherText, patternText }) => `${weatherText}を単独で見るのではなく、${patternText}のくせと重なったときの崩れ方として読みます。`,
+  },
+  "symptom-signs": {
+    label: "前触れサイン",
+    body: ({ symptom }) => `${symptom}だけでなく、その手前に出やすい軽いサインまで見返せるようにします。`,
+  },
+  "meridian-line": {
+    label: "経絡ライン",
+    body: () => "動作チェックで見えた負担ラインを、予報ページのツボ提案や日々のセルフチェックにつなげます。",
+  },
+  "forecast-guide": {
+    label: "予報の使い方",
+    body: () => "カルテで自分の傾向をつかみ、毎日の予報ページで今日のツボ・食養生・過ごし方を確認します。",
+  },
+  "advance-care": {
+    label: "先回りケア",
+    body: () => "注意天気の日に、食事・予定量・冷え対策のどこを軽く調整するかを決めやすくします。",
+  },
+  consult: {
+    label: "相談メモ",
+    body: () => "鍼灸・整体・漢方などで相談するときに、体質・天気・動作の要点を伝えやすくします。",
+  },
+};
+
 function LockedPreview({ karte }) {
-  const weather = karte?.mainWeatherLabel || "注意天気";
+  const weatherList = Array.isArray(karte?.weatherRankings) && karte.weatherRankings.length
+    ? karte.weatherRankings.map((item) => item.label).filter(Boolean)
+    : [karte?.mainWeatherLabel].filter(Boolean);
+  const weatherText = weatherList.length ? weatherList.join("・") : "注意天気";
   const symptom = karte?.symptomLabel || "今お困りの不調";
   const core = karte?.coreTitle || "あなたの体質";
-  const sections = [
-    {
-      label: "1｜天気の見方",
-      title: `${weather}の日に、何が先に出やすいか`,
-      body: "湿気・冷え・気圧などを、体質とつなげて読みます。点数だけでなく、崩れ始めのサインまで見返せます。",
-    },
-    {
-      label: "2｜内側のくせ",
-      title: "気血津液（きけつしんえき）を生活の言葉に翻訳",
-      body: "気虚・痰湿などの東洋医学語を、眠気・重さ・張り・乾きなど日常で気づける体感に置き換えます。",
-    },
-    {
-      label: "3｜経絡ライン",
-      title: `${symptom}と動作チェックをつなげる`,
-      body: "負担がかかりやすい経絡ラインを整理し、予報ページのツボ提案や日々のセルフチェックにつなげます。",
-    },
-  ];
+  const patterns = [karte?.primarySub?.code, karte?.secondarySub?.code]
+    .map((code) => SUB_TERM_LABELS[code])
+    .filter(Boolean);
+  const patternText = patterns.length ? patterns.join("・") : "気血津液の偏り";
+  const sections = Array.isArray(karte?.sections) ? karte.sections : [];
+  const previewItems = sections.map((section, index) => {
+    const copy = LOCKED_SECTION_COPY[section.id] || {};
+    return {
+      label: `${index + 1}｜${copy.label || section.badge || "項目"}`,
+      title: section.title,
+      body: typeof copy.body === "function"
+        ? copy.body({ core, symptom, weatherText, patternText })
+        : section.teaser || section.preview || "購入後に本文を表示します。",
+    };
+  });
 
   return (
     <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-7">
       <div className="mb-5">
         <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">PREVIEW</div>
-        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める内容</h2>
+        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める8項目</h2>
         <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">
-          {core}の結果をもとに、8項目のカルテ本文を開きます。未アンロック状態では本文の代わりに、内容の方向性だけを表示しています。
+          {core}・{patternText}・{weatherText}・{symptom}をもとに、体調が揺れる前触れと先回りの判断基準を開きます。
         </p>
       </div>
-      <div className="grid gap-3">
-        {sections.map((item) => (
+      <div className="grid gap-3 md:grid-cols-2">
+        {previewItems.map((item) => (
           <div key={item.label} className="rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
             <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
-            <div className="mt-2 text-[17px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{item.title}</div>
+            <div className="mt-2 text-[16px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{item.title}</div>
             <p className="mt-2 text-[13px] font-bold leading-6 text-[#64748b]">{item.body}</p>
           </div>
         ))}
@@ -171,8 +216,9 @@ function SectionCard({ section, locked, defaultOpen = false }) {
   const body = Array.isArray(section.body) ? section.body : [];
   const bullets = Array.isArray(section.bullets) ? section.bullets : [];
   const steps = Array.isArray(section.steps) ? section.steps : [];
-  const showSteps = steps.length > 0;
-  const showBullets = bullets.length > 0 && !showSteps;
+  const hideExtraLists = ["forecast-guide", "advance-care", "consult"].includes(section.id);
+  const showSteps = !hideExtraLists && steps.length > 0;
+  const showBullets = !hideExtraLists && bullets.length > 0 && !showSteps;
   const hasDetail = body.length || showBullets || showSteps;
 
   return (
@@ -506,7 +552,7 @@ export default function KarteClient() {
             <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
             <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立て</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
-              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。購入後は本文が開き、AI生成を有効化した環境では個別本文を生成して保存します。
+              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・天気・経絡ラインをつなげた読み物として、あとから何度でも見返せます。
             </p>
             <button
               type="button"
@@ -522,4 +568,3 @@ export default function KarteClient() {
     </main>
   );
 }
-
