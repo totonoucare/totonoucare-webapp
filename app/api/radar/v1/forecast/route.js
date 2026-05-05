@@ -101,6 +101,11 @@ function hasCompletedGpt(bundle) {
   return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
 }
 
+function shouldForceRecompute(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -113,16 +118,19 @@ export async function GET(req) {
     const date = searchParams.get("date");
     const latParam = searchParams.get("lat");
     const lonParam = searchParams.get("lon");
+    const forceParam = searchParams.get("force");
 
     const lat = latParam !== null ? Number(latParam) : null;
     const lon = lonParam !== null ? Number(lonParam) : null;
+    const hasLocationOverride = Number.isFinite(lat) && Number.isFinite(lon);
+    const force = shouldForceRecompute(forceParam) || hasLocationOverride;
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
     let location = null;
 
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    if (hasLocationOverride) {
       location = await enrichAndSaveLocation({
         userId: user.id,
         lat,
@@ -159,11 +167,13 @@ export async function GET(req) {
       userId: user.id,
       targetDate,
       location,
+      force,
     });
 
     return jsonUtf8({
       ok: true,
       cached: bundle.cached,
+      recomputed: !bundle.cached,
       gpt_pending: !hasCompletedGpt(bundle),
       target_date: targetDate,
       target_mode: mode,
@@ -178,3 +188,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
