@@ -142,6 +142,39 @@ const LOCKED_SECTION_LABELS = {
   "consult-list": "相談",
 };
 
+function buildLockedPreviewBody({ section, karte, core, symptom, patternText, weatherText }) {
+  const meridian = karte?.meridianPreview || {};
+  const primaryLine = meridian.primary;
+  const secondaryLine = meridian.secondary;
+
+  switch (section?.id) {
+    case "core-pattern":
+      return `${core}のタイプから、天気・予定量・疲れが重なったときの崩れ方を整理します。`;
+    case "inner-pattern":
+      return `${patternText}を、だるさ・こわばり・眠気・気分の波など生活の体感に翻訳します。`;
+    case "weather-switch":
+      return `${weatherText}が、${symptom}や軽いサインにどうつながるかを体質と一緒に読みます。`;
+    case "early-signs":
+      return `${symptom}が強くなる前に出やすいサインと、今後も注意したい軽い不調を整理します。`;
+    case "meridian-care":
+      if (primaryLine?.lineTitle && secondaryLine?.lineTitle && primaryLine.lineTitle !== secondaryLine.lineTitle) {
+        return `動作負担チェックでは、${primaryLine.lineTitle}と${secondaryLine.lineTitle}にサイン。購入後は、不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
+      }
+      if (primaryLine?.lineTitle) {
+        return `動作負担チェックでは、${primaryLine.lineTitle}にサイン。購入後は、このラインが不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
+      }
+      return "動作負担チェックから、不調の背景にある経絡ラインとケアの見方を整理します。";
+    case "alert-day-care":
+      return "予報ページの点数・主因・ツボ・食養生を、警戒日の前日〜当日の行動に落とし込む見方を整理します。";
+    case "season-care":
+      return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
+    case "consult-list":
+      return "鍼灸・整体・漢方などで相談するときに、体質・天気・不調・動作の要点を短く伝えられる形にします。";
+    default:
+      return section?.teaser || section?.preview || "購入後に本文を表示します。";
+  }
+}
+
 function LockedPreview({ karte }) {
   const weatherList = Array.isArray(karte?.weatherRankings) && karte.weatherRankings.length
     ? karte.weatherRankings.map((item) => item.label).filter(Boolean)
@@ -157,7 +190,7 @@ function LockedPreview({ karte }) {
   const previewItems = sections.map((section, index) => ({
     label: `${index + 1}｜${LOCKED_SECTION_LABELS[section.id] || section.badge || "項目"}`,
     title: section.title,
-    body: section.teaser || section.preview || "購入後に本文を表示します。",
+    body: buildLockedPreviewBody({ section, karte, core, symptom, patternText, weatherText }),
   }));
   const beauty = karte?.beautyColumn;
 
@@ -586,4 +619,5 @@ export default function KarteClient() {
     </main>
   );
 }
+
 
