@@ -513,14 +513,15 @@ export default function HomePage() {
             
             {/* ブランドロゴ */}
             <div className="mb-10">
+              {/* ※ご自身のロゴコンポーネントに合わせてください */}
               <HeroTitleMark compact={false} />
             </div>
 
-            {/* 体験カードエリア（ロボットを外に出して立体感を演出） */}
-            <div className="relative w-full max-w-[360px] mb-12">
+            {/* 体験カードエリア（上にマージン「mt-10」を追加して飛び出しスペースを確保） */}
+            <div className="relative w-full max-w-[360px] mb-12 mt-10">
               
-              {/* ボットをカードの右上（外側）に配置 */}
-              <div className="absolute -top-14 -right-4 z-20 scale-90 origin-bottom-right drop-shadow-md">
+              {/* ボットの位置を微調整（上に大きく逃がし、少し縮小して右へ） */}
+              <div className="absolute -top-[76px] -right-[6px] z-20 scale-[0.85] origin-bottom-right drop-shadow-md">
                  <HeroGuideBot compact showBubble={true} bubbleSide="left-belly" message="今日は気象変化が大きめ。無理せず休んでね。" signal={2} />
               </div>
               
@@ -529,7 +530,9 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-[12px] font-black tracking-widest text-slate-500 uppercase">今日の気象リスク</div>
                   <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100 shadow-sm">
-                    <IconPin /> 大阪 (未設定)
+                    {/* アイコンはお使いのコンポーネント（IconPin等）があれば差し替えてください */}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    大阪 (未設定)
                   </div>
                 </div>
                 
@@ -540,7 +543,8 @@ export default function HomePage() {
                        警戒
                      </span>
                      <div className="mt-2.5 flex items-center gap-2 text-[17px] font-black tracking-tight text-slate-900">
-                       <WeatherIcon triggerKey="pressure_down" className="h-5 w-5 text-rose-500" />
+                       {/* WeatherIcon 等のコンポーネントがあれば差し替えてください */}
+                       <span className="text-rose-500 text-lg">☔️</span>
                        気圧低下
                      </div>
                    </div>
@@ -560,10 +564,10 @@ export default function HomePage() {
               
               <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-[1.35] mb-8">
                 体質と気象変化から、<br/>
-                <span className="relative inline-block text-[var(--accent)] mt-1">
+                <span className="relative inline-block text-[#4b7360] mt-1">
                   体調の波を先読み。
                   {/* 文字の下に敷くアンダーライン装飾 */}
-                  <svg className="absolute w-full h-[10px] -bottom-0.5 left-0 text-[var(--accent)] opacity-20" viewBox="0 0 100 10" preserveAspectRatio="none">
+                  <svg className="absolute w-full h-[10px] -bottom-0.5 left-0 text-[#4b7360] opacity-30" viewBox="0 0 100 10" preserveAspectRatio="none">
                     <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="transparent"/>
                   </svg>
                 </span>
@@ -601,6 +605,7 @@ export default function HomePage() {
       </AppShell>
     );
   }
+
 
 
   /* ==============================================================
