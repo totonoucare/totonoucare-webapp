@@ -263,6 +263,7 @@ export async function GET(req, { params }) {
           secondarySub: baseKarte.secondarySub,
           mainWeather: baseKarte.mainWeather,
           mainWeatherLabel: baseKarte.mainWeatherLabel,
+          meridianPreview: baseKarte.meridianPreview,
           weatherRankings: baseKarte.weatherRankings,
           envVectors: baseKarte.envVectors,
           heroLead: baseKarte.heroLead,
