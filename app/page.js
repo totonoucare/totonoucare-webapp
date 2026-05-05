@@ -536,11 +536,11 @@ export default function HomePage() {
     const pf = publicForecast;
     const pfSignal = pf?.signal ?? 0;
 
-    // ボットのセリフ
+    // ★ ログイン後と同じセリフに変更（デモは常に「今日」なので、今日用のセリフを使用）
     const botMessages = {
-      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてくださいね。`,
-      1: `今日は少し気象の変化があります。こまめな休憩を意識してみてください。`,
-      0: `今日は気象がおだやかです。気持ちよく過ごせるといいですね！`,
+      2: `今日は警戒の日。無理せず自分を甘やかす一日にしようね。`,
+      1: `今日は少し波があるかも。こまめな休憩を意識してね。`,
+      0: `今日はおだやかな日。自分のペースで進んでいこう！`,
     };
     const botMessage = publicForecastLoading
       ? "今日の気象リスクを確認中…"
@@ -570,9 +570,7 @@ export default function HomePage() {
           </Button>
         }
       >
-        {/* ★ 変更1: 親の overflow-hidden を外し、十分な高さを確保 */}
         <Module className="relative rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[230px] mb-6">
-          {/* 背景のあしらいのみを切り抜くためのラッパー */}
           <div className="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none z-[1]">
              <HeroBgArt />
           </div>
@@ -581,7 +579,6 @@ export default function HomePage() {
             <HeroTitleMark compact={false} className="max-w-full" />
           </div>
 
-          {/* ★ 変更2: top の位置を少し上に調整し、3行でも綺麗に収まるように */}
           <div className="absolute left-8 top-[112px] z-[3] w-[220px] sm:w-[248px]">
             <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
               <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
@@ -596,7 +593,6 @@ export default function HomePage() {
           </div>
         </Module>
 
-        {/* ★ 変更3: 下部エリアをログイン後と全く同じ白カードスタイルで囲む */}
         <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -711,7 +707,6 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      {/* ★ ログイン後も同様に overflow-hidden を外し、内部ラッパーで切り抜く */}
       <Module className="relative rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[230px] mb-6">
         <div className="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none z-[1]">
           <HeroBgArt />
@@ -870,4 +865,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
