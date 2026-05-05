@@ -29,8 +29,8 @@ function clamp(value, min, max) {
 
 // 気象ストレス → シグナルへの汎用変換（体質なしバージョン）
 // 体質補正がないため、複数要因の単純合算ではなく「上位要因を中心に控えめ」に出す。
-function calcUniversalSignal(weatherStress) {
-  const channels = [
+function buildUniversalChannelRanking(weatherStress) {
+  return [
     { key: "pressure_down", strength: weatherStress.pressure_down_strength ?? 0 },
     { key: "pressure_up", strength: weatherStress.pressure_up_strength ?? 0 },
     { key: "cold", strength: weatherStress.cold_strength ?? 0 },
@@ -43,6 +43,10 @@ function calcUniversalSignal(weatherStress) {
       weighted: clamp(channel.strength, 0, 1) * (UNIVERSAL_CHANNEL_IMPORTANCE[channel.key] || 1),
     }))
     .sort((a, b) => b.weighted - a.weighted);
+}
+
+function calcUniversalSignal(weatherStress) {
+  const channels = buildUniversalChannelRanking(weatherStress);
 
   const [top = {}, second = {}, third = {}] = channels;
 
@@ -67,29 +71,55 @@ function calcUniversalSignal(weatherStress) {
   return { score_0_10: score, signal };
 }
 
-// メインのトリガー（最も強い気象変化）を特定
-function resolveMainTrigger(weatherStress) {
-  const channels = [
-    { key: "pressure_down", strength: weatherStress.pressure_down_strength ?? 0 },
-    { key: "pressure_up",   strength: weatherStress.pressure_up_strength ?? 0 },
-    { key: "cold",          strength: weatherStress.cold_strength ?? 0 },
-    { key: "heat",          strength: weatherStress.heat_strength ?? 0 },
-    { key: "damp",          strength: weatherStress.damp_strength ?? 0 },
-    { key: "dry",           strength: weatherStress.dry_strength ?? 0 },
-  ];
-  channels.sort((a, b) => b.strength - a.strength);
-  const top = channels[0];
+// メイン/副因のトリガー（強い気象変化）を特定
+function resolveTriggerFactors(weatherStress) {
+  const channels = buildUniversalChannelRanking(weatherStress);
+  const [top = {}, second = {}] = channels;
+
+  const primary = buildTriggerFactor(top, "primary");
+  if (!primary) return [];
+
+  const out = [primary];
+  const secondWeighted = Number(second?.weighted || 0);
+  const topWeighted = Number(top?.weighted || 0);
+  const secondIsMeaningful =
+    second?.key &&
+    secondWeighted >= 0.18 &&
+    secondWeighted >= topWeighted * 0.45;
+
+  if (secondIsMeaningful) {
+    const secondary = buildTriggerFactor(second, "secondary");
+    if (secondary) out.push(secondary);
+  }
+
+  return out;
+}
+
+function buildTriggerFactor(channel, role) {
+  if (!channel?.key || Number(channel.weighted || 0) <= 0.05) return null;
 
   const TRIGGER_MAP = {
-    pressure_down: { main_trigger: "pressure", trigger_dir: "down" },
-    pressure_up:   { main_trigger: "pressure", trigger_dir: "up" },
-    cold:          { main_trigger: "temp",     trigger_dir: "down" },
-    heat:          { main_trigger: "temp",     trigger_dir: "up" },
-    damp:          { main_trigger: "humidity", trigger_dir: "up" },
-    dry:           { main_trigger: "humidity", trigger_dir: "down" },
+    pressure_down: { main_trigger: "pressure", trigger_dir: "down", label: "気圧低下" },
+    pressure_up:   { main_trigger: "pressure", trigger_dir: "up", label: "気圧上昇" },
+    cold:          { main_trigger: "temp",     trigger_dir: "down", label: "冷え込み" },
+    heat:          { main_trigger: "temp",     trigger_dir: "up", label: "気温上昇" },
+    damp:          { main_trigger: "humidity", trigger_dir: "up", label: "湿気" },
+    dry:           { main_trigger: "humidity", trigger_dir: "down", label: "乾燥" },
   };
 
-  return TRIGGER_MAP[top?.key] ?? { main_trigger: "pressure", trigger_dir: "down" };
+  const compat = TRIGGER_MAP[channel.key];
+  if (!compat) return null;
+
+  return {
+    key: channel.key,
+    exact: channel.key,
+    role,
+    main_trigger: compat.main_trigger,
+    trigger_dir: compat.trigger_dir,
+    label: compat.label,
+    weather_strength: Math.round(Number(channel.strength || 0) * 100) / 100,
+    effective_load: Math.round(Number(channel.weighted || 0) * 100) / 100,
+  };
 }
 
 function jsonUtf8(payload, status = 200) {
@@ -125,7 +155,9 @@ export async function GET(req) {
 
     const weatherStress = buildWeatherStress({ points: normalized.points });
     const { score_0_10, signal } = calcUniversalSignal(weatherStress);
-    const { main_trigger, trigger_dir } = resolveMainTrigger(weatherStress);
+    const triggerFactors = resolveTriggerFactors(weatherStress);
+    const primaryTrigger = triggerFactors[0] || buildTriggerFactor({ key: "pressure_down", strength: 0, weighted: 0.06 }, "primary");
+    const secondaryTrigger = triggerFactors[1] || null;
 
     return jsonUtf8({
       ok: true,
@@ -133,8 +165,13 @@ export async function GET(req) {
       forecast: {
         score_0_10,
         signal,
-        main_trigger,
-        trigger_dir,
+        main_trigger: primaryTrigger.main_trigger,
+        trigger_dir: primaryTrigger.trigger_dir,
+        main_trigger_label: primaryTrigger.label,
+        personal_main_trigger_exact: primaryTrigger.exact,
+        personal_secondary_trigger_exact: secondaryTrigger?.exact || null,
+        secondary_trigger_label: secondaryTrigger?.label || null,
+        trigger_factors: triggerFactors.length ? triggerFactors : [primaryTrigger],
       },
     });
   } catch (e) {
@@ -142,3 +179,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(e) }, 500);
   }
 }
+
