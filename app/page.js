@@ -198,6 +198,55 @@ function exactTriggerKey(mainTrigger, triggerDir) {
   return "pressure_down";
 }
 
+function compatFromExact(exact) {
+  if (exact === "pressure_down") return { main_trigger: "pressure", trigger_dir: "down" };
+  if (exact === "pressure_up") return { main_trigger: "pressure", trigger_dir: "up" };
+  if (exact === "cold") return { main_trigger: "temp", trigger_dir: "down" };
+  if (exact === "heat") return { main_trigger: "temp", trigger_dir: "up" };
+  if (exact === "damp") return { main_trigger: "humidity", trigger_dir: "up" };
+  if (exact === "dry") return { main_trigger: "humidity", trigger_dir: "down" };
+  return { main_trigger: "pressure", trigger_dir: "down" };
+}
+
+function normalizeForecastTriggerFactor(item, index, forecast) {
+  const exact = item?.exact || item?.key || null;
+  const compat = exact ? compatFromExact(exact) : {
+    main_trigger: item?.main_trigger || forecast?.main_trigger,
+    trigger_dir: item?.trigger_dir || forecast?.trigger_dir,
+  };
+  const key = exact || exactTriggerKey(compat.main_trigger, compat.trigger_dir);
+
+  return {
+    key,
+    exact: key,
+    role: item?.role || (index === 0 ? "primary" : "secondary"),
+    main_trigger: item?.main_trigger || compat.main_trigger,
+    trigger_dir: item?.trigger_dir || compat.trigger_dir,
+    label: triggerLabel(item?.main_trigger || compat.main_trigger, item?.trigger_dir || compat.trigger_dir),
+  };
+}
+
+function getForecastTriggerFactors(forecast) {
+  if (!forecast) return [];
+  const raw = Array.isArray(forecast.trigger_factors) && forecast.trigger_factors.length
+    ? forecast.trigger_factors
+    : [];
+
+  if (raw.length) {
+    return raw.slice(0, 2).map((item, index) => normalizeForecastTriggerFactor(item, index, forecast));
+  }
+
+  const primary = forecast.personal_main_trigger_exact || exactTriggerKey(forecast.main_trigger, forecast.trigger_dir);
+  const secondary = forecast.personal_secondary_trigger_exact || null;
+  const factors = [normalizeForecastTriggerFactor({ exact: primary, role: "primary" }, 0, forecast)];
+
+  if (secondary && secondary !== primary) {
+    factors.push(normalizeForecastTriggerFactor({ exact: secondary, role: "secondary" }, 1, forecast));
+  }
+
+  return factors.slice(0, 2);
+}
+
 function ActionTile({ icon, title, sub, onClick }) {
   return (
     <button
@@ -250,7 +299,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
   const forecast = bundle.forecast || {};
   const location = bundle.location || {};
   const score = forecast.score_0_10 ?? 0;
-  const exactTrigger = exactTriggerKey(forecast.main_trigger, forecast.trigger_dir);
+  const triggerFactors = getForecastTriggerFactors(forecast);
 
   return (
     <button
@@ -296,11 +345,19 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
       <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">気になりやすい変化</div>
-          <div className="mt-1.5 flex items-center gap-2 text-[20px] font-black tracking-tight text-slate-950">
-            <div className="text-[var(--accent-ink)] opacity-95">
-              <WeatherIcon triggerKey={exactTrigger} className="h-6 w-6" />
-            </div>
-            <span>{triggerLabel(forecast.main_trigger, forecast.trigger_dir)}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {triggerFactors.map((factor, index) => (
+              <div
+                key={`${factor.key}-${index}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/72 px-2.5 py-1.5 text-[12px] font-black text-slate-800 ring-1 ring-black/5 shadow-sm"
+              >
+                <span className="text-[var(--accent-ink)] opacity-95">
+                  <WeatherIcon triggerKey={factor.key} className="h-5 w-5" />
+                </span>
+                <span>{factor.label}</span>
+                {index === 1 && <span className="text-[10px] text-slate-400">副</span>}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -861,3 +918,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
