@@ -19,6 +19,7 @@ import { WeatherIcon } from "@/components/illust/icons/weather";
 
 const SESSION_TIMEOUT_MS = 5000;
 
+// ★ 共通コンポーネント化された背景モチーフ
 function HeroBgArt() {
   return (
     <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
@@ -536,11 +537,11 @@ export default function HomePage() {
     const pf = publicForecast;
     const pfSignal = pf?.signal ?? 0;
 
-    // ★ ログイン後と同じセリフに変更（デモは常に「今日」なので、今日用のセリフを使用）
+    // ボットのセリフ
     const botMessages = {
-      2: `今日は警戒の日。無理せず自分を甘やかす一日にしようね。`,
-      1: `今日は少し波があるかも。こまめな休憩を意識してね。`,
-      0: `今日はおだやかな日。自分のペースで進んでいこう！`,
+      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてくださいね。`,
+      1: `今日は少し気象の変化があります。こまめな休憩を意識してみてください。`,
+      0: `今日は気象がおだやかです。気持ちよく過ごせるといいですね！`,
     };
     const botMessage = publicForecastLoading
       ? "今日の気象リスクを確認中…"
@@ -570,16 +571,16 @@ export default function HomePage() {
           </Button>
         }
       >
-        <Module className="relative rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[230px] mb-6">
-          <div className="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none z-[1]">
-             <HeroBgArt />
-          </div>
+        {/* ★ min-h-[212px] を 188px に縮め、吹き出し等の位置を bottom 基準に修正 */}
+        <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[188px] mb-6">
+          <HeroBgArt />
 
           <div className="relative z-[2] max-w-[420px]">
             <HeroTitleMark compact={false} className="max-w-full" />
           </div>
 
-          <div className="absolute left-8 top-[112px] z-[3] w-[220px] sm:w-[248px]">
+          {/* 吹き出し: bottom-6 で固定し、ボットとの高さを連動させる */}
+          <div className="absolute left-8 bottom-6 z-[3] w-[220px] sm:w-[248px]">
             <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
               <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
               <div className="text-[13px] font-extrabold leading-6 text-slate-600">
@@ -588,19 +589,16 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+          {/* ボット本体: bottom-4 で配置 */}
+          <div className="absolute right-6 bottom-4 z-[3] scale-[0.95] origin-bottom-right">
             <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
           </div>
         </Module>
 
-        <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] ring-1 ring-[#BFD9CC] shadow-sm">
-                <IconRadar className="h-5 w-5 text-[#255F4F]" />
-              </span>
-              <div className="text-[16px] sm:text-[18px] font-black tracking-tight text-slate-900">今日の気象リスク</div>
-            </div>
+        <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
+          {/* 地域選択 */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-[15px] font-black tracking-tight text-slate-900">今日の気象リスク</div>
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#BFD9CC]">
               <IconPin className="w-3.5 h-3.5 text-[#255F4F]" />
               <select
@@ -630,6 +628,7 @@ export default function HomePage() {
             onClick={() => router.push("/signup")}
           />
 
+          {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
              <div className="text-[15px] font-black tracking-tight text-[#255F4F]">
                ＋ あなたの体質データを掛け合わせる
@@ -707,16 +706,15 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      <Module className="relative rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[230px] mb-6">
-        <div className="absolute inset-0 overflow-hidden rounded-[32px] pointer-events-none z-[1]">
-          <HeroBgArt />
-        </div>
+      {/* ★ ログイン後も同様に高さを縮め、bottom 基準に変更 */}
+      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[188px]">
+        <HeroBgArt />
 
         <div className="relative z-[2] max-w-[420px]">
           <HeroTitleMark compact={false} className="max-w-full" />
         </div>
 
-        <div className="absolute left-8 top-[112px] z-[3] w-[220px] sm:w-[248px]">
+        <div className="absolute left-8 bottom-6 z-[3] w-[220px] sm:w-[248px]">
           <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
             <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
             <div className="text-[13px] font-extrabold leading-6 text-slate-600">
@@ -725,7 +723,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+        <div className="absolute right-6 bottom-4 z-[3] scale-[0.95] origin-bottom-right">
           <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
         </div>
       </Module>
@@ -759,7 +757,7 @@ export default function HomePage() {
       </Module>
 
       {/* 次にやること */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)] mt-6">
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center gap-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
             <IconBolt className="h-5 w-5" />
@@ -802,7 +800,7 @@ export default function HomePage() {
       </Module>
 
       {/* あなたの体質 */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)] mt-6">
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
              <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
@@ -865,3 +863,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
