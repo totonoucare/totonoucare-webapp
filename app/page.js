@@ -487,44 +487,9 @@ export default function HomePage() {
   }
 
   /* ==============================================================
-   * 未ログイン時（デモ気象リスク付きランディング）
+   * 未ログイン時（ランディングページ風の洗練されたUI）
    * ============================================================== */
   if (!isLoggedIn) {
-    const pf = publicForecast;
-    const pfSignal = pf?.signal ?? 0;
-    const pfScore = pf?.score_0_10 ?? null;
-
-    // シグナル別の吹き出しメッセージ
-    const botMessages = {
-      2: `今日は気象変化が大きめ。無理せずゆっくり過ごしてくださいね。`,
-      1: `今日は少し気象の変化があります。こまめな休憩を意識してみて。`,
-      0: `今日は気象がおだやかです。気持ちよく過ごせるといいですね！`,
-    };
-    const botMessage = publicForecastLoading
-      ? "今日の気象リスクを確認中…"
-      : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
-
-    // シグナル別カードスタイル
-    const demoCardBg = pfSignal === 2 ? "bg-[#FFF1F3]" : pfSignal === 1 ? "bg-[#FFF5DE]" : "bg-[#ECF8F1]";
-    const demoScoreColor = pfSignal === 2 ? "text-rose-600" : pfSignal === 1 ? "text-amber-600" : "text-emerald-600";
-    const demoBadgeBg = pfSignal === 2 ? "bg-rose-100 text-rose-800" : pfSignal === 1 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800";
-    const demoDotClass = pfSignal === 2 ? "bg-rose-500" : pfSignal === 1 ? "bg-amber-500" : "bg-emerald-500";
-    const demoSignalText = pfSignal === 2 ? "警戒" : pfSignal === 1 ? "注意" : "安定";
-
-    // 主な気象変化ラベル
-    const demoTriggerLabel = pf ? triggerLabel(pf.main_trigger, pf.trigger_dir) : null;
-    const demoTriggerKey = pf ? exactTriggerKey(pf.main_trigger, pf.trigger_dir) : null;
-
-    // 地域プリセット（主要都市のみ）
-    const QUICK_PRESETS = [
-      { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
-      { key: "sendai",  label: "仙台", lat: 38.26889, lon: 140.87194 },
-      { key: "tokyo",   label: "東京", lat: 35.68944, lon: 139.69167 },
-      { key: "nagoya",  label: "名古屋", lat: 35.18028, lon: 136.90667 },
-      { key: "osaka",   label: "大阪", lat: 34.68639, lon: 135.52 },
-      { key: "fukuoka", label: "福岡", lat: 33.60639, lon: 130.41806 },
-    ];
-
     return (
       <AppShell
         title="ホーム"
@@ -534,144 +499,109 @@ export default function HomePage() {
             size="sm"
             variant="ghost"
             onClick={() => router.push("/guide")}
-            className="font-extrabold text-slate-600 hover:bg-slate-100"
+            className="font-extrabold text-slate-500 hover:bg-slate-100"
           >
             使い方
           </Button>
         }
       >
-        <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-          <div className="relative bg-[#EEF5EF] px-5 pt-10 pb-6 text-center">
-            <HeroTitleMark />
+        <div className="relative overflow-hidden bg-white min-h-[calc(100vh-80px)] -mt-6">
+          {/* 背景の装飾（柔らかい緑のグラデーションで上部だけ色付け） */}
+          <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-[#EEF5EF] via-[#F4F9F5] to-white pointer-events-none" />
+          
+          <div className="relative px-5 pt-8 pb-12 z-10 flex flex-col items-center">
+            
+            {/* ブランドロゴ */}
+            <div className="mb-10">
+              <HeroTitleMark compact={false} />
+            </div>
 
-            {/* ★画像2枚目のように、白い美しいカードでデモUIを包む */}
-            <div className="mt-10 relative mx-auto w-full max-w-[340px] rounded-[32px] bg-white p-5 sm:p-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_16px_36px_-20px_rgba(77,111,85,0.2)] overflow-hidden text-left">
+            {/* 体験カードエリア（ロボットを外に出して立体感を演出） */}
+            <div className="relative w-full max-w-[360px] mb-12">
               
-              {/* 背景の装飾 SVG (カード内に波紋を敷く) */}
-              <div className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[80%] overflow-hidden opacity-60">
-                <svg viewBox="0 0 260 220" className="absolute -right-6 top-0 h-full w-full">
-                  <circle cx="180" cy="110" r="60" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.3" />
-                  <circle cx="180" cy="110" r="100" fill="none" stroke="#D8C58E" strokeWidth="1" strokeOpacity="0.2" />
-                  <circle cx="180" cy="110" r="30" fill="#E8D59A" opacity="0.15" />
-                </svg>
+              {/* ボットをカードの右上（外側）に配置 */}
+              <div className="absolute -top-14 -right-4 z-20 scale-90 origin-bottom-right drop-shadow-md">
+                 <HeroGuideBot compact showBubble={true} bubbleSide="left-belly" message="今日は気象変化が大きめ。無理せず休んでね。" signal={2} />
               </div>
-
-              <div className="relative z-10">
-                {/* 1. 地域選択ヘッダー */}
+              
+              {/* サンプルカード */}
+              <div className="relative z-10 rounded-[28px] bg-white/80 backdrop-blur-md p-5 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_20px_40px_-16px_rgba(37,95,79,0.15)]">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">今日の気象リスク</div>
-                  <div className="relative flex items-center gap-1 bg-slate-50 hover:bg-slate-100 transition-colors rounded-full px-3 py-1.5 ring-1 ring-slate-200 shadow-sm cursor-pointer">
-                    <IconPin />
-                    <select
-                      value={publicLocation.key}
-                      onChange={(e) => {
-                        const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
-                        if (preset) setPublicLocation(preset);
-                      }}
-                      className="bg-transparent text-[12px] font-bold text-slate-700 outline-none appearance-none pr-3 cursor-pointer"
-                    >
-                      {QUICK_PRESETS.map((p) => (
-                        <option key={p.key} value={p.key}>{p.label}</option>
-                      ))}
-                    </select>
-                    <IconChevron className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                  <div className="text-[12px] font-black tracking-widest text-slate-500 uppercase">今日の気象リスク</div>
+                  <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100 shadow-sm">
+                    <IconPin /> 大阪 (未設定)
                   </div>
                 </div>
-
-                {/* 2. デモ予報のミニカード（ダサいバッジではなく、アプリ風のUIに） */}
-                {publicForecastLoading ? (
-                   <div className="rounded-[20px] bg-slate-50 h-[72px] mb-6 animate-pulse ring-1 ring-slate-100" />
-                ) : (
-                  <div className={["rounded-[20px] p-4 ring-1 flex justify-between items-center mb-6 shadow-sm", demoCardBg, 
-                    pfSignal === 2 ? "ring-rose-200" : pfSignal === 1 ? "ring-amber-200" : "ring-emerald-200"
-                  ].join(" ")}>
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className={["h-2 w-2 rounded-full", demoDotClass].join(" ")} />
-                        <span className={["text-[10px] font-black tracking-wide", demoBadgeBg, "rounded-full px-2 py-0.5"].join(" ")}>
-                          {demoSignalText}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[15px] font-black text-slate-800">
-                        {demoTriggerLabel && <WeatherIcon triggerKey={demoTriggerKey} className="h-5 w-5 text-[var(--accent-ink)]" />}
-                        {demoTriggerLabel || "読込中"}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-end justify-end gap-0.5 leading-none">
-                        <span className={["text-[32px] font-black tracking-tight", demoScoreColor].join(" ")}>{pfScore ?? "-"}</span>
-                        <span className="text-[13px] font-bold text-slate-400 pb-1">/10</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. キャラクターと吹き出し（横並びでスマートに） */}
-                <div className="relative flex items-end gap-3 mt-2">
-                  <div className="w-[84px] shrink-0 -mb-2">
-                    {/* ボットコンポーネントの吹き出しはOFFにし、自前で横に配置する */}
-                    <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
-                  </div>
-                  <div className="relative flex-1 bg-white rounded-[18px] p-3.5 text-[12px] font-bold text-slate-600 leading-relaxed ring-1 ring-[var(--ring)] shadow-[0_8px_16px_-8px_rgba(40,55,48,0.12)]">
-                    <div className="absolute left-[-6px] bottom-[24px] h-3.5 w-3.5 rotate-45 border-b border-l border-[var(--ring)] bg-white" />
-                    {botMessage}
-                  </div>
+                
+                <div className="flex items-center justify-between bg-[#FFF1F3] rounded-[20px] p-4 ring-1 ring-inset ring-rose-200/60">
+                   <div>
+                     <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-black text-rose-800 shadow-sm ring-1 ring-rose-100">
+                       <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
+                       警戒
+                     </span>
+                     <div className="mt-2.5 flex items-center gap-2 text-[17px] font-black tracking-tight text-slate-900">
+                       <WeatherIcon triggerKey="pressure_down" className="h-5 w-5 text-rose-500" />
+                       気圧低下
+                     </div>
+                   </div>
+                   <div className="text-right">
+                     <div className="text-[40px] font-black tracking-[-0.04em] text-rose-600 leading-none">10<span className="text-[16px] text-rose-300">/10</span></div>
+                   </div>
                 </div>
-
               </div>
             </div>
 
-            {/* 体質チェックへの誘導コピー */}
-            <div className="mt-8 text-[14px] font-bold leading-relaxed text-slate-600">
-              💡 体質チェックをすると、<br />
-              予報の精度が<span className="font-extrabold text-[var(--accent-ink)]">あなた仕様</span>に変わります。
-            </div>
+            {/* コピー＆CTAエリア */}
+            <div className="w-full max-w-[340px] text-center">
+              
+              <div className="inline-flex items-center justify-center gap-2 bg-[#FFF9E5] text-[#A16E16] text-[11px] font-extrabold px-3.5 py-1.5 rounded-full mb-5 ring-1 ring-[#E9D8A9]/50 shadow-sm">
+                <span className="text-[14px]">💡</span> 体質を登録すると、予報があなた仕様に。
+              </div>
+              
+              <h1 className="text-[28px] font-black tracking-tight text-slate-900 leading-[1.35] mb-8">
+                体質と気象変化から、<br/>
+                <span className="relative inline-block text-[var(--accent)] mt-1">
+                  体調の波を先読み。
+                  {/* 文字の下に敷くアンダーライン装飾 */}
+                  <svg className="absolute w-full h-[10px] -bottom-0.5 left-0 text-[var(--accent)] opacity-20" viewBox="0 0 100 10" preserveAspectRatio="none">
+                    <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="transparent"/>
+                  </svg>
+                </span>
+              </h1>
 
-            {/* タイトルコピー */}
-            <div className="mt-6 text-[24px] sm:text-[28px] font-black tracking-tight leading-[1.35] text-slate-900">
-              体質と気象変化から、<br />
-              体調の波を先読み。
+              <div className="grid gap-3.5">
+                <Button
+                  onClick={() => router.push("/check")}
+                  className="w-full py-4.5 text-[15px] shadow-[0_8px_20px_-8px_rgba(37,95,79,0.4)] transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+                >
+                  無料で体質チェックをはじめる
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => router.push("/signup")}
+                  className="w-full py-4.5 text-[14px] bg-white border-slate-200 text-slate-600 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98]"
+                >
+                  ログインする
+                </Button>
+              </div>
+
+              <ul className="mt-7 space-y-2.5">
+                <li className="flex items-center justify-center gap-2 text-[12px] font-bold text-slate-500">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-emerald-500" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  体質チェック・日々の予報は<span className="font-black text-slate-700">ずっと無料</span>
+                </li>
+                <li className="flex items-center justify-center gap-2 text-[12px] font-bold text-slate-500">
+                  <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-emerald-500" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  記録・週次AIレポートはサブスク登録後に利用可能
+                </li>
+              </ul>
             </div>
           </div>
-
-          {/* CTA */}
-          <div className="px-6 mt-6 sm:max-w-[340px] sm:mx-auto">
-            <div className="grid gap-3">
-              <Button
-                onClick={() => router.push("/check")}
-                className="py-4 shadow-md text-[15px]"
-              >
-                無料で体質チェックをはじめる
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => router.push("/signup")}
-                className="py-4 shadow-sm text-[15px] bg-white"
-              >
-                ログインする
-              </Button>
-            </div>
-
-            <ul className="mt-6 space-y-2.5">
-              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                体質チェック・ログイン後の体調予報は
-                <span className="font-extrabold text-slate-700">ずっと無料</span>
-              </li>
-              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                記録・週次AIレポートはサブスク登録後に利用可能
-              </li>
-            </ul>
-          </div>
-        </Module>
+        </div>
       </AppShell>
     );
   }
+
 
   /* ==============================================================
    * ログイン後（ダッシュボード）
