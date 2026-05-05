@@ -851,7 +851,7 @@ function LocationEditor({
           <div className="text-[18px] font-black tracking-tight text-slate-900">地域を設定する</div>
           <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
             現在地か、生活圏に近い代表地点を設定できます。
-            変更した場合は次回の予報から反映されます。
+            変更した場合は今日/明日の予報にも反映されます。
           </div>
         </div>
 
@@ -1272,6 +1272,7 @@ export default function RadarPage() {
     lat = null,
     lon = null,
     force = false,
+    recompute = false,
     locationChanged = false,
     nextDateMode = dateMode,
   } = {}) {
@@ -1300,6 +1301,10 @@ export default function RadarPage() {
       if (lat != null && lon != null) {
         qs.set("lat", String(lat));
         qs.set("lon", String(lon));
+      }
+
+      if (recompute || locationChanged) {
+        qs.set("force", "1");
       }
 
       const url = `/api/radar/v1/forecast?${qs.toString()}`;
@@ -1339,7 +1344,7 @@ export default function RadarPage() {
       }
 
       if (locationChanged) {
-        setLocationNotice("地域を更新しました。変更は次回の予報から反映されます。");
+        setLocationNotice("地域を更新しました。今日/明日の予報にも反映しました。");
       }
     } catch (e) {
       if (requestSeq !== requestSeqRef.current) return;
@@ -1385,6 +1390,7 @@ export default function RadarPage() {
           lat,
           lon,
           force: true,
+          recompute: true,
           locationChanged: !needsLocation,
           nextDateMode: dateMode,
         });
@@ -1426,6 +1432,7 @@ export default function RadarPage() {
         lat: preset.lat,
         lon: preset.lon,
         force: true,
+        recompute: true,
         locationChanged: !needsLocation,
         nextDateMode: dateMode,
       });
@@ -1552,6 +1559,52 @@ export default function RadarPage() {
   const todayRecordDate = getJstTodayTomorrow().today;
   const todayRecordDateLabel = formatTargetDate(todayRecordDate);
 
+  if (!loadingAuth && !session) {
+    return (
+      <AppShell title="体調予報" subtitle="ログインが必要です">
+        <Module className="overflow-hidden p-0 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+          <div className="relative px-6 py-7 bg-[linear-gradient(135deg,#F5FBF7_0%,#FFF8E8_100%)]">
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/70 blur-2xl" />
+            <div className="relative z-10 inline-flex rounded-full bg-white/85 px-3 py-1 text-[11px] font-black tracking-wide text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm">
+              ログイン後に使えます
+            </div>
+            <div className="relative z-10 mt-4 text-[22px] font-black tracking-tight text-slate-900 leading-snug">
+              あなたの体質に合わせた
+              <br />
+              今日・明日の体調予報を表示します。
+            </div>
+            <div className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
+              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、崩れやすさと先回りケアを出します。
+            </div>
+          </div>
+
+          <div className="px-6 py-5">
+            <div className="grid gap-2.5 text-[13px] font-bold leading-6 text-slate-600">
+              <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
+                ・体質チェック結果をもとにパーソナル予報を作成
+              </div>
+              <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
+                ・地域設定後、今日/明日の天気負担を確認
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <Button onClick={() => router.push("/signup")} className="w-full shadow-md">
+                無料で登録・ログイン
+              </Button>
+              <Button variant="secondary" onClick={() => router.push("/check")} className="w-full bg-white">
+                体質チェックへ
+              </Button>
+              <Button variant="ghost" onClick={() => router.push("/")} className="w-full">
+                ホームへ戻る
+              </Button>
+            </div>
+          </div>
+        </Module>
+      </AppShell>
+    );
+  }
+
   if (loadingAuth || loading) {
     return (
       <AppShell title="体調予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
@@ -1578,35 +1631,6 @@ export default function RadarPage() {
           <div className="h-24 rounded-[32px] bg-slate-100 animate-pulse" />
           <div className="h-64 rounded-[32px] bg-slate-100 animate-pulse" />
         </div>
-      </AppShell>
-    );
-  }
-
-  if (!session) {
-    return (
-      <AppShell title="体調予報" subtitle="ログインが必要です">
-        <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900">ログインが必要です</div>
-          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-            体調予報（未病レーダー）はログイン後に使えます。
-          </div>
-
-          <div className="mt-8 space-y-3">
-            <Button
-              onClick={() => router.push("/signup")}
-              className="w-full shadow-md"
-            >
-              無料で登録・ログイン
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => router.push("/check")}
-              className="w-full"
-            >
-              体質チェックへ
-            </Button>
-          </div>
-        </Module>
       </AppShell>
     );
   }
@@ -2409,3 +2433,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
