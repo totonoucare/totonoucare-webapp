@@ -4,7 +4,7 @@
 import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
 import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
-import { decideTargetDateJST } from "@/lib/radar_v1/timeJST";
+import { decideTargetDateJST, nowJstParts, toJstISODate } from "@/lib/radar_v1/timeJST";
 
 export const runtime = "nodejs";
 
@@ -145,15 +145,25 @@ export async function GET(req) {
     }
 
     const { targetDate } = decideTargetDateJST({ date: dateParam || null });
+    const includePreviousNightBridge = isTomorrowTargetDate(targetDate);
 
     const { data: metnoData } = await fetchMetnoLocationForecast({ lat, lon });
-    const normalized = normalizeMetnoForTargetDate({ metnoJson: metnoData, targetDate });
+    const normalized = normalizeMetnoForTargetDate({
+      metnoJson: metnoData,
+      targetDate,
+      includePreviousNightBridge,
+    });
 
     if (!normalized.points.length) {
       return jsonUtf8({ ok: false, error: "No forecast points available" }, 503);
     }
 
-    const weatherStress = buildWeatherStress({ points: normalized.points });
+    const weatherStress = buildWeatherStress({
+      points: normalized.points,
+      previousNightBridgePoints: includePreviousNightBridge
+        ? normalized.previousNightBridgePoints
+        : null,
+    });
     const { score_0_10, signal } = calcUniversalSignal(weatherStress);
     const triggerFactors = resolveTriggerFactors(weatherStress);
     const primaryTrigger = triggerFactors[0] || buildTriggerFactor({ key: "pressure_down", strength: 0, weighted: 0.06 }, "primary");
@@ -179,4 +189,14 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(e) }, 500);
   }
 }
+
+
+function isTomorrowTargetDate(targetDate) {
+  const { isoDate: today } = nowJstParts(new Date());
+  const [y, m, d] = today.split("-").map(Number);
+  const tomorrowDate = new Date(Date.UTC(y, m - 1, d + 1, 0, 0, 0));
+  const tomorrow = toJstISODate(tomorrowDate);
+  return targetDate === tomorrow;
+}
+
 
