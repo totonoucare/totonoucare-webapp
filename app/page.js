@@ -14,6 +14,7 @@ import {
 } from "@/components/illust/home";
 import HeroGuideBot from "@/components/illust/home/HeroGuideBot";
 import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
+// ★ イラストと天候アイコンをインポート
 import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 
@@ -487,9 +488,45 @@ export default function HomePage() {
   }
 
   /* ==============================================================
-   * 未ログイン時（ランディングページ風の洗練されたUI）
+   * 未ログイン時（デモ気象リスク付き・洗練されたランディング）
    * ============================================================== */
   if (!isLoggedIn) {
+    const pf = publicForecast;
+    const pfSignal = pf?.signal ?? 0;
+    const pfScore = pf?.score_0_10 ?? null;
+
+    // シグナル別の吹き出しメッセージ
+    const botMessages = {
+      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてね。`,
+      1: `今日は少し気象の変化があります。こまめな休憩を意識してね。`,
+      0: `今日は気象がおだやかです。気持ちよく過ごせるといいね！`,
+    };
+    const botMessage = publicForecastLoading
+      ? "今日の気象リスクを確認中…"
+      : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
+
+    // シグナル別カードスタイル
+    const demoCardBg = pfSignal === 2 ? "bg-[#FFF1F3] ring-rose-200/60" : pfSignal === 1 ? "bg-[#FFF5DE] ring-amber-200/60" : "bg-[#ECF8F1] ring-emerald-200/60";
+    const demoScoreColor = pfSignal === 2 ? "text-rose-600" : pfSignal === 1 ? "text-amber-600" : "text-emerald-600";
+    const demoScoreSubColor = pfSignal === 2 ? "text-rose-300" : pfSignal === 1 ? "text-amber-300" : "text-emerald-300";
+    const demoBadgeBg = pfSignal === 2 ? "bg-white/80 text-rose-800 ring-rose-100" : pfSignal === 1 ? "bg-white/80 text-amber-800 ring-amber-100" : "bg-white/80 text-emerald-800 ring-emerald-100";
+    const demoDotClass = pfSignal === 2 ? "bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]" : pfSignal === 1 ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]" : "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]";
+    const demoSignalText = pfSignal === 2 ? "警戒" : pfSignal === 1 ? "注意" : "安定";
+
+    // 主な気象変化ラベル
+    const demoTriggerLabel = pf ? triggerLabel(pf.main_trigger, pf.trigger_dir) : null;
+    const demoTriggerKey = pf ? exactTriggerKey(pf.main_trigger, pf.trigger_dir) : null;
+
+    // 地域プリセット（主要都市のみ）
+    const QUICK_PRESETS = [
+      { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
+      { key: "sendai",  label: "仙台", lat: 38.26889, lon: 140.87194 },
+      { key: "tokyo",   label: "東京", lat: 35.68944, lon: 139.69167 },
+      { key: "nagoya",  label: "名古屋", lat: 35.18028, lon: 136.90667 },
+      { key: "osaka",   label: "大阪", lat: 34.68639, lon: 135.52 },
+      { key: "fukuoka", label: "福岡", lat: 33.60639, lon: 130.41806 },
+    ];
+
     return (
       <AppShell
         title="ホーム"
@@ -516,39 +553,64 @@ export default function HomePage() {
               <HeroTitleMark compact={false} />
             </div>
 
-            {/* 体験カードエリア（上にマージン「mt-[88px]」を追加してロボットの浮遊スペースを確保） */}
+            {/* 体験カードエリア */}
             <div className="relative w-full max-w-[360px] mb-12 mt-[88px]">
               
-              {/* ボットの位置をカードの上に完全に逃がす（-top-[96px]） */}
+              {/* ボットの位置 */}
               <div className="absolute -top-[96px] right-[-8px] z-20 scale-[0.85] origin-bottom-right drop-shadow-md">
-                 <HeroGuideBot compact showBubble={true} bubbleSide="left-belly" message="今日は気象変化が大きめ。無理せず休んでね。" signal={2} />
+                 <HeroGuideBot compact showBubble={true} bubbleSide="left-belly" message={botMessage} signal={publicForecastLoading ? 0 : pfSignal} />
               </div>
               
-              {/* サンプルカード */}
+              {/* サンプルカード本体 */}
               <div className="relative z-10 rounded-[28px] bg-white/80 backdrop-blur-md p-5 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_20px_40px_-16px_rgba(37,95,79,0.15)]">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-[12px] font-black tracking-widest text-slate-500 uppercase">今日の気象リスク</div>
-                  <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100 shadow-sm">
-                    {/* 元のIconPinコンポーネントを復元 */}
+                  
+                  {/* ロケーション選択プルダウン */}
+                  <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100 shadow-sm hover:bg-slate-100 transition-colors">
                     <IconPin />
-                    大阪 (未設定)
+                    <select
+                      value={publicLocation.key}
+                      onChange={(e) => {
+                        const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
+                        if (preset) setPublicLocation(preset);
+                      }}
+                      className="bg-transparent focus:outline-none appearance-none cursor-pointer text-slate-500"
+                    >
+                      {QUICK_PRESETS.map((p) => (
+                        <option key={p.key} value={p.key}>{p.label}</option>
+                      ))}
+                    </select>
+                    <IconChevron className="h-3 w-3 -ml-1 text-slate-300" />
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between bg-[#FFF1F3] rounded-[20px] p-4 ring-1 ring-inset ring-rose-200/60">
+                {/* 実際のAPIデータに基づくスコア表示 */}
+                <div className={`flex items-center justify-between rounded-[20px] p-4 ring-1 ring-inset ${demoCardBg}`}>
                    <div>
-                     <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-black text-rose-800 shadow-sm ring-1 ring-rose-100">
-                       <span className="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
-                       警戒
+                     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-black shadow-sm ring-1 ${demoBadgeBg}`}>
+                       <span className={`h-1.5 w-1.5 rounded-full ${demoDotClass}`} />
+                       {demoSignalText}
                      </span>
                      <div className="mt-2.5 flex items-center gap-2 text-[17px] font-black tracking-tight text-slate-900">
-                       {/* 元のWeatherIconコンポーネントを復元 */}
-                       <WeatherIcon triggerKey="pressure_down" className="h-5 w-5 text-rose-500" />
-                       気圧低下
+                       {demoTriggerLabel ? (
+                         <>
+                           <WeatherIcon triggerKey={demoTriggerKey} className={`h-5 w-5 ${demoScoreColor}`} />
+                           {demoTriggerLabel}
+                         </>
+                       ) : (
+                         <span className="text-slate-400 text-[14px]">取得中...</span>
+                       )}
                      </div>
                    </div>
                    <div className="text-right">
-                     <div className="text-[40px] font-black tracking-[-0.04em] text-rose-600 leading-none">10<span className="text-[16px] text-rose-300">/10</span></div>
+                     {publicForecastLoading ? (
+                       <div className="h-8 w-16 animate-pulse rounded-md bg-white/50 inline-block" />
+                     ) : (
+                       <div className={`text-[40px] font-black tracking-[-0.04em] leading-none ${demoScoreColor}`}>
+                         {pfScore ?? "-"}<span className={`text-[16px] ${demoScoreSubColor}`}>/10</span>
+                       </div>
+                     )}
                    </div>
                 </div>
               </div>
@@ -604,21 +666,26 @@ export default function HomePage() {
     );
   }
 
+
   /* ==============================================================
    * ログイン後（ダッシュボード）
    * ============================================================== */
 
+  // ★ 18時を境に「今日」か「明日」のどちらを主役にするか判定
   const currentHour = new Date().getHours();
   const isEvening = currentHour >= 18;
 
+  // 判定したターゲットのシグナル（安定=0, 注意=1, 警戒=2）を取得。ローディング中は null
   const targetSignal = isEvening
     ? (!tomorrowLoading && tomorrowBundle?.ok ? (tomorrowBundle.forecast?.signal ?? 0) : null)
     : (!todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null);
   
+  // ★ 時間帯とシグナルに応じたボットのセリフを決定
   let guideBotText = "体調予報の概要と、次の一歩をまとめています";
 
   if (targetSignal !== null) {
     if (isEvening) {
+      // 18時以降（明日の予報について）
       if (targetSignal === 2) {
         guideBotText = "明日は警戒の日。今日は湯船に浸かって、早めに休もうね。";
       } else if (targetSignal === 1) {
@@ -627,6 +694,7 @@ export default function HomePage() {
         guideBotText = "明日はおだやかな日になりそう。安心して眠ってね！";
       }
     } else {
+      // 18時未満（今日の予報について）
       if (targetSignal === 2) {
         guideBotText = "今日は警戒の日。無理せず自分を甘やかす一日にしようね。";
       } else if (targetSignal === 1) {
@@ -649,6 +717,7 @@ export default function HomePage() {
         />
       }
     >
+      {/* ヒーローヘッダー */}
       <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
         <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
           <svg
@@ -697,16 +766,19 @@ export default function HomePage() {
           <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
             <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
             <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+              {/* ★ 動的に変わるセリフを配置 */}
               {guideBotText}
             </div>
           </div>
         </div>
 
         <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+          {/* ★ targetSignal プロパティを渡す */}
           <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
         </div>
       </Module>
 
+      {/* サマリー・ウィジェット群 */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -734,6 +806,7 @@ export default function HomePage() {
         </div>
       </Module>
 
+      {/* 次にやること */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center gap-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
@@ -776,6 +849,7 @@ export default function HomePage() {
         </div>
       </Module>
 
+      {/* あなたの体質 */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -839,3 +913,6 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
+
+
