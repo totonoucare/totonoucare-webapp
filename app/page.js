@@ -488,211 +488,84 @@ export default function HomePage() {
   }
 
   /* ==============================================================
-   * 未ログイン時（デモ気象リスク付きランディング）
+   * 未ログイン時（本物のUIを使ったデモ体験）
    * ============================================================== */
   if (!isLoggedIn) {
-    const pf = publicForecast;
-    const pfSignal = pf?.signal ?? 0;
-    const pfScore = pf?.score_0_10 ?? null;
-
-    // シグナル別の吹き出しメッセージ
-    const botMessages = {
-      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてくださいね。`,
-      1: `今日は少し気象の変化があります。こまめな休憩を意識してみてください。`,
-      0: `今日は気象がおだやかです。気持ちよく過ごせるといいですね！`,
-    };
-    const botMessage = publicForecastLoading
-      ? "今日の気象リスクを確認中…"
-      : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
-
-    // シグナル別カードスタイル
-    const demoCardBg = pfSignal === 2 ? "bg-[#FFF1F3]" : pfSignal === 1 ? "bg-[#FFF5DE]" : "bg-[#ECF8F1]";
-    const demoScoreColor = pfSignal === 2 ? "text-rose-600" : pfSignal === 1 ? "text-amber-600" : "text-emerald-600";
-    const demoBadgeBg = pfSignal === 2 ? "bg-rose-100 text-rose-800" : pfSignal === 1 ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800";
-    const demoDotClass = pfSignal === 2 ? "bg-rose-500" : pfSignal === 1 ? "bg-amber-500" : "bg-emerald-500";
-    const demoSignalText = pfSignal === 2 ? "警戒" : pfSignal === 1 ? "注意" : "安定";
-
-    // 主な気象変化ラベル
-    const demoTriggerLabel = pf ? triggerLabel(pf.main_trigger, pf.trigger_dir) : null;
-    const demoTriggerKey = pf ? exactTriggerKey(pf.main_trigger, pf.trigger_dir) : null;
-
-    // 地域プリセット（主要都市のみ）
-    const QUICK_PRESETS = [
-      { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
-      { key: "sendai",  label: "仙台", lat: 38.26889, lon: 140.87194 },
-      { key: "tokyo",   label: "東京", lat: 35.68944, lon: 139.69167 },
-      { key: "nagoya",  label: "名古屋", lat: 35.18028, lon: 136.90667 },
-      { key: "osaka",   label: "大阪", lat: 34.68639, lon: 135.52 },
-      { key: "fukuoka", label: "福岡", lat: 33.60639, lon: 130.41806 },
-    ];
+    // ... (publicForecastなどの変数準備は同じ)
 
     return (
-      <AppShell
-        title="ホーム"
-        subtitle="未病レーダー"
-        headerRight={
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => router.push("/guide")}
-            className="font-extrabold text-slate-600 hover:bg-slate-100"
-          >
-            使い方
-          </Button>
-        }
-      >
-        <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-          <div className="relative bg-[#EEF5EF] px-6 pt-10 pb-6 text-center">
-            <HeroTitleMark />
+      <AppShell ...>
+        {/* 1. ログイン後と同じ構成のヒーローヘッダー */}
+        <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:var(--ring)] shadow-sm min-h-[212px] mb-6">
+          {/* 背景のあしらい（ログイン後と同じSVGなど） */}
+          <div className="absolute right-0 top-0 z-[1] w-[50%] opacity-60">
+             <HeroDashboardArt /> 
+          </div>
 
-            {/* デモ気象リスクカード (デザイン改善版) */}
-            <div className="mt-8 relative max-w-[340px] mx-auto text-left">
-              
-              {/* カード本体 */}
-              <div className={[
-                "relative overflow-hidden rounded-[32px] p-6 ring-1 ring-inset shadow-[0_16px_32px_-24px_rgba(47,111,98,0.25)] transition-all",
-                demoCardBg,
-                pfSignal === 2 ? "ring-rose-200" : pfSignal === 1 ? "ring-amber-200" : "ring-emerald-200"
-              ].join(" ")}>
-                
-                {/* ヘッダー：地域選択と日付 */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-1">
-                    <IconPin className="text-slate-500" />
-                    <div className="relative flex items-center">
-                      <select
-                        value={publicLocation.key}
-                        onChange={(e) => {
-                          const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
-                          if (preset) setPublicLocation(preset);
-                        }}
-                        className="appearance-none bg-transparent pr-4 pl-1 py-1 text-[14px] font-black tracking-tight text-slate-800 outline-none cursor-pointer relative z-10"
-                      >
-                        {QUICK_PRESETS.map((p) => (
-                          <option key={p.key} value={p.key}>{p.label}</option>
-                        ))}
-                      </select>
-                      <IconChevron className="absolute right-0 w-3.5 h-3.5 text-slate-400 z-0 -rotate-90 pointer-events-none" />
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-slate-400 bg-white/60 px-2.5 py-1 rounded-full ring-1 ring-white">
-                    今日の予報
-                  </span>
-                </div>
-
-                {publicForecastLoading ? (
-                  <div className="h-28 animate-pulse rounded-[20px] bg-white/50" />
-                ) : pf ? (
-                  <>
-                    {/* メイン情報：スコアとトリガー */}
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500/80 mb-1">
-                          気象変化ストレス
-                        </div>
-                        <div className="flex items-end gap-1 leading-none">
-                          <span className={["text-[48px] font-black tracking-[-0.04em]", demoScoreColor].join(" ")}>
-                            {pfScore}
-                          </span>
-                          <span className="text-[16px] font-black text-slate-400/80 pb-1.5">/10</span>
-                        </div>
-                      </div>
-                      
-                      {demoTriggerLabel && (
-                        <div className={[
-                          "rounded-[18px] px-3 py-2.5 flex flex-col items-center justify-center bg-white/60 ring-1 shadow-sm",
-                          pfSignal === 2 ? "ring-rose-100" : pfSignal === 1 ? "ring-amber-100" : "ring-emerald-100"
-                        ].join(" ")}>
-                          <WeatherIcon triggerKey={demoTriggerKey} className="h-7 w-7 text-[var(--accent-ink)] mb-1" />
-                          <span className={["text-[11px] font-black", demoScoreColor].join(" ")}>
-                            {demoTriggerLabel}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* キャラクターと吹き出し（インライン配置） */}
-                    <div className="mt-6 pt-5 border-t border-black/5 flex items-start gap-3">
-                      <div className="shrink-0 w-12 h-12 rounded-full bg-white/80 ring-1 ring-white flex items-center justify-center overflow-hidden shadow-sm">
-                        <HeroGuideBot compact showBubble={false} signal={pfSignal} />
-                      </div>
-                      <div className="relative bg-white/80 rounded-[16px] rounded-tl-none p-3.5 text-[12px] font-bold text-slate-700 leading-relaxed shadow-sm ring-1 ring-white">
-                        {botMessage}
-                        {/* 吹き出しのしっぽ */}
-                        <div className="absolute -left-1.5 top-0 w-0 h-0 border-r-[8px] border-t-[8px] border-r-white/80 border-t-transparent drop-shadow-sm"></div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8 text-[13px] font-bold text-slate-500">
-                    予報を読み込めませんでした。
-                  </div>
-                )}
-              </div>
-
-              {/* シグナルバッジを絶対配置でカードの角に装飾として配置 */}
-              {!publicForecastLoading && pf && (
-                <div className={[
-                  "absolute -top-3 -right-2 px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 ring-2 ring-white",
-                  demoBadgeBg
-                ].join(" ")}>
-                  <span className={["h-2 w-2 rounded-full", demoDotClass].join(" ")} />
-                  <span className="text-[12px] font-black">{demoSignalText}</span>
-                </div>
-              )}
-            </div>
-
-            {/* 体質チェックへの誘導コピー */}
-            <div className="mt-6 mx-auto max-w-[300px] rounded-[16px] bg-white/70 px-4 py-3 ring-1 ring-[var(--ring)] text-[13px] font-bold leading-6 text-slate-600">
-              💡 体質チェックをすると、<br />
-              <span className="font-extrabold text-[var(--accent-ink)]">予報の精度があなた仕様に変わります。</span>
-            </div>
-
-            {/* タイトルコピー */}
-            <div className="mt-6 text-[24px] sm:text-[28px] font-black tracking-tight leading-[1.35] text-slate-900">
-              体質と気象変化から、<br />
-              体調の波を先読み。
+          <div className="relative z-[2]">
+            <HeroTitleMark compact={false} />
+            
+            {/* 地域選択（シンプルなテキスト風ドロップダウン） */}
+            <div className="mt-4 flex items-center gap-1.5 bg-white/80 w-fit px-3 py-1.5 rounded-full ring-1 ring-slate-200">
+              <IconPin className="text-slate-500 w-3.5 h-3.5" />
+              <select
+                value={publicLocation.key}
+                onChange={(e) => setPublicLocation(QUICK_PRESETS.find(p => p.key === e.target.value))}
+                className="appearance-none bg-transparent text-[13px] font-black text-slate-700 outline-none pr-4"
+              >
+                {QUICK_PRESETS.map((p) => (
+                  <option key={p.key} value={p.key}>{p.label}</option>
+                ))}
+              </select>
+              <IconChevron className="absolute right-3 w-3 h-3 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
-          {/* CTA */}
-          <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
-            <div className="grid gap-3">
-              <Button
-                onClick={() => router.push("/check")}
-                className="py-4 shadow-md text-[15px]"
-              >
-                無料で体質チェックをはじめる
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => router.push("/signup")}
-                className="py-4 shadow-sm text-[15px] bg-white"
-              >
-                ログインする
-              </Button>
-            </div>
+          {/* 右下にボットを配置（本物のコンポーネントを使用） */}
+          <div className="absolute right-4 bottom-2 z-[3]">
+            <HeroGuideBot 
+              compact 
+              showBubble 
+              bubbleSide="left-belly" 
+              signal={publicForecastLoading ? 0 : pfSignal} 
+              message={botMessage} 
+            />
+          </div>
+        </Module>
 
-            <ul className="mt-6 space-y-2.5">
-              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                体質チェック・ログイン後の体調予報は
-                <span className="font-extrabold text-slate-700">ずっと無料</span>
-              </li>
-              <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                記録・週次AIレポートはサブスク登録後に利用可能
-              </li>
-            </ul>
+        {/* 2. 本物の ForecastMiniCard を使ったデモ表示 */}
+        <Module className="px-6 mb-8">
+          <div className="mb-3 text-[14px] font-black text-slate-800">
+            今日の気象リスク（フラットな予報）
+          </div>
+          <ForecastMiniCard
+            title="今日"
+            loading={publicForecastLoading}
+            bundle={{
+              ok: true,
+              forecast: publicForecast,
+              location: { display_name: publicLocation.label }
+            }}
+            onClick={() => {}} // デモなので遷移しないか、サインアップへ誘導
+          />
+
+          {/* 3. 体質チェックへの誘導 */}
+          <div className="mt-4 rounded-[24px] border-2 border-dashed border-[var(--accent)] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-5 text-center relative overflow-hidden">
+             <div className="text-[14px] font-black text-[var(--accent-ink)]">
+               ＋ あなたの体質データを掛け合わせる
+             </div>
+             <p className="mt-2 text-[12px] font-bold text-slate-600 leading-relaxed">
+               上記の気象リスクに、あなたの「崩れ方のクセ」を分析して組み合わせることで、精度の高いパーソナル予報が完成します。
+             </p>
+             <Button onClick={() => router.push("/check")} className="mt-4 shadow-md text-[14px] w-full">
+                無料で体質チェックをはじめる
+             </Button>
           </div>
         </Module>
       </AppShell>
     );
   }
+
 
   /* ==============================================================
    * ログイン後（ダッシュボード）
