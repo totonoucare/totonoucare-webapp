@@ -513,15 +513,14 @@ export default function HomePage() {
             
             {/* ブランドロゴ */}
             <div className="mb-10">
-              {/* ※ご自身のロゴコンポーネントに合わせてください */}
               <HeroTitleMark compact={false} />
             </div>
 
-            {/* 体験カードエリア（上にマージン「mt-10」を追加して飛び出しスペースを確保） */}
-            <div className="relative w-full max-w-[360px] mb-12 mt-10">
+            {/* 体験カードエリア（上にマージン「mt-[88px]」を追加してロボットの浮遊スペースを確保） */}
+            <div className="relative w-full max-w-[360px] mb-12 mt-[88px]">
               
-              {/* ボットの位置を微調整（上に大きく逃がし、少し縮小して右へ） */}
-              <div className="absolute -top-[76px] -right-[6px] z-20 scale-[0.85] origin-bottom-right drop-shadow-md">
+              {/* ボットの位置をカードの上に完全に逃がす（-top-[96px]） */}
+              <div className="absolute -top-[96px] right-[-8px] z-20 scale-[0.85] origin-bottom-right drop-shadow-md">
                  <HeroGuideBot compact showBubble={true} bubbleSide="left-belly" message="今日は気象変化が大きめ。無理せず休んでね。" signal={2} />
               </div>
               
@@ -530,8 +529,8 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-[12px] font-black tracking-widest text-slate-500 uppercase">今日の気象リスク</div>
                   <div className="flex items-center gap-1 text-[11px] font-extrabold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-100 shadow-sm">
-                    {/* アイコンはお使いのコンポーネント（IconPin等）があれば差し替えてください */}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    {/* 元のIconPinコンポーネントを復元 */}
+                    <IconPin />
                     大阪 (未設定)
                   </div>
                 </div>
@@ -543,8 +542,8 @@ export default function HomePage() {
                        警戒
                      </span>
                      <div className="mt-2.5 flex items-center gap-2 text-[17px] font-black tracking-tight text-slate-900">
-                       {/* WeatherIcon 等のコンポーネントがあれば差し替えてください */}
-                       <span className="text-rose-500 text-lg">☔️</span>
+                       {/* 元のWeatherIconコンポーネントを復元 */}
+                       <WeatherIcon triggerKey="pressure_down" className="h-5 w-5 text-rose-500" />
                        気圧低下
                      </div>
                    </div>
@@ -566,7 +565,6 @@ export default function HomePage() {
                 体質と気象変化から、<br/>
                 <span className="relative inline-block text-[#4b7360] mt-1">
                   体調の波を先読み。
-                  {/* 文字の下に敷くアンダーライン装飾 */}
                   <svg className="absolute w-full h-[10px] -bottom-0.5 left-0 text-[#4b7360] opacity-30" viewBox="0 0 100 10" preserveAspectRatio="none">
                     <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="6" strokeLinecap="round" fill="transparent"/>
                   </svg>
@@ -606,27 +604,21 @@ export default function HomePage() {
     );
   }
 
-
-
   /* ==============================================================
    * ログイン後（ダッシュボード）
    * ============================================================== */
 
-  // ★ 18時を境に「今日」か「明日」のどちらを主役にするか判定
   const currentHour = new Date().getHours();
   const isEvening = currentHour >= 18;
 
-  // 判定したターゲットのシグナル（安定=0, 注意=1, 警戒=2）を取得。ローディング中は null
   const targetSignal = isEvening
     ? (!tomorrowLoading && tomorrowBundle?.ok ? (tomorrowBundle.forecast?.signal ?? 0) : null)
     : (!todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null);
   
-  // ★ 時間帯とシグナルに応じたボットのセリフを決定
   let guideBotText = "体調予報の概要と、次の一歩をまとめています";
 
   if (targetSignal !== null) {
     if (isEvening) {
-      // 18時以降（明日の予報について）
       if (targetSignal === 2) {
         guideBotText = "明日は警戒の日。今日は湯船に浸かって、早めに休もうね。";
       } else if (targetSignal === 1) {
@@ -635,7 +627,6 @@ export default function HomePage() {
         guideBotText = "明日はおだやかな日になりそう。安心して眠ってね！";
       }
     } else {
-      // 18時未満（今日の予報について）
       if (targetSignal === 2) {
         guideBotText = "今日は警戒の日。無理せず自分を甘やかす一日にしようね。";
       } else if (targetSignal === 1) {
@@ -658,7 +649,6 @@ export default function HomePage() {
         />
       }
     >
-      {/* ヒーローヘッダー */}
       <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
         <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
           <svg
@@ -707,19 +697,16 @@ export default function HomePage() {
           <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
             <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
             <div className="text-[13px] font-extrabold leading-6 text-slate-600">
-              {/* ★ 動的に変わるセリフを配置 */}
               {guideBotText}
             </div>
           </div>
         </div>
 
         <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
-          {/* ★ targetSignal プロパティを渡す */}
           <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
         </div>
       </Module>
 
-      {/* サマリー・ウィジェット群 */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -747,7 +734,6 @@ export default function HomePage() {
         </div>
       </Module>
 
-      {/* 次にやること */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center gap-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
@@ -790,7 +776,6 @@ export default function HomePage() {
         </div>
       </Module>
 
-      {/* あなたの体質 */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -854,5 +839,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
-
