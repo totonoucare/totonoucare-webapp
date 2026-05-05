@@ -91,30 +91,58 @@ export function IconWeatherCold({ className = "h-10 w-10", ...props }) {
   );
 }
 
-// 4. 暑さ（発散・熱 / オレンジレッド系）
+        </radialGradient>
+        <linearGradient id="line-cold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#0369a1" />
+        </linearGradient>
+      </defs>
+      {/* 芯に冷えを溜め込んだ背景 */}
+      <circle cx="16" cy="16" r="13" fill="url(#grad-cold)" />
+      <circle cx="16" cy="16" r="13" fill="none" stroke="url(#line-cold)" strokeWidth="1.5" strokeOpacity="0.3" />
+      {/* 氷の結晶のディテール */}
+      <path d="M16 6v20 M6 16h20 M8.5 8.5l15 15 M8.5 23.5l15-15" fill="none" stroke="url(#line-cold)" strokeWidth="2" strokeLinecap="round" />
+      {/* 結晶の枝 */}
+      <path d="M16 9l2 2 M16 9l-2 2 M16 23l2-2 M16 23l-2-2 M23 16l-2 2 M23 16l-2-2 M9 16l2 2 M9 16l2-2" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <circle cx="16" cy="16" r="3" fill="#bae6fd" />
+    </svg>
+  );
+}
+
+// 4. 暑さ（気温上昇：上昇する熱気・陽炎 / オレンジレッド系）
 export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
-        <radialGradient id="grad-heat" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ea580c" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#ffedd5" stopOpacity="0.05" />
+        <radialGradient id="grad-heat" cx="50%" cy="60%" r="50%">
+          <stop offset="0%" stopColor="#ea580c" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#ffedd5" stopOpacity="0.0" />
         </radialGradient>
-        <linearGradient id="line-heat" x1="50%" y1="0%" x2="50%" y2="100%">
+        <linearGradient id="line-heat" x1="0%" y1="100%" x2="0%" y2="0%">
           <stop offset="0%" stopColor="#ea580c" />
           <stop offset="100%" stopColor="#f97316" />
         </linearGradient>
       </defs>
-      {/* 熱が放射される背景 */}
-      <circle cx="16" cy="16" r="14" fill="url(#grad-heat)" />
-      {/* 太陽のコア */}
-      <circle cx="16" cy="16" r="6" fill="url(#line-heat)" opacity="0.9" />
-      <circle cx="16" cy="16" r="6" fill="none" stroke="#c2410c" strokeWidth="1.5" />
-      {/* 揺らめく熱線 */}
-      <path d="M16 4v3 M16 25v3 M4 16h3 M25 16h3" fill="none" stroke="url(#line-heat)" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M7.5 7.5l2.5 2.5 M22 22l2.5 2.5 M7.5 24.5l2.5-2.5 M22 7.5l2.5 2.5" fill="none" stroke="#fb923c" strokeWidth="2" strokeLinecap="round" strokeDasharray="1 3" opacity="0.8" />
-      {/* コアのハイライト */}
-      <path d="M14 14a2.5 2.5 0 0 1 3.5 0" fill="none" stroke="#ffedd5" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      
+      {/* 下から湧き上がり、膨張する熱のオーラ */}
+      <circle cx="16" cy="18" r="12" fill="url(#grad-heat)" />
+      
+      {/* 上昇する熱気（陽炎のような波線と上向きの矢印） */}
+      {/* 中央 */}
+      <path d="M16 26 C20 22, 12 18, 16 14 C18.5 11.5, 16 7, 16 5" fill="none" stroke="url(#line-heat)" strokeWidth="2" strokeLinecap="round" />
+      <path d="M12.5 8.5 L16 5 L19.5 8.5" fill="none" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      
+      {/* 左 */}
+      <path d="M9 23 C11.5 20, 6.5 16, 9 13 C10.5 11, 9 8, 9 6" fill="none" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M6.5 8.5 L9 6 L11.5 8.5" fill="none" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+      
+      {/* 右 */}
+      <path d="M23 23 C20.5 20, 25.5 16, 23 13 C21.5 11, 23 8, 23 6" fill="none" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M20.5 8.5 L23 6 L25.5 8.5" fill="none" stroke="#ea580c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+
+      {/* 外側へ発散する熱の粒子感 */}
+      <path d="M5 18 Q 3 14, 6 10" fill="none" stroke="#fb923c" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 4" opacity="0.7" />
+      <path d="M27 18 Q 29 14, 26 10" fill="none" stroke="#fb923c" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 4" opacity="0.7" />
     </svg>
   );
 }
