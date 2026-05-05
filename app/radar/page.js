@@ -239,14 +239,93 @@ function getCompatTriggerLabel(mainTrigger, triggerDir) {
   return "気象変化";
 }
 
+function exactFromCompat(mainTrigger, triggerDir) {
+  if (mainTrigger === "pressure" && triggerDir === "down") return "pressure_down";
+  if (mainTrigger === "pressure" && triggerDir === "up") return "pressure_up";
+  if (mainTrigger === "temp" && triggerDir === "down") return "cold";
+  if (mainTrigger === "temp" && triggerDir === "up") return "heat";
+  if (mainTrigger === "humidity" && triggerDir === "up") return "damp";
+  if (mainTrigger === "humidity" && triggerDir === "down") return "dry";
+  return "pressure_down";
+}
+
+function compatFromExact(exact) {
+  if (exact === "pressure_down") return { main_trigger: "pressure", trigger_dir: "down" };
+  if (exact === "pressure_up") return { main_trigger: "pressure", trigger_dir: "up" };
+  if (exact === "cold") return { main_trigger: "temp", trigger_dir: "down" };
+  if (exact === "heat") return { main_trigger: "temp", trigger_dir: "up" };
+  if (exact === "damp") return { main_trigger: "humidity", trigger_dir: "up" };
+  if (exact === "dry") return { main_trigger: "humidity", trigger_dir: "down" };
+  return { main_trigger: "pressure", trigger_dir: "down" };
+}
+
+function getForecastSnapshot(forecast) {
+  return forecast?.computed?.forecast_snapshot || null;
+}
+
+function getRiskSummaryFromForecast(forecast) {
+  return forecast?.computed?.radar_plan_meta?.risk_context?.summary || null;
+}
+
 function getForecastTriggerKey(forecast) {
   if (!forecast) return "pressure_down";
-  if (forecast.main_trigger === "pressure" && forecast.trigger_dir === "down") return "pressure_down";
-  if (forecast.main_trigger === "pressure" && forecast.trigger_dir === "up") return "pressure_up";
-  if (forecast.main_trigger === "temp" && forecast.trigger_dir === "down") return "cold";
-  if (forecast.main_trigger === "temp" && forecast.trigger_dir === "up") return "heat";
-  if (forecast.main_trigger === "humidity" && forecast.trigger_dir === "up") return "damp";
-  return "dry";
+  const snapshot = getForecastSnapshot(forecast);
+  const riskSummary = getRiskSummaryFromForecast(forecast);
+  return (
+    forecast.personal_main_trigger_exact ||
+    snapshot?.personal_main_trigger_exact ||
+    riskSummary?.main_trigger_exact ||
+    exactFromCompat(forecast.main_trigger, forecast.trigger_dir)
+  );
+}
+
+function normalizeForecastTriggerFactor(item, index, forecast) {
+  const exact = item?.exact || item?.key || null;
+  const compat = exact ? compatFromExact(exact) : {
+    main_trigger: item?.main_trigger || forecast?.main_trigger,
+    trigger_dir: item?.trigger_dir || forecast?.trigger_dir,
+  };
+  const key = exact || exactFromCompat(compat.main_trigger, compat.trigger_dir);
+
+  return {
+    key,
+    exact: key,
+    role: item?.role || (index === 0 ? "primary" : "secondary"),
+    main_trigger: item?.main_trigger || compat.main_trigger,
+    trigger_dir: item?.trigger_dir || compat.trigger_dir,
+    label: getCompatTriggerLabel(item?.main_trigger || compat.main_trigger, item?.trigger_dir || compat.trigger_dir),
+    effective_load: item?.effective_load,
+  };
+}
+
+function getForecastTriggerFactors(forecast) {
+  if (!forecast) return [];
+
+  const snapshot = getForecastSnapshot(forecast);
+  const riskSummary = getRiskSummaryFromForecast(forecast);
+  const raw =
+    (Array.isArray(forecast.trigger_factors) && forecast.trigger_factors.length ? forecast.trigger_factors : null) ||
+    (Array.isArray(snapshot?.trigger_factors) && snapshot.trigger_factors.length ? snapshot.trigger_factors : null) ||
+    (Array.isArray(riskSummary?.trigger_factors) && riskSummary.trigger_factors.length ? riskSummary.trigger_factors : null) ||
+    null;
+
+  if (raw) {
+    return raw.slice(0, 2).map((item, index) => normalizeForecastTriggerFactor(item, index, forecast));
+  }
+
+  const primaryExact = getForecastTriggerKey(forecast);
+  const secondaryExact =
+    forecast.personal_secondary_trigger_exact ||
+    snapshot?.personal_secondary_trigger_exact ||
+    riskSummary?.secondary_trigger_exact ||
+    null;
+
+  const factors = [normalizeForecastTriggerFactor({ exact: primaryExact, role: "primary" }, 0, forecast)];
+  if (secondaryExact && secondaryExact !== primaryExact) {
+    factors.push(normalizeForecastTriggerFactor({ exact: secondaryExact, role: "secondary" }, 1, forecast));
+  }
+
+  return factors.slice(0, 2);
 }
 
 function getMoodHeadline(triggerKey, signal) {
@@ -1532,7 +1611,8 @@ export default function RadarPage() {
   );
 
   const forecastLines = useMemo(() => getForecastLines(bundle), [bundle]);
-  const triggerKey = useMemo(() => getForecastTriggerKey(forecast), [forecast]);
+  const triggerFactors = useMemo(() => getForecastTriggerFactors(forecast), [forecast]);
+  const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
   const moodHeadline = useMemo(
     () => getMoodHeadline(triggerKey, forecast?.signal ?? 0, bundleDateMode),
     [triggerKey, forecast?.signal, bundleDateMode]
@@ -1830,27 +1910,45 @@ export default function RadarPage() {
                     <div className="grid gap-3">
                       <div className="rounded-[24px] bg-white/80 px-4 py-4 ring-1 ring-black/5 shadow-sm">
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          一番響きやすい要素
+                          響きやすい要素
                         </div>
 
-                        <div className="mt-3 flex items-start gap-3">
-                          <div
-                            className={[
-                              "grid h-15 w-15 shrink-0 place-items-center rounded-[18px] bg-white shadow-sm ring-1 ring-black/5",
-                              getHeroAccentClass(forecast.signal),
-                            ].join(" ")}
-                          >
-                            <WeatherIcon triggerKey={triggerKey} className="h-9 w-9" />
-                          </div>
+                        <div className="mt-3 grid gap-2.5">
+                          {triggerFactors.map((factor, index) => (
+                            <div
+                              key={`${factor.key}-${index}`}
+                              className="flex items-center gap-3 rounded-[20px] bg-white/72 px-3 py-2.5 ring-1 ring-black/5 shadow-sm"
+                            >
+                              <div
+                                className={[
+                                  "grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[16px] bg-white shadow-sm ring-1 ring-black/5",
+                                  getHeroAccentClass(forecast.signal),
+                                ].join(" ")}
+                              >
+                                <WeatherIcon triggerKey={factor.key} className="h-8 w-8" />
+                              </div>
 
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[22px] font-black tracking-tight text-slate-900">
-                              {getCompatTriggerLabel(forecast.main_trigger, forecast.trigger_dir)}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[12px] font-black text-slate-400">
+                                    {index === 0 ? "主因" : "副因"}
+                                  </span>
+                                  {index === 1 && (
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500">
+                                      少し影響
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[19px] font-black tracking-tight text-slate-900">
+                                  {factor.label}
+                                </div>
+                              </div>
                             </div>
-                            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-                              {moodHeadline}
-                            </div>
-                          </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
+                          {moodHeadline}
                         </div>
                       </div>
 
@@ -2433,4 +2531,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
