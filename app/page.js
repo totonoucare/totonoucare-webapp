@@ -19,6 +19,7 @@ import { WeatherIcon } from "@/components/illust/icons/weather";
 
 const SESSION_TIMEOUT_MS = 5000;
 
+// ★ 共通コンポーネント化された背景モチーフ
 function HeroBgArt() {
   return (
     <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
@@ -536,7 +537,7 @@ export default function HomePage() {
     const pf = publicForecast;
     const pfSignal = pf?.signal ?? 0;
 
-    // ★ 未ログイン時もログイン後と同じく、寄り添うトーンのテキストに修正
+    // ★ 未ログイン時のテキストもダッシュボードと統一
     const botMessages = {
       2: `今日は警戒の日。無理せず自分を甘やかす一日にしようね。`,
       1: `今日は少し波があるかも。こまめな休憩を意識してね。`,
@@ -570,7 +571,8 @@ export default function HomePage() {
           </Button>
         }
       >
-        <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-6">
+        {/* mb-8に広げてカードとの隙間を確保 */}
+        <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-8">
           <HeroBgArt />
 
           <div className="relative z-[2] max-w-[420px]">
@@ -592,12 +594,9 @@ export default function HomePage() {
         </Module>
 
         <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
-          {/* 地域選択 */}
-          <div className="mb-4 flex items-center justify-between">
-            {/* ★「（フラットな予報）」を復活 */}
-            <div className="text-[15px] font-black tracking-tight text-slate-900">
-              今日の気象リスク <span className="text-[11px] font-bold text-slate-500">（フラットな予報）</span>
-            </div>
+          {/* mb-5に広げてタイトルとカード本体との余白を調整 */}
+          <div className="mb-5 flex items-center justify-between">
+            <div className="text-[15px] font-black tracking-tight text-slate-900">今日の気象リスク</div>
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#BFD9CC]">
               <IconPin className="w-3.5 h-3.5 text-[#255F4F]" />
               <select
@@ -612,7 +611,7 @@ export default function HomePage() {
                   <option key={p.key} value={p.key}>{p.label}</option>
                 ))}
               </select>
-              {/* ★ rotate-90 に修正（下向き ∨ になります） */}
+              {/* ★ 矢印が下を向くように rotate-90 に変更 */}
               <IconChevron className="absolute right-2 w-3.5 h-3.5 text-slate-400 pointer-events-none rotate-90" />
             </div>
           </div>
@@ -706,7 +705,7 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-6">
+      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-8">
         <HeroBgArt />
 
         <div className="relative z-[2] max-w-[420px]">
@@ -862,4 +861,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
