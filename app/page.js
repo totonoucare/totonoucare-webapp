@@ -508,6 +508,16 @@ export default function HomePage() {
 
     const todayDateStr = formatYmdJP(getJstDateString(0));
 
+    // ★ 定義したのに使い忘れていたボットのセリフ！
+    const botMessages = {
+      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてね。`,
+      1: `今日は少し気象の変化があります。こまめな休憩を意識してね。`,
+      0: `今日は気象がおだやかです。気持ちよく過ごせるといいね！`,
+    };
+    const botMessage = publicForecastLoading
+      ? "今日の気象リスクを確認中…"
+      : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
+
     // 地域プリセット（主要都市のみ）
     const QUICK_PRESETS = [
       { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
@@ -539,9 +549,15 @@ export default function HomePage() {
             {/* 1. ブランド名 */}
             <HeroTitleMark />
 
-            {/* 2. 生きたデモ予報エリア（従来はHeroMiniCardsがあった場所） */}
-            <div className="mt-10 mx-auto max-w-[340px]">
-              <div className="flex items-center justify-between mb-3 px-1">
+            {/* 2. 生きたデモ予報エリア（キャラ復活！） */}
+            <div className="relative mt-[88px] mx-auto max-w-[340px]">
+              
+              {/* ★ ボットをここに配置！ */}
+              <div className="absolute -top-[96px] right-[-8px] z-20 scale-[0.85] origin-bottom-right drop-shadow-md">
+                 <HeroGuideBot compact showBubble={true} bubbleSide="left-belly" message={botMessage} signal={publicForecastLoading ? 0 : pfSignal} />
+              </div>
+
+              <div className="relative z-10 flex items-center justify-between mb-3 px-1">
                 <div className="text-[13px] font-black text-slate-600">今日の気象リスク</div>
                 
                 {/* シームレスな地域切り替えプルダウン */}
