@@ -146,6 +146,8 @@ function buildLockedPreviewBody({ section, karte, core, symptom, patternText, we
   const meridian = karte?.meridianPreview || {};
   const primaryLine = meridian.primary;
   const secondaryLine = meridian.secondary;
+  const primaryLineText = primaryLine?.description || primaryLine?.lineTitle;
+  const secondaryLineText = secondaryLine?.description || secondaryLine?.lineTitle;
 
   switch (section?.id) {
     case "core-pattern":
@@ -157,11 +159,11 @@ function buildLockedPreviewBody({ section, karte, core, symptom, patternText, we
     case "early-signs":
       return `${symptom}が強くなる前に出やすいサインと、今後も注意したい軽い不調を整理します。`;
     case "meridian-care":
-      if (primaryLine?.lineTitle && secondaryLine?.lineTitle && primaryLine.lineTitle !== secondaryLine.lineTitle) {
-        return `動作負担チェックでは、${primaryLine.lineTitle}と${secondaryLine.lineTitle}にサイン。購入後は、不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
+      if (primaryLineText && secondaryLineText && primaryLine?.lineTitle !== secondaryLine?.lineTitle) {
+        return `動作負担チェックでは、${primaryLineText}と${secondaryLineText}にサイン。購入後は、不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
       }
-      if (primaryLine?.lineTitle) {
-        return `動作負担チェックでは、${primaryLine.lineTitle}にサイン。購入後は、このラインが不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
+      if (primaryLineText) {
+        return `動作負担チェックでは、${primaryLineText}にサイン。購入後は、このラインが不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
       }
       return "動作負担チェックから、不調の背景にある経絡ラインとケアの見方を整理します。";
     case "alert-day-care":
@@ -619,5 +621,3 @@ export default function KarteClient() {
     </main>
   );
 }
-
-
