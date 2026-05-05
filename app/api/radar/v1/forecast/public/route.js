@@ -12,32 +12,55 @@ export const runtime = "nodejs";
 const DEFAULT_LAT = 35.68944;
 const DEFAULT_LON = 139.69167;
 
+const UNIVERSAL_CHANNEL_IMPORTANCE = {
+  pressure_down: 1.0,
+  pressure_up: 0.74,
+  cold: 0.86,
+  heat: 0.76,
+  damp: 0.8,
+  dry: 0.66,
+};
+
+function clamp(value, min, max) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return min;
+  return Math.max(min, Math.min(max, num));
+}
+
 // 気象ストレス → シグナルへの汎用変換（体質なしバージョン）
-// personalizeForecast.js の UNIVERSAL_WEATHER_SHARE (0.35) に相当する重みで計算
+// 体質補正がないため、複数要因の単純合算ではなく「上位要因を中心に控えめ」に出す。
 function calcUniversalSignal(weatherStress) {
-  const {
-    pressure_down_strength = 0,
-    pressure_up_strength = 0,
-    cold_strength = 0,
-    heat_strength = 0,
-    damp_strength = 0,
-    dry_strength = 0,
-  } = weatherStress;
+  const channels = [
+    { key: "pressure_down", strength: weatherStress.pressure_down_strength ?? 0 },
+    { key: "pressure_up", strength: weatherStress.pressure_up_strength ?? 0 },
+    { key: "cold", strength: weatherStress.cold_strength ?? 0 },
+    { key: "heat", strength: weatherStress.heat_strength ?? 0 },
+    { key: "damp", strength: weatherStress.damp_strength ?? 0 },
+    { key: "dry", strength: weatherStress.dry_strength ?? 0 },
+  ]
+    .map((channel) => ({
+      ...channel,
+      weighted: clamp(channel.strength, 0, 1) * (UNIVERSAL_CHANNEL_IMPORTANCE[channel.key] || 1),
+    }))
+    .sort((a, b) => b.weighted - a.weighted);
 
-  // 気圧低下・寒暖差を重視（一般的な「気象病」の主要因）
-  const universalLoad =
-    pressure_down_strength * 1.10 +
-    pressure_up_strength * 0.85 +
-    cold_strength * 0.95 +
-    heat_strength * 0.85 +
-    damp_strength * 0.90 +
-    dry_strength * 0.75;
+  const [top = {}, second = {}, third = {}] = channels;
 
-  // 0〜10 スコアへ正規化（empiricalな上限 2.5 で割る）
-  const score = Math.min(10, Math.round((universalLoad / 2.5) * 10));
+  let normalizedLoad =
+    (top.weighted || 0) * 0.78 +
+    (second.weighted || 0) * 0.35 +
+    (third.weighted || 0) * 0.16;
+
+  // 9〜10は「強い主因 + もう1つ明確な負担」が重なる日に限定する。
+  if ((top.strength || 0) >= 0.88 && (second.strength || 0) >= 0.7) normalizedLoad += 0.13;
+  else if ((top.strength || 0) >= 0.9) normalizedLoad += 0.06;
+
+  if (channels.filter((channel) => channel.strength >= 0.72).length >= 3) normalizedLoad += 0.08;
+
+  const score = Math.round((clamp(normalizedLoad, 0, 1.45) / 1.45) * 10);
 
   let signal;
-  if (score >= 7) signal = 2;      // 警戒
+  if (score >= 8) signal = 2;      // 警戒: 体質なしではかなり強い日だけ
   else if (score >= 4) signal = 1; // 注意
   else signal = 0;                 // 安定
 
@@ -119,3 +142,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(e) }, 500);
   }
 }
+
