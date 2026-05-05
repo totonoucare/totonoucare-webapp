@@ -11,7 +11,6 @@ import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 import {
   HeroTitleMark,
   HomeHeaderMenu,
-  HeroDashboardArt, // ★追加
 } from "@/components/illust/home";
 import HeroGuideBot from "@/components/illust/home/HeroGuideBot";
 import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
@@ -19,6 +18,50 @@ import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 
 const SESSION_TIMEOUT_MS = 5000;
+
+// ★ 元の page.js にあった背景モチーフを共通コンポーネント化[span_6](start_span)[span_6](end_span)
+function HeroBgArt() {
+  return (
+    <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
+      <svg
+        viewBox="0 0 260 220"
+        className="absolute -right-9 top-2 h-[218px] w-[260px]"
+        aria-hidden="true"
+      >
+        <circle cx="154" cy="86" r="54" fill="#E8D59A" opacity="0.18" />
+        <circle cx="154" cy="86" r="81" fill="none" stroke="#D8C58E" strokeWidth="1.4" strokeOpacity="0.22" />
+        <circle cx="154" cy="86" r="118" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.14" />
+        <circle cx="154" cy="86" r="41" fill="none" stroke="#5C9F88" strokeWidth="1.3" strokeOpacity="0.18" />
+        <path
+          d="M48 92 A108 108 0 0 1 211 25"
+          fill="none"
+          stroke="#5C9F88"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeOpacity="0.2"
+        />
+        <path
+          d="M64 129 A90 90 0 0 1 225 95"
+          fill="none"
+          stroke="#D2A43A"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeOpacity="0.28"
+        />
+        <circle cx="214" cy="91" r="4.6" fill="#D2A43A" opacity="0.2" />
+        <circle cx="111" cy="138" r="3.3" fill="#5C9F88" opacity="0.22" />
+        <path
+          d="M118 188 C 139 175, 174 175, 195 188"
+          fill="none"
+          stroke="#5C9F88"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+          strokeOpacity="0.12"
+        />
+      </svg>
+    </div>
+  );
+}
 
 function IconChevron({ className = "h-4 w-4", ...props }) {
   return (
@@ -529,50 +572,51 @@ export default function HomePage() {
         }
       >
         <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px] mb-6">
-          {/* 背景のあしらい */}
-          <div className="absolute -top-4 -right-4 z-[1] w-[220px] opacity-80 pointer-events-none">
-             <HeroDashboardArt />
-          </div>
+          {/* ★ 共通の背景モチーフ（page.js由来）を使用[span_7](start_span)[span_7](end_span) */}
+          <HeroBgArt />
 
           <div className="relative z-[2] max-w-[420px]">
-            <HeroTitleMark compact={false} />
+            <HeroTitleMark compact={false} className="max-w-full" />
+          </div>
 
-            {/* 地域選択 */}
-            <div className="mt-6 flex items-center gap-1.5 bg-white/90 w-fit px-3 py-2 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 transition-all hover:bg-white hover:ring-[#BFD9CC]">
-              <IconPin />
+          {/* ★ 吹き出し: 元の page.js と同じ独立した絶対配置 DOM を使うことで崩れを防止[span_8](start_span)[span_8](end_span) */}
+          <div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
+            <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
+              <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+              <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+                {botMessage}
+              </div>
+            </div>
+          </div>
+
+          {/* ★ ボット本体: 内蔵吹き出しはオフにする[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span) */}
+          <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+            <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
+          </div>
+        </Module>
+
+        <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
+          {/* ★ 地域選択を予報カードのすぐ上に配置し、レイアウト干渉を回避 */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="text-[15px] font-black tracking-tight text-slate-900">今日の気象リスク</div>
+            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#BFD9CC]">
+              <IconPin className="w-3.5 h-3.5 text-[#255F4F]" />
               <select
                 value={publicLocation.key}
                 onChange={(e) => {
                   const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
                   if (preset) setPublicLocation(preset);
                 }}
-                className="appearance-none bg-transparent text-[14px] font-black tracking-tight text-[#255F4F] outline-none pr-6 cursor-pointer relative z-10"
+                className="appearance-none bg-transparent text-[13px] font-black tracking-tight text-[#255F4F] outline-none pr-5 cursor-pointer relative z-10"
               >
                 {QUICK_PRESETS.map((p) => (
                   <option key={p.key} value={p.key}>{p.label}</option>
                 ))}
               </select>
-              <IconChevron className="absolute right-2 w-4 h-4 text-slate-400 pointer-events-none -rotate-90" />
+              <IconChevron className="absolute right-2 w-3.5 h-3.5 text-slate-400 pointer-events-none -rotate-90" />
             </div>
           </div>
 
-          {/* ボット（本物のコンポーネントを使用） */}
-          <div className="absolute right-3 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
-            <HeroGuideBot
-              compact
-              showBubble
-              bubbleSide="left-belly"
-              signal={publicForecastLoading ? 0 : pfSignal}
-              message={botMessage}
-            />
-          </div>
-        </Module>
-
-        <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
-          {/* デモ予報カード (本物のコンポーネントを流用) */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="text-[15px] font-black tracking-tight text-slate-900">今日の気象リスク（フラットな予報）</div>
-          </div>
           <ForecastMiniCard
             title={`今日 ${formatYmdJP(getJstDateString(0))}`}
             loading={publicForecastLoading}
@@ -581,7 +625,7 @@ export default function HomePage() {
               forecast: publicForecast,
               location: { display_name: publicLocation.label }
             }}
-            onClick={() => router.push("/signup")} // 未ログイン時は登録へ誘導
+            onClick={() => router.push("/signup")}
           />
 
           {/* 体質チェックへの誘導 */}
@@ -663,22 +707,26 @@ export default function HomePage() {
     >
       {/* ヒーローヘッダー */}
       <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
-        <div className="absolute -top-4 -right-4 z-[1] w-[220px] opacity-80 pointer-events-none">
-          <HeroDashboardArt />
-        </div>
+        {/* ★ 共通の背景モチーフ（page.js由来）を使用[span_11](start_span)[span_11](end_span) */}
+        <HeroBgArt />
 
         <div className="relative z-[2] max-w-[420px]">
           <HeroTitleMark compact={false} className="max-w-full" />
         </div>
 
-        <div className="absolute right-3 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
-          <HeroGuideBot 
-            compact 
-            showBubble 
-            bubbleSide="left-belly" 
-            signal={targetSignal ?? 0} 
-            message={guideBotText} 
-          />
+        {/* ★ 吹き出し[span_12](start_span)[span_12](end_span) */}
+        <div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
+          <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
+            <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+            <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+              {guideBotText}
+            </div>
+          </div>
+        </div>
+
+        {/* ★ ボット本体[span_13](start_span)[span_13](end_span) */}
+        <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+          <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
         </div>
       </Module>
 
@@ -817,4 +865,5 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
 
