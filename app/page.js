@@ -865,5 +865,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
-
