@@ -571,27 +571,29 @@ export default function HomePage() {
           </Button>
         }
       >
-        {/* ★ min-h-[212px] を 188px に縮め、吹き出し等の位置を bottom 基準に修正 */}
-        <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[188px] mb-6">
+        {/* ★ 絶対位置を解除し、中身の高さに合わせてカードが伸縮するように変更 */}
+        <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-6">
           <HeroBgArt />
 
           <div className="relative z-[2] max-w-[420px]">
             <HeroTitleMark compact={false} className="max-w-full" />
           </div>
 
-          {/* 吹き出し: bottom-6 で固定し、ボットとの高さを連動させる */}
-          <div className="absolute left-8 bottom-6 z-[3] w-[220px] sm:w-[248px]">
-            <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
-              <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+          {/* ★ 吹き出しとボットを Flex でグループ化し、しっぽを確実に合わせる */}
+          <div className="relative z-[3] mt-5 flex items-center justify-between">
+            {/* 吹き出し */}
+            <div className="relative w-full max-w-[240px] rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
+              {/* しっぽの色を bg-[#fafaf7] から bg-white に修正 */}
+              <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-white" />
               <div className="text-[13px] font-extrabold leading-6 text-slate-600">
                 {botMessage}
               </div>
             </div>
-          </div>
-
-          {/* ボット本体: bottom-4 で配置 */}
-          <div className="absolute right-6 bottom-4 z-[3] scale-[0.95] origin-bottom-right">
-            <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
+            
+            {/* ボット: HeroGuideBot 内蔵の余白(mt-8)を相殺して高さを揃える */}
+            <div className="shrink-0 -mt-8 -mr-1">
+              <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
+            </div>
           </div>
         </Module>
 
@@ -706,25 +708,25 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      {/* ★ ログイン後も同様に高さを縮め、bottom 基準に変更 */}
-      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[188px]">
+      {/* ★ ログイン後も同様に Flex レイアウトを適用 */}
+      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-6">
         <HeroBgArt />
 
         <div className="relative z-[2] max-w-[420px]">
           <HeroTitleMark compact={false} className="max-w-full" />
         </div>
 
-        <div className="absolute left-8 bottom-6 z-[3] w-[220px] sm:w-[248px]">
-          <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
-            <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+        <div className="relative z-[3] mt-5 flex items-center justify-between">
+          <div className="relative w-full max-w-[240px] rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
+            <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-white" />
             <div className="text-[13px] font-extrabold leading-6 text-slate-600">
               {guideBotText}
             </div>
           </div>
-        </div>
-
-        <div className="absolute right-6 bottom-4 z-[3] scale-[0.95] origin-bottom-right">
-          <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
+          
+          <div className="shrink-0 -mt-8 -mr-1">
+            <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
+          </div>
         </div>
       </Module>
 
@@ -863,4 +865,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
