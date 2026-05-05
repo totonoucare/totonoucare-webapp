@@ -269,6 +269,7 @@ export async function GET(req, { params }) {
           quickTakeaways: baseKarte.quickTakeaways,
           mapFlow: baseKarte.mapFlow,
           forecastUsage: baseKarte.forecastUsage,
+          beautyColumn: baseKarte.beautyColumn,
           sections: getKartePreviewSections(baseKarte),
         },
       });
@@ -304,4 +305,3 @@ export async function GET(req, { params }) {
     );
   }
 }
-
