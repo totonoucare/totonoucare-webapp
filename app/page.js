@@ -673,5 +673,251 @@ export default function HomePage() {
     );
   }
 
-// 以下、ログイン後のコードは変更なし
-// ...(中略)...
+  /* ==============================================================
+   * ログイン後（ダッシュボード）
+   * ============================================================== */
+
+  // ★ 18時を境に「今日」か「明日」のどちらを主役にするか判定
+  const currentHour = new Date().getHours();
+  const isEvening = currentHour >= 18;
+
+  // 判定したターゲットのシグナル（安定=0, 注意=1, 警戒=2）を取得。ローディング中は null
+  const targetSignal = isEvening
+    ? (!tomorrowLoading && tomorrowBundle?.ok ? (tomorrowBundle.forecast?.signal ?? 0) : null)
+    : (!todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null);
+  
+  // ★ 時間帯とシグナルに応じたボットのセリフを決定
+  let guideBotText = "体調予報の概要と、次の一歩をまとめています";
+
+  if (targetSignal !== null) {
+    if (isEvening) {
+      // 18時以降（明日の予報について）
+      if (targetSignal === 2) {
+        guideBotText = "明日は警戒の日。今日は湯船に浸かって、早めに休もうね。";
+      } else if (targetSignal === 1) {
+        guideBotText = "明日は少し波があるかも。今のうちに明日の準備をしておくと安心だよ。";
+      } else if (targetSignal === 0) {
+        guideBotText = "明日はおだやかな日になりそう。安心して眠ってね！";
+      }
+    } else {
+      // 18時未満（今日の予報について）
+      if (targetSignal === 2) {
+        guideBotText = "今日は警戒の日。無理せず自分を甘やかす一日にしようね。";
+      } else if (targetSignal === 1) {
+        guideBotText = "今日は少し波があるかも。こまめな休憩を意識してね。";
+      } else if (targetSignal === 0) {
+        guideBotText = "今日はおだやかな日。自分のペースで進んでいこう！";
+      }
+    }
+  }
+
+  return (
+    <AppShell
+      title="ホーム"
+      subtitle="今日の体調予報と次の一歩"
+      headerRight={
+        <HomeHeaderMenu
+          onGuide={() => router.push("/guide")}
+          onRegionSettings={() => router.push("/radar")}
+          onLogout={handleLogout}
+        />
+      }
+    >
+      {/* ヒーローヘッダー */}
+      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
+          <svg
+            viewBox="0 0 260 220"
+            className="absolute -right-9 top-2 h-[218px] w-[260px]"
+            aria-hidden="true"
+          >
+            <circle cx="154" cy="86" r="54" fill="#E8D59A" opacity="0.18" />
+            <circle cx="154" cy="86" r="81" fill="none" stroke="#D8C58E" strokeWidth="1.4" strokeOpacity="0.22" />
+            <circle cx="154" cy="86" r="118" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.14" />
+            <circle cx="154" cy="86" r="41" fill="none" stroke="#5C9F88" strokeWidth="1.3" strokeOpacity="0.18" />
+            <path
+              d="M48 92 A108 108 0 0 1 211 25"
+              fill="none"
+              stroke="#5C9F88"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeOpacity="0.2"
+            />
+            <path
+              d="M64 129 A90 90 0 0 1 225 95"
+              fill="none"
+              stroke="#D2A43A"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeOpacity="0.28"
+            />
+            <circle cx="214" cy="91" r="4.6" fill="#D2A43A" opacity="0.2" />
+            <circle cx="111" cy="138" r="3.3" fill="#5C9F88" opacity="0.22" />
+            <path
+              d="M118 188 C 139 175, 174 175, 195 188"
+              fill="none"
+              stroke="#5C9F88"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeOpacity="0.12"
+            />
+          </svg>
+        </div>
+
+        <div className="relative z-[2] max-w-[420px]">
+          <HeroTitleMark compact={false} className="max-w-full" />
+        </div>
+
+        <div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
+          <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
+            <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
+            <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+              {/* ★ 動的に変わるセリフを配置 */}
+              {guideBotText}
+            </div>
+          </div>
+        </div>
+
+        <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
+          {/* ★ targetSignal プロパティを渡す */}
+          <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
+        </div>
+      </Module>
+
+      {/* サマリー・ウィジェット群 */}
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] ring-1 ring-[#BFD9CC] shadow-sm">
+              <IconRadar className="h-5 w-5 text-[#255F4F]" />
+            </span>
+            <div className="text-[18px] font-black tracking-tight text-slate-900">予報の概要</div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <ForecastMiniCard
+            title={`今日 ${formatYmdJP(getJstDateString(0))}`}
+            bundle={todayBundle}
+            loading={Boolean(session) && (todayLoading || !todayBundle)}
+            onClick={() => router.push("/radar?tab=today")}
+          />
+          <ForecastMiniCard
+            title={`明日 ${formatYmdJP(getJstDateString(1))}`}
+            bundle={tomorrowBundle}
+            loading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
+            onClick={() => router.push("/radar?tab=tomorrow")}
+          />
+        </div>
+      </Module>
+
+      {/* 次にやること */}
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+        <div className="flex items-center gap-2.5">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
+            <IconBolt className="h-5 w-5" />
+          </span>
+          <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <ActionTile
+            icon={<IconJournalCard />}
+            title="今日の記録をつける"
+            sub="体調予報を見たら、そのまま記録へ。"
+            onClick={() => router.push("/records?tab=calendar")}
+          />
+          <ActionTile
+            icon={<IconCheckCard />}
+            title="体質結果を見る"
+            sub={core ? `${core.title} を確認する` : "最新の体質チェック結果を見る"}
+            onClick={() => router.push(latestResultHref || "/check")}
+          />
+          <ActionTile
+            icon={<IconJournalCard />}
+            title="未病カルテを見る"
+            sub={latestKarteHref ? "購入・閲覧できる個別カルテへ" : "体質チェック後に作成できます"}
+            onClick={() => router.push(latestKarteHref || "/check")}
+          />
+          <ActionTile
+            icon={<IconHistoryCard />}
+            title="履歴を見る"
+            sub="過去の結果を一覧で見返す。"
+            onClick={() => router.push("/history")}
+          />
+          <ActionTile
+            icon={<IconReportCard />}
+            title="週次レポートを見る"
+            sub={weeklySummary?.recorded_days != null ? `今週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
+            onClick={() => router.push("/records?tab=report")}
+          />
+        </div>
+      </Module>
+
+      {/* あなたの体質 */}
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
+               <IconCompass className="h-5 w-5" />
+             </span>
+            <div className="text-[18px] font-black tracking-tight text-slate-900">あなたの体質</div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => router.push(latestResultHref || "/check")}>結果を見る</Button>
+        </div>
+
+        {latestResult && core ? (
+          <div className="mt-5 rounded-[32px] bg-[#EEF6F0] p-6 ring-1 ring-inset ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.32)]">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/85">前回のチェック</div>
+                <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">{core.title}</div>
+                <div className="mt-1.5 text-[12px] font-bold text-slate-700">{core.short}</div>
+
+                {subs.length ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {subs.map((sub) => (
+                      <span
+                        key={sub.code}
+                        className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm"
+                      >
+                        {sub.short}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="shrink-0">
+                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-white ring-1 ring-[#CFE0D3] shadow-[0_14px_28px_-22px_rgba(37,95,79,0.36)] transition-transform hover:scale-105 p-1.5">
+                  <CoreIllust
+                    code={latestResult.core_code}
+                    title={core.title}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 text-[11px] font-extrabold tracking-wide text-slate-500">
+              {latestResult.created_at ? `最終更新: ${new Date(latestResult.created_at).toLocaleDateString("ja-JP")}` : "最新の結果です。"}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+            <div className="text-[14px] font-black text-slate-700">まだ体質チェックの保存結果がありません</div>
+            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+              まずは無料の体質チェックから始めてみましょう。
+            </div>
+            <div className="mt-5">
+              <Button onClick={() => router.push("/check")} className="w-full shadow-sm">体質チェックをはじめる</Button>
+            </div>
+          </div>
+        )}
+      </Module>
+    </AppShell>
+  );
+}
+
+
