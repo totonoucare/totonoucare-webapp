@@ -91,23 +91,6 @@ export function IconWeatherCold({ className = "h-10 w-10", ...props }) {
   );
 }
 
-        </radialGradient>
-        <linearGradient id="line-cold" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#0369a1" />
-        </linearGradient>
-      </defs>
-      {/* 芯に冷えを溜め込んだ背景 */}
-      <circle cx="16" cy="16" r="13" fill="url(#grad-cold)" />
-      <circle cx="16" cy="16" r="13" fill="none" stroke="url(#line-cold)" strokeWidth="1.5" strokeOpacity="0.3" />
-      {/* 氷の結晶のディテール */}
-      <path d="M16 6v20 M6 16h20 M8.5 8.5l15 15 M8.5 23.5l15-15" fill="none" stroke="url(#line-cold)" strokeWidth="2" strokeLinecap="round" />
-      {/* 結晶の枝 */}
-      <path d="M16 9l2 2 M16 9l-2 2 M16 23l2-2 M16 23l-2-2 M23 16l-2 2 M23 16l-2-2 M9 16l2 2 M9 16l2-2" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
-      <circle cx="16" cy="16" r="3" fill="#bae6fd" />
-    </svg>
-  );
-}
 
 // 4. 暑さ（気温上昇：上昇する熱気・陽炎 / オレンジレッド系）
 export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
