@@ -19,7 +19,6 @@ import { WeatherIcon } from "@/components/illust/icons/weather";
 
 const SESSION_TIMEOUT_MS = 5000;
 
-// ★ 共通コンポーネント化された背景モチーフ
 function HeroBgArt() {
   return (
     <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
@@ -537,11 +536,11 @@ export default function HomePage() {
     const pf = publicForecast;
     const pfSignal = pf?.signal ?? 0;
 
-    // ボットのセリフ
+    // ★ 未ログイン時もログイン後と同じく、寄り添うトーンのテキストに修正
     const botMessages = {
-      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてくださいね。`,
-      1: `今日は少し気象の変化があります。こまめな休憩を意識してみてください。`,
-      0: `今日は気象がおだやかです。気持ちよく過ごせるといいですね！`,
+      2: `今日は警戒の日。無理せず自分を甘やかす一日にしようね。`,
+      1: `今日は少し波があるかも。こまめな休憩を意識してね。`,
+      0: `今日はおだやかな日。自分のペースで進んでいこう！`,
     };
     const botMessage = publicForecastLoading
       ? "今日の気象リスクを確認中…"
@@ -571,7 +570,6 @@ export default function HomePage() {
           </Button>
         }
       >
-        {/* ★ 絶対位置を解除し、中身の高さに合わせてカードが伸縮するように変更 */}
         <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-6">
           <HeroBgArt />
 
@@ -579,18 +577,14 @@ export default function HomePage() {
             <HeroTitleMark compact={false} className="max-w-full" />
           </div>
 
-          {/* ★ 吹き出しとボットを Flex でグループ化し、しっぽを確実に合わせる */}
           <div className="relative z-[3] mt-5 flex items-center justify-between">
-            {/* 吹き出し */}
             <div className="relative w-full max-w-[240px] rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
-              {/* しっぽの色を bg-[#fafaf7] から bg-white に修正 */}
               <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-white" />
               <div className="text-[13px] font-extrabold leading-6 text-slate-600">
                 {botMessage}
               </div>
             </div>
             
-            {/* ボット: HeroGuideBot 内蔵の余白(mt-8)を相殺して高さを揃える */}
             <div className="shrink-0 -mt-8 -mr-1">
               <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
             </div>
@@ -600,7 +594,10 @@ export default function HomePage() {
         <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
           {/* 地域選択 */}
           <div className="mb-4 flex items-center justify-between">
-            <div className="text-[15px] font-black tracking-tight text-slate-900">今日の気象リスク</div>
+            {/* ★「（フラットな予報）」を復活 */}
+            <div className="text-[15px] font-black tracking-tight text-slate-900">
+              今日の気象リスク <span className="text-[11px] font-bold text-slate-500">（フラットな予報）</span>
+            </div>
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#BFD9CC]">
               <IconPin className="w-3.5 h-3.5 text-[#255F4F]" />
               <select
@@ -615,7 +612,8 @@ export default function HomePage() {
                   <option key={p.key} value={p.key}>{p.label}</option>
                 ))}
               </select>
-              <IconChevron className="absolute right-2 w-3.5 h-3.5 text-slate-400 pointer-events-none -rotate-90" />
+              {/* ★ rotate-90 に修正（下向き ∨ になります） */}
+              <IconChevron className="absolute right-2 w-3.5 h-3.5 text-slate-400 pointer-events-none rotate-90" />
             </div>
           </div>
 
@@ -708,7 +706,6 @@ export default function HomePage() {
       }
     >
       {/* ヒーローヘッダー */}
-      {/* ★ ログイン後も同様に Flex レイアウトを適用 */}
       <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-6">
         <HeroBgArt />
 
@@ -865,3 +862,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
