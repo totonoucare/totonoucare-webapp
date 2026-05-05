@@ -60,7 +60,7 @@ function calcUniversalSignal(weatherStress) {
   const score = Math.round((clamp(normalizedLoad, 0, 1.45) / 1.45) * 10);
 
   let signal;
-  if (score >= 8) signal = 2;      // 警戒: 体質なしではかなり強い日だけ
+  if (score >= 6) signal = 2;      // 警戒
   else if (score >= 4) signal = 1; // 注意
   else signal = 0;                 // 安定
 
@@ -142,4 +142,3 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(e) }, 500);
   }
 }
-
