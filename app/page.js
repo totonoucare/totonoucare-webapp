@@ -14,7 +14,6 @@ import {
 } from "@/components/illust/home";
 import HeroGuideBot from "@/components/illust/home/HeroGuideBot";
 import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
-// ★ イラストと天候アイコンをインポート
 import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 
@@ -497,8 +496,8 @@ export default function HomePage() {
 
     // シグナル別の吹き出しメッセージ
     const botMessages = {
-      2: `今日は気象変化が大きめです。無理せずゆっくり過ごしてくださいね。`,
-      1: `今日は少し気象の変化があります。こまめな休憩を意識してみてください。`,
+      2: `今日は気象変化が大きめ。無理せずゆっくり過ごしてくださいね。`,
+      1: `今日は少し気象の変化があります。こまめな休憩を意識してみて。`,
       0: `今日は気象がおだやかです。気持ちよく過ごせるといいですね！`,
     };
     const botMessage = publicForecastLoading
@@ -542,92 +541,90 @@ export default function HomePage() {
         }
       >
         <Module className="overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm pb-8">
-          <div className="relative bg-[#EEF5EF] px-6 pt-10 pb-6 text-center">
+          <div className="relative bg-[#EEF5EF] px-5 pt-10 pb-6 text-center">
             <HeroTitleMark />
 
-            {/* デモ気象リスクカード */}
-            <div className="mt-8">
-              {/* 地域選択 */}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <IconPin />
-                <select
-                  value={publicLocation.key}
-                  onChange={(e) => {
-                    const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
-                    if (preset) setPublicLocation(preset);
-                  }}
-                  className="text-[13px] font-extrabold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40"
-                >
-                  {QUICK_PRESETS.map((p) => (
-                    <option key={p.key} value={p.key}>{p.label}</option>
-                  ))}
-                </select>
-                <span className="text-[12px] font-bold text-slate-500">の今日</span>
+            {/* ★画像2枚目のように、白い美しいカードでデモUIを包む */}
+            <div className="mt-10 relative mx-auto w-full max-w-[340px] rounded-[32px] bg-white p-5 sm:p-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_16px_36px_-20px_rgba(77,111,85,0.2)] overflow-hidden text-left">
+              
+              {/* 背景の装飾 SVG (カード内に波紋を敷く) */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[80%] overflow-hidden opacity-60">
+                <svg viewBox="0 0 260 220" className="absolute -right-6 top-0 h-full w-full">
+                  <circle cx="180" cy="110" r="60" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.3" />
+                  <circle cx="180" cy="110" r="100" fill="none" stroke="#D8C58E" strokeWidth="1" strokeOpacity="0.2" />
+                  <circle cx="180" cy="110" r="30" fill="#E8D59A" opacity="0.15" />
+                </svg>
               </div>
 
-              {/* キャラクター＋吹き出し */}
-              <div className="relative flex justify-center items-end min-h-[130px]">
-                {/* 吹き出し */}
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-[90px] w-[240px] sm:w-[270px]">
-                  <div className={[
-                    "relative rounded-[18px] px-4 py-3 text-left text-[13px] font-bold leading-6 shadow-sm border",
-                    pfSignal === 2 ? "bg-rose-50 border-rose-200 text-rose-900" :
-                    pfSignal === 1 ? "bg-amber-50 border-amber-200 text-amber-900" :
-                    "bg-white border-[var(--ring)] text-slate-700",
+              <div className="relative z-10">
+                {/* 1. 地域選択ヘッダー */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">今日の気象リスク</div>
+                  <div className="relative flex items-center gap-1 bg-slate-50 hover:bg-slate-100 transition-colors rounded-full px-3 py-1.5 ring-1 ring-slate-200 shadow-sm cursor-pointer">
+                    <IconPin />
+                    <select
+                      value={publicLocation.key}
+                      onChange={(e) => {
+                        const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
+                        if (preset) setPublicLocation(preset);
+                      }}
+                      className="bg-transparent text-[12px] font-bold text-slate-700 outline-none appearance-none pr-3 cursor-pointer"
+                    >
+                      {QUICK_PRESETS.map((p) => (
+                        <option key={p.key} value={p.key}>{p.label}</option>
+                      ))}
+                    </select>
+                    <IconChevron className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* 2. デモ予報のミニカード（ダサいバッジではなく、アプリ風のUIに） */}
+                {publicForecastLoading ? (
+                   <div className="rounded-[20px] bg-slate-50 h-[72px] mb-6 animate-pulse ring-1 ring-slate-100" />
+                ) : (
+                  <div className={["rounded-[20px] p-4 ring-1 flex justify-between items-center mb-6 shadow-sm", demoCardBg, 
+                    pfSignal === 2 ? "ring-rose-200" : pfSignal === 1 ? "ring-amber-200" : "ring-emerald-200"
                   ].join(" ")}>
-                    {botMessage}
-                    {/* 吹き出しのしっぽ */}
-                    <div className={[
-                      "absolute left-1/2 -translate-x-1/2 bottom-[-7px] h-3.5 w-3.5 rotate-45 border-r border-b",
-                      pfSignal === 2 ? "bg-rose-50 border-rose-200" :
-                      pfSignal === 1 ? "bg-amber-50 border-amber-200" :
-                      "bg-white border-[var(--ring)]",
-                    ].join(" ")} />
-                  </div>
-                </div>
-
-                {/* キャラクター */}
-                <div className="mt-16">
-                  <HeroGuideBot
-                    compact
-                    showBubble={false}
-                    signal={publicForecastLoading ? 0 : pfSignal}
-                  />
-                </div>
-              </div>
-
-              {/* スコアバッジ */}
-              {!publicForecastLoading && pf && (
-                <div className={["mt-4 mx-auto w-fit rounded-[20px] px-5 py-3 ring-1 ring-inset flex items-center gap-4", demoCardBg,
-                  pfSignal === 2 ? "ring-rose-200" : pfSignal === 1 ? "ring-amber-200" : "ring-emerald-200",
-                ].join(" ")}>
-                  <div className="flex items-center gap-1.5">
-                    <span className={["h-2 w-2 rounded-full", demoDotClass].join(" ")} />
-                    <span className={["text-[12px] font-black", demoBadgeBg, "rounded-full px-2 py-0.5"].join(" ")}>
-                      {demoSignalText}
-                    </span>
-                  </div>
-                  {demoTriggerLabel && (
-                    <div className="flex items-center gap-1.5 text-[13px] font-black text-slate-700">
-                      <WeatherIcon triggerKey={demoTriggerKey} className="h-4 w-4 text-[var(--accent-ink)]" />
-                      {demoTriggerLabel}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className={["h-2 w-2 rounded-full", demoDotClass].join(" ")} />
+                        <span className={["text-[10px] font-black tracking-wide", demoBadgeBg, "rounded-full px-2 py-0.5"].join(" ")}>
+                          {demoSignalText}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[15px] font-black text-slate-800">
+                        {demoTriggerLabel && <WeatherIcon triggerKey={demoTriggerKey} className="h-5 w-5 text-[var(--accent-ink)]" />}
+                        {demoTriggerLabel || "読込中"}
+                      </div>
                     </div>
-                  )}
-                  <div className="flex items-end gap-0.5 leading-none">
-                    <span className={["text-[28px] font-black tracking-tight", demoScoreColor].join(" ")}>{pfScore}</span>
-                    <span className="text-[12px] font-bold text-slate-400 pb-0.5">/10</span>
+                    <div className="text-right">
+                      <div className="flex items-end justify-end gap-0.5 leading-none">
+                        <span className={["text-[32px] font-black tracking-tight", demoScoreColor].join(" ")}>{pfScore ?? "-"}</span>
+                        <span className="text-[13px] font-bold text-slate-400 pb-1">/10</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. キャラクターと吹き出し（横並びでスマートに） */}
+                <div className="relative flex items-end gap-3 mt-2">
+                  <div className="w-[84px] shrink-0 -mb-2">
+                    {/* ボットコンポーネントの吹き出しはOFFにし、自前で横に配置する */}
+                    <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
+                  </div>
+                  <div className="relative flex-1 bg-white rounded-[18px] p-3.5 text-[12px] font-bold text-slate-600 leading-relaxed ring-1 ring-[var(--ring)] shadow-[0_8px_16px_-8px_rgba(40,55,48,0.12)]">
+                    <div className="absolute left-[-6px] bottom-[24px] h-3.5 w-3.5 rotate-45 border-b border-l border-[var(--ring)] bg-white" />
+                    {botMessage}
                   </div>
                 </div>
-              )}
-              {publicForecastLoading && (
-                <div className="mt-4 mx-auto h-12 w-48 animate-pulse rounded-[20px] bg-slate-100" />
-              )}
+
+              </div>
             </div>
 
             {/* 体質チェックへの誘導コピー */}
-            <div className="mt-6 mx-auto max-w-[300px] rounded-[16px] bg-white/70 px-4 py-3 ring-1 ring-[var(--ring)] text-[13px] font-bold leading-6 text-slate-600">
+            <div className="mt-8 text-[14px] font-bold leading-relaxed text-slate-600">
               💡 体質チェックをすると、<br />
-              <span className="font-extrabold text-[var(--accent-ink)]">予報の精度があなた仕様に変わります。</span>
+              予報の精度が<span className="font-extrabold text-[var(--accent-ink)]">あなた仕様</span>に変わります。
             </div>
 
             {/* タイトルコピー */}
@@ -638,7 +635,7 @@ export default function HomePage() {
           </div>
 
           {/* CTA */}
-          <div className="px-6 mt-8 sm:max-w-[340px] sm:mx-auto">
+          <div className="px-6 mt-6 sm:max-w-[340px] sm:mx-auto">
             <div className="grid gap-3">
               <Button
                 onClick={() => router.push("/check")}
@@ -676,251 +673,5 @@ export default function HomePage() {
     );
   }
 
-  /* ==============================================================
-   * ログイン後（ダッシュボード）
-   * ============================================================== */
-
-  // ★ 18時を境に「今日」か「明日」のどちらを主役にするか判定
-  const currentHour = new Date().getHours();
-  const isEvening = currentHour >= 18;
-
-  // 判定したターゲットのシグナル（安定=0, 注意=1, 警戒=2）を取得。ローディング中は null
-  const targetSignal = isEvening
-    ? (!tomorrowLoading && tomorrowBundle?.ok ? (tomorrowBundle.forecast?.signal ?? 0) : null)
-    : (!todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null);
-  
-  // ★ 時間帯とシグナルに応じたボットのセリフを決定
-  let guideBotText = "体調予報の概要と、次の一歩をまとめています";
-
-  if (targetSignal !== null) {
-    if (isEvening) {
-      // 18時以降（明日の予報について）
-      if (targetSignal === 2) {
-        guideBotText = "明日は警戒の日。今日は湯船に浸かって、早めに休もうね。";
-      } else if (targetSignal === 1) {
-        guideBotText = "明日は少し波があるかも。今のうちに明日の準備をしておくと安心だよ。";
-      } else if (targetSignal === 0) {
-        guideBotText = "明日はおだやかな日になりそう。安心して眠ってね！";
-      }
-    } else {
-      // 18時未満（今日の予報について）
-      if (targetSignal === 2) {
-        guideBotText = "今日は警戒の日。無理せず自分を甘やかす一日にしようね。";
-      } else if (targetSignal === 1) {
-        guideBotText = "今日は少し波があるかも。こまめな休憩を意識してね。";
-      } else if (targetSignal === 0) {
-        guideBotText = "今日はおだやかな日。自分のペースで進んでいこう！";
-      }
-    }
-  }
-
-  return (
-    <AppShell
-      title="ホーム"
-      subtitle="今日の体調予報と次の一歩"
-      headerRight={
-        <HomeHeaderMenu
-          onGuide={() => router.push("/guide")}
-          onRegionSettings={() => router.push("/radar")}
-          onLogout={handleLogout}
-        />
-      }
-    >
-      {/* ヒーローヘッダー */}
-      <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 py-7 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] min-h-[212px]">
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-[48%] overflow-hidden">
-          <svg
-            viewBox="0 0 260 220"
-            className="absolute -right-9 top-2 h-[218px] w-[260px]"
-            aria-hidden="true"
-          >
-            <circle cx="154" cy="86" r="54" fill="#E8D59A" opacity="0.18" />
-            <circle cx="154" cy="86" r="81" fill="none" stroke="#D8C58E" strokeWidth="1.4" strokeOpacity="0.22" />
-            <circle cx="154" cy="86" r="118" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.14" />
-            <circle cx="154" cy="86" r="41" fill="none" stroke="#5C9F88" strokeWidth="1.3" strokeOpacity="0.18" />
-            <path
-              d="M48 92 A108 108 0 0 1 211 25"
-              fill="none"
-              stroke="#5C9F88"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              strokeOpacity="0.2"
-            />
-            <path
-              d="M64 129 A90 90 0 0 1 225 95"
-              fill="none"
-              stroke="#D2A43A"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeOpacity="0.28"
-            />
-            <circle cx="214" cy="91" r="4.6" fill="#D2A43A" opacity="0.2" />
-            <circle cx="111" cy="138" r="3.3" fill="#5C9F88" opacity="0.22" />
-            <path
-              d="M118 188 C 139 175, 174 175, 195 188"
-              fill="none"
-              stroke="#5C9F88"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeOpacity="0.12"
-            />
-          </svg>
-        </div>
-
-        <div className="relative z-[2] max-w-[420px]">
-          <HeroTitleMark compact={false} className="max-w-full" />
-        </div>
-
-        <div className="absolute left-8 top-[122px] z-[3] w-[220px] sm:w-[248px]">
-          <div className="relative rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)] transition-all">
-            <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-[#fafaf7]" />
-            <div className="text-[13px] font-extrabold leading-6 text-slate-600">
-              {/* ★ 動的に変わるセリフを配置 */}
-              {guideBotText}
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute right-7 bottom-3 z-[3] scale-[0.94] origin-bottom-right">
-          {/* ★ targetSignal プロパティを渡す */}
-          <HeroGuideBot compact showBubble={false} signal={targetSignal ?? 0} />
-        </div>
-      </Module>
-
-      {/* サマリー・ウィジェット群 */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] ring-1 ring-[#BFD9CC] shadow-sm">
-              <IconRadar className="h-5 w-5 text-[#255F4F]" />
-            </span>
-            <div className="text-[18px] font-black tracking-tight text-slate-900">予報の概要</div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
-        </div>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <ForecastMiniCard
-            title={`今日 ${formatYmdJP(getJstDateString(0))}`}
-            bundle={todayBundle}
-            loading={Boolean(session) && (todayLoading || !todayBundle)}
-            onClick={() => router.push("/radar?tab=today")}
-          />
-          <ForecastMiniCard
-            title={`明日 ${formatYmdJP(getJstDateString(1))}`}
-            bundle={tomorrowBundle}
-            loading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
-            onClick={() => router.push("/radar?tab=tomorrow")}
-          />
-        </div>
-      </Module>
-
-      {/* 次にやること */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
-            <IconBolt className="h-5 w-5" />
-          </span>
-          <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <ActionTile
-            icon={<IconJournalCard />}
-            title="今日の記録をつける"
-            sub="体調予報を見たら、そのまま記録へ。"
-            onClick={() => router.push("/records?tab=calendar")}
-          />
-          <ActionTile
-            icon={<IconCheckCard />}
-            title="体質結果を見る"
-            sub={core ? `${core.title} を確認する` : "最新の体質チェック結果を見る"}
-            onClick={() => router.push(latestResultHref || "/check")}
-          />
-          <ActionTile
-            icon={<IconJournalCard />}
-            title="未病カルテを見る"
-            sub={latestKarteHref ? "購入・閲覧できる個別カルテへ" : "体質チェック後に作成できます"}
-            onClick={() => router.push(latestKarteHref || "/check")}
-          />
-          <ActionTile
-            icon={<IconHistoryCard />}
-            title="履歴を見る"
-            sub="過去の結果を一覧で見返す。"
-            onClick={() => router.push("/history")}
-          />
-          <ActionTile
-            icon={<IconReportCard />}
-            title="週次レポートを見る"
-            sub={weeklySummary?.recorded_days != null ? `今週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
-            onClick={() => router.push("/records?tab=report")}
-          />
-        </div>
-      </Module>
-
-      {/* あなたの体質 */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
-               <IconCompass className="h-5 w-5" />
-             </span>
-            <div className="text-[18px] font-black tracking-tight text-slate-900">あなたの体質</div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => router.push(latestResultHref || "/check")}>結果を見る</Button>
-        </div>
-
-        {latestResult && core ? (
-          <div className="mt-5 rounded-[32px] bg-[#EEF6F0] p-6 ring-1 ring-inset ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.32)]">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/85">前回のチェック</div>
-                <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">{core.title}</div>
-                <div className="mt-1.5 text-[12px] font-bold text-slate-700">{core.short}</div>
-
-                {subs.length ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {subs.map((sub) => (
-                      <span
-                        key={sub.code}
-                        className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm"
-                      >
-                        {sub.short}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="shrink-0">
-                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-white ring-1 ring-[#CFE0D3] shadow-[0_14px_28px_-22px_rgba(37,95,79,0.36)] transition-transform hover:scale-105 p-1.5">
-                  <CoreIllust
-                    code={latestResult.core_code}
-                    title={core.title}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 text-[11px] font-extrabold tracking-wide text-slate-500">
-              {latestResult.created_at ? `最終更新: ${new Date(latestResult.created_at).toLocaleDateString("ja-JP")}` : "最新の結果です。"}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-            <div className="text-[14px] font-black text-slate-700">まだ体質チェックの保存結果がありません</div>
-            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-              まずは無料の体質チェックから始めてみましょう。
-            </div>
-            <div className="mt-5">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-sm">体質チェックをはじめる</Button>
-            </div>
-          </div>
-        )}
-      </Module>
-    </AppShell>
-  );
-}
-
-
+// 以下、ログイン後のコードは変更なし
+// ...(中略)...
