@@ -100,7 +100,7 @@ function ForecastCTA({ usage }) {
   return (
     <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 shadow-[0_14px_34px_rgba(180,116,37,0.08)]">
       <div className="text-[12px] font-black tracking-[0.18em] text-[#b17425]">DAILY FORECAST</div>
-      <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">{usage.title || "今日のケアは予報ページで確認"}</h2>
+      <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">{usage.title || "今日・明日のケアは予報ページで確認"}</h2>
       {usage.body ? <p className="mt-3 text-[14px] font-bold leading-7 text-[#6b4a2a]">{usage.body}</p> : null}
       {bullets.length ? (
         <div className="mt-5 grid gap-2">
@@ -131,39 +131,15 @@ const SUB_TERM_LABELS = {
   fluid_deficiency: "津液不足（しんえきぶそく）",
 };
 
-const LOCKED_SECTION_COPY = {
-  "weather-map": {
-    label: "全体像",
-    body: ({ core, symptom, weatherText }) => `${core}の体質軸から、${symptom}と${weatherText}の日に出やすいサインをひとつながりで整理します。`,
-  },
-  "inner-pattern": {
-    label: "内側のくせ",
-    body: ({ patternText }) => `${patternText}など、気血津液（きけつしんえき）の偏りを生活の体感に翻訳します。`,
-  },
-  "weather-rokuin": {
-    label: "注意天気",
-    body: ({ weatherText, patternText }) => `${weatherText}を単独で見るのではなく、${patternText}のくせと重なったときの崩れ方として読みます。`,
-  },
-  "symptom-signs": {
-    label: "前触れサイン",
-    body: ({ symptom }) => `${symptom}だけでなく、その手前に出やすい軽いサインまで見返せるようにします。`,
-  },
-  "meridian-line": {
-    label: "経絡ライン",
-    body: () => "動作チェックで見えた負担ラインを、予報ページのツボ提案や日々のセルフチェックにつなげます。",
-  },
-  "forecast-guide": {
-    label: "予報の使い方",
-    body: () => "カルテで自分の傾向をつかみ、毎日の予報ページで今日のツボ・食養生・過ごし方を確認します。",
-  },
-  "advance-care": {
-    label: "先回りケア",
-    body: () => "注意天気の日に、食事・予定量・冷え対策のどこを軽く調整するかを決めやすくします。",
-  },
-  consult: {
-    label: "相談メモ",
-    body: () => "鍼灸・整体・漢方などで相談するときに、体質・天気・動作の要点を伝えやすくします。",
-  },
+const LOCKED_SECTION_LABELS = {
+  "core-pattern": "体質",
+  "inner-pattern": "気血水",
+  "weather-switch": "天気",
+  "early-signs": "前触れ",
+  "meridian-care": "経絡",
+  "alert-day-care": "警戒日",
+  "season-care": "季節",
+  "consult-list": "相談",
 };
 
 function LockedPreview({ karte }) {
@@ -176,26 +152,22 @@ function LockedPreview({ karte }) {
   const patterns = [karte?.primarySub?.code, karte?.secondarySub?.code]
     .map((code) => SUB_TERM_LABELS[code])
     .filter(Boolean);
-  const patternText = patterns.length ? patterns.join("・") : "気血津液の偏り";
+  const patternText = patterns.length ? patterns.join("・") : "気血津液（きけつしんえき）の偏り";
   const sections = Array.isArray(karte?.sections) ? karte.sections : [];
-  const previewItems = sections.map((section, index) => {
-    const copy = LOCKED_SECTION_COPY[section.id] || {};
-    return {
-      label: `${index + 1}｜${copy.label || section.badge || "項目"}`,
-      title: section.title,
-      body: typeof copy.body === "function"
-        ? copy.body({ core, symptom, weatherText, patternText })
-        : section.teaser || section.preview || "購入後に本文を表示します。",
-    };
-  });
+  const previewItems = sections.map((section, index) => ({
+    label: `${index + 1}｜${LOCKED_SECTION_LABELS[section.id] || section.badge || "項目"}`,
+    title: section.title,
+    body: section.teaser || section.preview || "購入後に本文を表示します。",
+  }));
+  const beauty = karte?.beautyColumn;
 
   return (
     <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-7">
       <div className="mb-5">
         <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">PREVIEW</div>
-        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める8項目</h2>
+        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める8項目＋美容コラム</h2>
         <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">
-          {core}・{patternText}・{weatherText}・{symptom}をもとに、体調が揺れる前触れと先回りの判断基準を開きます。
+          {core}・{patternText}・{weatherText}・{symptom}をもとに、体調が揺れやすい日の前触れ、経絡ライン、前日〜当日の先回りまでまとめます。
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -206,17 +178,61 @@ function LockedPreview({ karte }) {
             <p className="mt-2 text-[13px] font-bold leading-6 text-[#64748b]">{item.body}</p>
           </div>
         ))}
+        {beauty ? (
+          <div className="rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-5 md:col-span-2">
+            <div className="text-[11px] font-black tracking-[0.16em] text-[#b17425]">コラム</div>
+            <div className="mt-2 text-[16px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{beauty.title}</div>
+            <p className="mt-2 text-[13px] font-bold leading-6 text-[#6b4a2a]">{beauty.teaser || beauty.preview}</p>
+          </div>
+        ) : null}
       </div>
     </section>
   );
 }
+
+function BeautyColumn({ column }) {
+  if (!column) return null;
+  const body = Array.isArray(column.body) ? column.body : [];
+  const points = Array.isArray(column.points) ? column.points : [];
+
+  return (
+    <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 shadow-[0_14px_34px_rgba(180,116,37,0.08)] md:p-7">
+      <div className="mb-3 inline-flex rounded-full border border-[#ead7a5] bg-white/70 px-3 py-1 text-[11px] font-black tracking-[0.18em] text-[#b17425]">
+        {column.badge || "コラム"}
+      </div>
+      <h2 className="text-[24px] font-black leading-[1.45] tracking-[-0.05em] text-[#10182d] md:text-[29px]">
+        {column.title}
+      </h2>
+      {column.teaser ? <p className="mt-3 text-[14px] font-black leading-7 text-[#6b4a2a]">{column.teaser}</p> : null}
+      {body.length ? (
+        <div className="mt-5 space-y-4">
+          {body.slice(0, 3).map((text, index) => (
+            <p key={`beauty-p-${index}`} className="text-[15px] font-bold leading-[1.9] text-[#334155]">
+              {text}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      {points.length ? (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {points.slice(0, 3).map((item, index) => (
+            <span key={`beauty-point-${index}`} className="rounded-full border border-[#ead7a5] bg-white/80 px-4 py-2 text-[13px] font-black leading-6 text-[#6b4a2a]">
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 
 function SectionCard({ section, locked, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   const body = Array.isArray(section.body) ? section.body : [];
   const bullets = Array.isArray(section.bullets) ? section.bullets : [];
   const steps = Array.isArray(section.steps) ? section.steps : [];
-  const hideExtraLists = ["forecast-guide", "advance-care", "consult"].includes(section.id);
+  const hideExtraLists = ["consult-list"].includes(section.id);
   const showSteps = !hideExtraLists && steps.length > 0;
   const showBullets = !hideExtraLists && bullets.length > 0 && !showSteps;
   const hasDetail = body.length || showBullets || showSteps;
@@ -390,8 +406,8 @@ export default function KarteClient() {
   const generation = data?.generation || {};
 
   const completionLabel = useMemo(() => {
-    if (!karte?.sections?.length) return "8項目";
-    return `${karte.sections.length}項目`;
+    if (!karte?.sections?.length) return "8項目＋コラム";
+    return karte?.beautyColumn ? `${karte.sections.length}項目＋コラム` : `${karte.sections.length}項目`;
   }, [karte]);
 
   const quickTakeaways = useMemo(() => {
@@ -512,7 +528,7 @@ export default function KarteClient() {
                   あなた専用の体調パターンをアンロック
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  体質・気血津液・天気シグナル・経絡ラインをつなげて、天気で出やすい体調サインと先回りの判断基準まで見返せます。
+                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せます。
                 </p>
               </div>
               <button
@@ -545,6 +561,8 @@ export default function KarteClient() {
           </div>
         )}
 
+        {!locked ? <BeautyColumn column={karte.beautyColumn} /> : null}
+
         {!locked ? <ForecastCTA usage={karte.forecastUsage} /> : null}
 
         {locked ? (
@@ -552,7 +570,7 @@ export default function KarteClient() {
             <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
             <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立て</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
-              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・天気・経絡ラインをつなげた読み物として、あとから何度でも見返せます。
+              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・注意天気・経絡ライン・季節の守り方をつなげた読み物として、あとから何度でも見返せます。
             </p>
             <button
               type="button"
@@ -568,3 +586,4 @@ export default function KarteClient() {
     </main>
   );
 }
+
