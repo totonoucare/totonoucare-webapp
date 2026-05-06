@@ -389,7 +389,6 @@ export default function HomePage() {
   const [todayBundle, setTodayBundle] = useState(null);
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
   const [latestResult, setLatestResult] = useState(null);
-  const [weeklySummary, setWeeklySummary] = useState(null);
 
   const isLoggedIn = !!session;
 
@@ -472,7 +471,6 @@ export default function HomePage() {
         setTodayBundle(null);
         setTomorrowBundle(null);
         setLatestResult(null);
-        setWeeklySummary(null);
         setTodayLoading(false);
         setTomorrowLoading(false);
         setDashboardLoading(false);
@@ -518,15 +516,11 @@ export default function HomePage() {
 
       try {
         setDashboardLoading(true);
-        const [historyRes, reportRes] = await Promise.allSettled([
-          authedFetch(`/api/diagnosis/v2/events/list?limit=1`),
-          authedFetch(`/api/insights/14days?days=7`),
-        ]);
+        const historyRes = await authedFetch(`/api/diagnosis/v2/events/list?limit=1`).catch(() => null);
 
         if (cancelled) return;
 
-        setLatestResult(historyRes.status === "fulfilled" ? historyRes.value?.data?.[0] || null : null);
-        setWeeklySummary(reportRes.status === "fulfilled" ? reportRes.value?.data?.summary || null : null);
+        setLatestResult(historyRes?.data?.[0] || null);
       } catch (e) {
         console.error(e);
       } finally {
@@ -823,8 +817,8 @@ export default function HomePage() {
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <ActionTile
             icon={<IconJournalCard />}
-            title="今日の記録をつける"
-            sub="体調予報を見たら、そのまま記録へ。"
+            title="記録カレンダー（開発中）"
+            sub="体調メモと振り返り機能は準備中です。"
             onClick={() => router.push("/records?tab=calendar")}
           />
           <ActionTile
@@ -847,8 +841,8 @@ export default function HomePage() {
           />
           <ActionTile
             icon={<IconReportCard />}
-            title="週次レポートを見る"
-            sub={weeklySummary?.recorded_days != null ? `今週の記録 ${weeklySummary.recorded_days}/7 日` : "1週間の振り返りを見る"}
+            title="週次レポート（開発中）"
+            sub="1週間の傾向を振り返る機能を準備中です。"
             onClick={() => router.push("/records?tab=report")}
           />
         </div>
@@ -918,4 +912,6 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
+
 
