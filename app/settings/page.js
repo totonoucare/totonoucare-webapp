@@ -95,7 +95,6 @@ export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [premium, setPremium] = useState(null);
   const [karteCount, setKarteCount] = useState(null);
   const [error, setError] = useState("");
 
@@ -145,8 +144,7 @@ export default function SettingsPage() {
 
         if (!data?.user) return;
 
-        const [premiumRes, unlocksRes, notificationRes, locationRes] = await Promise.allSettled([
-          authedFetch("/api/premium/status"),
+        const [unlocksRes, notificationRes, locationRes] = await Promise.allSettled([
           supabase
             .from("personal_karte_unlocks")
             .select("id", { count: "exact", head: true })
@@ -157,7 +155,6 @@ export default function SettingsPage() {
         ]);
 
         if (cancelled) return;
-        if (premiumRes.status === "fulfilled") setPremium(premiumRes.value);
         if (unlocksRes.status === "fulfilled") setKarteCount(unlocksRes.value?.count ?? 0);
         if (notificationRes.status === "fulfilled") setNotificationSettings(notificationRes.value?.settings || null);
         if (locationRes.status === "fulfilled") setLocation(locationRes.value?.location || null);
@@ -290,7 +287,6 @@ export default function SettingsPage() {
     }
   }
 
-  const premiumActive = premium?.isPremium || premium?.active || premium?.isActive || premium?.status === "active";
   const notificationEnabled = Boolean(notificationSettings?.enabled);
   const minScore = notificationSettings?.min_score ?? 6;
   const locationLabel = useMemo(() => {
@@ -317,9 +313,9 @@ export default function SettingsPage() {
         <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
         <Row label="メールアドレス" value={user?.email || "未ログイン"} />
         <Row
-          label="未病レーダー Premium"
-          value={loading ? "確認中…" : premiumActive ? "有効" : "未加入または無効"}
-          action={<Button size="sm" variant="secondary" onClick={() => router.push("/records?tab=report")}>確認</Button>}
+          label="記録・週次レポート"
+          value="鋭意開発中。リリース後のアップデートで提供予定です"
+          action={<Button size="sm" variant="secondary" onClick={() => router.push("/records?tab=calendar")}>見る</Button>}
         />
         <Row
           label="購入済みカルテ"
@@ -468,3 +464,4 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
