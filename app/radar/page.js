@@ -1444,11 +1444,6 @@ export default function RadarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, loadingAuth, dateMode]);
 
-  useEffect(() => {
-    if (!session || loadingAuth) return;
-    fetchTodayReview();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, loadingAuth]);
 
   async function useCurrentLocation() {
     if (!navigator.geolocation) {
@@ -2380,127 +2375,52 @@ export default function RadarPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <Module className="p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[18px] font-black tracking-tight text-slate-900">今日の記録</div>
-                <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
-                  予報を見た日の終わりに1回だけ、不調の度合いと前日〜当日に対策ケアをしたかを残します。
+          <Module className="relative overflow-hidden p-6">
+            <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#E2F1EA] blur-3xl" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3D8] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9]">
+                COMING SOON
+              </div>
+              <div className="mt-4 text-[22px] font-black tracking-tight text-slate-900">
+                記録機能は鋭意開発中です
+              </div>
+              <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
+                予報を見た日の体調メモ、記録カレンダー、週次レポートはリリース後のアップデートで提供予定です。
+                まずは今日・明日の予報とカルテを中心に整えています。
+              </div>
+
+              <div className="mt-6 rounded-[28px] bg-white p-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="h-4 w-24 rounded-full bg-slate-200" />
+                  <div className="h-4 w-16 rounded-full bg-slate-100" />
+                </div>
+                <div className="grid grid-cols-7 gap-1.5 blur-[2px] opacity-80">
+                  {Array.from({ length: 28 }, (_, i) => (
+                    <div
+                      key={i}
+                      className={[
+                        "aspect-square rounded-[12px] ring-1 ring-inset ring-slate-200",
+                        i % 9 === 0
+                          ? "bg-rose-100"
+                          : i % 5 === 0
+                            ? "bg-amber-100"
+                            : i % 4 === 0
+                              ? "bg-emerald-100"
+                              : "bg-slate-50",
+                      ].join(" ")}
+                    />
+                  ))}
                 </div>
               </div>
-            </div>
 
-            <div className="mt-5">
-              <Button
-                onClick={() => setReviewEditorOpen(true)}
-                className="w-full shadow-md"
-              >
-                {todayReview ? "記録を編集する" : "記録をつける"}
-              </Button>
-            </div>
-
-            {loadingTodayReview ? (
-              <div className="mt-6 text-[13px] font-bold text-slate-500">読み込み中…</div>
-            ) : todayReviewForecast ? (
-              <div className="mt-6 rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">
-                  予報の振り返り
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={[
-                      "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-extrabold shadow-sm ring-1 ring-inset",
-                      reviewSignalBadgeClass(todayReviewForecast.signal),
-                    ].join(" ")}
-                  >
-                    {reviewSignalLabel(todayReviewForecast.signal)}
-                  </span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
-                    {todayReviewForecast.score_0_10} / 10
-                  </span>
-                  <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
-                    {reviewTriggerLabel(
-                      todayReviewForecast.main_trigger,
-                      todayReviewForecast.trigger_dir
-                    )}
-                  </span>
-                </div>
-                <div className="mt-3 text-[12px] font-bold leading-5 text-slate-600">
-                  {todayReviewForecast.why_short || "今日の予報と体調の答え合わせを残せます。"}
-                </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <Button onClick={() => setTab("forecast")} className="w-full shadow-md">
+                  予報・対策へ戻る
+                </Button>
+                <Button variant="secondary" onClick={() => router.push("/records?tab=calendar")} className="w-full bg-white">
+                  開発中ページを見る
+                </Button>
               </div>
-            ) : null}
-
-            {todayReview ? (
-              <div className="mt-4 space-y-3">
-                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">実際どうだった？</div>
-                  <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
-                    {conditionLabel(todayReview.condition_level)}
-                  </div>
-                </div>
-                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">前日〜当日の対策ケア</div>
-                  <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
-                    {preventLabel(todayReview.prevent_level)}
-                  </div>
-                </div>
-                <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">やったこと</div>
-                  <div className="mt-2.5 flex flex-wrap gap-2">
-                    {safeArray(todayReview.action_tags).length > 0 ? (
-                      safeArray(todayReview.action_tags).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-extrabold text-slate-700"
-                        >
-                          {actionTagLabel(tag)}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-[13px] font-bold text-slate-500">記録なし</span>
-                    )}
-                  </div>
-                </div>
-                {todayReview.note ? (
-                  <div className="rounded-[20px] bg-white px-5 py-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">メモ</div>
-                    <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                      {todayReview.note}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-center">
-                <div className="text-[14px] font-black text-slate-700">{todayRecordDateLabel} の記録はありません</div>
-                <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                  しんどかった日だけでも残しておくと、週次レポートで自分の傾向が見えやすくなります。
-                </div>
-              </div>
-            )}
-          </Module>
-
-          <Module className="p-6">
-            <div className="text-[18px] font-black tracking-tight text-slate-900">記録ページで見返す</div>
-            <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
-              記録カレンダーでは日ごとの履歴を、週次レポートでは1週間の傾向をまとめて見返せます。
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3">
-              <Button
-                onClick={() => router.push("/records?tab=calendar")}
-                className="w-full shadow-md"
-              >
-                記録カレンダーへ
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => router.push("/records?tab=report")}
-                className="w-full"
-              >
-                週次レポートへ
-              </Button>
             </div>
           </Module>
         </div>
@@ -2531,5 +2451,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
