@@ -266,90 +266,6 @@ function ActionTile({ icon, title, sub, onClick }) {
   );
 }
 
-
-function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecondary }) {
-  const hasResult = Boolean(core);
-  const primaryLabel = hasResult ? "カルテを開く" : "体質チェックから作る";
-  const primarySub = hasResult
-    ? "体質・天気・ツボ・食養生をつなげて見返せます。"
-    : "体質チェック後に、あなた専用のカルテ導線が表示されます。";
-
-  return (
-    <Module className="relative overflow-hidden p-6 bg-[linear-gradient(135deg,#F7FBF8_0%,#FFF9EA_100%)] ring-1 ring-[#D3E1D5] shadow-[0_20px_48px_-34px_rgba(37,95,79,0.38)]">
-      <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#F4D68A]/35 blur-2xl" />
-      <div className="pointer-events-none absolute right-8 bottom-4 h-24 w-24 rounded-full border border-[#D8C58E]/35" />
-
-      <div className="relative z-10 flex items-start gap-4">
-        <div className="grid h-[82px] w-[82px] shrink-0 place-items-center overflow-hidden rounded-[24px] bg-white p-2 ring-1 ring-[#CFE0D3] shadow-[0_14px_30px_-22px_rgba(37,95,79,0.36)]">
-          {hasResult ? (
-            <CoreIllust
-              code={coreCode}
-              title={core?.title || "体質タイプ"}
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[34px] ring-1 ring-[#D3E1D5]">
-              🌿
-            </div>
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9] shadow-sm">
-            PERSONAL KARTE
-          </div>
-          <h2 className="mt-3 text-[24px] font-black tracking-tight text-slate-950 leading-[1.25]">
-            あなた専用の未病カルテ
-          </h2>
-          <p className="mt-2 text-[13px] font-extrabold leading-6 text-slate-600">
-            {primarySub}
-          </p>
-
-          {hasResult ? (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="rounded-lg bg-white/85 px-2.5 py-1 text-[11px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm">
-                {core.title}
-              </span>
-              {subs.slice(0, 2).map((sub) => (
-                <span
-                  key={sub.code}
-                  className="rounded-lg bg-white/70 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-[#E3EAE5] shadow-sm"
-                >
-                  {sub.short}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="relative z-10 mt-5 grid gap-2.5 sm:grid-cols-3">
-        <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
-          <div className="text-[11px] font-black text-slate-900">崩れ方のクセ</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">いつ・どこに出やすいかを整理</div>
-        </div>
-        <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
-          <div className="text-[11px] font-black text-slate-900">天気との相性</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">響きやすい要素を見返せる</div>
-        </div>
-        <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
-          <div className="text-[11px] font-black text-slate-900">ケアの使い方</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">予報ページとのつなぎ方まで</div>
-        </div>
-      </div>
-
-      <div className="relative z-10 mt-5 flex flex-col gap-3 sm:flex-row">
-        <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
-          {primaryLabel}
-        </Button>
-        <Button variant="secondary" onClick={onSecondary} className="w-full bg-white py-4 shadow-sm sm:flex-1">
-          {hasResult ? "体質結果も見る" : "使い方を見る"}
-        </Button>
-      </div>
-    </Module>
-  );
-}
-
 function ForecastMiniCard({ title, bundle, loading, onClick }) {
   if (loading) {
     return (
@@ -889,14 +805,6 @@ export default function HomePage() {
         </div>
       </Module>
 
-      <PersonalKarteSpotlight
-        core={core}
-        coreCode={latestResult?.core_code}
-        subs={subs}
-        onPrimary={() => router.push(latestKarteHref || "/check")}
-        onSecondary={() => router.push(latestResultHref || "/guide")}
-      />
-
       {/* 次にやること */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center gap-2.5">
@@ -921,8 +829,8 @@ export default function HomePage() {
           />
           <ActionTile
             icon={<IconJournalCard />}
-            title="未病カルテを見返す"
-            sub={latestKarteHref ? "体質の説明書を開く" : "体質チェック後に作成できます"}
+            title="未病カルテを見る"
+            sub={latestKarteHref ? "購入・閲覧できる個別カルテへ" : "体質チェック後に作成できます"}
             onClick={() => router.push(latestKarteHref || "/check")}
           />
           <ActionTile
@@ -1004,3 +912,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
