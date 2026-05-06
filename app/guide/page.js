@@ -144,8 +144,8 @@ export default function GuidePage() {
             <GuideCard tone="amber" title="② 体調予報（レーダー）" icon={<IconWeather />}>
               あなたの体質と、現在地の「気圧・気温・湿度」の予報を掛け合わせ、今日明日の崩れやすさ（危険度）を見える化します。
             </GuideCard>
-            <GuideCard tone="indigo" title="③ 記録と振り返り" icon={<IconCalendar />}>
-              1日の終わりに「実際どうだったか」を記録します。データが溜まると、週次レポートで自分の不調パターンが分かってきます。
+            <GuideCard tone="indigo" title="③ 記録と振り返り（開発中）" icon={<IconCalendar />}>
+              体調メモ、記録カレンダー、週次レポートは準備中です。提供までは、今日明日の予報とセルフケア提案を中心にお使いください。
             </GuideCard>
 
             <div className="grid gap-3 pt-4">
@@ -216,25 +216,25 @@ export default function GuidePage() {
       {tab === "record" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            記録機能の使い方
+            記録機能について
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            予報と実際の体調の「答え合わせ」をすることで、精度が上がっていきます。
+            記録・カレンダー・週次レポートは現在開発中です。リリース後のアップデートで提供予定です。
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="indigo" title="1日1回の簡単な記録" icon={<IconChecklist />}>
-              体調予報の画面から、「実際どうだったか」「前日〜当日に対策ケアをしたか」を数タップで記録できます。
+            <GuideCard tone="indigo" title="体調メモ（開発中）" icon={<IconChecklist />}>
+              予報を見た日の体調や、実際に行ったケアを残せる機能を準備しています。
             </GuideCard>
-            <GuideCard tone="violet" title="記録カレンダー" icon={<IconCalendar />}>
-              月ごとのカレンダーで、予報の危険度と実際の体調を一覧できます。自分の不調の波が可視化されます。
+            <GuideCard tone="violet" title="記録カレンダー（開発中）" icon={<IconCalendar />}>
+              月ごとのカレンダーで、予報と体調メモを見返せるようにする予定です。
             </GuideCard>
-            <GuideCard tone="amber" title="週次レポート" icon={<IconSpark />}>
-              1週間の記録が溜まると、「今週は気圧低下に弱かった」「よくこのケアをしていた」といった分析と来週のヒントが届きます。
+            <GuideCard tone="amber" title="週次レポート（開発中）" icon={<IconSpark />}>
+              1週間の記録から、天気と体調の関係やケアの傾向を振り返れるようにしていきます。
             </GuideCard>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/records?tab=calendar")} className="w-full shadow-md">記録ページへ</Button>
+              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">体調予報を見る</Button>
             </div>
           </div>
         </Module>
@@ -242,3 +242,4 @@ export default function GuidePage() {
     </AppShell>
   );
 }
+
