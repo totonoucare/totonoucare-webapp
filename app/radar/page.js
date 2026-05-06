@@ -176,7 +176,7 @@ const MATCH_TAG_LABELS = {
   "肝胆ライン": "緊張や巡りの滞りに関わりやすいはたらき",
   "湿": "重だるさ・むくみ・べたつく不調につながりやすい状態",
   "腹部から整える": "お腹まわりから整えたい日に向く考え方",
-  "支える方向": "土台を支えて崩れにくくしたい日に向く考え方",
+  "やさしく支える": "土台を支えて崩れにくくしたい日に向く考え方",
   "体質ケア": "体質に合わせたケア",
   "ラインケア": "動きの負担に向くケア",
 };
@@ -390,13 +390,13 @@ function getTsuboRoleLabel(point, index) {
 }
 
 function getPointRoleSummary(point) {
-  return point?.explanation?.role_summary || "整えの軸になるツボです。";
+  return point?.explanation?.role_summary || "この日の整え方に合わせて選んだツボです。";
 }
 
 function getPointSelectionReason(point) {
   return (
     point?.explanation?.selection_reason ||
-    "今日の整え方に合う方向で選んでいます。"
+    "この日の整え方に合うツボを選んでいます。"
   );
 }
 
@@ -1931,11 +1931,11 @@ export default function RadarPage() {
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <span className="text-[12px] font-black text-slate-400">
-                                    {index === 0 ? "主因" : "副因"}
+                                    {index === 0 ? "中心になりやすい" : "重なりやすい"}
                                   </span>
                                   {index === 1 && (
                                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500">
-                                      少し影響
+                                      あわせて注意
                                     </span>
                                   )}
                                 </div>
@@ -2531,3 +2531,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
