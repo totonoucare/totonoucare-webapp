@@ -2114,9 +2114,6 @@ export default function RadarPage() {
                             : "—"}
                         </div>
 
-                        <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                          この時間帯に波が重なりやすい見込みです。今夜は少し早めに整えておきましょう。
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -2517,9 +2514,6 @@ export default function RadarPage() {
                       身の回りのひと工夫
                     </div>
                   </div>
-                  <div className="rounded-full bg-[#E2F1EA] px-3 py-1 text-[11px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
-                    無料でできる
-                  </div>
                 </div>
 
                 <div className="overflow-hidden rounded-[26px] bg-[#F7FAF7] ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(47,111,98,0.26)]">
@@ -2714,4 +2708,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
