@@ -1819,7 +1819,7 @@ export default function RadarPage() {
               明日の不調を、今夜のうちに先回りします。
             </div>
             <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-500">
-              今日ここからの軽い確認はホームに分け、このページでは明日の予報とケアをしっかり見せます。
+              山場と響きやすい要素を見て、今夜の整え方を選びましょう。
             </div>
           </div>
 
@@ -1965,7 +1965,7 @@ export default function RadarPage() {
                         </div>
 
                         <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                          この時間帯に負担が重なりやすい目安です。今夜のうちに先回りしておくと安心です。
+                          この時間帯に波が重なりやすい見込みです。今夜は少し早めに整えておきましょう。
                         </div>
                       </div>
                     </div>
@@ -2452,4 +2452,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
