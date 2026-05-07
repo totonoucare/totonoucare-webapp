@@ -481,7 +481,6 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
                   <WeatherIcon triggerKey={factor.key} className="h-5 w-5" />
                 </span>
                 <span>{factor.label}</span>
-                {index === 1 && <span className="text-[10px] text-slate-400">副</span>}
               </div>
             ))}
           </div>
@@ -913,7 +912,7 @@ export default function HomePage() {
             </span>
             <div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">今日ここから</div>
-              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">開くたびに、今後の気象だけで再計算します</div>
+              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">このあと気になりやすい時間をチェック</div>
             </div>
           </div>
         </div>
@@ -925,7 +924,7 @@ export default function HomePage() {
             loading={Boolean(session) && (todayLoading || !todayBundle)}
             eyebrow="今から響きやすい変化"
             scoreLabel="現在の目安"
-            memo={todayBundle?.ok ? `山場: ${formatPeakWindow(todayBundle.forecast)}。${buildQuickLiveAdvice(todayBundle.forecast)}` : null}
+            memo={todayBundle?.ok ? `このあとの山場: ${formatPeakWindow(todayBundle.forecast)}。${buildQuickLiveAdvice(todayBundle.forecast)}` : null}
             ctaLabel="地域を設定する"
             errorOnClick={() => router.push("/radar")}
           />
@@ -940,7 +939,7 @@ export default function HomePage() {
             </span>
             <div>
               <div className="text-[18px] font-black tracking-tight text-slate-900">明日の未病予報</div>
-              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">今夜のうちに先回りするためのメイン予報</div>
+              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">明日の山場と整え方をチェック</div>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
@@ -953,7 +952,7 @@ export default function HomePage() {
             loading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
             eyebrow="明日響きやすい要素"
             scoreLabel="先回りスコア"
-            memo={tomorrowBundle?.ok ? `明日の山場: ${formatPeakWindow(tomorrowBundle.forecast)}。くわしいケアは予報ページで確認できます。` : null}
+            memo={tomorrowBundle?.ok ? `明日の山場: ${formatPeakWindow(tomorrowBundle.forecast)}。今夜の整え方まで見ておきましょう。` : null}
             onClick={() => router.push("/radar")}
             ctaLabel="明日の予報を開く"
           />
