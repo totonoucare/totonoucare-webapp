@@ -208,6 +208,26 @@ function compatFromExact(exact) {
   return { main_trigger: "pressure", trigger_dir: "down" };
 }
 
+function getForecastSnapshot(forecast) {
+  return forecast?.computed?.forecast_snapshot || null;
+}
+
+function getRiskSummaryFromForecast(forecast) {
+  return forecast?.computed?.radar_plan_meta?.risk_context?.summary || null;
+}
+
+function getForecastTriggerKey(forecast) {
+  if (!forecast) return "pressure_down";
+  const snapshot = getForecastSnapshot(forecast);
+  const riskSummary = getRiskSummaryFromForecast(forecast);
+  return (
+    forecast.personal_main_trigger_exact ||
+    snapshot?.personal_main_trigger_exact ||
+    riskSummary?.main_trigger_exact ||
+    exactTriggerKey(forecast.main_trigger, forecast.trigger_dir)
+  );
+}
+
 function normalizeForecastTriggerFactor(item, index, forecast) {
   const exact = item?.exact || item?.key || null;
   const compat = exact ? compatFromExact(exact) : {
@@ -228,16 +248,26 @@ function normalizeForecastTriggerFactor(item, index, forecast) {
 
 function getForecastTriggerFactors(forecast) {
   if (!forecast) return [];
-  const raw = Array.isArray(forecast.trigger_factors) && forecast.trigger_factors.length
-    ? forecast.trigger_factors
-    : [];
 
-  if (raw.length) {
+  const snapshot = getForecastSnapshot(forecast);
+  const riskSummary = getRiskSummaryFromForecast(forecast);
+  const raw =
+    (Array.isArray(forecast.trigger_factors) && forecast.trigger_factors.length ? forecast.trigger_factors : null) ||
+    (Array.isArray(snapshot?.trigger_factors) && snapshot.trigger_factors.length ? snapshot.trigger_factors : null) ||
+    (Array.isArray(riskSummary?.trigger_factors) && riskSummary.trigger_factors.length ? riskSummary.trigger_factors : null) ||
+    null;
+
+  if (raw) {
     return raw.slice(0, 2).map((item, index) => normalizeForecastTriggerFactor(item, index, forecast));
   }
 
-  const primary = forecast.personal_main_trigger_exact || exactTriggerKey(forecast.main_trigger, forecast.trigger_dir);
-  const secondary = forecast.personal_secondary_trigger_exact || null;
+  const primary = getForecastTriggerKey(forecast);
+  const secondary =
+    forecast.personal_secondary_trigger_exact ||
+    snapshot?.personal_secondary_trigger_exact ||
+    riskSummary?.secondary_trigger_exact ||
+    riskSummary?.personal_secondary_trigger_exact ||
+    null;
   const factors = [normalizeForecastTriggerFactor({ exact: primary, role: "primary" }, 0, forecast)];
 
   if (secondary && secondary !== primary) {
@@ -1074,4 +1104,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
