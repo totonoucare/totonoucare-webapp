@@ -182,7 +182,7 @@ const MATCH_TAG_LABELS = {
 };
 const RADAR_LOADING_HINTS = [
   "体質データを読み込んでいます…",
-  "今日の気圧・気温・湿度の変化を照合しています…",
+  "明日の気圧・気温・湿度の変化を照合しています…",
   "あなた向けの注意ポイントをまとめています…",
 ];
 
@@ -930,7 +930,7 @@ function LocationEditor({
           <div className="text-[18px] font-black tracking-tight text-slate-900">地域を設定する</div>
           <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
             現在地か、生活圏に近い代表地点を設定できます。
-            変更した場合は今日/明日の予報にも反映されます。
+            変更した場合は明日の予報にも反映されます。
           </div>
         </div>
 
@@ -1193,7 +1193,7 @@ export default function RadarPage() {
   const [locationNotice, setLocationNotice] = useState("");
 
   const [tab, setTab] = useState("forecast");
-  const [dateMode, setDateMode] = useState(getDefaultDateModeJST());
+  const [dateMode, setDateMode] = useState("tomorrow");
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [noticeOpen, setNoticeOpen] = useState(false);
@@ -1353,7 +1353,7 @@ export default function RadarPage() {
     force = false,
     recompute = false,
     locationChanged = false,
-    nextDateMode = dateMode,
+    nextDateMode = "tomorrow",
   } = {}) {
     if (!session) return;
 
@@ -1371,8 +1371,8 @@ export default function RadarPage() {
       const token = data?.session?.access_token;
       if (!token) throw new Error("No token");
 
-      const { today, tomorrow } = getJstTodayTomorrow();
-      const targetDate = nextDateMode === "today" ? today : tomorrow;
+      const { tomorrow } = getJstTodayTomorrow();
+      const targetDate = tomorrow;
 
       const qs = new URLSearchParams();
       qs.set("date", targetDate);
@@ -1423,7 +1423,7 @@ export default function RadarPage() {
       }
 
       if (locationChanged) {
-        setLocationNotice("地域を更新しました。今日/明日の予報にも反映しました。");
+        setLocationNotice("地域を更新しました。明日の予報にも反映しました。");
       }
     } catch (e) {
       if (requestSeq !== requestSeqRef.current) return;
@@ -1440,9 +1440,9 @@ export default function RadarPage() {
 
   useEffect(() => {
     if (!session || loadingAuth) return;
-    fetchForecast({ force: true, nextDateMode: dateMode });
+    fetchForecast({ force: true, nextDateMode: "tomorrow" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, loadingAuth, dateMode]);
+  }, [session, loadingAuth]);
 
 
   async function useCurrentLocation() {
@@ -1466,7 +1466,7 @@ export default function RadarPage() {
           force: true,
           recompute: true,
           locationChanged: !needsLocation,
-          nextDateMode: dateMode,
+          nextDateMode: "tomorrow",
         });
 
         setLocating(false);
@@ -1508,7 +1508,7 @@ export default function RadarPage() {
         force: true,
         recompute: true,
         locationChanged: !needsLocation,
-        nextDateMode: dateMode,
+        nextDateMode: "tomorrow",
       });
 
       if (!needsLocation) {
@@ -1646,10 +1646,10 @@ export default function RadarPage() {
             <div className="relative z-10 mt-4 text-[22px] font-black tracking-tight text-slate-900 leading-snug">
               あなたの体質に合わせた
               <br />
-              今日・明日の体調予報を表示します。
+              明日の体調予報を表示します。
             </div>
             <div className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
-              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、崩れやすさと先回りケアを出します。
+              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の崩れやすさと先回りケアを出します。
             </div>
           </div>
 
@@ -1659,7 +1659,7 @@ export default function RadarPage() {
                 ・体質チェック結果をもとにパーソナル予報を作成
               </div>
               <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
-                ・地域設定後、今日/明日の天気負担を確認
+                ・地域設定後、明日の天気負担を確認
               </div>
             </div>
 
@@ -1693,7 +1693,7 @@ export default function RadarPage() {
                 {RADAR_LOADING_HINTS[loadingHintIndex] || RADAR_LOADING_HINTS[0]}
               </div>
               <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
-                体質と気象の重なりを見て、今日の崩れやすさと先回りケアを組み立てています。
+                体質と気象の重なりを見て、明日の崩れやすさと先回りケアを組み立てています。
               </div>
               <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5">
                 <div className="h-full w-1/3 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-[var(--accent-ink)]/55" />
@@ -1752,7 +1752,7 @@ export default function RadarPage() {
             {error || "時間をおいてもう一度お試しください。"}
           </div>
           <Button
-            onClick={() => fetchForecast({ force: true, nextDateMode: dateMode })}
+            onClick={() => fetchForecast({ force: true, nextDateMode: "tomorrow" })}
             className="mt-8 w-full shadow-md"
           >
             再読み込み
@@ -1811,15 +1811,16 @@ export default function RadarPage() {
 
       {tab === "forecast" ? (
         <div className="space-y-6">
-          <div className="mx-auto w-[60%]">
-            <SegmentedTabs
-              tabs={[
-                { key: "today", label: "今日" },
-                { key: "tomorrow", label: "明日" },
-              ]}
-              value={bundleDateMode}
-              onChange={setDateMode}
-            />
+          <div className="rounded-[24px] bg-white px-5 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
+            <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/70">
+              TOMORROW FORECAST
+            </div>
+            <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">
+              明日の不調を、今夜のうちに先回りします。
+            </div>
+            <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-500">
+              今日ここからの軽い確認はホームに分け、このページでは明日の予報とケアをしっかり見せます。
+            </div>
           </div>
 
           {error && !showLocationEditor ? (
@@ -1952,7 +1953,7 @@ export default function RadarPage() {
                           <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
                             <IconBolt className="h-5 w-5" />
                           </span>
-                          気をつけたい時間帯
+                          明日の山場
                         </div>
 
                         <div className="mt-3 text-[33px] font-black leading-none tracking-[-0.04em] text-slate-900">
@@ -1964,7 +1965,7 @@ export default function RadarPage() {
                         </div>
 
                         <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-                          {signalPanelSubtext(forecast.signal)}
+                          この時間帯に負担が重なりやすい目安です。今夜のうちに先回りしておくと安心です。
                         </div>
                       </div>
                     </div>
@@ -2386,7 +2387,7 @@ export default function RadarPage() {
               </div>
               <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
                 予報を見た日の体調メモ、記録カレンダー、週次レポートはリリース後のアップデートで提供予定です。
-                まずは今日・明日の予報とカルテを中心に整えています。
+                まずは明日の予報とカルテを中心に整えています。
               </div>
 
               <div className="mt-6 rounded-[28px] bg-white p-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
@@ -2451,3 +2452,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
