@@ -247,6 +247,46 @@ function getForecastTriggerFactors(forecast) {
   return factors.slice(0, 2);
 }
 
+
+function formatPeakWindow(forecast) {
+  const start = String(forecast?.peak_start || "").slice(0, 5);
+  const end = String(forecast?.peak_end || "").slice(0, 5);
+  if (start && end) return `${start}–${end}`;
+  if (start) return `${start}ごろ`;
+  return "まだ目立った山場なし";
+}
+
+function buildQuickLiveAdvice(forecast) {
+  const factor = getForecastTriggerFactors(forecast)[0];
+  const key = factor?.key || exactTriggerKey(forecast?.main_trigger, forecast?.trigger_dir);
+  const prefix = forecast?.signal === 2 ? "今日は早めに" : forecast?.signal === 1 ? "今日はこまめに" : "今日は軽く";
+
+  if (key === "pressure_down") return `${prefix}、首肩と耳まわりをゆるめて予定を詰めすぎないで。`;
+  if (key === "pressure_up") return `${prefix}、息を吐く時間を長めにして力みを抜いて。`;
+  if (key === "cold") return `${prefix}、首・お腹・足首を冷やさないようにして。`;
+  if (key === "heat") return `${prefix}、こもる前に水分と休憩を先に入れて。`;
+  if (key === "damp") return `${prefix}、重さを感じる前に軽く動いてめぐりを作って。`;
+  if (key === "dry") return `${prefix}、のど・肌・目の乾きを放置しないで。`;
+  return `${prefix}、無理を詰め込まず余白を残して。`;
+}
+
+function buildLiveGuideText(bundle) {
+  if (!bundle?.ok || !bundle?.forecast) return "今日ここからの気象負担を確認しています。";
+
+  const forecast = bundle.forecast;
+  const peak = formatPeakWindow(forecast);
+  const factor = getForecastTriggerFactors(forecast)[0];
+  const label = factor?.label || triggerLabel(forecast.main_trigger, forecast.trigger_dir);
+
+  if (forecast.signal === 2) {
+    return `今日ここからは${peak}が山場かも。${label}に合わせて、無理を一段落としていこう。`;
+  }
+  if (forecast.signal === 1) {
+    return `今日ここからは${peak}を少し意識してね。${label}の波を早めに逃がそう。`;
+  }
+  return `今日ここからは大きな波は小さめ。${label}だけ軽く見ておけば大丈夫そう。`;
+}
+
 function ActionTile({ icon, title, sub, onClick }) {
   return (
     <button
@@ -350,7 +390,7 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
   );
 }
 
-function ForecastMiniCard({ title, bundle, loading, onClick }) {
+function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", memo = null, ctaLabel = "体調予報を開く" }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)]">
@@ -373,8 +413,8 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
           </div>
           <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">{message}</div>
         </div>
-        <Button className="mt-4 w-full shadow-sm" variant="secondary" onClick={onClick}>
-          体調予報を開く
+        <Button className="mt-4 w-full shadow-sm" variant="secondary" onClick={errorOnClick}>
+          {ctaLabel}
         </Button>
       </div>
     );
@@ -385,9 +425,11 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
   const score = forecast.score_0_10 ?? 0;
   const triggerFactors = getForecastTriggerFactors(forecast);
 
+  const CardTag = onClick ? "button" : "div";
+
   return (
-    <button
-      type="button"
+    <CardTag
+      type={onClick ? "button" : undefined}
       onClick={onClick}
       className={[
         "relative overflow-hidden w-full rounded-[24px] p-5 text-left ring-1 ring-inset shadow-[0_16px_32px_-24px_rgba(47,111,98,0.28)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_38px_-22px_rgba(47,111,98,0.36)] active:scale-[0.98] group",
@@ -428,7 +470,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
 
       <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">気になりやすい変化</div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">{eyebrow}</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {triggerFactors.map((factor, index) => (
               <div
@@ -446,7 +488,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">目安スコア</div>
+          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{scoreLabel}</div>
           <div className="flex items-end justify-end gap-1 leading-none">
             <span className={["text-[42px] font-black tracking-[-0.04em]", signalScoreTextClass(forecast.signal)].join(" ")}>{score}</span>
             <span className="pb-1 text-[16px] font-black text-slate-400">/10</span>
@@ -454,10 +496,18 @@ function ForecastMiniCard({ title, bundle, loading, onClick }) {
         </div>
       </div>
 
-      <div className="absolute right-4 bottom-4 opacity-0 transition-opacity group-hover:opacity-100 text-slate-400">
-        <IconChevron />
-      </div>
-    </button>
+      {memo ? (
+        <div className="relative z-10 mt-4 rounded-[18px] bg-white/72 px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-black/5 shadow-sm">
+          {memo}
+        </div>
+      ) : null}
+
+      {onClick ? (
+        <div className="absolute right-4 bottom-4 opacity-0 transition-opacity group-hover:opacity-100 text-slate-400">
+          <IconChevron />
+        </div>
+      ) : null}
+    </CardTag>
   );
 }
 
@@ -561,42 +611,59 @@ export default function HomePage() {
         return;
       }
 
-      const today = getJstDateString(0);
       const tomorrow = getJstDateString(1);
 
       setTodayLoading(true);
       setTomorrowLoading(true);
 
-      async function loadForecastCard(targetDate, setBundle, setLoading) {
+      async function loadTodayLiveCard() {
         try {
-          setLoading(true);
-          const bundle = await authedFetch(`/api/radar/v1/forecast?date=${targetDate}`);
+          setTodayLoading(true);
+          const bundle = await authedFetch(`/api/radar/v1/forecast/live`);
+          if (!cancelled) setTodayBundle(bundle);
+        } catch (e) {
+          console.error(`today live forecast load failed:`, e);
+          if (!cancelled) {
+            setTodayBundle({
+              ok: false,
+              error: e?.message || "今日ここからの予報を読み込めませんでした。",
+            });
+          }
+        } finally {
+          if (!cancelled) setTodayLoading(false);
+        }
+      }
+
+      async function loadTomorrowForecastCard() {
+        try {
+          setTomorrowLoading(true);
+          const bundle = await authedFetch(`/api/radar/v1/forecast?date=${tomorrow}`);
           if (cancelled) return;
-          setBundle(bundle);
-          setLoading(false);
+          setTomorrowBundle(bundle);
+          setTomorrowLoading(false);
 
           if (bundle?.gpt_pending) {
-            enrichForecastBundle(targetDate).then((enriched) => {
+            enrichForecastBundle(tomorrow).then((enriched) => {
               if (!cancelled && enriched) {
-                setBundle(enriched);
+                setTomorrowBundle(enriched);
               }
             });
           }
         } catch (e) {
-          console.error(`forecast card load failed for ${targetDate}:`, e);
+          console.error(`tomorrow forecast card load failed:`, e);
           if (!cancelled) {
-            setBundle({
+            setTomorrowBundle({
               ok: false,
-              error: e?.message || '予報を読み込めませんでした。',
+              error: e?.message || "明日の予報を読み込めませんでした。",
             });
           }
         } finally {
-          if (!cancelled) setLoading(false);
+          if (!cancelled) setTomorrowLoading(false);
         }
       }
 
-      loadForecastCard(today, setTodayBundle, setTodayLoading);
-      loadForecastCard(tomorrow, setTomorrowBundle, setTomorrowLoading);
+      loadTodayLiveCard();
+      loadTomorrowForecastCard();
 
       try {
         setDashboardLoading(true);
@@ -798,34 +865,10 @@ export default function HomePage() {
    * ログイン後（ダッシュボード）
    * ============================================================== */
 
-  const currentHour = new Date().getHours();
-  const isEvening = currentHour >= 18;
-
-  const targetSignal = isEvening
-    ? (!tomorrowLoading && tomorrowBundle?.ok ? (tomorrowBundle.forecast?.signal ?? 0) : null)
-    : (!todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null);
-  
-  let guideBotText = "体調予報の概要と、次の一歩をまとめています";
-
-  if (targetSignal !== null) {
-    if (isEvening) {
-      if (targetSignal === 2) {
-        guideBotText = "明日は警戒の日。今日は湯船に浸かって、早めに休もうね。";
-      } else if (targetSignal === 1) {
-        guideBotText = "明日は少し波があるかも。今のうちに明日の準備をしておくと安心だよ。";
-      } else if (targetSignal === 0) {
-        guideBotText = "明日はおだやかな日になりそう。安心して眠ってね！";
-      }
-    } else {
-      if (targetSignal === 2) {
-        guideBotText = "今日は警戒の日。無理せず自分を甘やかす一日にしようね。";
-      } else if (targetSignal === 1) {
-        guideBotText = "今日は少し波があるかも。こまめな休憩を意識してね。";
-      } else if (targetSignal === 0) {
-        guideBotText = "今日はおだやかな日。自分のペースで進んでいこう！";
-      }
-    }
-  }
+  const targetSignal = !todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null;
+  const guideBotText = targetSignal !== null
+    ? buildLiveGuideText(todayBundle)
+    : "今日ここからの気象負担を確認しています。";
 
   return (
     <AppShell
@@ -861,30 +904,58 @@ export default function HomePage() {
         </div>
       </Module>
 
-      {/* サマリー・ウィジェット群 */}
+      {/* 今日ここから / 明日の先回り */}
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] ring-1 ring-[#BFD9CC] shadow-sm">
               <IconRadar className="h-5 w-5 text-[#255F4F]" />
             </span>
-            <div className="text-[18px] font-black tracking-tight text-slate-900">予報の概要</div>
+            <div>
+              <div className="text-[18px] font-black tracking-tight text-slate-900">今日ここから</div>
+              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">開くたびに、今後の気象だけで再計算します</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <ForecastMiniCard
+            title={`今日ここから ${formatYmdJP(getJstDateString(0))}`}
+            bundle={todayBundle}
+            loading={Boolean(session) && (todayLoading || !todayBundle)}
+            eyebrow="今から響きやすい変化"
+            scoreLabel="現在の目安"
+            memo={todayBundle?.ok ? `山場: ${formatPeakWindow(todayBundle.forecast)}。${buildQuickLiveAdvice(todayBundle.forecast)}` : null}
+            ctaLabel="地域を設定する"
+            errorOnClick={() => router.push("/radar")}
+          />
+        </div>
+      </Module>
+
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
+              <IconBolt className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-[18px] font-black tracking-tight text-slate-900">明日の未病予報</div>
+              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">今夜のうちに先回りするためのメイン予報</div>
+            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <ForecastMiniCard
-            title={`今日 ${formatYmdJP(getJstDateString(0))}`}
-            bundle={todayBundle}
-            loading={Boolean(session) && (todayLoading || !todayBundle)}
-            onClick={() => router.push("/radar?tab=today")}
-          />
+        <div className="mt-5">
           <ForecastMiniCard
             title={`明日 ${formatYmdJP(getJstDateString(1))}`}
             bundle={tomorrowBundle}
             loading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
-            onClick={() => router.push("/radar?tab=tomorrow")}
+            eyebrow="明日響きやすい要素"
+            scoreLabel="先回りスコア"
+            memo={tomorrowBundle?.ok ? `明日の山場: ${formatPeakWindow(tomorrowBundle.forecast)}。くわしいケアは予報ページで確認できます。` : null}
+            onClick={() => router.push("/radar")}
+            ctaLabel="明日の予報を開く"
           />
         </div>
       </Module>
@@ -1004,6 +1075,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
-
 
