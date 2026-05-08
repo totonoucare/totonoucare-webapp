@@ -43,6 +43,50 @@ export function getJstTodayTomorrow() {
   return { today, tomorrow, hour };
 }
 
+
+export function addDaysToIsoDate(dateStr, days) {
+  const d = new Date(`${dateStr}T00:00:00+09:00`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export function compareIsoDate(a, b) {
+  const aa = String(a || "");
+  const bb = String(b || "");
+  if (!aa || !bb) return 0;
+  if (aa < bb) return -1;
+  if (aa > bb) return 1;
+  return 0;
+}
+
+export function buildRadarDateTabs(rangeDays = 7) {
+  const { today } = getJstTodayTomorrow();
+  return Array.from({ length: rangeDays + 1 }, (_, offset) => {
+    const date = addDaysToIsoDate(today, offset);
+    const mode = offset === 0 ? "today" : offset === 1 ? "tomorrow" : "future";
+    return {
+      key: date,
+      date,
+      mode,
+      label: offset === 0 ? "今日" : offset === 1 ? "明日" : formatTargetDate(date),
+      subLabel: offset === 0 ? "見返し" : offset === 1 ? "本命" : "Premium",
+      locked: offset >= 2,
+    };
+  });
+}
+
+export function inferModeFromSelectedDate(targetDate) {
+  const { today, tomorrow } = getJstTodayTomorrow();
+  if (targetDate === today) return "today";
+  if (targetDate === tomorrow) return "tomorrow";
+  if (compareIsoDate(targetDate, tomorrow) > 0) return "future";
+  return inferModeFromTargetDate(targetDate);
+}
+
 export function getDefaultDateModeJST() {
   const { hour } = getJstTodayTomorrow();
   return hour < 18 ? "today" : "tomorrow";
@@ -56,28 +100,32 @@ export function inferModeFromTargetDate(targetDate) {
 }
 
 export function getDateModeLabel(mode) {
-  return mode === "today" ? "今日" : "明日";
+  if (mode === "today") return "今日";
+  if (mode === "future") return "週間";
+  return "明日";
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
+  if (mode === "today") return `今日(${formatTargetDate(targetDate)})の見返し`;
+  if (mode === "future") return `${formatTargetDate(targetDate)}の予報`;
   return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の予報`;
 }
 
 export function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "今日の注意点",
-      tsuboTitle: "今日の整えツボ",
-      tsuboSubtitle: "今日ここから整えたい3点セット",
-      foodTitle: "今日の食養生",
+      noticeTitle: "昨晩の読み解き",
+      tsuboTitle: "今日も見返せるツボケア",
+      tsuboSubtitle: "山場前にも見返したい3点セット",
+      foodTitle: "今日も使える食べ方",
     };
   }
 
   return {
     noticeTitle: "明日の注意点",
-    tsuboTitle: "今夜の先回りツボ",
-    tsuboSubtitle: "今夜のうちに整えておきたい3点セット",
-    foodTitle: "明日の食養生",
+    tsuboTitle: "今夜からできるツボケア",
+    tsuboSubtitle: "今夜から明日にかけて整えておきたい3点セット",
+    foodTitle: "今夜から使える食べ方",
   };
 }
 
@@ -594,3 +642,4 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
