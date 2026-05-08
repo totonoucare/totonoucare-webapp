@@ -102,12 +102,14 @@ app/api/cron/radar-notifications/
 ```text
 Next.js App Router
 Supabase
+Supabase Auth / Google OAuth
 Stripe
 OpenAI API
 MET Norway API
 PWA / Web Push
 GitHub Actions
-Vercel
+Vercel Preview
+Netlify Production
 ```
 
 画像はSupabase Storageではなく、リポジトリの `public/` 配下で管理しています。
@@ -122,7 +124,7 @@ components/       UIコンポーネント
 lib/              診断・予報・カルテ・通知などの主要ロジック
 public/           画像・PWA・service worker
 .github/          GitHub Actions
-docs/             AI引き継ぎ資料・開発計画・DB現状メモ
+docs/             AI引き継ぎ資料・開発計画・DB/環境設定メモ
 supabase/         DBスキーマ管理・確認SQL・migration・seed
 ```
 
@@ -148,6 +150,35 @@ docs/DB_CURRENT_STATUS_20260508.md
 
 ---
 
+## 外部サービス・環境変数
+
+Supabaseだけでなく、以下の外部サービス設定を使います。
+
+```text
+Vercel Preview
+Netlify Production
+Supabase
+Supabase Auth / Google OAuth
+Stripe
+OpenAI
+MET Norway
+GitHub Actions
+Web Push / VAPID
+```
+
+環境変数名・外部サービス設定の一覧は以下を参照してください。
+
+```text
+docs/ENVIRONMENT_AND_EXTERNAL_SERVICES.md
+docs/AUTH_AND_DEPLOY_URLS_20260508.md
+.env.example
+```
+
+実際の値はGitHubに保存しないでください。  
+Vercel / Netlify / Supabase / Stripe / OpenAI / Google Cloud / GitHub Secrets 側で管理します。
+
+---
+
 ## AI開発引き継ぎ
 
 このプロジェクトは、AIにコード作成を依頼し、GitHub上でファイルを差し替えて開発しています。
@@ -160,39 +191,12 @@ README_AI_HANDOFF.md
 docs/AI_HANDOFF.md
 docs/DB_CURRENT_STATUS_20260508.md
 docs/PRODUCT_PLAN_V0_2.md
+docs/ENVIRONMENT_AND_EXTERNAL_SERVICES.md
+docs/AUTH_AND_DEPLOY_URLS_20260508.md
+.env.example
 ```
 
 長い修正コードや新規ファイル群は、原則ZIPで渡す運用です。
-
----
-
-## 環境変数
-
-実際の値はGitHubに保存しないでください。  
-Vercel / Supabase / Stripe / OpenAI 側で管理します。
-
-主な環境変数の例:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-
-OPENAI_API_KEY
-
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-
-NEXT_PUBLIC_APP_URL
-CRON_SECRET
-
-NEXT_PUBLIC_VAPID_PUBLIC_KEY
-VAPID_PRIVATE_KEY
-VAPID_SUBJECT
-```
-
-秘密鍵やAPIキーは絶対にコミットしないでください。
 
 ---
 
