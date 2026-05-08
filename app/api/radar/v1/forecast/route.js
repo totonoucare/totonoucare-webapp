@@ -7,6 +7,7 @@ import {
 } from "@/lib/radar_v1/timeJST";
 import { ensureForecastBundle } from "@/lib/radar_v1/ensureForecastBundle";
 import {
+  getForecastBundle,
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
@@ -119,11 +120,13 @@ export async function GET(req) {
     const latParam = searchParams.get("lat");
     const lonParam = searchParams.get("lon");
     const forceParam = searchParams.get("force");
+    const cacheOnlyParam = searchParams.get("cache_only");
 
     const lat = latParam !== null ? Number(latParam) : null;
     const lon = lonParam !== null ? Number(lonParam) : null;
     const hasLocationOverride = Number.isFinite(lat) && Number.isFinite(lon);
-    const force = shouldForceRecompute(forceParam) || hasLocationOverride;
+    const cacheOnly = shouldForceRecompute(cacheOnlyParam);
+    const force = !cacheOnly && (shouldForceRecompute(forceParam) || hasLocationOverride);
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
@@ -163,17 +166,33 @@ export async function GET(req) {
       );
     }
 
-    const bundle = await ensureForecastBundle({
-      userId: user.id,
-      targetDate,
-      location,
-      force,
-    });
+    const bundle = cacheOnly
+      ? await getForecastBundle({ userId: user.id, targetDate, locationId: location.id })
+      : await ensureForecastBundle({
+          userId: user.id,
+          targetDate,
+          location,
+          force,
+        });
+
+    if (!bundle?.forecast || !bundle?.care_plan) {
+      return jsonUtf8(
+        {
+          ok: false,
+          error: "Cached forecast not found for this date.",
+          target_date: targetDate,
+          target_mode: mode,
+          relative_target_mode: relativeTargetMode,
+          location: serializeLocation(location),
+        },
+        404
+      );
+    }
 
     return jsonUtf8({
       ok: true,
-      cached: bundle.cached,
-      recomputed: !bundle.cached,
+      cached: cacheOnly ? true : bundle.cached,
+      recomputed: cacheOnly ? false : !bundle.cached,
       gpt_pending: !hasCompletedGpt(bundle),
       target_date: targetDate,
       target_mode: mode,
