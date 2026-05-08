@@ -1,0 +1,13 @@
+-- TODO:
+-- このファイルには、Supabase上の radar_tsubo_points からエクスポートした
+-- INSERT ... ON CONFLICT ... 文を保存する。
+--
+-- 生成方法:
+-- 1. `supabase/seeds/radar_tsubo_points_seed_export_query.sql` をSupabase SQL Editorで実行
+-- 2. 結果の insert_sql 列をコピー
+-- 3. このファイルへ貼り付ける
+--
+-- 2026-05-08時点:
+-- total_points: 36
+-- active_points: 36
+-- inactive_points: 0
