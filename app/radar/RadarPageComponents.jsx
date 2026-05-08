@@ -9,13 +9,152 @@ import {
   getPointCautions,
   getPointImageCandidates,
   getPointMatchTags,
+  formatTargetDate,
   getPointPressGuide,
   getPointReading,
   getPointRegionLabel,
   getPointRoleSummary,
   getPointSelectionReason,
+  signalLabel,
   sourceLabel,
 } from "./utils";
+
+
+export function ForecastDateRail({ tabs, activeDate, onSelect }) {
+  return (
+    <div className="-mx-1 overflow-x-auto pb-1 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex min-w-max gap-2 px-1">
+        {tabs.map((item) => {
+          const active = activeDate === item.date;
+          return (
+            <button
+              key={item.date}
+              type="button"
+              onClick={() => onSelect(item.date)}
+              className={[
+                "relative min-w-[76px] rounded-[20px] px-3.5 py-3 text-left transition-all duration-200 ring-1",
+                active
+                  ? "bg-slate-950 text-white ring-slate-950 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.85)]"
+                  : "bg-white text-slate-700 ring-slate-200 shadow-sm hover:-translate-y-0.5 hover:ring-slate-300",
+              ].join(" ")}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[13px] font-black tracking-tight">{item.label}</span>
+                {item.locked ? (
+                  <span className={active ? "text-[11px]" : "text-[11px] text-slate-400"}>🔒</span>
+                ) : null}
+              </div>
+              <div className={[
+                "mt-1 text-[10px] font-black uppercase tracking-wide",
+                active ? "text-white/70" : item.locked ? "text-slate-400" : "text-[var(--accent-ink)]/75",
+              ].join(" ")}
+              >
+                {item.subLabel}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function TodayCarryoverIntro({ forecast, targetDateLabel, onOpenDashboard }) {
+  const score = Number(forecast?.score_0_10 ?? 0);
+  const peakStart = forecast?.peak_start ? String(forecast.peak_start).slice(0, 5) : null;
+  const peakEnd = forecast?.peak_end ? String(forecast.peak_end).slice(0, 5) : null;
+  const peakLabel = peakStart && peakEnd ? `${peakStart}〜${peakEnd}` : peakStart || null;
+
+  return (
+    <Module className="overflow-hidden p-0 bg-white ring-1 ring-[#D6E3D8] shadow-sm">
+      <div className="relative px-5 py-5 bg-[linear-gradient(135deg,#F7FCF8_0%,#FFF7E7_100%)]">
+        <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-white/70 blur-2xl" />
+        <div className="relative z-10 inline-flex rounded-full bg-white/85 px-3 py-1 text-[11px] font-black text-[#285F50] ring-1 ring-[#D3E4D7] shadow-sm">
+          今日の見返し
+        </div>
+        <div className="relative z-10 mt-3 text-[20px] font-black tracking-tight text-slate-950 leading-snug">
+          昨晩の先回りケアを、
+          <br />
+          今日の山場前にも使えるように残しています。
+        </div>
+        <p className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
+          {targetDateLabel}に向けて出したケアをそのまま見返せます。いまからの細かい変動は、ダッシュボードの「今日ここから」で確認できます。
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 px-5 py-4">
+        <div className="rounded-[18px] bg-slate-50 px-3 py-3 ring-1 ring-slate-100">
+          <div className="text-[10px] font-black text-slate-400">スコア</div>
+          <div className="mt-1 text-[18px] font-black text-slate-950">{score}/10</div>
+        </div>
+        <div className="rounded-[18px] bg-slate-50 px-3 py-3 ring-1 ring-slate-100">
+          <div className="text-[10px] font-black text-slate-400">段階</div>
+          <div className="mt-1 text-[14px] font-black text-slate-950">{signalLabel(forecast?.signal ?? 0)}</div>
+        </div>
+        <div className="rounded-[18px] bg-slate-50 px-3 py-3 ring-1 ring-slate-100">
+          <div className="text-[10px] font-black text-slate-400">山場</div>
+          <div className="mt-1 text-[13px] font-black text-slate-950">{peakLabel || "—"}</div>
+        </div>
+      </div>
+
+      <div className="px-5 pb-5">
+        <Button variant="secondary" onClick={onOpenDashboard} className="w-full bg-white shadow-sm">
+          今日ここからの変動を見る
+        </Button>
+      </div>
+    </Module>
+  );
+}
+
+export function FutureForecastLockedPanel({ targetDate, onBackToTomorrow }) {
+  const label = formatTargetDate(targetDate);
+  return (
+    <Module className="overflow-hidden p-0 bg-white ring-1 ring-[#E0D8C8] shadow-sm">
+      <div className="relative px-6 py-7 bg-[linear-gradient(135deg,#FFF9EC_0%,#F5FBF7_100%)]">
+        <div className="absolute right-4 top-4 rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-[#8A6A20] ring-1 ring-[#E9D7A6]">
+          PREMIUM PREVIEW
+        </div>
+        <div className="text-[12px] font-black tracking-[0.18em] text-[#8A6A20]">{label}</div>
+        <h2 className="mt-3 text-[22px] font-black tracking-tight text-slate-950 leading-snug">
+          明後日以降の週間予報は、
+          <br />
+          先のケア計画として解放予定です。
+        </h2>
+        <p className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
+          無料では明日の予報を主役にします。数日先までのAI読み解きとケアは、コストと体験設計を分けるためPremium枠として扱います。
+        </p>
+      </div>
+
+      <div className="relative px-6 py-6">
+        <div className="pointer-events-none select-none space-y-3 blur-[3px] opacity-55">
+          <div className="rounded-[24px] bg-slate-50 p-5 ring-1 ring-slate-200">
+            <div className="h-3 w-24 rounded-full bg-slate-300" />
+            <div className="mt-4 h-8 w-36 rounded-full bg-slate-300" />
+            <div className="mt-4 h-3 w-full rounded-full bg-slate-200" />
+            <div className="mt-2 h-3 w-[82%] rounded-full bg-slate-200" />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="h-24 rounded-[20px] bg-slate-100 ring-1 ring-slate-200" />
+            <div className="h-24 rounded-[20px] bg-slate-100 ring-1 ring-slate-200" />
+            <div className="h-24 rounded-[20px] bg-slate-100 ring-1 ring-slate-200" />
+          </div>
+        </div>
+
+        <div className="absolute inset-0 flex items-center justify-center px-6">
+          <div className="rounded-[24px] bg-white/92 p-5 text-center shadow-xl ring-1 ring-slate-200 backdrop-blur-md">
+            <div className="text-[13px] font-black text-slate-900">今は明日予報を磨く段階</div>
+            <p className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
+              まずは「今日の見返し」と「明日の先回り」を中心に使える形にしています。
+            </p>
+            <Button onClick={onBackToTomorrow} className="mt-4 w-full shadow-sm">
+              明日の予報へ戻る
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Module>
+  );
+}
 
 function PointReasonLoadingBlock() {
   return (
@@ -80,7 +219,7 @@ export function LocationEditor({
           <div className="text-[18px] font-black tracking-tight text-slate-900">地域を設定する</div>
           <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
             現在地か、生活圏に近い代表地点を設定できます。
-            変更した場合は明日の予報にも反映されます。
+            変更した場合は選択中の予報にも反映されます。
           </div>
         </div>
 
@@ -315,4 +454,3 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
     </div>
   );
 }
-
