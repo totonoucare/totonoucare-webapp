@@ -84,6 +84,7 @@ supabase/         DBスキーマ管理、確認SQL、migration、seed関連
 README_AI_HANDOFF.md
 docs/AI_HANDOFF.md
 docs/PRODUCT_DIRECTION.md
+docs/PRODUCT_PLAN_V0_2.md
 docs/DB_SCHEMA_MANAGEMENT.md
 docs/DB_CURRENT_STATUS_20260508.md
 docs/RADAR_TSUBO_POINTS_MASTER_20260508.md
