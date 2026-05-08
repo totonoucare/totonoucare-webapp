@@ -1,98 +1,44 @@
 # 未病レーダー
 
-未病レーダーは、東洋医学の体質分類と天気変化を組み合わせて、今日・明日の崩れやすさとセルフケアを提案するWebアプリです。
+未病レーダーは、東洋医学の体質分類と天気変化を組み合わせて、体調が崩れやすいタイミングとセルフケアを提案するWebアプリです。
 
 コアメッセージ:
 
 > 明日の崩れやすさを、今夜の整え方に変える。
 
-単なる「今日の不調を当てるアプリ」ではなく、明日の体調変化を先回りし、今夜から整えるための未病予報アプリとして開発しています。
+このリポジトリは、開発者がiPad上でAIにコード作成を依頼し、生成されたコードをGitHubへ反映して開発しています。
 
 ---
 
-## 現在の開発方針
+## プロダクトの軸
 
-現在は、以下の体験を主軸にしています。
+未病レーダーは、単なる「今日の不調を当てるアプリ」ではなく、明日の崩れやすさを先回りし、今夜から整えるための未病予報アプリとして設計しています。
 
-```text
-明日の未病予報
-↓
-崩れやすさスコア
-↓
-響きやすい要素
-↓
-明日の山場
-↓
-今夜の先回りケア
-  ほぐす / 食べる / 暮らす
-```
-
-詳しい開発方針は以下を参照してください。
+詳しいプロダクト方針は以下を参照してください。
 
 ```text
-docs/PRODUCT_PLAN_V0_2.md
-docs/AI_HANDOFF.md
+docs/PRODUCT_DIRECTION.md
 ```
 
 ---
 
 ## 主な機能
 
-### 体質診断 v2
-
-回答から、体質タイプ・気血水・経絡傾向・天気感受性などを算出します。
-
-主な場所:
-
 ```text
-lib/diagnosis/v2/
-app/check/
-app/api/diagnosis/v2/
-```
+体質診断
+  体質・気血水・経絡傾向・天気感受性を算出する。
 
-### レーダー予報
+レーダー予報
+  天気変化、体質プロフィール、過去レビューを組み合わせて未病予報を出す。
 
-MET Norwayの天気データ、体質プロフィール、過去レビューを組み合わせて、今日/明日の崩れやすさとケア提案を生成します。
+ケア提案
+  ほぐす / 食べる / 暮らす の3方向で、今夜からできる整え方を提案する。
 
-主な場所:
+パーソナル未病カルテ
+  診断結果から、体質傾向とセルフケア方針をまとめる。
 
-```text
-lib/radar_v1/
-app/radar/
-app/api/radar/v1/
-```
-
-重要方針:
-
-- スコアや主因はルールベースで決める
-- GPTは読み解き文・食養生・表現補助に寄せる
-- GPTに診断や主因を再推論させない
-
-### パーソナル未病カルテ
-
-診断結果から、体質・天気感受性・前触れ・経絡・季節ケアなどを含むパーソナルレポートを生成します。
-
-主な場所:
-
-```text
-lib/personalKarte.js
-lib/personalKarteAi.js
-app/karte/
-app/api/karte/
-app/api/stripe/
-```
-
-### 通知
-
-PWA / Web Push を使い、夜・朝の未病予報通知を送ります。
-
-主な場所:
-
-```text
-public/sw.js
-lib/push/
-app/api/cron/radar-notifications/
-.github/workflows/
+通知
+  PWA / Web Push とcronで、夜・朝の予報通知を送る。
 ```
 
 ---
@@ -124,83 +70,33 @@ components/       UIコンポーネント
 lib/              診断・予報・カルテ・通知などの主要ロジック
 public/           画像・PWA・service worker
 .github/          GitHub Actions
-docs/             AI引き継ぎ資料・開発計画・DB/環境設定メモ
-supabase/         DBスキーマ管理・確認SQL・migration・seed
+docs/             AI引き継ぎ、プロダクト方針、DB/環境設定メモ
+supabase/         DBスキーマ管理、確認SQL、migration、seed関連
 ```
 
 ---
 
-## DB管理
+## AI引き継ぎ
 
-SupabaseのDB設計は `supabase/` 配下で管理します。
-
-```text
-supabase/schema/      現状スキーマのsnapshot。原則そのまま実行しない
-supabase/checks/      確認用SQL
-supabase/migrations/  実際にSupabase SQL Editorで実行する変更SQL
-supabase/seeds/       マスターデータ投入用SQL
-```
-
-詳しくは以下を参照してください。
+新しいAI担当は、まず以下を確認してください。
 
 ```text
-docs/DB_SCHEMA_MANAGEMENT.md
-docs/DB_CURRENT_STATUS_20260508.md
-```
-
----
-
-## 外部サービス・環境変数
-
-Supabaseだけでなく、以下の外部サービス設定を使います。
-
-```text
-Vercel Preview
-Netlify Production
-Supabase
-Supabase Auth / Google OAuth
-Stripe
-OpenAI
-MET Norway
-GitHub Actions
-Web Push / VAPID
-```
-
-環境変数名・外部サービス設定の一覧は以下を参照してください。
-
-```text
-docs/ENVIRONMENT_AND_EXTERNAL_SERVICES.md
-docs/AUTH_AND_DEPLOY_URLS_20260508.md
-.env.example
-```
-
-実際の値はGitHubに保存しないでください。  
-Vercel / Netlify / Supabase / Stripe / OpenAI / Google Cloud / GitHub Secrets 側で管理します。
-
----
-
-## AI開発引き継ぎ
-
-このプロジェクトは、AIにコード作成を依頼し、GitHub上でファイルを差し替えて開発しています。
-
-新しいAI担当は、最初に以下を読むこと。
-
-```text
-README.md
 README_AI_HANDOFF.md
 docs/AI_HANDOFF.md
+docs/PRODUCT_DIRECTION.md
+docs/DB_SCHEMA_MANAGEMENT.md
 docs/DB_CURRENT_STATUS_20260508.md
-docs/PRODUCT_PLAN_V0_2.md
+docs/RADAR_TSUBO_POINTS_MASTER_20260508.md
 docs/ENVIRONMENT_AND_EXTERNAL_SERVICES.md
 docs/AUTH_AND_DEPLOY_URLS_20260508.md
 .env.example
 ```
 
-長い修正コードや新規ファイル群は、原則ZIPで渡す運用です。
+重要:
 
----
+- 最新の進行状況はMarkdownではなく、ユーザーの最新メッセージと現行コードを優先する。
+- 日付付きのDB資料は、その時点のsnapshotとして読む。
+- 古い進捗メモや「次にやること」メモを根拠にしない。
+- 長い修正や複数ファイル変更は、原則ZIPで渡す。
+- Secret値はGitHubへ保存しない。
 
-## 注意
-
-このREADMEは、開発者・AI引き継ぎ・GitHub上での概要把握を目的にしています。  
-最新の事業方針や細かい実装状況は `docs/` 配下を確認してください。
