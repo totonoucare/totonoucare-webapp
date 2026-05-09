@@ -168,7 +168,7 @@ export default function RadarPage() {
     return json;
   }
 
-  async function saveLocationOverrideIfNeeded({ lat, lon }) {
+  async function saveLocationOverrideIfNeeded({ lat, lon, label }) {
     const nextLat = Number(lat);
     const nextLon = Number(lon);
     if (!Number.isFinite(nextLat) || !Number.isFinite(nextLon)) return null;
@@ -178,7 +178,7 @@ export default function RadarPage() {
       body: JSON.stringify({
         lat: nextLat,
         lon: nextLon,
-        label: "primary",
+        label: String(label || "現在地付近").trim() || "現在地付近",
       }),
     });
 
@@ -288,6 +288,7 @@ export default function RadarPage() {
     recompute = false,
     locationChanged = false,
     targetDate: requestedTargetDate = null,
+    locationLabel = null,
   } = {}) {
     if (!session) return;
 
@@ -311,7 +312,7 @@ export default function RadarPage() {
       const token = data?.session?.access_token;
       if (!token) throw new Error("No token");
 
-      const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon });
+      const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel });
 
       if (targetDate === today) {
         const liveRes = await fetch("/api/radar/v1/forecast/live", {
@@ -458,6 +459,7 @@ export default function RadarPage() {
           force: true,
           recompute: true,
           locationChanged: !needsLocation,
+          locationLabel: "現在地付近",
         });
 
         setLocating(false);
@@ -499,6 +501,7 @@ export default function RadarPage() {
         force: true,
         recompute: true,
         locationChanged: !needsLocation,
+        locationLabel: preset.label,
       });
 
       if (!needsLocation) {
