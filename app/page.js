@@ -549,7 +549,9 @@ export default function HomePage() {
 
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [todayLoading, setTodayLoading] = useState(false);
+  const [tomorrowLoading, setTomorrowLoading] = useState(false);
   const [todayBundle, setTodayBundle] = useState(null);
+  const [tomorrowBundle, setTomorrowBundle] = useState(null);
   const [latestResult, setLatestResult] = useState(null);
 
   const isLoggedIn = !!session;
@@ -621,13 +623,18 @@ export default function HomePage() {
     (async () => {
       if (!session) {
         setTodayBundle(null);
+        setTomorrowBundle(null);
         setLatestResult(null);
         setTodayLoading(false);
+        setTomorrowLoading(false);
         setDashboardLoading(false);
         return;
       }
 
+      const tomorrow = getJstDateString(1);
+
       setTodayLoading(true);
+      setTomorrowLoading(true);
 
       async function loadTodayLiveCard() {
         try {
@@ -647,9 +654,37 @@ export default function HomePage() {
         }
       }
 
+      async function loadTomorrowForecastCard() {
+        try {
+          setTomorrowLoading(true);
+          // ダッシュボードは保存済みの明日予報を軽く見せるだけ。
+          // ここでは天気APIの再計算もAI生成も走らせない。
+          const bundle = await authedFetch(`/api/radar/v1/forecast?date=${tomorrow}&cache_only=1`);
+          if (cancelled) return;
 
+          if (!bundle?.forecast || !bundle?.care_plan) {
+            setTomorrowBundle({
+              ok: false,
+              error: "明日の予報はまだ準備中です。詳しい予報ページで確認してください。",
+            });
+          } else {
+            setTomorrowBundle(bundle);
+          }
+        } catch (e) {
+          console.error(`tomorrow forecast card load failed:`, e);
+          if (!cancelled) {
+            setTomorrowBundle({
+              ok: false,
+              error: e?.message || "明日の予報を読み込めませんでした。",
+            });
+          }
+        } finally {
+          if (!cancelled) setTomorrowLoading(false);
+        }
+      }
 
       loadTodayLiveCard();
+      loadTomorrowForecastCard();
       try {
         setDashboardLoading(true);
         const historyRes = await authedFetch(`/api/diagnosis/v2/events/list?limit=1`).catch(() => null);
@@ -917,7 +952,33 @@ export default function HomePage() {
         </div>
       </Module>
 
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
+              <IconBolt className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-[18px] font-black tracking-tight text-slate-900">明日の未病予報</div>
+              <div className="mt-0.5 text-[11px] font-extrabold text-slate-500">明日の山場と整え方をチェック</div>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/radar")}>詳しく見る</Button>
+        </div>
 
+        <div className="mt-5">
+          <ForecastMiniCard
+            title={`明日 ${formatYmdJP(getJstDateString(1))}`}
+            bundle={tomorrowBundle}
+            loading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
+            eyebrow="明日響きやすい要素"
+            scoreLabel="先回りスコア"
+            memo={tomorrowBundle?.ok ? `明日の山場: ${formatPeakWindow(tomorrowBundle.forecast)}。今夜の整え方まで見ておきましょう。` : null}
+            onClick={() => router.push("/radar")}
+            ctaLabel="明日の予報を開く"
+          />
+        </div>
+      </Module>
 
       <PersonalKarteSpotlight
         core={core}
@@ -1034,3 +1095,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
