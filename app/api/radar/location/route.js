@@ -5,6 +5,10 @@ import {
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
+import {
+  getSafeLocationLabelHint,
+  serializeDisplayableRadarLocation,
+} from "@/lib/radar_v1/locationDisplay";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,19 +20,6 @@ function jsonUtf8(payload, status = 200) {
   });
 }
 
-function serializeLocation(location) {
-  if (!location) return null;
-  return {
-    id: location.id,
-    lat: location.lat,
-    lon: location.lon,
-    timezone: location.timezone,
-    label: location.label || null,
-    display_name: location.display_name || null,
-    region_name: location.region_name || null,
-    updated_at: location.updated_at || null,
-  };
-}
 
 async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) {
   const meta = await resolveRadarLocationMeta({ lat, lon, labelHint });
@@ -37,8 +28,8 @@ async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) 
     lat,
     lon,
     timezone,
-    label: meta.label || labelHint || "primary",
-    displayName: meta.display_name,
+    label: meta.label || labelHint || "現在地付近",
+    displayName: meta.display_name || labelHint || "現在地付近",
     regionName: meta.region_name,
   });
 }
@@ -91,7 +82,7 @@ async function getDisplayablePrimaryLocation({ userId }) {
       lat: Number(location.lat),
       lon: Number(location.lon),
       timezone: location.timezone || "Asia/Tokyo",
-      labelHint: location.label || "primary",
+      labelHint: getSafeLocationLabelHint(location, "現在地付近"),
     });
   }
 
@@ -104,7 +95,7 @@ export async function GET(req) {
     if (!user?.id) return jsonUtf8({ ok: false, error: error || "Unauthorized" }, 401);
 
     const location = await getDisplayablePrimaryLocation({ userId: user.id });
-    return jsonUtf8({ ok: true, location: serializeLocation(location) });
+    return jsonUtf8({ ok: true, location: serializeDisplayableRadarLocation(location, "現在地付近") });
   } catch (error) {
     console.error("/api/radar/location GET error:", error);
     return jsonUtf8({ ok: false, error: String(error?.message || error) }, 500);
@@ -119,7 +110,7 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     const lat = Number(body.lat);
     const lon = Number(body.lon);
-    const labelHint = String(body.label || body.label_hint || "primary").trim() || "primary";
+    const labelHint = String(body.label || body.label_hint || "現在地付近").trim() || "現在地付近";
 
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
       return jsonUtf8({ ok: false, error: "Invalid lat/lon" }, 400);
@@ -133,9 +124,10 @@ export async function POST(req) {
       labelHint,
     });
 
-    return jsonUtf8({ ok: true, location: serializeLocation(location) });
+    return jsonUtf8({ ok: true, location: serializeDisplayableRadarLocation(location, "現在地付近") });
   } catch (error) {
     console.error("/api/radar/location POST error:", error);
     return jsonUtf8({ ok: false, error: String(error?.message || error) }, 500);
   }
 }
+
