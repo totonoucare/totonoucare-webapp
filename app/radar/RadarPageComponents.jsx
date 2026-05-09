@@ -10,6 +10,10 @@ import {
   getPointImageCandidates,
   getPointMatchTags,
   formatTargetDate,
+  getForecastTriggerFactors,
+  getForecastTriggerKey,
+  getLifestylePlan,
+  safeArray,
   getPointPressGuide,
   getPointReading,
   getPointRegionLabel,
@@ -34,8 +38,8 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               className={[
                 "relative min-w-[76px] rounded-[20px] px-3.5 py-3 text-left transition-all duration-200 ring-1",
                 active
-                  ? "bg-slate-950 text-white ring-slate-950 shadow-[0_14px_30px_-22px_rgba(15,23,42,0.85)]"
-                  : "bg-white text-slate-700 ring-slate-200 shadow-sm hover:-translate-y-0.5 hover:ring-slate-300",
+                  ? "bg-[#FFF5E8] text-[#3F3025] ring-[#D8B892] shadow-[0_14px_30px_-22px_rgba(161,116,62,0.55)]"
+                  : "bg-white text-[#4A4039] ring-[#E3D7CC] shadow-sm hover:-translate-y-0.5 hover:bg-[#FFF9F2] hover:ring-[#D8C6B4]",
               ].join(" ")}
             >
               <div className="flex items-center justify-between gap-2">
@@ -46,7 +50,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               </div>
               <div className={[
                 "mt-1 text-[10px] font-black uppercase tracking-wide",
-                active ? "text-white/70" : item.locked ? "text-slate-400" : "text-[var(--accent-ink)]/75",
+                active ? "text-[#9B6A38]" : item.locked ? "text-slate-400" : "text-[var(--accent-ink)]/75",
               ].join(" ")}
               >
                 {item.subLabel}
@@ -78,7 +82,7 @@ export function TodayCarryoverIntro({ forecast, targetDateLabel, onOpenDashboard
           今日の山場前にも使えるように残しています。
         </div>
         <p className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
-          {targetDateLabel}に向けて出したケアをそのまま見返せます。いまからの細かい変動は、ダッシュボードの「今日ここから」で確認できます。
+          {targetDateLabel}に向けて出したケアをそのまま見返せます。いまからの細かい変動は、ダッシュボードの「今日これから」で確認できます。
         </p>
       </div>
 
@@ -99,58 +103,8 @@ export function TodayCarryoverIntro({ forecast, targetDateLabel, onOpenDashboard
 
       <div className="px-5 pb-5">
         <Button variant="secondary" onClick={onOpenDashboard} className="w-full bg-white shadow-sm">
-          今日ここからの変動を見る
+          今日これからの変動を見る
         </Button>
-      </div>
-    </Module>
-  );
-}
-
-export function FutureForecastLockedPanel({ targetDate, onBackToTomorrow }) {
-  const label = formatTargetDate(targetDate);
-  return (
-    <Module className="overflow-hidden p-0 bg-white ring-1 ring-[#E0D8C8] shadow-sm">
-      <div className="relative px-6 py-7 bg-[linear-gradient(135deg,#FFF9EC_0%,#F5FBF7_100%)]">
-        <div className="absolute right-4 top-4 rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-[#8A6A20] ring-1 ring-[#E9D7A6]">
-          PREMIUM PREVIEW
-        </div>
-        <div className="text-[12px] font-black tracking-[0.18em] text-[#8A6A20]">{label}</div>
-        <h2 className="mt-3 text-[22px] font-black tracking-tight text-slate-950 leading-snug">
-          明後日以降の週間予報は、
-          <br />
-          先のケア計画として解放予定です。
-        </h2>
-        <p className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
-          無料では明日の予報を主役にします。数日先までのAI読み解きとケアは、コストと体験設計を分けるためPremium枠として扱います。
-        </p>
-      </div>
-
-      <div className="relative px-6 py-6">
-        <div className="pointer-events-none select-none space-y-3 blur-[3px] opacity-55">
-          <div className="rounded-[24px] bg-slate-50 p-5 ring-1 ring-slate-200">
-            <div className="h-3 w-24 rounded-full bg-slate-300" />
-            <div className="mt-4 h-8 w-36 rounded-full bg-slate-300" />
-            <div className="mt-4 h-3 w-full rounded-full bg-slate-200" />
-            <div className="mt-2 h-3 w-[82%] rounded-full bg-slate-200" />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="h-24 rounded-[20px] bg-slate-100 ring-1 ring-slate-200" />
-            <div className="h-24 rounded-[20px] bg-slate-100 ring-1 ring-slate-200" />
-            <div className="h-24 rounded-[20px] bg-slate-100 ring-1 ring-slate-200" />
-          </div>
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center px-6">
-          <div className="rounded-[24px] bg-white/92 p-5 text-center shadow-xl ring-1 ring-slate-200 backdrop-blur-md">
-            <div className="text-[13px] font-black text-slate-900">今は明日予報を磨く段階</div>
-            <p className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
-              まずは「今日の見返し」と「明日の先回り」を中心に使える形にしています。
-            </p>
-            <Button onClick={onBackToTomorrow} className="mt-4 w-full shadow-sm">
-              明日の予報へ戻る
-            </Button>
-          </div>
-        </div>
       </div>
     </Module>
   );
@@ -456,3 +410,110 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
 }
 
 
+function SmallCareTabs({ value, onChange }) {
+  return (
+    <div className="mt-4 flex rounded-2xl bg-[#F8F1EA] p-1">
+      {[
+        ["tsubo", "ほぐす"],
+        ["food", "食べる"],
+        ["life", "暮らす"],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => onChange(key)}
+          className={`flex-1 rounded-xl px-3 py-2 text-xs font-black transition ${
+            value === key ? "bg-white text-[#6F543E] shadow-sm" : "text-[#8C7A6A]"
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SavedCareReviewAccordion({ bundle }) {
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("tsubo");
+  const forecast = bundle?.forecast || null;
+  const carePlan = bundle?.care_plan || null;
+  const points = safeArray(carePlan?.night_tsubo_set?.points);
+  const food = carePlan?.tomorrow_food_context || carePlan?.night_food || null;
+  const factors = getForecastTriggerFactors(forecast);
+  const lifestyle = getLifestylePlan(factors[0]?.key || getForecastTriggerKey(forecast), factors[1]?.key || null, Number(forecast?.signal ?? 0));
+
+  if (!carePlan) return null;
+
+  return (
+    <Module>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+      >
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#9B7A5B]">CARE REVIEW</p>
+          <h2 className="mt-1 text-lg font-black text-[#2F2F2F]">昨晩の先回りケアを見返す</h2>
+          <p className="mt-1 text-xs leading-relaxed text-[#7B6D60]">
+            昨晩の予報で出したケアです。今日の昼・夕方にもう一度使えそうなものだけ、必要な時に開いて見返せます。
+          </p>
+        </div>
+        <span className={`shrink-0 text-lg font-black text-[#8C7A6A] transition ${open ? "rotate-180" : ""}`}>⌄</span>
+      </button>
+
+      {open ? (
+        <div className="mt-4 border-t border-[#EFE4D8] pt-4">
+          <SmallCareTabs value={tab} onChange={setTab} />
+
+          {tab === "tsubo" ? (
+            <div className="mt-4 space-y-3">
+              {points.length ? (
+                points.slice(0, 3).map((point, index) => (
+                  <div key={point?.code || index} className="rounded-2xl bg-[#FFF9F2] p-4 ring-1 ring-[#EFE1D2]">
+                    <div className="text-sm font-black text-[#3F3025]">
+                      {point?.name_ja || "ツボ"}
+                      {point?.reading_ja ? <span className="ml-2 text-xs text-[#9B7A5B]">{point.reading_ja}</span> : null}
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-[#6D6257]">
+                      {point?.explanation?.selection_reason || point?.explanation?.role_summary || "昨晩の予報に合わせて選んだツボです。"}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-[#7B6D60]">昨晩のツボケアはまだ保存されていません。</p>
+              )}
+            </div>
+          ) : null}
+
+          {tab === "food" ? (
+            <div className="mt-4 rounded-2xl bg-[#FFFDF8] p-4 ring-1 ring-[#EFE1D2]">
+              <div className="text-sm font-black text-[#3F3025]">{food?.title || "食べるケア"}</div>
+              <p className="mt-2 text-sm leading-relaxed text-[#4F463D]">
+                {food?.recommendation || carePlan?.night_food_reason || "昨晩の予報に合わせた食養生です。今日の食事にも使えそうなら取り入れてください。"}
+              </p>
+              {food?.avoid || carePlan?.tomorrow_caution ? (
+                <p className="mt-3 text-xs leading-relaxed text-[#8A6B4D]">避けたい重ね方：{food?.avoid || carePlan.tomorrow_caution}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {tab === "life" ? (
+            <div className="mt-4 rounded-2xl bg-[#FBF8F2] p-4 ring-1 ring-[#EFE1D2]">
+              <div className="text-sm font-black text-[#3F3025]">{lifestyle?.title || "暮らしの一手"}</div>
+              <p className="mt-2 text-sm leading-relaxed text-[#4F463D]">{lifestyle?.lead || "昨晩の予報に合わせた身の回りケアです。"}</p>
+              <ul className="mt-3 space-y-2">
+                {safeArray(lifestyle?.steps).slice(0, 3).map((step, index) => (
+                  <li key={index} className="flex gap-2 text-xs leading-relaxed text-[#6D6257]">
+                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#CFA879]" />
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </Module>
+  );
+}
