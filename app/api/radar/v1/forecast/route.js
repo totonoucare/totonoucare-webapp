@@ -14,6 +14,7 @@ import {
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
 import {
   getSafeLocationLabelHint,
+  isVisibleLocationLabel,
   serializeDisplayableRadarLocation,
 } from "@/lib/radar_v1/locationDisplay";
 
@@ -169,7 +170,8 @@ export async function GET(req) {
     } else {
       location = await getPrimaryRadarLocation({ userId: user.id });
 
-      if (location && (!location.display_name || !location.region_name)) {
+      const hasHiddenLabel = location ? !isVisibleLocationLabel(location.label) : false;
+      if (location && (hasHiddenLabel || !location.display_name || !location.region_name)) {
         location = await enrichAndSaveLocation({
           userId: user.id,
           lat: Number(location.lat),
