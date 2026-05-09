@@ -90,8 +90,16 @@ function serializeLocation(location) {
   };
 }
 
+function getPersistedGptSummary(bundle) {
+  return String(
+    bundle?.forecast?.gpt_summary ||
+      bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
+      ""
+  ).trim();
+}
+
 function hasCompletedGpt(bundle) {
-  return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
+  return Boolean(getPersistedGptSummary(bundle));
 }
 
 function buildRadarPlanFromExistingBundle(existing) {
@@ -309,26 +317,36 @@ export async function GET(req) {
       vendorMeta: vendorMeta || {},
     });
 
-    const carePlan = await saveCarePlan({
+    await saveCarePlan({
       forecastId: forecast.id,
       radarPlan,
     });
 
+    // 返却値は「保存できたつもり」のメモリ上オブジェクトではなく、必ずDBから読み直す。
+    // これにより、初回表示では生成文が見えるのに再表示ではwhy_shortへ戻る事故を検知・防止する。
+    const persisted = await getForecastBundle({
+      userId: user.id,
+      targetDate,
+    });
+
+    const persistedSummary = getPersistedGptSummary(persisted);
+
     return jsonUtf8({
       ok: true,
       cached: false,
-      gpt_pending: !gptSummaryText,
+      gpt_pending: !persistedSummary,
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
       location: serializeLocation(location),
-      forecast,
-      care_plan: carePlan,
+      forecast: persisted?.forecast || forecast,
+      care_plan: persisted?.care_plan || null,
       debug: {
         point_count: normalized?.points?.length ?? null,
         partial_day: Array.isArray(normalized?.points) ? normalized.points.length < 24 : null,
         from_cache: false,
         enriched_from_existing: enrichedFromExisting,
+        persisted_gpt_summary: Boolean(persistedSummary),
       },
     });
   } catch (error) {
