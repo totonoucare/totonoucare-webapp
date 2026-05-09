@@ -16,6 +16,7 @@ import HeroGuideBot from "@/components/illust/home/HeroGuideBot";
 import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
 import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
+import { getDisplayableLocationName } from "@/lib/radar_v1/locationDisplay";
 
 const SESSION_TIMEOUT_MS = 5000;
 
@@ -486,7 +487,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
           <div className="text-[15px] font-black tracking-tight text-slate-950">{title}</div>
           <div className="mt-1 flex items-center gap-1 text-[11px] font-extrabold text-slate-600">
             <IconPin />
-            {location.display_name || location.label || "地域未設定"}
+            {getDisplayableLocationName(location, "地域未設定")}
           </div>
         </div>
         <span className={[
@@ -1104,3 +1105,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
