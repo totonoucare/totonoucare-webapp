@@ -838,41 +838,11 @@ export default function RadarPage() {
 
 
       <div className="space-y-6">
-          <div className="rounded-[24px] bg-white px-5 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
-            <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/70">
-              {selectedIsToday ? "TODAY FORECAST" : "TOMORROW FORECAST"}
-            </div>
-            <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">
-              {selectedIsToday
-                ? "今日これからの崩れやすさを確認します。"
-                : "明日の不調を、今夜から先回りします。"}
-            </div>
-            <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-500">
-              {selectedIsToday
-                ? "このあと響きやすい時間と、今日これから使えるケアを表示します。昨晩の先回りケアは下の開閉カードに残しています。"
-                : "山場と響きやすい要素を見て、今夜から明日にかけた整え方を選びましょう。"}
-            </div>
-          </div>
-
           {error && !showLocationEditor ? (
             <div className="rounded-[16px] bg-rose-50 px-4 py-3 text-[13px] font-bold text-rose-700 ring-1 ring-inset ring-rose-200">
               {error}
             </div>
           ) : null}
-
-          {selectedIsToday ? (
-            <div className="rounded-[24px] bg-white px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-slate-200 shadow-sm">
-              今日これから先の変化を、開いた時点で再計算しています。昨晩の先回りケアは下のカードから見返せます。
-              <button
-                type="button"
-                onClick={() => router.push("/dashboard")}
-                className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-[#E2F1EA] px-4 py-3 text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] transition-all active:scale-95"
-              >
-                ダッシュボードで今日これからを見る
-              </button>
-            </div>
-          ) : null}
-
           <Module className="relative overflow-hidden p-4 sm:p-6">
             <div
               className={[
@@ -1553,4 +1523,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
