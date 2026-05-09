@@ -195,7 +195,7 @@ export function ForecastGauge({
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
 
   return (
-    <div className="relative mx-auto w-full max-w-[360px]">
+    <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
       <div className="relative aspect-[1/1.04]">
         <svg viewBox="0 0 340 352" className="h-full w-full overflow-visible" aria-hidden="true">
           <defs>
@@ -365,7 +365,7 @@ export function ForecastGauge({
         </svg>
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-5 py-2 text-[12px] font-black shadow-sm backdrop-blur-sm"
+          className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm"
           style={{
             color: tone.labelText,
             background: tone.labelBg,
@@ -379,4 +379,3 @@ export function ForecastGauge({
     </div>
   );
 }
-
