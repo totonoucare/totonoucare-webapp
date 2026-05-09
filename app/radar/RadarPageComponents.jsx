@@ -411,24 +411,50 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
 
 
 function SmallCareTabs({ value, onChange }) {
+  const tabs = [
+    ["tsubo", "ほぐす"],
+    ["food", "食べる"],
+    ["life", "暮らす"],
+  ];
+
   return (
-    <div className="mt-4 flex rounded-2xl bg-[#F8F1EA] p-1">
-      {[
-        ["tsubo", "ほぐす"],
-        ["food", "食べる"],
-        ["life", "暮らす"],
-      ].map(([key, label]) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => onChange(key)}
-          className={`flex-1 rounded-xl px-3 py-2 text-xs font-black transition ${
-            value === key ? "bg-white text-[#6F543E] shadow-sm" : "text-[#8C7A6A]"
-          }`}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="flex rounded-full bg-[#F3ECE4] p-1 ring-1 ring-inset ring-[#E8D8C8] shadow-inner">
+      {tabs.map(([key, label]) => {
+        const active = value === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onChange(key)}
+            className={[
+              "flex-1 rounded-full px-3 py-2.5 text-[12px] font-black tracking-tight transition-all",
+              active
+                ? "bg-white text-[#5D4430] shadow-[0_10px_22px_-18px_rgba(63,48,37,0.35)] ring-1 ring-black/5"
+                : "text-[#8C7A6A] hover:text-[#5D4430]",
+            ].join(" ")}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReviewInfoChip({ label, value }) {
+  if (!value) return null;
+  return (
+    <div className="rounded-[16px] bg-white/80 px-3 py-2 ring-1 ring-[#E9DED2] shadow-sm">
+      <div className="text-[9px] font-black uppercase tracking-widest text-[#A78A70]">{label}</div>
+      <div className="mt-0.5 text-[12px] font-black text-[#4A3930]">{value}</div>
+    </div>
+  );
+}
+
+function ReviewEmptyState({ children }) {
+  return (
+    <div className="rounded-[22px] bg-white/75 px-4 py-4 text-[13px] font-bold leading-6 text-[#7B6D60] ring-1 ring-[#E9DED2]">
+      {children}
     </div>
   );
 }
@@ -441,75 +467,137 @@ export function SavedCareReviewAccordion({ bundle }) {
   const points = safeArray(carePlan?.night_tsubo_set?.points);
   const food = carePlan?.tomorrow_food_context || carePlan?.night_food || null;
   const factors = getForecastTriggerFactors(forecast);
-  const lifestyle = getLifestylePlan(factors[0]?.key || getForecastTriggerKey(forecast), factors[1]?.key || null, Number(forecast?.signal ?? 0));
+  const lifestyle = getLifestylePlan(
+    factors[0]?.key || getForecastTriggerKey(forecast),
+    factors[1]?.key || null,
+    Number(forecast?.signal ?? 0),
+    "today"
+  );
+  const score = forecast?.score_0_10 ?? null;
+  const signal = forecast?.signal ?? null;
+  const peakStart = forecast?.peak_start ? String(forecast.peak_start).slice(0, 5) : null;
+  const peakEnd = forecast?.peak_end ? String(forecast.peak_end).slice(0, 5) : null;
+  const peakLabel = peakStart && peakEnd ? `${peakStart}–${peakEnd}` : peakStart || null;
 
   if (!carePlan) return null;
 
   return (
-    <Module>
+    <Module className="overflow-hidden bg-white p-0 ring-[#E6DACE] shadow-[0_18px_42px_-30px_rgba(93,68,48,0.30)]">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="relative w-full overflow-hidden px-5 py-5 text-left transition-all active:scale-[0.99]"
       >
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#9B7A5B]">CARE REVIEW</p>
-          <h2 className="mt-1 text-lg font-black text-[#2F2F2F]">昨晩の先回りケアを見返す</h2>
-          <p className="mt-1 text-xs leading-relaxed text-[#7B6D60]">
-            昨晩の予報で出したケアです。今日の昼・夕方にもう一度使えそうなものだけ、必要な時に開いて見返せます。
-          </p>
+        <div className="pointer-events-none absolute -left-10 -top-12 h-32 w-32 rounded-full bg-[#FFF1DF] blur-2xl" />
+        <div className="pointer-events-none absolute -right-8 top-2 h-28 w-28 rounded-full border border-[#EADCCB] bg-[#FFF9F0]/70" />
+
+        <div className="relative z-10 flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="inline-flex rounded-full bg-[#FFF7EC] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#9B6A38] ring-1 ring-[#E9D8C3]">
+              Care Review
+            </div>
+            <h2 className="mt-3 text-[20px] font-black tracking-tight text-slate-950 leading-snug">
+              昨晩の先回りケアを見返す
+            </h2>
+            <p className="mt-2 text-[12px] font-bold leading-6 text-[#7B6D60]">
+              昨晩の予報で出たケアです。今日の昼・夕方にも使えそうなものだけ、必要な時に開いて見返せます。
+            </p>
+          </div>
+
+          <div
+            className={[
+              "grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-[#8C6A4C] ring-1 ring-[#E7D8C8] shadow-sm transition-transform",
+              open ? "rotate-180" : "",
+            ].join(" ")}
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
         </div>
-        <span className={`shrink-0 text-lg font-black text-[#8C7A6A] transition ${open ? "rotate-180" : ""}`}>⌄</span>
+
+        <div className="relative z-10 mt-4 grid grid-cols-3 gap-2">
+          <ReviewInfoChip label="スコア" value={score != null ? `${score}/10` : null} />
+          <ReviewInfoChip label="段階" value={signal != null ? signalLabel(signal) : null} />
+          <ReviewInfoChip label="山場" value={peakLabel || "見返し"} />
+        </div>
       </button>
 
       {open ? (
-        <div className="mt-4 border-t border-[#EFE4D8] pt-4">
+        <div className="border-t border-[#EFE4D8] bg-[#FFFCF8] px-5 pb-5 pt-4">
           <SmallCareTabs value={tab} onChange={setTab} />
 
           {tab === "tsubo" ? (
             <div className="mt-4 space-y-3">
               {points.length ? (
                 points.slice(0, 3).map((point, index) => (
-                  <div key={point?.code || index} className="rounded-2xl bg-[#FFF9F2] p-4 ring-1 ring-[#EFE1D2]">
-                    <div className="text-sm font-black text-[#3F3025]">
-                      {point?.name_ja || "ツボ"}
-                      {point?.reading_ja ? <span className="ml-2 text-xs text-[#9B7A5B]">{point.reading_ja}</span> : null}
+                  <div key={point?.code || index} className="rounded-[24px] bg-white p-4 ring-1 ring-[#E8DACE] shadow-[0_14px_28px_-24px_rgba(93,68,48,0.32)]">
+                    <div className="flex items-start gap-3">
+                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-[#FFF7EC] text-[12px] font-black text-[#6F543E] ring-1 ring-[#E9D8C3]">
+                        {point?.code || index + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                          <div className="text-[16px] font-black tracking-tight text-[#3F3025]">{point?.name_ja || "ツボ"}</div>
+                          {getPointReading(point) ? (
+                            <div className="text-[11px] font-black text-[#9B7A5B]">{getPointReading(point)}</div>
+                          ) : null}
+                        </div>
+                        <p className="mt-2 text-[12px] font-bold leading-6 text-[#6D6257]">
+                          {getPointSelectionReason(point) || getPointRoleSummary(point) || "昨晩の予報に合わせて選んだツボです。"}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-2 text-xs leading-relaxed text-[#6D6257]">
-                      {point?.explanation?.selection_reason || point?.explanation?.role_summary || "昨晩の予報に合わせて選んだツボです。"}
-                    </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-[#7B6D60]">昨晩のツボケアはまだ保存されていません。</p>
+                <ReviewEmptyState>昨晩のツボケアはまだ保存されていません。</ReviewEmptyState>
               )}
             </div>
           ) : null}
 
           {tab === "food" ? (
-            <div className="mt-4 rounded-2xl bg-[#FFFDF8] p-4 ring-1 ring-[#EFE1D2]">
-              <div className="text-sm font-black text-[#3F3025]">{food?.title || "食べるケア"}</div>
-              <p className="mt-2 text-sm leading-relaxed text-[#4F463D]">
-                {food?.recommendation || carePlan?.night_food_reason || "昨晩の予報に合わせた食養生です。今日の食事にも使えそうなら取り入れてください。"}
-              </p>
+            <div className="mt-4 overflow-hidden rounded-[24px] bg-white ring-1 ring-[#E8DACE] shadow-[0_14px_28px_-24px_rgba(93,68,48,0.32)]">
+              <div className="px-5 py-5">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#A78A70]">食べる</div>
+                <div className="mt-1 text-[17px] font-black tracking-tight text-[#3F3025]">{food?.title || "食べるケア"}</div>
+                <p className="mt-3 text-[13px] font-bold leading-6 text-[#4F463D]">
+                  {food?.recommendation || carePlan?.night_food_reason || "昨晩の予報に合わせた食養生です。今日の食事にも使えそうなら取り入れてください。"}
+                </p>
+              </div>
               {food?.avoid || carePlan?.tomorrow_caution ? (
-                <p className="mt-3 text-xs leading-relaxed text-[#8A6B4D]">避けたい重ね方：{food?.avoid || carePlan.tomorrow_caution}</p>
+                <div className="border-t border-[#EFE4D8] bg-[#FFF7EC] px-5 py-4">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-[#A66B38]">避けたい重ね方</div>
+                  <p className="mt-1.5 text-[12px] font-extrabold leading-6 text-[#7A5638]">
+                    {food?.avoid || carePlan.tomorrow_caution}
+                  </p>
+                </div>
               ) : null}
             </div>
           ) : null}
 
           {tab === "life" ? (
-            <div className="mt-4 rounded-2xl bg-[#FBF8F2] p-4 ring-1 ring-[#EFE1D2]">
-              <div className="text-sm font-black text-[#3F3025]">{lifestyle?.title || "暮らしの一手"}</div>
-              <p className="mt-2 text-sm leading-relaxed text-[#4F463D]">{lifestyle?.lead || "昨晩の予報に合わせた身の回りケアです。"}</p>
-              <ul className="mt-3 space-y-2">
-                {safeArray(lifestyle?.steps).slice(0, 3).map((step, index) => (
-                  <li key={index} className="flex gap-2 text-xs leading-relaxed text-[#6D6257]">
-                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#CFA879]" />
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-4 overflow-hidden rounded-[24px] bg-white ring-1 ring-[#E8DACE] shadow-[0_14px_28px_-24px_rgba(93,68,48,0.32)]">
+              <div className="px-5 py-5">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#A78A70]">暮らす</div>
+                <div className="mt-1 text-[17px] font-black tracking-tight text-[#3F3025]">{lifestyle?.title || "暮らしの一手"}</div>
+                <p className="mt-3 text-[13px] font-bold leading-6 text-[#4F463D]">
+                  {lifestyle?.lead || "昨晩の予報に合わせた身の回りケアです。"}
+                </p>
+              </div>
+              <div className="border-t border-[#EFE4D8] bg-[#FFFDF8] px-5 py-4">
+                <div className="space-y-2.5">
+                  {safeArray(lifestyle?.steps).slice(0, 3).map((step, index) => (
+                    <div key={index} className="flex items-start gap-3 rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#EFE4D8] shadow-sm">
+                      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#FFF7EC] text-[11px] font-black text-[#7A5638] ring-1 ring-[#E9D8C3]">
+                        {index + 1}
+                      </div>
+                      <div className="text-[12px] font-extrabold leading-6 text-[#6D6257]">{step}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           ) : null}
         </div>
@@ -517,3 +605,4 @@ export function SavedCareReviewAccordion({ bundle }) {
     </Module>
   );
 }
+
