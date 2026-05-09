@@ -843,10 +843,10 @@ export default function RadarPage() {
               {error}
             </div>
           ) : null}
-          <Module className="relative overflow-hidden p-4 sm:p-6">
+          <Module className="relative overflow-hidden p-3.5 sm:p-5">
             <div
               className={[
-                "relative overflow-hidden rounded-[32px] px-4 py-5 shadow-[0_18px_50px_-22px_rgba(15,23,42,0.28)] sm:px-5 sm:py-5",
+                "relative overflow-hidden rounded-[30px] px-3.5 py-4 shadow-[0_18px_50px_-22px_rgba(15,23,42,0.28)] sm:px-5 sm:py-5",
                 getHeroPanelClass(forecast.signal),
               ].join(" ")}
             >
@@ -868,14 +868,14 @@ export default function RadarPage() {
                   getHeroDecorClass(forecast.signal),
                 ].join(" ")}
               />
-              <div className="pointer-events-none absolute left-1/2 top-[110px] h-[260px] w-[260px] -translate-x-1/2 rounded-full border border-white/35 opacity-80" />
-              <div className="pointer-events-none absolute left-1/2 top-[142px] h-[180px] w-[180px] -translate-x-1/2 rounded-full border border-white/20 opacity-70" />
+              <div className="pointer-events-none absolute left-1/2 top-[94px] h-[220px] w-[220px] -translate-x-1/2 rounded-full border border-white/35 opacity-80" />
+              <div className="pointer-events-none absolute left-1/2 top-[124px] h-[150px] w-[150px] -translate-x-1/2 rounded-full border border-white/20 opacity-70" />
 
               <div className="relative">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="grid h-14 w-14 place-items-center rounded-[18px] bg-white/78 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
-                      <IconRadar className="h-9 w-9" />
+                    <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-white/78 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
+                      <IconRadar className="h-7 w-7" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[15px] font-black tracking-tight text-slate-900">
@@ -903,8 +903,8 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="relative mt-5 rounded-[28px] bg-white/62 px-4 py-5 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)]">
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:items-center">
+                <div className="relative mt-4 rounded-[26px] bg-white/62 px-3.5 py-4 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)] sm:px-4">
+                  <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-center">
                     <div className="relative">
                       <ForecastGauge
                         score={forecast.score_0_10}
@@ -912,44 +912,44 @@ export default function RadarPage() {
                         triggerKey={triggerKey}
                         animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                       />
-                      <div className="-mt-1 text-center text-[12px] font-bold leading-6 text-slate-500">
+                      <div className="-mt-2 text-center text-[11px] font-bold leading-5 text-slate-500">
                         スコアが高いほど、無理を重ねると崩れやすい目安です。
                       </div>                        
                     </div>
 
-                    <div className="grid gap-3">
-                      <div className="rounded-[24px] bg-white/80 px-4 py-4 ring-1 ring-black/5 shadow-sm">
+                    <div className="grid gap-2.5">
+                      <div className="rounded-[22px] bg-white/80 px-3.5 py-3 ring-1 ring-black/5 shadow-sm">
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                           響きやすい要素
                         </div>
 
-                        <div className="mt-3 grid gap-2.5">
+                        <div className="mt-2.5 grid gap-2">
                           {triggerFactors.map((factor, index) => (
                             <div
                               key={`${factor.key}-${index}`}
-                              className="flex items-center gap-3 rounded-[20px] bg-white/72 px-3 py-2.5 ring-1 ring-black/5 shadow-sm"
+                              className="flex items-center gap-2.5 rounded-[18px] bg-white/72 px-2.5 py-2 ring-1 ring-black/5 shadow-sm"
                             >
                               <div
                                 className={[
-                                  "grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[16px] bg-white shadow-sm ring-1 ring-black/5",
+                                  "grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white shadow-sm ring-1 ring-black/5",
                                   getHeroAccentClass(forecast.signal),
                                 ].join(" ")}
                               >
-                                <WeatherIcon triggerKey={factor.key} className="h-8 w-8" />
+                                <WeatherIcon triggerKey={factor.key} className="h-6 w-6" />
                               </div>
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[12px] font-black text-slate-400">
+                                  <span className="text-[10px] font-black text-slate-400">
                                     {index === 0 ? "中心になりやすい" : "重なりやすい"}
                                   </span>
                                   {index === 1 && (
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-500">
+                                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black text-slate-500">
                                       あわせて注意
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[19px] font-black tracking-tight text-slate-900">
+                                <div className="text-[16px] font-black tracking-tight text-slate-900">
                                   {factor.label}
                                 </div>
                               </div>
@@ -957,20 +957,20 @@ export default function RadarPage() {
                           ))}
                         </div>
 
-                        <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
+                        <div className="mt-2.5 text-[12px] font-bold leading-5 text-slate-600">
                           {moodHeadline}
                         </div>
                       </div>
 
-                      <div className="rounded-[24px] bg-white/74 px-4 py-4 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
-                        <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                            <IconBolt className="h-5 w-5" />
+                      <div className="rounded-[22px] bg-white/74 px-3.5 py-3 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                            <IconBolt className="h-4 w-4" />
                           </span>
                           {selectedIsToday ? "このあとの山場" : "明日の山場"}
                         </div>
 
-                        <div className="mt-3 text-[33px] font-black leading-none tracking-[-0.04em] text-slate-900">
+                        <div className="mt-2 text-[27px] font-black leading-none tracking-[-0.04em] text-slate-900">
                           {forecast.peak_start && forecast.peak_end
                             ? `${String(forecast.peak_start).slice(0, 5)}–${String(
                                 forecast.peak_end
