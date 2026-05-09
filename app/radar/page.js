@@ -32,18 +32,15 @@ import {
 import { ForecastGauge } from "./ForecastGauge";
 import {
   ForecastDateRail,
-  FutureForecastLockedPanel,
   LocationEditor,
   PointDetailSheet,
   SegmentedTabs,
-  TodayCarryoverIntro,
 } from "./RadarPageComponents";
 import {
   FLAT_PRESETS,
   RADAR_LOADING_HINTS,
   buildRadarDateTabs,
   buildScoreCardTitle,
-  compareIsoDate,
   formatTargetDate,
   getCareStrategyLead,
   getCareStrategyTitle,
@@ -93,6 +90,8 @@ export default function RadarPage() {
   const [enrichingForecast, setEnrichingForecast] = useState(false);
 
   const [bundle, setBundle] = useState(null);
+  const [carryoverBundle, setCarryoverBundle] = useState(null);
+  const [carryoverCareOpen, setCarryoverCareOpen] = useState(false);
   const [error, setError] = useState("");
 
   const [needsLocation, setNeedsLocation] = useState(false);
@@ -272,22 +271,13 @@ export default function RadarPage() {
     const { today, tomorrow } = getJstTodayTomorrow();
     const targetDate = requestedTargetDate || selectedTargetDate || tomorrow;
     const nextMode = inferModeFromSelectedDate(targetDate) || "tomorrow";
-
-    if (nextMode === "future" && compareIsoDate(targetDate, tomorrow) > 0) {
-      setSelectedTargetDate(targetDate);
-      setDateMode("future");
-      setError("");
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-
     const requestSeq = ++requestSeqRef.current;
 
     try {
       setSelectedTargetDate(targetDate);
       setDateMode(nextMode);
       setError("");
+      if (targetDate !== today) setCarryoverBundle(null);
       if (force) setRefreshing(true);
       if (!bundle) {
         setLoading(true);
@@ -298,12 +288,62 @@ export default function RadarPage() {
       const token = data?.session?.access_token;
       if (!token) throw new Error("No token");
 
+      if (targetDate === today) {
+        const liveRes = await fetch("/api/radar/v1/forecast/live", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        });
+
+        const liveJson = await liveRes.json().catch(() => ({}));
+
+        if (requestSeq !== requestSeqRef.current) return;
+
+        if (!liveRes.ok) {
+          if (liveJson?.error?.includes("No radar location found")) {
+            setNeedsLocation(true);
+            setBundle(null);
+            setCarryoverBundle(null);
+            return;
+          }
+          throw new Error(liveJson?.error || `HTTP ${liveRes.status}`);
+        }
+
+        let cachedCareBundle = null;
+        try {
+          const cachedRes = await fetch(`/api/radar/v1/forecast?date=${encodeURIComponent(today)}&cache_only=1`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+          });
+          const cachedJson = await cachedRes.json().catch(() => ({}));
+          if (cachedRes.ok && cachedJson?.forecast && cachedJson?.care_plan) {
+            cachedCareBundle = cachedJson;
+          }
+        } catch (cacheError) {
+          console.warn("today carryover cache load failed:", cacheError);
+        }
+
+        if (requestSeq !== requestSeqRef.current) return;
+
+        setNeedsLocation(false);
+        setBundle(liveJson);
+        setCarryoverBundle(cachedCareBundle);
+        setCarryoverCareOpen(false);
+        setEnrichingForecast(false);
+        setDateMode("today");
+        setSelectedTargetDate(today);
+
+        if (locationChanged) {
+          setLocationNotice("地域を更新しました。今日ここからの予報にも反映しました。");
+        }
+        return;
+      }
+
       const qs = new URLSearchParams();
       qs.set("date", targetDate);
-
-      if (targetDate === today) {
-        qs.set("cache_only", "1");
-      }
 
       if (lat != null && lon != null) {
         qs.set("lat", String(lat));
@@ -331,11 +371,6 @@ export default function RadarPage() {
         if (json?.error?.includes("No radar location found")) {
           setNeedsLocation(true);
           setBundle(null);
-          return;
-        }
-        if (targetDate === today && res.status === 404) {
-          setBundle(null);
-          setError("今日の見返し用予報はまだありません。明日の予報、またはダッシュボードの『今日ここから』を見てください。");
           return;
         }
         throw new Error(json?.error || `HTTP ${res.status}`);
@@ -499,11 +534,19 @@ export default function RadarPage() {
   }
 
   const forecast = bundle?.forecast || null;
-  const carePlan = bundle?.care_plan || null;
+
+  const dateTabs = useMemo(() => buildRadarDateTabs(1), []);
+  const todayTomorrow = getJstTodayTomorrow();
+  const activeTargetDate = selectedTargetDate || bundle?.target_date || todayTomorrow.tomorrow;
+  const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
+  const selectedIsToday = selectedDateMode === "today";
+  const activeCareBundle = selectedIsToday ? carryoverBundle : bundle;
+  const activeCareForecast = activeCareBundle?.forecast || forecast;
+  const carePlan = activeCareBundle?.care_plan || null;
   const tsuboSet = carePlan?.night_tsubo_set || {};
   const tsuboPoints = safeArray(tsuboSet?.points);
   const food = carePlan?.tomorrow_food_context || {};
-  const riskContext = getRiskContext(bundle);
+  const riskContext = getRiskContext(activeCareBundle || bundle);
 
   const coreCode = riskContext?.constitution_context?.core_code || null;
   const coreLabel = coreCode ? getCoreLabel(coreCode) : null;
@@ -516,19 +559,12 @@ export default function RadarPage() {
   const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomLabel = symptomFocus ? SYMPTOM_LABELS[symptomFocus] || symptomFocus : null;
 
-  const dateTabs = useMemo(() => buildRadarDateTabs(7), []);
-  const todayTomorrow = getJstTodayTomorrow();
-  const activeTargetDate = selectedTargetDate || bundle?.target_date || todayTomorrow.tomorrow;
-  const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
-  const selectedIsToday = selectedDateMode === "today";
-  const selectedIsLockedFuture = selectedDateMode === "future" && compareIsoDate(activeTargetDate, todayTomorrow.tomorrow) > 0;
-
   const bundleDateMode = useMemo(
     () => inferModeFromSelectedDate(bundle?.target_date) || inferModeFromTargetDate(bundle?.target_date) || dateMode,
     [bundle?.target_date, dateMode]
   );
 
-  const displayDateMode = selectedIsLockedFuture ? "future" : bundleDateMode;
+  const displayDateMode = selectedIsToday ? "today" : bundleDateMode;
 
   const targetDateLabel = useMemo(
     () => formatTargetDate(activeTargetDate),
@@ -557,18 +593,20 @@ export default function RadarPage() {
     () => getMoodHeadline(triggerKey, forecast?.signal ?? 0, displayDateMode),
     [triggerKey, forecast?.signal, displayDateMode]
   );
-  const secondaryTriggerKey = triggerFactors[1]?.key || null;
+  const careTriggerFactors = useMemo(() => getForecastTriggerFactors(activeCareForecast), [activeCareForecast]);
+  const careTriggerKey = careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
+  const secondaryCareTriggerKey = careTriggerFactors[1]?.key || null;
   const careStrategyTitle = useMemo(
-    () => getCareStrategyTitle(triggerKey, forecast?.signal ?? 0),
-    [triggerKey, forecast?.signal]
+    () => getCareStrategyTitle(careTriggerKey, activeCareForecast?.signal ?? 0),
+    [careTriggerKey, activeCareForecast?.signal]
   );
   const careStrategyLead = useMemo(
-    () => getCareStrategyLead(triggerFactors, forecast?.signal ?? 0),
-    [triggerFactors, forecast?.signal]
+    () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0),
+    [careTriggerFactors, activeCareForecast?.signal]
   );
   const lifestylePlan = useMemo(
-    () => getLifestylePlan(triggerKey, secondaryTriggerKey, forecast?.signal ?? 0),
-    [triggerKey, secondaryTriggerKey, forecast?.signal]
+    () => getLifestylePlan(careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal ?? 0),
+    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal]
   );
   const primaryTsubo = tsuboPoints[0] || null;
   const extraTsuboPoints = tsuboPoints.slice(1);
@@ -598,11 +636,6 @@ export default function RadarPage() {
     setDateMode(nextMode);
     setTab("forecast");
     setError("");
-
-    if (nextMode === "future" && compareIsoDate(nextDate, todayTomorrow.tomorrow) > 0) {
-      setLoading(false);
-      return;
-    }
 
     fetchForecast({ force: true, targetDate: nextDate });
   }
@@ -716,73 +749,7 @@ export default function RadarPage() {
     );
   }
 
-  if (selectedIsToday && (!bundle || !forecast || !carePlan)) {
-    return (
-      <AppShell title="体調予報" subtitle="今日の見返し">
-        <ForecastDateRail
-          tabs={dateTabs}
-          activeDate={activeTargetDate}
-          onSelect={selectTargetDate}
-        />
-        <Module className="p-5 bg-white ring-1 ring-slate-200 shadow-sm">
-          <div className="text-[12px] font-black uppercase tracking-widest text-[#255F4F]/70">
-            CARE REVIEW
-          </div>
-          <h2 className="mt-2 text-[20px] font-black tracking-tight text-slate-950">
-            今日の見返し用ケアはまだありません。
-          </h2>
-          <p className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
-            前日の夕方に明日予報が作られると、翌日ここでケアを見返せます。いまの変動はダッシュボードで確認できます。
-          </p>
-          {error ? (
-            <div className="mt-4 rounded-[16px] bg-rose-50 px-4 py-3 text-[12px] font-bold leading-5 text-rose-700 ring-1 ring-rose-200">
-              {error}
-            </div>
-          ) : null}
-          <div className="mt-5 grid gap-2">
-            <Button onClick={() => selectTargetDate(todayTomorrow.tomorrow)} className="w-full shadow-sm">
-              明日の予報を見る
-            </Button>
-            <Button variant="secondary" onClick={() => router.push("/dashboard")} className="w-full bg-white shadow-sm">
-              今日ここからを見る
-            </Button>
-          </div>
-        </Module>
-      </AppShell>
-    );
-  }
-
-  if (selectedIsLockedFuture) {
-    return (
-      <AppShell
-        title="体調予報"
-        subtitle={targetDateLabel}
-        headerRight={
-          bundle?.location ? (
-            <button
-              onClick={() => setShowLocationEditor(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
-            >
-              <span className="text-[14px]">📍</span> {locationDisplayLabel}
-            </button>
-          ) : null
-        }
-      >
-        <ForecastDateRail
-          tabs={dateTabs}
-          activeDate={activeTargetDate}
-          onSelect={selectTargetDate}
-        />
-
-        <FutureForecastLockedPanel
-          targetDate={activeTargetDate}
-          onBackToTomorrow={() => selectTargetDate(todayTomorrow.tomorrow)}
-        />
-      </AppShell>
-    );
-  }
-
-  if (!bundle || !forecast || !carePlan) {
+  if (!bundle || !forecast) {
     return (
       <AppShell title="体調予報" subtitle="予報を読み込めませんでした">
         <Module className="p-6">
@@ -862,12 +829,12 @@ export default function RadarPage() {
             </div>
             <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">
               {selectedIsToday
-                ? "今日のために残した、昨晩の先回りケアです。"
+                ? "今日ここからの崩れやすさを確認します。"
                 : "明日の不調を、今夜から先回りします。"}
             </div>
             <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-500">
               {selectedIsToday
-                ? "山場前にも使えるように、ほぐす・食べる・暮らすをそのまま見返せます。"
+                ? "昨晩の先回りケアは、下の開閉カードに残しています。"
                 : "山場と響きやすい要素を見て、今夜から明日にかけた整え方を選びましょう。"}
             </div>
           </div>
@@ -879,12 +846,18 @@ export default function RadarPage() {
           ) : null}
 
           {selectedIsToday ? (
-            <TodayCarryoverIntro
-              forecast={forecast}
-              targetDateLabel={targetDateLabel}
-              onOpenDashboard={() => router.push("/dashboard")}
-            />
-          ) : (
+            <div className="rounded-[24px] bg-white px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-slate-200 shadow-sm">
+              今日ここから先の変化を、開いた時点で再計算しています。昨晩の先回りケアは下のカードから見返せます。
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard")}
+                className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-[#E2F1EA] px-4 py-3 text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] transition-all active:scale-95"
+              >
+                ダッシュボードで今日ここからを見る
+              </button>
+            </div>
+          ) : null}
+
           <Module className="relative overflow-hidden p-4 sm:p-6">
             <div
               className={[
@@ -1009,7 +982,7 @@ export default function RadarPage() {
                           <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
                             <IconBolt className="h-5 w-5" />
                           </span>
-                          明日の山場
+                          {selectedIsToday ? "このあとの山場" : "明日の山場"}
                         </div>
 
                         <div className="mt-3 text-[33px] font-black leading-none tracking-[-0.04em] text-slate-900">
@@ -1079,7 +1052,6 @@ export default function RadarPage() {
               </div>
             </div>
           </Module>
-          )}
 
           <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
             <div className="flex items-start gap-3">
@@ -1097,14 +1069,34 @@ export default function RadarPage() {
                   {selectedIsToday ? "CARE REVIEW" : "CARE FROM TONIGHT"}
                 </div>
                 <div className="mt-1 text-[20px] font-black tracking-tight text-slate-900">
-                  {selectedIsToday ? "今日の見返しケア" : "今夜からできる先回りケア"}
+                  {selectedIsToday ? "昨晩の先回りケア" : "今夜からできる先回りケア"}
                 </div>
                 <div className="mt-1 text-[13px] font-extrabold leading-6 text-[var(--accent-ink)]">
                   {careStrategyTitle}
                 </div>
               </div>
+
+              {selectedIsToday && carePlan ? (
+                <button
+                  type="button"
+                  onClick={() => setCarryoverCareOpen((v) => !v)}
+                  className="ml-auto shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm transition-all active:scale-95"
+                >
+                  {carryoverCareOpen ? "閉じる" : "開く"}
+                </button>
+              ) : null}
             </div>
 
+            {selectedIsToday && !carePlan ? (
+              <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
+                昨晩の先回りケアはまだ保存されていません。明日タブで予報が作られると、翌日の今日タブから見返せます。
+              </div>
+            ) : selectedIsToday && !carryoverCareOpen ? (
+              <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
+                昨晩に提案した「ほぐす・食べる・暮らす」を、山場前の見返し用に残しています。
+              </div>
+            ) : (
+              <>
             <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 ring-1 ring-inset ring-[#D3E1D5]">
               <div className="text-[13px] font-bold leading-6 text-slate-700">
                 {careStrategyLead}
@@ -1462,6 +1454,8 @@ export default function RadarPage() {
                 </div>
               </div>
             ) : null}
+              </>
+            )}
           </Module>
 
           <Module className="p-5 bg-[#EEF6F0] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
@@ -1615,5 +1609,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
 
