@@ -94,6 +94,11 @@ function hasCompletedGpt(bundle) {
   return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
 }
 
+function shouldAllowGenerate(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -104,6 +109,7 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
+    const allowGenerate = shouldAllowGenerate(searchParams.get("generate") || searchParams.get("allow_generate"));
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
@@ -135,6 +141,21 @@ export async function GET(req) {
         location: serializeLocation(location),
         forecast: existing.forecast,
         care_plan: existing.care_plan,
+      });
+    }
+
+    if (!allowGenerate) {
+      return jsonUtf8({
+        ok: true,
+        cached: Boolean(existing?.forecast && existing?.care_plan),
+        gpt_pending: Boolean(existing?.forecast && existing?.care_plan),
+        skipped_generation: true,
+        target_date: targetDate,
+        target_mode: mode,
+        relative_target_mode: relativeTargetMode,
+        location: serializeLocation(location),
+        forecast: existing?.forecast || null,
+        care_plan: existing?.care_plan || null,
       });
     }
 
