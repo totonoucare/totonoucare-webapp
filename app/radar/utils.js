@@ -63,18 +63,18 @@ export function compareIsoDate(a, b) {
   return 0;
 }
 
-export function buildRadarDateTabs(rangeDays = 7) {
+export function buildRadarDateTabs(rangeDays = 1) {
   const { today } = getJstTodayTomorrow();
   return Array.from({ length: rangeDays + 1 }, (_, offset) => {
     const date = addDaysToIsoDate(today, offset);
-    const mode = offset === 0 ? "today" : offset === 1 ? "tomorrow" : "future";
+    const mode = offset === 0 ? "today" : "tomorrow";
     return {
       key: date,
       date,
       mode,
-      label: offset === 0 ? "今日" : offset === 1 ? "明日" : formatTargetDate(date),
-      subLabel: offset === 0 ? "見返し" : offset === 1 ? "本命" : "Premium",
-      locked: offset >= 2,
+      label: offset === 0 ? "今日" : "明日",
+      subLabel: offset === 0 ? "ここから" : "本命",
+      locked: false,
     };
   });
 }
@@ -88,8 +88,8 @@ export function inferModeFromSelectedDate(targetDate) {
 }
 
 export function getDefaultDateModeJST() {
-  const { hour } = getJstTodayTomorrow();
-  return hour < 18 ? "today" : "tomorrow";
+  // 未病レーダーの主役は「明日の先回り」。今日タブは見返し・当日確認用に置く。
+  return "tomorrow";
 }
 
 export function inferModeFromTargetDate(targetDate) {
@@ -106,7 +106,7 @@ export function getDateModeLabel(mode) {
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
-  if (mode === "today") return `今日(${formatTargetDate(targetDate)})の見返し`;
+  if (mode === "today") return "今日ここからの未病レーダー";
   if (mode === "future") return `${formatTargetDate(targetDate)}の予報`;
   return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の予報`;
 }
@@ -114,10 +114,10 @@ export function buildScoreCardTitle(mode, targetDate) {
 export function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "昨晩の読み解き",
-      tsuboTitle: "今日も見返せるツボケア",
-      tsuboSubtitle: "山場前にも見返したい3点セット",
-      foodTitle: "今日も使える食べ方",
+      noticeTitle: "今日ここからの読み解き",
+      tsuboTitle: "昨晩のツボケア",
+      tsuboSubtitle: "昨晩提案した3点セット",
+      foodTitle: "昨晩の食べ方",
     };
   }
 
