@@ -2,92 +2,46 @@ name: Radar notifications
 
 on:
   schedule:
-    # JST 17:07 / 明日の未病予報・夕方通知
-    # UTC 08:07
-    - cron: "7 8 * * *"
-
-    # JST 07:37 / 当日朝通知
-    # UTC 22:37
-    - cron: "37 22 * * *"
-
+    # 17:00 JST: 明日の未病予報と「今夜からできる先回りケア」通知
+    - cron: "0 8 * * *"
+    # 07:30 JST: 朝の見返し通知
+    - cron: "30 22 * * *"
   workflow_dispatch:
     inputs:
-      kind:
+      type:
         description: "night or morning"
-        required: true
+        required: false
         default: "night"
-        type: choice
-        options:
-          - night
-          - morning
-
-      dry_run:
-        description: "1 = send no push, only compute"
-        required: false
-        default: "0"
-
-      limit:
-        description: "max users per run"
-        required: false
-        default: "25"
-
-      base_url:
-        description: "optional override. default: PROD_BASE_URL secret or https://app.totonoucare.com"
-        required: false
-        default: ""
 
 jobs:
-  call-cron-endpoint:
+  send-radar-notifications:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
     steps:
-      - name: Call notification cron endpoint
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PROD_BASE_URL: ${{ secrets.PROD_BASE_URL }}
-
-          INPUT_KIND: ${{ github.event.inputs.kind }}
-          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
-          INPUT_LIMIT: ${{ github.event.inputs.limit }}
-          INPUT_BASE_URL: ${{ github.event.inputs.base_url }}
-
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
-
+      - name: Decide notification type
+        id: vars
+        shell: bash
         run: |
-          set -euo pipefail
-
-          if [ -z "${CRON_SECRET:-}" ]; then
-            echo "CRON_SECRET GitHub secret is not set" >&2
-            exit 1
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TYPE="${{ github.event.inputs.type }}"
+          elif [ "${{ github.event.schedule }}" = "0 8 * * *" ]; then
+            TYPE="night"
+          else
+            TYPE="morning"
           fi
+          echo "type=$TYPE" >> "$GITHUB_OUTPUT"
 
-          KIND="${INPUT_KIND:-}"
-          DRY_RUN="${INPUT_DRY_RUN:-0}"
-          LIMIT="${INPUT_LIMIT:-25}"
-          BASE_URL="${INPUT_BASE_URL:-}"
+      - name: Call radar notification cron endpoint
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          TYPE: ${{ steps.vars.outputs.type }}
+        shell: bash
+        run: |
+          test -n "$APP_BASE_URL"
+          test -n "$CRON_SECRET"
 
-          if [ -z "$KIND" ]; then
-            case "${EVENT_SCHEDULE:-}" in
-              "7 8 * * *")
-                KIND="night"
-                ;;
-              "37 22 * * *")
-                KIND="morning"
-                ;;
-              *)
-                KIND="night"
-                ;;
-            esac
-          fi
-
-          if [ -z "$BASE_URL" ]; then
-            BASE_URL="${PROD_BASE_URL:-https://app.totonoucare.com}"
-          fi
-
-          URL="${BASE_URL%/}/api/cron/radar-notifications/${KIND}?limit=${LIMIT}&dry_run=${DRY_RUN}"
-
-          echo "Calling: $URL"
-
-          curl -fSs "$URL" \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            -H "Accept: application/json"
+          curl --fail --show-error --silent \
+            --request GET \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_BASE_URL}/api/cron/radar-notifications/${TYPE}"
