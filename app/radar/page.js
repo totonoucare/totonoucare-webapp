@@ -399,7 +399,15 @@ export default function RadarPage() {
       setNeedsLocation(false);
       setBundle(json);
 
-      if (json?.gpt_pending && json?.target_date) {
+      const missingSavedSummary =
+        targetDate !== today &&
+        !String(
+          json?.forecast?.gpt_summary ||
+            json?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
+            ""
+        ).trim();
+
+      if ((json?.gpt_pending || missingSavedSummary) && json?.target_date) {
         enrichForecastAfterRender(json.target_date, requestSeq);
       } else {
         setEnrichingForecast(false);
@@ -1015,7 +1023,7 @@ export default function RadarPage() {
 
                   {noticeOpen ? (
   <div className="border-t border-slate-200/80 px-4 py-4 bg-white/60">
-    {enrichingForecast && !forecast?.gpt_summary ? (
+    {enrichingForecast && !String(forecast?.gpt_summary || forecast?.computed?.forecast_snapshot?.gpt_summary || "").trim() ? (
       <div className="mb-3 rounded-[16px] bg-slate-50 px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
         説明文を読みやすく整えています…
       </div>
@@ -1249,7 +1257,7 @@ export default function RadarPage() {
                     {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
                   </div>
 
-                  {enrichingForecast && !forecast?.gpt_summary ? (
+                  {enrichingForecast && !String(forecast?.gpt_summary || forecast?.computed?.forecast_snapshot?.gpt_summary || "").trim() ? (
                     <div className="mt-3 rounded-[16px] bg-white px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
                       食養生の説明を整えています…
                     </div>
@@ -1523,5 +1531,6 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
 
