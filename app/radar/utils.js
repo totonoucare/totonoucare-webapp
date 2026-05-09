@@ -243,6 +243,7 @@ export function getPointReading(point) {
 export function getForecastText(bundle) {
   return (
     bundle?.forecast?.gpt_summary ||
+    bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
     bundle?.forecast?.why_short ||
     "気象の変化と体質の重なりを見て、崩れやすさを出しています。"
   );
