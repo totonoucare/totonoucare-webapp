@@ -6,6 +6,28 @@ export function safeArray(v) {
   return Array.isArray(v) ? v : [];
 }
 
+const SYMPTOM_LABELS = {
+  fatigue: "疲れやすさ",
+  sleep: "睡眠の乱れ",
+  neck_shoulder: "首肩の重さ",
+  low_back_pain: "腰まわりの重さ",
+  swelling: "むくみ",
+  headache: "頭の重さ",
+  dizziness: "ふらつき",
+  mood: "気分の張りつめ",
+};
+
+const TRIGGER_LABELS = {
+  pressure_down: "低気圧",
+  pressure_up: "気圧上昇",
+  damp: "湿気",
+  humidity: "湿気",
+  cold: "冷え",
+  heat: "暑さ",
+  dry: "乾燥",
+  temp: "気温差",
+};
+
 export function formatTargetDate(dateStr) {
   if (!dateStr) return "—";
   const d = new Date(`${dateStr}T00:00:00+09:00`);
@@ -63,20 +85,26 @@ export function compareIsoDate(a, b) {
   return 0;
 }
 
-export function buildRadarDateTabs(rangeDays = 1) {
-  const { today } = getJstTodayTomorrow();
-  return Array.from({ length: rangeDays + 1 }, (_, offset) => {
-    const date = addDaysToIsoDate(today, offset);
-    const mode = offset === 0 ? "today" : "tomorrow";
-    return {
-      key: date,
-      date,
-      mode,
-      label: offset === 0 ? "今日" : "明日",
-      subLabel: offset === 0 ? "ここから" : "本命",
+export function buildRadarDateTabs() {
+  const { today, tomorrow } = getJstTodayTomorrow();
+  return [
+    {
+      key: today,
+      date: today,
+      mode: "today",
+      label: "今日",
+      subLabel: "これから",
       locked: false,
-    };
-  });
+    },
+    {
+      key: tomorrow,
+      date: tomorrow,
+      mode: "tomorrow",
+      label: "明日",
+      subLabel: "先回り",
+      locked: false,
+    },
+  ];
 }
 
 export function inferModeFromSelectedDate(targetDate) {
@@ -106,7 +134,7 @@ export function getDateModeLabel(mode) {
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
-  if (mode === "today") return "今日ここからの未病レーダー";
+  if (mode === "today") return "今日これからの未病レーダー";
   if (mode === "future") return `${formatTargetDate(targetDate)}の予報`;
   return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の予報`;
 }
@@ -114,7 +142,7 @@ export function buildScoreCardTitle(mode, targetDate) {
 export function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "今日ここからの読み解き",
+      noticeTitle: "今日これからの読み解き",
       tsuboTitle: "昨晩のツボケア",
       tsuboSubtitle: "昨晩提案した3点セット",
       foodTitle: "昨晩の食べ方",
@@ -409,7 +437,17 @@ export function getPointRoleSummary(point) {
   return point?.explanation?.role_summary || "この日の整え方に合わせて選んだツボです。";
 }
 
-export function getCareStrategyTitle(triggerKey, signal) {
+export function getCareStrategyTitle(triggerKey, signal, mode = "tomorrow") {
+  if (mode === "today") {
+    if (signal === 0) return "今日これから、崩さず過ごす一手";
+    if (triggerKey === "damp") return "重さをためない日中ケア";
+    if (triggerKey === "pressure_down") return "頭と首肩のこもりを逃がす";
+    if (triggerKey === "cold") return "冷えをこわばりに変えない";
+    if (triggerKey === "heat") return "熱をこもらせない過ごし方";
+    if (triggerKey === "dry") return "うるおいを削らない支度";
+    if (triggerKey === "pressure_up") return "張りつめをほどく日中ケア";
+    return "今日これから整える一手";
+  }
   if (signal === 0) return "明日は、整いやすさを崩さない日";
   if (triggerKey === "damp") return "重さを逃がす前夜づくり";
   if (triggerKey === "pressure_down") return "こもりを抜く前夜づくり";
@@ -420,9 +458,15 @@ export function getCareStrategyTitle(triggerKey, signal) {
   return "明日に持ち越さない前夜づくり";
 }
 
-export function getCareStrategyLead(triggerFactors, signal) {
+export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
   const labels = safeArray(triggerFactors).map((f) => f?.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "気象変化";
+
+  if (mode === "today") {
+    if (signal === 0) return `${joined}の影響は強すぎない見込みです。大きな対策より、いつもの調子を崩さない軽い一手に寄せます。`;
+    if (signal === 2) return `${joined}がこのあと響きやすい時間があります。山場の前に、ほぐす・食べる・暮らすを少しだけ今日用に整えます。`;
+    return `${joined}が少し響きやすい見込みです。今からできる範囲で、こもり・冷え・重さを残さないようにします。`;
+  }
 
   if (signal === 0) {
     return `${joined}の影響は強すぎない見込みです。明日に向けて、いつもの調子を崩さないための軽い整え方を選びます。`;
@@ -433,7 +477,77 @@ export function getCareStrategyLead(triggerFactors, signal) {
   return `${joined}が少し響きやすい日です。大きく構えすぎず、今夜のうちに一手だけ先回りしておきます。`;
 }
 
-export function getLifestylePlan(primaryKey, secondaryKey, signal) {
+
+function getTodayLifestylePlan(primaryKey, secondaryKey, signal) {
+  const severity = Number(signal ?? 0);
+  if (primaryKey === "damp") {
+    return {
+      title: "重さを外に逃がす環境づくり",
+      lead:
+        severity >= 2
+          ? "このあと湿気の重さが居座りやすい時間帯です。部屋・服・姿勢のこもりを少し抜くだけでも体感が変わります。"
+          : "湿気が少し残りやすい時間帯です。大きな対策より、こもりを作らない一手にします。",
+      steps: ["5分だけ換気する", "濡れたタオルや部屋干しから少し離れる", "食後に2〜3分だけ歩く"],
+      trap: "座りっぱなし・冷たい飲食・甘いものを重ねると、重さが残りやすくなります。",
+    };
+  }
+  if (primaryKey === "pressure_down") {
+    return {
+      title: "頭と首肩の通り道を作る",
+      lead:
+        severity >= 2
+          ? "このあと頭・首肩・耳まわりが詰まりやすい時間帯です。山場前に上半身の力みを抜いておきます。"
+          : "気圧変化が少し響きやすい時間帯です。首を固めたまま粘らないのがコツです。",
+      steps: ["耳の周りを10秒ずつほぐす", "画面から目を離して首を一度起こす", "肩をすくめて落とす動きを3回する"],
+      trap: "頭が重いままカフェインや甘いもので押し切ると、あとで首肩の重さとして残ることがあります。",
+    };
+  }
+  if (primaryKey === "cold") {
+    return {
+      title: "冷えをこわばりに変えない",
+      lead:
+        severity >= 2
+          ? "このあと冷えや気温差が腰腹・足元に残りやすい時間帯です。温める場所を一つに絞って先に守ります。"
+          : "冷えを少し拾いやすい時間帯です。冷やし切ってから戻すより、先に一か所だけ守ります。",
+      steps: ["足首かお腹のどちらかを温める", "冷たい飲み物を続けない", "外に出る前に首元・腰元を確認する"],
+      trap: "薄着のまま冷たい飲み物を重ねると、腰や足のだるさに残りやすくなります。",
+    };
+  }
+  if (primaryKey === "heat") {
+    return {
+      title: "熱をこもらせない休ませ方",
+      lead:
+        severity >= 2
+          ? "このあと暑さや熱のこもりが出やすい時間帯です。頑張って発散するより、熱の逃げ道を作ります。"
+          : "熱が少し残りやすい時間帯です。刺激を足すより、余分な熱を残さない方向に寄せます。",
+      steps: ["首の後ろを短時間だけ冷ます", "水分を小分けに取る", "辛いもの・濃い味を重ねすぎない"],
+      trap: "暑さの上に辛味・アルコール・カフェインを重ねると、眠りやだるさに残ることがあります。",
+    };
+  }
+  if (primaryKey === "dry") {
+    return {
+      title: "乾きの入口を減らす",
+      lead:
+        severity >= 2
+          ? "このあと喉・目・首肩の乾きが出やすい時間帯です。水分だけでなく、環境と使いすぎを一緒に整えます。"
+          : "乾きを少し拾いやすい時間帯です。喉や目が乾く前に小さく補います。",
+      steps: ["温かい飲み物を少しずつ取る", "目を閉じる時間を10秒作る", "室内が乾くなら加湿や濡れタオルを使う"],
+      trap: "コーヒーだけで粘る、乾いた菓子だけでつなぐと、乾きが残りやすくなります。",
+    };
+  }
+  return {
+    title: "張りつめをほどく切り替え",
+    lead:
+      severity >= 2
+        ? "このあと身体が前のめりになりやすい時間帯です。集中を増やすより、一度抜く時間を作ります。"
+        : "少し張りつめやすい時間帯です。早めに小さく切り替えると残りにくくなります。",
+    steps: ["通知を見ない時間を5分作る", "息を吐く時間を長めにする", "肩・手首・足首のどれかをゆるめる"],
+    trap: "予定や通知を抱えたまま走り続けると、夜に張りが残りやすくなります。",
+  };
+}
+
+export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomorrow") {
+  if (mode === "today") return getTodayLifestylePlan(primaryKey, secondaryKey, signal);
   const keys = new Set([primaryKey, secondaryKey].filter(Boolean));
 
   if (keys.has("damp")) {
@@ -441,8 +555,10 @@ export function getLifestylePlan(primaryKey, secondaryKey, signal) {
       title: "湿気を寝室に持ち込まない",
       lead:
         signal === 2
-          ? "明日は“重さが居座る”感じが出やすい日。身体だけを整えるより、まず寝る場所の湿気の逃げ道を作ると、朝の感覚が変わりやすくなります。"
-          : "湿気が残りやすい日は、寝る前の空間づくりで体感が変わります。部屋のこもりを少し抜いてから休みましょう。",
+          ? `${mode === "today" ? "このあと“重さが居座る”感じが出やすい時間帯。" : "明日は“重さが居座る”感じが出やすい日。"}身体だけを整えるより、まず空間の湿気の逃げ道を作ると、体感が変わりやすくなります。`
+          : mode === "today"
+            ? "湿気が残りやすい時間帯です。部屋や服のこもりを少し抜いて、身体に重さを残さないようにします。"
+            : "湿気が残りやすい日は、寝る前の空間づくりで体感が変わります。部屋のこもりを少し抜いてから休みましょう。",
       steps: [
         "寝る前に5分だけ換気して、空気を一度入れ替える",
         "部屋干しや濡れたタオルを、寝室から少し離す",
@@ -619,6 +735,281 @@ export function getPointCautions(point) {
     .slice(0, 3);
 }
 
+
+const TODAY_POINT_LIBRARY = {
+  LI4: {
+    code: "LI4",
+    name_ja: "合谷",
+    reading_ja: "ごうこく",
+    body_region: "hand",
+    point_region: "limb",
+    meridian_code: "li",
+    image_path: "points/LI4.webp",
+    tags_symptom: ["headache", "neck_shoulder", "mood"],
+    tags_trigger: ["pressure", "temp"],
+    tcm_actions: ["move_qi", "move_blood"],
+    organ_focus: ["liver"],
+  },
+  LR3: {
+    code: "LR3",
+    name_ja: "太衝",
+    reading_ja: "たいしょう",
+    body_region: "foot_dorsum",
+    point_region: "limb",
+    meridian_code: "lr",
+    image_path: "points/LR3.webp",
+    tags_symptom: ["headache", "mood", "neck_shoulder"],
+    tags_trigger: ["pressure", "temp"],
+    tcm_actions: ["move_qi", "soothe_liver"],
+    organ_focus: ["liver"],
+  },
+  GB20: {
+    code: "GB20",
+    name_ja: "風池",
+    reading_ja: "ふうち",
+    body_region: "neck_base",
+    point_region: "head_neck",
+    meridian_code: "gb",
+    image_path: "points/GB20.webp",
+    tags_symptom: ["headache", "dizziness", "neck_shoulder"],
+    tags_trigger: ["pressure", "temp"],
+    tcm_actions: ["move_qi", "move_blood"],
+    organ_focus: ["liver"],
+  },
+  PC6: {
+    code: "PC6",
+    name_ja: "内関",
+    reading_ja: "ないかん",
+    body_region: "forearm_inner",
+    point_region: "limb",
+    meridian_code: "pc",
+    image_path: "points/PC6.webp",
+    tags_symptom: ["sleep", "mood", "dizziness"],
+    tags_trigger: ["pressure", "temp"],
+    tcm_actions: ["move_qi", "soothe_liver"],
+    organ_focus: ["liver", "kidney"],
+  },
+  ST36: {
+    code: "ST36",
+    name_ja: "足三里",
+    reading_ja: "あしさんり",
+    body_region: "leg_anterior",
+    point_region: "limb",
+    meridian_code: "st",
+    image_path: "points/ST36.webp",
+    tags_symptom: ["fatigue", "swelling", "dizziness"],
+    tags_trigger: ["humidity", "temp"],
+    tcm_actions: ["tonify_qi", "strengthen_spleen"],
+    organ_focus: ["spleen", "kidney"],
+  },
+  SP6: {
+    code: "SP6",
+    name_ja: "三陰交",
+    reading_ja: "さんいんこう",
+    body_region: "leg_medial",
+    point_region: "limb",
+    meridian_code: "sp",
+    image_path: "points/SP6.webp",
+    tags_symptom: ["fatigue", "sleep", "low_back_pain"],
+    tags_trigger: ["humidity", "temp"],
+    tcm_actions: ["nourish_blood", "generate_fluids"],
+    organ_focus: ["spleen", "kidney"],
+  },
+  KI3: {
+    code: "KI3",
+    name_ja: "太渓",
+    reading_ja: "たいけい",
+    body_region: "ankle_medial",
+    point_region: "limb",
+    meridian_code: "ki",
+    image_path: "points/KI3.webp",
+    tags_symptom: ["fatigue", "low_back_pain", "dizziness"],
+    tags_trigger: ["temp", "pressure"],
+    tcm_actions: ["support_kidney", "generate_fluids"],
+    organ_focus: ["kidney"],
+  },
+  CV6: {
+    code: "CV6",
+    name_ja: "気海",
+    reading_ja: "きかい",
+    body_region: "lower_abdomen",
+    point_region: "abdomen",
+    meridian_code: "cv",
+    image_path: "points/CV6.webp",
+    tags_symptom: ["fatigue", "low_back_pain", "dizziness"],
+    tags_trigger: ["temp", "pressure"],
+    tcm_actions: ["tonify_qi", "support_kidney"],
+    organ_focus: ["kidney"],
+  },
+  LU7: {
+    code: "LU7",
+    name_ja: "列缺",
+    reading_ja: "れっけつ",
+    body_region: "forearm_thumb_side",
+    point_region: "limb",
+    meridian_code: "lu",
+    image_path: "points/LU7.webp",
+    tags_symptom: ["neck_shoulder", "headache"],
+    tags_trigger: ["pressure", "temp"],
+    tcm_actions: ["move_qi", "tonify_qi"],
+    organ_focus: ["liver", "spleen"],
+  },
+  SP5: {
+    code: "SP5",
+    name_ja: "商丘",
+    reading_ja: "しょうきゅう",
+    body_region: "ankle_medial",
+    point_region: "limb",
+    meridian_code: "sp",
+    image_path: "points/SP5.webp",
+    tags_symptom: ["swelling", "fatigue"],
+    tags_trigger: ["humidity", "temp"],
+    tcm_actions: ["transform_damp"],
+    organ_focus: ["spleen"],
+  },
+};
+
+const TODAY_POINT_BY_SYMPTOM = {
+  headache: ["GB20", "LI4", "LR3"],
+  neck_shoulder: ["GB20", "LU7", "LI4"],
+  low_back_pain: ["KI3", "CV6", "SP6"],
+  dizziness: ["PC6", "KI3", "ST36"],
+  mood: ["LR3", "PC6", "LI4"],
+  sleep: ["PC6", "SP6", "KI3"],
+  fatigue: ["ST36", "CV6", "KI3"],
+  swelling: ["SP5", "ST36", "SP6"],
+};
+
+const TODAY_POINT_BY_TRIGGER = {
+  damp: ["ST36", "SP5", "SP6"],
+  humidity: ["ST36", "SP5", "SP6"],
+  pressure_down: ["GB20", "PC6", "LI4"],
+  pressure_up: ["LR3", "LI4", "PC6"],
+  cold: ["KI3", "CV6", "ST36"],
+  heat: ["LI4", "LR3", "GB20"],
+  dry: ["KI3", "PC6", "LU7"],
+  temp: ["ST36", "KI3", "LI4"],
+};
+
+function decorateTodayPoint(point, { symptomFocus, triggerKey, signal } = {}) {
+  const symptomLabel = SYMPTOM_LABELS[symptomFocus] || "今日の不調";
+  const triggerLabel = TRIGGER_LABELS[triggerKey] || "このあとの変化";
+  const pressure = signal >= 2 ? "山場前に" : "気づいた時に";
+  return {
+    ...point,
+    source: "today_rule",
+    explanation: {
+      role_summary:
+        point.point_region === "head_neck"
+          ? "頭・首肩まわりのこもりを、その場で逃がしたい時に使いやすいツボです。"
+          : point.point_region === "abdomen"
+            ? "お腹と腰腹まわりの力を抜き、冷えやだるさを抱え込ませないためのツボです。"
+            : "今日これからの違和感を、強くなる前に逃がすためのセルフケア向きのツボです。",
+      selection_reason: `${symptomLabel}と${triggerLabel}を見て、${pressure}短時間で使いやすいツボとして選んでいます。明日の弁証型というより、今日の山場をやり過ごすための実用寄りです。`,
+      match_tags: [symptomFocus, triggerKey].filter(Boolean),
+    },
+  };
+}
+
+function pickTodayPointCodes(symptomFocus, triggerKey) {
+  const ordered = [
+    ...safeArray(TODAY_POINT_BY_SYMPTOM[symptomFocus]),
+    ...safeArray(TODAY_POINT_BY_TRIGGER[triggerKey]),
+    ...safeArray(TODAY_POINT_BY_TRIGGER[getForecastTriggerKey({ main_trigger: triggerKey })]),
+    "LI4",
+    "PC6",
+    "ST36",
+  ];
+  return Array.from(new Set(ordered)).filter((code) => TODAY_POINT_LIBRARY[code]).slice(0, 3);
+}
+
+function buildTodayFoodContext(triggerKey, signal) {
+  if (triggerKey === "damp" || triggerKey === "humidity") {
+    return {
+      title: "重さを増やさない昼〜間食",
+      recommendation: "冷たい麺・甘いカフェラテ・揚げ物を重ねるより、温かい汁物や香味野菜を少し足して、重さの逃げ道を作ります。",
+      how_to: "昼か間食のどこかで、温かい飲み物・汁物・生姜やねぎなどの香味を一つだけ足します。完璧な養生食に寄せなくて大丈夫です。",
+      avoid: "冷たいもの、甘いもの、油っこいものを同じ時間帯に重ねすぎない。",
+      reason: "湿気が響く日は、食べたものが力になる前に“重さ”として残りやすい設計にしています。",
+      lifestyle_tip: "食後すぐ座りっぱなしにせず、2〜3分だけ歩くと重さを残しにくくなります。",
+      examples: ["温かい味噌汁を足す", "冷たい麺なら温かいお茶を合わせる", "甘い飲み物を無糖のお茶に替える"],
+    };
+  }
+
+  if (triggerKey === "cold") {
+    return {
+      title: "冷えを残さない食べ方",
+      recommendation: "冷たいサラダやアイスで済ませるより、温かい主食・汁物・香味を一つ足して、腰腹まわりを冷やしすぎない形に寄せます。",
+      how_to: "昼食か夕方に、温かい飲み物か汁物を入れてください。量を増やすより温度を変える方が今日向きです。",
+      avoid: "空腹のまま冷たい飲み物を流し込む、薄着で冷たいものを続ける。",
+      reason: "気温差や冷え込みがある日は、食事の温度がそのままこわばりの残り方に出やすいためです。",
+      lifestyle_tip: "食べる前後に足首・腰腹を冷やさないだけでも、午後の重さを減らしやすくなります。",
+      examples: ["スープを足す", "常温〜温かい飲み物にする", "生姜・ねぎ・味噌系を少し使う"],
+    };
+  }
+
+  if (triggerKey === "heat") {
+    return {
+      title: "熱をこもらせない昼〜夕方",
+      recommendation: "辛いもの・濃い味・カフェインで押し切るより、軽い汁気やみずみずしい食材を入れて、熱の逃げ道を残します。",
+      how_to: "昼〜夕方のどこかで、水分と塩気を少し補い、濃い味を重ねすぎないようにします。",
+      avoid: "暑さに加えて辛味・アルコール・カフェインを重ねる。",
+      reason: "暑さが響く日は、頑張るための刺激が“内側の熱っぽさ”として残りやすいからです。",
+      lifestyle_tip: "首の後ろを冷やしすぎず、汗が引く時間を少し作ると楽です。",
+      examples: ["具のあるスープ", "梅・しそ系の軽い味", "常温の水分をこまめに"],
+    };
+  }
+
+  if (triggerKey === "dry") {
+    return {
+      title: "乾きを削らない間食",
+      recommendation: "カリカリした菓子や濃いコーヒーだけでつなぐより、汁気・果物・温かい飲み物を少し入れて、喉と頭の乾きを残さないようにします。",
+      how_to: "水を一気飲みするより、温かい飲み物や汁気を小分けに入れる方が今日向きです。",
+      avoid: "空腹のままコーヒーだけで粘る、乾いた菓子を続ける。",
+      reason: "乾燥が響く日は、喉だけでなく頭や首肩の張りにもつながりやすい前提で組みます。",
+      lifestyle_tip: "室内が乾くなら、デスク周りの湿度や喉の使いすぎも一緒に見てください。",
+      examples: ["温かいお茶", "汁物", "みずみずしい果物を少量"],
+    };
+  }
+
+  return {
+    title: "頭と首肩を詰まらせない食べ方",
+    recommendation: "急いで甘いものやカフェインで押すより、軽く温かいものを入れて、頭と首肩にこもる感じを逃がす食べ方に寄せます。",
+    how_to: "昼〜夕方に、温かい飲み物・汁物・軽めの主食のどれかを選びます。食べすぎより“詰め込まない”ことを優先します。",
+    avoid: "空腹のままカフェインを重ねる、甘いものだけで山場を越えようとする。",
+    reason: "気圧変化が響く日は、胃腸の重さと首肩のこわばりが一緒に出ると体感が悪くなりやすいからです。",
+    lifestyle_tip: "食後は首を一度起こし、耳まわりを軽く動かすと切り替えやすくなります。",
+    examples: ["温かいお茶", "軽いスープ", "小さめのおにぎり＋汁物"],
+  };
+}
+
+export function buildTodayCarePlan({ forecast, riskContext } = {}) {
+  if (!forecast) return null;
+  const triggerFactors = getForecastTriggerFactors(forecast);
+  const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
+  const secondaryKey = triggerFactors[1]?.key || null;
+  const signal = Number(forecast?.signal ?? 0);
+  const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
+  const codes = pickTodayPointCodes(symptomFocus, triggerKey);
+  const points = codes.map((code) => decorateTodayPoint(TODAY_POINT_LIBRARY[code], { symptomFocus, triggerKey, signal }));
+  const food = buildTodayFoodContext(triggerKey, signal);
+
+  return {
+    id: `today-care-${forecast?.target_date || "live"}`,
+    night_tsubo_set: {
+      title: "今日これから使えるツボ",
+      lead: "明日の弁証というより、このあとの山場をやり過ごすための実用寄りで選んでいます。",
+      points,
+    },
+    night_tsubo_reason: points[0]?.explanation?.selection_reason || "今日これからの山場に合わせて選んでいます。",
+    tomorrow_food_context: food,
+    night_food: food,
+    night_food_reason: food.reason,
+    tomorrow_caution: food.avoid || "無理を重ねすぎないでください。",
+    lifestyle_plan: getLifestylePlan(triggerKey, secondaryKey, signal, "today"),
+  };
+}
+
 export const FLAT_PRESETS = flattenRadarLocationPresets();
 
 export function getLocationDisplayLabel(location) {
@@ -642,4 +1033,5 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
 
