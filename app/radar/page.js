@@ -34,6 +34,7 @@ import {
   ForecastDateRail,
   LocationEditor,
   PointDetailSheet,
+  SavedCareReviewAccordion,
   SegmentedTabs,
 } from "./RadarPageComponents";
 import {
@@ -41,6 +42,7 @@ import {
   RADAR_LOADING_HINTS,
   buildRadarDateTabs,
   buildScoreCardTitle,
+  buildTodayCarePlan,
   formatTargetDate,
   getCareStrategyLead,
   getCareStrategyTitle,
@@ -91,7 +93,6 @@ export default function RadarPage() {
 
   const [bundle, setBundle] = useState(null);
   const [carryoverBundle, setCarryoverBundle] = useState(null);
-  const [carryoverCareOpen, setCarryoverCareOpen] = useState(false);
   const [error, setError] = useState("");
 
   const [needsLocation, setNeedsLocation] = useState(false);
@@ -331,13 +332,12 @@ export default function RadarPage() {
         setNeedsLocation(false);
         setBundle(liveJson);
         setCarryoverBundle(cachedCareBundle);
-        setCarryoverCareOpen(false);
         setEnrichingForecast(false);
         setDateMode("today");
         setSelectedTargetDate(today);
 
         if (locationChanged) {
-          setLocationNotice("地域を更新しました。今日ここからの予報にも反映しました。");
+          setLocationNotice("地域を更新しました。今日これからの予報にも反映しました。");
         }
         return;
       }
@@ -535,18 +535,21 @@ export default function RadarPage() {
 
   const forecast = bundle?.forecast || null;
 
-  const dateTabs = useMemo(() => buildRadarDateTabs(1), []);
+  const dateTabs = useMemo(() => buildRadarDateTabs(), []);
   const todayTomorrow = getJstTodayTomorrow();
   const activeTargetDate = selectedTargetDate || bundle?.target_date || todayTomorrow.tomorrow;
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
-  const activeCareBundle = selectedIsToday ? carryoverBundle : bundle;
-  const activeCareForecast = activeCareBundle?.forecast || forecast;
-  const carePlan = activeCareBundle?.care_plan || null;
+  const riskContext = getRiskContext(bundle);
+  const todayCarePlan = useMemo(
+    () => (selectedIsToday ? buildTodayCarePlan({ forecast, riskContext }) : null),
+    [selectedIsToday, forecast, riskContext],
+  );
+  const carePlan = selectedIsToday ? todayCarePlan : bundle?.care_plan || null;
+  const activeCareForecast = forecast;
   const tsuboSet = carePlan?.night_tsubo_set || {};
   const tsuboPoints = safeArray(tsuboSet?.points);
-  const food = carePlan?.tomorrow_food_context || {};
-  const riskContext = getRiskContext(activeCareBundle || bundle);
+  const food = carePlan?.tomorrow_food_context || carePlan?.night_food || {};
 
   const coreCode = riskContext?.constitution_context?.core_code || null;
   const coreLabel = coreCode ? getCoreLabel(coreCode) : null;
@@ -597,17 +600,18 @@ export default function RadarPage() {
   const careTriggerKey = careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
   const secondaryCareTriggerKey = careTriggerFactors[1]?.key || null;
   const careStrategyTitle = useMemo(
-    () => getCareStrategyTitle(careTriggerKey, activeCareForecast?.signal ?? 0),
-    [careTriggerKey, activeCareForecast?.signal]
+    () => getCareStrategyTitle(careTriggerKey, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
+    [careTriggerKey, activeCareForecast?.signal, selectedIsToday]
   );
   const careStrategyLead = useMemo(
-    () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0),
-    [careTriggerFactors, activeCareForecast?.signal]
+    () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
+    [careTriggerFactors, activeCareForecast?.signal, selectedIsToday]
   );
-  const lifestylePlan = useMemo(
-    () => getLifestylePlan(careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal ?? 0),
-    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal]
+  const derivedLifestylePlan = useMemo(
+    () => getLifestylePlan(careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
+    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday]
   );
+  const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
   const primaryTsubo = tsuboPoints[0] || null;
   const extraTsuboPoints = tsuboPoints.slice(1);
   const foodExamples = safeArray(food.examples);
@@ -825,16 +829,16 @@ export default function RadarPage() {
         <div className="space-y-6">
           <div className="rounded-[24px] bg-white px-5 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
             <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/70">
-              {selectedIsToday ? "CARE REVIEW" : "TOMORROW FORECAST"}
+              {selectedIsToday ? "TODAY FORECAST" : "TOMORROW FORECAST"}
             </div>
             <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">
               {selectedIsToday
-                ? "今日ここからの崩れやすさを確認します。"
+                ? "今日これからの崩れやすさを確認します。"
                 : "明日の不調を、今夜から先回りします。"}
             </div>
             <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-500">
               {selectedIsToday
-                ? "昨晩の先回りケアは、下の開閉カードに残しています。"
+                ? "このあと響きやすい時間と、今日これから使えるケアを表示します。昨晩の先回りケアは下の開閉カードに残しています。"
                 : "山場と響きやすい要素を見て、今夜から明日にかけた整え方を選びましょう。"}
             </div>
           </div>
@@ -847,13 +851,13 @@ export default function RadarPage() {
 
           {selectedIsToday ? (
             <div className="rounded-[24px] bg-white px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-slate-200 shadow-sm">
-              今日ここから先の変化を、開いた時点で再計算しています。昨晩の先回りケアは下のカードから見返せます。
+              今日これから先の変化を、開いた時点で再計算しています。昨晩の先回りケアは下のカードから見返せます。
               <button
                 type="button"
                 onClick={() => router.push("/dashboard")}
                 className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-[#E2F1EA] px-4 py-3 text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] transition-all active:scale-95"
               >
-                ダッシュボードで今日ここからを見る
+                ダッシュボードで今日これからを見る
               </button>
             </div>
           ) : null}
@@ -1066,37 +1070,18 @@ export default function RadarPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/70">
-                  {selectedIsToday ? "CARE REVIEW" : "CARE FROM TONIGHT"}
+                  {selectedIsToday ? "CARE FOR TODAY" : "CARE FROM TONIGHT"}
                 </div>
                 <div className="mt-1 text-[20px] font-black tracking-tight text-slate-900">
-                  {selectedIsToday ? "昨晩の先回りケア" : "今夜からできる先回りケア"}
+                  {selectedIsToday ? "今日これから使えるケア" : "今夜からできる先回りケア"}
                 </div>
                 <div className="mt-1 text-[13px] font-extrabold leading-6 text-[var(--accent-ink)]">
                   {careStrategyTitle}
                 </div>
               </div>
 
-              {selectedIsToday && carePlan ? (
-                <button
-                  type="button"
-                  onClick={() => setCarryoverCareOpen((v) => !v)}
-                  className="ml-auto shrink-0 rounded-full bg-white px-4 py-2 text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm transition-all active:scale-95"
-                >
-                  {carryoverCareOpen ? "閉じる" : "開く"}
-                </button>
-              ) : null}
             </div>
 
-            {selectedIsToday && !carePlan ? (
-              <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
-                昨晩の先回りケアはまだ保存されていません。明日タブで予報が作られると、翌日の今日タブから見返せます。
-              </div>
-            ) : selectedIsToday && !carryoverCareOpen ? (
-              <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
-                昨晩に提案した「ほぐす・食べる・暮らす」を、山場前の見返し用に残しています。
-              </div>
-            ) : (
-              <>
             <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 ring-1 ring-inset ring-[#D3E1D5]">
               <div className="text-[13px] font-bold leading-6 text-slate-700">
                 {careStrategyLead}
@@ -1454,9 +1439,9 @@ export default function RadarPage() {
                 </div>
               </div>
             ) : null}
-              </>
-            )}
           </Module>
+
+          {selectedIsToday ? <SavedCareReviewAccordion bundle={carryoverBundle} /> : null}
 
           <Module className="p-5 bg-[#EEF6F0] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
             <div className="flex items-start justify-between gap-4">
@@ -1609,4 +1594,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
