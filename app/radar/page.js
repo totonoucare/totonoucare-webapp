@@ -75,6 +75,11 @@ import {
  * Main Page
  * ---------------------------- */
 
+function normalizeRadarTargetDate(date) {
+  const { today, tomorrow } = getJstTodayTomorrow();
+  return date === today ? today : tomorrow;
+}
+
 export default function RadarPage() {
   const router = useRouter();
   const initialDateParam =
@@ -161,6 +166,23 @@ export default function RadarPage() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json?.error || `HTTP ${res.status}`);
     return json;
+  }
+
+  async function saveLocationOverrideIfNeeded({ lat, lon }) {
+    const nextLat = Number(lat);
+    const nextLon = Number(lon);
+    if (!Number.isFinite(nextLat) || !Number.isFinite(nextLon)) return null;
+
+    const json = await authedFetch("/api/radar/location", {
+      method: "POST",
+      body: JSON.stringify({
+        lat: nextLat,
+        lon: nextLon,
+        label: "primary",
+      }),
+    });
+
+    return json?.location || null;
   }
 
   function clearLoadingHintTimers() {
@@ -270,7 +292,7 @@ export default function RadarPage() {
     if (!session) return;
 
     const { today, tomorrow } = getJstTodayTomorrow();
-    const targetDate = requestedTargetDate || selectedTargetDate || tomorrow;
+    const targetDate = normalizeRadarTargetDate(requestedTargetDate || selectedTargetDate || tomorrow);
     const nextMode = inferModeFromSelectedDate(targetDate) || "tomorrow";
     const requestSeq = ++requestSeqRef.current;
 
@@ -288,6 +310,8 @@ export default function RadarPage() {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
       if (!token) throw new Error("No token");
+
+      const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon });
 
       if (targetDate === today) {
         const liveRes = await fetch("/api/radar/v1/forecast/live", {
@@ -345,12 +369,7 @@ export default function RadarPage() {
       const qs = new URLSearchParams();
       qs.set("date", targetDate);
 
-      if (lat != null && lon != null) {
-        qs.set("lat", String(lat));
-        qs.set("lon", String(lon));
-      }
-
-      if (recompute || locationChanged) {
+      if (recompute || locationChanged || savedLocation) {
         qs.set("force", "1");
       }
 
@@ -412,7 +431,7 @@ export default function RadarPage() {
   useEffect(() => {
     if (!session || loadingAuth) return;
     const { tomorrow } = getJstTodayTomorrow();
-    const firstTargetDate = initialDateParam || tomorrow;
+    const firstTargetDate = normalizeRadarTargetDate(initialDateParam || tomorrow);
     fetchForecast({ force: true, targetDate: firstTargetDate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, loadingAuth, initialDateParam]);
@@ -635,13 +654,13 @@ export default function RadarPage() {
   const todayRecordDateLabel = formatTargetDate(todayRecordDate);
 
   function selectTargetDate(nextDate) {
-    const nextMode = inferModeFromSelectedDate(nextDate) || "tomorrow";
-    setSelectedTargetDate(nextDate);
+    const normalizedDate = normalizeRadarTargetDate(nextDate);
+    const nextMode = inferModeFromSelectedDate(normalizedDate) || "tomorrow";
+    setSelectedTargetDate(normalizedDate);
     setDateMode(nextMode);
-    setTab("forecast");
     setError("");
 
-    fetchForecast({ force: true, targetDate: nextDate });
+    fetchForecast({ force: true, targetDate: normalizedDate });
   }
 
   if (!loadingAuth && !session) {
@@ -814,19 +833,8 @@ export default function RadarPage() {
         onSelect={selectTargetDate}
       />
 
-      <div className="sticky top-[60px] z-20 -mx-1 bg-app/90 px-1 py-2 mb-2 backdrop-blur-xl supports-[backdrop-filter]:bg-app/75">
-        <SegmentedTabs
-          tabs={[
-            { key: "forecast", label: "予報・対策" },
-            { key: "record", label: "記録" },
-          ]}
-          value={tab}
-          onChange={setTab}
-        />
-      </div>
 
-      {tab === "forecast" ? (
-        <div className="space-y-6">
+      <div className="space-y-6">
           <div className="rounded-[24px] bg-white px-5 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
             <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/70">
               {selectedIsToday ? "TODAY FORECAST" : "TOMORROW FORECAST"}
@@ -1515,59 +1523,7 @@ export default function RadarPage() {
               </Button>
             </div>
           </Module>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <Module className="relative overflow-hidden p-6">
-            <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#E2F1EA] blur-3xl" />
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3D8] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9]">
-                COMING SOON
-              </div>
-              <div className="mt-4 text-[22px] font-black tracking-tight text-slate-900">
-                記録機能は鋭意開発中です
-              </div>
-              <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
-                予報を見た日の体調メモ、記録カレンダー、週次レポートはリリース後のアップデートで提供予定です。
-                まずは明日の予報とカルテを中心に整えています。
-              </div>
-
-              <div className="mt-6 rounded-[28px] bg-white p-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="h-4 w-24 rounded-full bg-slate-200" />
-                  <div className="h-4 w-16 rounded-full bg-slate-100" />
-                </div>
-                <div className="grid grid-cols-7 gap-1.5 blur-[2px] opacity-80">
-                  {Array.from({ length: 28 }, (_, i) => (
-                    <div
-                      key={i}
-                      className={[
-                        "aspect-square rounded-[12px] ring-1 ring-inset ring-slate-200",
-                        i % 9 === 0
-                          ? "bg-rose-100"
-                          : i % 5 === 0
-                            ? "bg-amber-100"
-                            : i % 4 === 0
-                              ? "bg-emerald-100"
-                              : "bg-slate-50",
-                      ].join(" ")}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <Button onClick={() => setTab("forecast")} className="w-full shadow-md">
-                  予報・対策へ戻る
-                </Button>
-                <Button variant="secondary" onClick={() => router.push("/records?tab=calendar")} className="w-full bg-white">
-                  開発中ページを見る
-                </Button>
-              </div>
-            </div>
-          </Module>
-        </div>
-      )}
+      </div>
 
       <ReviewFormSheet
         open={reviewEditorOpen}
@@ -1594,3 +1550,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
