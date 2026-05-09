@@ -142,10 +142,10 @@ export function buildScoreCardTitle(mode, targetDate) {
 export function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "今日これからの読み解き",
-      tsuboTitle: "昨晩のツボケア",
-      tsuboSubtitle: "昨晩提案した3点セット",
-      foodTitle: "昨晩の食べ方",
+      noticeTitle: "このあとの山場",
+      tsuboTitle: "今日これから使えるツボケア",
+      tsuboSubtitle: "このあとの不調に合わせた実用寄りの3点セット",
+      foodTitle: "今日これからの食べ方",
     };
   }
 
