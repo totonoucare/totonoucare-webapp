@@ -107,6 +107,11 @@ function shouldForceRecompute(value) {
   return ["1", "true", "yes", "on"].includes(normalized);
 }
 
+function isTruthyParam(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -125,11 +130,50 @@ export async function GET(req) {
     const lat = latParam !== null ? Number(latParam) : null;
     const lon = lonParam !== null ? Number(lonParam) : null;
     const hasLocationOverride = Number.isFinite(lat) && Number.isFinite(lon);
-    const cacheOnly = shouldForceRecompute(cacheOnlyParam);
-    const force = !cacheOnly && (shouldForceRecompute(forceParam) || hasLocationOverride);
+    const force = shouldForceRecompute(forceParam) || hasLocationOverride;
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
+
+    if (isTruthyParam(cacheOnlyParam)) {
+      const cachedBundle = await getForecastBundle({
+        userId: user.id,
+        targetDate,
+      });
+
+      if (!cachedBundle?.forecast) {
+        return jsonUtf8(
+          {
+            ok: false,
+            cache_only: true,
+            error: "No cached forecast found for this date.",
+            target_date: targetDate,
+            target_mode: mode,
+            relative_target_mode: relativeTargetMode,
+          },
+          404
+        );
+      }
+
+      return jsonUtf8({
+        ok: true,
+        cached: true,
+        recomputed: false,
+        cache_only: true,
+        gpt_pending: !hasCompletedGpt(cachedBundle),
+        target_date: targetDate,
+        target_mode: mode,
+        relative_target_mode: relativeTargetMode,
+        location: null,
+        forecast: cachedBundle.forecast,
+        care_plan: cachedBundle.care_plan,
+        debug: {
+          from_cache: true,
+          point_count: null,
+          partial_day: null,
+        },
+      });
+    }
 
     let location = null;
 
@@ -166,33 +210,17 @@ export async function GET(req) {
       );
     }
 
-    const bundle = cacheOnly
-      ? await getForecastBundle({ userId: user.id, targetDate, locationId: location.id })
-      : await ensureForecastBundle({
-          userId: user.id,
-          targetDate,
-          location,
-          force,
-        });
-
-    if (!bundle?.forecast || !bundle?.care_plan) {
-      return jsonUtf8(
-        {
-          ok: false,
-          error: "Cached forecast not found for this date.",
-          target_date: targetDate,
-          target_mode: mode,
-          relative_target_mode: relativeTargetMode,
-          location: serializeLocation(location),
-        },
-        404
-      );
-    }
+    const bundle = await ensureForecastBundle({
+      userId: user.id,
+      targetDate,
+      location,
+      force,
+    });
 
     return jsonUtf8({
       ok: true,
-      cached: cacheOnly ? true : bundle.cached,
-      recomputed: cacheOnly ? false : !bundle.cached,
+      cached: bundle.cached,
+      recomputed: !bundle.cached,
       gpt_pending: !hasCompletedGpt(bundle),
       target_date: targetDate,
       target_mode: mode,
@@ -207,4 +235,3 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
-
