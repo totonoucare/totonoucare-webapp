@@ -94,6 +94,45 @@ function hasCompletedGpt(bundle) {
   return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
 }
 
+function buildRadarPlanFromExistingBundle(existing) {
+  const forecast = existing?.forecast || {};
+  const carePlan = existing?.care_plan || {};
+  const computed = forecast?.computed || {};
+  const snapshot = computed?.forecast_snapshot || {};
+  const meta = computed?.radar_plan_meta || null;
+
+  return {
+    forecast: {
+      ...snapshot,
+      score_0_10: snapshot.score_0_10 ?? forecast.score_0_10,
+      signal: snapshot.signal ?? forecast.signal,
+      peak_start: snapshot.peak_start ?? forecast.peak_start,
+      peak_end: snapshot.peak_end ?? forecast.peak_end,
+      main_trigger: snapshot.main_trigger ?? forecast.main_trigger,
+      trigger_dir: snapshot.trigger_dir ?? forecast.trigger_dir,
+      delta_vs_today: snapshot.delta_vs_today ?? forecast.delta_vs_today,
+      gpt_summary: forecast.gpt_summary || snapshot.gpt_summary || "",
+      gpt_model: forecast.gpt_model || snapshot.gpt_model || null,
+      gpt_generated_at: forecast.gpt_generated_at || snapshot.gpt_generated_at || null,
+    },
+    tonight: {
+      tsubo_set: carePlan.night_tsubo_set || {},
+      note: {
+        body: carePlan.night_note || carePlan.night_tsubo_reason || "",
+      },
+    },
+    tomorrow_food: carePlan.tomorrow_food_context || {},
+    tomorrow_caution: carePlan.tomorrow_caution || "",
+    review_schema: carePlan.review_schema || {},
+    gpt_inputs: computed?.gpt_inputs || null,
+    meta,
+  };
+}
+
+function getRiskContextFromExistingBundle(existing) {
+  return existing?.forecast?.computed?.radar_plan_meta?.risk_context || null;
+}
+
 function shouldAllowGenerate(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
@@ -159,11 +198,32 @@ export async function GET(req) {
       });
     }
 
-    let { radarPlan, vendorMeta, normalized, riskContext } = await buildFastRadarBundle({
-      userId: user.id,
-      targetDate,
-      location,
-    });
+    let radarPlan = null;
+    let vendorMeta = null;
+    let normalized = null;
+    let riskContext = null;
+    let enrichedFromExisting = false;
+
+    if (existing?.forecast && existing?.care_plan) {
+      radarPlan = buildRadarPlanFromExistingBundle(existing);
+      riskContext = getRiskContextFromExistingBundle(existing);
+      vendorMeta = existing.forecast.vendor_meta || {};
+      enrichedFromExisting = Boolean(riskContext);
+    }
+
+    // 既存のDB予報にAI生成用メタが残っていない古いデータだけ、最後の手段として再計算する。
+    // 通常の「gpt_pendingを埋める」処理では、天気APIを再取得せずDB上の予報を素材にする。
+    if (!radarPlan || !riskContext) {
+      const built = await buildFastRadarBundle({
+        userId: user.id,
+        targetDate,
+        location,
+      });
+      radarPlan = built.radarPlan;
+      vendorMeta = built.vendorMeta;
+      normalized = built.normalized;
+      riskContext = built.riskContext;
+    }
 
     let gptSummaryText = "";
 
@@ -243,10 +303,10 @@ export async function GET(req) {
     const forecast = await saveForecast({
       userId: user.id,
       targetDate,
-      locationId: location.id,
+      locationId: existing?.forecast?.location_id || location.id,
       radarPlan,
-      vendor: "metno",
-      vendorMeta,
+      vendor: existing?.forecast?.vendor || "metno",
+      vendorMeta: vendorMeta || {},
     });
 
     const carePlan = await saveCarePlan({
@@ -265,9 +325,10 @@ export async function GET(req) {
       forecast,
       care_plan: carePlan,
       debug: {
-        point_count: normalized.points.length,
-        partial_day: normalized.points.length < 24,
+        point_count: normalized?.points?.length ?? null,
+        partial_day: Array.isArray(normalized?.points) ? normalized.points.length < 24 : null,
         from_cache: false,
+        enriched_from_existing: enrichedFromExisting,
       },
     });
   } catch (error) {
@@ -275,3 +336,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
