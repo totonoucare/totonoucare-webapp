@@ -7,6 +7,7 @@ import {
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
 import {
   getSafeLocationLabelHint,
+  isVisibleLocationLabel,
   serializeDisplayableRadarLocation,
 } from "@/lib/radar_v1/locationDisplay";
 
@@ -76,7 +77,8 @@ async function getDisplayablePrimaryLocation({ userId }) {
     location = await restoreLocationFromLatestForecast({ userId });
   }
 
-  if (location && (!location.display_name || !location.region_name)) {
+  const hasHiddenLabel = location ? !isVisibleLocationLabel(location.label) : false;
+  if (location && (hasHiddenLabel || !location.display_name || !location.region_name)) {
     location = await enrichAndSaveLocation({
       userId,
       lat: Number(location.lat),
@@ -130,3 +132,4 @@ export async function POST(req) {
     return jsonUtf8({ ok: false, error: String(error?.message || error) }, 500);
   }
 }
+
