@@ -12,6 +12,10 @@ import {
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
+import {
+  getSafeLocationLabelHint,
+  serializeDisplayableRadarLocation,
+} from "@/lib/radar_v1/locationDisplay";
 
 export const runtime = "nodejs";
 
@@ -72,18 +76,6 @@ function getRelativeTargetMode(targetDate) {
   return "explicit";
 }
 
-function serializeLocation(location) {
-  if (!location) return null;
-  return {
-    id: location.id,
-    lat: location.lat,
-    lon: location.lon,
-    timezone: location.timezone,
-    label: location.label || null,
-    display_name: location.display_name || null,
-    region_name: location.region_name || null,
-  };
-}
 
 async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) {
   const meta = await resolveRadarLocationMeta({ lat, lon, labelHint });
@@ -92,7 +84,7 @@ async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) 
     lat,
     lon,
     timezone,
-    label: meta.label || labelHint || "primary",
+    label: meta.label || labelHint || "現在地付近",
     displayName: meta.display_name,
     regionName: meta.region_name,
   });
@@ -124,6 +116,7 @@ export async function GET(req) {
     const date = searchParams.get("date");
     const latParam = searchParams.get("lat");
     const lonParam = searchParams.get("lon");
+    const labelParam = searchParams.get("label");
     const forceParam = searchParams.get("force");
     const cacheOnlyParam = searchParams.get("cache_only");
 
@@ -171,7 +164,7 @@ export async function GET(req) {
         lat,
         lon,
         timezone: "Asia/Tokyo",
-        labelHint: "primary",
+        labelHint: String(labelParam || "現在地付近").trim() || "現在地付近",
       });
     } else {
       location = await getPrimaryRadarLocation({ userId: user.id });
@@ -182,7 +175,7 @@ export async function GET(req) {
           lat: Number(location.lat),
           lon: Number(location.lon),
           timezone: location.timezone || "Asia/Tokyo",
-          labelHint: location.label || "primary",
+          labelHint: getSafeLocationLabelHint(location, "現在地付近"),
         });
       }
     }
@@ -213,7 +206,7 @@ export async function GET(req) {
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
-      location: serializeLocation(location),
+      location: serializeDisplayableRadarLocation(location, "現在地付近"),
       forecast: bundle.forecast,
       care_plan: bundle.care_plan,
       debug: bundle.debug,
@@ -223,3 +216,6 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
+
+
