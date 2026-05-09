@@ -273,7 +273,7 @@ export default function SettingsPage() {
 
       const today = getJstDateString(0);
       const tomorrow = getJstDateString(1);
-      const base = `lat=${encodeURIComponent(preset.lat)}&lon=${encodeURIComponent(preset.lon)}&force=1`;
+      const base = `lat=${encodeURIComponent(preset.lat)}&lon=${encodeURIComponent(preset.lon)}&label=${encodeURIComponent(preset.label)}&force=1`;
       await Promise.allSettled([
         authedFetch(`/api/radar/v1/forecast?date=${today}&${base}`),
         authedFetch(`/api/radar/v1/forecast?date=${tomorrow}&${base}`),
