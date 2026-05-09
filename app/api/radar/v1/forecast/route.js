@@ -7,7 +7,6 @@ import {
 } from "@/lib/radar_v1/timeJST";
 import { ensureForecastBundle } from "@/lib/radar_v1/ensureForecastBundle";
 import {
-  getForecastBundle,
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
@@ -107,11 +106,6 @@ function shouldForceRecompute(value) {
   return ["1", "true", "yes", "on"].includes(normalized);
 }
 
-function isTruthyParam(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  return ["1", "true", "yes", "on"].includes(normalized);
-}
-
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -125,7 +119,6 @@ export async function GET(req) {
     const latParam = searchParams.get("lat");
     const lonParam = searchParams.get("lon");
     const forceParam = searchParams.get("force");
-    const cacheOnlyParam = searchParams.get("cache_only");
 
     const lat = latParam !== null ? Number(latParam) : null;
     const lon = lonParam !== null ? Number(lonParam) : null;
@@ -134,46 +127,6 @@ export async function GET(req) {
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
-
-    if (isTruthyParam(cacheOnlyParam)) {
-      const cachedBundle = await getForecastBundle({
-        userId: user.id,
-        targetDate,
-      });
-
-      if (!cachedBundle?.forecast) {
-        return jsonUtf8(
-          {
-            ok: false,
-            cache_only: true,
-            error: "No cached forecast found for this date.",
-            target_date: targetDate,
-            target_mode: mode,
-            relative_target_mode: relativeTargetMode,
-          },
-          404
-        );
-      }
-
-      return jsonUtf8({
-        ok: true,
-        cached: true,
-        recomputed: false,
-        cache_only: true,
-        gpt_pending: !hasCompletedGpt(cachedBundle),
-        target_date: targetDate,
-        target_mode: mode,
-        relative_target_mode: relativeTargetMode,
-        location: null,
-        forecast: cachedBundle.forecast,
-        care_plan: cachedBundle.care_plan,
-        debug: {
-          from_cache: true,
-          point_count: null,
-          partial_day: null,
-        },
-      });
-    }
 
     let location = null;
 
@@ -235,3 +188,5 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
+
