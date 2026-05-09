@@ -7,6 +7,7 @@ import {
 } from "@/lib/radar_v1/timeJST";
 import { ensureForecastBundle } from "@/lib/radar_v1/ensureForecastBundle";
 import {
+  getForecastBundle,
   getPrimaryRadarLocation,
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
@@ -106,6 +107,11 @@ function shouldForceRecompute(value) {
   return ["1", "true", "yes", "on"].includes(normalized);
 }
 
+function shouldUseCacheOnly(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -119,14 +125,43 @@ export async function GET(req) {
     const latParam = searchParams.get("lat");
     const lonParam = searchParams.get("lon");
     const forceParam = searchParams.get("force");
+    const cacheOnlyParam = searchParams.get("cache_only");
 
     const lat = latParam !== null ? Number(latParam) : null;
     const lon = lonParam !== null ? Number(lonParam) : null;
     const hasLocationOverride = Number.isFinite(lat) && Number.isFinite(lon);
     const force = shouldForceRecompute(forceParam) || hasLocationOverride;
+    const cacheOnly = shouldUseCacheOnly(cacheOnlyParam);
 
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
+
+    if (cacheOnly) {
+      const existing = await getForecastBundle({ userId: user.id, targetDate });
+      return jsonUtf8({
+        ok: true,
+        cached: Boolean(existing?.forecast && existing?.care_plan),
+        recomputed: false,
+        gpt_pending: false,
+        target_date: targetDate,
+        target_mode: mode,
+        relative_target_mode: relativeTargetMode,
+        location: null,
+        forecast: existing?.forecast || null,
+        care_plan: existing?.care_plan || null,
+        debug: { from_cache_only: true },
+      });
+    }
+
+    if (relativeTargetMode === "today") {
+      return jsonUtf8(
+        {
+          ok: false,
+          error: "Today forecasts are live-only. Use /api/radar/v1/forecast/live for 今日これからの未病レーダー.",
+        },
+        400
+      );
+    }
 
     let location = null;
 
@@ -188,5 +223,3 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
-
-
