@@ -218,7 +218,7 @@ export default function RadarPage() {
 
     try {
       setEnrichingForecast(true);
-      const json = await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}`);
+      const json = await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}&generate=1`);
 
       if (requestSeq !== requestSeqRef.current) return;
 
@@ -433,7 +433,7 @@ export default function RadarPage() {
     if (!session || loadingAuth) return;
     const { tomorrow } = getJstTodayTomorrow();
     const firstTargetDate = normalizeRadarTargetDate(initialDateParam || tomorrow);
-    fetchForecast({ force: true, targetDate: firstTargetDate });
+    fetchForecast({ targetDate: firstTargetDate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, loadingAuth, initialDateParam]);
 
@@ -663,7 +663,7 @@ export default function RadarPage() {
     setDateMode(nextMode);
     setError("");
 
-    fetchForecast({ force: true, targetDate: normalizedDate });
+    fetchForecast({ targetDate: normalizedDate });
   }
 
   if (!loadingAuth && !session) {
@@ -1523,3 +1523,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
+
