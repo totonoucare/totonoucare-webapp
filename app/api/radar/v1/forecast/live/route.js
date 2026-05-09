@@ -2,7 +2,16 @@ import { createClient } from "@supabase/supabase-js";
 
 import { nowJstParts } from "@/lib/radar_v1/timeJST";
 import { buildFastRadarBundle } from "@/lib/radar_v1/buildFastRadarBundle";
-import { getPrimaryRadarLocation } from "@/lib/radar_v1/radarRepo";
+import {
+  getPrimaryRadarLocation,
+  upsertPrimaryRadarLocation,
+} from "@/lib/radar_v1/radarRepo";
+import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
+import {
+  getSafeLocationLabelHint,
+  isVisibleLocationLabel,
+  serializeDisplayableRadarLocation,
+} from "@/lib/radar_v1/locationDisplay";
 
 export const runtime = "nodejs";
 
@@ -51,17 +60,30 @@ async function getAuthenticatedUser(req) {
   return data?.user || null;
 }
 
-function serializeLocation(location) {
+async function ensureDisplayableLocation({ userId, location }) {
   if (!location) return null;
-  return {
-    id: location.id,
-    lat: location.lat,
-    lon: location.lon,
-    timezone: location.timezone,
-    label: location.label || null,
-    display_name: location.display_name || null,
-    region_name: location.region_name || null,
-  };
+
+  const needsDisplayName = !String(location.display_name || "").trim();
+  const labelHint = getSafeLocationLabelHint(location, "現在地付近");
+  const hasHiddenLabel = !isVisibleLocationLabel(location.label);
+
+  if (!needsDisplayName && !hasHiddenLabel) return location;
+
+  const meta = await resolveRadarLocationMeta({
+    lat: Number(location.lat),
+    lon: Number(location.lon),
+    labelHint,
+  });
+
+  return upsertPrimaryRadarLocation({
+    userId,
+    lat: Number(location.lat),
+    lon: Number(location.lon),
+    timezone: location.timezone || "Asia/Tokyo",
+    label: meta.label || labelHint,
+    displayName: meta.display_name || labelHint,
+    regionName: meta.region_name,
+  });
 }
 
 function buildLiveForecastPayload({ radarPlan, targetDate }) {
@@ -106,7 +128,7 @@ export async function GET(req) {
     }
 
     const { isoDate: targetDate } = nowJstParts(new Date());
-    const location = await getPrimaryRadarLocation({ userId: user.id });
+    let location = await getPrimaryRadarLocation({ userId: user.id });
 
     if (!location) {
       return jsonUtf8(
@@ -117,6 +139,8 @@ export async function GET(req) {
         400
       );
     }
+
+    location = await ensureDisplayableLocation({ userId: user.id, location });
 
     const { radarPlan, vendorMeta, normalized } = await buildFastRadarBundle({
       userId: user.id,
@@ -133,7 +157,7 @@ export async function GET(req) {
       target_date: targetDate,
       target_mode: "today_live",
       relative_target_mode: "today",
-      location: serializeLocation(location),
+      location: serializeDisplayableRadarLocation(location, "現在地付近"),
       forecast: buildLiveForecastPayload({ radarPlan, targetDate }),
       debug: {
         from_cache: false,
