@@ -46,10 +46,10 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           PROD_BASE_URL: ${{ secrets.PROD_BASE_URL }}
 
-          INPUT_KIND: ${{ inputs.kind }}
-          INPUT_DRY_RUN: ${{ inputs.dry_run }}
-          INPUT_LIMIT: ${{ inputs.limit }}
-          INPUT_BASE_URL: ${{ inputs.base_url }}
+          INPUT_KIND: ${{ github.event.inputs.kind }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          INPUT_LIMIT: ${{ github.event.inputs.limit }}
+          INPUT_BASE_URL: ${{ github.event.inputs.base_url }}
 
           EVENT_SCHEDULE: ${{ github.event.schedule }}
 
