@@ -92,7 +92,13 @@ async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) 
 }
 
 function hasCompletedGpt(bundle) {
-  return Boolean(String(bundle?.forecast?.gpt_summary || "").trim());
+  return Boolean(
+    String(
+      bundle?.forecast?.gpt_summary ||
+        bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
+        ""
+    ).trim()
+  );
 }
 
 function shouldForceRecompute(value) {
@@ -136,7 +142,7 @@ export async function GET(req) {
         ok: true,
         cached: Boolean(existing?.forecast && existing?.care_plan),
         recomputed: false,
-        gpt_pending: false,
+        gpt_pending: Boolean(existing?.forecast && existing?.care_plan && !hasCompletedGpt(existing)),
         target_date: targetDate,
         target_mode: mode,
         relative_target_mode: relativeTargetMode,
