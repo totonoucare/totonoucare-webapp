@@ -64,6 +64,39 @@ function serializeLocation(location) {
   };
 }
 
+function buildLiveForecastPayload({ radarPlan, targetDate }) {
+  return {
+    ...radarPlan.forecast,
+    target_date: targetDate,
+    why_short: buildWhyShort(radarPlan),
+    gpt_summary: "",
+    gpt_generated_at: null,
+    computed: {
+      radar_plan_meta: radarPlan.meta || null,
+      gpt_inputs: radarPlan.gpt_inputs || null,
+      forecast_snapshot: radarPlan.forecast || null,
+    },
+  };
+}
+
+function buildWhyShort(radarPlan) {
+  const factors = Array.isArray(radarPlan?.forecast?.trigger_factors)
+    ? radarPlan.forecast.trigger_factors
+    : [];
+  const labels = factors.map((item) => item?.label).filter(Boolean).slice(0, 2);
+  const trigger = labels.length
+    ? labels.join("＋")
+    : radarPlan?.forecast?.main_trigger_label || "気象変化";
+  const peakStart = radarPlan?.forecast?.peak_start;
+  const peakEnd = radarPlan?.forecast?.peak_end;
+
+  if (peakStart && peakEnd) {
+    return `${trigger}。このあと響きやすい時間帯は ${peakStart}〜${peakEnd}。`;
+  }
+
+  return `${trigger}。`;
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -101,7 +134,7 @@ export async function GET(req) {
       target_mode: "today_live",
       relative_target_mode: "today",
       location: serializeLocation(location),
-      forecast: radarPlan.forecast,
+      forecast: buildLiveForecastPayload({ radarPlan, targetDate }),
       debug: {
         from_cache: false,
         point_count: normalized.points.length,
