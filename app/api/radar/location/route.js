@@ -21,6 +21,27 @@ function jsonUtf8(payload, status = 200) {
   });
 }
 
+function parseCoordinateInput(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "number" && typeof value !== "string") return null;
+
+  const normalized = typeof value === "string" ? value.trim() : value;
+  if (normalized === "") return null;
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isValidLatLon(lat, lon) {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
 
 async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) {
   const meta = await resolveRadarLocationMeta({ lat, lon, labelHint });
@@ -110,11 +131,11 @@ export async function POST(req) {
     if (!user?.id) return jsonUtf8({ ok: false, error: error || "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
-    const lat = Number(body.lat);
-    const lon = Number(body.lon);
+    const lat = parseCoordinateInput(body.lat);
+    const lon = parseCoordinateInput(body.lon);
     const labelHint = String(body.label || body.label_hint || "現在地付近").trim() || "現在地付近";
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    if (!isValidLatLon(lat, lon)) {
       return jsonUtf8({ ok: false, error: "Invalid lat/lon" }, 400);
     }
 
@@ -132,4 +153,5 @@ export async function POST(req) {
     return jsonUtf8({ ok: false, error: String(error?.message || error) }, 500);
   }
 }
+
 
