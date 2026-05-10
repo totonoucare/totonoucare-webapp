@@ -92,6 +92,28 @@ async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) 
   });
 }
 
+function parseCoordinateInput(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "number" && typeof value !== "string") return null;
+
+  const normalized = typeof value === "string" ? value.trim() : value;
+  if (normalized === "") return null;
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isValidLatLon(lat, lon) {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
+
 function shouldForceRecompute(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
@@ -118,9 +140,15 @@ export async function GET(req) {
     const forceParam = searchParams.get("force");
     const cacheOnlyParam = searchParams.get("cache_only");
 
-    const lat = latParam !== null ? Number(latParam) : null;
-    const lon = lonParam !== null ? Number(lonParam) : null;
-    const hasLocationOverride = Number.isFinite(lat) && Number.isFinite(lon);
+    const hasLocationParams = latParam !== null || lonParam !== null;
+    const lat = parseCoordinateInput(latParam);
+    const lon = parseCoordinateInput(lonParam);
+    const hasLocationOverride = isValidLatLon(lat, lon);
+
+    if (hasLocationParams && !hasLocationOverride) {
+      return jsonUtf8({ ok: false, error: "Invalid lat/lon" }, 400);
+    }
+
     const force = shouldForceRecompute(forceParam) || hasLocationOverride;
     const cacheOnly = shouldUseCacheOnly(cacheOnlyParam);
 
@@ -216,3 +244,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
