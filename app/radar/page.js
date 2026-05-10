@@ -169,10 +169,32 @@ export default function RadarPage() {
     return json;
   }
 
+  function parseCoordinateInput(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value !== "number" && typeof value !== "string") return null;
+
+    const normalized = typeof value === "string" ? value.trim() : value;
+    if (normalized === "") return null;
+
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function isValidLatLon(lat, lon) {
+    return (
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lon >= -180 &&
+      lon <= 180
+    );
+  }
+
   async function saveLocationOverrideIfNeeded({ lat, lon, label }) {
-    const nextLat = Number(lat);
-    const nextLon = Number(lon);
-    if (!Number.isFinite(nextLat) || !Number.isFinite(nextLon)) return null;
+    const nextLat = parseCoordinateInput(lat);
+    const nextLon = parseCoordinateInput(lon);
+    if (!isValidLatLon(nextLat, nextLon)) return null;
 
     const json = await authedFetch("/api/radar/location", {
       method: "POST",
@@ -405,9 +427,16 @@ export default function RadarPage() {
       setNeedsLocation(false);
       setBundle(json);
 
-      if (json?.gpt_pending && json?.target_date) {
+      const shouldGenerateGptNow = Boolean(
+        json?.gpt_pending &&
+        json?.target_date &&
+        (locationChanged || recompute || savedLocation)
+      );
+
+      if (shouldGenerateGptNow) {
         enrichForecastAfterRender(json.target_date, requestSeq);
       } else {
+        // 通常のページ表示だけではAI生成によるDB更新を発生させない。
         setEnrichingForecast(false);
       }
 
@@ -1529,7 +1558,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
-
-
