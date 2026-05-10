@@ -430,7 +430,9 @@ export default function RadarPage() {
       const shouldGenerateGptNow = Boolean(
         json?.gpt_pending &&
         json?.target_date &&
-        (locationChanged || recompute || savedLocation)
+        // DBに予報がまだ無く、この表示で新規作成された場合は、
+        // 既存予報の上書きではないためAI補完まで完了させる。
+        (json?.recomputed || locationChanged || recompute || savedLocation)
       );
 
       if (shouldGenerateGptNow) {
@@ -1558,3 +1560,8 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
+
+
+
+
