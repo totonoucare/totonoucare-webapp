@@ -126,6 +126,7 @@ export default function RadarPage() {
   const requestSeqRef = useRef(0);
   const slowLoadingTimerRef = useRef(null);
   const loadingHintIntervalRef = useRef(null);
+  const enrichInFlightRef = useRef(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -216,6 +217,10 @@ export default function RadarPage() {
   async function enrichForecastAfterRender(targetDate, requestSeq) {
     if (!targetDate) return;
 
+    const key = String(targetDate);
+    if (enrichInFlightRef.current.has(key)) return;
+    enrichInFlightRef.current.add(key);
+
     try {
       setEnrichingForecast(true);
       const json = await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}&generate=1`);
@@ -243,6 +248,7 @@ export default function RadarPage() {
     } catch (e) {
       console.error("enrichForecastAfterRender failed:", e);
     } finally {
+      enrichInFlightRef.current.delete(String(targetDate));
       if (requestSeq === requestSeqRef.current) {
         setEnrichingForecast(false);
       }
@@ -399,15 +405,7 @@ export default function RadarPage() {
       setNeedsLocation(false);
       setBundle(json);
 
-      const missingSavedSummary =
-        targetDate !== today &&
-        !String(
-          json?.forecast?.gpt_summary ||
-            json?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
-            ""
-        ).trim();
-
-      if ((json?.gpt_pending || missingSavedSummary) && json?.target_date) {
+      if (json?.gpt_pending && json?.target_date) {
         enrichForecastAfterRender(json.target_date, requestSeq);
       } else {
         setEnrichingForecast(false);
