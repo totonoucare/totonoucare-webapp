@@ -17,6 +17,7 @@ import {
   saveForecast,
   saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
+import { getGptCompletionStatus, hasCompletedGpt } from "@/lib/radar_v1/gptCompletion";
 
 export const runtime = "nodejs";
 
@@ -88,18 +89,6 @@ function serializeLocation(location) {
     display_name: location.display_name || null,
     region_name: location.region_name || null,
   };
-}
-
-function getPersistedGptSummary(bundle) {
-  return String(
-    bundle?.forecast?.gpt_summary ||
-      bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
-      ""
-  ).trim();
-}
-
-function hasCompletedGpt(bundle) {
-  return Boolean(getPersistedGptSummary(bundle));
 }
 
 function buildRadarPlanFromExistingBundle(existing) {
@@ -177,6 +166,8 @@ export async function GET(req) {
       targetDate,
     });
 
+    const completionBefore = getGptCompletionStatus(existing);
+
     if (existing?.forecast && existing?.care_plan && hasCompletedGpt(existing)) {
       return jsonUtf8({
         ok: true,
@@ -195,7 +186,7 @@ export async function GET(req) {
       return jsonUtf8({
         ok: true,
         cached: Boolean(existing?.forecast && existing?.care_plan),
-        gpt_pending: Boolean(existing?.forecast && existing?.care_plan),
+        gpt_pending: Boolean(existing?.forecast && existing?.care_plan && !hasCompletedGpt(existing)),
         skipped_generation: true,
         target_date: targetDate,
         target_mode: mode,
@@ -233,79 +224,82 @@ export async function GET(req) {
       riskContext = built.riskContext;
     }
 
-    let gptSummaryText = "";
+    if (!completionBefore.forecast_summary) {
+      try {
+        const summary = await generateRadarSummary({
+          riskContext,
+          radarPlan,
+          targetDate,
+          relativeTargetMode,
+        });
 
-    try {
-      const summary = await generateRadarSummary({
-        riskContext,
-        radarPlan,
-        targetDate,
-        relativeTargetMode,
-      });
-
-      if (summary?.text) {
-        gptSummaryText = summary.text;
-        radarPlan = {
-          ...radarPlan,
-          forecast: {
-            ...radarPlan.forecast,
-            gpt_summary: summary.text,
-            gpt_model: summary.model || null,
-            gpt_generated_at: summary.generated_at || new Date().toISOString(),
-          },
-        };
+        if (summary?.text) {
+          radarPlan = {
+            ...radarPlan,
+            forecast: {
+              ...radarPlan.forecast,
+              gpt_summary: summary.text,
+              gpt_model: summary.model || null,
+              gpt_generated_at: summary.generated_at || new Date().toISOString(),
+            },
+          };
+        }
+      } catch (error) {
+        console.error("generateRadarSummary failed:", error);
       }
-    } catch (error) {
-      console.error("generateRadarSummary failed:", error);
     }
 
-    try {
-      const generatedFood = await generateTomorrowFood({
-        riskContext,
-        radarPlan,
-        targetDate,
-        relativeTargetMode,
-      });
+    if (!completionBefore.tomorrow_food) {
+      try {
+        const generatedFood = await generateTomorrowFood({
+          riskContext,
+          radarPlan,
+          targetDate,
+          relativeTargetMode,
+        });
 
-      if (generatedFood?.food) {
-        radarPlan = {
-          ...radarPlan,
-          tomorrow_food: {
-            ...radarPlan.tomorrow_food,
-            ...generatedFood.food,
-          },
-        };
+        if (generatedFood?.food) {
+          radarPlan = {
+            ...radarPlan,
+            tomorrow_food: {
+              ...radarPlan.tomorrow_food,
+              ...generatedFood.food,
+            },
+          };
+        }
+      } catch (error) {
+        console.error("generateTomorrowFood failed:", error);
       }
-    } catch (error) {
-      console.error("generateTomorrowFood failed:", error);
     }
 
-    try {
-      const generatedTsuboReasons = await generateTsuboSelectionReasons({
-        riskContext,
-        radarPlan,
-        targetDate,
-        relativeTargetMode,
-        section: "tonight",
-      });
+    if (!completionBefore.tsubo_reasons) {
+      try {
+        const generatedTsuboReasons = await generateTsuboSelectionReasons({
+          riskContext,
+          radarPlan,
+          targetDate,
+          relativeTargetMode,
+          section: "tonight",
+        });
 
-      if (generatedTsuboReasons?.tsubo_set) {
-        radarPlan = {
-          ...radarPlan,
-          tonight: {
-            ...radarPlan.tonight,
-            tsubo_set: generatedTsuboReasons.tsubo_set,
-            note: generatedTsuboReasons.overall_reason
-              ? {
-                  ...radarPlan.tonight?.note,
-                  body: generatedTsuboReasons.overall_reason,
-                }
-              : radarPlan.tonight?.note,
-          },
-        };
+        if (generatedTsuboReasons?.tsubo_set) {
+          radarPlan = {
+            ...radarPlan,
+            tonight: {
+              ...radarPlan.tonight,
+              tsubo_set: generatedTsuboReasons.tsubo_set,
+              note: generatedTsuboReasons.overall_reason
+                ? {
+                    ...radarPlan.tonight?.note,
+                    body: generatedTsuboReasons.overall_reason,
+                  }
+                : radarPlan.tonight?.note,
+            },
+          };
+        }
+      } catch (error) {
+        console.error("generateTsuboSelectionReasons failed:", error);
       }
-    } catch (error) {
-      console.error("generateTsuboSelectionReasons failed:", error);
     }
 
     const forecast = await saveForecast({
@@ -329,12 +323,13 @@ export async function GET(req) {
       targetDate,
     });
 
-    const persistedSummary = getPersistedGptSummary(persisted);
+    const completionAfter = getGptCompletionStatus(persisted);
+    const completedAfter = hasCompletedGpt(persisted);
 
     return jsonUtf8({
       ok: true,
       cached: false,
-      gpt_pending: !persistedSummary,
+      gpt_pending: !completedAfter,
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
@@ -346,7 +341,8 @@ export async function GET(req) {
         partial_day: Array.isArray(normalized?.points) ? normalized.points.length < 24 : null,
         from_cache: false,
         enriched_from_existing: enrichedFromExisting,
-        persisted_gpt_summary: Boolean(persistedSummary),
+        gpt_completion_before: completionBefore,
+        gpt_completion_after: completionAfter,
       },
     });
   } catch (error) {
@@ -354,4 +350,6 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
+
 
