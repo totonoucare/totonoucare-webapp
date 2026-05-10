@@ -6,17 +6,11 @@ import {
   toJstISODate,
 } from "@/lib/radar_v1/timeJST";
 import {
-  generateRadarSummary,
-  generateTomorrowFood,
-  generateTsuboSelectionReasons,
-} from "@/lib/radar_v1/gptRadar";
-import {
   getPrimaryRadarLocation,
   getForecastBundle,
-  saveForecast,
-  saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
 import { getGptCompletionStatus, shouldAutoEnrich } from "@/lib/radar_v1/gptCompletion";
+import { enrichForecastGpt } from "@/lib/radar_v1/enrichForecastGpt";
 
 export const runtime = "nodejs";
 
@@ -90,69 +84,9 @@ function serializeLocation(location) {
   };
 }
 
-function buildRadarPlanFromExistingBundle(existing) {
-  const forecast = existing?.forecast || {};
-  const carePlan = existing?.care_plan || {};
-  const computed = forecast?.computed || {};
-  const snapshot = computed?.forecast_snapshot || {};
-  const meta = computed?.radar_plan_meta || null;
-
-  return {
-    forecast: {
-      ...snapshot,
-      score_0_10: snapshot.score_0_10 ?? forecast.score_0_10,
-      signal: snapshot.signal ?? forecast.signal,
-      peak_start: snapshot.peak_start ?? forecast.peak_start,
-      peak_end: snapshot.peak_end ?? forecast.peak_end,
-      main_trigger: snapshot.main_trigger ?? forecast.main_trigger,
-      trigger_dir: snapshot.trigger_dir ?? forecast.trigger_dir,
-      delta_vs_today: snapshot.delta_vs_today ?? forecast.delta_vs_today,
-      gpt_summary: forecast.gpt_summary || snapshot.gpt_summary || "",
-      gpt_model: forecast.gpt_model || snapshot.gpt_model || null,
-      gpt_generated_at: forecast.gpt_generated_at || snapshot.gpt_generated_at || null,
-    },
-    tonight: {
-      tsubo_set: carePlan.night_tsubo_set || {},
-      note: {
-        body: carePlan.night_note || carePlan.night_tsubo_reason || "",
-      },
-    },
-    tomorrow_food: carePlan.tomorrow_food_context || {},
-    tomorrow_caution: carePlan.tomorrow_caution || "",
-    review_schema: carePlan.review_schema || {},
-    gpt_inputs: computed?.gpt_inputs || null,
-    meta,
-  };
-}
-
-function getRiskContextFromExistingBundle(existing) {
-  return existing?.forecast?.computed?.radar_plan_meta?.risk_context || null;
-}
-
 function shouldAllowGenerate(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
-}
-
-function terminalStatus(status, extra = {}) {
-  return {
-    status,
-    at: new Date().toISOString(),
-    ...extra,
-  };
-}
-
-function markEnrichment(radarPlan, part, status, extra = {}) {
-  return {
-    ...radarPlan,
-    meta: {
-      ...(radarPlan?.meta || {}),
-      gpt_enrichment: {
-        ...(radarPlan?.meta?.gpt_enrichment || {}),
-        [part]: terminalStatus(status, extra),
-      },
-    },
-  };
 }
 
 export async function GET(req) {
@@ -232,169 +166,31 @@ export async function GET(req) {
       });
     }
 
-    let radarPlan = buildRadarPlanFromExistingBundle(existing);
-    const riskContext = getRiskContextFromExistingBundle(existing);
-
-    // enrichはAI補完専用。天気API再取得や予報再計算はしない。
-    if (!riskContext) {
-      radarPlan = markEnrichment(radarPlan, "forecast_summary", "skipped", {
-        reason: "missing_risk_context",
-      });
-      radarPlan = markEnrichment(radarPlan, "tomorrow_food", "skipped", {
-        reason: "missing_risk_context",
-      });
-      radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "skipped", {
-        reason: "missing_risk_context",
-      });
-    } else {
-      if (!completionBefore.forecast_summary_terminal) {
-        try {
-          const summary = await generateRadarSummary({
-            riskContext,
-            radarPlan,
-            targetDate,
-            relativeTargetMode,
-          });
-
-          if (summary?.text) {
-            radarPlan = {
-              ...radarPlan,
-              forecast: {
-                ...radarPlan.forecast,
-                gpt_summary: summary.text,
-                gpt_model: summary.model || null,
-                gpt_generated_at: summary.generated_at || new Date().toISOString(),
-              },
-            };
-            radarPlan = markEnrichment(radarPlan, "forecast_summary", "completed");
-          } else {
-            radarPlan = markEnrichment(radarPlan, "forecast_summary", "skipped", {
-              reason: "empty_generation",
-            });
-          }
-        } catch (error) {
-          console.error("generateRadarSummary failed:", error);
-          radarPlan = markEnrichment(radarPlan, "forecast_summary", "failed", {
-            reason: String(error?.message || error),
-          });
-        }
-      }
-
-      if (!completionBefore.tomorrow_food_terminal) {
-        try {
-          const generatedFood = await generateTomorrowFood({
-            riskContext,
-            radarPlan,
-            targetDate,
-            relativeTargetMode,
-          });
-
-          if (generatedFood?.food) {
-            radarPlan = {
-              ...radarPlan,
-              tomorrow_food: {
-                ...radarPlan.tomorrow_food,
-                ...generatedFood.food,
-              },
-            };
-            radarPlan = markEnrichment(
-              radarPlan,
-              "tomorrow_food",
-              generatedFood.food.generated_by === "fallback" ? "fallback" : "completed"
-            );
-          } else {
-            radarPlan = markEnrichment(radarPlan, "tomorrow_food", "skipped", {
-              reason: "empty_generation",
-            });
-          }
-        } catch (error) {
-          console.error("generateTomorrowFood failed:", error);
-          radarPlan = markEnrichment(radarPlan, "tomorrow_food", "failed", {
-            reason: String(error?.message || error),
-          });
-        }
-      }
-
-      if (!completionBefore.tsubo_reasons_terminal) {
-        try {
-          const generatedTsuboReasons = await generateTsuboSelectionReasons({
-            riskContext,
-            radarPlan,
-            targetDate,
-            relativeTargetMode,
-            section: "tonight",
-          });
-
-          if (generatedTsuboReasons?.tsubo_set) {
-            radarPlan = {
-              ...radarPlan,
-              tonight: {
-                ...radarPlan.tonight,
-                tsubo_set: generatedTsuboReasons.tsubo_set,
-                note: generatedTsuboReasons.overall_reason
-                  ? {
-                      ...radarPlan.tonight?.note,
-                      body: generatedTsuboReasons.overall_reason,
-                    }
-                  : radarPlan.tonight?.note,
-              },
-            };
-            radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "completed");
-          } else {
-            radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "skipped", {
-              reason: "empty_or_rejected_generation",
-            });
-          }
-        } catch (error) {
-          console.error("generateTsuboSelectionReasons failed:", error);
-          radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "failed", {
-            reason: String(error?.message || error),
-          });
-        }
-      }
-    }
-
-    const forecast = await saveForecast({
+    const enrichment = await enrichForecastGpt({
       userId: user.id,
       targetDate,
-      locationId: existing.forecast.location_id || location.id,
-      radarPlan,
-      vendor: existing.forecast.vendor || "metno",
-      vendorMeta: existing.forecast.vendor_meta || {},
-      preserveGptIfMissing: true,
+      location,
+      existing,
+      relativeTargetMode,
     });
 
-    await saveCarePlan({
-      forecastId: forecast.id,
-      radarPlan,
-      preserveGptIfMissing: true,
-    });
-
-    const persisted = await getForecastBundle({
-      userId: user.id,
-      targetDate,
-    });
-    const completionAfter = getGptCompletionStatus(persisted);
+    const persisted = enrichment.persisted || existing;
 
     return jsonUtf8({
       ok: true,
       cached: true,
-      gpt_pending: shouldAutoEnrich(persisted),
+      gpt_pending: enrichment.gpt_pending,
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
       location: serializeLocation(location),
-      forecast: persisted?.forecast || forecast,
+      forecast: persisted?.forecast || null,
       care_plan: persisted?.care_plan || null,
-      debug: {
-        from_cache: true,
-        no_weather_recompute_in_enrich: true,
-        gpt_completion_before: completionBefore,
-        gpt_completion_after: completionAfter,
-      },
+      debug: enrichment.debug,
     });
   } catch (error) {
     console.error("/api/radar/v1/forecast/enrich GET error:", error);
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
