@@ -12,6 +12,7 @@ import {
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
+import { hasCompletedGpt } from "@/lib/radar_v1/gptCompletion";
 import {
   getSafeLocationLabelHint,
   isVisibleLocationLabel,
@@ -91,16 +92,6 @@ async function enrichAndSaveLocation({ userId, lat, lon, timezone, labelHint }) 
   });
 }
 
-function hasCompletedGpt(bundle) {
-  return Boolean(
-    String(
-      bundle?.forecast?.gpt_summary ||
-        bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
-        ""
-    ).trim()
-  );
-}
-
 function shouldForceRecompute(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
@@ -138,6 +129,7 @@ export async function GET(req) {
 
     if (cacheOnly) {
       const existing = await getForecastBundle({ userId: user.id, targetDate });
+      const location = await getPrimaryRadarLocation({ userId: user.id });
       return jsonUtf8({
         ok: true,
         cached: Boolean(existing?.forecast && existing?.care_plan),
@@ -146,7 +138,7 @@ export async function GET(req) {
         target_date: targetDate,
         target_mode: mode,
         relative_target_mode: relativeTargetMode,
-        location: null,
+        location: serializeDisplayableRadarLocation(location, "現在地付近"),
         forecast: existing?.forecast || null,
         care_plan: existing?.care_plan || null,
         debug: { from_cache_only: true },
@@ -224,6 +216,3 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
-
-
-
