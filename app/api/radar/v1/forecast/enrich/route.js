@@ -17,7 +17,12 @@ import {
   saveForecast,
   saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
-import { getGptCompletionStatus, hasCompletedGpt } from "@/lib/radar_v1/gptCompletion";
+import {
+  getGptCompletionStatus,
+  getGptGenerationPlan,
+  hasCompletedGpt,
+  withGptEnrichmentStatus,
+} from "@/lib/radar_v1/gptCompletion";
 
 export const runtime = "nodejs";
 
@@ -167,6 +172,7 @@ export async function GET(req) {
     });
 
     const completionBefore = getGptCompletionStatus(existing);
+    let generationPlan = getGptGenerationPlan(existing);
 
     if (existing?.forecast && existing?.care_plan && hasCompletedGpt(existing)) {
       return jsonUtf8({
@@ -224,7 +230,18 @@ export async function GET(req) {
       riskContext = built.riskContext;
     }
 
-    if (!completionBefore.forecast_summary) {
+    if (!existing?.forecast || !existing?.care_plan) {
+      generationPlan = {
+        forecast_summary: true,
+        tomorrow_food: true,
+        tsubo_reasons: Array.isArray(radarPlan?.tonight?.tsubo_set?.points) && radarPlan.tonight.tsubo_set.points.length > 0,
+      };
+    }
+
+    if (generationPlan.forecast_summary) {
+      let status = "failed";
+      let statusDetails = {};
+
       try {
         const summary = await generateRadarSummary({
           riskContext,
@@ -234,6 +251,8 @@ export async function GET(req) {
         });
 
         if (summary?.text) {
+          status = "completed";
+          statusDetails = { model: summary.model || null };
           radarPlan = {
             ...radarPlan,
             forecast: {
@@ -243,13 +262,23 @@ export async function GET(req) {
               gpt_generated_at: summary.generated_at || new Date().toISOString(),
             },
           };
+        } else {
+          status = "skipped";
+          statusDetails = { reason: "empty_summary" };
         }
       } catch (error) {
+        status = "failed";
+        statusDetails = { reason: error?.message || String(error) };
         console.error("generateRadarSummary failed:", error);
       }
+
+      radarPlan = withGptEnrichmentStatus(radarPlan, "forecast_summary", status, statusDetails);
     }
 
-    if (!completionBefore.tomorrow_food) {
+    if (generationPlan.tomorrow_food) {
+      let status = "failed";
+      let statusDetails = {};
+
       try {
         const generatedFood = await generateTomorrowFood({
           riskContext,
@@ -259,6 +288,9 @@ export async function GET(req) {
         });
 
         if (generatedFood?.food) {
+          const generatedBy = String(generatedFood.food.generated_by || "").toLowerCase();
+          status = generatedBy === "fallback" ? "fallback" : "completed";
+          statusDetails = { model: generatedFood.food.model || null };
           radarPlan = {
             ...radarPlan,
             tomorrow_food: {
@@ -266,13 +298,23 @@ export async function GET(req) {
               ...generatedFood.food,
             },
           };
+        } else {
+          status = "skipped";
+          statusDetails = { reason: "empty_food" };
         }
       } catch (error) {
+        status = "failed";
+        statusDetails = { reason: error?.message || String(error) };
         console.error("generateTomorrowFood failed:", error);
       }
+
+      radarPlan = withGptEnrichmentStatus(radarPlan, "tomorrow_food", status, statusDetails);
     }
 
-    if (!completionBefore.tsubo_reasons) {
+    if (generationPlan.tsubo_reasons) {
+      let status = "failed";
+      let statusDetails = {};
+
       try {
         const generatedTsuboReasons = await generateTsuboSelectionReasons({
           riskContext,
@@ -283,6 +325,9 @@ export async function GET(req) {
         });
 
         if (generatedTsuboReasons?.tsubo_set) {
+          const generatedBy = String(generatedTsuboReasons.tsubo_set.generated_by || "").toLowerCase();
+          status = generatedBy === "fallback" ? "fallback" : "completed";
+          statusDetails = { model: generatedTsuboReasons.model || generatedTsuboReasons.tsubo_set.model || null };
           radarPlan = {
             ...radarPlan,
             tonight: {
@@ -296,10 +341,17 @@ export async function GET(req) {
                 : radarPlan.tonight?.note,
             },
           };
+        } else {
+          status = "rejected";
+          statusDetails = { reason: "empty_or_rejected_tsubo_reasons" };
         }
       } catch (error) {
+        status = "failed";
+        statusDetails = { reason: error?.message || String(error) };
         console.error("generateTsuboSelectionReasons failed:", error);
       }
+
+      radarPlan = withGptEnrichmentStatus(radarPlan, "tsubo_reasons", status, statusDetails);
     }
 
     const forecast = await saveForecast({
@@ -350,6 +402,7 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
 
 
 
