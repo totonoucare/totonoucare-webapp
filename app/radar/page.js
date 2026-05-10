@@ -124,9 +124,9 @@ export default function RadarPage() {
   const [reviewEditorOpen, setReviewEditorOpen] = useState(false);
 
   const requestSeqRef = useRef(0);
+  const enrichingTargetDateRef = useRef("");
   const slowLoadingTimerRef = useRef(null);
   const loadingHintIntervalRef = useRef(null);
-  const enrichInFlightRef = useRef(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -216,12 +216,10 @@ export default function RadarPage() {
 
   async function enrichForecastAfterRender(targetDate, requestSeq) {
     if (!targetDate) return;
-
-    const key = String(targetDate);
-    if (enrichInFlightRef.current.has(key)) return;
-    enrichInFlightRef.current.add(key);
+    if (enrichingTargetDateRef.current === targetDate) return;
 
     try {
+      enrichingTargetDateRef.current = targetDate;
       setEnrichingForecast(true);
       const json = await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}&generate=1`);
 
@@ -248,7 +246,9 @@ export default function RadarPage() {
     } catch (e) {
       console.error("enrichForecastAfterRender failed:", e);
     } finally {
-      enrichInFlightRef.current.delete(String(targetDate));
+      if (enrichingTargetDateRef.current === targetDate) {
+        enrichingTargetDateRef.current = "";
+      }
       if (requestSeq === requestSeqRef.current) {
         setEnrichingForecast(false);
       }
@@ -1529,6 +1529,7 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
 
 
