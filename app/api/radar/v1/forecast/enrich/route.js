@@ -5,7 +5,6 @@ import {
   nowJstParts,
   toJstISODate,
 } from "@/lib/radar_v1/timeJST";
-import { buildFastRadarBundle } from "@/lib/radar_v1/buildFastRadarBundle";
 import {
   generateRadarSummary,
   generateTomorrowFood,
@@ -17,12 +16,7 @@ import {
   saveForecast,
   saveCarePlan,
 } from "@/lib/radar_v1/radarRepo";
-import {
-  getGptCompletionStatus,
-  getGptGenerationPlan,
-  hasCompletedGpt,
-  withGptEnrichmentStatus,
-} from "@/lib/radar_v1/gptCompletion";
+import { getGptCompletionStatus, shouldAutoEnrich } from "@/lib/radar_v1/gptCompletion";
 
 export const runtime = "nodejs";
 
@@ -140,6 +134,27 @@ function shouldAllowGenerate(value) {
   return ["1", "true", "yes", "on"].includes(normalized);
 }
 
+function terminalStatus(status, extra = {}) {
+  return {
+    status,
+    at: new Date().toISOString(),
+    ...extra,
+  };
+}
+
+function markEnrichment(radarPlan, part, status, extra = {}) {
+  return {
+    ...radarPlan,
+    meta: {
+      ...(radarPlan?.meta || {}),
+      gpt_enrichment: {
+        ...(radarPlan?.meta?.gpt_enrichment || {}),
+        [part]: terminalStatus(status, extra),
+      },
+    },
+  };
+}
+
 export async function GET(req) {
   try {
     const user = await getAuthenticatedUser(req);
@@ -150,7 +165,9 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
-    const allowGenerate = shouldAllowGenerate(searchParams.get("generate") || searchParams.get("allow_generate"));
+    const allowGenerate = shouldAllowGenerate(
+      searchParams.get("generate") || searchParams.get("allow_generate")
+    );
     const { targetDate, mode } = decideTargetDateJST({ date: date || null });
     const relativeTargetMode = getRelativeTargetMode(targetDate);
 
@@ -171,217 +188,198 @@ export async function GET(req) {
       targetDate,
     });
 
-    const completionBefore = getGptCompletionStatus(existing);
-    let generationPlan = getGptGenerationPlan(existing);
+    const basePayload = {
+      ok: true,
+      target_date: targetDate,
+      target_mode: mode,
+      relative_target_mode: relativeTargetMode,
+      location: serializeLocation(location),
+      forecast: existing?.forecast || null,
+      care_plan: existing?.care_plan || null,
+    };
 
-    if (existing?.forecast && existing?.care_plan && hasCompletedGpt(existing)) {
+    if (!existing?.forecast || !existing?.care_plan) {
       return jsonUtf8({
-        ok: true,
+        ...basePayload,
+        cached: Boolean(existing?.forecast),
+        gpt_pending: false,
+        skipped_generation: true,
+        debug: {
+          reason: existing?.forecast ? "missing_care_plan" : "missing_forecast",
+          no_weather_recompute_in_enrich: true,
+        },
+      });
+    }
+
+    const completionBefore = getGptCompletionStatus(existing);
+
+    if (!shouldAutoEnrich(existing)) {
+      return jsonUtf8({
+        ...basePayload,
         cached: true,
         gpt_pending: false,
-        target_date: targetDate,
-        target_mode: mode,
-        relative_target_mode: relativeTargetMode,
-        location: serializeLocation(location),
-        forecast: existing.forecast,
-        care_plan: existing.care_plan,
+        debug: { gpt_completion_before: completionBefore },
       });
     }
 
     if (!allowGenerate) {
       return jsonUtf8({
-        ok: true,
-        cached: Boolean(existing?.forecast && existing?.care_plan),
-        gpt_pending: Boolean(existing?.forecast && existing?.care_plan && !hasCompletedGpt(existing)),
+        ...basePayload,
+        cached: true,
+        gpt_pending: true,
         skipped_generation: true,
-        target_date: targetDate,
-        target_mode: mode,
-        relative_target_mode: relativeTargetMode,
-        location: serializeLocation(location),
-        forecast: existing?.forecast || null,
-        care_plan: existing?.care_plan || null,
+        debug: { gpt_completion_before: completionBefore },
       });
     }
 
-    let radarPlan = null;
-    let vendorMeta = null;
-    let normalized = null;
-    let riskContext = null;
-    let enrichedFromExisting = false;
+    let radarPlan = buildRadarPlanFromExistingBundle(existing);
+    const riskContext = getRiskContextFromExistingBundle(existing);
 
-    if (existing?.forecast && existing?.care_plan) {
-      radarPlan = buildRadarPlanFromExistingBundle(existing);
-      riskContext = getRiskContextFromExistingBundle(existing);
-      vendorMeta = existing.forecast.vendor_meta || {};
-      enrichedFromExisting = Boolean(riskContext);
-    }
-
-    // 既存のDB予報にAI生成用メタが残っていない古いデータだけ、最後の手段として再計算する。
-    // 通常の「gpt_pendingを埋める」処理では、天気APIを再取得せずDB上の予報を素材にする。
-    if (!radarPlan || !riskContext) {
-      const built = await buildFastRadarBundle({
-        userId: user.id,
-        targetDate,
-        location,
+    // enrichはAI補完専用。天気API再取得や予報再計算はしない。
+    if (!riskContext) {
+      radarPlan = markEnrichment(radarPlan, "forecast_summary", "skipped", {
+        reason: "missing_risk_context",
       });
-      radarPlan = built.radarPlan;
-      vendorMeta = built.vendorMeta;
-      normalized = built.normalized;
-      riskContext = built.riskContext;
-    }
+      radarPlan = markEnrichment(radarPlan, "tomorrow_food", "skipped", {
+        reason: "missing_risk_context",
+      });
+      radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "skipped", {
+        reason: "missing_risk_context",
+      });
+    } else {
+      if (!completionBefore.forecast_summary_terminal) {
+        try {
+          const summary = await generateRadarSummary({
+            riskContext,
+            radarPlan,
+            targetDate,
+            relativeTargetMode,
+          });
 
-    if (!existing?.forecast || !existing?.care_plan) {
-      generationPlan = {
-        forecast_summary: true,
-        tomorrow_food: true,
-        tsubo_reasons: Array.isArray(radarPlan?.tonight?.tsubo_set?.points) && radarPlan.tonight.tsubo_set.points.length > 0,
-      };
-    }
-
-    if (generationPlan.forecast_summary) {
-      let status = "failed";
-      let statusDetails = {};
-
-      try {
-        const summary = await generateRadarSummary({
-          riskContext,
-          radarPlan,
-          targetDate,
-          relativeTargetMode,
-        });
-
-        if (summary?.text) {
-          status = "completed";
-          statusDetails = { model: summary.model || null };
-          radarPlan = {
-            ...radarPlan,
-            forecast: {
-              ...radarPlan.forecast,
-              gpt_summary: summary.text,
-              gpt_model: summary.model || null,
-              gpt_generated_at: summary.generated_at || new Date().toISOString(),
-            },
-          };
-        } else {
-          status = "skipped";
-          statusDetails = { reason: "empty_summary" };
+          if (summary?.text) {
+            radarPlan = {
+              ...radarPlan,
+              forecast: {
+                ...radarPlan.forecast,
+                gpt_summary: summary.text,
+                gpt_model: summary.model || null,
+                gpt_generated_at: summary.generated_at || new Date().toISOString(),
+              },
+            };
+            radarPlan = markEnrichment(radarPlan, "forecast_summary", "completed");
+          } else {
+            radarPlan = markEnrichment(radarPlan, "forecast_summary", "skipped", {
+              reason: "empty_generation",
+            });
+          }
+        } catch (error) {
+          console.error("generateRadarSummary failed:", error);
+          radarPlan = markEnrichment(radarPlan, "forecast_summary", "failed", {
+            reason: String(error?.message || error),
+          });
         }
-      } catch (error) {
-        status = "failed";
-        statusDetails = { reason: error?.message || String(error) };
-        console.error("generateRadarSummary failed:", error);
       }
 
-      radarPlan = withGptEnrichmentStatus(radarPlan, "forecast_summary", status, statusDetails);
-    }
+      if (!completionBefore.tomorrow_food_terminal) {
+        try {
+          const generatedFood = await generateTomorrowFood({
+            riskContext,
+            radarPlan,
+            targetDate,
+            relativeTargetMode,
+          });
 
-    if (generationPlan.tomorrow_food) {
-      let status = "failed";
-      let statusDetails = {};
-
-      try {
-        const generatedFood = await generateTomorrowFood({
-          riskContext,
-          radarPlan,
-          targetDate,
-          relativeTargetMode,
-        });
-
-        if (generatedFood?.food) {
-          const generatedBy = String(generatedFood.food.generated_by || "").toLowerCase();
-          status = generatedBy === "fallback" ? "fallback" : "completed";
-          statusDetails = { model: generatedFood.food.model || null };
-          radarPlan = {
-            ...radarPlan,
-            tomorrow_food: {
-              ...radarPlan.tomorrow_food,
-              ...generatedFood.food,
-            },
-          };
-        } else {
-          status = "skipped";
-          statusDetails = { reason: "empty_food" };
+          if (generatedFood?.food) {
+            radarPlan = {
+              ...radarPlan,
+              tomorrow_food: {
+                ...radarPlan.tomorrow_food,
+                ...generatedFood.food,
+              },
+            };
+            radarPlan = markEnrichment(
+              radarPlan,
+              "tomorrow_food",
+              generatedFood.food.generated_by === "fallback" ? "fallback" : "completed"
+            );
+          } else {
+            radarPlan = markEnrichment(radarPlan, "tomorrow_food", "skipped", {
+              reason: "empty_generation",
+            });
+          }
+        } catch (error) {
+          console.error("generateTomorrowFood failed:", error);
+          radarPlan = markEnrichment(radarPlan, "tomorrow_food", "failed", {
+            reason: String(error?.message || error),
+          });
         }
-      } catch (error) {
-        status = "failed";
-        statusDetails = { reason: error?.message || String(error) };
-        console.error("generateTomorrowFood failed:", error);
       }
 
-      radarPlan = withGptEnrichmentStatus(radarPlan, "tomorrow_food", status, statusDetails);
-    }
+      if (!completionBefore.tsubo_reasons_terminal) {
+        try {
+          const generatedTsuboReasons = await generateTsuboSelectionReasons({
+            riskContext,
+            radarPlan,
+            targetDate,
+            relativeTargetMode,
+            section: "tonight",
+          });
 
-    if (generationPlan.tsubo_reasons) {
-      let status = "failed";
-      let statusDetails = {};
-
-      try {
-        const generatedTsuboReasons = await generateTsuboSelectionReasons({
-          riskContext,
-          radarPlan,
-          targetDate,
-          relativeTargetMode,
-          section: "tonight",
-        });
-
-        if (generatedTsuboReasons?.tsubo_set) {
-          const generatedBy = String(generatedTsuboReasons.tsubo_set.generated_by || "").toLowerCase();
-          status = generatedBy === "fallback" ? "fallback" : "completed";
-          statusDetails = { model: generatedTsuboReasons.model || generatedTsuboReasons.tsubo_set.model || null };
-          radarPlan = {
-            ...radarPlan,
-            tonight: {
-              ...radarPlan.tonight,
-              tsubo_set: generatedTsuboReasons.tsubo_set,
-              note: generatedTsuboReasons.overall_reason
-                ? {
-                    ...radarPlan.tonight?.note,
-                    body: generatedTsuboReasons.overall_reason,
-                  }
-                : radarPlan.tonight?.note,
-            },
-          };
-        } else {
-          status = "rejected";
-          statusDetails = { reason: "empty_or_rejected_tsubo_reasons" };
+          if (generatedTsuboReasons?.tsubo_set) {
+            radarPlan = {
+              ...radarPlan,
+              tonight: {
+                ...radarPlan.tonight,
+                tsubo_set: generatedTsuboReasons.tsubo_set,
+                note: generatedTsuboReasons.overall_reason
+                  ? {
+                      ...radarPlan.tonight?.note,
+                      body: generatedTsuboReasons.overall_reason,
+                    }
+                  : radarPlan.tonight?.note,
+              },
+            };
+            radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "completed");
+          } else {
+            radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "skipped", {
+              reason: "empty_or_rejected_generation",
+            });
+          }
+        } catch (error) {
+          console.error("generateTsuboSelectionReasons failed:", error);
+          radarPlan = markEnrichment(radarPlan, "tsubo_reasons", "failed", {
+            reason: String(error?.message || error),
+          });
         }
-      } catch (error) {
-        status = "failed";
-        statusDetails = { reason: error?.message || String(error) };
-        console.error("generateTsuboSelectionReasons failed:", error);
       }
-
-      radarPlan = withGptEnrichmentStatus(radarPlan, "tsubo_reasons", status, statusDetails);
     }
 
     const forecast = await saveForecast({
       userId: user.id,
       targetDate,
-      locationId: existing?.forecast?.location_id || location.id,
+      locationId: existing.forecast.location_id || location.id,
       radarPlan,
-      vendor: existing?.forecast?.vendor || "metno",
-      vendorMeta: vendorMeta || {},
+      vendor: existing.forecast.vendor || "metno",
+      vendorMeta: existing.forecast.vendor_meta || {},
+      preserveGptIfMissing: true,
     });
 
     await saveCarePlan({
       forecastId: forecast.id,
       radarPlan,
+      preserveGptIfMissing: true,
     });
 
-    // 返却値は「保存できたつもり」のメモリ上オブジェクトではなく、必ずDBから読み直す。
-    // これにより、初回表示では生成文が見えるのに再表示ではwhy_shortへ戻る事故を検知・防止する。
     const persisted = await getForecastBundle({
       userId: user.id,
       targetDate,
     });
-
     const completionAfter = getGptCompletionStatus(persisted);
-    const completedAfter = hasCompletedGpt(persisted);
 
     return jsonUtf8({
       ok: true,
-      cached: false,
-      gpt_pending: !completedAfter,
+      cached: true,
+      gpt_pending: shouldAutoEnrich(persisted),
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
@@ -389,10 +387,8 @@ export async function GET(req) {
       forecast: persisted?.forecast || forecast,
       care_plan: persisted?.care_plan || null,
       debug: {
-        point_count: normalized?.points?.length ?? null,
-        partial_day: Array.isArray(normalized?.points) ? normalized.points.length < 24 : null,
-        from_cache: false,
-        enriched_from_existing: enrichedFromExisting,
+        from_cache: true,
+        no_weather_recompute_in_enrich: true,
         gpt_completion_before: completionBefore,
         gpt_completion_after: completionAfter,
       },
@@ -402,7 +398,3 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
-
-
-
-
