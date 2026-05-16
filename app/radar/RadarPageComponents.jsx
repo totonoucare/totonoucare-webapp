@@ -606,5 +606,3 @@ export function SavedCareReviewAccordion({ bundle }) {
   );
 }
 
-
-
