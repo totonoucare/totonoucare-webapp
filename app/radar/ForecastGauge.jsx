@@ -3,51 +3,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-function clampScore(score) {
-  const n = Number(score);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(10, n));
-}
-
-function getGaugeStroke(signal) {
-  if (signal === 2) return "#E38949";
-  if (signal === 1) return "#E2AE45";
-  return "#66B9A3";
-}
-
-function getGaugeSoftStroke(signal) {
-  if (signal === 2) return "rgba(227,137,73,0.15)";
-  if (signal === 1) return "rgba(226,174,69,0.15)";
-  return "rgba(102,185,163,0.15)";
-}
-
-function getGaugeFill(signal) {
-  if (signal === 2) return "rgba(255,246,239,0.96)";
-  if (signal === 1) return "rgba(255,249,237,0.96)";
-  return "rgba(243,251,248,0.96)";
-}
-
-function polarToCartesian(cx, cy, r, angleDeg) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  };
-}
-
-function describeArc(cx, cy, r, startAngle, endAngle) {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-  return ["M", start.x, start.y, "A", r, r, 0, largeArcFlag, 0, end.x, end.y].join(" ");
-}
-
-function getGaugeModeLabel() {
-  return "負担度スコア";
-}
-
 function getGaugeTone(signal) {
-  if (signal === 2) {
+  const level = Number(signal);
+  if (level === 2) {
     return {
       stroke: "#E38949",
       ring: "#EAB485",
@@ -64,7 +22,7 @@ function getGaugeTone(signal) {
     };
   }
 
-  if (signal === 1) {
+  if (level === 1) {
     return {
       stroke: "#E2AE45",
       ring: "#EAC86F",
@@ -97,20 +55,45 @@ function getGaugeTone(signal) {
   };
 }
 
-function getGaugeModePillTone(signal) {
-  if (signal === 2) {
-    return "border-rose-200 bg-white/92 text-rose-700 shadow-[0_10px_24px_-18px_rgba(225,29,72,0.42)]";
+function getModeMeta(signal) {
+  const level = Number(signal);
+  if (level === 2) {
+    return {
+      label: "守りモード",
+      shortLabel: "守り",
+      face: "🥲",
+      caption: "無理を重ねない日",
+    };
   }
-  if (signal === 1) {
-    return "border-amber-200 bg-white/92 text-amber-700 shadow-[0_10px_24px_-18px_rgba(217,119,6,0.42)]";
+  if (level === 1) {
+    return {
+      label: "いたわりモード",
+      shortLabel: "いたわり",
+      face: "😌",
+      caption: "早めに整える日",
+    };
   }
-  return "border-emerald-200 bg-white/92 text-emerald-700 shadow-[0_10px_24px_-18px_rgba(16,185,129,0.38)]";
+  return {
+    label: "安定モード",
+    shortLabel: "安定",
+    face: "🙂",
+    caption: "いつも通りで大丈夫",
+  };
 }
 
-function getGaugeShadow(signal) {
-  if (signal === 2) return "rgba(225,29,72,0.42)";
-  if (signal === 1) return "rgba(217,119,6,0.40)";
-  return "rgba(16,185,129,0.34)";
+function polarToCartesian(cx, cy, r, angleDeg) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return {
+    x: cx + r * Math.cos(rad),
+    y: cy + r * Math.sin(rad),
+  };
+}
+
+function describeArc(cx, cy, r, startAngle, endAngle) {
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+  return ["M", start.x, start.y, "A", r, r, 0, largeArcFlag, 0, end.x, end.y].join(" ");
 }
 
 function useResetAnimatedNumber(target, duration = 700, animationKey = "") {
@@ -121,7 +104,6 @@ function useResetAnimatedNumber(target, duration = 700, animationKey = "") {
     const to = Math.max(0, Number(target) || 0);
 
     cancelAnimationFrame(rafRef.current);
-
     setValue(0);
 
     const start = performance.now();
@@ -154,12 +136,20 @@ function useResetAnimatedNumber(target, duration = 700, animationKey = "") {
 export function ForecastGauge({
   score = 0,
   signal = 0,
-  triggerKey = "pressure_down",
   animationKey = "",
 }) {
   const safeScore = Math.max(0, Math.min(10, Number(score) || 0));
-  const animatedScore = useResetAnimatedNumber(safeScore, 700, animationKey);
-  const tone = getGaugeTone(signal);
+  const animatedScore = useResetAnimatedNumber(safeScore, 720, animationKey);
+  const [settled, setSettled] = useState(false);
+  const level = Number(signal);
+  const tone = getGaugeTone(level);
+  const mode = getModeMeta(level);
+
+  useEffect(() => {
+    setSettled(false);
+    const timer = window.setTimeout(() => setSettled(true), 760);
+    return () => window.clearTimeout(timer);
+  }, [animationKey, safeScore, signal]);
 
   const cx = 170;
   const cy = 172;
@@ -180,9 +170,9 @@ export function ForecastGauge({
 
   const centerFill = "#ffffff";
   const scoreShadow =
-    signal === 2
+    level === 2
       ? "rgba(227,137,73,0.14)"
-      : signal === 1
+      : level === 1
       ? "rgba(226,174,69,0.14)"
       : "rgba(102,185,163,0.13)";
 
@@ -190,9 +180,10 @@ export function ForecastGauge({
   const cautionEnd = scoreToAngle(5);
 
   const needleTip = polarToCartesian(cx, cy, needleRadius, valueAngle);
-  const needleTail = polarToCartesian(cx, cy, 18, valueAngle + 180);
+  const needleTail = polarToCartesian(cx, cy, 20, valueAngle + 180);
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
+  const modePillLabel = settled ? mode.label : "過ごし方モード";
 
   return (
     <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
@@ -300,72 +291,91 @@ export function ForecastGauge({
             stroke={`url(#needle-${signal})`}
             strokeWidth="5.5"
             strokeLinecap="round"
-            opacity="0.95"
+            opacity="0.88"
           />
 
-          <circle
-            cx={needleTip.x}
-            cy={needleTip.y}
-            r={14}
-            fill="#ffffff"
-            stroke={tone.fillEnd}
-            strokeWidth="4"
-            filter={`url(#gauge-shadow-${signal})`}
-          />
+          <g filter={`url(#gauge-shadow-${signal})`}>
+            <circle
+              cx={needleTip.x}
+              cy={needleTip.y}
+              r={20}
+              fill="#ffffff"
+              stroke={tone.fillEnd}
+              strokeWidth="4"
+            />
+            <text
+              x={needleTip.x}
+              y={needleTip.y + 7}
+              textAnchor="middle"
+              fontSize="23"
+              fontWeight="900"
+            >
+              {mode.face}
+            </text>
+          </g>
+
           <circle cx={170} cy={172} r={10} fill="#ffffff" stroke="rgba(226,232,240,0.95)" strokeWidth="2.5" />
           <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
 
           <text
-  x={170}
-  y={203}
-  textAnchor="middle"
-  fontSize="58"
-  fontWeight="900"
-  fill={tone.main}
-  stroke="rgba(255,255,255,0.95)"
-  strokeWidth="5"
-  paintOrder="stroke"
->
-  {Math.round(animatedScore)}
-</text>
-          <text
-            x={209}
-            y={203}
-            textAnchor="start"
-            fontSize="26"
+            x={170}
+            y={151}
+            textAnchor="middle"
+            fontSize="13"
             fontWeight="900"
-            fill="rgba(100,116,139,0.92)"
+            letterSpacing="1.5"
+            fill="rgba(100,116,139,0.72)"
+          >
+            MODE
+          </text>
+          <text
+            x={170}
+            y={191}
+            textAnchor="middle"
+            fontSize={mode.shortLabel.length >= 4 ? "32" : "38"}
+            fontWeight="900"
+            fill={tone.main}
             stroke="rgba(255,255,255,0.95)"
-            strokeWidth="3"
+            strokeWidth="5"
             paintOrder="stroke"
           >
-            /10
+            {settled ? mode.shortLabel : "判定中"}
+          </text>
+          <text
+            x={170}
+            y={219}
+            textAnchor="middle"
+            fontSize="13"
+            fontWeight="900"
+            fill="rgba(100,116,139,0.86)"
+          >
+            {settled ? mode.caption : "過ごし方を確認中"}
           </text>
 
           <text
             x={startLabelPos.x}
             y={startLabelPos.y + 6}
             textAnchor="middle"
-            fontSize="14"
+            fontSize="13"
             fontWeight="900"
             fill="rgba(148,163,184,0.88)"
           >
-            0
+            安定
           </text>
           <text
             x={endLabelPos.x}
             y={endLabelPos.y + 6}
             textAnchor="middle"
-            fontSize="14"
+            fontSize="13"
             fontWeight="900"
             fill="rgba(100,116,139,0.82)"
           >
-            10
+            守り
           </text>
         </svg>
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm"
+          className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
           style={{
             color: tone.labelText,
             background: tone.labelBg,
@@ -373,9 +383,10 @@ export function ForecastGauge({
             boxShadow: `0 12px 24px ${tone.labelShadow}`,
           }}
         >
-          {getGaugeModeLabel(triggerKey)}
+          {modePillLabel}
         </div>
       </div>
     </div>
   );
 }
+
