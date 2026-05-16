@@ -8,6 +8,7 @@ import AppShell, { Module } from "@/components/layout/AppShell";
 import { CoreIllust } from "@/components/illust/core";
 import Button from "@/components/ui/Button";
 import ReviewFormSheet from "@/components/records/ReviewFormSheet";
+import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   IconBolt,
   IconRadar,
@@ -1018,7 +1019,7 @@ export default function RadarPage() {
                                 key={`${factor.key}-${index}`}
                                 className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-slate-100"
                               >
-                                <span aria-hidden="true">{factor.emoji}</span>
+                                <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
                                 {factor.label}
                               </span>
                             ))}
@@ -1601,3 +1602,7 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
+
+
+
