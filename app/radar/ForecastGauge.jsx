@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 
 function getGaugeTone(signal) {
   const level = Number(signal);
@@ -61,7 +62,6 @@ function getModeMeta(signal) {
     return {
       label: "守りモード",
       shortLabel: "守り",
-      face: "🥲",
       caption: "無理を重ねない日",
     };
   }
@@ -69,14 +69,12 @@ function getModeMeta(signal) {
     return {
       label: "いたわりモード",
       shortLabel: "いたわり",
-      face: "😌",
       caption: "早めに整える日",
     };
   }
   return {
     label: "安定モード",
     shortLabel: "安定",
-    face: "🙂",
     caption: "いつも通りで大丈夫",
   };
 }
@@ -294,26 +292,6 @@ export function ForecastGauge({
             opacity="0.88"
           />
 
-          <g filter={`url(#gauge-shadow-${signal})`}>
-            <circle
-              cx={needleTip.x}
-              cy={needleTip.y}
-              r={20}
-              fill="#ffffff"
-              stroke={tone.fillEnd}
-              strokeWidth="4"
-            />
-            <text
-              x={needleTip.x}
-              y={needleTip.y + 7}
-              textAnchor="middle"
-              fontSize="23"
-              fontWeight="900"
-            >
-              {mode.face}
-            </text>
-          </g>
-
           <circle cx={170} cy={172} r={10} fill="#ffffff" stroke="rgba(226,232,240,0.95)" strokeWidth="2.5" />
           <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
 
@@ -375,6 +353,22 @@ export function ForecastGauge({
         </svg>
 
         <div
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 transition-[left,top,transform] duration-75 ease-out"
+          style={{
+            left: `${(needleTip.x / 340) * 100}%`,
+            top: `${(needleTip.y / 352) * 100}%`,
+          }}
+          aria-hidden="true"
+        >
+          <div
+            className="grid h-12 w-12 place-items-center rounded-full border-[3px] bg-white shadow-[0_14px_28px_-16px_rgba(15,23,42,0.55)]"
+            style={{ borderColor: tone.fillEnd }}
+          >
+            <GuideBotAvatar signal={level} className="h-12 w-12" />
+          </div>
+        </div>
+
+        <div
           className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
           style={{
             color: tone.labelText,
@@ -389,4 +383,3 @@ export function ForecastGauge({
     </div>
   );
 }
-
