@@ -386,16 +386,6 @@ export function getForecastTriggerFactors(forecast) {
 }
 
 
-const TRIGGER_EMOJI = {
-  pressure_down: "📉",
-  pressure_up: "📈",
-  damp: "💧",
-  humidity: "💧",
-  cold: "❄️",
-  heat: "☀️",
-  dry: "🍂",
-  temp: "🌡️",
-};
 
 const BODY_SIGN_LABELS = {
   pressure_down: ["頭が重くなりやすい", "首肩がこわばりやすい", "だるさが抜けにくい"],
@@ -430,16 +420,20 @@ function uniqueTake(items, limit = 3) {
   return result;
 }
 
-export function getTriggerEmoji(triggerKey) {
-  return TRIGGER_EMOJI[triggerKey] || "🌤️";
+function toWeatherIconKey(key) {
+  if (key === "humidity") return "damp";
+  if (key === "temp") return "cold";
+  return key || "pressure_down";
 }
 
 export function getForecastBackgroundFactors(triggerFactors) {
-  return safeArray(triggerFactors).slice(0, 2).map((factor) => ({
-    key: factor?.key || factor?.exact || "weather",
-    label: factor?.label || "気象変化",
-    emoji: getTriggerEmoji(factor?.key || factor?.exact),
-  }));
+  return safeArray(triggerFactors).slice(0, 2).map((factor) => {
+    const key = factor?.key || factor?.exact || "pressure_down";
+    return {
+      key: toWeatherIconKey(key),
+      label: factor?.label || "気象変化",
+    };
+  });
 }
 
 export function getForecastBodySigns(triggerFactors, signal = 0) {
@@ -1139,5 +1133,6 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
 
 
