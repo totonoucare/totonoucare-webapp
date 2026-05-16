@@ -93,7 +93,7 @@ export function buildRadarDateTabs() {
       date: today,
       mode: "today",
       label: "今日",
-      subLabel: "これから",
+      subLabel: "整える",
       locked: false,
     },
     {
@@ -101,7 +101,7 @@ export function buildRadarDateTabs() {
       date: tomorrow,
       mode: "tomorrow",
       label: "明日",
-      subLabel: "先回り",
+      subLabel: "備える",
       locked: false,
     },
   ];
@@ -116,8 +116,8 @@ export function inferModeFromSelectedDate(targetDate) {
 }
 
 export function getDefaultDateModeJST() {
-  // 未病レーダーの主役は「明日の先回り」。今日タブは見返し・当日確認用に置く。
-  return "tomorrow";
+  // 未病レーダーの主役は「今日の過ごし方」。明日タブは備えとして扱う。
+  return "today";
 }
 
 export function inferModeFromTargetDate(targetDate) {
@@ -134,9 +134,9 @@ export function getDateModeLabel(mode) {
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
-  if (mode === "today") return "今日これからの未病レーダー";
-  if (mode === "future") return `${formatTargetDate(targetDate)}の予報`;
-  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の予報`;
+  if (mode === "today") return "今日の過ごし方";
+  if (mode === "future") return `${formatTargetDate(targetDate)}の過ごし方`;
+  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の過ごし方`;
 }
 
 export function getSectionLabels(mode) {
@@ -158,8 +158,20 @@ export function getSectionLabels(mode) {
 }
 
 export function signalLabel(signal) {
-  if (signal === 2) return "警戒";
-  if (signal === 1) return "注意";
+  return getForecastModeLabel(signal);
+}
+
+export function getForecastModeLabel(signal) {
+  const level = Number(signal);
+  if (level === 2) return "守りモード";
+  if (level === 1) return "いたわりモード";
+  return "安定モード";
+}
+
+export function getForecastModeShortLabel(signal) {
+  const level = Number(signal);
+  if (level === 2) return "守り";
+  if (level === 1) return "いたわり";
   return "安定";
 }
 
@@ -371,6 +383,99 @@ export function getForecastTriggerFactors(forecast) {
   }
 
   return factors.slice(0, 2);
+}
+
+
+const TRIGGER_EMOJI = {
+  pressure_down: "📉",
+  pressure_up: "📈",
+  damp: "💧",
+  humidity: "💧",
+  cold: "❄️",
+  heat: "☀️",
+  dry: "🍂",
+  temp: "🌡️",
+};
+
+const BODY_SIGN_LABELS = {
+  pressure_down: ["頭が重くなりやすい", "首肩がこわばりやすい", "だるさが抜けにくい"],
+  pressure_up: ["張りつめ感が出やすい", "首肩に力が入りやすい", "気分が落ち着きにくい"],
+  damp: ["体が重だるくなりやすい", "眠気が出やすい", "胃腸が重く感じやすい"],
+  humidity: ["体が重だるくなりやすい", "眠気が出やすい", "胃腸が重く感じやすい"],
+  cold: ["手足やお腹が冷えやすい", "腰・首肩がこわばりやすい", "動き出しにくさが出やすい"],
+  heat: ["熱がこもって疲れやすい", "のぼせ・イライラが出やすい", "汗で消耗しやすい"],
+  dry: ["喉・肌・目が乾きやすい", "疲れがカサつきとして出やすい", "呼吸が浅くなりやすい"],
+};
+
+const PEAK_PREP_ITEMS = {
+  pressure_down: ["首肩を固めたまま山場に入らない", "目・耳まわりを一度ゆるめる", "大事な作業は早めに寄せる"],
+  pressure_up: ["予定を詰め込みすぎない", "肩の力を抜いて呼吸を一度整える", "刺激の強い飲食を重ねない"],
+  damp: ["昼食を重くしすぎない", "甘いもの・冷たい飲み物を重ねない", "食後に少しだけ歩く"],
+  humidity: ["昼食を重くしすぎない", "甘いもの・冷たい飲み物を重ねない", "食後に少しだけ歩く"],
+  cold: ["足首かお腹を先に守る", "冷たい飲み物を続けない", "外に出る前に首元・腰元を確認する"],
+  heat: ["暑さを我慢して押し切らない", "水分を一気飲みせずこまめに入れる", "熱がこもる前に休憩を挟む"],
+  dry: ["喉が渇く前に少しずつ潤す", "目と喉を使いすぎない", "夜更かしで消耗を重ねない"],
+};
+
+function uniqueTake(items, limit = 3) {
+  const seen = new Set();
+  const result = [];
+  for (const item of items) {
+    const text = String(item || "").trim();
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    result.push(text);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+export function getTriggerEmoji(triggerKey) {
+  return TRIGGER_EMOJI[triggerKey] || "🌤️";
+}
+
+export function getForecastBackgroundFactors(triggerFactors) {
+  return safeArray(triggerFactors).slice(0, 2).map((factor) => ({
+    key: factor?.key || factor?.exact || "weather",
+    label: factor?.label || "気象変化",
+    emoji: getTriggerEmoji(factor?.key || factor?.exact),
+  }));
+}
+
+export function getForecastBodySigns(triggerFactors, signal = 0) {
+  if (Number(signal) === 0) {
+    return ["大きなサインは出にくい見込み", "いつものリズムを崩さない", "違和感があれば軽めに整える"];
+  }
+
+  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
+  const signs = keys.flatMap((key) => BODY_SIGN_LABELS[key] || []);
+  return uniqueTake(signs.length ? signs : ["重だるさが出やすい", "首肩がこわばりやすい", "疲れが残りやすい"], 3);
+}
+
+export function getForecastPeakPrepItems(triggerFactors, signal = 0) {
+  if (Number(signal) === 0) {
+    return ["予定を詰め込みすぎない", "食事と休憩をいつも通りに保つ", "違和感が出たら早めに一息入れる"];
+  }
+
+  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
+  const items = keys.flatMap((key) => PEAK_PREP_ITEMS[key] || []);
+  return uniqueTake(items.length ? items : ["山場前に首肩をゆるめる", "食事を重くしすぎない", "予定に少し余白を残す"], 3);
+}
+
+export function getForecastModeLead(triggerFactors, signal = 0, mode = "today") {
+  const level = Number(signal);
+  const factors = getForecastBackgroundFactors(triggerFactors);
+  const labels = factors.map((f) => f.label).filter(Boolean);
+  const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
+  const target = mode === "today" ? "今日は" : "明日は";
+
+  if (level === 2) {
+    return `${target}${joined}の影響が強め。予定・食事・休み方を守り気味にして、無理を重ねない日です。`;
+  }
+  if (level === 1) {
+    return `${target}${joined}が少し響きやすい見込み。早めに軽く整えると、後半の崩れを抑えやすい日です。`;
+  }
+  return `${target}大きく崩れにくい見込み。いつものリズムを保ちながら、余裕があれば軽く整える日です。`;
 }
 
 export function getMoodHeadline(triggerKey, signal) {
