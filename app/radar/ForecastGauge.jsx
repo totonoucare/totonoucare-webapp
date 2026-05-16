@@ -275,6 +275,15 @@ export function ForecastGauge({
           <circle cx={170} cy={172} r={94} fill={centerFill} stroke={tone.ringSoft} strokeWidth="5" />
           <circle cx={170} cy={172} r={58} fill="#ffffff" stroke={tone.ring} strokeWidth="3" />
 
+          <ellipse
+            cx={170}
+            cy={272}
+            rx={72}
+            ry={9}
+            fill={tone.ringSoft}
+            opacity="0.34"
+          />
+
           <text
             x={170}
             y={151}
@@ -373,4 +382,3 @@ export function ForecastGauge({
     </div>
   );
 }
-
