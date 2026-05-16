@@ -92,7 +92,7 @@ export function TodayCarryoverIntro({ forecast, targetDateLabel, onOpenDashboard
           <div className="mt-1 text-[18px] font-black text-slate-950">{score}/10</div>
         </div>
         <div className="rounded-[18px] bg-slate-50 px-3 py-3 ring-1 ring-slate-100">
-          <div className="text-[10px] font-black text-slate-400">段階</div>
+          <div className="text-[10px] font-black text-slate-400">モード</div>
           <div className="mt-1 text-[14px] font-black text-slate-950">{signalLabel(forecast?.signal ?? 0)}</div>
         </div>
         <div className="rounded-[18px] bg-slate-50 px-3 py-3 ring-1 ring-slate-100">
@@ -519,7 +519,7 @@ export function SavedCareReviewAccordion({ bundle }) {
 
         <div className="relative z-10 mt-4 grid grid-cols-3 gap-2">
           <ReviewInfoChip label="スコア" value={score != null ? `${score}/10` : null} />
-          <ReviewInfoChip label="段階" value={signal != null ? signalLabel(signal) : null} />
+          <ReviewInfoChip label="モード" value={signal != null ? signalLabel(signal) : null} />
           <ReviewInfoChip label="山場" value={peakLabel || "見返し"} />
         </div>
       </button>
@@ -605,4 +605,6 @@ export function SavedCareReviewAccordion({ bundle }) {
     </Module>
   );
 }
+
+
 
