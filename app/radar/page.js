@@ -970,9 +970,6 @@ export default function RadarPage() {
                         signal={forecast.signal}
                         animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                       />
-                      <div className="-mt-2 text-center text-[11px] font-bold leading-5 text-slate-500">
-                        数字よりも、今日の過ごし方を切り替える目安です。
-                      </div>
                     </div>
 
                     <div className="grid gap-2.5">
@@ -1037,10 +1034,10 @@ export default function RadarPage() {
                           </div>
                           <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
                             {forecast.peak_start && forecast.peak_end
-                              ? `${String(forecast.peak_start).slice(0, 5)}–${String(
+                              ? `山場：${String(forecast.peak_start).slice(0, 5)}–${String(
                                   forecast.peak_end
                                 ).slice(0, 5)}`
-                              : "山場 —"}
+                              : "山場：—"}
                           </div>
                         </div>
 
@@ -1602,7 +1599,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
-
-
