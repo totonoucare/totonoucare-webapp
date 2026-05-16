@@ -164,7 +164,7 @@ export function ForecastGauge({
   const innerRadius = 80;
   const guideRadius = 126;
   const rangeRadius = 138;
-  const needleRadius = 105;
+  const bubbleRadius = outerRadius;
 
   const centerFill = "#ffffff";
   const scoreShadow =
@@ -174,12 +174,12 @@ export function ForecastGauge({
       ? "rgba(226,174,69,0.14)"
       : "rgba(102,185,163,0.13)";
 
-  const stableEnd = scoreToAngle(3);
-  const cautionEnd = scoreToAngle(5);
+  const stableEnd = scoreToAngle(3.5);
+  const cautionEnd = scoreToAngle(6.5);
 
-  const needleTip = polarToCartesian(cx, cy, needleRadius, valueAngle);
-  const needleTail = polarToCartesian(cx, cy, 20, valueAngle + 180);
+  const bubblePos = polarToCartesian(cx, cy, bubbleRadius, valueAngle);
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
+  const midLabelPos = polarToCartesian(cx, cy, 72, scoreToAngle(5));
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
   const modePillLabel = settled ? mode.label : "過ごし方モード";
 
@@ -194,11 +194,6 @@ export function ForecastGauge({
             </linearGradient>
 
             <linearGradient id={`gauge-fill-${signal}`} x1="18%" y1="18%" x2="82%" y2="82%">
-              <stop offset="0%" stopColor={tone.fillStart} />
-              <stop offset="100%" stopColor={tone.fillEnd} />
-            </linearGradient>
-
-            <linearGradient id={`needle-${signal}`} x1="0%" y1="50%" x2="100%" y2="50%">
               <stop offset="0%" stopColor={tone.fillStart} />
               <stop offset="100%" stopColor={tone.fillEnd} />
             </linearGradient>
@@ -224,21 +219,21 @@ export function ForecastGauge({
             d={describeArc(cx, cy, rangeRadius, gaugeStart, stableEnd)}
             fill="none"
             stroke="rgba(102,185,163,0.72)"
-            strokeWidth="5"
+            strokeWidth="7"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, stableEnd, cautionEnd)}
             fill="none"
             stroke="rgba(226,174,69,0.74)"
-            strokeWidth="5"
+            strokeWidth="7"
             strokeLinecap="round"
           />
           <path
             d={describeArc(cx, cy, rangeRadius, cautionEnd, gaugeEnd)}
             fill="none"
             stroke="rgba(227,137,73,0.72)"
-            strokeWidth="5"
+            strokeWidth="7"
             strokeLinecap="round"
           />
 
@@ -246,7 +241,7 @@ export function ForecastGauge({
             d={describeArc(cx, cy, outerRadius, gaugeStart, gaugeEnd)}
             fill="none"
             stroke={`url(#gauge-track-${signal})`}
-            strokeWidth="22"
+            strokeWidth="28"
             strokeLinecap="round"
           />
 
@@ -254,12 +249,12 @@ export function ForecastGauge({
             d={describeArc(cx, cy, outerRadius, gaugeStart, valueAngle)}
             fill="none"
             stroke={`url(#gauge-fill-${signal})`}
-            strokeWidth="24"
+            strokeWidth="30"
             strokeLinecap="round"
             filter={`url(#gauge-shadow-${signal})`}
           />
 
-          {[0, 3, 5, 10].map((value) => {
+          {[0, 3.5, 6.5, 10].map((value) => {
             const angle = scoreToAngle(value);
             const inner = polarToCartesian(cx, cy, innerRadius + 4, angle);
             const outer = polarToCartesian(cx, cy, guideRadius - 4, angle);
@@ -272,7 +267,7 @@ export function ForecastGauge({
                 x2={outer.x}
                 y2={outer.y}
                 stroke="rgba(100,116,139,0.58)"
-                strokeWidth="3.5"
+                strokeWidth="3"
                 strokeLinecap="round"
               />
             );
@@ -280,20 +275,6 @@ export function ForecastGauge({
 
           <circle cx={170} cy={172} r={94} fill={centerFill} stroke={tone.ringSoft} strokeWidth="5" />
           <circle cx={170} cy={172} r={58} fill="#ffffff" stroke={tone.ring} strokeWidth="3" />
-
-          <line
-            x1={needleTail.x}
-            y1={needleTail.y}
-            x2={needleTip.x}
-            y2={needleTip.y}
-            stroke={`url(#needle-${signal})`}
-            strokeWidth="5.5"
-            strokeLinecap="round"
-            opacity="0.88"
-          />
-
-          <circle cx={170} cy={172} r={10} fill="#ffffff" stroke="rgba(226,232,240,0.95)" strokeWidth="2.5" />
-          <circle cx={170} cy={172} r={5.5} fill={tone.fillEnd} />
 
           <text
             x={170}
@@ -341,6 +322,16 @@ export function ForecastGauge({
             安定
           </text>
           <text
+            x={midLabelPos.x}
+            y={midLabelPos.y + 6}
+            textAnchor="middle"
+            fontSize="12"
+            fontWeight="900"
+            fill="rgba(148,163,184,0.88)"
+          >
+            いたわり
+          </text>
+          <text
             x={endLabelPos.x}
             y={endLabelPos.y + 6}
             textAnchor="middle"
@@ -353,18 +344,18 @@ export function ForecastGauge({
         </svg>
 
         <div
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 transition-[left,top,transform] duration-75 ease-out"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 will-change-[left,top]"
           style={{
-            left: `${(needleTip.x / 340) * 100}%`,
-            top: `${(needleTip.y / 352) * 100}%`,
+            left: `${(bubblePos.x / 340) * 100}%`,
+            top: `${(bubblePos.y / 352) * 100}%`,
           }}
           aria-hidden="true"
         >
           <div
-            className="grid h-12 w-12 place-items-center rounded-full border-[3px] bg-white shadow-[0_14px_28px_-16px_rgba(15,23,42,0.55)]"
-            style={{ borderColor: tone.fillEnd }}
+            className="grid h-12 w-12 place-items-center rounded-full border bg-white/78 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.42)] ring-1 ring-white/80 backdrop-blur-sm"
+            style={{ borderColor: tone.labelBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
           >
-            <GuideBotAvatar signal={level} className="h-12 w-12" />
+            <GuideBotAvatar signal={level} className="h-10 w-10" />
           </div>
         </div>
 
@@ -383,3 +374,4 @@ export function ForecastGauge({
     </div>
   );
 }
+
