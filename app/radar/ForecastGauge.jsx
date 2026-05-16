@@ -183,7 +183,7 @@ export function ForecastGauge({
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
   const midLabelPos = polarToCartesian(cx, cy, rangeRadius + 12, scoreToAngle(5));
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
-  const modePillLabel = settled ? mode.label : "過ごし方モード";
+  const modePillLabel = settled ? mode.caption : "過ごし方を確認中";
 
   return (
     <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
@@ -288,18 +288,18 @@ export function ForecastGauge({
             x={170}
             y={151}
             textAnchor="middle"
-            fontSize="13"
+            fontSize="12"
             fontWeight="900"
-            letterSpacing="1.5"
+            letterSpacing="0.08em"
             fill="rgba(100,116,139,0.72)"
           >
-            MODE
+            過ごし方
           </text>
           <text
             x={170}
-            y={191}
+            y={190}
             textAnchor="middle"
-            fontSize={mode.shortLabel.length >= 4 ? "32" : "38"}
+            fontSize={mode.shortLabel.length >= 4 ? "29" : "34"}
             fontWeight="900"
             fill={tone.main}
             stroke="rgba(255,255,255,0.95)"
@@ -307,16 +307,6 @@ export function ForecastGauge({
             paintOrder="stroke"
           >
             {settled ? mode.shortLabel : "判定中"}
-          </text>
-          <text
-            x={170}
-            y={219}
-            textAnchor="middle"
-            fontSize="13"
-            fontWeight="900"
-            fill="rgba(100,116,139,0.86)"
-          >
-            {settled ? mode.caption : "過ごし方を確認中"}
           </text>
 
           <text
@@ -368,7 +358,7 @@ export function ForecastGauge({
         </div>
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[82%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
+          className="pointer-events-none absolute left-1/2 top-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
           style={{
             color: tone.labelText,
             background: tone.labelBg,
@@ -382,3 +372,4 @@ export function ForecastGauge({
     </div>
   );
 }
+
