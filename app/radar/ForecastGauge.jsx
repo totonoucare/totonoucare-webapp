@@ -293,7 +293,7 @@ export function ForecastGauge({
             letterSpacing="0.08em"
             fill="rgba(100,116,139,0.72)"
           >
-            過ごし方モード
+            MODO
           </text>
           <text
             x={170}
