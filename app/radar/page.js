@@ -47,7 +47,6 @@ import {
   getCareStrategyLead,
   getCareStrategyTitle,
   getDateModeLabel,
-  getForecastLines,
   getForecastBackgroundFactors,
   getForecastBodySigns,
   getForecastModeLabel,
@@ -115,7 +114,6 @@ export default function RadarPage() {
   const [selectedTargetDate, setSelectedTargetDate] = useState("");
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
-  const [noticeOpen, setNoticeOpen] = useState(false);
   const [tsuboExtraOpen, setTsuboExtraOpen] = useState(false);
   const [foodDetailOpen, setFoodDetailOpen] = useState(false);
 
@@ -650,7 +648,6 @@ export default function RadarPage() {
     [displayDateMode]
   );
 
-  const forecastLines = useMemo(() => getForecastLines(bundle), [bundle]);
   const triggerFactors = useMemo(() => getForecastTriggerFactors(forecast), [forecast]);
   const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
   const forecastModeLabel = useMemo(
@@ -1058,62 +1055,9 @@ export default function RadarPage() {
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-4 rounded-[22px] bg-white/72 ring-1 ring-black/5 backdrop-blur-sm overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setNoticeOpen((v) => !v)}
-                    className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition-all hover:bg-white/60"
-                  >
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        {sectionLabels.noticeTitle}
-                      </div>
-                      <div className="mt-1.5 text-[15px] font-black tracking-tight text-slate-900">
-                        予報の根拠を見る
-                      </div>
-                    </div>
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className={[
-                        "h-6 w-6 text-slate-400 transition-transform",
-                        noticeOpen ? "rotate-180" : "",
-                      ].join(" ")}
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 9l6 6 6-6" />
-                    </svg>
-                  </button>
-
-                  {noticeOpen ? (
-  <div className="border-t border-slate-200/80 px-4 py-4 bg-white/60">
-    {enrichingForecast && !String(forecast?.gpt_summary || forecast?.computed?.forecast_snapshot?.gpt_summary || "").trim() ? (
-      <div className="mb-3 rounded-[16px] bg-slate-50 px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
-        説明文を読みやすく整えています…
-      </div>
-    ) : null}
-    <ul className="space-y-3">
-      {forecastLines.map((line, idx) => (
-        <li
-          key={`${idx}-${line}`}
-          className="flex items-start gap-3 text-[13px] font-bold leading-6 text-slate-700"
-        >
-          <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
-          <span>{line}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
-) : null}
-                </div>
               </div>
             </div>
           </Module>
-
           <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
             <div className="flex items-start gap-3">
               <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
@@ -1325,7 +1269,7 @@ export default function RadarPage() {
                     {food.title || `${getDateModeLabel(bundleDateMode)}の食養生`}
                   </div>
 
-                  {enrichingForecast && !String(forecast?.gpt_summary || forecast?.computed?.forecast_snapshot?.gpt_summary || "").trim() ? (
+                  {enrichingForecast && !hasFoodDetails ? (
                     <div className="mt-3 rounded-[16px] bg-white px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
                       食養生の説明を整えています…
                     </div>
@@ -1599,4 +1543,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
