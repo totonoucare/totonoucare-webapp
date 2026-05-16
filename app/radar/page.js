@@ -934,7 +934,7 @@ export default function RadarPage() {
                         {scoreCardTitle}
                       </div>
                       <div className="mt-1 text-[11px] font-black tracking-[0.16em] text-slate-400">
-                        DAILY FORECAST
+                        DAILY CARE
                       </div>
                     </div>
                   </div>
@@ -1543,3 +1543,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
+
