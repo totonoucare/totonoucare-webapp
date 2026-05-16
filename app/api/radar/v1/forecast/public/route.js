@@ -64,8 +64,8 @@ function calcUniversalSignal(weatherStress) {
   const score = Math.round((clamp(normalizedLoad, 0, 1.45) / 1.45) * 10);
 
   let signal;
-  if (score >= 6) signal = 2;      // 警戒
-  else if (score >= 4) signal = 1; // 注意
+  if (score >= 7) signal = 2;      // 守り
+  else if (score >= 4) signal = 1; // いたわり
   else signal = 0;                 // 安定
 
   return { score_0_10: score, signal };
