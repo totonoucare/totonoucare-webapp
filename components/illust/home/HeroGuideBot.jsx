@@ -1,5 +1,93 @@
 "use client";
 
+function getGuideBotFace(signal = 0) {
+  const darkGreen = "#3a5c4b";
+  const blushColor = "#d69e9e";
+
+  let eyes = (
+    <>
+      <circle cx="44" cy="50" r="4.5" fill={darkGreen} />
+      <circle cx="76" cy="50" r="4.5" fill={darkGreen} />
+    </>
+  );
+
+  let mouth = (
+    <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />
+  );
+
+  let accessory = null;
+
+  if (signal === 1) {
+    mouth = <path d="M54 59 C 58 58, 62 58, 66 59" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+  } else if (signal === 2) {
+    eyes = (
+      <>
+        <path d="M40 51 Q 44 48 48 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M72 51 Q 76 48 80 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+      </>
+    );
+    mouth = <path d="M54 60 C 58 57, 62 57, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+    accessory = <path d="M 85 40 Q 88 45 85 48 Q 82 45 85 40 Z" fill="#90b1e0" opacity="0.8" />;
+  }
+
+  return { eyes, mouth, accessory, blushColor };
+}
+
+function GuideBotSvg({ signal = 0, className = "h-full w-full" }) {
+  const { eyes, mouth, accessory, blushColor } = getGuideBotFace(Number(signal));
+
+  return (
+    <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
+      <defs>
+        <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#eef7f2" />
+        </linearGradient>
+        <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#dcefe6" />
+          <stop offset="100%" stopColor="#bfdacb" />
+        </linearGradient>
+        <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e2aa3b" stopOpacity="0.92" />
+          <stop offset="100%" stopColor="#efbf56" stopOpacity="0.28" />
+        </linearGradient>
+        <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#355f52" floodOpacity="0.28" />
+        </filter>
+      </defs>
+
+      <circle cx="60" cy="70" r="40" fill="#ffffff" fillOpacity="0.4" filter="blur(10px)" />
+      <path
+        d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z"
+        fill="url(#bodyGrad)"
+        stroke="#a1c4b2"
+        strokeWidth="1"
+        filter="url(#softShadow)"
+      />
+
+      <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.98" />
+      <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.76" />
+      <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
+
+      <path d="M60 28 L60 18" stroke="#6eab90" strokeWidth="2.7" strokeLinecap="round" />
+      <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#8fc7aa" />
+
+      <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" stroke="#d9e8df" strokeWidth="1" />
+
+      <ellipse cx="36" cy="56" rx="5" ry="3" fill={blushColor} opacity="0.65" />
+      <ellipse cx="84" cy="56" rx="5" ry="3" fill={blushColor} opacity="0.65" />
+
+      {eyes}
+      {mouth}
+      {accessory}
+    </svg>
+  );
+}
+
+export function GuideBotAvatar({ signal = 0, className = "h-12 w-12" }) {
+  return <GuideBotSvg signal={signal} className={className} />;
+}
+
 export default function HeroGuideBot({
   message = "今日はどんな日か、ひと目で見ていこう。",
   compact = false,
@@ -30,38 +118,7 @@ export default function HeroGuideBot({
     bubbleStyles = "right-[130px] top-4 w-[180px]";
   }
 
-  // ★ 表情のパーツを定義（コントラストを高めるために色を濃く調整）
-  const darkGreen = "#3a5c4b"; // 元の #4f7a64 より濃い緑
-  const blushColor = "#d69e9e"; // 元の #e2b4b4 より濃いピンク
-
-  let eyes = (
-    <>
-      <circle cx="44" cy="50" r="4.5" fill={darkGreen} />
-      <circle cx="76" cy="50" r="4.5" fill={darkGreen} />
-    </>
-  );
-  
-  let mouth = (
-    <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />
-  );
-  
-  let accessory = null;
-
-  // シグナルに応じた表情の変化
-  if (signal === 1) {
-    // 注意: 口を少し真っ直ぐに（すんっ、とした顔）
-    mouth = <path d="M54 59 C 58 58, 62 58, 66 59" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
-  } else if (signal === 2) {
-    // 警戒: 少し心配そうな顔（目を閉じる ＋ 汗マーク ＋ ハの字の口）
-    eyes = (
-      <>
-        <path d="M40 51 Q 44 48 48 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M72 51 Q 76 48 80 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
-      </>
-    );
-    mouth = <path d="M54 60 C 58 57, 62 57, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
-    accessory = <path d="M 85 40 Q 88 45 85 48 Q 82 45 85 40 Z" fill="#90b1e0" opacity="0.8" />; // 水色の汗
-  }
+  const { eyes, mouth, accessory, blushColor } = getGuideBotFace(Number(signal));
 
   return (
     <div className={["relative", widthClass].join(" ")}>
