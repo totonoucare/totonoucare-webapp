@@ -179,7 +179,7 @@ export function ForecastGauge({
 
   const bubblePos = polarToCartesian(cx, cy, bubbleRadius, valueAngle);
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
-  const midLabelPos = polarToCartesian(cx, cy, 72, scoreToAngle(5));
+  const midLabelPos = polarToCartesian(cx, cy, rangeRadius + 12, scoreToAngle(5));
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
   const modePillLabel = settled ? mode.label : "過ごし方モード";
 
@@ -202,9 +202,6 @@ export function ForecastGauge({
               <feDropShadow dx="0" dy="10" stdDeviation="11" floodColor={scoreShadow} />
             </filter>
           </defs>
-
-          <ellipse cx={170} cy={286} rx={104} ry={18} fill={tone.shadow} />
-          <ellipse cx={170} cy={286} rx={76} ry={10} fill="rgba(255,255,255,0.82)" />
 
           <path
             d={describeArc(cx, cy, guideRadius, gaugeStart, gaugeEnd)}
@@ -325,7 +322,7 @@ export function ForecastGauge({
             x={midLabelPos.x}
             y={midLabelPos.y + 6}
             textAnchor="middle"
-            fontSize="12"
+            fontSize="13"
             fontWeight="900"
             fill="rgba(148,163,184,0.88)"
           >
@@ -374,3 +371,4 @@ export function ForecastGauge({
     </div>
   );
 }
+
