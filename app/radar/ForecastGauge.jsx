@@ -151,6 +151,8 @@ export function ForecastGauge({
 
   const cx = 170;
   const cy = 172;
+  const viewBoxWidth = 340;
+  const viewBoxHeight = 300;
 
   const gaugeStart = -120;
   const gaugeEnd = 120;
@@ -185,8 +187,8 @@ export function ForecastGauge({
 
   return (
     <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
-      <div className="relative aspect-[1/1.04]">
-        <svg viewBox="0 0 340 352" className="h-full w-full overflow-visible" aria-hidden="true">
+      <div className="relative aspect-[340/300]">
+        <svg viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="h-full w-full overflow-visible" aria-hidden="true">
           <defs>
             <linearGradient id={`gauge-track-${signal}`} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#e5e7eb" />
@@ -343,8 +345,8 @@ export function ForecastGauge({
         <div
           className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 will-change-[left,top]"
           style={{
-            left: `${(bubblePos.x / 340) * 100}%`,
-            top: `${(bubblePos.y / 352) * 100}%`,
+            left: `${(bubblePos.x / viewBoxWidth) * 100}%`,
+            top: `${(bubblePos.y / viewBoxHeight) * 100}%`,
           }}
           aria-hidden="true"
         >
@@ -357,7 +359,7 @@ export function ForecastGauge({
         </div>
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[70.5%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
+          className="pointer-events-none absolute left-1/2 top-[82%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
           style={{
             color: tone.labelText,
             background: tone.labelBg,
@@ -371,3 +373,4 @@ export function ForecastGauge({
     </div>
   );
 }
+
