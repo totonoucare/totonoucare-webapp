@@ -14,7 +14,6 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
-import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   actionTagLabel,
   conditionLabel,
@@ -48,15 +47,18 @@ import {
   getCareStrategyTitle,
   getDateModeLabel,
   getForecastLines,
+  getForecastBackgroundFactors,
+  getForecastBodySigns,
+  getForecastModeLabel,
+  getForecastModeLead,
+  getForecastPeakPrepItems,
   getForecastTriggerFactors,
   getForecastTriggerKey,
-  getHeroAccentClass,
   getHeroDecorClass,
   getHeroPanelClass,
   getJstTodayTomorrow,
   getLifestylePlan,
   getLocationDisplayLabel,
-  getMoodHeadline,
   getPointReading,
   getPointRoleSummary,
   getRiskContext,
@@ -68,7 +70,6 @@ import {
   safeArray,
   signalBadgeClass,
   signalDotClass,
-  signalLabel,
 } from "./utils";
 
 /* -----------------------------
@@ -109,7 +110,7 @@ export default function RadarPage() {
 
   const [tab, setTab] = useState("forecast");
   const [careTab, setCareTab] = useState("loosen");
-  const [dateMode, setDateMode] = useState("tomorrow");
+  const [dateMode, setDateMode] = useState("today");
   const [selectedTargetDate, setSelectedTargetDate] = useState("");
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
   const [selectedPoint, setSelectedPoint] = useState(null);
@@ -320,8 +321,8 @@ export default function RadarPage() {
   } = {}) {
     if (!session) return;
 
-    const { today, tomorrow } = getJstTodayTomorrow();
-    const targetDate = normalizeRadarTargetDate(requestedTargetDate || selectedTargetDate || tomorrow);
+    const { today } = getJstTodayTomorrow();
+    const targetDate = normalizeRadarTargetDate(requestedTargetDate || selectedTargetDate || today);
     const nextMode = inferModeFromSelectedDate(targetDate) || "tomorrow";
     const requestSeq = ++requestSeqRef.current;
 
@@ -468,8 +469,8 @@ export default function RadarPage() {
 
   useEffect(() => {
     if (!session || loadingAuth) return;
-    const { tomorrow } = getJstTodayTomorrow();
-    const firstTargetDate = normalizeRadarTargetDate(initialDateParam || tomorrow);
+    const { today } = getJstTodayTomorrow();
+    const firstTargetDate = normalizeRadarTargetDate(initialDateParam || today);
     fetchForecast({ targetDate: firstTargetDate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, loadingAuth, initialDateParam]);
@@ -651,9 +652,25 @@ export default function RadarPage() {
   const forecastLines = useMemo(() => getForecastLines(bundle), [bundle]);
   const triggerFactors = useMemo(() => getForecastTriggerFactors(forecast), [forecast]);
   const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
-  const moodHeadline = useMemo(
-    () => getMoodHeadline(triggerKey, forecast?.signal ?? 0, displayDateMode),
-    [triggerKey, forecast?.signal, displayDateMode]
+  const forecastModeLabel = useMemo(
+    () => getForecastModeLabel(forecast?.signal ?? 0),
+    [forecast?.signal]
+  );
+  const forecastModeLead = useMemo(
+    () => getForecastModeLead(triggerFactors, forecast?.signal ?? 0, displayDateMode),
+    [triggerFactors, forecast?.signal, displayDateMode]
+  );
+  const bodySigns = useMemo(
+    () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0),
+    [triggerFactors, forecast?.signal]
+  );
+  const peakPrepItems = useMemo(
+    () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0),
+    [triggerFactors, forecast?.signal]
+  );
+  const backgroundFactors = useMemo(
+    () => getForecastBackgroundFactors(triggerFactors),
+    [triggerFactors]
   );
   const careTriggerFactors = useMemo(() => getForecastTriggerFactors(activeCareForecast), [activeCareForecast]);
   const careTriggerKey = careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
@@ -821,7 +838,7 @@ export default function RadarPage() {
             {error || "時間をおいてもう一度お試しください。"}
           </div>
           <Button
-            onClick={() => fetchForecast({ force: true, targetDate: selectedTargetDate || getJstTodayTomorrow().tomorrow })}
+            onClick={() => fetchForecast({ force: true, targetDate: selectedTargetDate || getJstTodayTomorrow().today })}
             className="mt-8 w-full shadow-md"
           >
             再読み込み
@@ -936,8 +953,12 @@ export default function RadarPage() {
                         signalDotClass(forecast.signal),
                       ].join(" ")}
                     />
-                    {forecast.signal_label || signalLabel(forecast.signal)}
+                    {forecastModeLabel}
                   </span>
+                </div>
+
+                <div className="mt-3 rounded-[22px] bg-white/72 px-4 py-3 text-[13px] font-extrabold leading-6 text-slate-700 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
+                  {forecastModeLead}
                 </div>
 
                 <div className="relative mt-4 rounded-[26px] bg-white/62 px-3.5 py-4 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)] sm:px-4">
@@ -946,75 +967,95 @@ export default function RadarPage() {
                       <ForecastGauge
                         score={forecast.score_0_10}
                         signal={forecast.signal}
-                        triggerKey={triggerKey}
                         animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                       />
                       <div className="-mt-2 text-center text-[11px] font-bold leading-5 text-slate-500">
-                        スコアが高いほど、無理を重ねると崩れやすい目安です。
-                      </div>                        
+                        数字よりも、今日の過ごし方を切り替える目安です。
+                      </div>
                     </div>
 
                     <div className="grid gap-2.5">
                       <div className="rounded-[22px] bg-white/80 px-3.5 py-3 ring-1 ring-black/5 shadow-sm">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          響きやすい要素
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            出やすいサイン
+                          </div>
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
+                            体感の目安
+                          </span>
                         </div>
 
                         <div className="mt-2.5 grid gap-2">
-                          {triggerFactors.map((factor, index) => (
+                          {bodySigns.map((sign, index) => (
                             <div
-                              key={`${factor.key}-${index}`}
-                              className="flex items-center gap-2.5 rounded-[18px] bg-white/72 px-2.5 py-2 ring-1 ring-black/5 shadow-sm"
+                              key={`${sign}-${index}`}
+                              className="flex items-start gap-2.5 rounded-[18px] bg-white/74 px-3 py-2.5 ring-1 ring-black/5 shadow-sm"
                             >
-                              <div
+                              <span
                                 className={[
-                                  "grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white shadow-sm ring-1 ring-black/5",
-                                  getHeroAccentClass(forecast.signal),
+                                  "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-black text-white shadow-sm",
+                                  forecast.signal === 2
+                                    ? "bg-[#E38949]"
+                                    : forecast.signal === 1
+                                    ? "bg-[#E2AE45]"
+                                    : "bg-[#66B9A3]",
                                 ].join(" ")}
                               >
-                                <WeatherIcon triggerKey={factor.key} className="h-6 w-6" />
-                              </div>
-
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-black text-slate-400">
-                                    {index === 0 ? "中心になりやすい" : "重なりやすい"}
-                                  </span>
-                                  {index === 1 && (
-                                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-black text-slate-500">
-                                      あわせて注意
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[16px] font-black tracking-tight text-slate-900">
-                                  {factor.label}
-                                </div>
-                              </div>
+                                {index + 1}
+                              </span>
+                              <span className="text-[13px] font-extrabold leading-6 text-slate-800">
+                                {sign}
+                              </span>
                             </div>
                           ))}
                         </div>
 
-                        <div className="mt-2.5 text-[12px] font-bold leading-5 text-slate-600">
-                          {moodHeadline}
-                        </div>
+                        {backgroundFactors.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                            <span className="mr-1 text-[10px] font-black text-slate-400">背景</span>
+                            {backgroundFactors.map((factor, index) => (
+                              <span
+                                key={`${factor.key}-${index}`}
+                                className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-slate-100"
+                              >
+                                <span aria-hidden="true">{factor.emoji}</span>
+                                {factor.label}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
 
                       <div className="rounded-[22px] bg-white/74 px-3.5 py-3 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                            <IconBolt className="h-4 w-4" />
-                          </span>
-                          {selectedIsToday ? "このあとの山場" : "明日の山場"}
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                              <IconBolt className="h-4 w-4" />
+                            </span>
+                            {selectedIsToday ? "山場前に" : "明日の山場前に"}
+                          </div>
+                          <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
+                            {forecast.peak_start && forecast.peak_end
+                              ? `${String(forecast.peak_start).slice(0, 5)}–${String(
+                                  forecast.peak_end
+                                ).slice(0, 5)}`
+                              : "山場 —"}
+                          </div>
                         </div>
 
-                        <div className="mt-2 text-[27px] font-black leading-none tracking-[-0.04em] text-slate-900">
-                          {forecast.peak_start && forecast.peak_end
-                            ? `${String(forecast.peak_start).slice(0, 5)}–${String(
-                                forecast.peak_end
-                              ).slice(0, 5)}`
-                            : "—"}
+                        <div className="mt-3 grid gap-2">
+                          {peakPrepItems.map((item, index) => (
+                            <div
+                              key={`${item}-${index}`}
+                              className="flex items-start gap-2 rounded-[16px] bg-white/70 px-3 py-2 ring-1 ring-black/5"
+                            >
+                              <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
+                              <span className="text-[12px] font-extrabold leading-5 text-slate-700">
+                                {item}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-
                       </div>
                     </div>
                   </div>
@@ -1031,7 +1072,7 @@ export default function RadarPage() {
                         {sectionLabels.noticeTitle}
                       </div>
                       <div className="mt-1.5 text-[15px] font-black tracking-tight text-slate-900">
-                        くわしく見る
+                        予報の根拠を見る
                       </div>
                     </div>
                     <svg
@@ -1560,8 +1601,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
-
-
-
