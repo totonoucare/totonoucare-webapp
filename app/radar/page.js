@@ -44,6 +44,7 @@ import {
   buildScoreCardTitle,
   buildTodayCarePlan,
   formatTargetDate,
+  deriveCarePolicies,
   getCareStrategyLead,
   getCareStrategyTitle,
   getDateModeLabel,
@@ -681,6 +682,16 @@ export default function RadarPage() {
     () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
     [careTriggerFactors, activeCareForecast?.signal, selectedIsToday]
   );
+  const carePolicies = useMemo(
+    () =>
+      deriveCarePolicies({
+        forecast: activeCareForecast,
+        triggerFactors: careTriggerFactors,
+        riskContext,
+        mode: selectedIsToday ? "today" : "tomorrow",
+      }),
+    [activeCareForecast, careTriggerFactors, riskContext, selectedIsToday]
+  );
   const derivedLifestylePlan = useMemo(
     () => getLifestylePlan(careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
     [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday]
@@ -1083,9 +1094,31 @@ export default function RadarPage() {
 
             </div>
 
-            <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 ring-1 ring-inset ring-[#D3E1D5]">
-              <div className="text-[13px] font-bold leading-6 text-slate-700">
-                {careStrategyLead}
+            <div className="mt-4 rounded-[26px] bg-[#F7FAF7] px-4 py-4 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_12px_28px_-24px_rgba(37,95,79,0.28)]">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/70">
+                  この日のケア方針
+                </div>
+                <div className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#D3E1D5]">
+                  体質 × 天気
+                </div>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                {safeArray(carePolicies?.policies).map((policy) => (
+                  <span
+                    key={policy.key}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm"
+                    title={policy.short}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.22)]" />
+                    {policy.label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-700">
+                {carePolicies?.summary || careStrategyLead}
               </div>
             </div>
 
@@ -1543,5 +1576,6 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
 
