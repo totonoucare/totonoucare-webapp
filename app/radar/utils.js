@@ -578,6 +578,289 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
 }
 
 
+const CARE_POLICY_DEFINITIONS = {
+  shizumeru: {
+    key: "shizumeru",
+    label: "しずめる",
+    short: "熱と冴えを落ち着ける",
+  },
+  yurumeru: {
+    key: "yurumeru",
+    label: "ゆるめる",
+    short: "力みをほどく",
+  },
+  meguraseru: {
+    key: "meguraseru",
+    label: "めぐらせる",
+    short: "巡りを止めない",
+  },
+  nagasu: {
+    key: "nagasu",
+    label: "ながす",
+    short: "重さを逃がす",
+  },
+  uruosu: {
+    key: "uruosu",
+    label: "うるおす",
+    short: "乾きを補う",
+  },
+  nukumeru: {
+    key: "nukumeru",
+    label: "ぬくめる",
+    short: "冷えを守る",
+  },
+  sasaeru: {
+    key: "sasaeru",
+    label: "ささえる",
+    short: "回復力を削らない",
+  },
+};
+
+const TRIGGER_POLICY_SCORES = {
+  pressure_down: { meguraseru: 6, yurumeru: 3.5 },
+  pressure_up: { yurumeru: 6, shizumeru: 3.5 },
+  damp: { nagasu: 6, sasaeru: 3.5 },
+  humidity: { nagasu: 6, sasaeru: 3.5 },
+  cold: { nukumeru: 6, sasaeru: 3.5 },
+  heat: { shizumeru: 6, uruosu: 3.5 },
+  dry: { uruosu: 6, sasaeru: 3.5 },
+};
+
+const TCM_ACTION_POLICY_SCORES = {
+  move_qi: { yurumeru: 1.5, meguraseru: 1.2 },
+  move_blood: { meguraseru: 2 },
+  soothe_liver: { yurumeru: 1.6, shizumeru: 1 },
+  transform_damp: { nagasu: 2 },
+  strengthen_spleen: { sasaeru: 1.4, nagasu: 1 },
+  tonify_qi: { sasaeru: 2 },
+  nourish_blood: { uruosu: 1.6, sasaeru: 1 },
+  generate_fluids: { uruosu: 2 },
+  support_kidney: { nukumeru: 1.6, sasaeru: 1.3 },
+};
+
+const SUB_LABEL_POLICY_SCORES = {
+  qi_stagnation: { yurumeru: 1.2, meguraseru: 0.9 },
+  qi_deficiency: { sasaeru: 1.3, nukumeru: 0.6 },
+  blood_deficiency: { uruosu: 1.2, sasaeru: 0.8 },
+  blood_stasis: { meguraseru: 1.4, yurumeru: 0.6 },
+  fluid_damp: { nagasu: 1.4, sasaeru: 0.8 },
+  fluid_deficiency: { uruosu: 1.4, shizumeru: 0.8 },
+};
+
+const SYMPTOM_POLICY_SCORES = {
+  fatigue: { sasaeru: 1.1, nagasu: 0.4 },
+  sleep: { shizumeru: 1.0, sasaeru: 0.7, uruosu: 0.5 },
+  neck_shoulder: { yurumeru: 1.0, meguraseru: 0.8 },
+  low_back_pain: { nukumeru: 0.9, meguraseru: 0.6, sasaeru: 0.6 },
+  swelling: { nagasu: 1.2 },
+  headache: { yurumeru: 0.9, meguraseru: 0.8, shizumeru: 0.5 },
+  dizziness: { sasaeru: 0.8, meguraseru: 0.6, uruosu: 0.5 },
+  mood: { yurumeru: 0.9, shizumeru: 0.8, meguraseru: 0.5 },
+};
+
+const ENV_VECTOR_POLICY_SCORES = {
+  pressure_shift: { yurumeru: 0.45, meguraseru: 0.45 },
+  temp_swing: { nukumeru: 0.35, sasaeru: 0.3, uruosu: 0.2 },
+  humidity_up: { nagasu: 0.55, sasaeru: 0.25 },
+  dryness_up: { uruosu: 0.55, sasaeru: 0.25 },
+  wind_strong: { yurumeru: 0.35, shizumeru: 0.3 },
+};
+
+const POLICY_PAIR_SUMMARIES = {
+  "yurumeru+meguraseru": "首肩や呼吸を固めすぎず、巡りの逃げ道を作るケアが合います。",
+  "meguraseru+yurumeru": "首肩や呼吸を固めすぎず、巡りの逃げ道を作るケアが合います。",
+  "nagasu+sasaeru": "重さをため込まず、胃腸と回復力を守るケアが合います。",
+  "sasaeru+nagasu": "重さをため込まず、胃腸と回復力を守るケアが合います。",
+  "nukumeru+sasaeru": "冷えの入口を守りながら、消耗を増やさないケアが合います。",
+  "sasaeru+nukumeru": "冷えの入口を守りながら、消耗を増やさないケアが合います。",
+  "shizumeru+uruosu": "熱をこもらせず、乾きや消耗を残さないケアが合います。",
+  "uruosu+shizumeru": "熱をこもらせず、乾きや消耗を残さないケアが合います。",
+  "shizumeru+nagasu": "熱と重さをため込まず、軽さを残すケアが合います。",
+  "nagasu+shizumeru": "熱と重さをため込まず、軽さを残すケアが合います。",
+  "uruosu+sasaeru": "乾かしすぎず、回復力を残すケアが合います。",
+  "sasaeru+uruosu": "乾かしすぎず、回復力を残すケアが合います。",
+  "nagasu+meguraseru": "重さを逃がしながら、巡りを止めないケアが合います。",
+  "meguraseru+nagasu": "重さを逃がしながら、巡りを止めないケアが合います。",
+  "yurumeru+shizumeru": "力みと高ぶりを早めに落とすケアが合います。",
+  "shizumeru+yurumeru": "力みと高ぶりを早めに落とすケアが合います。",
+  "nukumeru+meguraseru": "冷やさず、固めず、動き出しやすさを残すケアが合います。",
+  "meguraseru+nukumeru": "冷やさず、固めず、動き出しやすさを残すケアが合います。",
+};
+
+const SINGLE_POLICY_SUMMARIES = {
+  shizumeru: "熱や頭の冴えをこもらせず、落ち着けるケアが合います。",
+  yurumeru: "首肩・呼吸・気持ちの力みをほどくケアが合います。",
+  meguraseru: "止まりやすい巡りに、軽い動きの逃げ道を作るケアが合います。",
+  nagasu: "湿気や重だるさをため込まないケアが合います。",
+  uruosu: "乾きと消耗を残さないケアが合います。",
+  nukumeru: "足元・お腹・腰まわりの冷えを守るケアが合います。",
+  sasaeru: "無理に押し切らず、回復力を削らないケアが合います。",
+};
+
+function addPolicyScores(scores, weights, multiplier = 1) {
+  Object.entries(weights || {}).forEach(([key, value]) => {
+    if (!Object.prototype.hasOwnProperty.call(scores, key)) return;
+    scores[key] += Number(value || 0) * multiplier;
+  });
+}
+
+function normalizeCarePolicyTriggerKey(value) {
+  const key = String(value || "").trim();
+  if (key === "humidity") return "damp";
+  if (key === "temp") return "cold";
+  return key || "pressure_down";
+}
+
+function getRiskContextTriggerFactors(riskContext) {
+  const summary = riskContext?.summary || {};
+  const raw = Array.isArray(summary.trigger_factors) && summary.trigger_factors.length
+    ? summary.trigger_factors
+    : [
+        summary.personal_main_trigger_exact || summary.main_trigger_exact,
+        summary.personal_secondary_trigger_exact || summary.secondary_trigger_exact,
+      ]
+        .filter(Boolean)
+        .map((exact, index) => ({ exact, key: exact, role: index === 0 ? "primary" : "secondary" }));
+
+  return safeArray(raw).map((factor, index) => {
+    const key = normalizeCarePolicyTriggerKey(factor?.key || factor?.exact);
+    return {
+      ...factor,
+      key,
+      exact: key,
+      role: factor?.role || (index === 0 ? "primary" : "secondary"),
+      label: factor?.label || getCompatTriggerLabel(factor?.main_trigger, factor?.trigger_dir),
+    };
+  });
+}
+
+function getPolicySummary({ policies, triggerFactors, signal, mode }) {
+  const labels = getForecastBackgroundFactors(triggerFactors).map((f) => f.label).filter(Boolean);
+  const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
+  const target = mode === "today" ? "今日は" : "明日は";
+  const level = Number(signal || 0);
+  const keys = safeArray(policies).map((p) => p.key).filter(Boolean);
+  const detail =
+    keys.length >= 2
+      ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}ケアが合います。`
+      : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
+
+  if (level <= 0) {
+    return `${target}${joined}の影響は強く出にくい見込み。強い対策より、${detail}`;
+  }
+  if (level >= 2) {
+    return `${target}${joined}が響きやすい日。${detail}`;
+  }
+  return `${target}${joined}が少し響きやすい見込み。${detail}`;
+}
+
+export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow" } = {}) {
+  const scores = Object.fromEntries(
+    Object.keys(CARE_POLICY_DEFINITIONS).map((key) => [key, 0])
+  );
+
+  const personalizedTriggerFactors = safeArray(triggerFactors).length
+    ? safeArray(triggerFactors)
+    : forecast
+      ? getForecastTriggerFactors(forecast)
+      : getRiskContextTriggerFactors(riskContext);
+
+  const normalizedTriggerFactors = safeArray(personalizedTriggerFactors).map((factor, index) => ({
+    ...factor,
+    key: normalizeCarePolicyTriggerKey(factor?.key || factor?.exact),
+    exact: normalizeCarePolicyTriggerKey(factor?.exact || factor?.key),
+    role: factor?.role || (index === 0 ? "primary" : "secondary"),
+  })).slice(0, 2);
+
+  normalizedTriggerFactors.forEach((factor, index) => {
+    const key = normalizeCarePolicyTriggerKey(factor?.key || factor?.exact);
+    const multiplier = index === 0 ? 1 : 0.42;
+    addPolicyScores(scores, TRIGGER_POLICY_SCORES[key], multiplier);
+  });
+
+  const tcmContext = riskContext?.tcm_context || forecast?.computed?.radar_plan_meta?.risk_context?.tcm_context || {};
+  safeArray(tcmContext.primary_actions).forEach((action) => {
+    addPolicyScores(scores, TCM_ACTION_POLICY_SCORES[action], 1.25);
+  });
+  safeArray(tcmContext.secondary_actions).forEach((action) => {
+    addPolicyScores(scores, TCM_ACTION_POLICY_SCORES[action], 0.65);
+  });
+
+  const constitutionContext =
+    riskContext?.constitution_context || forecast?.computed?.radar_plan_meta?.risk_context?.constitution_context || {};
+
+  safeArray(constitutionContext.sub_labels).forEach((label, index) => {
+    addPolicyScores(scores, SUB_LABEL_POLICY_SCORES[label], index === 0 ? 1 : 0.62);
+  });
+
+  const symptomFocus = constitutionContext.symptom_focus || null;
+  addPolicyScores(scores, SYMPTOM_POLICY_SCORES[symptomFocus], 1);
+
+  const coreCode = String(constitutionContext.core_code || "");
+  if (coreCode.includes("batt_small")) addPolicyScores(scores, { sasaeru: 0.8, nukumeru: 0.25 });
+  if (coreCode.includes("batt_large")) addPolicyScores(scores, { yurumeru: 0.25, meguraseru: 0.25 });
+  if (coreCode.startsWith("accel_")) addPolicyScores(scores, { yurumeru: 0.35, shizumeru: 0.3 });
+  if (coreCode.startsWith("brake_")) addPolicyScores(scores, { nagasu: 0.35, meguraseru: 0.25 });
+
+  const env = constitutionContext.env || {};
+  safeArray(env.vectors).forEach((vector) => {
+    addPolicyScores(scores, ENV_VECTOR_POLICY_SCORES[vector], 0.75);
+  });
+
+  const signal = Number(
+    forecast?.signal ??
+      riskContext?.target?.signal ??
+      forecast?.computed?.radar_plan_meta?.risk_context?.target?.signal ??
+      0
+  );
+  if (signal >= 2) addPolicyScores(scores, { sasaeru: 0.75 }, 1);
+  if (signal === 1) addPolicyScores(scores, { sasaeru: 0.3 }, 1);
+
+  // The primary policy should stay anchored to the personalized forecast trigger.
+  // Constitution, symptoms, and TCM actions only translate that trigger into care language.
+  const primaryTriggerKey = normalizeCarePolicyTriggerKey(normalizedTriggerFactors[0]?.key || normalizedTriggerFactors[0]?.exact);
+  const primaryTriggerPolicies = Object.keys(TRIGGER_POLICY_SCORES[primaryTriggerKey] || {});
+  primaryTriggerPolicies.forEach((key, index) => {
+    scores[key] += index === 0 ? 0.9 : 0.35;
+  });
+
+  let ranked = Object.entries(scores)
+    .map(([key, score]) => ({ key, score }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (!ranked.length) {
+    ranked = [{ key: "sasaeru", score: 1 }];
+  }
+
+  const selected = [ranked[0]];
+  const second = ranked.find((item) => item.key !== ranked[0].key);
+  const shouldShowSecond =
+    Number(signal) > 0 &&
+    second &&
+    second.score >= Math.max(2.15, ranked[0].score * 0.48) &&
+    !(ranked[0].key === "shizumeru" && second.key === "nukumeru") &&
+    !(ranked[0].key === "nukumeru" && second.key === "shizumeru");
+
+  if (shouldShowSecond) selected.push(second);
+
+  const policies = selected
+    .map((item) => CARE_POLICY_DEFINITIONS[item.key])
+    .filter(Boolean);
+
+  return {
+    policies,
+    scores,
+    summary: getPolicySummary({
+      policies,
+      triggerFactors: normalizedTriggerFactors,
+      signal,
+      mode,
+    }),
+  };
+}
+
+
 function getTodayLifestylePlan(primaryKey, secondaryKey, signal) {
   const severity = Number(signal ?? 0);
   if (primaryKey === "damp") {
@@ -1133,6 +1416,5 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
 
 
