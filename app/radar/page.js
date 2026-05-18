@@ -908,11 +908,11 @@ export default function RadarPage() {
               {error}
             </div>
           ) : null}
-          <Module className="relative overflow-visible bg-white/55 p-[1px] ring-white/70 shadow-[0_22px_52px_-42px_rgba(15,23,42,0.40)] backdrop-blur-sm">
+          <Module className="relative overflow-visible bg-white/82 p-2 ring-1 ring-[#DCE8DD]/75 shadow-[0_20px_48px_-34px_rgba(15,23,42,0.42)] backdrop-blur-sm sm:p-2.5">
             <div
               className={[
                 "relative overflow-hidden rounded-[31px] px-4 py-4 sm:px-5 sm:py-5",
-                "shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]",
+                "shadow-[inset_0_1px_0_rgba(255,255,255,0.82),0_18px_42px_-34px_rgba(15,23,42,0.26)]",
                 getHeroPanelClass(forecast.signal),
               ].join(" ")}
             >
@@ -969,12 +969,12 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 rounded-[22px] bg-white/62 px-4 py-3 text-[13px] font-extrabold leading-6 text-slate-700 ring-1 ring-white/55 backdrop-blur-sm">
+                <div className="mt-3 rounded-[22px] bg-white/78 px-4 py-3 text-[13px] font-extrabold leading-6 text-slate-700 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
                   {forecastModeLead}
                 </div>
 
                 <div className="relative mt-4 grid gap-3.5">
-                  <div className="relative rounded-[28px] bg-white/26 px-2.5 py-3 ring-1 ring-white/40 backdrop-blur-sm sm:px-3">
+                  <div className="relative rounded-[28px] bg-white/46 px-2.5 py-3 ring-1 ring-white/70 shadow-[0_14px_36px_-32px_rgba(15,23,42,0.36)] backdrop-blur-sm sm:px-3">
                     <ForecastGauge
                       score={forecast.score_0_10}
                       signal={forecast.signal}
@@ -982,12 +982,12 @@ export default function RadarPage() {
                     />
                   </div>
 
-                  <div className="rounded-[24px] bg-white/56 px-3.5 py-3 ring-1 ring-white/55 backdrop-blur-sm">
+                  <div className="rounded-[24px] bg-white/78 px-3.5 py-3 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         出やすいサイン
                       </div>
-                      <span className="rounded-full bg-white/74 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
+                      <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
                         体感の目安
                       </span>
                     </div>
@@ -996,7 +996,7 @@ export default function RadarPage() {
                       {bodySigns.map((sign, index) => (
                         <div
                           key={`${sign}-${index}`}
-                          className="flex items-start gap-2.5 rounded-[18px] bg-white/62 px-3 py-2.5 ring-1 ring-white/55"
+                          className="flex items-start gap-2.5 rounded-[18px] bg-white/86 px-3 py-2.5 ring-1 ring-black/5 shadow-sm"
                         >
                           <span
                             className={[
@@ -1023,7 +1023,7 @@ export default function RadarPage() {
                         {backgroundFactors.map((factor, index) => (
                           <span
                             key={`${factor.key}-${index}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-white/64 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-white/65"
+                            className="inline-flex items-center gap-1 rounded-full bg-white/86 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5"
                           >
                             <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
                             {factor.label}
@@ -1033,15 +1033,15 @@ export default function RadarPage() {
                     ) : null}
                   </div>
 
-                  <div className="rounded-[24px] bg-white/60 px-3.5 py-3 ring-1 ring-white/55 backdrop-blur-sm">
+                  <div className="rounded-[24px] bg-white/82 px-3.5 py-3 ring-1 ring-black/5 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.30)] backdrop-blur-sm">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        <span className="grid h-8 w-8 place-items-center rounded-full bg-white/72 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                        <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
                           <IconBolt className="h-4 w-4" />
                         </span>
                         {selectedIsToday ? "山場前に" : "明日の山場前に"}
                       </div>
-                      <div className="rounded-full bg-white/74 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
+                      <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
                         {forecast.peak_start && forecast.peak_end
                           ? `山場：${String(forecast.peak_start).slice(0, 5)}–${String(
                               forecast.peak_end
@@ -1054,7 +1054,7 @@ export default function RadarPage() {
                       {peakPrepItems.map((item, index) => (
                         <div
                           key={`${item}-${index}`}
-                          className="flex items-start gap-2 rounded-[16px] bg-white/62 px-3 py-2 ring-1 ring-white/55"
+                          className="flex items-start gap-2 rounded-[16px] bg-white/78 px-3 py-2 ring-1 ring-black/5"
                         >
                           <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
                           <span className="text-[12px] font-extrabold leading-5 text-slate-700">
@@ -1549,5 +1549,6 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
 
