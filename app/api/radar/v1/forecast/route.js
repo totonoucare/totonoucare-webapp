@@ -173,16 +173,6 @@ export async function GET(req) {
       });
     }
 
-    if (relativeTargetMode === "today") {
-      return jsonUtf8(
-        {
-          ok: false,
-          error: "Today forecasts are live-only. Use /api/radar/v1/forecast/live for 今日これからの未病レーダー.",
-        },
-        400
-      );
-    }
-
     let location = null;
 
     if (hasLocationOverride) {
@@ -244,3 +234,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error) }, 500);
   }
 }
+
