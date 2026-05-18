@@ -167,7 +167,7 @@ export default function RadarPage() {
   const [locationNotice, setLocationNotice] = useState("");
 
   const [tab, setTab] = useState("forecast");
-  const [careTab, setCareTab] = useState("loosen");
+  const [careTab, setCareTab] = useState("live");
   const [dateMode, setDateMode] = useState("today");
   const [selectedTargetDate, setSelectedTargetDate] = useState("");
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
@@ -1124,9 +1124,9 @@ export default function RadarPage() {
             <div className="mt-4">
               <SegmentedTabs
                 tabs={[
-                  { key: "loosen", label: "ほぐす" },
-                  { key: "eat", label: "食べる" },
                   { key: "live", label: "暮らす" },
+                  { key: "eat", label: "食べる" },
+                  { key: "loosen", label: "ほぐす" },
                 ]}
                 value={careTab}
                 onChange={setCareTab}
@@ -1550,5 +1550,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
