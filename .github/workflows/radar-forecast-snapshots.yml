@@ -1,0 +1,42 @@
+name: Radar forecast snapshots
+
+on:
+  schedule:
+    # 01:05 JST: 今日分と明日分の固定スナップショットを作り直す
+    - cron: "5 16 * * *"
+  workflow_dispatch:
+    inputs:
+      dates:
+        description: "today,tomorrow or YYYY-MM-DD"
+        required: false
+        default: "today,tomorrow"
+      limit:
+        description: "Maximum users to process"
+        required: false
+        default: "100"
+      force:
+        description: "1 to recompute existing snapshots"
+        required: false
+        default: "1"
+
+jobs:
+  build-radar-forecast-snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Call radar forecast snapshot cron endpoint
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DATES: ${{ github.event.inputs.dates || 'today,tomorrow' }}
+          LIMIT: ${{ github.event.inputs.limit || '100' }}
+          FORCE: ${{ github.event.inputs.force || '1' }}
+        shell: bash
+        run: |
+          test -n "$APP_BASE_URL"
+          test -n "$CRON_SECRET"
+
+          curl --fail --show-error --silent \
+            --request GET \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_BASE_URL}/api/cron/radar-forecast-snapshots?dates=${DATES}&limit=${LIMIT}&force=${FORCE}&enrich=1"
