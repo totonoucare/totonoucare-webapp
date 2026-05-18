@@ -531,7 +531,7 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
           </span>
           <div>
             <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日の未病予報</div>
-            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">固定予報から、今日の過ごし方を確認</div>
+            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日の過ごし方を確認</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳しく見る</Button>
