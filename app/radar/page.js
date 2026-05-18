@@ -1125,9 +1125,9 @@ export default function RadarPage() {
               </div>
             </div>
           </Module>
-          <Module className="p-5 bg-white ring-1 ring-[#E2E8E4] shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22)]">
+          <Module className={["p-5", careTone.shell].join(" ")}>
             <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#F5F8F6] text-[#5F746C] ring-1 ring-[#E1E8E3] shadow-sm">
+              <div className={["grid h-12 w-12 shrink-0 place-items-center rounded-[18px] ring-1 shadow-sm", careTone.icon].join(" ")}>
                 {careTab === "eat" ? (
                   <IconBowl className="h-7 w-7" />
                 ) : careTab === "live" ? (
@@ -1137,13 +1137,13 @@ export default function RadarPage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#6F837B]/60">
+                <div className={["text-[10px] font-black uppercase tracking-widest", careTone.eyebrow].join(" ")}>
                   DAILY CARE
                 </div>
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
                   {selectedIsToday ? "今日のケア" : "今夜のケア"}
                 </div>
-                <div className="mt-1 text-[12px] font-extrabold leading-5 text-[#40544E]/80">
+                <div className={["mt-1 text-[12px] font-extrabold leading-5", careTone.inkSoft].join(" ")}>
                   {careStrategyTitle}
                 </div>
               </div>
@@ -1606,9 +1606,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
-
-
-
 
