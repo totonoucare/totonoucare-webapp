@@ -66,6 +66,61 @@ import {
  * Main Page
  * ---------------------------- */
 
+
+function getCareToneClasses(signal) {
+  if (signal === 2) {
+    return {
+      shell: "bg-[linear-gradient(135deg,#FFF9F5_0%,#FFF4EE_100%)] ring-1 ring-[#EBD7C8] shadow-[0_18px_42px_-32px_rgba(184,100,48,0.28)]",
+      icon: "bg-[#FFF0EA] text-[#B86430] ring-[#ECD6C5]",
+      eyebrow: "text-[#B86430]/62",
+      ink: "text-[#B86430]",
+      inkSoft: "text-[#B86430]/85",
+      panel: "bg-[#FFF6EF]/78 ring-white/70 shadow-[inset_0_2px_8px_rgba(184,100,48,0.055),inset_0_-18px_28px_rgba(255,255,255,0.35)]",
+      panelHover: "hover:bg-[#FFF9F5]",
+      pill: "bg-white text-[#B86430] ring-[#ECD6C5] shadow-[0_10px_22px_-16px_rgba(184,100,48,0.30)]",
+      pillSoft: "bg-[#FFF6EF] text-[#B86430] ring-[#ECD6C5]",
+      dot: "bg-[#E38949] shadow-[0_0_10px_rgba(227,137,73,0.20)]",
+      smallRing: "ring-[#ECD6C5]",
+      stepCircle: "bg-[#FFF0EA] text-[#B86430] ring-[#ECD6C5]",
+      divider: "border-[#EBD7C8]",
+    };
+  }
+
+  if (signal === 1) {
+    return {
+      shell: "bg-[linear-gradient(135deg,#FFFDF5_0%,#FFF8EC_100%)] ring-1 ring-[#E9DAB0] shadow-[0_18px_42px_-32px_rgba(173,122,24,0.28)]",
+      icon: "bg-[#FFF5D8] text-[#AD7A18] ring-[#EAD8A6]",
+      eyebrow: "text-[#AD7A18]/62",
+      ink: "text-[#AD7A18]",
+      inkSoft: "text-[#AD7A18]/85",
+      panel: "bg-[#FFF9ED]/78 ring-white/70 shadow-[inset_0_2px_8px_rgba(173,122,24,0.055),inset_0_-18px_28px_rgba(255,255,255,0.35)]",
+      panelHover: "hover:bg-[#FFFDF5]",
+      pill: "bg-white text-[#AD7A18] ring-[#EAD8A6] shadow-[0_10px_22px_-16px_rgba(173,122,24,0.30)]",
+      pillSoft: "bg-[#FFF9ED] text-[#AD7A18] ring-[#EAD8A6]",
+      dot: "bg-[#E2AE45] shadow-[0_0_10px_rgba(226,174,69,0.20)]",
+      smallRing: "ring-[#EAD8A6]",
+      stepCircle: "bg-[#FFF5D8] text-[#AD7A18] ring-[#EAD8A6]",
+      divider: "border-[#E9DAB0]",
+    };
+  }
+
+  return {
+    shell: "bg-[linear-gradient(135deg,#F7FCFA_0%,#F3FBF8_100%)] ring-1 ring-[#CBE5DC] shadow-[0_18px_42px_-32px_rgba(47,129,110,0.30)]",
+    icon: "bg-[#E6F6F0] text-[#2F816E] ring-[#C8E4DB]",
+    eyebrow: "text-[#2F816E]/62",
+    ink: "text-[#2F816E]",
+    inkSoft: "text-[#2F816E]/85",
+    panel: "bg-[#F3FBF8]/78 ring-white/70 shadow-[inset_0_2px_8px_rgba(47,129,110,0.055),inset_0_-18px_28px_rgba(255,255,255,0.35)]",
+    panelHover: "hover:bg-[#F8FEFB]",
+    pill: "bg-white text-[#2F816E] ring-[#C8E4DB] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.30)]",
+    pillSoft: "bg-[#F3FBF8] text-[#2F816E] ring-[#C8E4DB]",
+    dot: "bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.18)]",
+    smallRing: "ring-[#C8E4DB]",
+    stepCircle: "bg-[#E6F6F0] text-[#2F816E] ring-[#C8E4DB]",
+    divider: "border-[#CBE5DC]",
+  };
+}
+
 function normalizeRadarTargetDate(date) {
   const { today, tomorrow } = getJstTodayTomorrow();
   return date === today ? today : tomorrow;
@@ -656,6 +711,7 @@ export default function RadarPage() {
     [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday]
   );
   const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
+  const careTone = getCareToneClasses(activeCareForecast?.signal ?? 0);
   const primaryTsubo = tsuboPoints[0] || null;
   const extraTsuboPoints = tsuboPoints.slice(1);
   const foodExamples = safeArray(food.examples);
@@ -1069,9 +1125,9 @@ export default function RadarPage() {
               </div>
             </div>
           </Module>
-          <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.30)]">
+          <Module className={["p-5", careTone.shell].join(" ")}>
             <div className="flex items-center gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
+              <div className={["grid h-12 w-12 shrink-0 place-items-center rounded-[18px] ring-1 shadow-sm", careTone.icon].join(" ")}>
                 {careTab === "eat" ? (
                   <IconBowl className="h-7 w-7" />
                 ) : careTab === "live" ? (
@@ -1081,24 +1137,24 @@ export default function RadarPage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/60">
+                <div className={["text-[10px] font-black uppercase tracking-widest", careTone.eyebrow].join(" ")}>
                   DAILY CARE
                 </div>
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
                   {selectedIsToday ? "今日のケア" : "今夜のケア"}
                 </div>
-                <div className="mt-1 text-[12px] font-extrabold leading-5 text-[var(--accent-ink)]/85">
+                <div className={["mt-1 text-[12px] font-extrabold leading-5", careTone.inkSoft].join(" ")}>
                   {careStrategyTitle}
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className={["mt-4 rounded-[24px] px-4 py-4 ring-1", careTone.panel].join(" ")}>
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/65">
+                <div className={["text-[10px] font-black uppercase tracking-widest", careTone.eyebrow].join(" ")}>
                   この日の方針
                 </div>
-                <div className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#D3E1D5]">
+                <div className={["rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1", careTone.smallRing].join(" ")}>
                   体質 × 天気
                 </div>
               </div>
@@ -1107,10 +1163,10 @@ export default function RadarPage() {
                 {safeArray(carePolicies?.policies).map((policy) => (
                   <span
                     key={policy.key}
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]"
+                    className={["inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-black ring-1", careTone.pill].join(" ")}
                     title={policy.short}
                   >
-                    <span className="h-2 w-2 rounded-full bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.22)]" />
+                    <span className={["h-2 w-2 rounded-full", careTone.dot].join(" ")} />
                     {policy.label}
                   </span>
                 ))}
@@ -1139,22 +1195,22 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     ほぐす
                   </div>
-                  <div className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
                     ツボケア
                   </div>
                 </div>
 
                 {primaryTsubo ? (
                   <div
-                    className="relative overflow-hidden rounded-[24px] bg-[#F7FAF7]/75 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#F9FCFA]"
+                    className={["relative overflow-hidden rounded-[24px] p-4 ring-1 cursor-pointer transition-all", careTone.panel, careTone.panelHover].join(" ")}
                     onClick={() => setSelectedPoint(primaryTsubo)}
                   >
-                    <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
+                    <div className={["mb-3 inline-flex rounded-full px-3 py-1 text-[10px] font-black ring-1", careTone.pill].join(" ")}>
                       まずはこれ
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white text-[16px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]">
+                      <div className={["grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white text-[16px] font-black shadow-sm ring-1", careTone.ink, careTone.smallRing].join(" ")}>
                         {primaryTsubo.code}
                       </div>
 
@@ -1180,23 +1236,23 @@ export default function RadarPage() {
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E1E6E1]">
+                      <span className={["rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-slate-500 ring-1", careTone.smallRing].join(" ")}>
                         {getTsuboRoleLabel(primaryTsubo, 0)}
                       </span>
-                      <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E1E6E1]">
+                      <span className={["rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-slate-500 ring-1", careTone.smallRing].join(" ")}>
                         タップで押し方
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-[22px] bg-[#F7FAF7] px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
+                  <div className={["rounded-[22px] px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset", careTone.panel].join(" ")}>
                     体質データに合わせたツボを準備しています。
                   </div>
                 )}
 
                 {carePlan?.night_note ? (
-                  <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-[#E1E6E1] shadow-sm">
-                    <span className="mr-2 text-[#255F4F]">ひとこと</span>
+                  <div className={["rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 shadow-sm", careTone.smallRing].join(" ")}>
+                    <span className={["mr-2", careTone.ink].join(" ")}>ひとこと</span>
                     {carePlan.night_note}
                   </div>
                 ) : null}
@@ -1206,7 +1262,7 @@ export default function RadarPage() {
                     <button
                       type="button"
                       onClick={() => setTsuboExtraOpen((v) => !v)}
-                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#D3E1D5] text-left shadow-sm transition-all hover:bg-[#F7FAF7]"
+                      className={["flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 text-left shadow-sm transition-all", careTone.smallRing, careTone.panelHover].join(" ")}
                     >
                       <div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1237,11 +1293,11 @@ export default function RadarPage() {
                         {extraTsuboPoints.map((p, i) => (
                           <div
                             key={`${p.code}-${i + 1}`}
-                            className="relative rounded-[20px] bg-[#F7FAF7] p-4 ring-1 ring-inset ring-[#D3E1D5] transition-all hover:bg-white cursor-pointer"
+                            className={["relative rounded-[20px] p-4 ring-1 ring-inset transition-all hover:bg-white cursor-pointer", careTone.panel].join(" ")}
                             onClick={() => setSelectedPoint(p)}
                           >
                             <div className="flex items-center gap-3 pr-8">
-                              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[13px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]">
+                              <div className={["grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[13px] font-black shadow-sm ring-1", careTone.ink, careTone.smallRing].join(" ")}>
                                 {p.code}
                               </div>
 
@@ -1256,7 +1312,7 @@ export default function RadarPage() {
                                     </div>
                                   ) : null}
                                 </div>
-                                <div className="mt-1 text-[11px] font-black text-[#255F4F]/75">
+                                <div className={["mt-1 text-[11px] font-black", careTone.inkSoft].join(" ")}>
                                   {getTsuboRoleLabel(p, i + 1)}
                                 </div>
                               </div>
@@ -1282,13 +1338,13 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     食べる
                   </div>
-                  <div className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
                     食養生
                   </div>
                 </div>
 
-                <div className="rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
-                  <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
+                <div className={["rounded-[24px] px-4 py-4 ring-1", careTone.panel].join(" ")}>
+                  <div className={["inline-flex rounded-full px-3 py-1 text-[10px] font-black ring-1", careTone.pill].join(" ")}>
                     まずはこれ
                   </div>
 
@@ -1298,7 +1354,7 @@ export default function RadarPage() {
 
 
                   {food.recommendation || food.focus ? (
-                    <div className="mt-3 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
+                    <div className={["mt-3 text-[14px] font-extrabold leading-6", careTone.ink].join(" ")}>
                       {food.recommendation || food.focus}
                     </div>
                   ) : null}
@@ -1312,7 +1368,7 @@ export default function RadarPage() {
                         {foodExamples.map((x, idx) => (
                           <span
                             key={`${x}-${idx}`}
-                            className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#E1E6E1]"
+                            className={["rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1", careTone.smallRing].join(" ")}
                           >
                             {x}
                           </span>
@@ -1326,7 +1382,7 @@ export default function RadarPage() {
                       <button
                         type="button"
                         onClick={() => setFoodDetailOpen((v) => !v)}
-                        className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#D3E1D5] text-left shadow-sm"
+                        className={["flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 text-left shadow-sm", careTone.smallRing].join(" ")}
                       >
                         <div>
                           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1353,7 +1409,7 @@ export default function RadarPage() {
                       </button>
 
                       {foodDetailOpen ? (
-                        <div className="mt-4 space-y-4 border-t border-slate-200 pt-4">
+                        <div className={["mt-4 space-y-4 border-t pt-4", careTone.divider].join(" ")}>
                           {food.how_to ? (
                             <div>
                               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1388,7 +1444,7 @@ export default function RadarPage() {
                           ) : null}
 
                           {food.lifestyle_tip ? (
-                            <div className="rounded-[18px] bg-white px-4 py-4 ring-1 ring-[var(--ring)] shadow-sm">
+                            <div className={["rounded-[18px] bg-white px-4 py-4 ring-1 shadow-sm", careTone.smallRing].join(" ")}>
                               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                 一緒に意識したいこと
                               </div>
@@ -1411,14 +1467,14 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     暮らす
                   </div>
-                  <div className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
                     生活ケア
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[24px] bg-[#F7FAF7]/75 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                <div className={["overflow-hidden rounded-[24px] ring-1", careTone.panel].join(" ")}>
                   <div className="px-4 py-4">
-                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
+                    <div className={["inline-flex rounded-full px-3 py-1 text-[10px] font-black ring-1", careTone.pill].join(" ")}>
                       まずはこれ
                     </div>
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
@@ -1429,14 +1485,14 @@ export default function RadarPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-white/70 bg-white/34 px-4 py-4">
+                  <div className={["border-t bg-white/34 px-4 py-4", careTone.divider].join(" ")}>
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       {selectedIsToday ? "今日やること" : "今夜やること"}
                     </div>
                     <div className="mt-3 space-y-2">
                       {safeArray(lifestylePlan.steps).map((step, idx) => (
-                        <div key={`${idx}-${step}`} className="flex items-start gap-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
-                          <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#E2F1EA] text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                        <div key={`${idx}-${step}`} className={["flex items-start gap-3 rounded-[17px] bg-white px-4 py-3 ring-1 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]", careTone.smallRing].join(" ")}>
+                          <div className={["grid h-7 w-7 shrink-0 place-items-center rounded-full text-[12px] font-black ring-1", careTone.stepCircle].join(" ")}>
                             {idx + 1}
                           </div>
                           <div className="text-[13px] font-extrabold leading-6 text-slate-700">
@@ -1447,7 +1503,7 @@ export default function RadarPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[#D3E1D5] bg-white px-4 py-4">
+                  <div className={["border-t bg-white px-4 py-4", careTone.divider].join(" ")}>
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       気をつけたいこと
                     </div>
@@ -1550,3 +1606,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
+
