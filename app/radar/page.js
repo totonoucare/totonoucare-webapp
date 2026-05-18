@@ -99,7 +99,6 @@ export default function RadarPage() {
   const [enrichingForecast, setEnrichingForecast] = useState(false);
 
   const [bundle, setBundle] = useState(null);
-  const [carryoverBundle, setCarryoverBundle] = useState(null);
   const [error, setError] = useState("");
 
   const [needsLocation, setNeedsLocation] = useState(false);
@@ -330,7 +329,6 @@ export default function RadarPage() {
       setSelectedTargetDate(targetDate);
       setDateMode(nextMode);
       setError("");
-      if (targetDate !== today) setCarryoverBundle(null);
       if (force) setRefreshing(true);
       if (!bundle) {
         setLoading(true);
@@ -342,59 +340,6 @@ export default function RadarPage() {
       if (!token) throw new Error("No token");
 
       const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel });
-
-      if (targetDate === today) {
-        const liveRes = await fetch("/api/radar/v1/forecast/live", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          cache: "no-store",
-        });
-
-        const liveJson = await liveRes.json().catch(() => ({}));
-
-        if (requestSeq !== requestSeqRef.current) return;
-
-        if (!liveRes.ok) {
-          if (liveJson?.error?.includes("No radar location found")) {
-            setNeedsLocation(true);
-            setBundle(null);
-            setCarryoverBundle(null);
-            return;
-          }
-          throw new Error(liveJson?.error || `HTTP ${liveRes.status}`);
-        }
-
-        let cachedCareBundle = null;
-        try {
-          const cachedRes = await fetch(`/api/radar/v1/forecast?date=${encodeURIComponent(today)}&cache_only=1`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
-          });
-          const cachedJson = await cachedRes.json().catch(() => ({}));
-          if (cachedRes.ok && cachedJson?.forecast && cachedJson?.care_plan) {
-            cachedCareBundle = cachedJson;
-          }
-        } catch (cacheError) {
-          console.warn("today carryover cache load failed:", cacheError);
-        }
-
-        if (requestSeq !== requestSeqRef.current) return;
-
-        setNeedsLocation(false);
-        setBundle(liveJson);
-        setCarryoverBundle(cachedCareBundle);
-        setEnrichingForecast(false);
-        setDateMode("today");
-        setSelectedTargetDate(today);
-
-        if (locationChanged) {
-          setLocationNotice("地域を更新しました。今日これからの予報にも反映しました。");
-        }
-        return;
-      }
 
       const qs = new URLSearchParams();
       qs.set("date", targetDate);
@@ -1465,7 +1410,7 @@ export default function RadarPage() {
             ) : null}
           </Module>
 
-          {selectedIsToday ? <SavedCareReviewAccordion bundle={carryoverBundle} /> : null}
+          {selectedIsToday ? <SavedCareReviewAccordion bundle={bundle} /> : null}
 
           <Module className="p-5 bg-[#EEF6F0] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
             <div className="flex items-start justify-between gap-4">
@@ -1566,3 +1511,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
+
