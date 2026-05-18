@@ -71,6 +71,74 @@ function normalizeRadarTargetDate(date) {
   return date === today ? today : tomorrow;
 }
 
+function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationLabel = "" }) {
+  const isLocationRefresh = kind === "location";
+  const title = isLocationRefresh
+    ? "地域の予報を更新中"
+    : mode === "today"
+      ? "今日の過ごし方を確認中"
+      : "明日の過ごし方を確認中";
+  const lead = isLocationRefresh
+    ? `${locationLabel || "新しい地域"}の天気と、体質への響き方を確認しています。`
+    : mode === "today"
+      ? "今日の予報とケアを読み込んでいます。"
+      : "明日の予報と今夜からのケアを読み込んでいます。";
+
+  return (
+    <div className="space-y-6">
+      <Module className="relative overflow-hidden p-4 sm:p-5">
+        <div className="absolute -right-12 -top-14 h-48 w-48 rounded-full bg-[var(--mint)]/35 blur-2xl" />
+        <div className="relative rounded-[30px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF9EB_100%)] px-5 py-6 ring-1 ring-[#DCE8DD] shadow-[0_18px_48px_-28px_rgba(15,23,42,0.28)]">
+          <div className="inline-flex rounded-full bg-white/90 px-3 py-1 text-[11px] font-black tracking-[0.16em] text-[#47786C] ring-1 ring-[#CFE0D3]">
+            LOADING
+          </div>
+          <div className="mt-4 text-[22px] font-black tracking-tight text-slate-900">
+            {title}
+          </div>
+          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+            {lead}
+          </div>
+
+          <div className="mt-6 rounded-[28px] bg-white/78 p-4 ring-1 ring-[#E2ECE4]">
+            <div className="mx-auto h-52 max-w-[340px] rounded-[28px] bg-slate-100/80 animate-pulse" />
+            <div className="mt-5 space-y-3">
+              <div className="h-14 rounded-[22px] bg-white/90 ring-1 ring-slate-100 animate-pulse" />
+              <div className="h-14 rounded-[22px] bg-white/90 ring-1 ring-slate-100 animate-pulse" />
+              <div className="h-14 rounded-[22px] bg-white/90 ring-1 ring-slate-100 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </Module>
+
+      <Module className="p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 rounded-[22px] bg-[var(--mint)]/45 ring-1 ring-[#CFE0D3] animate-pulse" />
+          <div className="min-w-0 flex-1">
+            <div className="h-4 w-28 rounded-full bg-slate-100 animate-pulse" />
+            <div className="mt-3 h-7 w-40 rounded-full bg-slate-100 animate-pulse" />
+          </div>
+        </div>
+        <div className="mt-6 rounded-[28px] bg-[#F8FCF9] p-4 ring-1 ring-[#DCE8DD]">
+          <div className="flex gap-2">
+            <div className="h-10 w-24 rounded-full bg-white ring-1 ring-[#DCE8DD] animate-pulse" />
+            <div className="h-10 w-24 rounded-full bg-white ring-1 ring-[#DCE8DD] animate-pulse" />
+          </div>
+          <div className="mt-5 space-y-2.5">
+            <div className="h-4 w-full rounded-full bg-slate-100 animate-pulse" />
+            <div className="h-4 w-11/12 rounded-full bg-slate-100 animate-pulse" />
+            <div className="h-4 w-8/12 rounded-full bg-slate-100 animate-pulse" />
+          </div>
+        </div>
+        <div className="mt-6 h-14 rounded-full bg-slate-100 animate-pulse" />
+        <div className="mt-5 rounded-[28px] bg-[#F8FCF9] p-5 ring-1 ring-[#DCE8DD]">
+          <div className="h-7 w-36 rounded-full bg-white ring-1 ring-[#DCE8DD] animate-pulse" />
+          <div className="mt-5 h-28 rounded-[24px] bg-white/90 ring-1 ring-slate-100 animate-pulse" />
+        </div>
+      </Module>
+    </div>
+  );
+}
+
 export default function RadarPage() {
   const router = useRouter();
   const initialDateParam =
@@ -82,6 +150,8 @@ export default function RadarPage() {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [loading, setLoading] = useState(true);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentLoadingKind, setContentLoadingKind] = useState("forecast");
   const [refreshing, setRefreshing] = useState(false);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
@@ -237,13 +307,23 @@ export default function RadarPage() {
     const requestSeq = ++requestSeqRef.current;
 
     try {
+      const hasExistingBundle = !!bundle;
+      const isLocationRefresh =
+        locationChanged || recompute || lat !== null || lon !== null;
+
       setSelectedTargetDate(targetDate);
       setDateMode(nextMode);
       setError("");
       if (force) setRefreshing(true);
-      if (!bundle) {
+      if (!hasExistingBundle) {
         setLoading(true);
+        setContentLoading(false);
         startSlowLoadingHints(requestSeq);
+      } else {
+        setContentLoadingKind(isLocationRefresh ? "location" : nextMode);
+        setContentLoading(true);
+        clearLoadingHintTimers();
+        setShowSlowLoadingMessage(false);
       }
 
       const { data } = await supabase.auth.getSession();
@@ -306,6 +386,7 @@ export default function RadarPage() {
         clearLoadingHintTimers();
         setShowSlowLoadingMessage(false);
         setLoading(false);
+        setContentLoading(false);
         setRefreshing(false);
       }
     }
@@ -437,11 +518,12 @@ export default function RadarPage() {
     }
   }
 
-  const forecast = bundle?.forecast || null;
-
   const dateTabs = useMemo(() => buildRadarDateTabs(), []);
   const todayTomorrow = getJstTodayTomorrow();
   const activeTargetDate = selectedTargetDate || bundle?.target_date || todayTomorrow.tomorrow;
+  const bundleTargetDate = bundle?.target_date || "";
+  const bundleMatchesActiveTarget = !!bundle && (!bundleTargetDate || bundleTargetDate === activeTargetDate);
+  const forecast = bundleMatchesActiveTarget ? bundle?.forecast || null : null;
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
   const riskContext = getRiskContext(bundle);
@@ -675,6 +757,52 @@ export default function RadarPage() {
         >
           体質チェックへ戻る
         </Button>
+      </AppShell>
+    );
+  }
+
+  if (contentLoading) {
+    return (
+      <AppShell
+        title="体調予報"
+        subtitle={targetDateLabel}
+        headerRight={
+          <button
+            onClick={() => setShowLocationEditor(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
+          >
+            <span className="text-[14px]">📍</span> {locationDisplayLabel}
+          </button>
+        }
+      >
+        {showLocationEditor ? (
+          <LocationEditor
+            error={error}
+            locating={locating}
+            savingPreset={savingPreset}
+            selectedPresetKey={selectedPresetKey}
+            setSelectedPresetKey={setSelectedPresetKey}
+            onUseCurrentLocation={useCurrentLocation}
+            onSavePresetLocation={savePresetLocation}
+            onClose={() => {
+              setShowLocationEditor(false);
+              setError("");
+            }}
+            showClose
+          />
+        ) : null}
+
+        <ForecastDateRail
+          tabs={dateTabs}
+          activeDate={activeTargetDate}
+          onSelect={selectTargetDate}
+        />
+
+        <RadarContentLoadingCards
+          mode={selectedIsToday ? "today" : "tomorrow"}
+          kind={contentLoadingKind}
+          locationLabel={locationDisplayLabel}
+        />
       </AppShell>
     );
   }
@@ -1391,6 +1519,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
 
