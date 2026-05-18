@@ -972,98 +972,96 @@ export default function RadarPage() {
                   {forecastModeLead}
                 </div>
 
-                <div className="relative mt-4 rounded-[26px] bg-white/62 px-3.5 py-4 ring-1 ring-black/5 backdrop-blur-sm shadow-[0_16px_40px_-26px_rgba(15,23,42,0.42)] sm:px-4">
-                  <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-center">
-                    <div className="relative">
-                      <ForecastGauge
-                        score={forecast.score_0_10}
-                        signal={forecast.signal}
-                        animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
-                      />
-                    </div>
+                <div className="relative mt-5">
+                  <div className="relative mx-auto max-w-[420px] px-1">
+                    <ForecastGauge
+                      score={forecast.score_0_10}
+                      signal={forecast.signal}
+                      animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
+                    />
+                  </div>
 
-                    <div className="grid gap-2.5">
-                      <div className="rounded-[22px] bg-white/80 px-3.5 py-3 ring-1 ring-black/5 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            出やすいサイン
-                          </div>
-                          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
-                            体感の目安
-                          </span>
+                  <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                    <div className="rounded-[22px] bg-white/76 px-3.5 py-3 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          出やすいサイン
                         </div>
-
-                        <div className="mt-2.5 grid gap-2">
-                          {bodySigns.map((sign, index) => (
-                            <div
-                              key={`${sign}-${index}`}
-                              className="flex items-start gap-2.5 rounded-[18px] bg-white/74 px-3 py-2.5 ring-1 ring-black/5 shadow-sm"
-                            >
-                              <span
-                                className={[
-                                  "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-black text-white shadow-sm",
-                                  forecast.signal === 2
-                                    ? "bg-[#E38949]"
-                                    : forecast.signal === 1
-                                    ? "bg-[#E2AE45]"
-                                    : "bg-[#66B9A3]",
-                                ].join(" ")}
-                              >
-                                {index + 1}
-                              </span>
-                              <span className="text-[13px] font-extrabold leading-6 text-slate-800">
-                                {sign}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {backgroundFactors.length > 0 ? (
-                          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                            <span className="mr-1 text-[10px] font-black text-slate-400">背景</span>
-                            {backgroundFactors.map((factor, index) => (
-                              <span
-                                key={`${factor.key}-${index}`}
-                                className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-slate-100"
-                              >
-                                <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
-                                {factor.label}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
+                          体感の目安
+                        </span>
                       </div>
 
-                      <div className="rounded-[22px] bg-white/74 px-3.5 py-3 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                              <IconBolt className="h-4 w-4" />
-                            </span>
-                            {selectedIsToday ? "山場前に" : "明日の山場前に"}
-                          </div>
-                          <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
-                            {forecast.peak_start && forecast.peak_end
-                              ? `山場：${String(forecast.peak_start).slice(0, 5)}–${String(
-                                  forecast.peak_end
-                                ).slice(0, 5)}`
-                              : "山場：—"}
-                          </div>
-                        </div>
-
-                        <div className="mt-3 grid gap-2">
-                          {peakPrepItems.map((item, index) => (
-                            <div
-                              key={`${item}-${index}`}
-                              className="flex items-start gap-2 rounded-[16px] bg-white/70 px-3 py-2 ring-1 ring-black/5"
+                      <div className="mt-2.5 grid gap-2">
+                        {bodySigns.map((sign, index) => (
+                          <div
+                            key={`${sign}-${index}`}
+                            className="flex items-start gap-2.5 rounded-[18px] bg-white/74 px-3 py-2.5 ring-1 ring-black/5 shadow-sm"
+                          >
+                            <span
+                              className={[
+                                "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-black text-white shadow-sm",
+                                forecast.signal === 2
+                                  ? "bg-[#E38949]"
+                                  : forecast.signal === 1
+                                  ? "bg-[#E2AE45]"
+                                  : "bg-[#66B9A3]",
+                              ].join(" ")}
                             >
-                              <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
-                              <span className="text-[12px] font-extrabold leading-5 text-slate-700">
-                                {item}
-                              </span>
-                            </div>
+                              {index + 1}
+                            </span>
+                            <span className="text-[13px] font-extrabold leading-6 text-slate-800">
+                              {sign}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {backgroundFactors.length > 0 ? (
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                          <span className="mr-1 text-[10px] font-black text-slate-400">背景</span>
+                          {backgroundFactors.map((factor, index) => (
+                            <span
+                              key={`${factor.key}-${index}`}
+                              className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-slate-100"
+                            >
+                              <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
+                              {factor.label}
+                            </span>
                           ))}
                         </div>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-[22px] bg-white/76 px-3.5 py-3 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                            <IconBolt className="h-4 w-4" />
+                          </span>
+                          {selectedIsToday ? "山場前に" : "明日の山場前に"}
+                        </div>
+                        <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
+                          {forecast.peak_start && forecast.peak_end
+                            ? `山場：${String(forecast.peak_start).slice(0, 5)}–${String(
+                                forecast.peak_end
+                              ).slice(0, 5)}`
+                            : "山場：—"}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-2">
+                        {peakPrepItems.map((item, index) => (
+                          <div
+                            key={`${item}-${index}`}
+                            className="flex items-start gap-2 rounded-[16px] bg-white/70 px-3 py-2 ring-1 ring-black/5"
+                          >
+                            <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
+                            <span className="text-[12px] font-extrabold leading-5 text-slate-700">
+                              {item}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1552,4 +1550,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
