@@ -15,8 +15,12 @@ function IconHome() {
 
 function IconCheck() {
   return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5" />
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.15" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.5c3.2 0 5.8 2.3 5.8 5.3 0 4.2-5.8 8.9-5.8 8.9S6.2 13 6.2 8.8c0-3 2.6-5.3 5.8-5.3z" opacity="0.34" fill="currentColor" stroke="none" />
+      <path d="M12 3.5c3.2 0 5.8 2.3 5.8 5.3 0 4.2-5.8 8.9-5.8 8.9S6.2 13 6.2 8.8c0-3 2.6-5.3 5.8-5.3z" />
+      <path d="M9 20h6" />
+      <path d="M12 8.2v4.4" />
+      <path d="M9.8 10.4h4.4" />
     </svg>
   );
 }
@@ -90,8 +94,8 @@ export default function BottomTabs() {
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
-          {item("check", "体質チェック", IconCheck, "/check")}
-          {item("radar", "体調予報", IconRadar, "/radar")}
+          {item("check", "体質理解", IconCheck, "/check")}
+          {item("radar", "未病予報", IconRadar, "/radar")}
           {item("settings", "設定", IconSettings, "/settings")}
         </div>
       </div>
