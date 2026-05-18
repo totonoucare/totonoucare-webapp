@@ -406,7 +406,7 @@ function MiniGuideBotMarker({ signal = 0 }) {
   }
 
   return (
-    <svg viewBox="0 0 120 120" className="h-full w-full drop-shadow-sm" aria-hidden="true">
+    <svg viewBox="20 0 80 84" className="h-full w-full drop-shadow-sm" aria-hidden="true">
       <defs>
         <linearGradient id={`miniHeadGrad-${signal}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#ffffff" />
@@ -1271,4 +1271,5 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
 
