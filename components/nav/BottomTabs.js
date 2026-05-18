@@ -94,8 +94,8 @@ export default function BottomTabs() {
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
-          {item("check", "体質理解", IconCheck, "/check")}
-          {item("radar", "未病予報", IconRadar, "/radar")}
+          {item("check", "体を知る", IconCheck, "/check")}
+          {item("radar", "予報をみる", IconRadar, "/radar")}
           {item("settings", "設定", IconSettings, "/settings")}
         </div>
       </div>
