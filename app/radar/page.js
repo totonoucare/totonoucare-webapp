@@ -290,6 +290,30 @@ export default function RadarPage() {
 
 
 
+  async function requestForecastSnapshot({ token, targetDate, forceSnapshot = false }) {
+    const qs = new URLSearchParams();
+    qs.set("date", targetDate);
+    if (forceSnapshot) qs.set("force", "1");
+
+    const res = await fetch(`/api/radar/v1/forecast?${qs.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const err = new Error(json?.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.payload = json;
+      throw err;
+    }
+
+    return json;
+  }
+
   async function fetchForecast({
     lat = null,
     lon = null,
@@ -301,7 +325,7 @@ export default function RadarPage() {
   } = {}) {
     if (!session) return;
 
-    const { today } = getJstTodayTomorrow();
+    const { today, tomorrow } = getJstTodayTomorrow();
     const targetDate = normalizeRadarTargetDate(requestedTargetDate || selectedTargetDate || today);
     const nextMode = inferModeFromSelectedDate(targetDate) || "tomorrow";
     const requestSeq = ++requestSeqRef.current;
@@ -331,35 +355,35 @@ export default function RadarPage() {
       if (!token) throw new Error("No token");
 
       const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel });
+      const shouldForceSnapshot = recompute || locationChanged || !!savedLocation;
+      const shouldRefreshBothDates = isLocationRefresh || !!savedLocation;
 
-      const qs = new URLSearchParams();
-      qs.set("date", targetDate);
-
-      if (recompute || locationChanged || savedLocation) {
-        qs.set("force", "1");
-      }
-
-      const url = `/api/radar/v1/forecast?${qs.toString()}`;
-
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        cache: "no-store",
+      const json = await requestForecastSnapshot({
+        token,
+        targetDate,
+        forceSnapshot: shouldForceSnapshot,
       });
-
-      const json = await res.json();
 
       if (requestSeq !== requestSeqRef.current) return;
 
-      if (!res.ok) {
-        if (json?.error?.includes("No radar location found")) {
-          setNeedsLocation(true);
-          setBundle(null);
-          return;
+      let siblingRefreshFailed = false;
+      if (shouldRefreshBothDates) {
+        const siblingTargetDate = targetDate === today ? tomorrow : today;
+        if (siblingTargetDate && siblingTargetDate !== targetDate) {
+          try {
+            await requestForecastSnapshot({
+              token,
+              targetDate: siblingTargetDate,
+              forceSnapshot: true,
+            });
+          } catch (siblingError) {
+            siblingRefreshFailed = true;
+            console.error("refresh sibling radar forecast failed:", siblingError);
+          }
         }
-        throw new Error(json?.error || `HTTP ${res.status}`);
       }
+
+      if (requestSeq !== requestSeqRef.current) return;
 
       setNeedsLocation(false);
       setBundle(json);
@@ -375,11 +399,20 @@ export default function RadarPage() {
         setSelectedTargetDate(json.target_date);
       }
 
-      if (locationChanged) {
-        setLocationNotice("地域を更新しました。選択中の予報にも反映しました。");
+      if (shouldRefreshBothDates) {
+        setLocationNotice(
+          siblingRefreshFailed
+            ? "地域を更新しました。選択中の予報に反映しました。もう片方の予報は、開いたときに再取得します。"
+            : "地域を更新しました。今日と明日の予報に反映しました。"
+        );
       }
     } catch (e) {
       if (requestSeq !== requestSeqRef.current) return;
+      if (e?.payload?.error?.includes("No radar location found")) {
+        setNeedsLocation(true);
+        setBundle(null);
+        return;
+      }
       setError(e?.message || "予報の取得に失敗しました。");
     } finally {
       if (requestSeq === requestSeqRef.current) {
@@ -1519,4 +1552,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
