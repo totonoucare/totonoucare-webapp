@@ -982,7 +982,7 @@ export default function RadarPage() {
                   </div>
 
                   <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                    <div className="rounded-[24px] bg-white/34 px-4 py-3.5 ring-1 ring-white/65 shadow-[inset_0_1px_4px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.22)] backdrop-blur-sm">
+                    <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                           出やすいサイン
@@ -996,7 +996,7 @@ export default function RadarPage() {
                         {bodySigns.map((sign, index) => (
                           <div
                             key={`${sign}-${index}`}
-                            className="flex items-start gap-2.5 rounded-[18px] bg-white/86 px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_10px_24px_-20px_rgba(15,23,42,0.36)]"
+                            className="flex items-start gap-2.5 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]"
                           >
                             <span
                               className={[
@@ -1023,7 +1023,7 @@ export default function RadarPage() {
                           {backgroundFactors.map((factor, index) => (
                             <span
                               key={`${factor.key}-${index}`}
-                              className="inline-flex items-center gap-1 rounded-full bg-white/82 px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-[#E4ECE4] shadow-[0_8px_18px_-18px_rgba(15,23,42,0.24)]"
+                              className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-[#E4ECE4] shadow-[0_10px_20px_-16px_rgba(15,23,42,0.28)]"
                             >
                               <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
                               {factor.label}
@@ -1033,7 +1033,7 @@ export default function RadarPage() {
                       ) : null}
                     </div>
 
-                    <div className="rounded-[24px] bg-white/34 px-4 py-3.5 ring-1 ring-white/65 shadow-[inset_0_1px_4px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.22)] backdrop-blur-sm">
+                    <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                           <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
@@ -1054,7 +1054,7 @@ export default function RadarPage() {
                         {peakPrepItems.map((item, index) => (
                           <div
                             key={`${item}-${index}`}
-                            className="flex items-start gap-2 rounded-[16px] bg-white/86 px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_10px_22px_-20px_rgba(15,23,42,0.34)]"
+                            className="flex items-start gap-2 rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.32)]"
                           >
                             <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
                             <span className="text-[12px] font-extrabold leading-5 text-slate-700">
@@ -1093,7 +1093,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-[24px] bg-[#F7FAF7] px-4 py-4 ring-1 ring-inset ring-[#D3E1D5]">
+            <div className="mt-4 rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/65">
                   この日の方針
@@ -1107,7 +1107,7 @@ export default function RadarPage() {
                 {safeArray(carePolicies?.policies).map((policy) => (
                   <span
                     key={policy.key}
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]"
                     title={policy.short}
                   >
                     <span className="h-2 w-2 rounded-full bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.22)]" />
@@ -1146,10 +1146,10 @@ export default function RadarPage() {
 
                 {primaryTsubo ? (
                   <div
-                    className="relative overflow-hidden rounded-[24px] bg-[#F7FAF7] p-4 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(47,111,98,0.28)] cursor-pointer transition-all hover:-translate-y-0.5 hover:bg-white"
+                    className="relative overflow-hidden rounded-[24px] bg-[#F7FAF7]/75 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#F9FCFA]"
                     onClick={() => setSelectedPoint(primaryTsubo)}
                   >
-                    <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3]">
+                    <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                       まずはこれ
                     </div>
 
@@ -1287,8 +1287,8 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] bg-[#F7FAF7] px-4 py-4 ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(47,111,98,0.26)]">
-                  <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3]">
+                <div className="rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                  <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                     まずはこれ
                   </div>
 
@@ -1416,9 +1416,9 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[24px] bg-[#F7FAF7] ring-1 ring-inset ring-[#D3E1D5] shadow-[0_14px_30px_-26px_rgba(47,111,98,0.26)]">
+                <div className="overflow-hidden rounded-[24px] bg-[#F7FAF7]/75 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div className="px-4 py-4">
-                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3]">
+                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                       まずはこれ
                     </div>
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
@@ -1429,13 +1429,13 @@ export default function RadarPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[#D3E1D5] bg-white/55 px-4 py-4">
+                  <div className="border-t border-white/70 bg-white/34 px-4 py-4">
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       {selectedIsToday ? "今日やること" : "今夜やること"}
                     </div>
                     <div className="mt-3 space-y-2">
                       {safeArray(lifestylePlan.steps).map((step, idx) => (
-                        <div key={`${idx}-${step}`} className="flex items-start gap-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-sm">
+                        <div key={`${idx}-${step}`} className="flex items-start gap-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
                           <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#E2F1EA] text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
                             {idx + 1}
                           </div>
@@ -1550,6 +1550,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
-
-
