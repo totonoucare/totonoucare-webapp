@@ -35,7 +35,8 @@ export async function GET(req) {
       dates: searchParams.get("dates") || "today,tomorrow",
       limit: searchParams.get("limit") || 100,
       force: asBool(searchParams.get("force"), true),
-      enrich: asBool(searchParams.get("enrich"), true),
+      // AI補完は一時停止中。クエリでenrich=1が来ても有効化しない。
+      enrich: false,
       dryRun: searchParams.get("dry_run") === "1",
       userId: searchParams.get("user_id") || null,
     });
@@ -46,3 +47,4 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error?.message || error) }, 500);
   }
 }
+
