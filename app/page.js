@@ -385,40 +385,39 @@ function MiniGuideBotMarker({ signal = 0 }) {
   const darkGreen = "#3a5c4b";
   let eyes = (
     <>
-      <circle cx="44" cy="50" r="4.5" fill={darkGreen} />
-      <circle cx="76" cy="50" r="4.5" fill={darkGreen} />
+      <circle cx="46" cy="63" r="3.8" fill={darkGreen} />
+      <circle cx="74" cy="63" r="3.8" fill={darkGreen} />
     </>
   );
-  let mouth = <path d="M54 58 C 58 61, 62 61, 66 58" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+  let mouth = <path d="M54 72 C 58 75, 62 75, 66 72" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
   let accessory = null;
 
   if (signal === 1) {
-    mouth = <path d="M54 59 C 58 58, 62 58, 66 59" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+    mouth = <path d="M54 72 C 58 71, 62 71, 66 72" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
   } else if (signal === 2) {
     eyes = (
       <>
-        <path d="M40 51 Q 44 48 48 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M72 51 Q 76 48 80 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M42 64 Q 46 61 50 64" fill="none" stroke={darkGreen} strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M70 64 Q 74 61 78 64" fill="none" stroke={darkGreen} strokeWidth="2.4" strokeLinecap="round" />
       </>
     );
-    mouth = <path d="M54 60 C 58 57, 62 57, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
-    accessory = <path d="M 85 40 Q 88 45 85 48 Q 82 45 85 40 Z" fill="#90b1e0" opacity="0.8" />;
+    mouth = <path d="M54 73 C 58 70, 62 70, 66 73" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
+    accessory = <path d="M83 53 Q 86 58 83 61 Q 80 58 83 53 Z" fill="#90b1e0" opacity="0.78" />;
   }
 
   return (
-    <svg viewBox="20 0 80 84" className="h-full w-full drop-shadow-sm" aria-hidden="true">
+    <svg viewBox="0 0 120 120" className="h-full w-full drop-shadow-sm" aria-hidden="true">
       <defs>
         <linearGradient id={`miniHeadGrad-${signal}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#ffffff" />
           <stop offset="100%" stopColor="#eef7f2" />
         </linearGradient>
       </defs>
-      <circle cx="60" cy="68" r="42" fill="#ffffff" opacity="0.92" />
-      <path d="M60 28 L60 18" stroke="#6eab90" strokeWidth="2.7" strokeLinecap="round" />
-      <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#8fc7aa" />
-      <rect x="24" y="28" width="72" height="52" rx="22" fill={`url(#miniHeadGrad-${signal})`} stroke="#d9e8df" strokeWidth="1" />
-      <ellipse cx="36" cy="56" rx="5" ry="3" fill="#d69e9e" opacity="0.65" />
-      <ellipse cx="84" cy="56" rx="5" ry="3" fill="#d69e9e" opacity="0.65" />
+      <path d="M60 40 L60 29" stroke="#6eab90" strokeWidth="2.6" strokeLinecap="round" />
+      <path d="M60 29 C53 22, 57 16, 64 16 C71 16, 69 25, 60 29 Z" fill="#8fc7aa" />
+      <rect x="29" y="43" width="62" height="45" rx="20" fill={`url(#miniHeadGrad-${signal})`} stroke="#d9e8df" strokeWidth="1.1" />
+      <ellipse cx="40" cy="70" rx="4.8" ry="3" fill="#d69e9e" opacity="0.65" />
+      <ellipse cx="80" cy="70" rx="4.8" ry="3" fill="#d69e9e" opacity="0.65" />
       {eyes}
       {mouth}
       {accessory}
@@ -438,7 +437,7 @@ function ForecastBar({ forecast }) {
         <div className={["h-full rounded-full transition-all duration-500", style.fill].join(" ")} style={{ width: `${percent}%` }} />
       </div>
       <div
-        className={["absolute top-0 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-full bg-white ring-1 ring-white/80", style.glow].join(" ")}
+        className={["absolute top-0 grid h-10 w-10 -translate-x-1/2 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/80", style.glow].join(" ")}
         style={{ left: `${Math.max(7, Math.min(93, percent))}%` }}
       >
         <MiniGuideBotMarker signal={signal} />
@@ -1271,5 +1270,6 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
 
 
