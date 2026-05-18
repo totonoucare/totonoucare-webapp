@@ -522,7 +522,7 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
   const style = modeStyle(mainSignal);
 
   return (
-    <Module className={["relative overflow-hidden p-6 ring-1 shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]", style.shell].join(" ")}>
+    <Module className="relative overflow-hidden bg-white p-6 ring-1 ring-slate-200/80 shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
       <div className="pointer-events-none absolute -right-10 -top-12 h-32 w-32 rounded-full bg-white/40 blur-2xl" />
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
@@ -534,7 +534,7 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
             <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日の過ごし方を確認</div>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳しく見る</Button>
+        <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳細へ</Button>
       </div>
 
       <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2">
