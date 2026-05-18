@@ -1125,9 +1125,9 @@ export default function RadarPage() {
               </div>
             </div>
           </Module>
-          <Module className={["p-5", careTone.shell].join(" ")}>
+          <Module className="p-5 bg-white ring-1 ring-[#E2E8E4] shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22)]">
             <div className="flex items-center gap-3">
-              <div className={["grid h-12 w-12 shrink-0 place-items-center rounded-[18px] ring-1 shadow-sm", careTone.icon].join(" ")}>
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#F5F8F6] text-[#5F746C] ring-1 ring-[#E1E8E3] shadow-sm">
                 {careTab === "eat" ? (
                   <IconBowl className="h-7 w-7" />
                 ) : careTab === "live" ? (
@@ -1137,13 +1137,13 @@ export default function RadarPage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className={["text-[10px] font-black uppercase tracking-widest", careTone.eyebrow].join(" ")}>
+                <div className="text-[10px] font-black uppercase tracking-widest text-[#6F837B]/60">
                   DAILY CARE
                 </div>
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
                   {selectedIsToday ? "今日のケア" : "今夜のケア"}
                 </div>
-                <div className={["mt-1 text-[12px] font-extrabold leading-5", careTone.inkSoft].join(" ")}>
+                <div className="mt-1 text-[12px] font-extrabold leading-5 text-[#40544E]/80">
                   {careStrategyTitle}
                 </div>
               </div>
@@ -1195,7 +1195,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     ほぐす
                   </div>
-                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
+                  <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E2E8E4]">
                     ツボケア
                   </div>
                 </div>
@@ -1251,8 +1251,8 @@ export default function RadarPage() {
                 )}
 
                 {carePlan?.night_note ? (
-                  <div className={["rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 shadow-sm", careTone.smallRing].join(" ")}>
-                    <span className={["mr-2", careTone.ink].join(" ")}>ひとこと</span>
+                  <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-[#E2E8E4] shadow-sm">
+                    <span className="mr-2 text-[#5F746C]">ひとこと</span>
                     {carePlan.night_note}
                   </div>
                 ) : null}
@@ -1262,7 +1262,7 @@ export default function RadarPage() {
                     <button
                       type="button"
                       onClick={() => setTsuboExtraOpen((v) => !v)}
-                      className={["flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 text-left shadow-sm transition-all", careTone.smallRing, careTone.panelHover].join(" ")}
+                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#E2E8E4] text-left shadow-sm transition-all hover:bg-[#F8FAF9]"
                     >
                       <div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1338,7 +1338,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     食べる
                   </div>
-                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
+                  <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E2E8E4]">
                     食養生
                   </div>
                 </div>
@@ -1467,7 +1467,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     暮らす
                   </div>
-                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
+                  <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E2E8E4]">
                     生活ケア
                   </div>
                 </div>
@@ -1606,5 +1606,6 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
 
