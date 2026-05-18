@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import { CoreIllust } from "@/components/illust/core";
 import Button from "@/components/ui/Button";
-import ReviewFormSheet from "@/components/records/ReviewFormSheet";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   IconBolt,
@@ -15,14 +14,6 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
-import {
-  actionTagLabel,
-  conditionLabel,
-  preventLabel,
-  signalBadgeClass as reviewSignalBadgeClass,
-  signalLabel as reviewSignalLabel,
-  triggerLabel as reviewTriggerLabel,
-} from "@/components/records/reviewConfig";
 import {
   getCoreLabel,
   getSubLabels,
@@ -34,7 +25,6 @@ import {
   ForecastDateRail,
   LocationEditor,
   PointDetailSheet,
-  SavedCareReviewAccordion,
   SegmentedTabs,
 } from "./RadarPageComponents";
 import {
@@ -65,7 +55,6 @@ import {
   getRiskContext,
   getSectionLabels,
   getTsuboRoleLabel,
-  hasAiPointSelectionReason,
   inferModeFromSelectedDate,
   inferModeFromTargetDate,
   safeArray,
@@ -96,7 +85,6 @@ export default function RadarPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
-  const [enrichingForecast, setEnrichingForecast] = useState(false);
 
   const [bundle, setBundle] = useState(null);
   const [error, setError] = useState("");
@@ -117,14 +105,8 @@ export default function RadarPage() {
   const [tsuboExtraOpen, setTsuboExtraOpen] = useState(false);
   const [foodDetailOpen, setFoodDetailOpen] = useState(false);
 
-  const [todayReview, setTodayReview] = useState(null);
-  const [todayReviewForecast, setTodayReviewForecast] = useState(null);
-  const [loadingTodayReview, setLoadingTodayReview] = useState(false);
-  const [savingTodayReview, setSavingTodayReview] = useState(false);
-  const [reviewEditorOpen, setReviewEditorOpen] = useState(false);
 
   const requestSeqRef = useRef(0);
-  const enrichingTargetDateRef = useRef("");
   const slowLoadingTimerRef = useRef(null);
   const loadingHintIntervalRef = useRef(null);
 
@@ -236,78 +218,7 @@ export default function RadarPage() {
     }, 1200);
   }
 
-  async function enrichForecastAfterRender(targetDate, requestSeq) {
-    if (!targetDate) return;
-    if (enrichingTargetDateRef.current === targetDate) return;
 
-    try {
-      enrichingTargetDateRef.current = targetDate;
-      setEnrichingForecast(true);
-      const json = await authedFetch(`/api/radar/v1/forecast/enrich?date=${encodeURIComponent(targetDate)}&generate=1`);
-
-      if (requestSeq !== requestSeqRef.current) return;
-
-      setBundle((prev) => {
-        if (!prev) return json;
-        if (prev?.target_date && json?.target_date && prev.target_date !== json.target_date) {
-          return prev;
-        }
-        return {
-          ...prev,
-          ...json,
-          forecast: {
-            ...(prev?.forecast || {}),
-            ...(json?.forecast || {}),
-          },
-          care_plan: {
-            ...(prev?.care_plan || {}),
-            ...(json?.care_plan || {}),
-          },
-        };
-      });
-    } catch (e) {
-      console.error("enrichForecastAfterRender failed:", e);
-    } finally {
-      if (enrichingTargetDateRef.current === targetDate) {
-        enrichingTargetDateRef.current = "";
-      }
-      if (requestSeq === requestSeqRef.current) {
-        setEnrichingForecast(false);
-      }
-    }
-  }
-
-  async function fetchTodayReview() {
-    if (!session) return;
-    try {
-      setLoadingTodayReview(true);
-      const { today } = getJstTodayTomorrow();
-      const json = await authedFetch(`/api/radar/review?date=${today}`);
-      setTodayReview(json?.data?.review || null);
-      setTodayReviewForecast(json?.data?.forecast || null);
-    } catch (e) {
-      console.error("fetchTodayReview failed:", e);
-    } finally {
-      setLoadingTodayReview(false);
-    }
-  }
-
-  async function saveTodayReview(payload) {
-    try {
-      setSavingTodayReview(true);
-      const json = await authedFetch("/api/radar/review", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      setTodayReview(json?.data?.review || null);
-      setTodayReviewForecast(json?.data?.forecast || null);
-      setReviewEditorOpen(false);
-    } catch (e) {
-      alert(e?.message || "保存に失敗しました");
-    } finally {
-      setSavingTodayReview(false);
-    }
-  }
 
   async function fetchForecast({
     lat = null,
@@ -373,20 +284,8 @@ export default function RadarPage() {
       setNeedsLocation(false);
       setBundle(json);
 
-      const shouldGenerateGptNow = Boolean(
-        json?.gpt_pending &&
-        json?.target_date &&
-        // DBに予報がまだ無く、この表示で新規作成された場合は、
-        // 既存予報の上書きではないためAI補完まで完了させる。
-        (json?.recomputed || locationChanged || recompute || savedLocation)
-      );
-
-      if (shouldGenerateGptNow) {
-        enrichForecastAfterRender(json.target_date, requestSeq);
-      } else {
-        // 通常のページ表示だけではAI生成によるDB更新を発生させない。
-        setEnrichingForecast(false);
-      }
+      // AI補完ルートは一時停止中。
+      // ページ表示・地域変更・欠損時生成のいずれでも、ここからGPT生成は呼ばない。
 
       const returnedMode = inferModeFromSelectedDate(json?.target_date) || inferModeFromTargetDate(json?.target_date);
       if (returnedMode) {
@@ -647,8 +546,7 @@ export default function RadarPage() {
   const foodExamples = safeArray(food.examples);
   const hasFoodDetails =
     !!food.how_to || !!food.avoid || !!food.reason || !!food.lifestyle_tip;
-  const pointReasonLoading =
-    !!selectedPoint && enrichingForecast && !hasAiPointSelectionReason(selectedPoint);
+  const pointReasonLoading = false;
 
   useEffect(() => {
     if (!selectedPoint) return;
@@ -661,8 +559,6 @@ export default function RadarPage() {
     }
   }, [bundle?.care_plan?.night_tsubo_set?.points, selectedPoint]);
 
-  const todayRecordDate = getJstTodayTomorrow().today;
-  const todayRecordDateLabel = formatTargetDate(todayRecordDate);
 
   function selectTargetDate(nextDate) {
     const normalizedDate = normalizeRadarTargetDate(nextDate);
@@ -1241,11 +1137,6 @@ export default function RadarPage() {
                     {food.title || sectionLabels.foodTitle || `${getDateModeLabel(bundleDateMode)}の食養生`}
                   </div>
 
-                  {enrichingForecast && !hasFoodDetails ? (
-                    <div className="mt-3 rounded-[16px] bg-white px-3 py-2 text-[11px] font-black tracking-wide text-slate-500 ring-1 ring-black/5">
-                      食養生の説明を整えています…
-                    </div>
-                  ) : null}
 
                   {food.recommendation || food.focus ? (
                     <div className="mt-3 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
@@ -1410,7 +1301,6 @@ export default function RadarPage() {
             ) : null}
           </Module>
 
-          {selectedIsToday ? <SavedCareReviewAccordion bundle={bundle} /> : null}
 
           <Module className="p-5 bg-[#EEF6F0] ring-1 ring-[#BFD9CC] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
             <div className="flex items-start justify-between gap-4">
@@ -1486,16 +1376,6 @@ export default function RadarPage() {
           </Module>
       </div>
 
-      <ReviewFormSheet
-        open={reviewEditorOpen}
-        date={todayRecordDate}
-        review={todayReview}
-        forecast={todayReviewForecast}
-        saving={savingTodayReview}
-        title={todayReview ? "今日の記録を編集する" : "今日を記録する"}
-        onClose={() => setReviewEditorOpen(false)}
-        onSave={saveTodayReview}
-      />
 
       {selectedPoint ? (
         <PointDetailSheet
@@ -1511,5 +1391,6 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
 
