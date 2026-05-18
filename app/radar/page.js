@@ -75,8 +75,8 @@ function getCareToneClasses(signal) {
       eyebrow: "text-[#B86430]/62",
       ink: "text-[#B86430]",
       inkSoft: "text-[#B86430]/85",
-      panel: "bg-white/74 ring-white/80 shadow-[inset_0_2px_8px_rgba(184,100,48,0.030),inset_0_-18px_28px_rgba(255,255,255,0.52)]",
-      panelHover: "hover:bg-white/82",
+      panel: "bg-[#FFF6EF]/78 ring-white/70 shadow-[inset_0_2px_8px_rgba(184,100,48,0.055),inset_0_-18px_28px_rgba(255,255,255,0.35)]",
+      panelHover: "hover:bg-[#FFF9F5]",
       pill: "bg-white text-[#B86430] ring-[#ECD6C5] shadow-[0_10px_22px_-16px_rgba(184,100,48,0.30)]",
       pillSoft: "bg-[#FFF6EF] text-[#B86430] ring-[#ECD6C5]",
       dot: "bg-[#E38949] shadow-[0_0_10px_rgba(227,137,73,0.20)]",
@@ -93,8 +93,8 @@ function getCareToneClasses(signal) {
       eyebrow: "text-[#AD7A18]/62",
       ink: "text-[#AD7A18]",
       inkSoft: "text-[#AD7A18]/85",
-      panel: "bg-white/74 ring-white/80 shadow-[inset_0_2px_8px_rgba(173,122,24,0.030),inset_0_-18px_28px_rgba(255,255,255,0.52)]",
-      panelHover: "hover:bg-white/82",
+      panel: "bg-[#FFF9ED]/78 ring-white/70 shadow-[inset_0_2px_8px_rgba(173,122,24,0.055),inset_0_-18px_28px_rgba(255,255,255,0.35)]",
+      panelHover: "hover:bg-[#FFFDF5]",
       pill: "bg-white text-[#AD7A18] ring-[#EAD8A6] shadow-[0_10px_22px_-16px_rgba(173,122,24,0.30)]",
       pillSoft: "bg-[#FFF9ED] text-[#AD7A18] ring-[#EAD8A6]",
       dot: "bg-[#E2AE45] shadow-[0_0_10px_rgba(226,174,69,0.20)]",
@@ -110,8 +110,8 @@ function getCareToneClasses(signal) {
     eyebrow: "text-[#2F816E]/62",
     ink: "text-[#2F816E]",
     inkSoft: "text-[#2F816E]/85",
-    panel: "bg-white/74 ring-white/80 shadow-[inset_0_2px_8px_rgba(47,129,110,0.030),inset_0_-18px_28px_rgba(255,255,255,0.52)]",
-    panelHover: "hover:bg-white/82",
+    panel: "bg-[#F3FBF8]/78 ring-white/70 shadow-[inset_0_2px_8px_rgba(47,129,110,0.055),inset_0_-18px_28px_rgba(255,255,255,0.35)]",
+    panelHover: "hover:bg-[#F8FEFB]",
     pill: "bg-white text-[#2F816E] ring-[#C8E4DB] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.30)]",
     pillSoft: "bg-[#F3FBF8] text-[#2F816E] ring-[#C8E4DB]",
     dot: "bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.18)]",
@@ -1195,7 +1195,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     ほぐす
                   </div>
-                  <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E2E8E4]">
+                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
                     ツボケア
                   </div>
                 </div>
@@ -1251,8 +1251,8 @@ export default function RadarPage() {
                 )}
 
                 {carePlan?.night_note ? (
-                  <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-[#E2E8E4] shadow-sm">
-                    <span className="mr-2 text-[#5F746C]">ひとこと</span>
+                  <div className={["rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 shadow-sm", careTone.smallRing].join(" ")}>
+                    <span className={["mr-2", careTone.ink].join(" ")}>ひとこと</span>
                     {carePlan.night_note}
                   </div>
                 ) : null}
@@ -1262,7 +1262,7 @@ export default function RadarPage() {
                     <button
                       type="button"
                       onClick={() => setTsuboExtraOpen((v) => !v)}
-                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#E2E8E4] text-left shadow-sm transition-all hover:bg-[#F8FAF9]"
+                      className={["flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 text-left shadow-sm transition-all", careTone.smallRing, careTone.panelHover].join(" ")}
                     >
                       <div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1338,7 +1338,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     食べる
                   </div>
-                  <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E2E8E4]">
+                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
                     食養生
                   </div>
                 </div>
@@ -1467,7 +1467,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     暮らす
                   </div>
-                  <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E2E8E4]">
+                  <div className={["rounded-full px-2.5 py-1 text-[10px] font-black ring-1", careTone.pillSoft].join(" ")}>
                     生活ケア
                   </div>
                 </div>
