@@ -325,6 +325,19 @@ function modeActionLabel(signal) {
   return "いつも通りで大丈夫";
 }
 
+function buildGuestSignHints(forecast) {
+  const factor = getForecastTriggerFactors(forecast)[0];
+  const key = factor?.key || exactTriggerKey(forecast?.main_trigger, forecast?.trigger_dir);
+
+  if (key === "pressure_down") return ["頭が重い", "首肩が張る", "眠気・だるさ"];
+  if (key === "pressure_up") return ["力みやすい", "呼吸が浅い", "寝つきにくい"];
+  if (key === "cold") return ["手足が冷える", "腰が重い", "こわばる"];
+  if (key === "heat") return ["のぼせる", "汗で消耗", "眠りが浅い"];
+  if (key === "damp") return ["重だるい", "むくみやすい", "胃腸が重い"];
+  if (key === "dry") return ["のどが乾く", "目が疲れる", "肌が乾く"];
+  return ["だるさ", "こわばり", "切り替えにくさ"];
+}
+
 function buildFixedGuideText(bundle) {
   if (!bundle?.ok || !bundle?.forecast) return "今日の未病予報を確認しています。";
 
@@ -660,7 +673,98 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
   );
 }
 
-function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", memo = null, ctaLabel = "体調予報を開く" }) {
+
+function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = [], onPrimary, onSecondary }) {
+  if (loading) {
+    return (
+      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
+        <div className="h-28 animate-pulse rounded-[26px] bg-slate-100" />
+      </Module>
+    );
+  }
+
+  let icon = <IconCheckCard />;
+  let eyebrow = "PERSONAL KARTE";
+  let title = "未病カルテを作る";
+  let body = "約1〜2分の体質チェックで、あなたの崩れやすいパターンと天気との相性を見える化します。";
+  let primaryLabel = "無料で作る";
+  let secondaryLabel = "使い方を見る";
+
+  if (hasResult && !hasLocation) {
+    icon = <IconPin />;
+    eyebrow = "LOCATION";
+    title = "地域を設定して予報を完成";
+    body = "未病カルテはできています。次は地域を設定して、今日・明日の未病予報に反映しましょう。";
+    primaryLabel = "地域を設定する";
+    secondaryLabel = "未病カルテを見る";
+  } else if (hasResult) {
+    icon = <IconCompass className="h-5 w-5" />;
+    eyebrow = core?.title ? `${core.title}のカルテ` : "YOUR KARTE";
+    title = "未病カルテを見返す";
+    body = core?.short
+      ? `${core.short}。体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。`
+      : "体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。";
+    primaryLabel = "カルテを開く";
+    secondaryLabel = "チェックを更新";
+  }
+
+  return (
+    <Module className="relative overflow-hidden p-6 bg-[linear-gradient(135deg,#F7FBF8_0%,#FFF9EA_100%)] ring-1 ring-[#D3E1D5] shadow-[0_20px_48px_-34px_rgba(37,95,79,0.38)]">
+      <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#F4D68A]/35 blur-2xl" />
+      <div className="relative z-10 flex items-start gap-4">
+        <div className="grid h-[74px] w-[74px] shrink-0 place-items-center overflow-hidden rounded-[24px] bg-white p-2 text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_14px_30px_-22px_rgba(37,95,79,0.36)]">
+          {hasResult && core ? (
+            <CoreIllust
+              code={coreCode}
+              title={core?.title || "体質タイプ"}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[#255F4F] ring-1 ring-[#D3E1D5]">
+              {icon}
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9] shadow-sm">
+            {eyebrow}
+          </div>
+          <h2 className="mt-3 text-[22px] font-black tracking-tight text-slate-950 leading-[1.25]">
+            {title}
+          </h2>
+          <p className="mt-2 text-[13px] font-extrabold leading-6 text-slate-600">
+            {body}
+          </p>
+
+          {hasResult && subs.length ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {subs.slice(0, 3).map((sub) => (
+                <span
+                  key={sub.code}
+                  className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm"
+                >
+                  {sub.short}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-5 flex flex-col gap-3 sm:flex-row">
+        <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
+          {primaryLabel}
+        </Button>
+        <Button variant="secondary" onClick={onSecondary} className="w-full bg-white py-4 shadow-sm sm:flex-1">
+          {secondaryLabel}
+        </Button>
+      </div>
+    </Module>
+  );
+}
+
+function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", memo = null, ctaLabel = "未病予報を開く", scoreVariant = "score" }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)]">
@@ -758,10 +862,17 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
 
         <div className="shrink-0 text-right">
           <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{scoreLabel}</div>
-          <div className="flex items-end justify-end gap-1 leading-none">
-            <span className={["text-[42px] font-black tracking-[-0.04em]", signalScoreTextClass(forecast.signal)].join(" ")}>{score}</span>
-            <span className="pb-1 text-[16px] font-black text-slate-400">/10</span>
-          </div>
+          {scoreVariant === "mode" ? (
+            <div className="leading-tight">
+              <div className={["text-[18px] font-black tracking-tight", signalScoreTextClass(forecast.signal)].join(" ")}>{modeActionLabel(forecast.signal)}</div>
+              <div className="mt-1 text-[10px] font-extrabold text-slate-400">今日の過ごし方</div>
+            </div>
+          ) : (
+            <div className="flex items-end justify-end gap-1 leading-none">
+              <span className={["text-[42px] font-black tracking-[-0.04em]", signalScoreTextClass(forecast.signal)].join(" ")}>{score}</span>
+              <span className="pb-1 text-[16px] font-black text-slate-400">/10</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -792,6 +903,8 @@ export default function HomePage() {
   const [todayBundle, setTodayBundle] = useState(null);
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
   const [latestResult, setLatestResult] = useState(null);
+  const [radarLocation, setRadarLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const isLoggedIn = !!session;
 
@@ -864,9 +977,11 @@ export default function HomePage() {
         setTodayBundle(null);
         setTomorrowBundle(null);
         setLatestResult(null);
+        setRadarLocation(null);
         setTodayLoading(false);
         setTomorrowLoading(false);
         setDashboardLoading(false);
+        setLocationLoading(false);
         return;
       }
 
@@ -919,6 +1034,18 @@ export default function HomePage() {
       } finally {
         if (!cancelled) setDashboardLoading(false);
       }
+
+      try {
+        setLocationLoading(true);
+        const locationRes = await authedFetch(`/api/radar/location`).catch(() => null);
+        if (cancelled) return;
+        setRadarLocation(locationRes?.location || null);
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setRadarLocation(null);
+      } finally {
+        if (!cancelled) setLocationLoading(false);
+      }
     })();
 
     return () => {
@@ -960,7 +1087,7 @@ export default function HomePage() {
       ? `/result/${encodeURIComponent(latestResult.notes.source_event_id)}?from=history`
       : null;
 
-  const latestKarteId = latestResult?.source_event_id || latestResult?.notes?.source_event_id || latestResult?.id || null;
+  const latestKarteId = latestResult?.source_event_id || latestResult?.notes?.source_event_id || null;
   const latestKarteHref = latestKarteId ? `/karte/${encodeURIComponent(latestKarteId)}` : null;
 
   const core = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
@@ -988,8 +1115,9 @@ export default function HomePage() {
       0: `今日はおだやかな日。自分のペースで進んでいこう！`,
     };
     const botMessage = publicForecastLoading
-      ? "今日の気象リスクを確認中…"
+      ? "今日の未病予報デモを確認中…"
       : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
+    const guestSignHints = pf ? buildGuestSignHints(pf) : [];
 
     const QUICK_PRESETS = [
       { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
@@ -1040,7 +1168,10 @@ export default function HomePage() {
         <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
           {/* mb-5に広げてタイトルとカード本体との余白を調整 */}
           <div className="mb-5 flex items-center justify-between">
-            <div className="text-[15px] font-black tracking-tight text-slate-900">今日の気象リスク</div>
+            <div>
+              <div className="text-[15px] font-black tracking-tight text-slate-900">天気だけで見る未病予報デモ</div>
+              <div className="mt-0.5 text-[10px] font-extrabold text-slate-500">体質チェック前のため、天気要素だけで表示しています</div>
+            </div>
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#BFD9CC]">
               <IconPin className="w-3.5 h-3.5 text-[#255F4F]" />
               <select
@@ -1068,20 +1199,38 @@ export default function HomePage() {
               forecast: publicForecast,
               location: { display_name: publicLocation.label }
             }}
-            onClick={() => router.push("/signup")}
+            onClick={() => router.push("/check")}
+            eyebrow="気になりやすい天気変化"
+            scoreLabel="今日のモード"
+            scoreVariant="mode"
+            memo="体質チェックをすると、ここにあなたの崩れやすいサインとケア方針が重なります。"
+            ctaLabel="未病カルテを作る"
           />
+
+          {guestSignHints.length ? (
+            <div className="mt-4 rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_14px_30px_-24px_rgba(37,95,79,0.24)]">
+              <div className="text-[12px] font-black tracking-tight text-slate-900">出やすいサイン</div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {guestSignHints.map((sign) => (
+                  <span key={sign} className="rounded-full bg-[#F4F9F6] px-3 py-1.5 text-[12px] font-extrabold text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                    {sign}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
              <div className="text-[15px] font-black tracking-tight text-[#255F4F]">
-               ＋ あなたの体質データを掛け合わせる
+               体質チェックで、自分向けの未病予報へ
              </div>
              <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
-               上記の気象リスクに、あなたの「崩れ方のクセ」を組み合わせることで、精度の高いパーソナル予報が完成します。
+               天気だけのデモに、あなたの「崩れ方のクセ」を重ねると、今日・明日の過ごし方まで見えるようになります。
              </p>
              <div className="mt-5 grid gap-3">
                <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[14px] w-full">
-                  無料で体質チェックをはじめる
+                  無料で未病カルテを作る
                </Button>
                <Button variant="secondary" onClick={() => router.push("/signup")} className="py-4 shadow-sm text-[14px] w-full bg-white">
                   ログインする
@@ -1094,7 +1243,7 @@ export default function HomePage() {
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              体質チェック・ログイン後の体調予報は
+              体質チェック・ログイン後の未病予報は
               <span className="font-extrabold text-slate-700">ずっと無料</span>
             </li>
           </ul>
@@ -1115,7 +1264,7 @@ export default function HomePage() {
   return (
     <AppShell
       title="ホーム"
-      subtitle="今日の未病予報と次の一歩"
+      subtitle="今日の未病予報"
       headerRight={
         <HomeHeaderMenu
           onGuide={() => router.push("/guide")}
@@ -1155,121 +1304,25 @@ export default function HomePage() {
         onOpenRadar={() => router.push("/radar")}
       />
 
-      <PersonalKarteSpotlight
+      <HomeStateCta
+        loading={dashboardLoading || (Boolean(latestResult && core) && locationLoading)}
+        hasResult={Boolean(latestResult && core)}
+        hasLocation={Boolean(radarLocation)}
         core={core}
         coreCode={latestResult?.core_code}
         subs={subs}
-        onPrimary={() => router.push(latestKarteHref || "/check")}
-        onSecondary={() => router.push(latestResultHref || "/guide")}
+        onPrimary={() => {
+          if (!latestResult || !core) return router.push("/check");
+          if (!radarLocation) return router.push("/radar");
+          return router.push(latestResultHref || latestKarteHref || "/history");
+        }}
+        onSecondary={() => {
+          if (!latestResult || !core) return router.push("/guide");
+          if (!radarLocation) return router.push(latestResultHref || latestKarteHref || "/history");
+          return router.push("/check/run");
+        }}
       />
-
-      {/* 次にやること */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#FFF3D8] text-[#A16E16] ring-1 ring-[#E9D8A9] shadow-sm">
-            <IconBolt className="h-5 w-5" />
-          </span>
-          <div className="text-[18px] font-black tracking-tight text-slate-900">次にやること</div>
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <ActionTile
-            icon={<IconJournalCard />}
-            title="記録カレンダー（開発中）"
-            sub="体調メモと振り返り機能は準備中です。"
-            onClick={() => router.push("/records?tab=calendar")}
-          />
-          <ActionTile
-            icon={<IconCheckCard />}
-            title="体質結果を見る"
-            sub={core ? `${core.title} を確認する` : "最新の体質チェック結果を見る"}
-            onClick={() => router.push(latestResultHref || "/check")}
-          />
-          <ActionTile
-            icon={<IconJournalCard />}
-            title="未病カルテを見返す"
-            sub={latestKarteHref ? "体質の説明書を開く" : "体質チェック後に作成できます"}
-            onClick={() => router.push(latestKarteHref || "/check")}
-          />
-          <ActionTile
-            icon={<IconHistoryCard />}
-            title="履歴を見る"
-            sub="過去の結果を一覧で見返す。"
-            onClick={() => router.push("/history")}
-          />
-          <ActionTile
-            icon={<IconReportCard />}
-            title="週次レポート（開発中）"
-            sub="1週間の傾向を振り返る機能を準備中です。"
-            onClick={() => router.push("/records?tab=report")}
-          />
-        </div>
-      </Module>
-
-      {/* あなたの体質 */}
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.32)]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-             <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
-               <IconCompass className="h-5 w-5" />
-             </span>
-            <div className="text-[18px] font-black tracking-tight text-slate-900">あなたの体質</div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => router.push(latestResultHref || "/check")}>結果を見る</Button>
-        </div>
-
-        {latestResult && core ? (
-          <div className="mt-5 rounded-[32px] bg-[#EEF6F0] p-6 ring-1 ring-inset ring-[#BFD9CC] shadow-[0_16px_34px_-24px_rgba(37,95,79,0.32)]">
-            <div className="flex items-center justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/85">前回のチェック</div>
-                <div className="mt-1 text-[24px] font-black tracking-tight text-slate-900 leading-tight">{core.title}</div>
-                <div className="mt-1.5 text-[12px] font-bold text-slate-700">{core.short}</div>
-
-                {subs.length ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {subs.map((sub) => (
-                      <span
-                        key={sub.code}
-                        className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm"
-                      >
-                        {sub.short}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="shrink-0">
-                <div className="grid h-[104px] w-[104px] place-items-center overflow-hidden rounded-[22px] bg-white ring-1 ring-[#CFE0D3] shadow-[0_14px_28px_-22px_rgba(37,95,79,0.36)] transition-transform hover:scale-105 p-1.5">
-                  <CoreIllust
-                    code={latestResult.core_code}
-                    title={core.title}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 text-[11px] font-extrabold tracking-wide text-slate-500">
-              {latestResult.created_at ? `最終更新: ${new Date(latestResult.created_at).toLocaleDateString("ja-JP")}` : "最新の結果です。"}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-5 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-            <div className="text-[14px] font-black text-slate-700">まだ体質チェックの保存結果がありません</div>
-            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-              まずは無料の体質チェックから始めてみましょう。
-            </div>
-            <div className="mt-5">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-sm">体質チェックをはじめる</Button>
-            </div>
-          </div>
-        )}
-      </Module>
     </AppShell>
   );
 }
-
-
 
