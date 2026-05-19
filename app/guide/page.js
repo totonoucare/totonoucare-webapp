@@ -80,9 +80,8 @@ export default function GuidePage() {
   const tabs = useMemo(
     () => [
       { key: "start", label: "全体像" },
-      { key: "check", label: "①チェック" },
+      { key: "check", label: "①カルテ" },
       { key: "radar", label: "②予報" },
-      { key: "record", label: "③記録" },
     ],
     []
   );
@@ -138,19 +137,19 @@ export default function GuidePage() {
             基本の３ステップ
           </div>
           <div className="space-y-4">
-            <GuideCard tone="mint" title="① 体質チェック" icon={<IconChecklist />}>
-              直近の体調や簡単な動作テストから、あなたの「ベース体質」や「負担が出やすい場所」を割り出します。
+            <GuideCard tone="mint" title="① 未病カルテ" icon={<IconChecklist />}>
+              約1〜2分の質問から、あなたの「ベース体質」「負担が出やすい場所」「天気との相性」を見える化します。
             </GuideCard>
-            <GuideCard tone="amber" title="② 体調予報（レーダー）" icon={<IconWeather />}>
-              あなたの体質と、現在地の「気圧・気温・湿度」の予報を掛け合わせ、今日明日の崩れやすさ（危険度）を見える化します。
+            <GuideCard tone="amber" title="② 未病予報" icon={<IconWeather />}>
+              あなたの体質と、現在地の「気圧・気温・湿度」の予報を掛け合わせ、今日明日の崩れやすさと過ごし方を表示します。
             </GuideCard>
-            <GuideCard tone="indigo" title="③ 記録と振り返り（開発中）" icon={<IconCalendar />}>
-              体調メモ、記録カレンダー、週次レポートは準備中です。提供までは、今日明日の予報とセルフケア提案を中心にお使いください。
+            <GuideCard tone="teal" title="③ 暮らす・食べる・ほぐす" icon={<IconTsubo />}>
+              その日の予報に合わせて、生活の工夫・食事の足し引き・ツボケアを確認できます。
             </GuideCard>
 
             <div className="grid gap-3 pt-4">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-md">体質チェックをはじめる</Button>
-              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">体調予報を見る</Button>
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">未病カルテを作る</Button>
+              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">未病予報を見る</Button>
             </div>
           </div>
         </Module>
@@ -160,7 +159,7 @@ export default function GuidePage() {
       {tab === "check" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            体質チェックで分かること
+            未病カルテで分かること
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
             ただの性格診断ではなく、東洋医学に基づく「体調の波の出方」を分析します。
@@ -178,20 +177,20 @@ export default function GuidePage() {
             </GuideCard>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-md">体質チェックへ</Button>
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">未病カルテへ</Button>
             </div>
           </div>
         </Module>
       ) : null}
 
-      {/* 3. 体調予報詳細タブ */}
+      {/* 3. 未病予報詳細タブ */}
       {tab === "radar" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            体調予報の見方
+            未病予報の見方
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            毎日の気象ダメージを避け、効率よく整えるためのダッシュボードです。
+            毎日の気象変化に合わせて、崩れる前に整えるためのダッシュボードです。
           </div>
 
           <div className="space-y-4">
@@ -206,39 +205,12 @@ export default function GuidePage() {
             </GuideCard>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">体調予報へ</Button>
+              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">未病予報へ</Button>
             </div>
           </div>
         </Module>
       ) : null}
 
-      {/* 4. 記録と振り返り詳細タブ */}
-      {tab === "record" ? (
-        <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            記録機能について
-          </div>
-          <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            記録・カレンダー・週次レポートは現在開発中です。リリース後のアップデートで提供予定です。
-          </div>
-
-          <div className="space-y-4">
-            <GuideCard tone="indigo" title="体調メモ（開発中）" icon={<IconChecklist />}>
-              予報を見た日の体調や、実際に行ったケアを残せる機能を準備しています。
-            </GuideCard>
-            <GuideCard tone="violet" title="記録カレンダー（開発中）" icon={<IconCalendar />}>
-              月ごとのカレンダーで、予報と体調メモを見返せるようにする予定です。
-            </GuideCard>
-            <GuideCard tone="amber" title="週次レポート（開発中）" icon={<IconSpark />}>
-              1週間の記録から、天気と体調の関係やケアの傾向を振り返れるようにしていきます。
-            </GuideCard>
-
-            <div className="pt-2">
-              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">体調予報を見る</Button>
-            </div>
-          </div>
-        </Module>
-      ) : null}
     </AppShell>
   );
 }
