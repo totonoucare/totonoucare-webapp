@@ -29,35 +29,35 @@ function HeroBgArt() {
         className="absolute -right-9 top-2 h-[218px] w-[260px]"
         aria-hidden="true"
       >
-        <circle cx="154" cy="86" r="54" fill="#E8D59A" opacity="0.18" />
-        <circle cx="154" cy="86" r="81" fill="none" stroke="#D8C58E" strokeWidth="1.4" strokeOpacity="0.22" />
-        <circle cx="154" cy="86" r="118" fill="none" stroke="#D8C58E" strokeWidth="1.2" strokeOpacity="0.14" />
-        <circle cx="154" cy="86" r="41" fill="none" stroke="#5C9F88" strokeWidth="1.3" strokeOpacity="0.18" />
+        <circle cx="154" cy="86" r="54" fill="#DFA42D" opacity="0.08" />
+        <circle cx="154" cy="86" r="81" fill="none" stroke="#D7E8DD" strokeWidth="1.4" strokeOpacity="0.5" />
+        <circle cx="154" cy="86" r="118" fill="none" stroke="#EDF2EE" strokeWidth="1.2" strokeOpacity="0.62" />
+        <circle cx="154" cy="86" r="41" fill="none" stroke="#D7E8DD" strokeWidth="1.3" strokeOpacity="0.46" />
         <path
           d="M48 92 A108 108 0 0 1 211 25"
           fill="none"
-          stroke="#5C9F88"
+          stroke="#6BB69A"
           strokeWidth="2.4"
           strokeLinecap="round"
-          strokeOpacity="0.2"
+          strokeOpacity="0.34"
         />
         <path
           d="M64 129 A90 90 0 0 1 225 95"
           fill="none"
-          stroke="#D2A43A"
+          stroke="#DFA42D"
           strokeWidth="2.2"
           strokeLinecap="round"
-          strokeOpacity="0.28"
+          strokeOpacity="0.38"
         />
-        <circle cx="214" cy="91" r="4.6" fill="#D2A43A" opacity="0.2" />
-        <circle cx="111" cy="138" r="3.3" fill="#5C9F88" opacity="0.22" />
+        <circle cx="214" cy="91" r="4.6" fill="#DFA42D" opacity="0.42" />
+        <circle cx="111" cy="138" r="3.3" fill="#4EA789" opacity="0.48" />
         <path
           d="M118 188 C 139 175, 174 175, 195 188"
           fill="none"
-          stroke="#5C9F88"
+          stroke="#6BB69A"
           strokeWidth="1.3"
           strokeLinecap="round"
-          strokeOpacity="0.12"
+          strokeOpacity="0.18"
         />
       </svg>
     </div>
@@ -445,12 +445,12 @@ function ForecastBar({ forecast }) {
   const style = modeStyle(signal);
 
   return (
-    <div className="relative pt-7 pb-2">
+    <div className="relative pt-8 pb-2">
       <div className={["h-3 overflow-hidden rounded-full", style.track].join(" ")}>
         <div className={["h-full rounded-full transition-all duration-500", style.fill].join(" ")} style={{ width: `${percent}%` }} />
       </div>
       <div
-        className={["absolute top-0 grid h-10 w-10 -translate-x-1/2 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/80", style.glow].join(" ")}
+        className={["absolute top-0 grid h-12 w-12 -translate-x-1/2 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/80", style.glow].join(" ")}
         style={{ left: `${Math.max(7, Math.min(93, percent))}%` }}
       >
         <MiniGuideBotMarker signal={signal} />
@@ -875,6 +875,12 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
           )}
         </div>
       </div>
+
+      {scoreVariant === "mode" ? (
+        <div className="relative z-10 mt-4 rounded-[20px] bg-white/55 px-3.5 py-2.5 ring-1 ring-black/5 shadow-sm">
+          <ForecastBar forecast={forecast} />
+        </div>
+      ) : null}
 
       {memo ? (
         <div className="relative z-10 mt-4 rounded-[18px] bg-white/72 px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-black/5 shadow-sm">
@@ -1325,8 +1331,5 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
-
-
 
 
