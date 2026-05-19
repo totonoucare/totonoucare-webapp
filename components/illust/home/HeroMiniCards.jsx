@@ -61,7 +61,7 @@ export default function HeroMiniCards({ compact = false }) {
           </div>
 
           <div className="absolute right-4 top-[120px] z-10 w-[170px] rounded-[22px] bg-white p-4 shadow-[0_16px_30px_-12px_rgba(40,55,48,0.16)] ring-1 ring-[color:var(--ring)] transition-all hover:shadow-[0_20px_36px_-12px_rgba(40,55,48,0.2)]">
-            <div className="text-[10px] font-black uppercase tracking-widest text-[#9ea6b0]">体調予報</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-[#9ea6b0]">未病予報</div>
             <div className="mt-1 text-sm font-black text-slate-900">明日：気圧上昇</div>
             <div className="mt-3 flex items-end justify-between">
               <div className="text-[11px] font-bold leading-tight text-[#76808d]">
@@ -90,8 +90,8 @@ export default function HeroMiniCards({ compact = false }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="group relative overflow-hidden rounded-[30px] border border-[color:var(--ring)] bg-white p-5 shadow-[0_18px_34px_-14px_rgba(40,55,48,0.12)] transition-all hover:shadow-[0_22px_42px_-14px_rgba(40,55,48,0.16)]">
         <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[#98a1ae]">体調予報サマリー</div>
-          <div className="mt-1 text-base font-black leading-tight text-slate-900">明日のあなたの体調予報</div>
+          <div className="text-[11px] font-black uppercase tracking-widest text-[#98a1ae]">未病予報サマリー</div>
+          <div className="mt-1 text-base font-black leading-tight text-slate-900">明日のあなたの未病予報</div>
           <div className="mt-8 flex items-end justify-between">
             <div className="text-[11px] font-bold text-[#98a1ae]">
               目安スコア
