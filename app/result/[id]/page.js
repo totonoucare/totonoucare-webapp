@@ -120,8 +120,8 @@ function MeridianPanelContent({ line, tone = "violet" }) {
 
 function SegmentedTabs({ value, onChange }) {
   const tabs = [
-    { key: "overview", label: "概要" },
-    { key: "compat", label: "天気との相性" },
+    { key: "overview", label: "カルテ概要" },
+    { key: "compat", label: "天気相性" },
     { key: "save", label: "保存" },
   ];
 
@@ -364,7 +364,7 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
 
       <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
         <p className="text-[13px] font-black leading-7 text-[#8a4b1d]">
-          無料結果では見えない「崩れる順番」「NGケア」「季節別の先回り行動」「相談時に伝えるメモ」まで、アプリ上でいつでも見返せます。
+          無料カルテでは見えない「崩れる順番」「NGケア」「季節別の先回り行動」「相談時に伝えるメモ」まで、アプリ上でいつでも見返せます。
         </p>
       </div>
 
@@ -372,7 +372,7 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
         href={`/karte/${resultId}`}
         className="mt-5 flex w-full items-center justify-center rounded-full bg-[#2f7567] px-6 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.26)]"
       >
-        チラ見せを見る
+        詳しい未病カルテを見る
       </a>
     </section>
   );
@@ -531,9 +531,9 @@ function ResultPage({ params }) {
 
   if (loadingEvent) {
     return (
-      <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="未病カルテ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module className="border-none shadow-none">
-          <ModuleHeader icon={<IconResult />} title="結果を読み込み中…" sub="少し待ってください" />
+          <ModuleHeader icon={<IconResult />} title="カルテを読み込み中…" sub="少し待ってください" />
           <div className="px-5 pb-6 pt-4">
             <div className="rounded-[32px] bg-white p-8 ring-1 ring-[var(--ring)] flex flex-col items-center gap-4 shadow-sm text-center">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
@@ -547,16 +547,16 @@ function ResultPage({ params }) {
 
   if (!event || event?.notFound) {
     return (
-      <AppShell title="診断結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="未病カルテ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
-          <ModuleHeader icon={<IconResult />} title="結果が見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
+          <ModuleHeader icon={<IconResult />} title="カルテが見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-5">
             <div className="rounded-[28px] bg-rose-50 p-6 ring-1 ring-rose-200 text-center shadow-sm">
               <div className="text-[15px] leading-relaxed text-rose-800 font-bold">
-                診断結果を取得できませんでした。<br/>恐れ入りますが、再度チェックをお願いします。
+                未病カルテを取得できませんでした。<br/>恐れ入りますが、再度チェックをお願いします。
               </div>
             </div>
-            <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">体質チェックをやり直す</Button>
+            <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">未病カルテを作り直す</Button>
           </div>
         </Module>
       </AppShell>
@@ -564,7 +564,7 @@ function ResultPage({ params }) {
   }
 
   return (
-    <AppShell title="体質チェック結果" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+    <AppShell title="未病カルテ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
         <div className="fixed left-1/2 top-4 z-[100] w-[92%] max-w-md -translate-x-1/2 rounded-full bg-slate-900/95 backdrop-blur-md px-5 py-3.5 text-[14px] font-extrabold text-white shadow-[0_16px_32px_-12px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-top-4">
           {toast}
@@ -591,7 +591,7 @@ function ResultPage({ params }) {
               {/* 体質の軸を堂々と表示 */}
               <div className="flex flex-col items-center text-center">
                 <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
-                  あなたの体質の軸
+                  あなたの未病カルテ
                 </div>
                 <div className="mt-2 text-[32px] font-black tracking-tight text-slate-900 leading-[1.15]">
                   {core?.title || "—"}
@@ -693,7 +693,7 @@ function ResultPage({ params }) {
               </Card>
 
               <Card>
-                <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存 → 今日の予報と対策へ" />
+                <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の未病予報に反映されます" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   {isLoggedIn ? (
                     <>
@@ -797,7 +797,7 @@ function ResultPage({ params }) {
 
           {tab === "save" && (
             <Card>
-              <CardHeader icon={<IconBolt />} title="結果を保存する" sub="今後の予報精度が向上します" />
+              <CardHeader icon={<IconBolt />} title="カルテを保存する" sub="今日・明日の未病予報に反映します" />
               <div className="px-6 pb-8 pt-5 space-y-5 text-center">
                 {isLoggedIn ? (
                    isAttached ? (
@@ -813,7 +813,7 @@ function ResultPage({ params }) {
                 ) : (
                   <div className="space-y-5">
                     <div className="text-[13px] font-bold text-slate-600 leading-relaxed px-2">
-                      アカウントを作成して保存すると、毎日の「体調予報」と「先回りケア」を無料で確認できるようになります。
+                      アカウントを作成して保存すると、毎日の「未病予報」と「先回りケア」を無料で確認できるようになります。
                     </div>
                     <Button onClick={goSignupToRadar} className="w-full shadow-[0_8px_16px_-6px_rgba(0,0,0,0.2)] py-4 text-[15px]">無料で保存して予報を見る</Button>
                   </div>
@@ -835,3 +835,4 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
