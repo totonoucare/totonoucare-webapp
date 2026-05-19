@@ -313,11 +313,6 @@ export default function SettingsPage() {
         <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
         <Row label="メールアドレス" value={user?.email || "未ログイン"} />
         <Row
-          label="記録・週次レポート"
-          value="鋭意開発中。リリース後のアップデートで提供予定です"
-          action={<Button size="sm" variant="secondary" onClick={() => router.push("/records?tab=calendar")}>見る</Button>}
-        />
-        <Row
           label="購入済みカルテ"
           value={loading ? "確認中…" : `${karteCount ?? 0}件`}
           action={<Button size="sm" variant="secondary" onClick={() => router.push("/history")}>履歴へ</Button>}
@@ -372,7 +367,7 @@ export default function SettingsPage() {
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[16px] font-black tracking-tight text-slate-900">体調予報の地域</div>
+            <div className="text-[16px] font-black tracking-tight text-slate-900">未病予報の地域</div>
             <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
               現在の地域：{loading ? "確認中…" : locationLabel}
             </div>
@@ -464,4 +459,5 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
 
