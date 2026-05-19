@@ -350,10 +350,10 @@ export function ForecastGauge({
           aria-hidden="true"
         >
           <div
-            className="grid h-12 w-12 place-items-center rounded-full border bg-white/78 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.42)] ring-1 ring-white/80 backdrop-blur-sm"
+            className="grid h-14 w-14 place-items-center rounded-full border bg-white/78 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.42)] ring-1 ring-white/80 backdrop-blur-sm"
             style={{ borderColor: tone.labelBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
           >
-            <GuideBotAvatar signal={level} className="h-10 w-10" />
+            <GuideBotAvatar signal={level} className="h-11 w-11" />
           </div>
         </div>
 
