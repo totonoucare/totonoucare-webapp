@@ -126,7 +126,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
             {tab === "report" ? "週次レポートは鋭意開発中です" : "記録カレンダーは鋭意開発中です"}
           </div>
           <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
-            まずは体調予報とパーソナル未病カルテを安定して使えるように整えています。
+            まずは未病予報とパーソナル未病カルテを安定して使えるように整えています。
             記録・カレンダー・週次レポートは、リリース後のアップデートで提供予定です。
           </div>
 
@@ -136,7 +136,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
-              体調予報へ戻る
+              未病予報へ戻る
             </Button>
             <Button variant="secondary" onClick={() => router.push("/guide")} className="w-full bg-white">
               使い方を見る
@@ -148,7 +148,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
       <Module className="p-5 bg-[#FBFCF8] ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[14px] font-black tracking-tight text-slate-900">今使える機能</div>
         <div className="mt-3 grid gap-2 text-[12px] font-bold leading-6 text-slate-600">
-          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">今日・明日の体調予報</div>
+          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">今日・明日の未病予報</div>
           <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">天気に合わせたツボ・食養生</div>
           <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">パーソナル未病カルテ</div>
         </div>
