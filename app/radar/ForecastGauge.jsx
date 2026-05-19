@@ -137,7 +137,7 @@ export function ForecastGauge({
   animationKey = "",
 }) {
   const safeScore = Math.max(0, Math.min(10, Number(score) || 0));
-  const animatedScore = useResetAnimatedNumber(safeScore, 720, animationKey);
+  const animatedScore = useResetAnimatedNumber(safeScore, 1400, animationKey);
   const [settled, setSettled] = useState(false);
   const level = Number(signal);
   const tone = getGaugeTone(level);
@@ -145,7 +145,7 @@ export function ForecastGauge({
 
   useEffect(() => {
     setSettled(false);
-    const timer = window.setTimeout(() => setSettled(true), 760);
+    const timer = window.setTimeout(() => setSettled(true), 1440);
     return () => window.clearTimeout(timer);
   }, [animationKey, safeScore, signal]);
 
@@ -372,4 +372,6 @@ export function ForecastGauge({
     </div>
   );
 }
+
+
 
