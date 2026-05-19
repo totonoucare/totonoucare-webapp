@@ -7,6 +7,7 @@ import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { IconCheck, IconHistory, IconInfo } from "@/components/illust/icons/check";
+import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 
 function MiniBadge({ children }) {
   return (
@@ -34,6 +35,8 @@ export default function CheckLandingPage() {
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [latestResult, setLatestResult] = useState(null);
+  const [loadingLatest, setLoadingLatest] = useState(false);
 
   useEffect(() => {
     let unsub = null;
@@ -58,18 +61,86 @@ export default function CheckLandingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (!session?.access_token) {
+        setLatestResult(null);
+        setLoadingLatest(false);
+        return;
+      }
+      try {
+        setLoadingLatest(true);
+        const res = await fetch("/api/diagnosis/v2/events/list?limit=1", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store",
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!cancelled) setLatestResult(json?.data?.[0] || null);
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setLatestResult(null);
+      } finally {
+        if (!cancelled) setLoadingLatest(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
+
   const isLoggedIn = !!session;
+  const latestResultId = latestResult?.source_event_id || latestResult?.notes?.source_event_id || null;
+  const latestResultHref = latestResultId ? `/result/${encodeURIComponent(latestResultId)}?from=check` : null;
+  const latestCore = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
+  const latestSubs = getSubLabels(latestResult?.sub_labels || []);
 
   return (
-    <AppShell title="体質チェック">
+    <AppShell title="未病カルテ">
       <Module className="mb-8">
         <ModuleHeader
           icon={<IconCheck />}
-          title="体質チェック"
-          sub="未病のクセをサクッと見える化"
+          title="未病カルテ"
+          sub="体質のクセと天気との相性を見える化"
         />
 
         <div className="space-y-5 px-5 pb-8 pt-4">
+          {isLoggedIn && (loadingLatest || latestResult) ? (
+            <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-[0_18px_38px_-26px_rgba(40,55,48,0.22)] ring-1 ring-[color:var(--ring)]">
+              {loadingLatest ? (
+                <div className="h-24 animate-pulse rounded-[22px] bg-slate-100" />
+              ) : (
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">LATEST KARTE</div>
+                      <div className="mt-2 text-[22px] font-black leading-tight tracking-tight text-slate-950">
+                        最新の未病カルテ
+                      </div>
+                      <div className="mt-2 text-[13px] font-bold leading-6 text-[#536072]">
+                        {latestCore ? `${latestCore.title}：${latestCore.short}` : "保存済みのカルテを確認できます。"}
+                      </div>
+                      {latestSubs.length ? (
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {latestSubs.slice(0, 3).map((sub) => (
+                            <span key={sub.code} className="rounded-lg bg-[#F4F9F6] px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                              {sub.short}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => router.push(latestResultHref || "/history")} className="shrink-0 bg-white px-5 shadow-sm">
+                      開く
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </section>
+          ) : null}
+
           <section className="relative overflow-hidden rounded-[28px] bg-[#fbfcf8] p-5 shadow-[0_18px_38px_-26px_rgba(40,55,48,0.24)] ring-1 ring-[color:var(--ring)]">
             <CheckOrbitMark />
 
@@ -81,18 +152,20 @@ export default function CheckLandingPage() {
 
                 <div className="min-w-0 pt-0.5">
                   <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">
-                    NEW CHECK
+                    PERSONAL KARTE
                   </div>
                   <h1 className="mt-1 text-[25px] font-black leading-[1.18] tracking-tight text-slate-950">
-                    今の状態を
+                    未病カルテを
                     <br />
-                    チェックする
+                    {latestResult ? "更新する" : "作る"}
                   </h1>
                 </div>
               </div>
 
               <p className="mt-5 text-[13px] font-bold leading-7 text-[#536072]">
-                約1〜2分で終わる簡単な質問です。回答は途中保存されるので、気軽に進めてOKです。
+                {latestResult
+                  ? "体調や気になる不調が変わったら、再チェックしてカルテを更新できます。"
+                  : "約1〜2分の質問から、あなたの体質・崩れやすいサイン・天気との相性をまとめた未病カルテを作ります。"}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -106,7 +179,7 @@ export default function CheckLandingPage() {
                   onClick={() => router.push("/check/run")}
                   className="h-14 w-full rounded-[20px] text-[16px] shadow-[0_16px_28px_-16px_rgba(42,99,80,0.52)]"
                 >
-                  チェックを始める
+                  {latestResult ? "体質チェックを更新する" : "未病カルテを作る"}
                 </Button>
               </div>
             </div>
@@ -123,10 +196,10 @@ export default function CheckLandingPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-[16px] font-black tracking-tight text-slate-900">
-                      過去の履歴
+                      過去のカルテ
                     </div>
                     <div className="mt-0.5 text-[11px] font-bold text-slate-500">
-                      体質の変化を見返す
+                      体質チェックの結果を見返す
                     </div>
                   </div>
                 </div>
@@ -143,7 +216,7 @@ export default function CheckLandingPage() {
               </div>
 
               <p className="mt-4 text-[13px] font-bold leading-7 text-[#536072]">
-                保存した過去の診断結果を見返して、体質の変化を確認できます。
+                保存した過去の未病カルテを見返して、体質の変化や崩れやすいパターンを確認できます。
               </p>
 
               {!loadingAuth && !isLoggedIn ? (
@@ -160,4 +233,3 @@ export default function CheckLandingPage() {
     </AppShell>
   );
 }
-
