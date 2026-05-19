@@ -179,7 +179,7 @@ export default function CheckLandingPage() {
                   onClick={() => router.push("/check/run")}
                   className="h-14 w-full rounded-[20px] text-[16px] shadow-[0_16px_28px_-16px_rgba(42,99,80,0.52)]"
                 >
-                  {latestResult ? "体質チェックを更新する" : "未病カルテを作る"}
+                  {latestResult ? "体質チェックを更新する" : "無料で体質チェックを始める"}
                 </Button>
               </div>
             </div>
@@ -199,7 +199,7 @@ export default function CheckLandingPage() {
                       過去のカルテ
                     </div>
                     <div className="mt-0.5 text-[11px] font-bold text-slate-500">
-                      体質チェックの結果を見返す
+                      未病カルテを見返す
                     </div>
                   </div>
                 </div>
@@ -233,3 +233,4 @@ export default function CheckLandingPage() {
     </AppShell>
   );
 }
+
