@@ -687,7 +687,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   let eyebrow = "PERSONAL KARTE";
   let title = "未病カルテを作る";
   let body = "約1〜2分の体質チェックで、あなたの崩れやすいパターンと天気との相性を見える化します。";
-  let primaryLabel = "無料で作る";
+  let primaryLabel = "無料で体質チェックを始める";
   let secondaryLabel = "使い方を見る";
 
   if (hasResult && !hasLocation) {
@@ -704,8 +704,8 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
     body = core?.short
       ? `${core.short}。体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。`
       : "体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。";
-    primaryLabel = "カルテを開く";
-    secondaryLabel = "チェックを更新";
+    primaryLabel = "未病カルテを見る";
+    secondaryLabel = "体質チェックを更新する";
   }
 
   return (
@@ -1165,7 +1165,7 @@ export default function HomePage() {
           </div>
         </Module>
 
-        <Module className="px-6 pb-12 sm:max-w-[400px] sm:mx-auto">
+        <Module className="px-6 pt-6 pb-12 sm:max-w-[400px] sm:mx-auto">
           {/* mb-5に広げてタイトルとカード本体との余白を調整 */}
           <div className="mb-5 flex items-center justify-between">
             <div>
@@ -1204,7 +1204,7 @@ export default function HomePage() {
             scoreLabel="今日のモード"
             scoreVariant="mode"
             memo="体質チェックをすると、ここにあなたの崩れやすいサインとケア方針が重なります。"
-            ctaLabel="未病カルテを作る"
+            ctaLabel="体質チェックを始める"
           />
 
           {guestSignHints.length ? (
@@ -1223,14 +1223,14 @@ export default function HomePage() {
           {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
              <div className="text-[15px] font-black tracking-tight text-[#255F4F]">
-               体質チェックで、自分向けの未病予報へ
+               未病カルテを作って、自分向けの未病予報へ
              </div>
              <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
-               天気だけのデモに、あなたの「崩れ方のクセ」を重ねると、今日・明日の過ごし方まで見えるようになります。
+               1〜2分の体質チェックで、あなたの「崩れ方のクセ」を未病カルテにまとめます。作成後は、今日・明日の過ごし方も自分向けに見られます。
              </p>
              <div className="mt-5 grid gap-3">
                <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[14px] w-full">
-                  無料で未病カルテを作る
+                  無料で体質チェックを始める
                </Button>
                <Button variant="secondary" onClick={() => router.push("/signup")} className="py-4 shadow-sm text-[14px] w-full bg-white">
                   ログインする
@@ -1325,4 +1325,8 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
+
+
+
 
