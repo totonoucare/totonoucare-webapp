@@ -687,7 +687,7 @@ export default function RadarPage() {
 
   if (!loadingAuth && !session) {
     return (
-      <AppShell title="体調予報" subtitle="ログインが必要です">
+      <AppShell title="未病予報" subtitle="ログインが必要です">
         <Module className="overflow-hidden p-0 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
           <div className="relative px-6 py-7 bg-[linear-gradient(135deg,#F5FBF7_0%,#FFF8E8_100%)]">
             <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/70 blur-2xl" />
@@ -697,10 +697,10 @@ export default function RadarPage() {
             <div className="relative z-10 mt-4 text-[22px] font-black tracking-tight text-slate-900 leading-snug">
               あなたの体質に合わせた
               <br />
-              明日の体調予報を表示します。
+              明日の未病予報を表示します。
             </div>
             <div className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
-              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の崩れやすさと先回りケアを出します。
+              未病予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の崩れやすさと先回りケアを出します。
             </div>
           </div>
 
@@ -733,7 +733,7 @@ export default function RadarPage() {
 
   if (loadingAuth || loading) {
     return (
-      <AppShell title="体調予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
+      <AppShell title="未病予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
         <div className="space-y-6 pt-4">
           {showSlowLoadingMessage ? (
             <div className="rounded-[32px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_74%)] px-6 py-7 shadow-sm">
@@ -763,7 +763,7 @@ export default function RadarPage() {
 
   if (needsLocation) {
     return (
-      <AppShell title="体調予報" subtitle="地域設定">
+      <AppShell title="未病予報" subtitle="地域設定">
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900">位置情報の設定が必要です</div>
           <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
@@ -797,7 +797,7 @@ export default function RadarPage() {
   if (contentLoading) {
     return (
       <AppShell
-        title="体調予報"
+        title="未病予報"
         subtitle={targetDateLabel}
         headerRight={
           <button
@@ -842,7 +842,7 @@ export default function RadarPage() {
 
   if (!bundle || !forecast) {
     return (
-      <AppShell title="体調予報" subtitle="予報を読み込めませんでした">
+      <AppShell title="未病予報" subtitle="予報を読み込めませんでした">
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900">予報を読み込めませんでした</div>
           <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
@@ -861,7 +861,7 @@ export default function RadarPage() {
 
   return (
     <AppShell
-      title="体調予報"
+      title="未病予報"
       subtitle={targetDateLabel}
       headerRight={
         <button
@@ -1550,3 +1550,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
