@@ -159,7 +159,7 @@ export default function PwaInstallPrompt() {
               ホーム画面に追加できます
             </p>
             <p className="mt-0.5 text-[11px] font-extrabold leading-snug text-[#5F6D7C]">
-              毎朝の体調予報を、アプリみたいにすぐ開けます。
+              毎朝の未病予報を、アプリみたいにすぐ開けます。
             </p>
           </div>
 
