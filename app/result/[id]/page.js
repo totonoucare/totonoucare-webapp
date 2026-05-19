@@ -122,7 +122,7 @@ function SegmentedTabs({ value, onChange }) {
   const tabs = [
     { key: "overview", label: "カルテ概要" },
     { key: "compat", label: "天気相性" },
-    { key: "save", label: "保存" },
+    { key: "map", label: "不調マップ" },
   ];
 
   return (
@@ -329,51 +329,66 @@ function buildRadarBridge({ symptomKey }) {
 
 
 function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
+  const focusLabel = symptomLabel || "今気になる不調";
+
   return (
-    <section className="rounded-[34px] border border-[#d7e6df] bg-white p-6 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
-      <div className="flex items-start gap-4">
-        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-[#d7e6df] bg-[#eff8f4] text-[24px]">
-          🔒
-        </div>
-        <div className="min-w-0">
-          <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">ONE TIME KARTE</div>
-          <h2 className="mt-2 text-[24px] font-black leading-[1.35] tracking-[-0.04em] text-[#10182d]">
-            パーソナル未病カルテ
-          </h2>
-          <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
-            あなたの「崩れ方」を先読みする、未病ケア指南書
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-3">
-        {[
-          `なぜいつもここで無理がたたるのか。${coreTitle || "あなた"}の崩れ方の設計図`,
-          `あの「${symptomLabel || "不調"}」が強くなるまでの裏ルート解析`,
-          "休んでるのに重いのはナゼ？やりがちな逆効果ケア",
-          "季節の変わり目で崩れない。未病シーズンマップ",
-          "鍼灸院・整体・漢方相談でそのまま使える相談メモ",
-          "HP10%の夜に。コンビニで買えるレスキュー飯",
-        ].map((title) => (
-          <div key={title} className="flex items-center gap-3 rounded-[22px] border border-[#e6eee9] bg-[#f8fbf9] px-4 py-3">
-            <span className="h-2 w-2 rounded-full bg-[#f4b73d]" />
-            <span className="text-[13px] font-black leading-6 text-[#334155]">{title}</span>
+    <section className="overflow-hidden rounded-[34px] border border-[#d7e6df] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
+      <div className="relative p-6">
+        <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-[#f7e8b9] opacity-70" />
+        <div className="pointer-events-none absolute right-12 top-24 h-24 w-24 rounded-full border border-[#d7e6df]" />
+        <div className="relative">
+          <div className="flex items-start gap-4">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-[#d7e6df] bg-[#eff8f4] text-[24px] shadow-sm">
+              🗺️
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">未病カルテ Plus</div>
+              <h2 className="mt-2 text-[25px] font-black leading-[1.35] tracking-[-0.05em] text-[#10182d]">
+                あなたの不調マップ
+              </h2>
+              <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
+                {focusLabel}が、どこから始まり、どの天気・季節で強まりやすいかを読み解きます。
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
 
-      <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
-        <p className="text-[13px] font-black leading-7 text-[#8a4b1d]">
-          無料カルテでは見えない「崩れる順番」「NGケア」「季節別の先回り行動」「相談時に伝えるメモ」まで、アプリ上でいつでも見返せます。
-        </p>
-      </div>
+          <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+            <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料カルテの先でわかること</div>
+            <p className="mt-3 text-[14px] font-bold leading-7 text-[#475569]">
+              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、今気になる「{focusLabel}」を主役にして、前触れ・天気・季節・体のライン・相談時に伝えることまで、ひとつながりの地図として整理します。
+            </p>
+          </div>
 
-      <a
-        href={`/karte/${resultId}`}
-        className="mt-5 flex w-full items-center justify-center rounded-full bg-[#2f7567] px-6 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.26)]"
-      >
-        詳しい未病カルテを見る
-      </a>
+          <div className="mt-5 grid gap-3">
+            {[
+              "不調が強くなる前の前触れサイン",
+              "天気・季節で揺れやすい理由",
+              "経絡ラインから見た負担の出方",
+              "今日・明日の予報ページをどう使うか",
+              "鍼灸・整体・漢方相談で伝えやすいメモ",
+              "肌・むくみ・顔色に出やすいサイン",
+            ].map((title) => (
+              <div key={title} className="flex items-center gap-3 rounded-[22px] border border-[#e6eee9] bg-white/80 px-4 py-3">
+                <span className="h-2 w-2 rounded-full bg-[#dfa42d] shadow-[0_0_8px_rgba(223,164,45,0.35)]" />
+                <span className="text-[13px] font-black leading-6 text-[#334155]">{title}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
+            <p className="text-[13px] font-black leading-7 text-[#8a4b1d]">
+              体質を知って終わりではなく、「自分の不調がどう出るか」を見返せる形にします。将来、専門家に相談するときの整理メモとしても使いやすい内容です。
+            </p>
+          </div>
+
+          <a
+            href={`/karte/${resultId}`}
+            className="mt-5 flex w-full items-center justify-center rounded-full bg-[#2f7567] px-6 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.26)] active:translate-y-[1px]"
+          >
+            未病カルテ Plusで不調マップを見る
+          </a>
+        </div>
+      </div>
     </section>
   );
 }
@@ -789,43 +804,15 @@ function ResultPage({ params }) {
                     <h3 className="text-[16px] font-black text-slate-900">未病レーダーで分かること</h3>
                   </div>
                   <div className="text-[13px] leading-relaxed font-bold text-slate-700 mb-6">{weatherCompat.radarBridge}</div>
-                  <Button onClick={() => setTab("save")} className="w-full shadow-md py-4">保存して予報へ進む</Button>
+                  <Button onClick={() => setTab("map")} className="w-full shadow-md py-4">不調マップを見る</Button>
                 </div>
               </div>
             </Card>
           ) : null}
 
-          {tab === "save" && (
-            <Card>
-              <CardHeader icon={<IconBolt />} title="カルテを保存する" sub="今日・明日の未病予報に反映します" />
-              <div className="px-6 pb-8 pt-5 space-y-5 text-center">
-                {isLoggedIn ? (
-                   isAttached ? (
-                     <div className="rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 shadow-sm">
-                       <div className="text-[16px] font-black text-emerald-800">保存済みです ✅</div>
-                       <Button onClick={() => router.push("/radar")} className="mt-5 w-full shadow-md py-4">今日の予報と対策へ</Button>
-                     </div>
-                   ) : (
-                     <Button onClick={() => attachToAccount(false)} disabled={attaching} className="w-full shadow-[0_8px_16px_-6px_rgba(0,0,0,0.2)] py-4 text-[15px]">
-                       {attaching ? "保存中…" : "この結果を保存して移動する"}
-                     </Button>
-                   )
-                ) : (
-                  <div className="space-y-5">
-                    <div className="text-[13px] font-bold text-slate-600 leading-relaxed px-2">
-                      アカウントを作成して保存すると、毎日の「未病予報」と「先回りケア」を無料で確認できるようになります。
-                    </div>
-                    <Button onClick={goSignupToRadar} className="w-full shadow-[0_8px_16px_-6px_rgba(0,0,0,0.2)] py-4 text-[15px]">無料で保存して予報を見る</Button>
-                  </div>
-                )}
-                <div className="pt-2">
-                  <Button variant="ghost" onClick={() => router.push("/check")} className="w-full py-4 text-[13px]">もう一度チェックし直す</Button>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          <PersonalKarteTeaser resultId={id} coreTitle={core.title} symptomLabel={symptomLabel} />
+          {tab === "map" ? (
+            <PersonalKarteTeaser resultId={id} coreTitle={core.title} symptomLabel={symptomLabel} />
+          ) : null}
 
           <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300 pb-4">
             Result ID: {id}
@@ -835,4 +822,3 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
