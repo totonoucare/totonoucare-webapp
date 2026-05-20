@@ -196,7 +196,7 @@ function GooglePointImageSearch({ point, query }) {
             defaultToImageSearch: true,
             disableWebSearch: true,
             imageSearchLayout: "classic",
-            imageSearchResultSetSize: "large",
+            imageSearchResultSetSize: "small",
             linkTarget: "_blank",
             safeSearch: "active",
             noResultsString: "画像が見つかりませんでした。ツボ名や部位名を変えて確認してください。",
@@ -227,7 +227,7 @@ function GooglePointImageSearch({ point, query }) {
   }, [containerId, gname, query]);
 
   return (
-    <div className="min-h-[320px] overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-200">
+    <div className="overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-200">
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
         <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
           Google画像検索
@@ -238,22 +238,22 @@ function GooglePointImageSearch({ point, query }) {
       </div>
 
       {status === "missing-id" ? (
-        <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+        <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
           画像検索を表示するには、環境変数 NEXT_PUBLIC_GOOGLE_CSE_ID にProgrammable Search Engine IDを設定してください。
         </div>
       ) : status === "missing-query" ? (
-        <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+        <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
           検索ワードを準備できませんでした。
         </div>
       ) : (
-        <div className="relative max-h-[460px] min-h-[260px] overflow-y-auto px-2 py-2">
+        <div className="relative max-h-[300px] min-h-[220px] overflow-y-auto px-2 py-2">
           {status === "loading" ? (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 px-6 text-center text-[12px] font-bold text-slate-500">
               画像検索を読み込んでいます…
             </div>
           ) : null}
           {status === "error" ? (
-            <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+            <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
               画像検索を表示できませんでした。少し時間をおいて再度開いてください。
             </div>
           ) : (
@@ -338,7 +338,7 @@ function PointVisualPanel({ point }) {
           }}
         />
       ) : (
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           <GooglePointImageSearch key={point?.code || searchQuery} point={point} query={searchQuery} />
         </div>
       )}
@@ -794,5 +794,6 @@ export function SavedCareReviewAccordion({ bundle }) {
     </Module>
   );
 }
+
 
 
