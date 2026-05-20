@@ -477,8 +477,12 @@ function ResultPage({ params }) {
   const computed = event?.computed || {};
   const answers = event?.answers || {};
 
-  const symptomKey = answers?.symptom_focus || event?.symptom_focus || "fatigue";
+  const diagnosisSymptomKey = event?.diagnosis_symptom_focus || answers?.symptom_focus || event?.symptom_focus || "fatigue";
+  const activeSymptomKey = event?.active_symptom_focus || diagnosisSymptomKey;
+  const symptomKey = activeSymptomKey;
+  const diagnosisSymptomLabel = useMemo(() => SYMPTOM_LABELS[diagnosisSymptomKey] || "だるさ・疲労", [diagnosisSymptomKey]);
   const symptomLabel = useMemo(() => SYMPTOM_LABELS[symptomKey] || "だるさ・疲労", [symptomKey]);
+  const symptomChanged = diagnosisSymptomKey && symptomKey && diagnosisSymptomKey !== symptomKey;
 
   const core = useMemo(() => getCoreLabel(computed?.core_code), [computed?.core_code]);
   const subLabels = useMemo(() => getSubLabels(computed?.sub_labels), [computed?.sub_labels]);
@@ -598,7 +602,7 @@ function ResultPage({ params }) {
               <div className="flex justify-center mb-6">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-md px-3.5 py-1.5 ring-1 ring-black/5 shadow-sm">
                   <span className="text-[10px] font-extrabold text-slate-500">
-                    お困りの不調：{symptomLabel}
+                    現在の不調：{symptomLabel}{symptomChanged ? `（チェック時：${diagnosisSymptomLabel}）` : ""}
                   </span>
                 </div>
               </div>
@@ -822,3 +826,4 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
