@@ -472,7 +472,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
-          体質タイプの計算は変えず、予報や未病カルテで扱う「不調の文脈」だけを切り替えます。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
+          予報や未病カルテの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
         </div>
 
         <div className="mt-4">
@@ -555,6 +555,4 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
-
-
 
