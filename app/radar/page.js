@@ -966,7 +966,7 @@ export default function RadarPage() {
               {symptomLabel || "未設定"}
             </div>
             <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
-              体質はそのまま、不調の文脈だけ切り替えて予報に反映します。
+              今気になる不調に切り替えて反映できます。
             </div>
           </div>
           <button
@@ -989,7 +989,7 @@ export default function RadarPage() {
               <div>
                 <p className="text-sm font-black text-[#101827]">今気になる不調を変更</p>
                 <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#647386]">
-                  体質タイプの計算は変えず、予報・カルテの不調文脈に反映します。
+                  体質データはそのままに、予報やカルテの内容を今見たい不調に合わせて反映し直します。
                 </p>
               </div>
               <button
