@@ -7,14 +7,14 @@ export function safeArray(v) {
 }
 
 const SYMPTOM_LABELS = {
-  fatigue: "疲れやすさ",
-  sleep: "睡眠の乱れ",
-  neck_shoulder: "首肩の重さ",
-  low_back_pain: "腰まわりの重さ",
+  fatigue: "だるさ・疲労",
+  sleep: "睡眠",
+  neck_shoulder: "首肩のつらさ",
+  low_back_pain: "腰のつらさ",
   swelling: "むくみ",
-  headache: "頭の重さ",
-  dizziness: "ふらつき",
-  mood: "気分の張りつめ",
+  headache: "頭痛",
+  dizziness: "めまい",
+  mood: "気分の浮き沈み",
 };
 
 const TRIGGER_LABELS = {
@@ -238,14 +238,14 @@ export const MATCH_TAG_LABELS = {
   "ラインケア": "動きの負担に向くケア",
 
   // 今日タブのルール選定で使う内部キーを、ユーザー向けの言葉に変換する
-  fatigue: "今見ている不調：疲れやすさ",
-  sleep: "今見ている不調：睡眠の乱れ",
-  neck_shoulder: "今見ている不調：首肩の重さ",
-  low_back_pain: "今見ている不調：腰まわりの重さ",
+  fatigue: "今見ている不調：だるさ・疲労",
+  sleep: "今見ている不調：睡眠",
+  neck_shoulder: "今見ている不調：首肩のつらさ",
+  low_back_pain: "今見ている不調：腰のつらさ",
   swelling: "今見ている不調：むくみ",
-  headache: "今見ている不調：頭の重さ",
-  dizziness: "今見ている不調：ふらつき",
-  mood: "今見ている不調：気分の張りつめ",
+  headache: "今見ている不調：頭痛",
+  dizziness: "今見ている不調：めまい",
+  mood: "今見ている不調：気分の浮き沈み",
   pressure_down: "天気の影響：低気圧",
   pressure_up: "天気の影響：気圧上昇",
   damp: "天気の影響：湿気",
@@ -1457,6 +1457,7 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
 
 
 
