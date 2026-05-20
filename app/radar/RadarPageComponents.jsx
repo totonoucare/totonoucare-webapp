@@ -8,6 +8,7 @@ import { RADAR_LOCATION_PRESETS } from "@/lib/radar_v1/locationPresets";
 import {
   getPointCautions,
   getPointImageCandidates,
+  getPointImageSearchQuery,
   getPointMatchTags,
   formatTargetDate,
   getForecastTriggerFactors,
@@ -130,6 +131,221 @@ function PointReasonLoadingBlock() {
 }
 
 
+const GOOGLE_CSE_ID = process.env.NEXT_PUBLIC_GOOGLE_CSE_ID || "";
+const GOOGLE_CSE_SCRIPT_ID = "totonoucare-google-cse-script";
+
+function loadGoogleCseScript(cx, onReady) {
+  if (typeof window === "undefined" || !cx) return;
+
+  window.__gcse = {
+    ...(window.__gcse || {}),
+    parsetags: "explicit",
+  };
+
+  const existing = document.getElementById(GOOGLE_CSE_SCRIPT_ID);
+  if (existing) {
+    if (window.google?.search?.cse?.element) {
+      onReady?.();
+    } else {
+      existing.addEventListener("load", () => onReady?.(), { once: true });
+    }
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.id = GOOGLE_CSE_SCRIPT_ID;
+  script.async = true;
+  script.src = `https://cse.google.com/cse.js?cx=${encodeURIComponent(cx)}`;
+  script.addEventListener("load", () => onReady?.(), { once: true });
+  document.head.appendChild(script);
+}
+
+function GooglePointImageSearch({ point, query }) {
+  const [containerId] = useState(() => `point-image-search-${Math.random().toString(36).slice(2)}`);
+  const [gname] = useState(() => `pointImageSearch${Math.random().toString(36).slice(2)}`);
+  const [status, setStatus] = useState(GOOGLE_CSE_ID ? "loading" : "missing-id");
+
+  useEffect(() => {
+    if (!GOOGLE_CSE_ID || !query) {
+      setStatus(GOOGLE_CSE_ID ? "missing-query" : "missing-id");
+      return;
+    }
+
+    let cancelled = false;
+    setStatus("loading");
+
+    const renderSearch = () => {
+      if (cancelled) return;
+
+      const cse = window.google?.search?.cse?.element;
+      const target = document.getElementById(containerId);
+
+      if (!cse || !target) {
+        window.setTimeout(renderSearch, 120);
+        return;
+      }
+
+      target.innerHTML = "";
+
+      try {
+        cse.render({
+          div: containerId,
+          tag: "searchresults-only",
+          gname,
+          attributes: {
+            defaultToImageSearch: true,
+            disableWebSearch: true,
+            imageSearchLayout: "classic",
+            imageSearchResultSetSize: "large",
+            linkTarget: "_blank",
+            safeSearch: "active",
+            noResultsString: "画像が見つかりませんでした。ツボ名や部位名を変えて確認してください。",
+          },
+        });
+
+        window.setTimeout(() => {
+          if (cancelled) return;
+          const element = cse.getElement(gname);
+          if (element?.execute) {
+            element.execute(query);
+            setStatus("ready");
+          } else {
+            setStatus("error");
+          }
+        }, 80);
+      } catch (error) {
+        console.error("Failed to render Google Programmable Search Element", error);
+        setStatus("error");
+      }
+    };
+
+    loadGoogleCseScript(GOOGLE_CSE_ID, renderSearch);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [containerId, gname, query]);
+
+  return (
+    <div className="min-h-[320px] overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-200">
+      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+          Google画像検索
+        </div>
+        <div className="mt-1 line-clamp-2 text-[12px] font-extrabold leading-5 text-slate-700">
+          検索ワード：{query || point?.name_ja || point?.code || "ツボ 位置"}
+        </div>
+      </div>
+
+      {status === "missing-id" ? (
+        <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+          画像検索を表示するには、環境変数 NEXT_PUBLIC_GOOGLE_CSE_ID にProgrammable Search Engine IDを設定してください。
+        </div>
+      ) : status === "missing-query" ? (
+        <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+          検索ワードを準備できませんでした。
+        </div>
+      ) : (
+        <div className="relative max-h-[460px] min-h-[260px] overflow-y-auto px-2 py-2">
+          {status === "loading" ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 px-6 text-center text-[12px] font-bold text-slate-500">
+              画像検索を読み込んでいます…
+            </div>
+          ) : null}
+          {status === "error" ? (
+            <div className="flex min-h-[260px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+              画像検索を表示できませんでした。少し時間をおいて再度開いてください。
+            </div>
+          ) : (
+            <div id={containerId} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PointVisualPanel({ point }) {
+  const imageCandidates = getPointImageCandidates(point);
+  const searchQuery = getPointImageSearchQuery(point);
+  const hasSearch = Boolean(GOOGLE_CSE_ID);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [mode, setMode] = useState(imageCandidates.length ? "app" : "search");
+
+  useEffect(() => {
+    const nextCandidates = getPointImageCandidates(point);
+    setImageIndex(0);
+    setMode(nextCandidates.length ? "app" : "search");
+  }, [point?.code]);
+
+  const imageSrc = imageCandidates[imageIndex] || null;
+  const canShowAppImage = Boolean(imageSrc);
+  const showTabs = Boolean(canShowAppImage || hasSearch);
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)]">
+      <div className="border-b border-slate-100 bg-white px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+              ツボの場所を確認
+            </div>
+            <p className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+              位置は図解によって少し表現が違います。複数の画像で、おおまかな場所を確認してください。
+            </p>
+          </div>
+        </div>
+
+        {showTabs ? (
+          <div className="mt-3 flex rounded-full bg-slate-100 p-1 ring-1 ring-inset ring-slate-200">
+            {canShowAppImage ? (
+              <button
+                type="button"
+                onClick={() => setMode("app")}
+                className={[
+                  "flex-1 rounded-full px-3 py-2 text-[11px] font-black transition-all",
+                  mode === "app" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
+                ].join(" ")}
+              >
+                アプリ図解
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setMode("search")}
+              className={[
+                "flex-1 rounded-full px-3 py-2 text-[11px] font-black transition-all",
+                mode === "search" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
+              ].join(" ")}
+            >
+              画像検索
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {mode === "app" && canShowAppImage ? (
+        <img
+          src={imageSrc}
+          alt={`${point.name_ja || point.code} の位置`}
+          className="h-56 w-full object-contain bg-white"
+          onError={() => {
+            if (imageIndex < imageCandidates.length - 1) {
+              setImageIndex((i) => i + 1);
+            } else {
+              setMode("search");
+            }
+          }}
+        />
+      ) : (
+        <div className="p-4">
+          <GooglePointImageSearch key={point?.code || searchQuery} point={point} query={searchQuery} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SegmentedTabs({ tabs, value, onChange }) {
   return (
     <div className="flex rounded-full bg-slate-200/55 p-1 ring-1 ring-inset ring-slate-200/70 shadow-inner">
@@ -248,16 +464,8 @@ export function LocationEditor({
 }
 
 export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
-  const [imageIndex, setImageIndex] = useState(0);
-
-  useEffect(() => {
-    setImageIndex(0);
-  }, [point?.code]);
-
   if (!point) return null;
 
-  const imageCandidates = getPointImageCandidates(point);
-  const imageSrc = imageCandidates[imageIndex] || null;
   const reasonTags = getPointMatchTags(point);
   const cautions = getPointCautions(point);
 
@@ -307,26 +515,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
           </button>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)]">
-          {imageSrc ? (
-            <img
-              src={imageSrc}
-              alt={`${point.name_ja || point.code} の位置`}
-              className="h-56 w-full object-contain bg-white"
-              onError={() => {
-                if (imageIndex < imageCandidates.length - 1) {
-                  setImageIndex((i) => i + 1);
-                } else {
-                  setImageIndex(imageCandidates.length);
-                }
-              }}
-            />
-          ) : (
-            <div className="flex h-56 items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
-              画像がまだ用意されていないか、表示できませんでした。ツボ名とコードを見ながら、押し方の目安を先に使えます。
-            </div>
-          )}
-        </div>
+        <PointVisualPanel point={point} />
 
         <div className="mt-5 rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_70%)] px-5 py-4 ring-1 ring-[var(--ring)]">
           <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">
@@ -605,4 +794,5 @@ export function SavedCareReviewAccordion({ bundle }) {
     </Module>
   );
 }
+
 
