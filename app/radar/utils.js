@@ -225,6 +225,7 @@ export function getPointRegionLabel(region) {
 export const HIDDEN_LOCATION_LABELS = new Set(["primary", "current", "home"]);
 
 export const MATCH_TAG_LABELS = {
+  // 既存の日本語タグ
   "脾を意識": "消化吸収や重だるさに関わるはたらき",
   "脾": "消化吸収や重だるさに関わるはたらき",
   "肝を意識": "緊張や巡りの滞りに関わりやすいはたらき",
@@ -235,6 +236,24 @@ export const MATCH_TAG_LABELS = {
   "やさしく支える": "土台を支えて崩れにくくしたい日に向く考え方",
   "体質ケア": "体質に合わせたケア",
   "ラインケア": "動きの負担に向くケア",
+
+  // 今日タブのルール選定で使う内部キーを、ユーザー向けの言葉に変換する
+  fatigue: "今見ている不調：疲れやすさ",
+  sleep: "今見ている不調：睡眠の乱れ",
+  neck_shoulder: "今見ている不調：首肩の重さ",
+  low_back_pain: "今見ている不調：腰まわりの重さ",
+  swelling: "今見ている不調：むくみ",
+  headache: "今見ている不調：頭の重さ",
+  dizziness: "今見ている不調：ふらつき",
+  mood: "今見ている不調：気分の張りつめ",
+  pressure_down: "天気の影響：低気圧",
+  pressure_up: "天気の影響：気圧上昇",
+  damp: "天気の影響：湿気",
+  humidity: "天気の影響：湿気",
+  cold: "天気の影響：冷え",
+  heat: "天気の影響：暑さ",
+  dry: "天気の影響：乾燥",
+  temp: "天気の影響：気温差",
 };
 export const RADAR_LOADING_HINTS = [
   "体質データを読み込んでいます…",
@@ -1307,8 +1326,11 @@ function decorateTodayPoint(point, { symptomFocus, triggerKey, signal } = {}) {
           : point.point_region === "abdomen"
             ? "お腹と腰腹まわりの力を抜き、冷えやだるさを抱え込ませないためのツボです。"
             : "今日これからの違和感を、強くなる前に逃がすためのセルフケア向きのツボです。",
-      selection_reason: `${symptomLabel}と${triggerLabel}を見て、${pressure}短時間で使いやすいツボとして選んでいます。明日の弁証型というより、今日の山場をやり過ごすための実用寄りです。`,
-      match_tags: [symptomFocus, triggerKey].filter(Boolean),
+      selection_reason: `${symptomLabel}と${triggerLabel}の影響を見て、${pressure}短時間で取り入れやすいツボとして選んでいます。今日の山場に合わせて、まず体感を軽くしやすいものを優先しています。`,
+      match_tags: [
+        symptomFocus ? `今見ている不調：${symptomLabel}` : null,
+        triggerKey ? `天気の影響：${triggerLabel}` : null,
+      ].filter(Boolean),
     },
   };
 }
@@ -1435,5 +1457,6 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
 
 
