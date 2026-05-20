@@ -9,8 +9,10 @@ import {
   RADAR_LOCATION_PRESETS,
   flattenRadarLocationPresets,
 } from "@/lib/radar_v1/locationPresets";
+import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
+const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
 
 function Row({ label, value, action }) {
   return (
@@ -107,6 +109,11 @@ export default function SettingsPage() {
   const [savingLocation, setSavingLocation] = useState(false);
   const [locationMessage, setLocationMessage] = useState("");
 
+  const [activeSymptomProfile, setActiveSymptomProfile] = useState(null);
+  const [selectedSymptomKey, setSelectedSymptomKey] = useState("");
+  const [savingSymptom, setSavingSymptom] = useState(false);
+  const [symptomMessage, setSymptomMessage] = useState("");
+
   const [pwaGuideOpen, setPwaGuideOpen] = useState(false);
   const [standalone, setStandalone] = useState(false);
 
@@ -144,7 +151,7 @@ export default function SettingsPage() {
 
         if (!data?.user) return;
 
-        const [unlocksRes, notificationRes, locationRes] = await Promise.allSettled([
+        const [unlocksRes, notificationRes, locationRes, symptomRes] = await Promise.allSettled([
           supabase
             .from("personal_karte_unlocks")
             .select("id", { count: "exact", head: true })
@@ -152,12 +159,18 @@ export default function SettingsPage() {
             .in("status", ["active", "paid"]),
           authedFetch("/api/push/settings"),
           authedFetch("/api/radar/location"),
+          authedFetch("/api/profile/active-symptom-focus"),
         ]);
 
         if (cancelled) return;
         if (unlocksRes.status === "fulfilled") setKarteCount(unlocksRes.value?.count ?? 0);
         if (notificationRes.status === "fulfilled") setNotificationSettings(notificationRes.value?.settings || null);
         if (locationRes.status === "fulfilled") setLocation(locationRes.value?.location || null);
+        if (symptomRes.status === "fulfilled") {
+          const profile = symptomRes.value?.profile || null;
+          setActiveSymptomProfile(profile);
+          setSelectedSymptomKey(profile?.active_symptom_focus || profile?.diagnosis_symptom_focus || "");
+        }
       } catch (e) {
         if (!cancelled) setError(e?.message || "設定情報を読み込めませんでした。");
       } finally {
@@ -253,6 +266,43 @@ export default function SettingsPage() {
       morning_enabled: notificationSettings?.morning_enabled ?? true,
       min_score: notificationSettings?.min_score ?? 6,
     });
+  }
+
+  async function handleSaveSymptomFocus() {
+    const current = activeSymptomProfile?.active_symptom_focus || activeSymptomProfile?.diagnosis_symptom_focus || "";
+    const next = selectedSymptomKey || current;
+
+    if (!next || next === current) {
+      setSymptomMessage("変更はありません。");
+      return;
+    }
+
+    setSavingSymptom(true);
+    setSymptomMessage("");
+    try {
+      const json = await authedFetch("/api/profile/active-symptom-focus", {
+        method: "PATCH",
+        body: JSON.stringify({ active_symptom_focus: next }),
+      });
+      setActiveSymptomProfile(json.profile || null);
+      setSelectedSymptomKey(json.profile?.active_symptom_focus || next);
+
+      if (location?.id) {
+        const today = getJstDateString(0);
+        const tomorrow = getJstDateString(1);
+        await Promise.allSettled([
+          authedFetch(`/api/radar/v1/forecast?date=${today}&force=1`),
+          authedFetch(`/api/radar/v1/forecast?date=${tomorrow}&force=1`),
+        ]);
+        setSymptomMessage("今気になる不調を更新し、今日/明日の予報も再計算しました。");
+      } else {
+        setSymptomMessage("今気になる不調を更新しました。地域を設定すると予報にも反映されます。");
+      }
+    } catch (e) {
+      setSymptomMessage(e?.message || "不調の種類を更新できませんでした。");
+    } finally {
+      setSavingSymptom(false);
+    }
   }
 
   async function handleSaveLocation() {
@@ -408,6 +458,52 @@ export default function SettingsPage() {
       </Module>
 
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[16px] font-black tracking-tight text-slate-900">今気になる不調</div>
+            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+              現在の不調：{loading ? "確認中…" : activeSymptomProfile?.active_symptom_label || "未設定"}
+              {activeSymptomProfile?.diagnosis_symptom_focus && activeSymptomProfile?.active_symptom_focus !== activeSymptomProfile?.diagnosis_symptom_focus
+                ? `（チェック時：${activeSymptomProfile?.diagnosis_symptom_label || "—"}）`
+                : ""}
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => router.push("/radar")}>予報へ</Button>
+        </div>
+
+        <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
+          体質タイプの計算は変えず、予報や未病カルテで扱う「不調の文脈」だけを切り替えます。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-2 block text-[12px] font-extrabold text-slate-500">不調の種類</label>
+          <select
+            value={selectedSymptomKey}
+            onChange={(e) => setSelectedSymptomKey(e.target.value)}
+            disabled={!user || savingSymptom || !activeSymptomProfile}
+            className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
+          >
+            <option value="">選んでください</option>
+            {SYMPTOM_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+        <Button
+          onClick={handleSaveSymptomFocus}
+          disabled={!user || !selectedSymptomKey || savingSymptom || !activeSymptomProfile}
+          className="mt-4 w-full shadow-sm"
+        >
+          {savingSymptom ? "反映中…" : "この不調で予報に反映する"}
+        </Button>
+        {symptomMessage ? (
+          <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-[12px] font-black leading-5 text-slate-600 ring-1 ring-slate-100">
+            {symptomMessage}
+          </div>
+        ) : null}
+      </Module>
+
+      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[16px] font-black tracking-tight text-slate-900">使い方・ホーム画面追加</div>
         <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
           迷った時はガイドへ。毎日見るならホーム画面追加がおすすめです。
@@ -459,5 +555,6 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
 
 
