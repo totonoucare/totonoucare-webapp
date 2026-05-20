@@ -14,6 +14,39 @@ function getBearer(req) {
   return m ? m[1] : null;
 }
 
+
+function isMissingActiveSymptomColumn(error) {
+  const message = String(error?.message || "");
+  return (
+    error?.code === "42703" ||
+    error?.code === "PGRST204" ||
+    message.includes("active_symptom_focus") ||
+    message.includes("Could not find")
+  );
+}
+
+async function getActiveSymptomForUser(userId) {
+  if (!userId) return null;
+
+  const { data, error } = await supabaseServer
+    .from("constitution_profiles")
+    .select("symptom_focus,active_symptom_focus")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!error) return data?.active_symptom_focus || data?.symptom_focus || null;
+  if (!isMissingActiveSymptomColumn(error)) throw error;
+
+  const { data: fallback, error: fallbackError } = await supabaseServer
+    .from("constitution_profiles")
+    .select("symptom_focus")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (fallbackError) throw fallbackError;
+  return fallback?.symptom_focus || null;
+}
+
 async function getAuthedUser(req) {
   const token = getBearer(req);
   if (!token) return null;
@@ -65,11 +98,17 @@ export async function GET(req, { params }) {
 
     const answers = data.answers || {};
     const computed = scoreDiagnosis(answers); // always recompute from answers
+    const diagnosisSymptomFocus = computed.symptom_focus || data.symptom_focus || "fatigue";
+    const activeSymptomFocus = data.user_id
+      ? await getActiveSymptomForUser(data.user_id) || diagnosisSymptomFocus
+      : diagnosisSymptomFocus;
 
     const safe = {
       id: data.id,
       created_at: data.created_at,
-      symptom_focus: computed.symptom_focus || data.symptom_focus || "fatigue",
+      symptom_focus: diagnosisSymptomFocus,
+      diagnosis_symptom_focus: diagnosisSymptomFocus,
+      active_symptom_focus: activeSymptomFocus,
       answers,
       computed,
       version: data.version || "v2",
@@ -86,3 +125,4 @@ export async function GET(req, { params }) {
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
   }
 }
+
