@@ -1083,7 +1083,7 @@ export function getPointPressGuide(point) {
 
 
 const POINT_IMAGE_SEARCH_QUERIES = {
-  LI4: "合谷 ツボ 位置 手",
+  LI4: "合谷",
   LR3: "太衝 ツボ 位置 足 甲",
   GB20: "風池 ツボ 位置 後頭部 首",
   PC6: "内関 ツボ 位置 手首",
