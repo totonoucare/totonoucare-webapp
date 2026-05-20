@@ -1082,31 +1082,18 @@ export function getPointPressGuide(point) {
 }
 
 
-const POINT_IMAGE_SEARCH_QUERIES = {
-  LI4: "合谷",
-  LR3: "太衝 ツボ 位置 足 甲",
-  GB20: "風池 ツボ 位置 後頭部 首",
-  PC6: "内関 ツボ 位置 手首",
-  ST36: "足三里 ツボ 位置 膝 下",
-  SP6: "三陰交 ツボ 位置 内くるぶし",
-  KI3: "太渓 ツボ 位置 内くるぶし",
-  CV6: "気海 ツボ 位置 下腹部",
-  CV12: "中脘 ツボ 位置 お腹",
-  LU7: "列缺 ツボ 位置 手首 親指側",
-  SP5: "商丘 ツボ 位置 内くるぶし",
-};
-
 function buildPointImageSearchQuery(point) {
-  const code = String(point?.code || "").trim().toUpperCase();
-  if (POINT_IMAGE_SEARCH_QUERIES[code]) return POINT_IMAGE_SEARCH_QUERIES[code];
-
+  // Programmable Search Engine側でツボ図鑑系サイトに絞っているため、
+  // 「ツボ」「位置」「手」などを足すと別ツボや関連症状の画像が混ざりやすい。
+  // DBから渡ってくるツボ名そのものを検索語にすることで、
+  // radar_tsubo_points に登録済みの全ツボと今後の追加ツボをコード追加なしで扱う。
   const name = String(point?.name_ja || "").trim();
-  const reading = String(point?.reading_ja || "").trim();
-  const region = getPointRegionLabel(point?.point_region);
+  if (name) return name;
 
-  return [name || reading || code, "ツボ", "位置", region]
-    .filter(Boolean)
-    .join(" ");
+  const reading = String(point?.reading_ja || "").trim();
+  if (reading) return reading;
+
+  return String(point?.code || "").trim().toUpperCase();
 }
 
 export function getPointImageSearchQuery(point) {
@@ -1448,5 +1435,6 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
 
 
