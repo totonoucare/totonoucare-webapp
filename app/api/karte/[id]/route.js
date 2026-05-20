@@ -54,6 +54,39 @@ async function getUserFromRequest(req) {
   return data.user;
 }
 
+
+function isMissingActiveSymptomColumn(error) {
+  const message = String(error?.message || "");
+  return (
+    error?.code === "42703" ||
+    error?.code === "PGRST204" ||
+    message.includes("active_symptom_focus") ||
+    message.includes("Could not find")
+  );
+}
+
+async function getActiveSymptomForUser(admin, userId) {
+  if (!userId) return null;
+
+  const { data, error } = await admin
+    .from("constitution_profiles")
+    .select("symptom_focus,active_symptom_focus")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!error) return data?.active_symptom_focus || data?.symptom_focus || null;
+  if (!isMissingActiveSymptomColumn(error)) throw error;
+
+  const { data: fallback, error: fallbackError } = await admin
+    .from("constitution_profiles")
+    .select("symptom_focus")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (fallbackError) throw fallbackError;
+  return fallback?.symptom_focus || null;
+}
+
 async function hasUnlockedKarte(admin, userId, diagnosisEventId) {
   if (!userId || !diagnosisEventId) return false;
 
@@ -234,10 +267,16 @@ export async function GET(req, { params }) {
     }
 
     const computed = scoreDiagnosis(event.answers || {});
+    const diagnosisSymptomFocus = computed.symptom_focus || event.symptom_focus;
+    const activeSymptomFocus = event.user_id
+      ? await getActiveSymptomForUser(admin, event.user_id) || diagnosisSymptomFocus
+      : diagnosisSymptomFocus;
     const eventForKarte = {
       ...event,
       computed,
-      symptom_focus: computed.symptom_focus || event.symptom_focus,
+      symptom_focus: activeSymptomFocus,
+      diagnosis_symptom_focus: diagnosisSymptomFocus,
+      active_symptom_focus: activeSymptomFocus,
     };
     const baseKarte = buildPersonalKarte(eventForKarte);
 
@@ -249,6 +288,9 @@ export async function GET(req, { params }) {
           id: event.id,
           user_id: event.user_id,
           created_at: event.created_at,
+          symptom_focus: diagnosisSymptomFocus,
+          diagnosis_symptom_focus: diagnosisSymptomFocus,
+          active_symptom_focus: activeSymptomFocus,
           computed,
         },
         karte: {
@@ -278,7 +320,7 @@ export async function GET(req, { params }) {
 
     const purchased = await getOrCreatePurchasedKarte({
       admin,
-      event,
+      event: eventForKarte,
       computed,
       baseKarte,
       userId: user?.id,
@@ -294,6 +336,9 @@ export async function GET(req, { params }) {
         id: event.id,
         user_id: event.user_id,
         created_at: event.created_at,
+        symptom_focus: diagnosisSymptomFocus,
+        diagnosis_symptom_focus: diagnosisSymptomFocus,
+        active_symptom_focus: activeSymptomFocus,
         computed,
       },
       karte: purchased.karte,
@@ -306,3 +351,4 @@ export async function GET(req, { params }) {
     );
   }
 }
+
