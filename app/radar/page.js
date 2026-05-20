@@ -62,6 +62,8 @@ import {
   signalDotClass,
 } from "./utils";
 
+const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
+
 /* -----------------------------
  * Main Page
  * ---------------------------- */
@@ -165,6 +167,9 @@ export default function RadarPage() {
   const [selectedPresetKey, setSelectedPresetKey] = useState("");
   const [showLocationEditor, setShowLocationEditor] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
+  const [showSymptomEditor, setShowSymptomEditor] = useState(false);
+  const [selectedSymptomKey, setSelectedSymptomKey] = useState("");
+  const [savingSymptom, setSavingSymptom] = useState(false);
 
   const [tab, setTab] = useState("forecast");
   const [careTab, setCareTab] = useState("live");
@@ -322,6 +327,7 @@ export default function RadarPage() {
     locationChanged = false,
     targetDate: requestedTargetDate = null,
     locationLabel = null,
+    showRefreshNotice = true,
   } = {}) {
     if (!session) return;
 
@@ -399,7 +405,7 @@ export default function RadarPage() {
         setSelectedTargetDate(json.target_date);
       }
 
-      if (shouldRefreshBothDates) {
+      if (shouldRefreshBothDates && showRefreshNotice) {
         setLocationNotice(
           siblingRefreshFailed
             ? "地域を更新しました。選択中の予報に反映しました。もう片方の予報は、開いたときに再取得します。"
@@ -675,6 +681,55 @@ export default function RadarPage() {
   }, [bundle?.care_plan?.night_tsubo_set?.points, selectedPoint]);
 
 
+  useEffect(() => {
+    if (!symptomFocus) return;
+    setSelectedSymptomKey((current) => current || symptomFocus);
+  }, [symptomFocus]);
+
+  async function handleSaveActiveSymptomFocus() {
+    const nextSymptom = selectedSymptomKey || symptomFocus;
+    if (!nextSymptom || nextSymptom === symptomFocus) {
+      setShowSymptomEditor(false);
+      return;
+    }
+
+    try {
+      setSavingSymptom(true);
+      setError("");
+      setLocationNotice("");
+
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error("ログインが必要です。");
+
+      const res = await fetch("/api/profile/active-symptom-focus", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ active_symptom_focus: nextSymptom }),
+        cache: "no-store",
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.ok === false) throw new Error(json?.error || "不調の種類を更新できませんでした。");
+
+      setShowSymptomEditor(false);
+      await fetchForecast({
+        force: true,
+        recompute: true,
+        targetDate: activeTargetDate,
+        showRefreshNotice: false,
+      });
+      setLocationNotice("今気になる不調を更新し、今日・明日の予報に反映しました。");
+    } catch (e) {
+      setError(e?.message || "不調の種類を更新できませんでした。");
+    } finally {
+      setSavingSymptom(false);
+    }
+  }
+
+
   function selectTargetDate(nextDate) {
     const normalizedDate = normalizeRadarTargetDate(nextDate);
     const nextMode = inferModeFromSelectedDate(normalizedDate) || "tomorrow";
@@ -901,6 +956,83 @@ export default function RadarPage() {
         onSelect={selectTargetDate}
       />
 
+      <div className="rounded-[20px] bg-white px-4 py-3.5 shadow-sm ring-1 ring-[#D3E1D5]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+              今見ている不調
+            </div>
+            <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">
+              {symptomLabel || "未設定"}
+            </div>
+            <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
+              体質はそのまま、不調の文脈だけ切り替えて予報に反映します。
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedSymptomKey(symptomFocus || "");
+              setShowSymptomEditor(true);
+            }}
+            className="shrink-0 rounded-full bg-[#F2F8F4] px-4 py-2 text-[12px] font-black text-[#2F7668] ring-1 ring-[#CFE0D3] shadow-sm active:scale-95"
+          >
+            変更
+          </button>
+        </div>
+      </div>
+
+      {showSymptomEditor ? (
+        <div className="fixed inset-0 z-[95] grid place-items-end bg-[#101827]/40 px-4 pb-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-[430px] rounded-[28px] border border-[#DCE7DE] bg-white p-5 shadow-[0_24px_72px_rgba(15,23,42,0.24)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-black text-[#101827]">今気になる不調を変更</p>
+                <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#647386]">
+                  体質タイプの計算は変えず、予報・カルテの不調文脈に反映します。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSymptomEditor(false)}
+                aria-label="不調変更を閉じる"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-50 text-[#9AA7B6] shadow-sm ring-1 ring-[#DCE7DE]"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {SYMPTOM_OPTIONS.map((option) => {
+                const active = selectedSymptomKey === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedSymptomKey(option.value)}
+                    className={[
+                      "rounded-[18px] px-3 py-3 text-left text-[13px] font-black leading-5 ring-1 transition active:scale-[0.99]",
+                      active
+                        ? "bg-[#EAF6EF] text-[#255F4F] ring-[#9CCBB7] shadow-sm"
+                        : "bg-white text-slate-700 ring-slate-200",
+                    ].join(" ")}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <Button
+              onClick={handleSaveActiveSymptomFocus}
+              disabled={savingSymptom || !selectedSymptomKey}
+              className="mt-5 w-full"
+            >
+              {savingSymptom ? "反映中…" : "この不調で予報に反映する"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-6">
           {error && !showLocationEditor ? (
