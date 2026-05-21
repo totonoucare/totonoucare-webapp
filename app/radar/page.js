@@ -26,8 +26,6 @@ import {
   LocationEditor,
   PointDetailSheet,
   SegmentedTabs,
-  TsuboRegionIcon,
-  getPointBodyIconLabel,
 } from "./RadarPageComponents";
 import {
   FLAT_PRESETS,
@@ -63,6 +61,96 @@ import {
   signalBadgeClass,
   signalDotClass,
 } from "./utils";
+
+const TSUBO_HAND_PREFIXES = new Set(["LI", "LU", "PC", "HT", "SI", "TE"]);
+const TSUBO_FOOT_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
+const TSUBO_TRUNK_PREFIXES = new Set(["CV"]);
+
+function getTsuboCodePrefix(point) {
+  const code = String(point?.code || "").trim().toUpperCase();
+  const match = code.match(/^[A-Z]+/);
+  return match ? match[0] : "";
+}
+
+function getTsuboRegionKey(point) {
+  const region = String(point?.point_region || "").trim();
+  if (region === "head_neck") return "head_neck";
+  if (region === "abdomen") return "trunk";
+
+  const prefix = getTsuboCodePrefix(point);
+  if (TSUBO_TRUNK_PREFIXES.has(prefix)) return "trunk";
+  if (TSUBO_HAND_PREFIXES.has(prefix)) return "hand";
+  if (TSUBO_FOOT_PREFIXES.has(prefix)) return "foot";
+  return "body";
+}
+
+function getTsuboRegionIconLabel(point) {
+  const key = getTsuboRegionKey(point);
+  if (key === "head_neck") return "頭・首まわり";
+  if (key === "hand") return "手・手首まわり";
+  if (key === "foot") return "足・足首まわり";
+  if (key === "trunk") return "体幹・お腹まわり";
+  return "からだのツボ";
+}
+
+function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
+  const key = getTsuboRegionKey(point);
+  if (key === "head_neck") {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+        <circle cx="24" cy="15" r="8.5" stroke="currentColor" strokeWidth="3" />
+        <path d="M20 23.5v6.2c0 2.2-1.5 4-3.6 4.6l-4.2 1.2" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M28 23.5v6.2c0 2.2 1.5 4 3.6 4.6l4.2 1.2" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18.5 40.5c3.5 1.3 7.5 1.3 11 0" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.72" />
+        <circle cx="31" cy="21" r="4.2" fill="currentColor" opacity="0.18" />
+        <circle cx="31" cy="21" r="1.8" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (key === "hand") {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+        <path d="M18.5 27.5V13.2a3 3 0 0 1 6 0v12.4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M24.5 25.8V11.8a3 3 0 0 1 6 0v15.4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M30.5 27.2V17a2.9 2.9 0 0 1 5.8 0v12.8c0 6.6-4.5 11.2-11.1 11.2h-2.5c-4.2 0-7.5-1.9-9.7-5.5l-3.5-5.8a3 3 0 0 1 4.9-3.4l3.7 4.8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18.5 41c3.7 1.1 8.4 1.1 12.2 0" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.72" />
+        <circle cx="24" cy="39.2" r="5" fill="currentColor" opacity="0.18" />
+        <circle cx="24" cy="39.2" r="1.8" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (key === "foot") {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+        <path d="M21.5 6.5c1 5.2 1 10.2.1 15.1-.5 2.8-1.5 5.2-2.9 7.4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M30.5 6.7c.6 5 .8 9.8.5 14.3-.2 3.5.6 6.3 2.5 8.4l2.3 2.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18.7 29c-3.2 2.1-4.9 4.8-4.9 7.8 0 3.4 3.1 5.7 8 5.7h12.5c3.8 0 6.4-1.6 7.6-4.1.7-1.5-.3-3.2-2-3.4l-7.1-.7c-3-.3-5.5-1.7-7.3-4.1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M18 36.2c5.2 1.3 11.4 1.2 18.4-.3" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.72" />
+        <circle cx="24.5" cy="30" r="5" fill="currentColor" opacity="0.18" />
+        <circle cx="24.5" cy="30" r="1.8" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (key === "trunk") {
+    return (
+      <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+        <path d="M16 9.5c2.6 2.1 5.2 3.1 8 3.1s5.4-1 8-3.1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        <path d="M17 13.8c-3.2 5.6-4.4 11.8-3.6 18.4.5 4.4 4.1 7.7 8.5 7.7h4.2c4.4 0 8-3.3 8.5-7.7.8-6.6-.4-12.8-3.6-18.4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M17.5 39.2c4.1 1.6 8.9 1.6 13 0" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.72" />
+        <circle cx="24" cy="27" r="5" fill="currentColor" opacity="0.18" />
+        <circle cx="24" cy="27" r="1.8" fill="currentColor" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <circle cx="24" cy="10" r="5" stroke="currentColor" strokeWidth="3" />
+      <path d="M24 15.5v15M13.5 23.2h21M17.5 40l6.5-9.5L30.5 40" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="24" cy="24" r="4.6" fill="currentColor" opacity="0.18" />
+      <circle cx="24" cy="24" r="1.8" fill="currentColor" />
+    </svg>
+  );
+}
 
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
 
@@ -1290,8 +1378,8 @@ export default function RadarPage() {
                     <div className="flex items-center gap-3">
                       <div
                         className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]"
-                        title={getPointBodyIconLabel(primaryTsubo)}
-                        aria-label={getPointBodyIconLabel(primaryTsubo)}
+                        title={getTsuboRegionIconLabel(primaryTsubo)}
+                        aria-label={getTsuboRegionIconLabel(primaryTsubo)}
                       >
                         <TsuboRegionIcon point={primaryTsubo} className="h-9 w-9" />
                       </div>
@@ -1381,8 +1469,8 @@ export default function RadarPage() {
                             <div className="flex items-center gap-3 pr-8">
                               <div
                                 className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]"
-                                title={getPointBodyIconLabel(p)}
-                                aria-label={getPointBodyIconLabel(p)}
+                                title={getTsuboRegionIconLabel(p)}
+                                aria-label={getTsuboRegionIconLabel(p)}
                               >
                                 <TsuboRegionIcon point={p} className="h-7 w-7" />
                               </div>
@@ -1692,4 +1780,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
