@@ -7,29 +7,42 @@ const TSUBO_FOOT_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
 const TSUBO_TRUNK_PREFIXES = new Set(["CV"]);
 const TSUBO_HEAD_NECK_CODES = new Set(["GB20", "GV20"]);
 
-// 温かみがあり健康的な解剖イラスト用カラーパレット
-const SKIN = "#F2C8A8";
-const SKIN_LIGHT = "#FFE5D2";
-const SKIN_SHADOW = "#D89C78";
-const SKIN_DEEP = "#B9785D";
-const OUTLINE = "#8A5A49";
-const HAIR = "#6F5145";
-const SOFT_BG = "#FDF5F0"; // アプリに馴染む透明感のある上品な背景色
+const OUTLINE = "#7C5244";
+const HAIR = "#6A4B3F";
+const SKIN_LINE = "#B77B61";
+const SKIN_DEEP = "#9E684F";
 
-function getTsuboCode(point) {
+const strokeProps = {
+  stroke: OUTLINE,
+  strokeWidth: 2.1,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  vectorEffect: "non-scaling-stroke" as const,
+};
+
+const softLineProps = {
+  stroke: SKIN_DEEP,
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  vectorEffect: "non-scaling-stroke" as const,
+};
+
+function getTsuboCode(point: any) {
   return String(point?.code || "").trim().toUpperCase();
 }
 
-function getTsuboCodePrefix(point) {
+function getTsuboCodePrefix(point: any) {
   const match = getTsuboCode(point).match(/^[A-Z]+/);
   return match ? match[0] : "";
 }
 
-function getTsuboRegionKey(point) {
+function getTsuboRegionKey(point: any) {
   const region = String(point?.point_region || "").trim();
   const code = getTsuboCode(point);
 
   if (region === "head_neck" || TSUBO_HEAD_NECK_CODES.has(code)) return "head_neck";
+
   if (
     region === "abdomen" ||
     region === "chest_abdomen" ||
@@ -41,195 +54,354 @@ function getTsuboRegionKey(point) {
   }
 
   const prefix = getTsuboCodePrefix(point);
+
   if (TSUBO_TRUNK_PREFIXES.has(prefix)) return "trunk";
   if (TSUBO_HAND_PREFIXES.has(prefix)) return "hand_wrist";
   if (TSUBO_FOOT_PREFIXES.has(prefix)) return "foot_ankle";
+
   return "body";
 }
 
-export function getTsuboRegionIconLabel(point) {
+export function getTsuboRegionIconLabel(point: any) {
   const key = getTsuboRegionKey(point);
+
   if (key === "head_neck") return "頭・首まわり";
   if (key === "hand_wrist") return "手・手首まわり";
   if (key === "foot_ankle") return "足・足首まわり";
   if (key === "trunk") return "体幹・お腹まわり";
+
   return "からだのツボ";
 }
 
-// 繊細なディテールを表現する 128x128 の高解像度フレーム
-function IconFrame({ children, className }) {
+function IconFrame({
+  children,
+  className,
+}: {
+  children: (paint: {
+    skin: string;
+    shade: string;
+    bg: string;
+    highlight: string;
+  }) => React.ReactNode;
+  className?: string;
+}) {
+  const rawId = React.useId().replaceAll(":", "");
+  const ids = {
+    bg: `tsubo-bg-${rawId}`,
+    skin: `tsubo-skin-${rawId}`,
+    shade: `tsubo-shade-${rawId}`,
+    lift: `tsubo-lift-${rawId}`,
+  };
+
+  const paint = {
+    skin: `url(#${ids.skin})`,
+    shade: `url(#${ids.shade})`,
+    bg: `url(#${ids.bg})`,
+    highlight: "#FFE7D5",
+  };
+
   return (
-    <svg viewBox="0 0 128 128" className={className} aria-hidden="true" role="img">
-      {/* 統一感を出すための丸型ベース背景（透過にしたい場合はこのcircleを削除してください） */}
-      <circle cx="64" cy="64" r="58" fill={SOFT_BG} />
-      {children}
+    <svg
+      viewBox="0 0 128 128"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+      preserveAspectRatio="xMidYMid meet"
+      shapeRendering="geometricPrecision"
+    >
+      <defs>
+        <radialGradient id={ids.bg} cx="36%" cy="28%" r="72%">
+          <stop offset="0%" stopColor="#FFFDFC" />
+          <stop offset="68%" stopColor="#FDF4EF" />
+          <stop offset="100%" stopColor="#F7E5DC" />
+        </radialGradient>
+
+        <linearGradient id={ids.skin} x1="32" y1="16" x2="96" y2="118" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFE2CD" />
+          <stop offset="48%" stopColor="#F1BE9C" />
+          <stop offset="100%" stopColor="#D99673" />
+        </linearGradient>
+
+        <linearGradient id={ids.shade} x1="48" y1="24" x2="98" y2="116" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#C98466" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#9E5F49" stopOpacity="0.48" />
+        </linearGradient>
+
+        <filter id={ids.lift} x="-20%" y="-20%" width="140%" height="150%">
+          <feDropShadow dx="0" dy="2.2" stdDeviation="2.2" floodColor="#6E4A3C" floodOpacity="0.16" />
+        </filter>
+      </defs>
+
+      <circle cx="64" cy="64" r="58" fill={paint.bg} />
+
+      <g filter={`url(#${ids.lift})`}>
+        {children(paint)}
+      </g>
     </svg>
   );
 }
 
-function HeadNeckIcon({ className }) {
+function HeadNeckIcon({ className }: { className?: string }) {
   return (
     <IconFrame className={className}>
-      {/* 首・肩・胸元のベース */}
-      <path
-        d="M 50 72 L 50 92 C 40 100, 26 106, 16 116 L 112 116 C 102 106, 88 100, 78 92 L 78 72 Z"
-        fill={SKIN}
-        stroke={OUTLINE}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* デコルテの立体シャドウ */}
-      <path
-        d="M 50 92 C 58 100, 70 100, 78 92 C 88 100, 102 106, 112 116 L 16 116 C 26 106, 40 100, 50 92 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.4"
-      />
-      {/* 頭部・顔の輪郭 */}
-      <path
-        d="M 40 50 C 40 68, 50 76, 64 76 C 78 76, 88 68, 88 50 C 88 32, 78 22, 64 22 C 50 22, 40 32, 40 50 Z"
-        fill={SKIN}
-        stroke={OUTLINE}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* 顔のサイドシャドウ */}
-      <path
-        d="M 64 22 C 78 22, 88 32, 88 50 C 88 68, 78 76, 64 76 C 72 70, 76 58, 76 50 C 76 42, 72 30, 64 22 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.3"
-      />
-      {/* 耳のライン */}
-      <path d="M 35 46 C 32 46, 32 54, 40 54 M 93 46 C 96 46, 96 54, 88 54" fill="none" stroke={OUTLINE} strokeWidth="2.5" strokeLinecap="round" />
-      {/* 洗練されたヘアライン */}
-      <path
-        d="M 39 46 C 38 28, 48 16, 64 16 C 80 16, 90 28, 89 46 C 84 40, 76 38, 64 42 C 52 38, 44 40, 39 46 Z"
-        fill={HAIR}
-        stroke={OUTLINE}
-        strokeWidth="1"
-      />
-      {/* 鎖骨の補助線 */}
-      <path d="M 36 104 Q 64 112 92 104" fill="none" stroke={SKIN_DEEP} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+      {(p) => (
+        <>
+          <path
+            d="M49 72 L49 88 C44 96 31 102 18 116 H110 C97 102 84 96 79 88 V72 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          <path
+            d="M49 88 C56 97 72 97 79 88 C87 98 100 105 110 116 H18 C28 105 41 98 49 88 Z"
+            fill={p.shade}
+            opacity="0.65"
+          />
+
+          <path
+            d="M40 50 C40 33 50 22 64 22 C78 22 88 33 88 50 C88 67 78 77 64 77 C50 77 40 67 40 50 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          <path
+            d="M65 22 C79 23 88 34 88 50 C88 67 78 77 64 77 C71 70 75 60 75 50 C75 40 72 30 65 22 Z"
+            fill={p.shade}
+            opacity="0.45"
+          />
+
+          <path
+            d="M39 45 C38 28 49 16 64 16 C80 16 90 28 89 45 C82 38 73 37 64 41 C54 37 46 38 39 45 Z"
+            fill={HAIR}
+            stroke={OUTLINE}
+            strokeWidth="1.6"
+            strokeLinejoin="round"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          <path
+            d="M36 48 C32 49 32 56 40 56 M92 48 C96 49 96 56 88 56"
+            fill="none"
+            {...strokeProps}
+          />
+
+          <path
+            d="M45 104 C56 110 72 110 83 104"
+            fill="none"
+            {...softLineProps}
+            opacity="0.52"
+          />
+        </>
+      )}
     </IconFrame>
   );
 }
 
-function HandWristIcon({ className }) {
+function HandWristIcon({ className }: { className?: string }) {
   return (
     <IconFrame className={className}>
-      {/* 手首から5本の指先までが、歪みなく滑らかに繋がった1本の美しいクローズドパス */}
-      <path
-        d="M 52 120 L 52 92 C 44 86, 30 80, 24 70 C 18 60, 26 52, 34 58 L 48 72 L 48 26 C 48 18, 57 18, 57 26 L 57 66 L 58 16 C 58 8, 67 8, 67 16 L 67 64 L 68 20 C 68 12, 77 12, 77 20 L 77 66 L 78 30 C 78 23, 86 23, 86 30 L 86 82 C 88 92, 84 102, 84 120 Z"
-        fill={SKIN}
-        stroke={OUTLINE}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* 母指球（親指の付け根）のふくらみを表現するシャドウ */}
-      <path
-        d="M 52 120 L 52 92 C 44 86, 30 80, 24 70 C 22 66, 24 60, 28 59 C 36 68, 48 84, 58 90 L 58 120 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.35"
-      />
-      {/* 指と指の間のセパレーター線（これで1本ずつの指がリアルに分離します） */}
-      <path d="M 57 56 L 57 76 M 67 54 L 67 80 M 77 58 L 77 80" fill="none" stroke={OUTLINE} strokeWidth="2.2" strokeLinecap="round" />
-      {/* 手のひらのシワ（手相の自然なカーブ） */}
-      <path d="M 38 74 C 46 76, 54 86, 56 100" fill="none" stroke={SKIN_DEEP} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-      <path d="M 48 84 C 56 84, 68 92, 72 102" fill="none" stroke={SKIN_DEEP} strokeWidth="1.8" strokeLinecap="round" opacity="0.4" />
+      {(p) => (
+        <>
+          {/* fingers */}
+          <path d="M48 66 V31 C48 24 56 24 56 31 V63" fill={p.skin} {...strokeProps} />
+          <path d="M57 64 V20 C57 13 66 13 66 20 V62" fill={p.skin} {...strokeProps} />
+          <path d="M67 63 V24 C67 17 76 17 76 24 V65" fill={p.skin} {...strokeProps} />
+          <path d="M77 68 V34 C77 28 85 28 85 34 V78" fill={p.skin} {...strokeProps} />
+
+          {/* thumb */}
+          <path
+            d="M45 80 L30 68 C24 63 23 55 29 51 C34 48 39 52 45 59 L54 70 C59 77 52 85 45 80 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          {/* palm */}
+          <path
+            d="M42 66 C46 56 55 51 66 52 C79 53 88 64 88 78 V89 C88 106 78 117 64 117 C50 117 40 106 40 91 V78 C40 74 41 70 42 66 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          <path
+            d="M42 83 C47 90 54 95 58 104 M52 76 C61 77 70 84 75 94"
+            fill="none"
+            {...softLineProps}
+            opacity="0.5"
+          />
+
+          <path
+            d="M75 58 C84 65 86 75 86 88 C86 104 77 115 64 117 C75 105 76 85 75 58 Z"
+            fill={p.shade}
+            opacity="0.38"
+          />
+
+          <path
+            d="M56 61 V75 M66 61 V77 M76 66 V79"
+            fill="none"
+            {...strokeProps}
+            opacity="0.44"
+          />
+        </>
+      )}
     </IconFrame>
   );
 }
 
-function FootAnkleIcon({ className }) {
+function FootAnkleIcon({ className }: { className?: string }) {
   return (
     <IconFrame className={className}>
-      {/* すね・足の甲・つま先・土踏まず・かかと・ふくらはぎを完璧なプロポーションで繋いだパス */}
-      <path
-        d="M 72 12 L 72 65 C 72 80, 52 95, 34 106 C 24 112, 22 118, 32 118 L 52 118 C 64 118, 68 114, 78 118 C 90 118, 96 114, 96 102 C 96 88, 90 78, 90 68 C 90 53, 94 33, 94 12 Z"
-        fill={SKIN}
-        stroke={OUTLINE}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* アキレス腱からかかと、足底へ流れる美しい立体陰影 */}
-      <path
-        d="M 90 68 C 90 53, 94 33, 94 12 L 84 12 C 84 35, 80 55, 80 68 C 80 82, 74 94, 68 102 C 64 108, 64 114, 78 118 C 90 118, 96 114, 96 102 C 96 88, 90 78, 90 68 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.4"
-      />
-      {/* 内くるぶしの骨の膨らみ（絶妙なハイライト効果） */}
-      <ellipse cx="80" cy="94" rx="4.5" ry="6" fill={SKIN_LIGHT} opacity="0.7" />
-      <ellipse cx="80" cy="94" rx="4.5" ry="6" fill="none" stroke={OUTLINE} strokeWidth="1.5" opacity="0.4" />
-      {/* 足の甲のディテール */}
-      <path d="M 44 104 C 38 108, 34 112, 32 116" fill="none" stroke={OUTLINE} strokeWidth="1.8" strokeLinecap="round" opacity="0.6" />
-      <path d="M 72 55 C 74 70, 68 85, 58 95" fill="none" stroke={SKIN_LIGHT} strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+      {(p) => (
+        <>
+          <path
+            d="M70 12 H94 C92 34 89 52 89 68 C89 80 97 90 97 102 C97 113 88 119 76 118 C69 118 64 115 56 116 H32 C24 116 23 109 31 105 C49 96 65 82 70 65 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          <path
+            d="M88 13 H94 C92 34 89 52 89 68 C89 80 97 90 97 102 C97 113 88 119 76 118 C68 117 64 113 66 106 C70 92 80 82 80 67 C80 50 85 32 88 13 Z"
+            fill={p.shade}
+            opacity="0.55"
+          />
+
+          <ellipse
+            cx="79"
+            cy="93"
+            rx="5"
+            ry="6.5"
+            fill={p.highlight}
+            opacity="0.75"
+            stroke={SKIN_LINE}
+            strokeWidth="1.2"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          <path
+            d="M34 106 C31 109 29 112 29 115 M45 101 C41 105 38 109 37 115 M57 94 C53 101 50 108 50 115"
+            fill="none"
+            {...softLineProps}
+            opacity="0.52"
+          />
+
+          <path
+            d="M72 54 C74 68 70 82 61 93"
+            fill="none"
+            stroke={p.highlight}
+            strokeWidth="2"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            opacity="0.6"
+          />
+        </>
+      )}
     </IconFrame>
   );
 }
 
-function TrunkAbdomenIcon({ className }) {
+function TrunkAbdomenIcon({ className }: { className?: string }) {
   return (
     <IconFrame className={className}>
-      {/* 肩のライン、脇の下、引き締まったウエストのくびれ、骨盤を表現したトルソー */}
-      <path
-        d="M 52 16 L 76 16 C 86 16, 100 20, 108 30 C 110 34, 102 44, 94 48 C 90 62, 88 74, 88 88 C 88 100, 96 108, 98 118 L 30 118 C 32 108, 40 100, 40 88 C 40 74, 38 62, 34 48 C 26 44, 18 34, 20 30 C 28 20, 42 16, 52 16 Z"
-        fill={SKIN}
-        stroke={OUTLINE}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* 脇腹から腰回りのリアルな陰影（シャドウ） */}
-      <path
-        d="M 30 118 C 32 108, 40 100, 40 88 C 40 74, 38 62, 34 48 C 30 46, 26 42, 24 38 C 30 52, 46 80, 46 95 C 46 105, 38 112, 30 118 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.35"
-      />
-      <path
-        d="M 98 118 C 96 108, 88 100, 88 88 C 88 74, 90 62, 94 48 C 98 46, 102 42, 104 38 C 98 52, 82 80, 82 95 C 82 105, 90 112, 98 118 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.35"
-      />
-      {/* 大胸筋・肋骨周りのソフトな輪郭線 */}
-      <path d="M 36 48 C 48 54, 60 54, 64 54 C 68 54, 80 54, 92 48" fill="none" stroke={OUTLINE} strokeWidth="1.8" opacity="0.3" />
-      {/* 腹筋の中心線（白線）とおへそ */}
-      <path d="M 64 58 L 64 110" fill="none" stroke={SKIN_SHADOW} strokeWidth="2.2" strokeLinecap="round" opacity="0.6" />
-      <circle cx="64" cy="92" r="3.5" fill={SKIN_DEEP} opacity="0.8" />
-      {/* 腹筋の立体ハイライト */}
-      <path d="M 64 68 C 54 74, 52 82, 52 90" fill="none" stroke={SKIN_LIGHT} strokeWidth="2.5" strokeLinecap="round" opacity="0.5" />
+      {(p) => (
+        <>
+          <path
+            d="M51 16 H77 C90 17 101 23 108 32 C110 36 103 45 94 49 C90 63 88 76 88 88 C88 101 96 109 98 118 H30 C32 109 40 101 40 88 C40 76 38 63 34 49 C25 45 18 36 20 32 C27 23 38 17 51 16 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          <path
+            d="M33 118 C37 109 43 101 43 89 C43 72 38 58 34 49 C29 47 24 42 22 37 C29 57 47 78 48 94 C48 106 39 114 33 118 Z"
+            fill={p.shade}
+            opacity="0.45"
+          />
+
+          <path
+            d="M95 118 C91 109 85 101 85 89 C85 72 90 58 94 49 C99 47 104 42 106 37 C99 57 81 78 80 94 C80 106 89 114 95 118 Z"
+            fill={p.shade}
+            opacity="0.45"
+          />
+
+          <path
+            d="M38 50 C49 56 59 56 64 56 C69 56 79 56 90 50"
+            fill="none"
+            {...strokeProps}
+            opacity="0.28"
+          />
+
+          <path
+            d="M64 60 V110"
+            fill="none"
+            stroke={SKIN_LINE}
+            strokeWidth="2"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            opacity="0.58"
+          />
+
+          <circle cx="64" cy="92" r="3.2" fill={SKIN_DEEP} opacity="0.72" />
+
+          <path
+            d="M59 69 C54 76 53 84 54 91 M69 69 C74 76 75 84 74 91"
+            fill="none"
+            stroke={p.highlight}
+            strokeWidth="2"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            opacity="0.46"
+          />
+        </>
+      )}
     </IconFrame>
   );
 }
 
-function GenericBodyIcon({ className }) {
+function GenericBodyIcon({ className }: { className?: string }) {
   return (
     <IconFrame className={className}>
-      {/* 頭部と立体シャドウ */}
-      <circle cx="64" cy="22" r="11" fill={SKIN} stroke={OUTLINE} strokeWidth="2.5" />
-      <path d="M 64 11 A 11 11 0 0 1 64 33 A 11 11 0 0 0 64 11 Z" fill={SKIN_SHADOW} opacity="0.3" />
-      
-      {/* 全身（体幹、四肢）をスタイリッシュかつ滑らかな3Dフラット調に落とし込んだマネキンシルエット */}
-      <path
-        d="M 52 38 C 42 38, 28 44, 22 52 C 18 58, 24 64, 30 58 L 44 46 L 44 76 L 36 114 C 34 120, 44 122, 48 116 L 64 88 L 80 116 C 84 122, 94 120, 92 114 L 84 76 L 84 46 L 98 58 C 104 64, 110 58, 106 52 C 100 44, 86 38, 76 38 Z"
-        fill={SKIN}
-        stroke={OUTLINE}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-      {/* 半身にかかる立体シャドウ */}
-      <path
-        d="M 64 38 L 64 88 L 80 116 C 84 122, 94 120, 92 114 L 84 76 L 84 46 L 98 58 C 104 64, 110 58, 106 52 C 100 44, 86 38, 76 38 Z"
-        fill={SKIN_SHADOW}
-        opacity="0.35"
-      />
+      {(p) => (
+        <>
+          <circle cx="64" cy="23" r="11" fill={p.skin} {...strokeProps} />
+
+          <path
+            d="M52 39 H76 C87 39 100 45 106 53 C110 59 104 65 98 60 L85 49 V76 L93 113 C95 121 84 123 80 116 L64 88 L48 116 C44 123 33 121 35 113 L43 76 V49 L30 60 C24 65 18 59 22 53 C28 45 41 39 52 39 Z"
+            fill={p.skin}
+            {...strokeProps}
+          />
+
+          <path
+            d="M64 39 H76 C87 39 100 45 106 53 C110 59 104 65 98 60 L85 49 V76 L93 113 C95 121 84 123 80 116 L64 88 Z"
+            fill={p.shade}
+            opacity="0.44"
+          />
+
+          <path
+            d="M64 43 V85"
+            fill="none"
+            stroke={SKIN_LINE}
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            opacity="0.42"
+          />
+        </>
+      )}
     </IconFrame>
   );
 }
 
-export default function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
+export default function TsuboRegionIcon({
+  point,
+  className = "h-8 w-8",
+}: {
+  point: any;
+  className?: string;
+}) {
   const key = getTsuboRegionKey(point);
+
   if (key === "head_neck") return <HeadNeckIcon className={className} />;
   if (key === "hand_wrist") return <HandWristIcon className={className} />;
   if (key === "foot_ankle") return <FootAnkleIcon className={className} />;
   if (key === "trunk") return <TrunkAbdomenIcon className={className} />;
+
   return <GenericBodyIcon className={className} />;
 }
-
