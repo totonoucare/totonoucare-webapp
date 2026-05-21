@@ -1073,7 +1073,7 @@ export default function RadarPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-white/78 text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm shrink-0">
-                      <IconRadar className="h-7 w-7" />
+                      <IconRadar className="h-8 w-8" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[15px] font-black tracking-tight text-slate-900">
@@ -1158,7 +1158,7 @@ export default function RadarPage() {
                               key={`${factor.key}-${index}`}
                               className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-[#E4ECE4] shadow-[0_10px_20px_-16px_rgba(15,23,42,0.28)]"
                             >
-                              <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
+                              <WeatherIcon triggerKey={factor.key} className="h-[18px] w-[18px]" />
                               {factor.label}
                             </span>
                           ))}
@@ -1170,7 +1170,7 @@ export default function RadarPage() {
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                           <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                            <IconBolt className="h-4 w-4" />
+                            <IconBolt className="h-5 w-5" />
                           </span>
                           {selectedIsToday ? "山場前に" : "明日の山場前に"}
                         </div>
@@ -1206,11 +1206,11 @@ export default function RadarPage() {
             <div className="flex items-center gap-3">
               <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm">
                 {careTab === "eat" ? (
-                  <IconBowl className="h-7 w-7" />
+                  <IconBowl className="h-8 w-8" />
                 ) : careTab === "live" ? (
-                  <IconBolt className="h-7 w-7" />
+                  <IconBolt className="h-8 w-8" />
                 ) : (
-                  <IconRipple className="h-7 w-7" />
+                  <IconRipple className="h-8 w-8" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -1292,7 +1292,7 @@ export default function RadarPage() {
                         title={getTsuboRegionIconLabel(primaryTsubo)}
                         aria-label={getTsuboRegionIconLabel(primaryTsubo)}
                       >
-                        <TsuboRegionIcon point={primaryTsubo} className="h-12 w-12" />
+                        <TsuboRegionIcon point={primaryTsubo} className="h-[52px] w-[52px]" />
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -1383,7 +1383,7 @@ export default function RadarPage() {
                                 title={getTsuboRegionIconLabel(p)}
                                 aria-label={getTsuboRegionIconLabel(p)}
                               >
-                                <TsuboRegionIcon point={p} className="h-9 w-9" />
+                                <TsuboRegionIcon point={p} className="h-10 w-10" />
                               </div>
 
                               <div className="min-w-0 flex-1">
@@ -1610,7 +1610,7 @@ export default function RadarPage() {
                 </div>
 
                 <div className="mt-3 flex items-start gap-3">
-                  <div className="grid h-[74px] w-[74px] place-items-center overflow-hidden rounded-[20px] bg-white p-2 ring-1 ring-[#CFE0D3] shadow-sm shrink-0">
+                  <div className="grid h-[74px] w-[74px] place-items-center overflow-hidden rounded-[20px] bg-white p-1.5 ring-1 ring-[#CFE0D3] shadow-sm shrink-0">
                     <CoreIllust
                       code={coreCode}
                       title={coreLabel?.title || "体質タイプ"}
@@ -1691,4 +1691,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
