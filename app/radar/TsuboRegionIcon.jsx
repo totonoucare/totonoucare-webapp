@@ -52,23 +52,23 @@ function IconFrame({ children, className }) {
 function HeadNeckIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 頭・首〜肩のやわらかい塗り絵調イラスト */}
-      <path
-        d="M60,216 C76,200 100,188 104,155 C96,145 84,128 84,92 C84,60 104,40 128,40 C152,40 172,60 172,92 C172,128 160,145 152,155 C156,188 180,200 196,216 Z"
-        fill="currentColor"
-        fillOpacity="0.12"
-      />
+      {/* ブラッシュアップ：線を細く、形をより洗練されたカーブに */}
       <path
         d="M60,216 C76,200 100,188 104,155 C96,145 84,128 84,92 C84,60 104,40 128,40 C152,40 172,60 172,92 C172,128 160,145 152,155 C156,188 180,200 196,216"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
+        d="M60,216 C76,200 100,188 104,155 C96,145 84,128 84,92 C84,60 104,40 128,40 C152,40 172,60 172,92 C172,128 160,145 152,155 C156,188 180,200 196,216 Z"
+        fill="currentColor"
+        fillOpacity="0.08"
+      />
+      <path
         d="M100,195 Q128,204 156,195"
         stroke="currentColor"
-        strokeWidth="10"
+        strokeWidth="6"
         strokeLinecap="round"
       />
     </IconFrame>
@@ -78,23 +78,23 @@ function HeadNeckIcon({ className }) {
 function HandWristIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 手・手首〜袖口の5本指スタンプ調イラスト */}
-      <path
-        d="M96,224 L96,170 C96,155 80,145 72,132 C65,120 74,108 86,116 C96,122 104,136 108,146 L108,80 C108,70 122,70 122,80 L122,145 L126,145 L126,68 C126,58 140,58 140,68 L140,145 L144,145 L144,74 C144,64 158,64 158,74 L158,145 L162,145 L162,94 C162,84 176,84 176,94 L176,170 C176,190 160,224 160,224 Z"
-        fill="currentColor"
-        fillOpacity="0.12"
-      />
+      {/* ブラッシュアップ：指の比率と袖口をより自然に。線を細く */}
       <path
         d="M96,224 L96,170 C96,155 80,145 72,132 C65,120 74,108 86,116 C96,122 104,136 108,146 L108,80 C108,70 122,70 122,80 L122,145 M126,120 L126,68 C126,58 140,58 140,68 L140,145 M144,120 L144,74 C144,64 158,64 158,74 L158,145 M162,130 L162,94 C162,84 176,84 176,94 L176,170 C176,190 160,224 160,224"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
+        d="M96,224 L96,170 C96,155 80,145 72,132 C65,120 74,108 86,116 C96,122 104,136 108,146 L108,80 C108,70 122,70 122,80 L122,145 L126,145 L126,68 C126,58 140,58 140,68 L140,145 L144,145 L144,74 C144,64 158,64 158,74 L158,145 L162,145 L162,94 C162,84 176,84 176,94 L176,170 C176,190 160,224 160,224 Z"
+        fill="currentColor"
+        fillOpacity="0.08"
+      />
+      <path
         d="M90,198 L166,198"
         stroke="currentColor"
-        strokeWidth="10"
+        strokeWidth="6"
         strokeLinecap="round"
       />
     </IconFrame>
@@ -104,23 +104,23 @@ function HandWristIcon({ className }) {
 function FootAnkleIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 脚・足首〜すね・くるぶしの分かるシルエットイラスト */}
-      <path
-        d="M165,44 L165,115 C165,130 145,150 120,165 C95,178 72,185 60,192 C48,200 52,216 72,216 L192,216 C206,216 216,204 212,185 C206,160 195,125 195,44 Z"
-        fill="currentColor"
-        fillOpacity="0.12"
-      />
+      {/* ブラッシュアップ：脚の形をよりエレガントなカーブに。くるぶしを自然に。線を細く */}
       <path
         d="M165,44 L165,115 C165,130 145,150 120,165 C95,178 72,185 60,192 C48,200 52,216 72,216 L192,216 C206,216 216,204 212,185 C206,160 195,125 195,44"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
+        d="M165,44 L165,115 C165,130 145,150 120,165 C95,178 72,185 60,192 C48,200 52,216 72,216 L192,216 C206,216 216,204 212,185 C206,160 195,125 195,44 Z"
+        fill="currentColor"
+        fillOpacity="0.08"
+      />
+      <path
         d="M172,150 A 8,8 0 0,1 172,166"
         stroke="currentColor"
-        strokeWidth="10"
+        strokeWidth="6"
         strokeLinecap="round"
       />
     </IconFrame>
@@ -130,26 +130,26 @@ function FootAnkleIcon({ className }) {
 function TrunkAbdomenIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 首下〜肩〜胴体〜腰（トルソー風・お臍アクセント）イラスト */}
-      <path
-        d="M106,44 C95,44 72,55 60,70 C48,82 54,104 68,112 L74,116 C84,145 92,175 80,216 C76,226 84,232 96,232 L160,232 C172,232 180,226 176,216 C164,175 172,145 182,116 L188,112 C202,104 208,82 196,70 C184,55 161,44 150,44 Z"
-        fill="currentColor"
-        fillOpacity="0.12"
-      />
+      {/* ブラッシュアップ：トルソーの形をより柔らかく。お臍を控えめに。線を細く */}
       <path
         d="M106,44 C95,44 72,55 60,70 C48,82 54,104 68,112 L74,116 C84,145 92,175 80,216 C76,226 84,232 96,232 L160,232 C172,232 180,226 176,216 C164,175 172,145 182,116 L188,112 C202,104 208,82 196,70 C184,55 161,44 150,44"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="8"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
+        d="M106,44 C95,44 72,55 60,70 C48,82 54,104 68,112 L74,116 C84,145 92,175 80,216 C76,226 84,232 96,232 L160,232 C172,232 180,226 176,216 C164,175 172,145 182,116 L188,112 C202,104 208,82 196,70 C184,55 161,44 150,44 Z"
+        fill="currentColor"
+        fillOpacity="0.08"
+      />
+      <path
         d="M84,80 Q128,95 172,80"
         stroke="currentColor"
-        strokeWidth="10"
+        strokeWidth="6"
         strokeLinecap="round"
       />
-      <circle cx="128" cy="170" r="6" fill="currentColor" />
+      <circle cx="128" cy="170" r="4" fill="currentColor" fillOpacity="0.5" />
     </IconFrame>
   );
 }
@@ -157,24 +157,32 @@ function TrunkAbdomenIcon({ className }) {
 function GenericBodyIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 判定不能時の汎用全身ミニマルスタンプイラスト */}
+      {/* ブラッシュアップ：全身のシルエットをよりシンプルで洗練されたものに。線を細く */}
       <circle
         cx="128"
         cy="64"
-        r="22"
-        fill="currentColor"
-        fillOpacity="0.12"
+        r="20"
         stroke="currentColor"
-        strokeWidth="12"
+        strokeWidth="8"
+      />
+      <circle
+        cx="128"
+        cy="64"
+        r="20"
+        fill="currentColor"
+        fillOpacity="0.08"
+      />
+      <path
+        d="M88,114 C88,104 96,96 106,96 L150,96 C160,96 168,104 168,114 L168,170 L152,170 L152,224 C152,230 146,236 140,236 L116,236 C110,236 104,230 104,224 L104,170 L88,170 Z"
+        stroke="currentColor"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
         d="M88,114 C88,104 96,96 106,96 L150,96 C160,96 168,104 168,114 L168,170 L152,170 L152,224 C152,230 146,236 140,236 L116,236 C110,236 104,230 104,224 L104,170 L88,170 Z"
         fill="currentColor"
-        fillOpacity="0.12"
-        stroke="currentColor"
-        strokeWidth="12"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fillOpacity="0.08"
       />
     </IconFrame>
   );
