@@ -2,32 +2,18 @@
 
 const TSUBO_HAND_PREFIXES = new Set(["LI", "LU", "PC", "HT", "SI", "TE"]);
 const TSUBO_FOOT_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
-const TSUBO_TRUNK_PREFIXES = new Set(["CV"]);
-const TSUBO_HEAD_NECK_CODES = new Set(["GB20", "GV20"]);
-
-function getTsuboCode(point) {
-  return String(point?.code || "").trim().toUpperCase();
-}
+const TSUBO_TRUNK_PREFIXES = new Set(["CV", "GV"]);
 
 function getTsuboCodePrefix(point) {
-  const match = getTsuboCode(point).match(/^[A-Z]+/);
+  const code = String(point?.code || "").trim().toUpperCase();
+  const match = code.match(/^[A-Z]+/);
   return match ? match[0] : "";
 }
 
 function getTsuboRegionKey(point) {
   const region = String(point?.point_region || "").trim();
-  const code = getTsuboCode(point);
-
-  if (region === "head_neck" || TSUBO_HEAD_NECK_CODES.has(code)) return "head_neck";
-  if (
-    region === "abdomen" ||
-    region === "chest_abdomen" ||
-    region === "trunk" ||
-    region === "back" ||
-    region === "low_back"
-  ) {
-    return "trunk";
-  }
+  if (region === "head_neck") return "head_neck";
+  if (region === "abdomen" || region === "chest_abdomen" || region === "trunk") return "trunk";
 
   const prefix = getTsuboCodePrefix(point);
   if (TSUBO_TRUNK_PREFIXES.has(prefix)) return "trunk";
@@ -47,59 +33,41 @@ export function getTsuboRegionIconLabel(point) {
 
 function IconFrame({ children, className }) {
   return (
-    <svg viewBox="0 0 64 64" fill="none" className={className} aria-hidden="true">
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
       {children}
     </svg>
   );
 }
 
-function TsuboMark({ cx, cy, r = 6 }) {
+function TsuboMark({ cx, cy, r = 4.5 }) {
   return (
-    <g>
-      <circle cx={cx} cy={cy} r={r} fill="currentColor" opacity="0.14" />
-      <circle cx={cx} cy={cy} r="2.2" fill="currentColor" />
-      <circle cx={cx} cy={cy} r="7.8" stroke="currentColor" strokeWidth="1.4" opacity="0.16" />
-    </g>
+    <>
+      <circle cx={cx} cy={cy} r={r} fill="currentColor" opacity="0.2" />
+      <circle cx={cx} cy={cy} r="1.8" fill="currentColor" />
+    </>
   );
 }
 
 function HeadNeckIcon({ className }) {
   return (
     <IconFrame className={className}>
+      {/* 頭〜首〜肩のクリーンなシルエット */}
       <path
-        d="M32 7.5c-9.1 0-16.1 7.1-16.1 16.4 0 7.1 4.1 13 10 15.2v5.1c0 2.1-1.3 3.9-3.3 4.6l-6.3 2.2c-3 1.1-5 3.8-5 7v1.5h41.4V58c0-3.2-2-5.9-5-7l-6.3-2.2c-2-.7-3.3-2.5-3.3-4.6v-5.1c5.9-2.2 10-8.1 10-15.2C48.1 14.6 41.1 7.5 32 7.5Z"
-        fill="currentColor"
-        opacity="0.085"
-      />
-      <path
-        d="M32 7.5c-9.1 0-16.1 7.1-16.1 16.4 0 7.1 4.1 13 10 15.2v5.1c0 2.1-1.3 3.9-3.3 4.6l-6.3 2.2c-3 1.1-5 3.8-5 7"
+        d="M 24 6 C 18 6 14 10 14 16 C 14 22 17 25 17 28 L 17 31 C 17 33 13 36 9 38 L 9 42 H 39 L 39 38 C 35 36 31 33 31 31 L 31 28 C 31 25 34 22 34 16 C 34 10 30 6 24 6 Z"
         stroke="currentColor"
-        strokeWidth="3.2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* 鎖骨のライン（さりげないアクセント） */}
       <path
-        d="M32 7.5c9.1 0 16.1 7.1 16.1 16.4 0 7.1-4.1 13-10 15.2v5.1c0 2.1 1.3 3.9 3.3 4.6l6.3 2.2c3 1.1 5 3.8 5 7"
+        d="M 15 36 Q 24 38 33 36"
         stroke="currentColor"
-        strokeWidth="3.2"
+        strokeWidth="2"
         strokeLinecap="round"
-        strokeLinejoin="round"
+        opacity="0.35"
       />
-      <path
-        d="M23.8 46.5c5 2.1 11.4 2.1 16.4 0"
-        stroke="currentColor"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-        opacity="0.58"
-      />
-      <path
-        d="M18.8 55.5h26.4"
-        stroke="currentColor"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-        opacity="0.42"
-      />
-      <TsuboMark cx="44.2" cy="30.8" r="6.2" />
+      <TsuboMark cx="24" cy="27" />
     </IconFrame>
   );
 }
@@ -107,40 +75,23 @@ function HeadNeckIcon({ className }) {
 function HandWristIcon({ className }) {
   return (
     <IconFrame className={className}>
+      {/* 親指〜手首までの美しい連続ライン */}
       <path
-        d="M22.6 31.1V15.4a4.1 4.1 0 0 1 8.2 0v14.5M30.7 29.8V11.8a4.1 4.1 0 0 1 8.2 0v18.6M38.9 30.7V15.2a4 4 0 0 1 8 0v21.1c0 8.2-5.5 13.8-14.1 13.8h-8.2c-8.1 0-13.4-4.9-14-13.2"
+        d="M 18 42 V 26 C 14 26 10 24 10 20 C 10 17 13 16 15 18 L 16 20 V 10 C 16 7.5 19 7.5 19 10 V 18 M 19 18 V 6 C 19 3.5 22 3.5 22 6 V 18 M 22 18 V 8 C 22 5.5 25 5.5 25 8 V 18 M 25 18 V 12 C 25 9.5 28 9.5 28 12 V 26 C 28 32 30 36 30 42"
         stroke="currentColor"
-        strokeWidth="3.2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* 手首のシワ */}
       <path
-        d="M46.9 34.7V21.2a3.8 3.8 0 0 1 7.6 0v16c0 10.7-7.7 18.3-19.6 18.3H25c-10.2 0-17-6.5-17-16.2v-4.1"
+        d="M 18 36 Q 24 38 30 36"
         stroke="currentColor"
-        strokeWidth="3.2"
+        strokeWidth="2"
         strokeLinecap="round"
-        strokeLinejoin="round"
+        opacity="0.35"
       />
-      <path
-        d="m10 36.1-4.7-5.8a4.1 4.1 0 0 1 .5-5.7 4 4 0 0 1 5.6.3l11.2 11.5"
-        stroke="currentColor"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M13.2 36c1.8 8.8 6.9 13.5 14.6 13.5h7c8.2 0 13.1-4.9 13.1-13.2V21.2a3.8 3.8 0 0 1 7.6 0v16c0 10.7-7.7 18.3-19.6 18.3H25c-10.2 0-17-6.5-17-16.2v-4.1c0-1.1.2-2.2.6-3.2l1.4 1.7c.9 1 1.9 1.8 3.2 2.3Z"
-        fill="currentColor"
-        opacity="0.075"
-      />
-      <path
-        d="M22.5 55.8c5.8 1.8 13.2 1.8 19 0"
-        stroke="currentColor"
-        strokeWidth="2.3"
-        strokeLinecap="round"
-        opacity="0.58"
-      />
-      <TsuboMark cx="25.2" cy="47.6" r="5.9" />
+      <TsuboMark cx="24" cy="28" />
     </IconFrame>
   );
 }
@@ -148,40 +99,24 @@ function HandWristIcon({ className }) {
 function FootAnkleIcon({ className }) {
   return (
     <IconFrame className={className}>
+      {/* 足首からつま先までの側面シルエット */}
       <path
-        d="M24.4 6.8c1 8.7.5 16.3-1.5 22.4-.9 2.9-2.4 5.5-4.4 7.8-2.2 2.5-3.5 5.3-3.5 8.2 0 5.4 4.6 8.6 12.2 8.6h19.2c5.9 0 9.6-2.4 10.5-6.3.6-2.7-1.1-4.9-4.1-5.3l-10.9-1.3c-5.9-.7-10-2.9-13.4-7.4 1.9-7 2.4-15.9 1.5-26.7"
-        fill="currentColor"
-        opacity="0.075"
-      />
-      <path
-        d="M24.4 6.8c1 8.7.5 16.3-1.5 22.4-.9 2.9-2.4 5.5-4.4 7.8-2.2 2.5-3.5 5.3-3.5 8.2 0 5.4 4.6 8.6 12.2 8.6h19.2c5.9 0 9.6-2.4 10.5-6.3.6-2.7-1.1-4.9-4.1-5.3l-10.9-1.3c-5.9-.7-10-2.9-13.4-7.4"
+        d="M 14 6 V 26 C 14 34 18 38 22 38 H 36 C 40 38 42 34 38 32 C 32 29 27 26 26 20 V 6"
         stroke="currentColor"
-        strokeWidth="3.3"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path
-        d="M34.7 6.8c1.2 9.5 1.1 17.7-.1 24.4-.5 3 .1 5.5 1.9 7.6l2.4 2.9"
-        stroke="currentColor"
-        strokeWidth="3.3"
+      {/* くるぶし */}
+      <circle 
+        cx="20" 
+        cy="28" 
+        r="2" 
+        stroke="currentColor" 
+        strokeWidth="2.5" 
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
-      <path
-        d="M20.3 45.1c8.1 2.3 18.1 2.2 29.8-.3"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
-      <path
-        d="M22.9 33.2c4.5 1.8 9.8 1.8 15.8-.1"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.42"
-      />
-      <TsuboMark cx="28.8" cy="36.8" r="6" />
+      <TsuboMark cx="27" cy="30" />
     </IconFrame>
   );
 }
@@ -189,56 +124,25 @@ function FootAnkleIcon({ className }) {
 function TrunkAbdomenIcon({ className }) {
   return (
     <IconFrame className={className}>
+      {/* 胴体のくびれを意識した滑らかなライン */}
       <path
-        d="M25.7 8.2c1.9 1.7 3.9 2.5 6.3 2.5s4.4-.8 6.3-2.5M20.3 18.8c3.4-2.7 7.3-4.1 11.7-4.1s8.3 1.4 11.7 4.1c6.3 5 8.8 22.7 3.4 32-2.9 5-8.4 7.3-15.1 7.3s-12.2-2.3-15.1-7.3c-5.4-9.3-2.9-27 3.4-32Z"
-        fill="currentColor"
-        opacity="0.075"
-      />
-      <path
-        d="M25.7 8.2c1.9 1.7 3.9 2.5 6.3 2.5s4.4-.8 6.3-2.5"
+        d="M 20 6 C 16 6 12 10 12 16 C 12 24 16 28 16 32 C 16 38 12 42 12 42 H 36 C 36 42 32 38 32 32 C 32 28 36 24 36 16 C 36 10 32 6 28 6"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {/* みぞおち〜肋骨の補助線 */}
       <path
-        d="M15.3 22.5c4.8-5.2 10.4-7.8 16.7-7.8s11.9 2.6 16.7 7.8"
+        d="M 16 20 Q 24 24 32 20"
         stroke="currentColor"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M21.3 18.2c-5.7 7.4-7.7 23.7-4.4 32.6 2 5.3 7.4 7.3 15.1 7.3s13.1-2 15.1-7.3c3.3-8.9 1.3-25.2-4.4-32.6"
-        stroke="currentColor"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <ellipse
-        cx="32"
-        cy="38.4"
-        rx="10.3"
-        ry="12.4"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        opacity="0.42"
-      />
-      <path
-        d="M22.8 49.7c5.4 2.4 13 2.4 18.4 0"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        opacity="0.58"
-      />
-      <path
-        d="M32 25.8v24"
-        stroke="currentColor"
-        strokeWidth="2.1"
+        strokeWidth="2"
         strokeLinecap="round"
         opacity="0.35"
       />
-      <TsuboMark cx="32" cy="38.4" r="6.1" />
+      {/* おへそ */}
+      <circle cx="24" cy="34" r="1.5" fill="currentColor" opacity="0.35" />
+      <TsuboMark cx="24" cy="25" />
     </IconFrame>
   );
 }
@@ -246,16 +150,16 @@ function TrunkAbdomenIcon({ className }) {
 function GenericBodyIcon({ className }) {
   return (
     <IconFrame className={className}>
-      <circle cx="32" cy="12.5" r="6.5" fill="currentColor" opacity="0.075" />
-      <circle cx="32" cy="12.5" r="6.5" stroke="currentColor" strokeWidth="3" />
+      {/* シンプルで視認性の高いピクトグラム風 */}
+      <circle cx="24" cy="10" r="5" stroke="currentColor" strokeWidth="2.5" />
       <path
-        d="M32 19.7v22.1M18.8 30.2h26.4M23.5 55.5 32 41.8l8.5 13.7"
+        d="M 24 18 V 30 M 16 28 C 14 20 18 16 24 16 C 30 16 34 20 32 28 M 18 42 C 18 34 24 30 24 30 C 24 30 30 34 30 42"
         stroke="currentColor"
-        strokeWidth="3"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <TsuboMark cx="32" cy="32" r="5.8" />
+      <TsuboMark cx="24" cy="24" />
     </IconFrame>
   );
 }
@@ -268,4 +172,5 @@ export default function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
   if (key === "trunk") return <TrunkAbdomenIcon className={className} />;
   return <GenericBodyIcon className={className} />;
 }
+
 
