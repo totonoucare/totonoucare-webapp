@@ -24,6 +24,183 @@ import {
   sourceLabel,
 } from "./utils";
 
+const HAND_MERIDIAN_PREFIXES = new Set(["LI", "LU", "PC", "HT", "SI", "TE"]);
+const FOOT_MERIDIAN_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
+
+function getPointMeridianPrefix(point) {
+  const fromMeridian = String(point?.meridian || "").trim().toUpperCase();
+  if (fromMeridian) return fromMeridian;
+  const code = String(point?.code || "").trim().toUpperCase();
+  const match = code.match(/^[A-Z]+/);
+  return match ? match[0] : "";
+}
+
+function inferPointBodyIconKey(point) {
+  const region = String(point?.point_region || "").trim();
+  if (region === "head_neck") return "head_neck";
+  if (region === "abdomen") return "abdomen";
+
+  const prefix = getPointMeridianPrefix(point);
+  if (HAND_MERIDIAN_PREFIXES.has(prefix)) return "hand";
+  if (FOOT_MERIDIAN_PREFIXES.has(prefix)) return "foot";
+  return "body";
+}
+
+export function getPointBodyIconLabel(point) {
+  const key = inferPointBodyIconKey(point);
+  if (key === "head_neck") return "頭・首まわり";
+  if (key === "abdomen") return "体幹・お腹まわり";
+  if (key === "hand") return "手・手首まわり";
+  if (key === "foot") return "足・足首まわり";
+  return "からだのツボ";
+}
+
+function IconHeadNeck({ className = "h-8 w-8" }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <path d="M24 5.8c-7 0-12.2 5.1-12.2 12.2 0 5.7 3 9.7 7.1 11.6v5.2c0 1.7-1.1 3.1-2.8 3.6l-3.3.9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M35.2 39.3l-3.3-.9c-1.7-.5-2.8-1.9-2.8-3.6v-5.2c4.1-1.9 7.1-5.9 7.1-11.6C36.2 10.9 31 5.8 24 5.8Z" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19.2 31.2c1.4.7 3 1.1 4.8 1.1s3.4-.4 4.8-1.1" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="32" cy="20" r="3.6" fill="currentColor" opacity="0.22" />
+      <circle cx="32" cy="20" r="1.7" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconAbdomen({ className = "h-8 w-8" }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M16.2 9.5c2.4 2 5 3 7.8 3s5.4-1 7.8-3"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.7 15.3c3.6-2 7.4-2.9 11.3-2.9s7.7.9 11.3 2.9"
+        stroke="currentColor"
+        strokeWidth="2.7"
+        strokeLinecap="round"
+        opacity="0.78"
+      />
+      <path
+        d="M17.3 13.8c-3.1 5.5-4.4 11.6-3.7 18.4.5 4.4 4.1 7.7 8.5 7.7h3.8c4.4 0 8-3.3 8.5-7.7.7-6.8-.6-12.9-3.7-18.4"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M17.2 39.3c4.2 1.7 9.4 1.7 13.6 0"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+      <path d="M20.2 25.1c2.3 1.5 5.3 1.5 7.6 0" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.75" />
+      <circle cx="24" cy="27" r="5" fill="currentColor" opacity="0.18" />
+      <circle cx="24" cy="27" r="1.9" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconHand({ className = "h-8 w-8" }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M18.4 29.2V12.6a3 3 0 0 1 6 0v12.2"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M24.4 25.2V11.4a3 3 0 0 1 6 0v15.2"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M30.4 26.6v-9.8a2.9 2.9 0 0 1 5.8 0v12.6c0 5.1-2.7 9.1-7 10.7"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.2 29.7l-3.3-4.4a3.1 3.1 0 0 0-5.1 3.5l4.8 7.5c2.2 3.4 5.5 5.2 9.7 5.2h2.7"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19.1 41.2c-.5 1.8-.5 3.2.1 4.1M29.4 40.4c.6 1.8.6 3.4.1 4.9"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.85"
+      />
+      <path d="M17.4 39.4c3.8 1.2 8.5 1.3 12.7.1" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.72" />
+      <circle cx="23.9" cy="39.6" r="5.1" fill="currentColor" opacity="0.18" />
+      <circle cx="23.9" cy="39.6" r="1.9" fill="currentColor" />
+      <circle cx="14.7" cy="28.9" r="3.6" fill="currentColor" opacity="0.13" />
+    </svg>
+  );
+}
+
+function IconFoot({ className = "h-8 w-8" }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M22.3 5.7c1 5.2 1 10.2.1 15.1-.5 2.7-1.4 5.2-2.7 7.3"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M31.2 5.9c.5 5 .7 9.7.4 14.2-.2 3.6.6 6.3 2.4 8.4l2 2.4"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M19.8 28.1c-3.6 2.2-5.5 5.1-5.5 8.3 0 3.5 3.2 5.9 8.2 5.9h11.9c3.8 0 6.5-1.7 7.8-4.4.7-1.5-.3-3.3-2-3.4l-7.1-.7c-3-.3-5.5-1.7-7.3-4.1"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M18.2 35.8c5.4 1.4 11.7 1.3 18.9-.3" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" opacity="0.72" />
+      <circle cx="24.6" cy="29.9" r="5" fill="currentColor" opacity="0.18" />
+      <circle cx="24.6" cy="29.9" r="1.9" fill="currentColor" />
+      <circle cx="17.6" cy="38.2" r="3.8" fill="currentColor" opacity="0.13" />
+    </svg>
+  );
+}
+
+function IconBody({ className = "h-8 w-8" }) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <circle cx="24" cy="10" r="5" stroke="currentColor" strokeWidth="3" />
+      <path d="M24 15.5v15M13.5 23.2h21M17.5 40l6.5-9.5L30.5 40" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="24" cy="24" r="4.6" fill="currentColor" opacity="0.18" />
+      <circle cx="24" cy="24" r="1.8" fill="currentColor" />
+    </svg>
+  );
+}
+
+export function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
+  const key = inferPointBodyIconKey(point);
+  if (key === "head_neck") return <IconHeadNeck className={className} />;
+  if (key === "abdomen") return <IconAbdomen className={className} />;
+  if (key === "hand") return <IconHand className={className} />;
+  if (key === "foot") return <IconFoot className={className} />;
+  return <IconBody className={className} />;
+}
 
 export function ForecastDateRail({ tabs, activeDate, onSelect }) {
   return (
@@ -794,5 +971,6 @@ export function SavedCareReviewAccordion({ bundle }) {
     </Module>
   );
 }
+
 
 
