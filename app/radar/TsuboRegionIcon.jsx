@@ -31,7 +31,7 @@ export function getTsuboRegionIconLabel(point) {
   return "からだのツボ";
 }
 
-// viewBoxを 256x256 の高解像度グリッドに拡張
+// リアルなイラストを描写するためのキャンバス（解像度256x256）
 function IconFrame({ children, className }) {
   return (
     <svg viewBox="0 0 256 256" fill="none" className={className} aria-hidden="true">
@@ -40,37 +40,29 @@ function IconFrame({ children, className }) {
   );
 }
 
-// グリッド拡大に合わせてツボマークのサイズも最適化
-function TsuboMark({ cx, cy, r = 22 }) {
-  return (
-    <>
-      <circle cx={cx} cy={cy} r={r} fill="currentColor" opacity="0.15" />
-      <circle cx={cx} cy={cy} r="8" fill="currentColor" />
-    </>
-  );
-}
+// 共通の肌色パレット
+const SKIN_BASE = "#F2D1B3"; // 明るい肌色
+const SKIN_SHADOW = "#DDA882"; // 立体感を出す影の色
+const SKIN_DEEP = "#C68A61"; // さらに深い影（へそなど）
 
 function HeadNeckIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 繊細で美しい頭部から肩へのシルエット */}
+      {/* 頭〜首〜肩のリアルな横顔シルエット（ベース） */}
       <path
-        d="M 128 28 C 88 28 64 64 64 104 C 64 140 84 156 96 172 C 102 180 104 192 92 208 C 76 228 32 240 32 240 H 224 C 224 240 180 228 164 208 C 152 192 154 180 160 172 C 172 156 192 140 192 104 C 192 64 168 28 128 28 Z"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M120 30 C80 30 70 60 70 80 C70 90 60 95 50 105 C40 115 55 125 60 130 C55 135 60 145 70 150 C80 160 90 170 90 190 C90 220 60 230 40 256 L216 256 C190 230 170 200 170 160 C170 100 160 30 120 30 Z"
+        fill={SKIN_BASE}
       />
-      {/* 鎖骨のライン（高級感を出すためのディテール） */}
+      {/* 首筋と顎下のシャドウ（立体感） */}
       <path
-        d="M 68 200 Q 128 220 188 200"
-        stroke="currentColor"
-        strokeWidth="8"
-        strokeLinecap="round"
-        opacity="0.3"
+        d="M70 150 C80 160 90 170 90 190 C90 220 60 230 40 256 L130 256 C130 256 120 200 110 180 C100 160 85 155 70 150 Z"
+        fill={SKIN_SHADOW}
       />
-      {/* 首の後ろ/うなじ付近のツボを想定した配置 */}
-      <TsuboMark cx="128" cy="160" />
+      {/* 耳のディテール */}
+      <path
+        d="M 125 105 C 115 105 110 120 115 130 C 120 140 135 135 135 120 C 135 110 130 105 125 105 Z"
+        fill={SKIN_SHADOW}
+      />
     </IconFrame>
   );
 }
@@ -78,24 +70,21 @@ function HeadNeckIcon({ className }) {
 function HandWristIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 幾何学的で洗練された指と手首の連続ライン */}
+      {/* 5本の指と手首を持つリアルな手のひら（ベース） */}
       <path
-        d="M 76 256 L 76 172 C 60 144 32 120 36 92 C 40 64 72 72 88 104 L 96 128 L 96 44 C 96 20 128 20 128 44 L 128 120 L 128 28 C 128 4 160 4 160 28 L 160 120 L 160 52 C 160 28 192 28 192 52 L 192 136 L 192 88 C 192 64 224 64 224 88 L 224 164 C 224 204 184 228 184 256"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M90 256 L90 180 C80 170 60 150 55 130 C50 110 70 100 80 120 L95 140 L95 60 C95 40 120 40 120 60 L120 130 L125 50 C125 30 150 30 150 50 L150 130 L155 65 C155 45 180 45 180 65 L180 140 L185 95 C185 75 210 75 210 95 L210 180 C210 210 170 230 170 256 Z"
+        fill={SKIN_BASE}
       />
-      {/* 手首のシワ */}
+      {/* 親指の付け根（母指球）のシャドウ */}
       <path
-        d="M 88 220 Q 130 236 172 220"
-        stroke="currentColor"
-        strokeWidth="8"
-        strokeLinecap="round"
-        opacity="0.3"
+        d="M90 256 L90 180 C80 170 60 150 55 130 C50 110 70 100 80 120 L95 140 L110 170 L110 256 Z"
+        fill={SKIN_SHADOW}
       />
-      {/* 手のひら/労宮などを想定した配置 */}
-      <TsuboMark cx="128" cy="168" />
+      {/* 小指側のシャドウ */}
+      <path
+        d="M210 180 C210 210 170 230 170 256 L150 256 L180 180 Z"
+        fill={SKIN_SHADOW}
+      />
     </IconFrame>
   );
 }
@@ -103,25 +92,18 @@ function HandWristIcon({ className }) {
 function FootAnkleIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* ふくらはぎ〜足首〜つま先までの美しいサイドシルエット */}
+      {/* ふくらはぎ〜かかと〜つま先の側面シルエット（ベース） */}
       <path
-        d="M 96 24 L 96 112 C 96 156 60 172 48 204 C 36 236 72 244 96 244 L 192 244 C 228 244 244 212 224 188 C 196 156 160 140 160 92 L 160 24"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M 120 30 L 120 140 C 120 170 100 180 70 210 C 40 240 50 250 80 250 L 200 250 C 230 250 240 230 220 200 C 200 170 180 150 180 110 L 180 30 Z"
+        fill={SKIN_BASE}
       />
-      {/* くるぶし（外果・内果）の骨の表現 */}
-      <circle 
-        cx="100" 
-        cy="180" 
-        r="12" 
-        stroke="currentColor" 
-        strokeWidth="10" 
-        strokeLinecap="round"
+      {/* アキレス腱と土踏まずのシャドウ */}
+      <path
+        d="M 180 30 L 180 110 C 180 150 200 170 220 200 C 240 230 230 250 200 250 L 160 250 C 180 220 170 170 150 140 L 150 30 Z"
+        fill={SKIN_SHADOW}
       />
-      {/* 足首周辺/太渓などを想定した配置 */}
-      <TsuboMark cx="136" cy="192" />
+      {/* くるぶしの骨の膨らみ */}
+      <circle cx="165" cy="195" r="12" fill={SKIN_SHADOW} />
     </IconFrame>
   );
 }
@@ -129,26 +111,28 @@ function FootAnkleIcon({ className }) {
 function TrunkAbdomenIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 肩からウエストラインにかけての有機的なカーブ */}
+      {/* 胴体のくびれと筋肉を意識したトルソー（ベース） */}
       <path
-        d="M 64 32 C 40 32 32 64 48 100 C 64 136 64 164 56 196 C 48 228 72 248 128 248 C 184 248 208 228 200 196 C 192 164 192 136 208 100 C 224 64 216 32 192 32 C 168 32 152 48 128 48 C 104 48 88 32 64 32 Z"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M 70 30 C 50 30 40 50 50 80 C 60 110 70 140 65 180 C 60 220 50 250 80 250 L 176 250 C 206 250 196 220 191 180 C 186 140 196 110 206 80 C 216 50 206 30 186 30 C 166 30 150 50 128 50 C 106 50 90 30 70 30 Z"
+        fill={SKIN_BASE}
       />
-      {/* みぞおちの補助線 */}
+      {/* 胸部（大胸筋）下部のシャドウ */}
       <path
-        d="M 88 112 Q 128 132 168 112"
-        stroke="currentColor"
-        strokeWidth="8"
-        strokeLinecap="round"
-        opacity="0.3"
+        d="M 60 100 C 80 130 110 130 128 110 C 146 130 176 130 196 100 C 190 140 150 145 128 135 C 106 145 66 140 60 100 Z"
+        fill={SKIN_SHADOW}
+      />
+      {/* 腹筋の中心線（白線） */}
+      <path
+        d="M 125 135 L 125 230 A 3 3 0 0 0 131 230 L 131 135 Z"
+        fill={SKIN_SHADOW}
+      />
+      {/* ウエスト両サイドのシャドウ */}
+      <path
+        d="M 50 80 C 60 110 70 140 65 180 C 60 220 50 250 80 250 L 100 250 C 70 210 80 150 65 100 Z"
+        fill={SKIN_SHADOW}
       />
       {/* おへそ */}
-      <circle cx="128" cy="184" r="6" fill="currentColor" opacity="0.4" />
-      {/* 中脘/関元などを想定した配置 */}
-      <TsuboMark cx="128" cy="140" />
+      <circle cx="128" cy="195" r="5" fill={SKIN_DEEP} />
     </IconFrame>
   );
 }
@@ -156,17 +140,23 @@ function TrunkAbdomenIcon({ className }) {
 function GenericBodyIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* シンボリックかつモダンな全身ピクトグラム */}
-      <circle cx="128" cy="48" r="24" stroke="currentColor" strokeWidth="10" />
+      {/* 全身のマネキン風シルエット */}
+      <circle cx="128" cy="35" r="24" fill={SKIN_BASE} />
+      {/* 頭の球体としての立体感（三日月型の影） */}
       <path
-        d="M 128 92 V 164 M 80 152 C 64 104 92 80 128 80 C 164 80 192 104 176 152 M 88 232 C 88 184 128 164 128 164 C 128 164 168 184 168 232"
-        stroke="currentColor"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M 128 11 A 24 24 0 0 1 128 59 A 24 24 0 0 0 128 11 Z"
+        fill={SKIN_SHADOW}
       />
-      {/* 全身の中心としての配置 */}
-      <TsuboMark cx="128" cy="128" />
+      {/* 胴体と手足のベース */}
+      <path
+        d="M 100 65 C 128 55 156 65 166 85 L 190 145 C 195 155 180 165 170 150 L 155 110 L 155 170 L 175 240 C 180 255 155 260 150 245 L 128 180 L 106 245 C 101 260 76 255 81 240 L 101 170 L 101 110 L 86 150 C 76 165 61 155 66 145 L 90 85 C 95 75 100 65 100 65 Z"
+        fill={SKIN_BASE}
+      />
+      {/* 右半身のシャドウで3D感を強調 */}
+      <path
+        d="M 128 60 C 156 65 166 85 190 145 C 195 155 180 165 170 150 L 155 110 L 155 170 L 175 240 C 180 255 155 260 150 245 L 128 180 L 128 60 Z"
+        fill={SKIN_SHADOW}
+      />
     </IconFrame>
   );
 }
@@ -179,5 +169,4 @@ export default function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
   if (key === "trunk") return <TrunkAbdomenIcon className={className} />;
   return <GenericBodyIcon className={className} />;
 }
-
 
