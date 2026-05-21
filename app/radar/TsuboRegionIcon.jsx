@@ -31,19 +31,21 @@ export function getTsuboRegionIconLabel(point) {
   return "からだのツボ";
 }
 
+// viewBoxを 256x256 の高解像度グリッドに拡張
 function IconFrame({ children, className }) {
   return (
-    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+    <svg viewBox="0 0 256 256" fill="none" className={className} aria-hidden="true">
       {children}
     </svg>
   );
 }
 
-function TsuboMark({ cx, cy, r = 4.5 }) {
+// グリッド拡大に合わせてツボマークのサイズも最適化
+function TsuboMark({ cx, cy, r = 22 }) {
   return (
     <>
-      <circle cx={cx} cy={cy} r={r} fill="currentColor" opacity="0.2" />
-      <circle cx={cx} cy={cy} r="1.8" fill="currentColor" />
+      <circle cx={cx} cy={cy} r={r} fill="currentColor" opacity="0.15" />
+      <circle cx={cx} cy={cy} r="8" fill="currentColor" />
     </>
   );
 }
@@ -51,23 +53,24 @@ function TsuboMark({ cx, cy, r = 4.5 }) {
 function HeadNeckIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 頭〜首〜肩のクリーンなシルエット */}
+      {/* 繊細で美しい頭部から肩へのシルエット */}
       <path
-        d="M 24 6 C 18 6 14 10 14 16 C 14 22 17 25 17 28 L 17 31 C 17 33 13 36 9 38 L 9 42 H 39 L 39 38 C 35 36 31 33 31 31 L 31 28 C 31 25 34 22 34 16 C 34 10 30 6 24 6 Z"
+        d="M 128 28 C 88 28 64 64 64 104 C 64 140 84 156 96 172 C 102 180 104 192 92 208 C 76 228 32 240 32 240 H 224 C 224 240 180 228 164 208 C 152 192 154 180 160 172 C 172 156 192 140 192 104 C 192 64 168 28 128 28 Z"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* 鎖骨のライン（さりげないアクセント） */}
+      {/* 鎖骨のライン（高級感を出すためのディテール） */}
       <path
-        d="M 15 36 Q 24 38 33 36"
+        d="M 68 200 Q 128 220 188 200"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="8"
         strokeLinecap="round"
-        opacity="0.35"
+        opacity="0.3"
       />
-      <TsuboMark cx="24" cy="27" />
+      {/* 首の後ろ/うなじ付近のツボを想定した配置 */}
+      <TsuboMark cx="128" cy="160" />
     </IconFrame>
   );
 }
@@ -75,23 +78,24 @@ function HeadNeckIcon({ className }) {
 function HandWristIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 親指〜手首までの美しい連続ライン */}
+      {/* 幾何学的で洗練された指と手首の連続ライン */}
       <path
-        d="M 18 42 V 26 C 14 26 10 24 10 20 C 10 17 13 16 15 18 L 16 20 V 10 C 16 7.5 19 7.5 19 10 V 18 M 19 18 V 6 C 19 3.5 22 3.5 22 6 V 18 M 22 18 V 8 C 22 5.5 25 5.5 25 8 V 18 M 25 18 V 12 C 25 9.5 28 9.5 28 12 V 26 C 28 32 30 36 30 42"
+        d="M 76 256 L 76 172 C 60 144 32 120 36 92 C 40 64 72 72 88 104 L 96 128 L 96 44 C 96 20 128 20 128 44 L 128 120 L 128 28 C 128 4 160 4 160 28 L 160 120 L 160 52 C 160 28 192 28 192 52 L 192 136 L 192 88 C 192 64 224 64 224 88 L 224 164 C 224 204 184 228 184 256"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       {/* 手首のシワ */}
       <path
-        d="M 18 36 Q 24 38 30 36"
+        d="M 88 220 Q 130 236 172 220"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="8"
         strokeLinecap="round"
-        opacity="0.35"
+        opacity="0.3"
       />
-      <TsuboMark cx="24" cy="28" />
+      {/* 手のひら/労宮などを想定した配置 */}
+      <TsuboMark cx="128" cy="168" />
     </IconFrame>
   );
 }
@@ -99,24 +103,25 @@ function HandWristIcon({ className }) {
 function FootAnkleIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 足首からつま先までの側面シルエット */}
+      {/* ふくらはぎ〜足首〜つま先までの美しいサイドシルエット */}
       <path
-        d="M 14 6 V 26 C 14 34 18 38 22 38 H 36 C 40 38 42 34 38 32 C 32 29 27 26 26 20 V 6"
+        d="M 96 24 L 96 112 C 96 156 60 172 48 204 C 36 236 72 244 96 244 L 192 244 C 228 244 244 212 224 188 C 196 156 160 140 160 92 L 160 24"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* くるぶし */}
+      {/* くるぶし（外果・内果）の骨の表現 */}
       <circle 
-        cx="20" 
-        cy="28" 
-        r="2" 
+        cx="100" 
+        cy="180" 
+        r="12" 
         stroke="currentColor" 
-        strokeWidth="2.5" 
+        strokeWidth="10" 
         strokeLinecap="round"
       />
-      <TsuboMark cx="27" cy="30" />
+      {/* 足首周辺/太渓などを想定した配置 */}
+      <TsuboMark cx="136" cy="192" />
     </IconFrame>
   );
 }
@@ -124,25 +129,26 @@ function FootAnkleIcon({ className }) {
 function TrunkAbdomenIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* 胴体のくびれを意識した滑らかなライン */}
+      {/* 肩からウエストラインにかけての有機的なカーブ */}
       <path
-        d="M 20 6 C 16 6 12 10 12 16 C 12 24 16 28 16 32 C 16 38 12 42 12 42 H 36 C 36 42 32 38 32 32 C 32 28 36 24 36 16 C 36 10 32 6 28 6"
+        d="M 64 32 C 40 32 32 64 48 100 C 64 136 64 164 56 196 C 48 228 72 248 128 248 C 184 248 208 228 200 196 C 192 164 192 136 208 100 C 224 64 216 32 192 32 C 168 32 152 48 128 48 C 104 48 88 32 64 32 Z"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* みぞおち〜肋骨の補助線 */}
+      {/* みぞおちの補助線 */}
       <path
-        d="M 16 20 Q 24 24 32 20"
+        d="M 88 112 Q 128 132 168 112"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="8"
         strokeLinecap="round"
-        opacity="0.35"
+        opacity="0.3"
       />
       {/* おへそ */}
-      <circle cx="24" cy="34" r="1.5" fill="currentColor" opacity="0.35" />
-      <TsuboMark cx="24" cy="25" />
+      <circle cx="128" cy="184" r="6" fill="currentColor" opacity="0.4" />
+      {/* 中脘/関元などを想定した配置 */}
+      <TsuboMark cx="128" cy="140" />
     </IconFrame>
   );
 }
@@ -150,16 +156,17 @@ function TrunkAbdomenIcon({ className }) {
 function GenericBodyIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {/* シンプルで視認性の高いピクトグラム風 */}
-      <circle cx="24" cy="10" r="5" stroke="currentColor" strokeWidth="2.5" />
+      {/* シンボリックかつモダンな全身ピクトグラム */}
+      <circle cx="128" cy="48" r="24" stroke="currentColor" strokeWidth="10" />
       <path
-        d="M 24 18 V 30 M 16 28 C 14 20 18 16 24 16 C 30 16 34 20 32 28 M 18 42 C 18 34 24 30 24 30 C 24 30 30 34 30 42"
+        d="M 128 92 V 164 M 80 152 C 64 104 92 80 128 80 C 164 80 192 104 176 152 M 88 232 C 88 184 128 164 128 164 C 128 164 168 184 168 232"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="10"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <TsuboMark cx="24" cy="24" />
+      {/* 全身の中心としての配置 */}
+      <TsuboMark cx="128" cy="128" />
     </IconFrame>
   );
 }
