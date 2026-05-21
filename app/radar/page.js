@@ -26,6 +26,8 @@ import {
   LocationEditor,
   PointDetailSheet,
   SegmentedTabs,
+  TsuboRegionIcon,
+  getPointBodyIconLabel,
 } from "./RadarPageComponents";
 import {
   FLAT_PRESETS,
@@ -1286,8 +1288,12 @@ export default function RadarPage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white text-[16px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]">
-                        {primaryTsubo.code}
+                      <div
+                        className="grid h-14 w-14 shrink-0 place-items-center rounded-[18px] bg-white text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]"
+                        title={getPointBodyIconLabel(primaryTsubo)}
+                        aria-label={getPointBodyIconLabel(primaryTsubo)}
+                      >
+                        <TsuboRegionIcon point={primaryTsubo} className="h-9 w-9" />
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -1373,8 +1379,12 @@ export default function RadarPage() {
                             onClick={() => setSelectedPoint(p)}
                           >
                             <div className="flex items-center gap-3 pr-8">
-                              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[13px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]">
-                                {p.code}
+                              <div
+                                className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white text-[#255F4F] shadow-sm ring-1 ring-[#CFE0D3]"
+                                title={getPointBodyIconLabel(p)}
+                                aria-label={getPointBodyIconLabel(p)}
+                              >
+                                <TsuboRegionIcon point={p} className="h-7 w-7" />
                               </div>
 
                               <div className="min-w-0 flex-1">
