@@ -1292,7 +1292,7 @@ export default function RadarPage() {
                         title={getTsuboRegionIconLabel(primaryTsubo)}
                         aria-label={getTsuboRegionIconLabel(primaryTsubo)}
                       >
-                        <TsuboRegionIcon point={primaryTsubo} className="h-11 w-11" />
+                        <TsuboRegionIcon point={primaryTsubo} className="h-12 w-12" />
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -1383,7 +1383,7 @@ export default function RadarPage() {
                                 title={getTsuboRegionIconLabel(p)}
                                 aria-label={getTsuboRegionIconLabel(p)}
                               >
-                                <TsuboRegionIcon point={p} className="h-11 w-11" />
+                                <TsuboRegionIcon point={p} className="h-9 w-9" />
                               </div>
 
                               <div className="min-w-0 flex-1">
