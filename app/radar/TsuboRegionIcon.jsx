@@ -1,150 +1,52 @@
 "use client";
 
-import React from "react";
-
 const TSUBO_HAND_PREFIXES = new Set(["LI", "LU", "PC", "HT", "SI", "TE"]);
 const TSUBO_FOOT_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
-const TSUBO_TRUNK_PREFIXES = new Set(["CV"]);
-const TSUBO_HEAD_NECK_CODES = new Set(["GB20", "GV20"]);
-
-const OUTLINE = "#7C5244";
-const HAIR = "#68483D";
-const SKIN_DEEP = "#9F684F";
-const SKIN_LINE = "#B97A5F";
-
-const strokeProps = {
-  stroke: OUTLINE,
-  strokeWidth: 2.2,
-  strokeLinecap: "round",
-  strokeLinejoin: "round",
-  vectorEffect: "non-scaling-stroke",
-};
-
-const softLineProps = {
-  stroke: SKIN_DEEP,
-  strokeWidth: 1.7,
-  strokeLinecap: "round",
-  strokeLinejoin: "round",
-  vectorEffect: "non-scaling-stroke",
-};
-
-function getTsuboCode(point) {
-  return String(point?.code || "").trim().toUpperCase();
-}
+const TSUBO_TRUNK_PREFIXES = new Set(["CV", "GV"]);
 
 function getTsuboCodePrefix(point) {
-  const match = getTsuboCode(point).match(/^[A-Z]+/);
+  const code = String(point?.code || "").trim().toUpperCase();
+  const match = code.match(/^[A-Z]+/);
   return match ? match[0] : "";
 }
 
 function getTsuboRegionKey(point) {
   const region = String(point?.point_region || "").trim();
-  const code = getTsuboCode(point);
-
-  if (region === "head_neck" || TSUBO_HEAD_NECK_CODES.has(code)) {
-    return "head_neck";
-  }
-
-  if (
-    region === "abdomen" ||
-    region === "chest_abdomen" ||
-    region === "trunk" ||
-    region === "back" ||
-    region === "low_back"
-  ) {
-    return "trunk";
-  }
+  if (region === "head_neck") return "head_neck";
+  if (region === "abdomen" || region === "chest_abdomen" || region === "trunk") return "trunk";
 
   const prefix = getTsuboCodePrefix(point);
-
   if (TSUBO_TRUNK_PREFIXES.has(prefix)) return "trunk";
   if (TSUBO_HAND_PREFIXES.has(prefix)) return "hand_wrist";
   if (TSUBO_FOOT_PREFIXES.has(prefix)) return "foot_ankle";
-
   return "body";
 }
 
 export function getTsuboRegionIconLabel(point) {
   const key = getTsuboRegionKey(point);
-
   if (key === "head_neck") return "頭・首まわり";
   if (key === "hand_wrist") return "手・手首まわり";
   if (key === "foot_ankle") return "足・足首まわり";
   if (key === "trunk") return "体幹・お腹まわり";
-
   return "からだのツボ";
 }
 
+const SKIN_BASE = "#F2D1B3";
+const SKIN_LIGHT = "#F8DFC6";
+const SKIN_SHADOW = "#D9A178";
+const SKIN_DEEP = "#B97751";
+const SKIN_LINE = "#A96F4E";
+
 function IconFrame({ children, className }) {
-  const rawId = React.useId().replace(/[^a-zA-Z0-9]/g, "");
-
-  const bgId = `tsuboBg${rawId}`;
-  const skinId = `tsuboSkin${rawId}`;
-  const shadeId = `tsuboShade${rawId}`;
-  const shadowId = `tsuboShadow${rawId}`;
-
-  const paint = {
-    bg: `url(#${bgId})`,
-    skin: `url(#${skinId})`,
-    shade: `url(#${shadeId})`,
-    highlight: "#FFE8D7",
-  };
-
   return (
     <svg
-      viewBox="0 0 128 128"
+      viewBox="0 0 256 256"
+      fill="none"
       className={className}
       aria-hidden="true"
       focusable="false"
-      preserveAspectRatio="xMidYMid meet"
-      shapeRendering="geometricPrecision"
     >
-      <defs>
-        <radialGradient id={bgId} cx="34%" cy="26%" r="72%">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="65%" stopColor="#FDF4EF" />
-          <stop offset="100%" stopColor="#F5E2D8" />
-        </radialGradient>
-
-        <linearGradient
-          id={skinId}
-          x1="28"
-          y1="18"
-          x2="98"
-          y2="118"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#FFE4D2" />
-          <stop offset="50%" stopColor="#F2BF9E" />
-          <stop offset="100%" stopColor="#D99773" />
-        </linearGradient>
-
-        <linearGradient
-          id={shadeId}
-          x1="46"
-          y1="24"
-          x2="98"
-          y2="116"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#C88568" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="#8F5643" stopOpacity="0.5" />
-        </linearGradient>
-
-        <filter id={shadowId} x="-20%" y="-20%" width="140%" height="150%">
-          <feDropShadow
-            dx="0"
-            dy="2"
-            stdDeviation="2"
-            floodColor="#5F4035"
-            floodOpacity="0.16"
-          />
-        </filter>
-      </defs>
-
-      <circle cx="64" cy="64" r="58" fill={paint.bg} />
-
-      <g filter={`url(#${shadowId})`}>{children(paint)}</g>
+      {children}
     </svg>
   );
 }
@@ -152,55 +54,46 @@ function IconFrame({ children, className }) {
 function HeadNeckIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {(p) => (
-        <>
-          <path
-            d="M49 72 L49 88 C43 97 31 103 18 116 H110 C97 103 85 97 79 88 V72 Z"
-            fill={p.skin}
-            {...strokeProps}
-          />
-
-          <path
-            d="M49 88 C56 97 72 97 79 88 C87 98 100 106 110 116 H18 C28 106 41 98 49 88 Z"
-            fill={p.shade}
-            opacity="0.62"
-          />
-
-          <path
-            d="M40 50 C40 33 50 22 64 22 C78 22 88 33 88 50 C88 67 78 77 64 77 C50 77 40 67 40 50 Z"
-            fill={p.skin}
-            {...strokeProps}
-          />
-
-          <path
-            d="M65 22 C79 23 88 34 88 50 C88 67 78 77 64 77 C71 70 75 60 75 50 C75 40 72 30 65 22 Z"
-            fill={p.shade}
-            opacity="0.44"
-          />
-
-          <path
-            d="M39 45 C38 29 49 16 64 16 C80 16 90 29 89 45 C82 38 73 37 64 41 C54 37 46 38 39 45 Z"
-            fill={HAIR}
-            stroke={OUTLINE}
-            strokeWidth="1.7"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
-
-          <path
-            d="M36 48 C32 49 32 56 40 56 M92 48 C96 49 96 56 88 56"
-            fill="none"
-            {...strokeProps}
-          />
-
-          <path
-            d="M45 104 C56 110 72 110 83 104"
-            fill="none"
-            {...softLineProps}
-            opacity="0.5"
-          />
-        </>
-      )}
+      <ellipse cx="128" cy="74" rx="48" ry="55" fill={SKIN_LIGHT} />
+      <path
+        d="M88 49c15-28 66-29 82 1 17 31 3 72-24 87-13 7-28 7-41 0-27-15-43-56-17-88Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M161 73c8 32-4 61-31 72 27-2 48-27 48-62 0-20-7-37-18-48 3 12 3 25 1 38Z"
+        fill={SKIN_SHADOW}
+        opacity="0.5"
+      />
+      <path
+        d="M105 133h46v39c0 14 11 27 27 32l33 11c11 4 18 14 18 25v6H27v-6c0-11 7-21 18-25l33-11c16-5 27-18 27-32v-39Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M105 145c13 9 33 10 46 1v22c-14 10-32 10-46 0v-23Z"
+        fill={SKIN_SHADOW}
+        opacity="0.45"
+      />
+      <path
+        d="M65 211c17-14 40-22 63-22s46 8 63 22c14 12 21 23 21 35H44c0-12 7-23 21-35Z"
+        fill={SKIN_LIGHT}
+      />
+      <path
+        d="M73 206c-22 8-38 20-46 40h73c-13-12-23-25-27-40Z"
+        fill={SKIN_SHADOW}
+        opacity="0.32"
+      />
+      <path
+        d="M183 206c22 8 38 20 46 40h-73c13-12 23-25 27-40Z"
+        fill={SKIN_SHADOW}
+        opacity="0.32"
+      />
+      <path
+        d="M94 126c18 22 50 22 68 0"
+        stroke={SKIN_DEEP}
+        strokeWidth="8"
+        strokeLinecap="round"
+        opacity="0.24"
+      />
     </IconFrame>
   );
 }
@@ -208,84 +101,48 @@ function HeadNeckIcon({ className }) {
 function HandWristIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {(p) => (
-        <>
-          <path
-            d="
-              M50 119
-              C43 110 40 100 40 88
-              L40 78
-              C34 74 28 69 24 63
-              C20 57 24 50 30 50
-              C34 50 38 54 43 60
-              L49 67
-              L49 31
-              C49 25 56 25 56 31
-              L56 63
-              L58 20
-              C58 13 66 13 66 20
-              L66 62
-              L68 24
-              C68 17 76 17 76 24
-              L76 65
-              L78 34
-              C78 28 85 28 85 34
-              L85 78
-              C89 86 90 95 87 104
-              C84 114 76 119 64 119
-              Z
-            "
-            fill={p.skin}
-            {...strokeProps}
-          />
-
-          <path
-            d="
-              M76 38
-              L78 78
-              C81 90 78 105 66 118
-              C78 118 85 112 88 103
-              C91 94 89 86 85 78
-              L85 34
-              C85 29 79 28 78 34
-              Z
-            "
-            fill={p.shade}
-            opacity="0.44"
-          />
-
-          <path
-            d="M56 62 V77 M66 62 V78 M76 66 V79"
-            fill="none"
-            {...strokeProps}
-            opacity="0.42"
-          />
-
-          <path
-            d="M40 80 C48 84 55 92 58 104"
-            fill="none"
-            {...softLineProps}
-            opacity="0.5"
-          />
-
-          <path
-            d="M51 80 C61 80 71 87 76 97"
-            fill="none"
-            {...softLineProps}
-            opacity="0.42"
-          />
-
-          <path
-            d="M31 59 C37 66 45 74 54 79"
-            fill="none"
-            stroke={p.highlight}
-            strokeWidth="2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.55"
-          />
-        </>
-      )}
+      <path
+        d="M82 245v-55c0-15-9-31-20-44l-16-19c-11-13-8-29 4-36 10-6 23-2 32 10l11 15V54c0-18 12-30 27-30 12 0 22 8 24 22 4-12 15-20 28-18 15 2 24 15 22 32 5-8 14-12 24-9 14 4 20 16 17 31l-14 70c-3 16-2 31 5 44 8 15 9 31 3 49H82Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M93 123 82 102c-8-15-24-19-35-11-12 8-14 24-4 37l36 48c10 13 14 26 14 41v28h43v-58c0-19-7-35-21-48l-22-16Z"
+        fill={SKIN_SHADOW}
+        opacity="0.75"
+      />
+      <path
+        d="M96 55c0-13 9-22 21-22s22 9 22 22v86H96V55Z"
+        fill={SKIN_LIGHT}
+      />
+      <path
+        d="M139 48c0-13 10-22 23-22s23 10 23 24l-2 91h-44V48Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M183 60c1-13 11-21 23-19 13 2 21 13 18 27l-15 75h-42l16-83Z"
+        fill={SKIN_LIGHT}
+      />
+      <path
+        d="M217 82c3-13 13-20 24-16 12 4 17 16 13 30l-21 67c-6 19-8 36-2 52 4 11 3 21-2 30h-48c11-17 15-34 11-53l-4-20 29-90Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M81 184c17 20 45 31 77 28 30-2 52-17 65-42 5 26 13 47 6 75H82v-55l-1-6Z"
+        fill={SKIN_SHADOW}
+        opacity="0.38"
+      />
+      <path
+        d="M96 141c28 10 64 10 101 0"
+        stroke={SKIN_LINE}
+        strokeWidth="7"
+        strokeLinecap="round"
+        opacity="0.18"
+      />
+      <path
+        d="M91 222h146v23H91z"
+        fill={SKIN_DEEP}
+        opacity="0.12"
+      />
     </IconFrame>
   );
 }
@@ -293,85 +150,46 @@ function HandWristIcon({ className }) {
 function FootAnkleIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {(p) => (
-        <>
-          <path
-            d="
-              M70 12
-              H94
-              C93 31 89 51 89 68
-              C89 80 97 90 97 102
-              C97 113 88 119 76 118
-              C68 118 64 115 56 116
-              H32
-              C24 116 23 109 31 105
-              C48 96 64 83 70 65
-              Z
-            "
-            fill={p.skin}
-            {...strokeProps}
-          />
-
-          <path
-            d="
-              M88 13
-              H94
-              C93 31 89 51 89 68
-              C89 80 97 90 97 102
-              C97 113 88 119 76 118
-              C68 117 64 113 66 106
-              C70 92 80 82 80 67
-              C80 50 85 32 88 13
-              Z
-            "
-            fill={p.shade}
-            opacity="0.55"
-          />
-
-          <ellipse
-            cx="79"
-            cy="93"
-            rx="5"
-            ry="6.5"
-            fill={p.highlight}
-            opacity="0.75"
-            stroke={SKIN_LINE}
-            strokeWidth="1.2"
-            vectorEffect="non-scaling-stroke"
-          />
-
-          <path
-            d="M34 106 C31 109 29 112 29 115"
-            fill="none"
-            {...softLineProps}
-            opacity="0.5"
-          />
-
-          <path
-            d="M45 101 C41 105 38 109 37 115"
-            fill="none"
-            {...softLineProps}
-            opacity="0.48"
-          />
-
-          <path
-            d="M57 94 C53 101 50 108 50 115"
-            fill="none"
-            {...softLineProps}
-            opacity="0.42"
-          />
-
-          <path
-            d="M72 54 C74 68 70 82 61 93"
-            fill="none"
-            stroke={p.highlight}
-            strokeWidth="2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.58"
-          />
-        </>
-      )}
+      <path
+        d="M106 20h61c0 48-2 83 8 112 9 25 36 43 57 65 16 18 10 39-16 45-27 6-60 6-96 3-25-2-51 0-76-2-17-1-24-12-18-26 6-16 22-25 41-36 28-17 42-42 42-75L106 20Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M167 20c0 48-2 83 8 112 8 22 29 39 48 58 7 7 12 14 14 21-19 1-41 0-66-3-36-4-66-8-93-2 22-20 31-45 31-75V20h58Z"
+        fill={SKIN_LIGHT}
+      />
+      <path
+        d="M151 129c12 34 41 51 69 73 12 9 13 20 2 29-10 8-29 12-58 12 21-16 29-35 20-57-6-15-19-30-33-57Z"
+        fill={SKIN_SHADOW}
+        opacity="0.52"
+      />
+      <path
+        d="M68 181c-20 12-36 21-42 36-6 14 1 25 18 26 24 2 50 0 76 2 35 3 69 3 96-3 18-4 26-15 23-28-33 7-69 8-107 3-42-5-72-1-95 12 5-17 25-25 52-40 20-11 34-25 44-43-16 16-36 24-65 35Z"
+        fill={SKIN_SHADOW}
+        opacity="0.62"
+      />
+      <path
+        d="M147 126c-18 33-44 57-79 72"
+        stroke={SKIN_DEEP}
+        strokeWidth="8"
+        strokeLinecap="round"
+        opacity="0.2"
+      />
+      <ellipse cx="158" cy="155" rx="18" ry="16" fill={SKIN_SHADOW} opacity="0.55" />
+      <path
+        d="M198 221c10 0 19-1 27-4"
+        stroke={SKIN_DEEP}
+        strokeWidth="8"
+        strokeLinecap="round"
+        opacity="0.22"
+      />
+      <path
+        d="M177 217c8 1 15 1 22 1"
+        stroke={SKIN_DEEP}
+        strokeWidth="6"
+        strokeLinecap="round"
+        opacity="0.16"
+      />
     </IconFrame>
   );
 }
@@ -379,95 +197,44 @@ function FootAnkleIcon({ className }) {
 function TrunkAbdomenIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {(p) => (
-        <>
-          <path
-            d="
-              M51 16
-              H77
-              C90 17 101 23 108 32
-              C110 36 103 45 94 49
-              C90 63 88 76 88 88
-              C88 101 96 109 98 118
-              H30
-              C32 109 40 101 40 88
-              C40 76 38 63 34 49
-              C25 45 18 36 20 32
-              C27 23 38 17 51 16
-              Z
-            "
-            fill={p.skin}
-            {...strokeProps}
-          />
-
-          <path
-            d="
-              M33 118
-              C37 109 43 101 43 89
-              C43 72 38 58 34 49
-              C29 47 24 42 22 37
-              C29 57 47 78 48 94
-              C48 106 39 114 33 118
-              Z
-            "
-            fill={p.shade}
-            opacity="0.42"
-          />
-
-          <path
-            d="
-              M95 118
-              C91 109 85 101 85 89
-              C85 72 90 58 94 49
-              C99 47 104 42 106 37
-              C99 57 81 78 80 94
-              C80 106 89 114 95 118
-              Z
-            "
-            fill={p.shade}
-            opacity="0.42"
-          />
-
-          <path
-            d="M38 50 C49 56 59 56 64 56 C69 56 79 56 90 50"
-            fill="none"
-            {...strokeProps}
-            opacity="0.26"
-          />
-
-          <path
-            d="M64 60 V110"
-            fill="none"
-            stroke={SKIN_LINE}
-            strokeWidth="2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.56"
-          />
-
-          <circle cx="64" cy="92" r="3.2" fill={SKIN_DEEP} opacity="0.72" />
-
-          <path
-            d="M59 69 C54 76 53 84 54 91"
-            fill="none"
-            stroke={p.highlight}
-            strokeWidth="2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.45"
-          />
-
-          <path
-            d="M69 69 C74 76 75 84 74 91"
-            fill="none"
-            stroke={p.highlight}
-            strokeWidth="2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.38"
-          />
-        </>
-      )}
+      <path
+        d="M61 31c22-9 44 7 67 7s45-16 67-7c22 9 36 33 25 63-9 25-21 49-18 82 2 26 13 48 2 66H52c-11-18 0-40 2-66 3-33-9-57-18-82-11-30 3-54 25-63Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M61 31c22-9 44 7 67 7s45-16 67-7c-22 23-44 35-67 35S83 54 61 31Z"
+        fill={SKIN_LIGHT}
+      />
+      <path
+        d="M37 93c14 24 34 37 58 38 15 0 26-5 33-16 7 11 18 16 33 16 24-1 44-14 58-38-4 17-10 35-14 55-23 14-51 14-77 2-26 12-54 12-77-2-4-20-10-38-14-55Z"
+        fill={SKIN_SHADOW}
+        opacity="0.38"
+      />
+      <path
+        d="M76 139c-4 35-7 69-24 103h48c-8-37-6-69 2-99-9 2-18 1-26-4Z"
+        fill={SKIN_SHADOW}
+        opacity="0.5"
+      />
+      <path
+        d="M180 139c4 35 7 69 24 103h-48c8-37 6-69-2-99 9 2 18 1 26-4Z"
+        fill={SKIN_SHADOW}
+        opacity="0.5"
+      />
+      <path
+        d="M128 119c-8 26-8 67 0 102"
+        stroke={SKIN_DEEP}
+        strokeWidth="7"
+        strokeLinecap="round"
+        opacity="0.18"
+      />
+      <ellipse cx="128" cy="188" rx="9" ry="6" fill={SKIN_DEEP} opacity="0.32" />
+      <path
+        d="M87 96c11 11 25 16 41 16s30-5 41-16"
+        stroke={SKIN_DEEP}
+        strokeWidth="7"
+        strokeLinecap="round"
+        opacity="0.16"
+      />
     </IconFrame>
   );
 }
@@ -475,87 +242,25 @@ function TrunkAbdomenIcon({ className }) {
 function GenericBodyIcon({ className }) {
   return (
     <IconFrame className={className}>
-      {(p) => (
-        <>
-          <circle cx="64" cy="23" r="11" fill={p.skin} {...strokeProps} />
-
-          <path
-            d="
-              M52 39
-              H76
-              C87 39 100 45 106 53
-              C110 59 104 65 98 60
-              L85 49
-              V76
-              L93 113
-              C95 121 84 123 80 116
-              L64 88
-              L48 116
-              C44 123 33 121 35 113
-              L43 76
-              V49
-              L30 60
-              C24 65 18 59 22 53
-              C28 45 41 39 52 39
-              Z
-            "
-            fill={p.skin}
-            {...strokeProps}
-          />
-
-          <path
-            d="
-              M64 39
-              H76
-              C87 39 100 45 106 53
-              C110 59 104 65 98 60
-              L85 49
-              V76
-              L93 113
-              C95 121 84 123 80 116
-              L64 88
-              Z
-            "
-            fill={p.shade}
-            opacity="0.42"
-          />
-
-          <path
-            d="M64 43 V85"
-            fill="none"
-            stroke={SKIN_LINE}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-            opacity="0.4"
-          />
-        </>
-      )}
+      <ellipse cx="128" cy="38" rx="27" ry="29" fill={SKIN_BASE} />
+      <path
+        d="M89 75c20-13 58-13 78 0 10 7 16 18 18 31l12 67c2 11-5 21-16 23l-10 2 18 42H67l18-42-10-2c-11-2-18-12-16-23l12-67c2-13 8-24 18-31Z"
+        fill={SKIN_BASE}
+      />
+      <path
+        d="M128 67c27 1 47 15 55 38l14 68c2 11-5 21-16 23l-10 2 18 42h-61V67Z"
+        fill={SKIN_SHADOW}
+        opacity="0.42"
+      />
     </IconFrame>
   );
 }
 
-export default function TsuboRegionIcon({
-  point,
-  className = "h-8 w-8",
-}) {
+export default function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
   const key = getTsuboRegionKey(point);
-
-  if (key === "head_neck") {
-    return <HeadNeckIcon className={className} />;
-  }
-
-  if (key === "hand_wrist") {
-    return <HandWristIcon className={className} />;
-  }
-
-  if (key === "foot_ankle") {
-    return <FootAnkleIcon className={className} />;
-  }
-
-  if (key === "trunk") {
-    return <TrunkAbdomenIcon className={className} />;
-  }
-
+  if (key === "head_neck") return <HeadNeckIcon className={className} />;
+  if (key === "hand_wrist") return <HandWristIcon className={className} />;
+  if (key === "foot_ankle") return <FootAnkleIcon className={className} />;
+  if (key === "trunk") return <TrunkAbdomenIcon className={className} />;
   return <GenericBodyIcon className={className} />;
 }
