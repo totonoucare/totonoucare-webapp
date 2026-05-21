@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 const TSUBO_HAND_PREFIXES = new Set(["LI", "LU", "PC", "HT", "SI", "TE"]);
 const TSUBO_FOOT_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
 const TSUBO_TRUNK_PREFIXES = new Set(["CV", "GV"]);
@@ -31,228 +33,264 @@ export function getTsuboRegionIconLabel(point) {
   return "からだのツボ";
 }
 
-const SKIN_BASE = "#F2D1B3";
-const SKIN_LIGHT = "#F8DFC6";
-const SKIN_SHADOW = "#D9A178";
-const SKIN_DEEP = "#B97751";
-const SKIN_LINE = "#A96F4E";
+const SKIN = {
+  light: "#F8DDC4",
+  base: "#EDC29E",
+  shade: "#D79A73",
+  deep: "#B97855",
+  blush: "#F3C6AA",
+  outline: "#C58A66",
+};
 
-function IconFrame({ children, className }) {
+function IconSvg({ children, className, label }) {
   return (
     <svg
-      viewBox="0 0 256 256"
-      fill="none"
+      viewBox="0 0 96 96"
       className={className}
-      aria-hidden="true"
+      role="img"
+      aria-label={label}
       focusable="false"
     >
+      <rect x="3" y="3" width="90" height="90" rx="25" fill="#FFFDF9" />
+      <rect
+        x="4"
+        y="4"
+        width="88"
+        height="88"
+        rx="24"
+        fill="none"
+        stroke="#E5EFE8"
+        strokeWidth="3"
+      />
       {children}
     </svg>
   );
 }
 
-function HeadNeckIcon({ className }) {
+function SvgDefs({ id }) {
   return (
-    <IconFrame className={className}>
-      <ellipse cx="128" cy="74" rx="48" ry="55" fill={SKIN_LIGHT} />
-      <path
-        d="M88 49c15-28 66-29 82 1 17 31 3 72-24 87-13 7-28 7-41 0-27-15-43-56-17-88Z"
-        fill={SKIN_BASE}
-      />
-      <path
-        d="M161 73c8 32-4 61-31 72 27-2 48-27 48-62 0-20-7-37-18-48 3 12 3 25 1 38Z"
-        fill={SKIN_SHADOW}
-        opacity="0.5"
-      />
-      <path
-        d="M105 133h46v39c0 14 11 27 27 32l33 11c11 4 18 14 18 25v6H27v-6c0-11 7-21 18-25l33-11c16-5 27-18 27-32v-39Z"
-        fill={SKIN_BASE}
-      />
-      <path
-        d="M105 145c13 9 33 10 46 1v22c-14 10-32 10-46 0v-23Z"
-        fill={SKIN_SHADOW}
-        opacity="0.45"
-      />
-      <path
-        d="M65 211c17-14 40-22 63-22s46 8 63 22c14 12 21 23 21 35H44c0-12 7-23 21-35Z"
-        fill={SKIN_LIGHT}
-      />
-      <path
-        d="M73 206c-22 8-38 20-46 40h73c-13-12-23-25-27-40Z"
-        fill={SKIN_SHADOW}
-        opacity="0.32"
-      />
-      <path
-        d="M183 206c22 8 38 20 46 40h-73c13-12 23-25 27-40Z"
-        fill={SKIN_SHADOW}
-        opacity="0.32"
-      />
-      <path
-        d="M94 126c18 22 50 22 68 0"
-        stroke={SKIN_DEEP}
-        strokeWidth="8"
-        strokeLinecap="round"
-        opacity="0.24"
-      />
-    </IconFrame>
+    <defs>
+      <linearGradient id={`${id}-skin`} x1="22" y1="14" x2="74" y2="86" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor={SKIN.light} />
+        <stop offset="0.58" stopColor={SKIN.base} />
+        <stop offset="1" stopColor={SKIN.shade} />
+      </linearGradient>
+      <linearGradient id={`${id}-shadow`} x1="34" y1="14" x2="68" y2="86" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor={SKIN.blush} stopOpacity="0.3" />
+        <stop offset="1" stopColor={SKIN.deep} stopOpacity="0.48" />
+      </linearGradient>
+    </defs>
   );
 }
 
 function HandWristIcon({ className }) {
+  const id = useId().replaceAll(":", "");
   return (
-    <IconFrame className={className}>
+    <IconSvg className={className} label="手・手首まわり">
+      <SvgDefs id={id} />
+      {/* wrist */}
       <path
-        d="M82 245v-55c0-15-9-31-20-44l-16-19c-11-13-8-29 4-36 10-6 23-2 32 10l11 15V54c0-18 12-30 27-30 12 0 22 8 24 22 4-12 15-20 28-18 15 2 24 15 22 32 5-8 14-12 24-9 14 4 20 16 17 31l-14 70c-3 16-2 31 5 44 8 15 9 31 3 49H82Z"
-        fill={SKIN_BASE}
+        d="M37 76h27c2.8 0 5 2.2 5 5v8H32v-8c0-2.8 2.2-5 5-5Z"
+        fill={`url(#${id}-skin)`}
+      />
+      <path d="M33 80h36v7H33z" fill={SKIN.shade} opacity="0.22" />
+
+      {/* palm */}
+      <path
+        d="M29 38c0-7.5 6.1-13.5 13.6-13.5h11.9c8.4 0 15.3 6.8 15.3 15.2v26.6c0 8.7-7 15.7-15.7 15.7H43.4C35.4 82 29 75.6 29 67.6V38Z"
+        fill={`url(#${id}-skin)`}
+      />
+
+      {/* fingers: five visible rounded digits */}
+      <rect x="31.5" y="15" width="8.8" height="31" rx="4.4" fill={`url(#${id}-skin)`} />
+      <rect x="41" y="10" width="9.2" height="36" rx="4.6" fill={`url(#${id}-skin)`} />
+      <rect x="51" y="12" width="9" height="34" rx="4.5" fill={`url(#${id}-skin)`} />
+      <rect x="60.5" y="18" width="8.2" height="28" rx="4.1" fill={`url(#${id}-skin)`} />
+
+      {/* thumb */}
+      <path
+        d="M29.5 49.5 21 43.8c-3.4-2.3-4.3-6.9-2-10.3 2.4-3.5 7.2-4.2 10.5-1.6l10.2 8.1-10.2 9.5Z"
+        fill={`url(#${id}-skin)`}
+      />
+
+      {/* soft shadows */}
+      <path
+        d="M61.5 42c4.9 4.8 7.8 11.8 7.8 20.1 0 9.5-6.4 18.5-16 20H64c7.2 0 13-5.8 13-13V42c0-7.5-4.9-13.8-11.6-16 .8 5.5-.2 11.2-3.9 16Z"
+        fill={`url(#${id}-shadow)`}
       />
       <path
-        d="M93 123 82 102c-8-15-24-19-35-11-12 8-14 24-4 37l36 48c10 13 14 26 14 41v28h43v-58c0-19-7-35-21-48l-22-16Z"
-        fill={SKIN_SHADOW}
-        opacity="0.75"
-      />
-      <path
-        d="M96 55c0-13 9-22 21-22s22 9 22 22v86H96V55Z"
-        fill={SKIN_LIGHT}
-      />
-      <path
-        d="M139 48c0-13 10-22 23-22s23 10 23 24l-2 91h-44V48Z"
-        fill={SKIN_BASE}
-      />
-      <path
-        d="M183 60c1-13 11-21 23-19 13 2 21 13 18 27l-15 75h-42l16-83Z"
-        fill={SKIN_LIGHT}
-      />
-      <path
-        d="M217 82c3-13 13-20 24-16 12 4 17 16 13 30l-21 67c-6 19-8 36-2 52 4 11 3 21-2 30h-48c11-17 15-34 11-53l-4-20 29-90Z"
-        fill={SKIN_BASE}
-      />
-      <path
-        d="M81 184c17 20 45 31 77 28 30-2 52-17 65-42 5 26 13 47 6 75H82v-55l-1-6Z"
-        fill={SKIN_SHADOW}
-        opacity="0.38"
-      />
-      <path
-        d="M96 141c28 10 64 10 101 0"
-        stroke={SKIN_LINE}
-        strokeWidth="7"
+        d="M30.5 49.8c4.5 4.5 8.5 5.8 12.4 4.9"
+        fill="none"
+        stroke={SKIN.outline}
+        strokeWidth="2.8"
         strokeLinecap="round"
-        opacity="0.18"
+        opacity="0.35"
       />
-      <path
-        d="M91 222h146v23H91z"
-        fill={SKIN_DEEP}
-        opacity="0.12"
-      />
-    </IconFrame>
+      {[36, 46, 56, 65].map((x) => (
+        <path
+          key={x}
+          d={`M${x} 47v20`}
+          stroke={SKIN.outline}
+          strokeWidth="2"
+          strokeLinecap="round"
+          opacity="0.18"
+        />
+      ))}
+    </IconSvg>
   );
 }
 
 function FootAnkleIcon({ className }) {
+  const id = useId().replaceAll(":", "");
   return (
-    <IconFrame className={className}>
+    <IconSvg className={className} label="足・足首まわり">
+      <SvgDefs id={id} />
+      {/* lower leg */}
       <path
-        d="M106 20h61c0 48-2 83 8 112 9 25 36 43 57 65 16 18 10 39-16 45-27 6-60 6-96 3-25-2-51 0-76-2-17-1-24-12-18-26 6-16 22-25 41-36 28-17 42-42 42-75L106 20Z"
-        fill={SKIN_BASE}
+        d="M41 11h22c1.8 0 3.1 1.6 2.8 3.4l-6 37.5c-.9 5.7 1.2 11.5 5.5 15.3l2.6 2.3H42.4l2.4-7c2.1-6.2 2.3-12.8.5-19.1L38.2 14.7c-.4-1.9 1-3.7 2.8-3.7Z"
+        fill={`url(#${id}-skin)`}
+      />
+
+      {/* ankle + heel + foot silhouette */}
+      <path
+        d="M43.5 58.2c5.6 3.3 13.1 3.3 19.2 0 2.1 7.2 6.6 11.5 14 14.2l6.5 2.3c4.7 1.7 7.5 6.3 6.5 11.1-.7 3.3-3.7 5.7-7.1 5.7H22.5c-5.7 0-9.8-5.5-8.2-10.9.9-3.2 3.6-5.6 7-6.3l10.5-2.2c6.5-1.4 10.2-6.1 11.7-13.9Z"
+        fill={`url(#${id}-skin)`}
+      />
+
+      {/* instep and arch shading */}
+      <path
+        d="M56.5 63.5c3.5 7.2 10.3 12 20.4 14.3 4.8 1.1 7.4 4.1 7.7 8.6H52.9c7.5-5.5 8.7-13.1 3.6-22.9Z"
+        fill={`url(#${id}-shadow)`}
       />
       <path
-        d="M167 20c0 48-2 83 8 112 8 22 29 39 48 58 7 7 12 14 14 21-19 1-41 0-66-3-36-4-66-8-93-2 22-20 31-45 31-75V20h58Z"
-        fill={SKIN_LIGHT}
-      />
-      <path
-        d="M151 129c12 34 41 51 69 73 12 9 13 20 2 29-10 8-29 12-58 12 21-16 29-35 20-57-6-15-19-30-33-57Z"
-        fill={SKIN_SHADOW}
-        opacity="0.52"
-      />
-      <path
-        d="M68 181c-20 12-36 21-42 36-6 14 1 25 18 26 24 2 50 0 76 2 35 3 69 3 96-3 18-4 26-15 23-28-33 7-69 8-107 3-42-5-72-1-95 12 5-17 25-25 52-40 20-11 34-25 44-43-16 16-36 24-65 35Z"
-        fill={SKIN_SHADOW}
-        opacity="0.62"
-      />
-      <path
-        d="M147 126c-18 33-44 57-79 72"
-        stroke={SKIN_DEEP}
-        strokeWidth="8"
+        d="M20.5 81.5c8.8 1.2 17.1-.6 24.7-5.4 9.1 8.3 22.3 11.2 39.4 8.8"
+        fill="none"
+        stroke={SKIN.outline}
+        strokeWidth="3.2"
         strokeLinecap="round"
-        opacity="0.2"
+        opacity="0.25"
       />
-      <ellipse cx="158" cy="155" rx="18" ry="16" fill={SKIN_SHADOW} opacity="0.55" />
-      <path
-        d="M198 221c10 0 19-1 27-4"
-        stroke={SKIN_DEEP}
-        strokeWidth="8"
-        strokeLinecap="round"
-        opacity="0.22"
-      />
-      <path
-        d="M177 217c8 1 15 1 22 1"
-        stroke={SKIN_DEEP}
-        strokeWidth="6"
-        strokeLinecap="round"
-        opacity="0.16"
-      />
-    </IconFrame>
+
+      {/* ankle bone and toe bumps */}
+      <circle cx="59" cy="64" r="4.6" fill={SKIN.deep} opacity="0.22" />
+      {[76, 81, 85].map((x, i) => (
+        <circle key={x} cx={x} cy={83.8 + i * 0.2} r={2.2 - i * 0.2} fill={SKIN.deep} opacity="0.18" />
+      ))}
+    </IconSvg>
   );
 }
 
 function TrunkAbdomenIcon({ className }) {
+  const id = useId().replaceAll(":", "");
   return (
-    <IconFrame className={className}>
+    <IconSvg className={className} label="体幹・お腹まわり">
+      <SvgDefs id={id} />
+      {/* neck */}
       <path
-        d="M61 31c22-9 44 7 67 7s45-16 67-7c22 9 36 33 25 63-9 25-21 49-18 82 2 26 13 48 2 66H52c-11-18 0-40 2-66 3-33-9-57-18-82-11-30 3-54 25-63Z"
-        fill={SKIN_BASE}
+        d="M38.5 10h19v16.5c0 5.2-4.2 9.5-9.5 9.5s-9.5-4.3-9.5-9.5V10Z"
+        fill={`url(#${id}-skin)`}
       />
+      {/* shoulders, chest, abdomen and waist as one clear trunk silhouette */}
       <path
-        d="M61 31c22-9 44 7 67 7s45-16 67-7c-22 23-44 35-67 35S83 54 61 31Z"
-        fill={SKIN_LIGHT}
+        d="M28 25.8c8 5.6 14.7 8.3 20 8.3s12-2.7 20-8.3c10.2 3.8 17.4 12.8 18.7 23.6l4 32.9c.7 5.5-3.6 10.4-9.2 10.4h-67c-5.6 0-9.9-4.9-9.2-10.4l4-32.9C10.6 38.6 17.8 29.6 28 25.8Z"
+        fill={`url(#${id}-skin)`}
       />
+      {/* soft abdomen plane */}
       <path
-        d="M37 93c14 24 34 37 58 38 15 0 26-5 33-16 7 11 18 16 33 16 24-1 44-14 58-38-4 17-10 35-14 55-23 14-51 14-77 2-26 12-54 12-77-2-4-20-10-38-14-55Z"
-        fill={SKIN_SHADOW}
-        opacity="0.38"
+        d="M16.2 52c8.9 7.5 19.5 11.2 31.8 11.2S71.4 59.5 80.3 52l3.5 28.7c.4 3.4-2.2 6.3-5.6 6.3H17.8c-3.4 0-6-2.9-5.6-6.3L16.2 52Z"
+        fill={`url(#${id}-shadow)`}
+        opacity="0.72"
       />
+      {/* side waist shadows */}
       <path
-        d="M76 139c-4 35-7 69-24 103h48c-8-37-6-69 2-99-9 2-18 1-26-4Z"
-        fill={SKIN_SHADOW}
-        opacity="0.5"
-      />
-      <path
-        d="M180 139c4 35 7 69 24 103h-48c8-37 6-69-2-99 9 2 18 1 26-4Z"
-        fill={SKIN_SHADOW}
-        opacity="0.5"
-      />
-      <path
-        d="M128 119c-8 26-8 67 0 102"
-        stroke={SKIN_DEEP}
-        strokeWidth="7"
+        d="M22.5 42c4.6 13.6 4.7 29.8.3 48"
+        fill="none"
+        stroke={SKIN.outline}
+        strokeWidth="4"
         strokeLinecap="round"
         opacity="0.18"
       />
-      <ellipse cx="128" cy="188" rx="9" ry="6" fill={SKIN_DEEP} opacity="0.32" />
       <path
-        d="M87 96c11 11 25 16 41 16s30-5 41-16"
-        stroke={SKIN_DEEP}
-        strokeWidth="7"
+        d="M73.5 42c-4.6 13.6-4.7 29.8-.3 48"
+        fill="none"
+        stroke={SKIN.outline}
+        strokeWidth="4"
         strokeLinecap="round"
-        opacity="0.16"
+        opacity="0.18"
       />
-    </IconFrame>
+      {/* minimal center line and navel to read as front abdomen */}
+      <path
+        d="M48 48c-2.2 10.5-2.2 22.7 0 33.5"
+        stroke={SKIN.outline}
+        strokeWidth="2.3"
+        strokeLinecap="round"
+        opacity="0.15"
+      />
+      <ellipse cx="48" cy="72" rx="3.4" ry="2.1" fill={SKIN.deep} opacity="0.28" />
+      <path
+        d="M30.5 35.2c5.5 4.3 11.3 6.4 17.5 6.4s12-2.1 17.5-6.4"
+        fill="none"
+        stroke={SKIN.outline}
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.12"
+      />
+    </IconSvg>
+  );
+}
+
+function HeadNeckIcon({ className }) {
+  const id = useId().replaceAll(":", "");
+  return (
+    <IconSvg className={className} label="頭・首まわり">
+      <SvgDefs id={id} />
+      {/* head */}
+      <path
+        d="M48 9c16.3 0 28.5 13.5 28.5 31.2 0 13.4-6.3 25.7-16.3 30.9-7.5 3.9-16.9 3.9-24.4 0-10-5.2-16.3-17.5-16.3-30.9C19.5 22.5 31.7 9 48 9Z"
+        fill={`url(#${id}-skin)`}
+      />
+      <path
+        d="M65.2 23.3c4.8 12.5 2.3 28-6.7 39.8-5 6.6-11.6 10.3-19.8 11.2 7.3 2.5 15.7 2 22.3-1.6C71 67.2 77.1 54.2 76.5 40.2c-.4-7.6-2.9-14.2-6.9-19.4-1.4.8-2.9 1.6-4.4 2.5Z"
+        fill={`url(#${id}-shadow)`}
+      />
+      {/* neck and shoulders */}
+      <path
+        d="M37.8 67.2h20.4v12.3c0 4.9 3.1 9.2 7.7 10.7l11.6 3.8H18.5l11.6-3.8c4.6-1.5 7.7-5.8 7.7-10.7V67.2Z"
+        fill={`url(#${id}-skin)`}
+      />
+      <path
+        d="M37.8 70c5.7 4.5 14.7 4.6 20.4 0v7.4c-6.1 4.3-14.3 4.3-20.4 0V70Z"
+        fill={SKIN.shade}
+        opacity="0.3"
+      />
+      <path
+        d="M18.5 94c8-10.4 18-15.6 29.5-15.6S69.5 83.6 77.5 94h-59Z"
+        fill={SKIN.light}
+      />
+      <path
+        d="M29.5 69.5c8.8 8.7 28.2 8.7 37 0"
+        fill="none"
+        stroke={SKIN.outline}
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity="0.2"
+      />
+    </IconSvg>
   );
 }
 
 function GenericBodyIcon({ className }) {
+  const id = useId().replaceAll(":", "");
   return (
-    <IconFrame className={className}>
-      <ellipse cx="128" cy="38" rx="27" ry="29" fill={SKIN_BASE} />
+    <IconSvg className={className} label="からだのツボ">
+      <SvgDefs id={id} />
+      <circle cx="48" cy="19" r="12" fill={`url(#${id}-skin)`} />
       <path
-        d="M89 75c20-13 58-13 78 0 10 7 16 18 18 31l12 67c2 11-5 21-16 23l-10 2 18 42H67l18-42-10-2c-11-2-18-12-16-23l12-67c2-13 8-24 18-31Z"
-        fill={SKIN_BASE}
+        d="M31 36c8-5.2 26-5.2 34 0 5.2 3.4 8.3 9 8.8 15.2L76 83H20l2.2-31.8C22.7 45 25.8 39.4 31 36Z"
+        fill={`url(#${id}-skin)`}
       />
-      <path
-        d="M128 67c27 1 47 15 55 38l14 68c2 11-5 21-16 23l-10 2 18 42h-61V67Z"
-        fill={SKIN_SHADOW}
-        opacity="0.42"
-      />
-    </IconFrame>
+      <path d="M48 31c12 .8 20 8.1 24 21.8L76 83H48V31Z" fill={`url(#${id}-shadow)`} />
+    </IconSvg>
   );
 }
 
@@ -264,3 +302,4 @@ export default function TsuboRegionIcon({ point, className = "h-8 w-8" }) {
   if (key === "trunk") return <TrunkAbdomenIcon className={className} />;
   return <GenericBodyIcon className={className} />;
 }
+
