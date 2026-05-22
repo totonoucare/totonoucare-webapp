@@ -659,8 +659,15 @@ export default function RadarPage() {
     [activeCareForecast, careTriggerFactors, riskContext, selectedIsToday]
   );
   const derivedLifestylePlan = useMemo(
-    () => getLifestylePlan(careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
-    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday]
+    () =>
+      getLifestylePlan(
+        careTriggerKey,
+        secondaryCareTriggerKey,
+        activeCareForecast?.signal ?? 0,
+        selectedIsToday ? "today" : "tomorrow",
+        symptomFocus,
+      ),
+    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday, symptomFocus]
   );
   const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
   const primaryTsubo = tsuboPoints[0] || null;
@@ -1691,5 +1698,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
 
