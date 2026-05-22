@@ -407,6 +407,78 @@ const PEAK_PREP_ITEMS = {
   dry: ["喉が渇く前に少しずつ潤す", "目と喉を使いすぎない", "夜更かしで消耗を重ねない"],
 };
 
+const FORECAST_SYMPTOM_LABELS = {
+  fatigue: "だるさ",
+  sleep: "睡眠",
+  neck_shoulder: "首肩",
+  low_back_pain: "腰",
+  swelling: "むくみ",
+  headache: "頭痛",
+  dizziness: "めまい",
+  mood: "気分",
+};
+
+const SYMPTOM_BODY_SIGN_LABELS = {
+  fatigue: ["だるさが残りやすい", "動き出しが重くなりやすい", "休んでも抜けにくく感じやすい"],
+  sleep: ["夜まで刺激が残りやすい", "寝る前に体が休みに入りにくい", "朝の重さにつながりやすい"],
+  neck_shoulder: ["首元・肩甲骨まわりがこわばりやすい", "画面姿勢で肩の力が抜けにくい", "頭〜首の重さとして感じやすい"],
+  low_back_pain: ["腰腹・骨盤まわりが重くなりやすい", "座りっぱなしで腰に残りやすい", "動き出しでこわばりを感じやすい"],
+  swelling: ["顔や脚の重さが残りやすい", "足首まわりが重く感じやすい", "冷たさ・甘さ・塩気が重なりやすい"],
+  headache: ["頭・目・耳まわりにこもりやすい", "首肩のこわばりが頭に響きやすい", "空腹や刺激で重さが増えやすい"],
+  dizziness: ["ふわつき感が出やすい", "立ち上がりで揺れを感じやすい", "首や耳まわりの緊張が残りやすい"],
+  mood: ["気分の重さや焦りが出やすい", "刺激で押すほど揺れやすい", "予定の詰め込みが負担になりやすい"],
+};
+
+const SYMPTOM_PEAK_PREP_ITEMS = {
+  fatigue: ["作業量を一つ減らして余白を残す", "空腹と食べすぎの差を小さくする", "休む余白を残して予定を詰めすぎない"],
+  sleep: ["夕方以降の刺激を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
+  neck_shoulder: ["首元を冷やしたまま固めない", "画面から目を離して肩を落とす", "耳まわりと肩甲骨まわりを一度ゆるめる"],
+  low_back_pain: ["座りっぱなしを一度切る", "腰腹か足首を冷やさない", "深く座る前に骨盤を小さく動かす"],
+  swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねない", "同じ姿勢を長く続けない"],
+  headache: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を一度リセットする"],
+  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
+  mood: ["予定を一つに絞って始める", "通知や刺激を少し減らす", "甘いもの・カフェインで押し切らない"],
+};
+
+const SYMPTOM_MODE_HINTS = {
+  fatigue: {
+    today: "だるさを見ているなら、動きを増やすより消耗を足さないことを優先します。",
+    tomorrow: "だるさを見ているなら、今夜のうちに予定量を少し軽くしておくと安心です。",
+  },
+  sleep: {
+    today: "睡眠を見ているなら、夜まで刺激や重さを持ち越さない流れに寄せます。",
+    tomorrow: "睡眠を見ているなら、今夜から明朝にかけて冷え・刺激・食べすぎを残さない準備が合います。",
+  },
+  neck_shoulder: {
+    today: "首肩を見ているなら、首元を冷やしたまま固めないことを優先します。",
+    tomorrow: "首肩を見ているなら、今夜から首元と画面姿勢を軽く整えておくと安心です。",
+  },
+  low_back_pain: {
+    today: "腰を見ているなら、腰腹・足首を冷やさず、座りっぱなしを切ることを優先します。",
+    tomorrow: "腰を見ているなら、今夜から腰腹・下半身を冷やさない準備が合います。",
+  },
+  swelling: {
+    today: "むくみを見ているなら、冷たさ・甘さ・塩気を重ねすぎないことを優先します。",
+    tomorrow: "むくみを見ているなら、今夜の重ね方を軽くして、明朝の重さを増やさない準備が合います。",
+  },
+  headache: {
+    today: "頭痛を見ているなら、首・耳・目まわりにこもらせないことを優先します。",
+    tomorrow: "頭痛を見ているなら、今夜から首肩と耳まわりを固めない準備が合います。",
+  },
+  dizziness: {
+    today: "めまいを見ているなら、空腹や急な姿勢変更を避けて、切り替えをゆっくりにします。",
+    tomorrow: "めまいを見ているなら、明朝の動き出しを急がない準備をしておくと安心です。",
+  },
+  mood: {
+    today: "気分を見ているなら、刺激で押し切るより、予定と通知を少し軽くします。",
+    tomorrow: "気分を見ているなら、今夜の刺激量を下げて、明日の始まりを軽くしておくのが合います。",
+  },
+};
+
+function getSymptomModeHint(symptomFocus, mode = "today") {
+  return SYMPTOM_MODE_HINTS[symptomFocus]?.[mode] || null;
+}
+
 function uniqueTake(items, limit = 3) {
   const seen = new Set();
   const result = [];
@@ -436,40 +508,63 @@ export function getForecastBackgroundFactors(triggerFactors) {
   });
 }
 
-export function getForecastBodySigns(triggerFactors, signal = 0) {
+export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
+  const symptomSigns = SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [];
+
   if (Number(signal) === 0) {
-    return ["大きなサインは出にくい見込み", "いつものリズムを崩さない", "違和感があれば軽めに整える"];
+    return uniqueTake(
+      [
+        "大きなサインは出にくい見込み",
+        ...symptomSigns,
+        "いつものリズムを崩さない",
+        "違和感があれば軽めに整える",
+      ],
+      3
+    );
   }
 
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
-  const signs = keys.flatMap((key) => BODY_SIGN_LABELS[key] || []);
+  const signs = [...symptomSigns, ...keys.flatMap((key) => BODY_SIGN_LABELS[key] || [])];
   return uniqueTake(signs.length ? signs : ["重だるさが出やすい", "首肩がこわばりやすい", "疲れが残りやすい"], 3);
 }
 
-export function getForecastPeakPrepItems(triggerFactors, signal = 0) {
+export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
+  const symptomItems = SYMPTOM_PEAK_PREP_ITEMS[symptomFocus] || [];
+
   if (Number(signal) === 0) {
-    return ["予定を詰め込みすぎない", "食事と休憩をいつも通りに保つ", "違和感が出たら早めに一息入れる"];
+    return uniqueTake(
+      [
+        ...symptomItems,
+        "予定を詰め込みすぎない",
+        "食事と休憩をいつも通りに保つ",
+        "違和感が出たら早めに一息入れる",
+      ],
+      3
+    );
   }
 
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
-  const items = keys.flatMap((key) => PEAK_PREP_ITEMS[key] || []);
+  const items = [...symptomItems, ...keys.flatMap((key) => PEAK_PREP_ITEMS[key] || [])];
   return uniqueTake(items.length ? items : ["山場前に首肩をゆるめる", "食事を重くしすぎない", "予定に少し余白を残す"], 3);
 }
 
-export function getForecastModeLead(triggerFactors, signal = 0, mode = "today") {
+export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
   const level = Number(signal);
   const factors = getForecastBackgroundFactors(triggerFactors);
   const labels = factors.map((f) => f.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
   const target = mode === "today" ? "今日は" : "明日は";
+  const symptomHint = getSymptomModeHint(symptomFocus, mode);
+  const symptomLabel = FORECAST_SYMPTOM_LABELS[symptomFocus];
+  const focusText = symptomHint ? ` ${symptomHint}` : symptomLabel ? ` ${symptomLabel}に出やすいサインも軽く見ておきます。` : "";
 
   if (level === 2) {
-    return `${target}${joined}の影響が強め。予定・食事・休み方を守り気味にして、無理を重ねない日です。`;
+    return `${target}${joined}の影響が強め。予定・食事・休み方を守り気味にして、無理を重ねない日です。${focusText}`;
   }
   if (level === 1) {
-    return `${target}${joined}が少し響きやすい見込み。早めに軽く整えると、後半の崩れを抑えやすい日です。`;
+    return `${target}${joined}が少し響きやすい見込み。早めに軽く整えると、後半の崩れを抑えやすい日です。${focusText}`;
   }
-  return `${target}大きく崩れにくい見込み。いつものリズムを保ちながら、余裕があれば軽く整える日です。`;
+  return `${target}${joined}は背景にありますが、大きく崩れにくい見込み。いつものリズムを保ちながら、余裕があれば軽く整える日です。${focusText}`;
 }
 
 export function getMoodHeadline(triggerKey, signal) {
@@ -1003,6 +1098,7 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
 
 
 
