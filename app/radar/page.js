@@ -622,16 +622,16 @@ export default function RadarPage() {
     [forecast?.signal]
   );
   const forecastModeLead = useMemo(
-    () => getForecastModeLead(triggerFactors, forecast?.signal ?? 0, displayDateMode),
-    [triggerFactors, forecast?.signal, displayDateMode]
+    () => getForecastModeLead(triggerFactors, forecast?.signal ?? 0, displayDateMode, symptomFocus),
+    [triggerFactors, forecast?.signal, displayDateMode, symptomFocus]
   );
   const bodySigns = useMemo(
-    () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0),
-    [triggerFactors, forecast?.signal]
+    () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0, symptomFocus),
+    [triggerFactors, forecast?.signal, symptomFocus]
   );
   const peakPrepItems = useMemo(
-    () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0),
-    [triggerFactors, forecast?.signal]
+    () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0, symptomFocus),
+    [triggerFactors, forecast?.signal, symptomFocus]
   );
   const backgroundFactors = useMemo(
     () => getForecastBackgroundFactors(triggerFactors),
@@ -673,8 +673,12 @@ export default function RadarPage() {
   const primaryTsubo = tsuboPoints[0] || null;
   const extraTsuboPoints = tsuboPoints.slice(1);
   const foodExamples = safeArray(food.examples);
-  const hasFoodDetails =
-    !!food.how_to || !!food.avoid || !!food.reason || !!food.lifestyle_tip;
+  const foodActionCards = safeArray(food.action_cards);
+  const foodContextChips = safeArray(food.context_chips);
+  const hasFoodActionCards = foodActionCards.length > 0;
+  const hasFoodDetails = hasFoodActionCards
+    ? !!food.reason || !!food.lifestyle_tip
+    : !!food.how_to || !!food.avoid || !!food.reason || !!food.lifestyle_tip;
   const pointReasonLoading = false;
 
   useEffect(() => {
@@ -1437,7 +1441,7 @@ export default function RadarPage() {
 
                 <div className="rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
-                    まずはこれ
+                    {food.badge || "まずはこれ"}
                   </div>
 
                   <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
@@ -1445,16 +1449,81 @@ export default function RadarPage() {
                   </div>
 
 
+                  {foodContextChips.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {foodContextChips.map((chip, idx) => (
+                        <span
+                          key={`${chip}-${idx}`}
+                          className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-black text-[#255F4F]/80 ring-1 ring-[#D3E1D5]"
+                        >
+                          {chip}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
                   {food.recommendation || food.focus ? (
                     <div className="mt-3 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
                       {food.recommendation || food.focus}
                     </div>
                   ) : null}
 
-                  {foodExamples.length > 0 ? (
+                  {hasFoodActionCards ? (
+                    <div className="mt-4 space-y-2.5">
+                      {foodActionCards.map((card, idx) => {
+                        const marker = card.key === "add" ? "＋" : card.key === "caution" ? "！" : "○";
+                        const markerClass = card.key === "caution"
+                          ? "bg-[#FFF8EE] text-[#9A5A14] ring-[#F0D7B6]"
+                          : card.key === "choice"
+                            ? "bg-white text-[#255F4F] ring-[#CFE0D3]"
+                            : "bg-[#EAF5EE] text-[#255F4F] ring-[#CFE0D3]";
+
+                        return (
+                          <div
+                            key={card.key || `${card.label}-${idx}`}
+                            className="rounded-[20px] bg-white px-4 py-3.5 ring-1 ring-[#DDE7DF] shadow-[0_12px_28px_-22px_rgba(37,95,79,0.28)]"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={[
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px] font-black ring-1",
+                                markerClass,
+                              ].join(" ")}>
+                                {marker}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-[13px] font-black tracking-tight text-slate-900">
+                                  {card.label}
+                                </div>
+                                {card.body ? (
+                                  <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">
+                                    {card.body}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            {safeArray(card.items).length > 0 ? (
+                              <div className="mt-3 flex flex-wrap gap-2 pl-11">
+                                {safeArray(card.items).map((item, itemIdx) => (
+                                  <span
+                                    key={`${card.key}-${item}-${itemIdx}`}
+                                    className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#E1E6E1]"
+                                  >
+                                    {item}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  {!hasFoodActionCards && foodExamples.length > 0 ? (
                     <div className="mt-4">
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        例
+                        {food.examples_label || "例"}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {foodExamples.map((x, idx) => (
@@ -1481,7 +1550,7 @@ export default function RadarPage() {
                             詳しく
                           </div>
                           <div className="mt-1 text-[13px] font-black tracking-tight text-slate-900">
-                            取り入れ方・控えたいこと
+                            {food.detail_title || "取り入れ方・控えたいこと"}
                           </div>
                         </div>
                         <svg
@@ -1502,10 +1571,10 @@ export default function RadarPage() {
 
                       {foodDetailOpen ? (
                         <div className="mt-4 space-y-4 border-t border-slate-200 pt-4">
-                          {food.how_to ? (
+                          {!hasFoodActionCards && food.how_to ? (
                             <div>
                               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                取り入れ方
+                                {food.how_to_label || "取り入れ方"}
                               </div>
                               <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                                 {food.how_to}
@@ -1513,10 +1582,10 @@ export default function RadarPage() {
                             </div>
                           ) : null}
 
-                          {food.avoid ? (
+                          {!hasFoodActionCards && food.avoid ? (
                             <div>
                               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                控えたいこと
+                                {food.avoid_label || "控えたいこと"}
                               </div>
                               <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                                 {food.avoid}
@@ -1527,7 +1596,7 @@ export default function RadarPage() {
                           {food.reason ? (
                             <div>
                               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                ひとこと理由
+                                {food.reason_label || "ひとこと理由"}
                               </div>
                               <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                                 {food.reason}
@@ -1538,7 +1607,7 @@ export default function RadarPage() {
                           {food.lifestyle_tip ? (
                             <div className="rounded-[18px] bg-white px-4 py-4 ring-1 ring-[var(--ring)] shadow-sm">
                               <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                一緒に意識したいこと
+                                {food.lifestyle_tip_label || "一緒に意識したいこと"}
                               </div>
                               <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
                                 {food.lifestyle_tip}
