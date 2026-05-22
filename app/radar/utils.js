@@ -861,8 +861,8 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
 }
 
 
-export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomorrow") {
-  return getLifestylePlanFromRules(primaryKey, secondaryKey, signal, mode);
+export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomorrow", symptomFocus = null) {
+  return getLifestylePlanFromRules(primaryKey, secondaryKey, signal, mode, symptomFocus);
 }
 
 
@@ -1003,3 +1003,6 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
+
+
