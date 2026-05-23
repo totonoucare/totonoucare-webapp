@@ -430,14 +430,14 @@ const SYMPTOM_BODY_SIGN_LABELS = {
 };
 
 const SYMPTOM_STABLE_BODY_POINTS = {
-  fatigue: ["午後の予定量を少し詰めすぎない", "休む前提の余白を一つ残す", "空腹と食べすぎの差を小さくする"],
-  sleep: ["夕方以降の刺激を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
-  neck_shoulder: ["首元を冷やしたまま固めない", "画面姿勢が続いたら肩を一度落とす", "耳まわりと肩甲骨まわりを一度ゆるめる"],
-  low_back_pain: ["座りっぱなしを一度切る", "腰腹か足首を冷やさない", "深く座る前に骨盤を小さく動かす"],
-  swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねない", "同じ姿勢を長く続けない"],
-  headache: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を一度リセットする"],
-  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
-  mood: ["予定を一つに絞って始める", "通知や刺激を少し減らす", "甘いもの・カフェインで押し切らない"],
+  fatigue: ["午後に残る小さな重だるさ", "動き出しの重さ", "休んでも抜けにくい感じ"],
+  sleep: ["夕方以降の目・頭の冴え", "寝る前の休まりにくさ", "朝に残る重さ"],
+  neck_shoulder: ["首元・肩甲骨まわりのこわばり", "画面姿勢で肩の力が抜けにくい感じ", "頭〜首の重さ"],
+  low_back_pain: ["腰腹・骨盤まわりの重さ", "座りっぱなしの後のこわばり", "動き出しの腰の重さ"],
+  swelling: ["夕方の足首まわりの重さ", "顔や脚に残る重さ", "冷たさ・甘さ・塩気の残りやすさ"],
+  headache: ["頭・目・耳まわりの重さ", "首肩から頭にかけてのこわばり", "空腹や刺激の後の重さ"],
+  dizziness: ["立ち上がりのふわつき", "動き出しの揺れ感", "首や耳まわりの緊張"],
+  mood: ["気分の重さや焦り", "通知や刺激への疲れ", "予定を詰めた後の余裕のなさ"],
 };
 
 const SYMPTOM_PEAK_PREP_ITEMS = {
@@ -596,46 +596,95 @@ export function getForecastBackgroundFactors(triggerFactors) {
   });
 }
 
+function softenPeakPrepItem(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return "";
+  return raw
+    .replace("作業量を一つ減らして余白を残す", "午後の予定を詰めすぎない")
+    .replace("空腹と食べすぎの差を小さくする", "空腹と食べすぎの差を大きくしない")
+    .replace("休む余白を残して予定を詰めすぎない", "休む余白を一つ残す")
+    .replace("夕方以降の刺激を少し減らす", "夕方以降の刺激を少し控えめにする")
+    .replace("寝る前に首肩と目を休ませる", "寝る前に目と首肩を一度休ませる")
+    .replace("夜の食べすぎ・飲みすぎを避ける", "夜の食べすぎ・飲みすぎを重ねすぎない")
+    .replace("首元を冷やしたまま固めない", "山場前に首元の冷えだけ確認する")
+    .replace("画面から目を離して肩を落とす", "画面姿勢が続いたら肩を一度落とす")
+    .replace("耳まわりと肩甲骨まわりを一度ゆるめる", "耳まわりか肩甲骨まわりを軽くゆるめる")
+    .replace("座りっぱなしを一度切る", "座りっぱなしを一度だけ切る")
+    .replace("腰腹か足首を冷やさない", "腰腹か足首の冷えだけ確認する")
+    .replace("深く座る前に骨盤を小さく動かす", "深く座る前に骨盤を小さく動かす")
+    .replace("足首を小さく動かす", "足首を小さく動かす")
+    .replace("甘いもの・塩気・冷たい飲み物を重ねない", "甘いもの・塩気・冷たい飲み物を重ねすぎない")
+    .replace("同じ姿勢を長く続けない", "同じ姿勢を続けすぎない")
+    .replace("首・耳・目まわりを先にゆるめる", "首・耳・目まわりを一度ゆるめる")
+    .replace("脂っこさやお酒でこもらせない", "脂っこさやお酒を重ねすぎない")
+    .replace("画面姿勢を一度リセットする", "画面姿勢を一度リセットする")
+    .replace("立ち上がる前に一呼吸置く", "立ち上がる前に一呼吸置く")
+    .replace("空腹のまま急に動かない", "空腹のまま急に動きすぎない")
+    .replace("首を急に振らずゆっくり切り替える", "首を急に振らずゆっくり切り替える")
+    .replace("予定を一つに絞って始める", "最初の予定を一つに絞る")
+    .replace("通知や刺激を少し減らす", "通知や刺激を少し控えめにする")
+    .replace("甘いもの・カフェインで押し切らない", "甘いもの・カフェインで押し切りすぎない");
+}
+
+function strengthenPeakPrepItem(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return "";
+  if (raw.includes("先に") || raw.includes("山場前に")) return raw;
+  if (raw.includes("一度")) return raw.replace("一度", "山場前に一度");
+  return `山場前に${raw}`;
+}
+
 export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
   const level = Number(signal ?? 0);
-  const symptomSigns = (SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [])
-    .map((item) => qualifyBodySignForSignal(item, level));
+  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
 
   if (level === 0) {
     const stablePoints = SYMPTOM_STABLE_BODY_POINTS[symptomFocus] || [];
+    const weatherPoints = keys.flatMap((key) => BODY_SIGN_LABELS[key] || [])
+      .map((item) => String(item || "").replace(/やすい/g, "やすさ").replace(/出る/g, "出方"));
     return uniqueTake(
       [
         ...stablePoints,
-        "山場の時間だけ軽く見ておく",
-        "いつものリズムを大きく崩さない",
-        "違和感があれば早めに一息入れる",
+        ...weatherPoints,
+        "山場の時間の小さな違和感",
+        "いつもより少し残る重さ",
+        "切り替え時のこわばり",
       ],
       3
     );
   }
 
-  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
+  const symptomSigns = (SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [])
+    .map((item) => qualifyBodySignForSignal(item, level));
   const signs = [...symptomSigns, ...keys.flatMap((key) => BODY_SIGN_LABELS[key] || [])];
   return uniqueTake(signs.length ? signs : ["重だるさが出やすい", "首肩がこわばりやすい", "疲れが残りやすい"], 3);
 }
 
 export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
+  const level = Number(signal ?? 0);
+  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
   const symptomItems = SYMPTOM_PEAK_PREP_ITEMS[symptomFocus] || [];
+  const weatherItems = keys.flatMap((key) => PEAK_PREP_ITEMS[key] || []);
+  const items = [...symptomItems, ...weatherItems];
 
-  if (Number(signal) === 0) {
+  if (level === 0) {
+    const stableItems = items.map(softenPeakPrepItem);
     return uniqueTake(
       [
-        ...symptomItems,
-        "予定を詰め込みすぎない",
-        "食事と休憩をいつも通りに保つ",
+        ...stableItems,
+        "山場前に一度だけ体勢を変える",
+        "食事と休憩のリズムを大きく崩さない",
         "違和感が出たら早めに一息入れる",
       ],
       3
     );
   }
 
-  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
-  const items = [...symptomItems, ...keys.flatMap((key) => PEAK_PREP_ITEMS[key] || [])];
+  if (level >= 2) {
+    const highItems = items.map(strengthenPeakPrepItem);
+    return uniqueTake(highItems.length ? highItems : ["山場前に首肩をゆるめる", "食事を重くしすぎない", "予定に少し余白を残す"], 3);
+  }
+
   return uniqueTake(items.length ? items : ["山場前に首肩をゆるめる", "食事を重くしすぎない", "予定に少し余白を残す"], 3);
 }
 
@@ -1196,5 +1245,7 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
+
 
 
