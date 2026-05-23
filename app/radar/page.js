@@ -567,7 +567,8 @@ export default function RadarPage() {
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
   const riskContext = getRiskContext(bundle);
-  const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
+  const savedSymptomFocus = riskContext?.constitution_context?.symptom_focus || null;
+  const symptomFocus = selectedSymptomKey || savedSymptomFocus || null;
   const todayCarePlan = useMemo(
     () => (selectedIsToday ? buildTodayCarePlan({ forecast, riskContext, symptomFocus }) : null),
     [selectedIsToday, forecast, riskContext, symptomFocus],
@@ -694,13 +695,13 @@ export default function RadarPage() {
 
 
   useEffect(() => {
-    if (!symptomFocus) return;
-    setSelectedSymptomKey((current) => current || symptomFocus);
-  }, [symptomFocus]);
+    if (!savedSymptomFocus) return;
+    setSelectedSymptomKey((current) => current || savedSymptomFocus);
+  }, [savedSymptomFocus]);
 
   async function handleSaveActiveSymptomFocus() {
-    const nextSymptom = selectedSymptomKey || symptomFocus;
-    if (!nextSymptom || nextSymptom === symptomFocus) {
+    const nextSymptom = selectedSymptomKey || savedSymptomFocus;
+    if (!nextSymptom || nextSymptom === savedSymptomFocus) {
       setShowSymptomEditor(false);
       return;
     }
