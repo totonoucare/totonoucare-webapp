@@ -75,7 +75,7 @@ function getModeMeta(signal) {
   return {
     label: "安定モード",
     shortLabel: "安定",
-    caption: "いつも通りで大丈夫",
+    caption: "影響は少なめの日",
   };
 }
 
@@ -372,6 +372,8 @@ export function ForecastGauge({
     </div>
   );
 }
+
+
 
 
 
