@@ -567,9 +567,10 @@ export default function RadarPage() {
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
   const riskContext = getRiskContext(bundle);
+  const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const todayCarePlan = useMemo(
-    () => (selectedIsToday ? buildTodayCarePlan({ forecast, riskContext }) : null),
-    [selectedIsToday, forecast, riskContext],
+    () => (selectedIsToday ? buildTodayCarePlan({ forecast, riskContext, symptomFocus }) : null),
+    [selectedIsToday, forecast, riskContext, symptomFocus],
   );
   const carePlan = selectedIsToday ? todayCarePlan : bundle?.care_plan || null;
   const activeCareForecast = forecast;
@@ -585,7 +586,6 @@ export default function RadarPage() {
   const primaryLine = riskContext?.constitution_context?.primary_meridian
     ? getMeridianLine(riskContext.constitution_context.primary_meridian)
     : null;
-  const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomLabel = symptomFocus ? SYMPTOM_LABELS[symptomFocus] || symptomFocus : null;
 
   const bundleDateMode = useMemo(
@@ -726,6 +726,7 @@ export default function RadarPage() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok || json?.ok === false) throw new Error(json?.error || "不調の種類を更新できませんでした。");
 
+      setSelectedSymptomKey(nextSymptom);
       setShowSymptomEditor(false);
       await fetchForecast({
         force: true,
@@ -1767,5 +1768,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
 
