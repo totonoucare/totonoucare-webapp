@@ -479,6 +479,83 @@ function getSymptomModeHint(symptomFocus, mode = "today") {
   return SYMPTOM_MODE_HINTS[symptomFocus]?.[mode] || null;
 }
 
+const FORECAST_SYMPTOM_LEAD_CLAUSES = {
+  fatigue: {
+    low: "だるさは少し残りやすい",
+    middle: "だるさが残りやすい",
+    high: "だるさが強く残りやすい",
+  },
+  sleep: {
+    low: "睡眠は少し乱れやすい",
+    middle: "睡眠に響きやすい",
+    high: "睡眠に強く響きやすい",
+  },
+  neck_shoulder: {
+    low: "首肩は少しこわばりやすい",
+    middle: "首肩がこわばりやすい",
+    high: "首肩が強くこわばりやすい",
+  },
+  low_back_pain: {
+    low: "腰まわりは少し重くなりやすい",
+    middle: "腰まわりが重くなりやすい",
+    high: "腰まわりが強く重くなりやすい",
+  },
+  swelling: {
+    low: "むくみは少し残りやすい",
+    middle: "むくみが残りやすい",
+    high: "むくみが強く残りやすい",
+  },
+  headache: {
+    low: "頭まわりは少し重くなりやすい",
+    middle: "頭まわりが重くなりやすい",
+    high: "頭まわりが強く重くなりやすい",
+  },
+  dizziness: {
+    low: "ふわつきは少し出やすい",
+    middle: "ふわつきが出やすい",
+    high: "ふわつきが強く出やすい",
+  },
+  mood: {
+    low: "気分は少し揺れやすい",
+    middle: "気分が揺れやすい",
+    high: "気分が強く揺れやすい",
+  },
+};
+
+function getSignalTone(signal) {
+  const level = Number(signal ?? 0);
+  if (level >= 2) return "high";
+  if (level >= 1) return "middle";
+  return "low";
+}
+
+function getForecastSymptomLeadClause(symptomFocus, signal = 0) {
+  const tone = getSignalTone(signal);
+  return FORECAST_SYMPTOM_LEAD_CLAUSES[symptomFocus]?.[tone] || null;
+}
+
+function qualifyBodySignForSignal(text, signal = 0) {
+  const raw = String(text || "").trim();
+  if (!raw) return "";
+
+  const level = Number(signal ?? 0);
+  if (level === 0) {
+    if (raw.includes("少し")) return raw;
+    if (raw.includes("が")) return raw.replace("が", "が少し");
+    if (raw.includes("に")) return raw.replace("に", "に少し");
+    return `少し${raw}`;
+  }
+
+  if (level >= 2) {
+    if (raw.includes("強く")) return raw;
+    if (raw.includes("が")) return raw.replace("が", "が強く");
+    if (raw.includes("に")) return raw.replace("に", "に強く");
+    return `強く${raw}`;
+  }
+
+  return raw;
+}
+
 function uniqueTake(items, limit = 3) {
   const seen = new Set();
   const result = [];
@@ -509,13 +586,25 @@ export function getForecastBackgroundFactors(triggerFactors) {
 }
 
 export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
-  const symptomSigns = SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [];
+  const level = Number(signal ?? 0);
+  const symptomSigns = (SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [])
+    .map((item) => qualifyBodySignForSignal(item, level));
 
-  if (Number(signal) === 0) {
+  if (level === 0) {
+    if (symptomSigns.length) {
+      return uniqueTake(
+        [
+          ...symptomSigns,
+          "いつものリズムを崩さない",
+          "違和感があれば軽めに整える",
+        ],
+        3
+      );
+    }
+
     return uniqueTake(
       [
         "大きなサインは出にくい見込み",
-        ...symptomSigns,
         "いつものリズムを崩さない",
         "違和感があれば軽めに整える",
       ],
@@ -549,22 +638,28 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
 }
 
 export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
-  const level = Number(signal);
+  const level = Number(signal ?? 0);
   const factors = getForecastBackgroundFactors(triggerFactors);
   const labels = factors.map((f) => f.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
   const target = mode === "today" ? "今日は" : "明日は";
-  const symptomHint = getSymptomModeHint(symptomFocus, mode);
-  const symptomLabel = FORECAST_SYMPTOM_LABELS[symptomFocus];
-  const focusText = symptomHint ? ` ${symptomHint}` : symptomLabel ? ` ${symptomLabel}に出やすいサインも軽く見ておきます。` : "";
+  const symptomClause = getForecastSymptomLeadClause(symptomFocus, level);
 
-  if (level === 2) {
-    return `${target}${joined}の影響が強め。予定・食事・休み方を守り気味にして、無理を重ねない日です。${focusText}`;
+  if (level >= 2) {
+    return symptomClause
+      ? `${target}${joined}の影響が強め。${symptomClause}です。`
+      : `${target}${joined}の影響が強め。守り気味に過ごしたい日です。`;
   }
-  if (level === 1) {
-    return `${target}${joined}が少し響きやすい見込み。早めに軽く整えると、後半の崩れを抑えやすい日です。${focusText}`;
+
+  if (level >= 1) {
+    return symptomClause
+      ? `${target}${joined}が少し響きそう。${symptomClause}です。`
+      : `${target}${joined}が少し響きそう。早めに軽く整えたい日です。`;
   }
-  return `${target}${joined}は背景にありますが、大きく崩れにくい見込み。いつものリズムを保ちながら、余裕があれば軽く整える日です。${focusText}`;
+
+  return symptomClause
+    ? `${target}${joined}が背景。${symptomClause}です。`
+    : `${target}${joined}が背景。大きく崩れにくい見込みです。`;
 }
 
 export function getMoodHeadline(triggerKey, signal) {
@@ -1055,13 +1150,13 @@ export function getPointCautions(point) {
 }
 
 
-export function buildTodayCarePlan({ forecast, riskContext } = {}) {
+export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explicitSymptomFocus = null } = {}) {
   if (!forecast) return null;
   const triggerFactors = getForecastTriggerFactors(forecast);
   const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
   const secondaryKey = triggerFactors[1]?.key || null;
   const signal = Number(forecast?.signal ?? 0);
-  const symptomFocus = riskContext?.constitution_context?.symptom_focus || null;
+  const symptomFocus = explicitSymptomFocus || riskContext?.constitution_context?.symptom_focus || null;
   const fallbackTriggerKey = getForecastTriggerKey({ main_trigger: triggerKey });
 
   return buildTodayCarePlanCore({
@@ -1098,7 +1193,4 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
-
-
 
