@@ -189,7 +189,7 @@ export function signalPanelClass(signal) {
 export function signalPanelSubtext(signal) {
   if (signal === 2) return "無理を詰め込みすぎず、早めのケアを意識したい日です。";
   if (signal === 1) return "少し崩れやすさがあるので、余白を持って過ごしたい日です。";
-  return "大きく崩れにくい見込みですが、普段どおりのケアは続けると安心です。";
+  return "天気の影響は少なめ。山場の時間だけ軽く見ておきたい日です。";
 }
 
 export function sourceLabel(source) {
@@ -429,6 +429,17 @@ const SYMPTOM_BODY_SIGN_LABELS = {
   mood: ["気分の重さや焦りが出やすい", "刺激で押すほど揺れやすい", "予定の詰め込みが負担になりやすい"],
 };
 
+const SYMPTOM_STABLE_BODY_POINTS = {
+  fatigue: ["午後の予定量を少し詰めすぎない", "休む前提の余白を一つ残す", "空腹と食べすぎの差を小さくする"],
+  sleep: ["夕方以降の刺激を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
+  neck_shoulder: ["首元を冷やしたまま固めない", "画面姿勢が続いたら肩を一度落とす", "耳まわりと肩甲骨まわりを一度ゆるめる"],
+  low_back_pain: ["座りっぱなしを一度切る", "腰腹か足首を冷やさない", "深く座る前に骨盤を小さく動かす"],
+  swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねない", "同じ姿勢を長く続けない"],
+  headache: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を一度リセットする"],
+  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
+  mood: ["予定を一つに絞って始める", "通知や刺激を少し減らす", "甘いもの・カフェインで押し切らない"],
+};
+
 const SYMPTOM_PEAK_PREP_ITEMS = {
   fatigue: ["作業量を一つ減らして余白を残す", "空腹と食べすぎの差を小さくする", "休む余白を残して予定を詰めすぎない"],
   sleep: ["夕方以降の刺激を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
@@ -481,42 +492,42 @@ function getSymptomModeHint(symptomFocus, mode = "today") {
 
 const FORECAST_SYMPTOM_LEAD_CLAUSES = {
   fatigue: {
-    low: "だるさは少し残りやすい",
+    low: "だるさは山場の時間に少し残る見込み",
     middle: "だるさが残りやすい",
     high: "だるさが強く残りやすい",
   },
   sleep: {
-    low: "睡眠は少し乱れやすい",
+    low: "夜の刺激が睡眠に少し残る見込み",
     middle: "睡眠に響きやすい",
     high: "睡眠に強く響きやすい",
   },
   neck_shoulder: {
-    low: "首肩は少しこわばりやすい",
+    low: "首肩は山場の時間に少し固まりやすい",
     middle: "首肩がこわばりやすい",
     high: "首肩が強くこわばりやすい",
   },
   low_back_pain: {
-    low: "腰まわりは少し重くなりやすい",
+    low: "腰まわりは山場の時間に少し重さが出る見込み",
     middle: "腰まわりが重くなりやすい",
     high: "腰まわりが強く重くなりやすい",
   },
   swelling: {
-    low: "むくみは少し残りやすい",
+    low: "むくみは夕方に少し残る見込み",
     middle: "むくみが残りやすい",
     high: "むくみが強く残りやすい",
   },
   headache: {
-    low: "頭まわりは少し重くなりやすい",
+    low: "頭まわりは山場の時間に少し重さが出る見込み",
     middle: "頭まわりが重くなりやすい",
     high: "頭まわりが強く重くなりやすい",
   },
   dizziness: {
-    low: "ふわつきは少し出やすい",
+    low: "ふわつきは動き出しに少し出る見込み",
     middle: "ふわつきが出やすい",
     high: "ふわつきが強く出やすい",
   },
   mood: {
-    low: "気分は少し揺れやすい",
+    low: "刺激量の影響が気分に少し出る見込み",
     middle: "気分が揺れやすい",
     high: "気分が強く揺れやすい",
   },
@@ -591,22 +602,13 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
     .map((item) => qualifyBodySignForSignal(item, level));
 
   if (level === 0) {
-    if (symptomSigns.length) {
-      return uniqueTake(
-        [
-          ...symptomSigns,
-          "いつものリズムを崩さない",
-          "違和感があれば軽めに整える",
-        ],
-        3
-      );
-    }
-
+    const stablePoints = SYMPTOM_STABLE_BODY_POINTS[symptomFocus] || [];
     return uniqueTake(
       [
-        "大きなサインは出にくい見込み",
-        "いつものリズムを崩さない",
-        "違和感があれば軽めに整える",
+        ...stablePoints,
+        "山場の時間だけ軽く見ておく",
+        "いつものリズムを大きく崩さない",
+        "違和感があれば早めに一息入れる",
       ],
       3
     );
@@ -658,8 +660,8 @@ export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", 
   }
 
   return symptomClause
-    ? `${target}${joined}が背景。${symptomClause}です。`
-    : `${target}${joined}が背景。大きく崩れにくい見込みです。`;
+    ? `${target}${joined}の影響は少なめ。ただ、${symptomClause}です。`
+    : `${target}${joined}の影響は少なめ。ただ、山場の時間だけ軽く見ておきたい日です。`;
 }
 
 export function getMoodHeadline(triggerKey, signal) {
@@ -753,13 +755,13 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "気象変化";
 
   if (mode === "today") {
-    if (signal === 0) return `${joined}の影響は強すぎない見込みです。大きな対策より、いつもの調子を崩さない軽い一手に寄せます。`;
+    if (signal === 0) return `今日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い一手にします。`;
     if (signal === 2) return `${joined}がこのあと響きやすい時間があります。山場の前に、ほぐす・食べる・暮らすを少しだけ今日用に整えます。`;
     return `${joined}が少し響きやすい見込みです。今からできる範囲で、こもり・冷え・重さを残さないようにします。`;
   }
 
   if (signal === 0) {
-    return `${joined}の影響は強すぎない見込みです。明日に向けて、いつもの調子を崩さないための軽い整え方を選びます。`;
+    return `明日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い整え方を選びます。`;
   }
   if (signal === 2) {
     return `${joined}が重なりやすい日です。明日は山場の前に余力を削られないよう、今夜のうちに身体の逃げ道を作っておきます。`;
@@ -928,6 +930,7 @@ function getPolicySummary({ policies, triggerFactors, signal, mode }) {
   const labels = getForecastBackgroundFactors(triggerFactors).map((f) => f.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
   const target = mode === "today" ? "今日は" : "明日は";
+  const weatherTarget = mode === "today" ? "今日の天気では" : "明日の天気では";
   const level = Number(signal || 0);
   const keys = safeArray(policies).map((p) => p.key).filter(Boolean);
   const detail =
@@ -936,7 +939,7 @@ function getPolicySummary({ policies, triggerFactors, signal, mode }) {
       : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
 
   if (level <= 0) {
-    return `${target}${joined}の影響は強く出にくい見込み。強い対策より、${detail}`;
+    return `${weatherTarget}、${joined}の影響が少しだけある見込み。強い対策より、${detail}`;
   }
   if (level >= 2) {
     return `${target}${joined}が響きやすい日。${detail}`;
@@ -1193,7 +1196,5 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
-
 
 
