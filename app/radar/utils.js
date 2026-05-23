@@ -432,12 +432,12 @@ const SYMPTOM_BODY_SIGN_LABELS = {
 const SYMPTOM_STABLE_BODY_POINTS = {
   fatigue: ["午後に残る小さな重だるさ", "動き出しの重さ", "休んでも抜けにくい感じ"],
   sleep: ["夕方以降の目・頭の冴え", "寝る前の休まりにくさ", "朝に残る重さ"],
-  neck_shoulder: ["首元・肩甲骨まわりのこわばり", "画面姿勢で肩の力が抜けにくい感じ", "頭〜首の重さ"],
-  low_back_pain: ["腰腹・骨盤まわりの重さ", "座りっぱなしの後のこわばり", "動き出しの腰の重さ"],
+  neck_shoulder: ["首元・肩甲骨まわりのこわばり感", "画面姿勢が続いた後の肩の重さ", "頭〜首に残る重さ"],
+  low_back_pain: ["腰腹・骨盤まわりの重さ", "座りっぱなしの後のこわばり感", "動き出しの腰の重さ"],
   swelling: ["夕方の足首まわりの重さ", "顔や脚に残る重さ", "冷たさ・甘さ・塩気の残りやすさ"],
-  headache: ["頭・目・耳まわりの重さ", "首肩から頭にかけてのこわばり", "空腹や刺激の後の重さ"],
-  dizziness: ["立ち上がりのふわつき", "動き出しの揺れ感", "首や耳まわりの緊張"],
-  mood: ["気分の重さや焦り", "通知や刺激への疲れ", "予定を詰めた後の余裕のなさ"],
+  headache: ["頭・目・耳まわりの重さ", "首肩から頭にかけてのこわばり感", "空腹や刺激の後の重さ"],
+  dizziness: ["立ち上がりのふわつき", "動き出しの揺れ感", "首や耳まわりの緊張感"],
+  mood: ["気分の重さや焦り", "通知や刺激の疲れ", "予定を詰めた後の余裕のなさ"],
 };
 
 const SYMPTOM_PEAK_PREP_ITEMS = {
@@ -449,6 +449,28 @@ const SYMPTOM_PEAK_PREP_ITEMS = {
   headache: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を一度リセットする"],
   dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
   mood: ["予定を一つに絞って始める", "通知や刺激を少し減らす", "甘いもの・カフェインで押し切らない"],
+};
+
+const SYMPTOM_STABLE_PEAK_PREP_ITEMS = {
+  fatigue: ["午後の予定を詰めすぎない", "空腹と食べすぎの差を大きくしない", "休む余白を一つ残す"],
+  sleep: ["夕方以降の刺激を少し控えめにする", "寝る前に目と首肩を一度休ませる", "夜の食べすぎ・飲みすぎを重ねすぎない"],
+  neck_shoulder: ["首元が冷えていないか確認する", "画面が続いたら肩を一度落とす", "耳まわりを軽く動かす"],
+  low_back_pain: ["座りっぱなしを一度だけ切る", "腰腹か足首の冷えを確認する", "深く座る前に骨盤を小さく動かす"],
+  swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねすぎない", "同じ姿勢を続けすぎない"],
+  headache: ["首・耳・目まわりを一度ゆるめる", "脂っこさやお酒を重ねすぎない", "画面姿勢を一度リセットする"],
+  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動きすぎない", "首を急に振らずゆっくり切り替える"],
+  mood: ["最初の予定を一つに絞る", "通知や刺激を少し控えめにする", "甘いもの・カフェインで押し切りすぎない"],
+};
+
+const SYMPTOM_HIGH_PEAK_PREP_ITEMS = {
+  fatigue: ["山場前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "予定に休む余白を先に残す"],
+  sleep: ["夕方以降の刺激を先に減らす", "寝る前に首肩と目をしっかり休ませる", "夜の食べすぎ・飲みすぎを避ける"],
+  neck_shoulder: ["山場前に首元を冷やしたままにしない", "山場前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
+  low_back_pain: ["山場前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
+  swelling: ["山場前に足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を先に重ねない", "同じ姿勢を長く続けない"],
+  headache: ["山場前に首・耳・目まわりをゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を先にリセットする"],
+  dizziness: ["動き出す前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
+  mood: ["山場前に予定を一つに絞る", "通知や刺激を先に減らす", "甘いもの・カフェインで押し切らない"],
 };
 
 const SYMPTOM_MODE_HINTS = {
@@ -663,15 +685,14 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
 export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
   const level = Number(signal ?? 0);
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
-  const symptomItems = SYMPTOM_PEAK_PREP_ITEMS[symptomFocus] || [];
   const weatherItems = keys.flatMap((key) => PEAK_PREP_ITEMS[key] || []);
-  const items = [...symptomItems, ...weatherItems];
 
   if (level === 0) {
-    const stableItems = items.map(softenPeakPrepItem);
+    const stableItems = SYMPTOM_STABLE_PEAK_PREP_ITEMS[symptomFocus] || [];
     return uniqueTake(
       [
         ...stableItems,
+        ...weatherItems.map(softenPeakPrepItem),
         "山場前に一度だけ体勢を変える",
         "食事と休憩のリズムを大きく崩さない",
         "違和感が出たら早めに一息入れる",
@@ -681,11 +702,33 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
   }
 
   if (level >= 2) {
-    const highItems = items.map(strengthenPeakPrepItem);
-    return uniqueTake(highItems.length ? highItems : ["山場前に首肩をゆるめる", "食事を重くしすぎない", "予定に少し余白を残す"], 3);
+    const highSymptomItems = SYMPTOM_HIGH_PEAK_PREP_ITEMS[symptomFocus] || [];
+    const normalSymptomItems = SYMPTOM_PEAK_PREP_ITEMS[symptomFocus] || [];
+    const highWeatherItems = weatherItems.map(strengthenPeakPrepItem);
+    return uniqueTake(
+      [
+        ...highSymptomItems,
+        ...normalSymptomItems.map(strengthenPeakPrepItem),
+        ...highWeatherItems,
+        "山場前に首肩をゆるめる",
+        "山場前に食事を重くしすぎない",
+        "予定に少し余白を残す",
+      ],
+      3
+    );
   }
 
-  return uniqueTake(items.length ? items : ["山場前に首肩をゆるめる", "食事を重くしすぎない", "予定に少し余白を残す"], 3);
+  const symptomItems = SYMPTOM_PEAK_PREP_ITEMS[symptomFocus] || [];
+  return uniqueTake(
+    [
+      ...symptomItems,
+      ...weatherItems,
+      "山場前に首肩をゆるめる",
+      "食事を重くしすぎない",
+      "予定に少し余白を残す",
+    ],
+    3
+  );
 }
 
 export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
