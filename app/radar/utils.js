@@ -1194,3 +1194,6 @@ export function getLocationDisplayLabel(location) {
   return "設定中の地域";
 }
 
+
+
+
