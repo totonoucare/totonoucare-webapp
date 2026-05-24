@@ -10,10 +10,10 @@ import {
   IconChecklist,
   IconWeather,
   IconCalendar,
-  IconConstitution, // ★ IconCoreから変更
+  IconConstitution,
   IconBodyLine,
-  IconTsubo,        // ★ 新規追加
-  IconBowl,         // ★ 新規追加
+  IconTsubo,
+  IconBowl,
 } from "@/components/illust/icons/guide";
 
 /* -----------------------------
@@ -45,11 +45,11 @@ function SegmentedTabs({ items, active, onChange }) {
 }
 
 /* -----------------------------
- * プレミアム・ガイドカード
+ * ガイドカード
  * ---------------------------- */
 function GuideCard({ title, icon, tone = "mint", children }) {
   const tones = {
-    mint: "text-[var(--accent-ink)] bg-[color-mix(in_srgb,var(--mint),white_40%)]",
+    mint: "text-[var(--accent-ink)] bg-[#E2F1EA]",
     amber: "text-amber-800 bg-amber-100",
     indigo: "text-indigo-800 bg-indigo-100",
     violet: "text-violet-800 bg-violet-100",
@@ -59,7 +59,9 @@ function GuideCard({ title, icon, tone = "mint", children }) {
   return (
     <div className="rounded-[24px] bg-white ring-1 ring-[var(--ring)] p-5 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className={`grid h-11 w-11 place-items-center rounded-[14px] ring-1 ring-[var(--ring)] shadow-sm ${tones[tone]}`}>
+        <div
+          className={`grid h-11 w-11 shrink-0 place-items-center rounded-[14px] ring-1 ring-[var(--ring)] shadow-sm ${tones[tone]}`}
+        >
           {icon}
         </div>
         <div className="text-[16px] font-black tracking-tight text-slate-900">
@@ -68,6 +70,43 @@ function GuideCard({ title, icon, tone = "mint", children }) {
       </div>
       <div className="mt-3.5 text-[13px] font-bold leading-6 text-slate-700">
         {children}
+      </div>
+    </div>
+  );
+}
+
+function MiniNote({ children }) {
+  return (
+    <div className="rounded-[20px] bg-[#E2F1EA]/55 p-4 text-[12px] font-extrabold leading-6 text-[#255F4F] ring-1 ring-[#BFD9CC]/70">
+      {children}
+    </div>
+  );
+}
+
+function CheckList({ items }) {
+  return (
+    <div className="mt-3 space-y-2">
+      {items.map((item) => (
+        <div key={item} className="flex gap-2 text-[12px] font-bold leading-5 text-slate-600">
+          <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+          <span>{item}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FlowItem({ num, title, children }) {
+  return (
+    <div className="flex gap-3 rounded-[22px] bg-[#E2F1EA]/55 p-4 ring-1 ring-[#BFD9CC]/70">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
+        {num}
+      </div>
+      <div className="min-w-0">
+        <div className="text-[13px] font-black text-slate-900">{title}</div>
+        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -98,8 +137,7 @@ export default function GuidePage() {
 
   return (
     <AppShell title="使い方ガイド" noTabs={true} headerLeft={headerLeft}>
-      
-      {/* ヒーローセクション（プレミアム版） */}
+      {/* ヒーローセクション */}
       <Module className="mb-4 overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm">
         <div className="relative px-6 py-7 bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_35%)] to-[color-mix(in_srgb,var(--mint),white_75%)]">
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/70 blur-2xl pointer-events-none" />
@@ -109,17 +147,17 @@ export default function GuidePage() {
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3.5 py-1.5 shadow-sm ring-1 ring-black/5 backdrop-blur-md">
               <IconSpark className="h-4 w-4 text-[var(--accent)]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
-                未病レーダーの目的
+                未病レーダーの使い方
               </span>
             </div>
 
             <div className="mt-5 text-[22px] font-black tracking-tight text-slate-900 leading-[1.35]">
-              不調の波を先読みして、<br />
-              崩れる前に<span className="text-[var(--accent-ink)]">「先回り」</span>する。
+              体質と天気から、<br />
+              今日・明日の<span className="text-[var(--accent-ink)]">整え方</span>を選ぶ。
             </div>
-            
+
             <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
-              自分の「崩れ方のクセ」を知り、気象変化による負担をあらかじめ避けるためのセルフケアアプリです。
+              未病レーダーは、体質チェックで分かる「崩れ方のクセ」と、気圧・気温・湿度などの天気変化を合わせて、暮らす・食べる・ほぐすのケアを提案します。
             </div>
           </div>
         </div>
@@ -133,23 +171,35 @@ export default function GuidePage() {
       {/* 1. 全体像タブ */}
       {tab === "start" ? (
         <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-5">
-            基本の３ステップ
+          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
+            基本の流れ
           </div>
+          <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
+            まずカルテを作り、その日の予報を見て、必要なケアだけ選びます。
+          </div>
+
           <div className="space-y-4">
-            <GuideCard tone="mint" title="① 未病カルテ" icon={<IconChecklist />}>
-              約1〜2分の質問から、あなたの「ベース体質」「負担が出やすい場所」「天気との相性」を見える化します。
-            </GuideCard>
-            <GuideCard tone="amber" title="② 未病予報" icon={<IconWeather />}>
-              あなたの体質と、現在地の「気圧・気温・湿度」の予報を掛け合わせ、今日明日の崩れやすさと過ごし方を表示します。
-            </GuideCard>
-            <GuideCard tone="teal" title="③ 暮らす・食べる・ほぐす" icon={<IconTsubo />}>
-              その日の予報に合わせて、生活の工夫・食事の足し引き・ツボケアを確認できます。
+            <FlowItem num="1" title="未病カルテを作る">
+              質問に答えて、体質・天気との相性・負担が出やすい場所を見える化します。
+            </FlowItem>
+            <FlowItem num="2" title="未病予報を見る">
+              今日と明日の天気が、今の体質や不調にどう響きそうかを確認します。
+            </FlowItem>
+            <FlowItem num="3" title="暮らす・食べる・ほぐすを選ぶ">
+              全部やる必要はありません。服装、食事、ツボケアの中から、その日に取り入れやすいものを選びます。
+            </FlowItem>
+
+            <GuideCard tone="mint" title="今気になる不調を切り替える" icon={<IconBodyLine />}>
+              予報ページでは、頭痛・首肩・腰・むくみなど、今いちばん見たい不調を切り替えられます。切り替えると、予報カードやケア文言もその不調に合わせて変わります。
             </GuideCard>
 
             <div className="grid gap-3 pt-4">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-md">未病カルテを作る</Button>
-              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">未病予報を見る</Button>
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">
+                未病カルテを作る
+              </Button>
+              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">
+                未病予報を見る
+              </Button>
             </div>
           </div>
         </Module>
@@ -162,22 +212,31 @@ export default function GuidePage() {
             未病カルテで分かること
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            ただの性格診断ではなく、東洋医学に基づく「体調の波の出方」を分析します。
+            病名を当てるのではなく、体調が崩れやすい方向を整理するためのカルテです。
           </div>
-          
+
           <div className="space-y-4">
-            <GuideCard tone="mint" title="ベース体質（コア）" icon={<IconConstitution />}>
-              バッテリー（余力）の大きさと、アクセル/ブレーキの踏みやすさを掛け合わせた、あなたの根本的な性質です。
+            <GuideCard tone="mint" title="ベース体質" icon={<IconConstitution />}>
+              余力の大きさと、アクセル・ブレーキの入りやすさから、あなたの基本的な崩れ方のクセを整理します。
             </GuideCard>
-            <GuideCard tone="teal" title="気・血・水のバランス" icon={<IconSpark />}>
-              エネルギー不足（気虚）や、潤い不足（津液不足）など、今現在どの要素が崩れているか（サブ体質）を表示します。
+            <GuideCard tone="teal" title="気・血・水の偏り" icon={<IconSpark />}>
+              疲れやすさ、巡りにくさ、重だるさ、乾きやすさなど、今の不調につながりやすい偏りを見ます。
             </GuideCard>
-            <GuideCard tone="violet" title="張りやすい場所（経絡）" icon={<IconBodyLine />}>
-              動作テストの違和感から、首・肩、背中、体側など、負担が蓄積しやすい「体のライン」を特定します。
+            <GuideCard tone="violet" title="負担が出やすい体のライン" icon={<IconBodyLine />}>
+              動作チェックの違和感から、首肩、腰、体側、脚など、こわばりやすいラインを見ます。
+            </GuideCard>
+            <GuideCard tone="amber" title="天気との相性" icon={<IconWeather />}>
+              気圧低下、冷え込み、湿気、暑さ、乾燥など、どの天気変化で不調が出やすいかを予報に使います。
             </GuideCard>
 
+            <MiniNote>
+              カルテは一度作ると、未病予報の土台になります。気になる不調が変わった時は、予報ページ側で「今気になる不調」を切り替えて見られます。
+            </MiniNote>
+
             <div className="pt-2">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-md">未病カルテへ</Button>
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">
+                未病カルテへ
+              </Button>
             </div>
           </div>
         </Module>
@@ -190,29 +249,66 @@ export default function GuidePage() {
             未病予報の見方
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            毎日の気象変化に合わせて、崩れる前に整えるためのダッシュボードです。
+            予報は「影響の強さ」だけでなく、今日どう過ごすかまで見るページです。
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="amber" title="崩れやすさ（10段階）" icon={<IconWeather />}>
-              気圧低下、寒暖差、湿気などの気象変化に対して、あなたの体質がどれくらいダメージを受けやすいかをスコア化します。
-            </GuideCard>
-            <GuideCard tone="teal" title="今夜の先回りツボ" icon={<IconTsubo />}>
-              明日が「崩れやすい日」なら、前夜のうちに押しておきたいツボを提案します。お風呂上がりなどに30秒でOKです。
-            </GuideCard>
-            <GuideCard tone="mint" title="食養生（食事の工夫）" icon={<IconBowl />}>
-              胃腸に負担をかけない食事や、冷えを防ぐ食材など、その日の天候と体質に合った「食事の取り入れ方」が分かります。
+            <GuideCard tone="amber" title="まずゲージを見る" icon={<IconWeather />}>
+              今日・明日の天気影響がどのくらい出そうかを確認します。「影響は少なめ」「少し響きやすい」「守りたい日」のように、ケアの強さを決める目安になります。
             </GuideCard>
 
+            <GuideCard tone="mint" title="この日の方針を見る" icon={<IconSpark />}>
+              「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは下のカードから選びます。
+            </GuideCard>
+
+            <GuideCard tone="teal" title="暮らすを見る" icon={<IconCalendar />}>
+              服装、予定量、休み方、動き出しなど、生活の中ですぐ試しやすい工夫をまとめています。時間がない時は、まず暮らすカードを見るのが使いやすいです。
+              <CheckList
+                items={[
+                  "今日タブは、今日これ以上崩さないための工夫。",
+                  "明日タブは、今夜〜明朝に備えるための工夫。",
+                ]}
+              />
+            </GuideCard>
+
+            <GuideCard tone="mint" title="食べるを見る" icon={<IconBowl />}>
+              食事を完璧に変える場所ではありません。今日・明日に合わせて「足すもの」「重ねすぎ注意」「迷ったらこれ」を見る場所です。
+              <CheckList
+                items={[
+                  "足す：温かい汁物、軽めの主食、温かい飲み物など。",
+                  "重ねすぎ注意：お酒、甘いもの、冷たいもの、塩気、脂っこさなど。",
+                  "迷ったら：その日の条件に合う無理のない選択肢。",
+                ]}
+              />
+            </GuideCard>
+
+            <GuideCard tone="violet" title="ほぐすを見る" icon={<IconTsubo />}>
+              天気や今気になる不調に合わせて、軽くほぐしたいツボを表示します。ツボ詳細では、選んだ理由、ほぐし方の目安、場所の確認ができます。
+              <CheckList
+                items={[
+                  "場所が分かりにくい時は、ツボ詳細の画像検索から確認できます。",
+                  "強く押し込まず、気持ちよい範囲で短く行います。",
+                ]}
+              />
+            </GuideCard>
+
+            <GuideCard tone="indigo" title="地域設定も忘れずに" icon={<IconCalendar />}>
+              未病予報は、設定した地域の天気をもとに作られます。引っ越しや旅行などで見る地域を変えたい時は、設定ページから地域を変更してください。
+            </GuideCard>
+
+            <MiniNote>
+              不調マップやPlus導線は、今後さらに詳しく自分の傾向を見るための入口です。MVPではまず、カルテと今日・明日の予報を日常で使うことを中心にしてください。
+            </MiniNote>
+
             <div className="pt-2">
-              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">未病予報へ</Button>
+              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
+                未病予報へ
+              </Button>
             </div>
           </div>
         </Module>
       ) : null}
-
     </AppShell>
   );
 }
-
 
