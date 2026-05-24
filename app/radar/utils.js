@@ -332,9 +332,21 @@ function joinPointReasonTargets(items) {
   return `${arr.slice(0, -1).join("・")}や${arr[arr.length - 1]}`;
 }
 
-function humanizeLegacyPointSelectionReason(reason) {
+function humanizeLegacyPointSelectionReason(reason, point = null) {
   const raw = String(reason || "").trim();
   if (!raw) return "";
+
+  const code = String(point?.code || "").trim().toUpperCase();
+
+  if (raw === "明日は、お腹まわりの冷えや重さが全体に残りやすい日です。まず腹部を軽くほぐし、翌朝に重さを残しにくくするために選んでいます。") {
+    if (code === "CV12") {
+      return "明日は湿気や食後の重さが残りやすい見込みです。中脘はお腹の中央から胃腸まわりを軽くゆるめるツボなので、今夜のうちに食後の重さを持ち越しにくくする準備として選んでいます。";
+    }
+    if (code === "CV6") {
+      return "明日は冷えやだるさが腰腹まわりに残りやすい見込みです。気海は下腹部を軽くゆるめるツボなので、今夜のうちに冷えや重さを持ち越しにくくする準備として選んでいます。";
+    }
+    return "明日は、お腹まわりの冷えや重さが残りやすい見込みです。今夜のうちに腹部を軽くゆるめ、翌朝に重さを持ち越しにくくするために選んでいます。";
+  }
 
   const mtestMotherMatch = raw.match(/^この日は、?(.+?)をやさしく支えたい流れです。?(.*)$/);
   if (mtestMotherMatch) {
@@ -965,8 +977,30 @@ export function getTsuboRoleLabel(point, index) {
   return index === 0 ? "まず整えたい体質ケア" : "体質ケア";
 }
 
+function humanizeLegacyPointRoleSummary(summary, point = null) {
+  const raw = String(summary || "").trim();
+  if (!raw) return "";
+
+  const code = String(point?.code || "").trim().toUpperCase();
+
+  if (raw === "お腹まわりから、全体の余力を支えるツボです") {
+    if (code === "CV12") {
+      return "食後の重さを翌朝に残しにくくするため、今夜のうちにお腹の中央を軽く整えるツボです";
+    }
+    if (code === "CV6") {
+      return "腰腹まわりの冷えやだるさを持ち越しにくくするため、今夜のうちに下腹部を軽く整えるツボです";
+    }
+    return "翌朝に残りやすいお腹の重さを、今夜のうちに軽く整えるツボです";
+  }
+
+  return raw;
+}
+
 export function getPointRoleSummary(point) {
-  return point?.explanation?.role_summary || "この日の整え方に合わせて選んだツボです。";
+  return humanizeLegacyPointRoleSummary(
+    point?.explanation?.role_summary || "この日の整え方に合わせて選んだツボです。",
+    point
+  );
 }
 
 export function getCareStrategyTitle(triggerKey, signal, mode = "tomorrow") {
@@ -1302,7 +1336,8 @@ export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomor
 export function getPointSelectionReason(point) {
   return humanizeLegacyPointSelectionReason(
     point?.explanation?.selection_reason ||
-      "明日の天気で出やすい重さやこわばりを、今夜のうちに整えやすいツボとして選んでいます。"
+      "明日の天気で出やすい重さやこわばりを、今夜のうちに整えやすいツボとして選んでいます。",
+    point
   );
 }
 
@@ -1445,7 +1480,4 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
-
-
 
