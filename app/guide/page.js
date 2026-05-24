@@ -157,26 +157,51 @@ export default function GuidePage() {
   return (
     <AppShell title="使い方ガイド" noTabs={true} headerLeft={headerLeft}>
       {/* ヒーローセクション */}
-      <Module className="mb-4 overflow-hidden border-none ring-1 ring-[var(--ring)] shadow-sm">
-        <div className="relative px-6 py-7 bg-gradient-to-br from-[color-mix(in_srgb,var(--mint),white_35%)] to-[color-mix(in_srgb,var(--mint),white_75%)]">
-          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/70 blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-[var(--accent)]/10 blur-3xl pointer-events-none" />
+      <Module className="mb-4 overflow-hidden border-none bg-transparent shadow-none ring-0">
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#DDEFE6] via-[#F4FAF7] to-white px-6 py-7 shadow-[0_18px_45px_rgba(37,95,79,0.12)] ring-1 ring-[#BFD9CC]/70">
+          <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/80 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-[#8DC7AD]/25 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-5 right-5 h-20 w-20 rounded-full border border-white/70 bg-white/20" />
 
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3.5 py-1.5 shadow-sm ring-1 ring-black/5 backdrop-blur-md">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3.5 py-1.5 shadow-sm ring-1 ring-[#BFD9CC]/70 backdrop-blur-md">
               <IconSpark className="h-4 w-4 text-[var(--accent)]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
                 未病レーダーの使い方
               </span>
             </div>
 
-            <div className="mt-5 text-[22px] font-black tracking-tight text-slate-900 leading-[1.35]">
+            <div className="mt-5 text-[24px] font-black tracking-tight text-slate-900 leading-[1.32]">
               体質と天気から、<br />
               今日・明日の<span className="text-[var(--accent-ink)]">整え方</span>を選ぶ。
             </div>
 
             <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
-              未病レーダーは、体質チェックで分かる「崩れ方のクセ」と、気圧・気温・湿度などの天気変化を合わせて、暮らす・食べる・ほぐすのケアを提案します。
+              カルテで自分の崩れ方のクセを知り、予報で今日・明日の過ごし方を選びます。迷ったら、まずは暮らすカードから見てください。
+            </div>
+
+            <div className="mt-5 grid grid-cols-3 gap-2.5">
+              <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
+                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                  <IconConstitution className="h-4 w-4" />
+                </div>
+                <div className="mt-2 text-[11px] font-black text-slate-900">カルテ</div>
+                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">体質を知る</div>
+              </div>
+              <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
+                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                  <IconWeather className="h-4 w-4" />
+                </div>
+                <div className="mt-2 text-[11px] font-black text-slate-900">予報</div>
+                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">影響を見る</div>
+              </div>
+              <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
+                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                  <IconChecklist className="h-4 w-4" />
+                </div>
+                <div className="mt-2 text-[11px] font-black text-slate-900">ケア</div>
+                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">選んで整える</div>
+              </div>
             </div>
           </div>
         </div>
@@ -208,9 +233,9 @@ export default function GuidePage() {
               全部やる必要はありません。服装、食事、ツボケアの中から、その日に取り入れやすいものを選びます。
             </FlowItem>
 
-            <GuideCard tone="mint" title="今気になる不調を切り替える" icon={<IconBodyLine />} compact>
-              予報ページでは、頭痛・首肩・腰・むくみなど、今いちばん見たい不調を切り替えられます。切り替えると、予報カードやケア文言もその不調に合わせて変わります。
-            </GuideCard>
+            <MiniNote>
+              基本はこの3ステップです。詳しい見方は、①カルテ・②予報のタブで確認できます。
+            </MiniNote>
 
             <div className="grid gap-3 pt-4">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">
@@ -249,7 +274,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              カルテは一度作ると、未病予報の土台になります。気になる不調が変わった時は、予報ページ側で「今気になる不調」を切り替えて見られます。
+              カルテは一度作ると、未病予報の土台になります。未病カルテPlus（不調マップ）は、自分の傾向をさらに詳しく見るための追加ページです。
             </MiniNote>
 
             <div className="pt-2">
@@ -278,6 +303,10 @@ export default function GuidePage() {
 
             <GuideCard tone="mint" title="この日の方針を見る" icon={<IconSpark />}>
               「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは下のカードから選びます。
+            </GuideCard>
+
+            <GuideCard tone="indigo" title="今気になる不調を切り替える" icon={<IconBodyLine />} compact>
+              予報ページでは、頭痛・首肩・腰・むくみなど、今いちばん見たい不調を切り替えられます。切り替えると、予報カードやケア文言もその不調に合わせて変わります。
             </GuideCard>
 
             <GuideCard tone="teal" title="暮らすを見る" icon={<IconCalendar />}>
@@ -316,7 +345,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              不調マップやPlusは、自分の傾向をさらに詳しく見るための入口です。まずは、カルテと今日・明日の予報を日常で使うところから始めてください。
+              予報の内容は、カルテ・地域設定・今気になる不調をもとに変わります。見ている不調や地域が変わった時は、予報ページで切り替えて確認してください。
             </MiniNote>
 
             <div className="pt-2">
@@ -330,3 +359,4 @@ export default function GuidePage() {
     </AppShell>
   );
 }
+
