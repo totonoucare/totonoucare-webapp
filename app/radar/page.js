@@ -656,8 +656,9 @@ export default function RadarPage() {
         triggerFactors: careTriggerFactors,
         riskContext,
         mode: selectedIsToday ? "today" : "tomorrow",
+        symptomFocus,
       }),
-    [activeCareForecast, careTriggerFactors, riskContext, selectedIsToday]
+    [activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]
   );
   const derivedLifestylePlan = useMemo(
     () =>
@@ -1249,7 +1250,7 @@ export default function RadarPage() {
                   この日の方針
                 </div>
                 <div className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#D3E1D5]">
-                  体質 × 天気
+                  {symptomFocus ? "体質 × 天気 × 不調" : "体質 × 天気"}
                 </div>
               </div>
 
