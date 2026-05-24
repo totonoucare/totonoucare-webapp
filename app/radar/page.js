@@ -685,13 +685,17 @@ export default function RadarPage() {
   useEffect(() => {
     if (!selectedPoint) return;
 
-    const currentPoints = safeArray(bundle?.care_plan?.night_tsubo_set?.points);
+    // Detail sheet should stay in sync with the currently displayed tsubo list.
+    // Today uses a locally rebuilt todayCarePlan, while tomorrow uses bundle.care_plan.
+    // Looking only at bundle.care_plan here can replace a today_rule point with
+    // tomorrow's DB point when the same code appears in both lists.
+    const currentPoints = safeArray(carePlan?.night_tsubo_set?.points);
     const refreshedPoint = currentPoints.find((p) => p?.code === selectedPoint?.code);
 
     if (refreshedPoint && refreshedPoint !== selectedPoint) {
       setSelectedPoint(refreshedPoint);
     }
-  }, [bundle?.care_plan?.night_tsubo_set?.points, selectedPoint]);
+  }, [carePlan?.night_tsubo_set?.points, selectedPoint]);
 
 
   useEffect(() => {
