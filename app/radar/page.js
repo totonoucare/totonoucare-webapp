@@ -1334,7 +1334,7 @@ export default function RadarPage() {
                         {getTsuboRoleLabel(primaryTsubo, 0)}
                       </span>
                       <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E1E6E1]">
-                        タップで押し方
+                        タップでほぐし方
                       </span>
                     </div>
                   </div>
