@@ -1239,7 +1239,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className="mt-4 rounded-[24px] bg-[#E2F1EA]/55 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[#255F4F]/65">
                   この日の方針
@@ -1292,7 +1292,7 @@ export default function RadarPage() {
 
                 {primaryTsubo ? (
                   <div
-                    className="relative overflow-hidden rounded-[24px] bg-[#F7FAF7]/75 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#F9FCFA]"
+                    className="relative overflow-hidden rounded-[24px] bg-[#E2F1EA]/55 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#F9FCFA]"
                     onClick={() => setSelectedPoint(primaryTsubo)}
                   >
                     <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
@@ -1441,7 +1441,7 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] bg-[#F7FAF7]/75 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                <div className="rounded-[24px] bg-[#E2F1EA]/55 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                     {food.badge || "まずはこれ"}
                   </div>
@@ -1635,7 +1635,7 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[24px] bg-[#F7FAF7]/75 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                <div className="overflow-hidden rounded-[24px] bg-[#E2F1EA]/55 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div className="px-4 py-4">
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                       まずはこれ
@@ -1769,4 +1769,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
