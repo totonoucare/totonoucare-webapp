@@ -305,10 +305,6 @@ export default function GuidePage() {
               「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは下のカードから選びます。
             </GuideCard>
 
-            <GuideCard tone="indigo" title="今気になる不調を切り替える" icon={<IconBodyLine />} compact>
-              予報ページでは、頭痛・首肩・腰・むくみなど、今いちばん見たい不調を切り替えられます。切り替えると、予報カードやケア文言もその不調に合わせて変わります。
-            </GuideCard>
-
             <GuideCard tone="teal" title="暮らすを見る" icon={<IconCalendar />}>
               服装、予定量、休み方、動き出しなど、生活の中ですぐ試しやすい工夫をまとめています。時間がない時は、まず暮らすカードを見るのが使いやすいです。
               <CheckList
@@ -340,12 +336,12 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="indigo" title="地域設定も忘れずに" icon={<IconCalendar />}>
-              未病予報は、設定した地域の天気をもとに作られます。引っ越しや旅行などで見る地域を変えたい時は、設定ページから地域を変更してください。
+            <GuideCard tone="indigo" title="地域と不調も確認する" icon={<IconCalendar />}>
+              未病予報は、設定した地域の天気と、今見ている不調をもとに作られます。引っ越しや旅行の時は設定ページで地域を変更し、頭痛・首肩・腰・むくみなど見たい不調は予報ページで切り替えてください。
             </GuideCard>
 
             <MiniNote>
-              予報の内容は、カルテ・地域設定・今気になる不調をもとに変わります。見ている不調や地域が変わった時は、予報ページで切り替えて確認してください。
+              ゲージとこの日の方針で大まかな方向を見て、実際にやることは暮らす・食べる・ほぐすから選びます。必要なところだけ見れば大丈夫です。
             </MiniNote>
 
             <div className="pt-2">
