@@ -193,14 +193,73 @@ export function signalPanelSubtext(signal) {
 }
 
 export function sourceLabel(source) {
+  if (source === "today_rule") return "今日の天気と不調から選んだケア";
   if (source === "mtest") return "動きから選んだケア";
-  return "体質から選んだケア";
+  if (source === "tcm") return "体質と天気から選んだケア";
+  return "この日の状態から選んだケア";
 }
 
-export function getPointRegionLabel(region) {
-  if (region === "abdomen") return "お腹まわり";
-  if (region === "head_neck") return "頭・首まわり";
-  return "手足まわり";
+const HAND_ARM_POINT_PREFIXES = new Set(["LI", "LU", "PC", "HT", "SI", "TE", "SJ"]);
+const LEG_FOOT_POINT_PREFIXES = new Set(["ST", "SP", "LR", "GB", "KI", "BL"]);
+const TRUNK_POINT_PREFIXES = new Set(["CV", "GV"]);
+
+function getPointCodePrefix(point) {
+  const code = String(point?.code || "").trim().toUpperCase();
+  const codePrefix = code.match(/^[A-Z]+/)?.[0] || "";
+  if (codePrefix) return codePrefix;
+
+  const meridian = String(point?.meridian_code || "").trim().toUpperCase();
+  if (meridian === "SJ") return "TE";
+  return meridian;
+}
+
+export function inferPointTouchArea(pointOrRegion, codeMaybe = null) {
+  const point =
+    pointOrRegion && typeof pointOrRegion === "object"
+      ? pointOrRegion
+      : { point_region: pointOrRegion, code: codeMaybe };
+
+  const region = String(point?.point_region || "").trim().toLowerCase();
+  const bodyRegion = String(point?.body_region || "").trim().toLowerCase();
+  const prefix = getPointCodePrefix(point);
+
+  // point_region/body_region を優先する。GV20のように、経脈コードだけでは
+  // 体幹扱いできないツボが今後増えても崩れにくくするため。
+  if (region === "head_neck" || /head|neck|face|temple|scalp/.test(bodyRegion)) {
+    return "head_neck";
+  }
+
+  if (
+    ["abdomen", "chest_abdomen", "trunk"].includes(region) ||
+    /abdomen|belly|chest|trunk|lower_abdomen|upper_abdomen/.test(bodyRegion)
+  ) {
+    return "abdomen_trunk";
+  }
+
+  if (HAND_ARM_POINT_PREFIXES.has(prefix) || /hand|wrist|forearm|arm|elbow/.test(bodyRegion)) {
+    return "hand_arm";
+  }
+
+  if (LEG_FOOT_POINT_PREFIXES.has(prefix) || /foot|ankle|leg|knee|thigh|toe/.test(bodyRegion)) {
+    return "leg_foot";
+  }
+
+  if (TRUNK_POINT_PREFIXES.has(prefix)) {
+    return "abdomen_trunk";
+  }
+
+  if (region === "limb") return "limb";
+  return "general";
+}
+
+export function getPointRegionLabel(pointOrRegion, codeMaybe = null) {
+  const area = inferPointTouchArea(pointOrRegion, codeMaybe);
+  if (area === "head_neck") return "頭・首まわり";
+  if (area === "abdomen_trunk") return "お腹・体幹まわり";
+  if (area === "hand_arm") return "手・腕まわり";
+  if (area === "leg_foot") return "脚・足まわり";
+  if (area === "limb") return "手足まわり";
+  return "ほぐしやすい場所";
 }
 
 export const HIDDEN_LOCATION_LABELS = new Set(["primary", "current", "home"]);
@@ -811,10 +870,13 @@ export function getHeroDecorClass(signal) {
 }
 
 export function getTsuboRoleLabel(point, index) {
-  if (index === 0) {
-    return point?.source === "mtest" ? "まず整えたいラインケア" : "まず整えたい体質ケア";
+  if (point?.source === "today_rule") {
+    return index === 0 ? "今日まずほぐしたいケア" : "今日の候補ケア";
   }
-  return point?.source === "mtest" ? "ラインケア" : "体質ケア";
+  if (point?.source === "mtest") {
+    return index === 0 ? "まず整えたいラインケア" : "ラインケア";
+  }
+  return index === 0 ? "まず整えたい体質ケア" : "体質ケア";
 }
 
 export function getPointRoleSummary(point) {
@@ -1175,17 +1237,26 @@ export function getPointMatchTags(point) {
 }
 
 export function getPointPressGuide(point) {
-  const base =
-    point?.point_region === "abdomen"
-      ? "仰向けでお腹の力を抜き、吐く息に合わせて中指でやさしく押します。"
-      : "息を吐きながら、じんわり気持ちいい強さで押します。";
+  const area = inferPointTouchArea(point);
+  const name = String(point?.name_ja || point?.code || "このツボ").trim();
 
-  const side =
-    point?.point_region === "abdomen"
-      ? "20〜30秒を2〜3回。"
-      : "左右ある場所は片側20〜30秒ずつ、2〜3回が目安です。";
+  if (area === "head_neck") {
+    return `${name}は頭・首まわりのツボです。人差し指か中指の腹で、押し込まずに軽く触ります。息を吐きながら、小さく円を描くくらいで十分です。20〜30秒を1〜2回。痛みを探して強く押さないでください。`;
+  }
 
-  return `${base}${side} 痛すぎる強さは避けてください。`;
+  if (area === "abdomen_trunk") {
+    return `${name}はお腹・体幹まわりのツボです。親指で押し込まず、手のひらか2〜3本の指の腹を置くように触ります。お腹が軽く動くくらいのやさしい圧で、小さく円を描きます。20〜30秒を1〜2回。苦しさや痛みがあればやめてください。`;
+  }
+
+  if (area === "hand_arm") {
+    return `${name}は手・腕まわりのツボです。反対の手の親指の腹で、痛くない強さでゆっくり触ります。押し込むより、息を吐きながら小さく円を描くくらいで十分です。左右ある場所は片側20〜30秒を1〜2回。`;
+  }
+
+  if (area === "leg_foot") {
+    return `${name}は脚・足まわりのツボです。親指の腹で、冷えやこわばりを確認するように軽く触ります。強く押し込まず、息を吐きながら小さく円を描くくらいで十分です。左右ある場所は片側20〜30秒を1〜2回。`;
+  }
+
+  return `${name}は指の腹で軽く触ります。息を吐きながら、痛くない範囲で小さく円を描くくらいで十分です。20〜30秒を1〜2回。強く押し込まないでください。`;
 }
 
 
@@ -1288,6 +1359,3 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
-
-
