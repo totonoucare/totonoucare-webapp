@@ -265,16 +265,32 @@ export function getPointRegionLabel(pointOrRegion, codeMaybe = null) {
 export const HIDDEN_LOCATION_LABELS = new Set(["primary", "current", "home"]);
 
 export const MATCH_TAG_LABELS = {
-  // 既存の日本語タグ
-  "脾を意識": "消化吸収や重だるさに関わるはたらき",
-  "脾": "消化吸収や重だるさに関わるはたらき",
-  "肝を意識": "緊張や巡りの滞りに関わりやすいはたらき",
-  "肝・胆ライン": "緊張や巡りの滞りに関わりやすいはたらき",
-  "肝胆ライン": "緊張や巡りの滞りに関わりやすいはたらき",
-  "湿": "重だるさ・むくみ・べたつく不調につながりやすい状態",
-  "腹部から整える": "お腹まわりから整えたい日に向く考え方",
-  "やさしく支える": "土台を支えて崩れにくくしたい日に向く考え方",
-  "体質ケア": "体質に合わせたケア",
+  // 既存の日本語タグ / 旧ロジック由来の専門語を生活語に変換する
+  "気を補う": "疲れやすさを残しにくくする",
+  "腎を支える": "腰腹まわりの冷えを残しにくくする",
+  "脾胃を支える": "食後の重さを残しにくくする",
+  "湿をさばく": "重だるさ・むくみを残しにくくする",
+  "血の巡りを動かす": "こわばりを残しにくくする",
+  "うるおいを補う": "乾きやほてりを残しにくくする",
+  "血を補う": "休みに入りにくい感じを残しにくくする",
+  "巡りを動かす": "張りや詰まり感を残しにくくする",
+  "張りをゆるめる": "緊張や力みを抜きやすくする",
+  "気圧低下も補助": "気圧低下も少し見る",
+  "気圧上昇も補助": "気圧上昇も少し見る",
+  "冷え込みも補助": "冷え込みも少し見る",
+  "気温上昇も補助": "暑さも少し見る",
+  "湿気も補助": "湿気も少し見る",
+  "乾燥も補助": "乾燥も少し見る",
+  "脾を意識": "食後の重さやだるさを見ておく",
+  "脾": "食後の重さやだるさを見ておく",
+  "肝を意識": "緊張や巡りの滞りを見ておく",
+  "肝・胆ライン": "緊張や巡りの滞りを見ておく",
+  "肝胆ライン": "緊張や巡りの滞りを見ておく",
+  "湿": "重だるさ・むくみを残しにくくする",
+  "腹部から整える": "お腹まわりから整える",
+  "やさしく支える": "動き出しを支える",
+  "詰まりをゆるめる": "張りを残しにくくする",
+  "体質ケア": "明日の天気に合わせたケア",
   "ラインケア": "動きの負担に向くケア",
 
   // 今日タブのルール選定で使う内部キーを、ユーザー向けの言葉に変換する
@@ -295,6 +311,62 @@ export const MATCH_TAG_LABELS = {
   dry: "天気の影響：乾燥",
   temp: "天気の影響：気温差",
 };
+
+const LEGACY_TSUBO_REASON_TARGETS = {
+  "気を補う": "疲れやすさ",
+  "腎を支える": "腰腹まわりの冷え",
+  "脾胃を支える": "食後の重さ",
+  "湿をさばく": "重だるさ・むくみ",
+  "血の巡りを動かす": "こわばり",
+  "うるおいを補う": "乾きやほてり",
+  "血を補う": "休みに入りにくい感じ",
+  "巡りを動かす": "張りや詰まり感",
+  "張りをゆるめる": "緊張や力み",
+};
+
+function joinPointReasonTargets(items) {
+  const arr = Array.from(new Set(safeArray(items).filter(Boolean)));
+  if (!arr.length) return "重さやこわばり";
+  if (arr.length === 1) return arr[0];
+  if (arr.length === 2) return `${arr[0]}や${arr[1]}`;
+  return `${arr.slice(0, -1).join("・")}や${arr[arr.length - 1]}`;
+}
+
+function humanizeLegacyPointSelectionReason(reason) {
+  const raw = String(reason || "").trim();
+  if (!raw) return "";
+
+  const secondaryMatch = raw.match(/^(.+?)の影響も少し重なりそうなため、(.+?)ケアも少し入れられるように選んでいます。?$/);
+  if (secondaryMatch) {
+    const trigger = secondaryMatch[1];
+    const targets = String(secondaryMatch[2] || "")
+      .split("・")
+      .map((part) => LEGACY_TSUBO_REASON_TARGETS[part] || part)
+      .filter(Boolean);
+    return `明日は${trigger}の影響も少し重なる見込みです。${joinPointReasonTargets(targets)}を翌朝に残しにくくするために、このツボを選んでいます。`;
+  }
+
+  const primaryMatch = raw.match(/^(.+?)ケアがこの日の体質ケアに合うため選んでいます。?$/);
+  if (primaryMatch) {
+    const targets = String(primaryMatch[1] || "")
+      .split("・")
+      .map((part) => LEGACY_TSUBO_REASON_TARGETS[part] || part)
+      .filter(Boolean);
+    return `${joinPointReasonTargets(targets)}を翌朝に残しにくくするために、このツボを選んでいます。`;
+  }
+
+  const secondarySimpleMatch = raw.match(/^(.+?)ケアも、この日の整え方に合うため選んでいます。?$/);
+  if (secondarySimpleMatch) {
+    const targets = String(secondarySimpleMatch[1] || "")
+      .split("・")
+      .map((part) => LEGACY_TSUBO_REASON_TARGETS[part] || part)
+      .filter(Boolean);
+    return `${joinPointReasonTargets(targets)}も翌朝に残しにくくするために、このツボを選んでいます。`;
+  }
+
+  return raw;
+}
+
 export const RADAR_LOADING_HINTS = [
   "体質データを読み込んでいます…",
   "明日の気圧・気温・湿度の変化を照合しています…",
@@ -1214,9 +1286,9 @@ export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomor
 
 
 export function getPointSelectionReason(point) {
-  return (
+  return humanizeLegacyPointSelectionReason(
     point?.explanation?.selection_reason ||
-    "この日の整え方に合うツボを選んでいます。"
+      "明日の天気で出やすい重さやこわばりを、今夜のうちに整えやすいツボとして選んでいます。"
   );
 }
 
@@ -1359,3 +1431,7 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
+
+
+
