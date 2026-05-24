@@ -1153,6 +1153,46 @@ const POLICY_PAIR_SUMMARIES = {
   "meguraseru+nukumeru": "冷やさず、固めず、動き出しやすさを残すケアが合います。",
 };
 
+
+const CARE_POLICY_SYMPTOM_CONTEXTS = {
+  fatigue: {
+    today: "だるさを見ている日は、消耗を増やさず、回復の余白を残す方向で整えます。",
+    tomorrow: "だるさを見ている日は、明朝に重さを残さないよう、今夜の消耗を軽くする方向で整えます。",
+  },
+  sleep: {
+    today: "睡眠を見ている日は、夜まで頭の冴えや食後の重さを持ち越さない方向で整えます。",
+    tomorrow: "睡眠を見ている日は、今夜の冷え・光・食後の重さを翌朝に残さない方向で整えます。",
+  },
+  neck_shoulder: {
+    today: "首肩を見ている日は、首元・肩甲骨まわりを固めすぎない方向で整えます。",
+    tomorrow: "首肩を見ている日は、今夜から首元の冷えと画面姿勢を残さない方向で整えます。",
+  },
+  low_back_pain: {
+    today: "腰を見ている日は、腰腹・下半身に重さを残さない方向で整えます。",
+    tomorrow: "腰を見ている日は、明朝の動き出しに重さを残さない方向で整えます。",
+  },
+  swelling: {
+    today: "むくみを見ている日は、顔や脚に重さをため込まない方向で整えます。",
+    tomorrow: "むくみを見ている日は、明朝の顔・脚の重さを増やさない方向で整えます。",
+  },
+  headache: {
+    today: "頭痛を見ている日は、首・耳・目まわりにこもらせない方向で整えます。",
+    tomorrow: "頭痛を見ている日は、今夜から首肩と耳まわりを固めない方向で整えます。",
+  },
+  dizziness: {
+    today: "めまいを見ている日は、揺れや急な切り替えを増やさない方向で整えます。",
+    tomorrow: "めまいを見ている日は、明朝の動き出しを急がない方向で整えます。",
+  },
+  mood: {
+    today: "気分を見ている日は、予定や通知に押されすぎない方向で整えます。",
+    tomorrow: "気分を見ている日は、明日の始まりを軽くするために、今夜の刺激を減らす方向で整えます。",
+  },
+};
+
+function getCarePolicySymptomContext(symptomFocus, mode = "today") {
+  return CARE_POLICY_SYMPTOM_CONTEXTS[symptomFocus]?.[mode] || "";
+}
+
 const SINGLE_POLICY_SUMMARIES = {
   shizumeru: "熱や頭の冴えをこもらせず、落ち着けるケアが合います。",
   yurumeru: "首肩・呼吸・気持ちの力みをほどくケアが合います。",
@@ -1200,7 +1240,7 @@ function getRiskContextTriggerFactors(riskContext) {
   });
 }
 
-function getPolicySummary({ policies, triggerFactors, signal, mode }) {
+function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus }) {
   const labels = getForecastBackgroundFactors(triggerFactors).map((f) => f.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
   const target = mode === "today" ? "今日は" : "明日は";
@@ -1211,17 +1251,19 @@ function getPolicySummary({ policies, triggerFactors, signal, mode }) {
     keys.length >= 2
       ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}ケアが合います。`
       : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
+  const symptomContext = getCarePolicySymptomContext(symptomFocus, mode);
+  const withSymptomContext = (text) => [text, symptomContext].filter(Boolean).join(" ");
 
   if (level <= 0) {
-    return `${weatherTarget}、${joined}の影響が少しだけある見込み。強い対策より、${detail}`;
+    return withSymptomContext(`${weatherTarget}、${joined}の影響が少しだけある見込み。強い対策より、${detail}`);
   }
   if (level >= 2) {
-    return `${target}${joined}が響きやすい日。${detail}`;
+    return withSymptomContext(`${target}${joined}が響きやすい日。${detail}`);
   }
-  return `${target}${joined}が少し響きやすい見込み。${detail}`;
+  return withSymptomContext(`${target}${joined}が少し響きやすい見込み。${detail}`);
 }
 
-export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow" } = {}) {
+export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow", symptomFocus = null } = {}) {
   const scores = Object.fromEntries(
     Object.keys(CARE_POLICY_DEFINITIONS).map((key) => [key, 0])
   );
@@ -1260,8 +1302,8 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
     addPolicyScores(scores, SUB_LABEL_POLICY_SCORES[label], index === 0 ? 1 : 0.62);
   });
 
-  const symptomFocus = constitutionContext.symptom_focus || null;
-  addPolicyScores(scores, SYMPTOM_POLICY_SCORES[symptomFocus], 1);
+  const activeSymptomFocus = symptomFocus || constitutionContext.symptom_focus || null;
+  addPolicyScores(scores, SYMPTOM_POLICY_SCORES[activeSymptomFocus], 1);
 
   const coreCode = String(constitutionContext.core_code || "");
   if (coreCode.includes("batt_small")) addPolicyScores(scores, { sasaeru: 0.8, nukumeru: 0.25 });
@@ -1323,6 +1365,7 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
       triggerFactors: normalizedTriggerFactors,
       signal,
       mode,
+      symptomFocus: activeSymptomFocus,
     }),
   };
 }
@@ -1480,4 +1523,7 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
+
+
+
 
