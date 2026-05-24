@@ -575,6 +575,10 @@ const FORECAST_SYMPTOM_LABELS = {
   mood: "気分",
 };
 
+function getSymptomFocusLabel(symptomFocus) {
+  return FORECAST_SYMPTOM_LABELS[symptomFocus] || "今気になる不調";
+}
+
 const SYMPTOM_BODY_SIGN_LABELS = {
   fatigue: ["だるさが残りやすい", "動き出しが重くなりやすい", "休んでも抜けにくく感じやすい"],
   sleep: ["画面・光の影響が夜まで残りやすい", "寝る前に体が休みに入りにくい", "朝の重さにつながりやすい"],
@@ -1044,41 +1048,48 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
 }
 
 
-const CARE_POLICY_DEFINITIONS = {
+export const CARE_POLICY_DEFINITIONS = {
   shizumeru: {
     key: "shizumeru",
     label: "しずめる",
     short: "熱と冴えを落ち着ける",
+    guide: "熱・冴え・高ぶりを落ち着ける",
   },
   yurumeru: {
     key: "yurumeru",
     label: "ゆるめる",
     short: "力みをほどく",
+    guide: "力み・こわばり・緊張をほどく",
   },
   meguraseru: {
     key: "meguraseru",
     label: "めぐらせる",
     short: "巡りを止めない",
+    guide: "滞りやこもりに逃げ道を作る",
   },
   nagasu: {
     key: "nagasu",
     label: "ながす",
     short: "重さを逃がす",
+    guide: "湿気・重だるさ・水っぽさをためない",
   },
   uruosu: {
     key: "uruosu",
     label: "うるおす",
-    short: "乾きを補う",
+    short: "乾きを残さない",
+    guide: "乾き・消耗を残さない",
   },
   nukumeru: {
     key: "nukumeru",
     label: "ぬくめる",
     short: "冷えを守る",
+    guide: "冷えの入口を守る",
   },
   sasaeru: {
     key: "sasaeru",
     label: "ささえる",
     short: "回復力を削らない",
+    guide: "胃腸・回復力・余力を削らない",
   },
 };
 
@@ -1154,43 +1165,159 @@ const POLICY_PAIR_SUMMARIES = {
 };
 
 
-const CARE_POLICY_SYMPTOM_CONTEXTS = {
-  fatigue: {
-    today: "だるさを見ている日は、消耗を増やさず、回復の余白を残す方向で整えます。",
-    tomorrow: "だるさを見ている日は、明朝に重さを残さないよう、今夜の消耗を軽くする方向で整えます。",
-  },
-  sleep: {
-    today: "睡眠を見ている日は、夜まで頭の冴えや食後の重さを持ち越さない方向で整えます。",
-    tomorrow: "睡眠を見ている日は、今夜の冷え・光・食後の重さを翌朝に残さない方向で整えます。",
-  },
-  neck_shoulder: {
-    today: "首肩を見ている日は、首元・肩甲骨まわりを固めすぎない方向で整えます。",
-    tomorrow: "首肩を見ている日は、今夜から首元の冷えと画面姿勢を残さない方向で整えます。",
-  },
-  low_back_pain: {
-    today: "腰を見ている日は、腰腹・下半身に重さを残さない方向で整えます。",
-    tomorrow: "腰を見ている日は、明朝の動き出しに重さを残さない方向で整えます。",
-  },
-  swelling: {
-    today: "むくみを見ている日は、顔や脚に重さをため込まない方向で整えます。",
-    tomorrow: "むくみを見ている日は、明朝の顔・脚の重さを増やさない方向で整えます。",
-  },
-  headache: {
-    today: "頭痛を見ている日は、首・耳・目まわりにこもらせない方向で整えます。",
-    tomorrow: "頭痛を見ている日は、今夜から首肩と耳まわりを固めない方向で整えます。",
-  },
-  dizziness: {
-    today: "めまいを見ている日は、揺れや急な切り替えを増やさない方向で整えます。",
-    tomorrow: "めまいを見ている日は、明朝の動き出しを急がない方向で整えます。",
-  },
-  mood: {
-    today: "気分を見ている日は、予定や通知に押されすぎない方向で整えます。",
-    tomorrow: "気分を見ている日は、明日の始まりを軽くするために、今夜の刺激を減らす方向で整えます。",
-  },
-};
+function getCarePolicyTriggerKeys(triggerFactors) {
+  return getForecastBackgroundFactors(triggerFactors)
+    .map((factor) => normalizeCarePolicyTriggerKey(factor?.key || factor?.exact))
+    .filter(Boolean);
+}
 
-function getCarePolicySymptomContext(symptomFocus, mode = "today") {
-  return CARE_POLICY_SYMPTOM_CONTEXTS[symptomFocus]?.[mode] || "";
+function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "today" } = {}) {
+  const keys = getCarePolicyTriggerKeys(triggerFactors);
+  if (!symptomFocus || !keys.length) return "";
+
+  const has = (...targets) => targets.some((target) => keys.includes(target));
+  const today = mode === "today";
+  const weatherLead = (() => {
+    if (has("heat") && has("cold")) return "気温差";
+    if (has("damp") && has("cold")) return "湿気と冷え込み";
+    if (has("damp") && has("heat")) return "湿気と気温上昇";
+    if (has("pressure_down")) return "気圧低下";
+    if (has("pressure_up")) return "気圧上昇";
+    if (has("damp")) return "湿気";
+    if (has("cold")) return "冷え込み";
+    if (has("heat")) return "気温上昇";
+    if (has("dry")) return "乾燥";
+    return "天気変化";
+  })();
+
+  const todaySentence = (body) => `${getSymptomFocusLabel(symptomFocus)}を見ている場合は、${weatherLead}で${body}`;
+  const tomorrowSentence = (body) => `${getSymptomFocusLabel(symptomFocus)}を見ている場合は、明日の${weatherLead}に備えて、今夜は${body}`;
+  const sentence = (todayBody, tomorrowBody) => today ? todaySentence(todayBody) : tomorrowSentence(tomorrowBody);
+
+  switch (symptomFocus) {
+    case "fatigue":
+      return sentence(
+        "消耗やだるさが残りやすいため、重さをため込まない方向で整えます。",
+        "食べすぎ・冷え・予定の詰め込みを軽くし、明朝のだるさを残さない方向で整えます。",
+      );
+
+    case "sleep":
+      if (has("heat") || has("pressure_up")) {
+        return sentence(
+          "頭の冴えや熱が夜まで残りやすいため、刺激をこもらせない方向で整えます。",
+          "光・刺激・食後の重さを控えめにし、寝つきに響く冴えを残さない方向で整えます。",
+        );
+      }
+      return sentence(
+        "冷えや食後の重さが夜まで残りやすいため、眠りに重さを持ち込まない方向で整えます。",
+        "冷えと食後の重さを軽くし、明朝に眠りの重さを残さない方向で整えます。",
+      );
+
+    case "neck_shoulder":
+      if (has("cold")) {
+        return sentence(
+          "首元・肩甲骨まわりが固まりやすいため、冷やしてこわばらせない方向で整えます。",
+          "首元を冷やしたまま寝ないようにし、明朝のこわばりを残さない方向で整えます。",
+        );
+      }
+      if (has("pressure_down")) {
+        return sentence(
+          "首肩から後頭部にこもりが残りやすいため、力みをためない方向で整えます。",
+          "首肩と耳まわりを軽くゆるめ、明朝のこもりを残さない方向で整えます。",
+        );
+      }
+      return sentence(
+        "首元・肩甲骨まわりが固まりやすいため、力みをためない方向で整えます。",
+        "画面姿勢と首元の冷えを残さず、明朝のこわばりを軽くする方向で整えます。",
+      );
+
+    case "low_back_pain":
+      if (has("cold")) {
+        return sentence(
+          "腰腹まわりと下半身が冷えて固まりやすいため、冷えを入口で止める方向で整えます。",
+          "腰腹まわりを冷やしたまま寝ないようにし、明朝の動き出しを重くしない方向で整えます。",
+        );
+      }
+      if (has("damp")) {
+        return sentence(
+          "腰まわり・下半身に重だるさが残りやすいため、重さをため込まない方向で整えます。",
+          "冷たいものや食後の重さを控えめにし、腰まわりの重だるさを持ち越さない方向で整えます。",
+        );
+      }
+      return sentence(
+        "腰腹・下半身に重さが残りやすいため、動き出しを重くしない方向で整えます。",
+        "冷えや食後の重さを軽くし、明朝の動き出しに重さを残さない方向で整えます。",
+      );
+
+    case "swelling":
+      if (has("damp")) {
+        return sentence(
+          "顔や脚に水っぽい重さが出やすいため、冷たさ・甘さ・塩気を重ねすぎない方向で整えます。",
+          "冷たさ・甘さ・塩気を重ねすぎず、明朝の顔や脚の重さを増やさない方向で整えます。",
+        );
+      }
+      return sentence(
+        "顔や脚に重さが残りやすいため、ため込まない方向で整えます。",
+        "食後の重さと冷えを軽くし、明朝の顔・脚の重さを増やさない方向で整えます。",
+      );
+
+    case "headache":
+      if (has("pressure_down")) {
+        return sentence(
+          "首・耳・目まわりにこもりが残りやすいため、頭まわりに逃げ道を作る方向で整えます。",
+          "お酒・脂っこさ・画面の刺激を控えめにし、頭のこもりを持ち越さない方向で整えます。",
+        );
+      }
+      if (has("heat") || has("pressure_up")) {
+        return sentence(
+          "熱や頭の冴えがこもりやすいため、刺激を増やしすぎない方向で整えます。",
+          "刺激と夜更かしを控えめにし、頭の冴えを残さない方向で整えます。",
+        );
+      }
+      return sentence(
+        "首・耳・目まわりにこもりが残りやすいため、頭まわりを固めない方向で整えます。",
+        "首肩と耳まわりを固めず、頭のこもりを持ち越さない方向で整えます。",
+      );
+
+    case "dizziness":
+      if (has("pressure_down") || has("pressure_up")) {
+        return sentence(
+          "切り替えや急な動きが負担になりやすいため、動き出しを急がない方向で整えます。",
+          "寝不足や食後の重さを控えめにし、明朝の動き出しを急がない方向で整えます。",
+        );
+      }
+      return sentence(
+        "冷えや重さで動き出しが乱れやすいため、立ち上がりを急がない方向で整えます。",
+        "冷えと食後の重さを軽くし、明朝の立ち上がりを急がない方向で整えます。",
+      );
+
+    case "mood":
+      if (has("heat") && has("cold")) {
+        return sentence(
+          "頭の冴えと身構えが残りやすいため、予定や通知に押されすぎない方向で整えます。",
+          "光・通知・予定の詰め込みを控えめにし、明日の始まりを重くしない方向で整えます。",
+        );
+      }
+      if (has("heat") || has("pressure_up")) {
+        return sentence(
+          "頭の冴えや高ぶりが残りやすいため、予定や通知に押されすぎない方向で整えます。",
+          "刺激と情報量を控えめにし、明日の始まりを軽くする方向で整えます。",
+        );
+      }
+      if (has("damp") || has("pressure_down")) {
+        return sentence(
+          "気分の重さや切り替えにくさが出やすいため、予定や通知に押されすぎない方向で整えます。",
+          "食後の重さと情報量を控えめにし、明日の切り替えを重くしない方向で整えます。",
+        );
+      }
+      return sentence(
+        "気持ちの切り替えに負担が出やすいため、予定や通知に押されすぎない方向で整えます。",
+        "刺激と予定量を軽くし、明日の始まりを重くしない方向で整えます。",
+      );
+
+    default:
+      return "";
+  }
 }
 
 const SINGLE_POLICY_SUMMARIES = {
@@ -1240,6 +1367,16 @@ function getRiskContextTriggerFactors(riskContext) {
   });
 }
 
+function toCarePolicyDirection(text) {
+  const normalized = String(text || "").trim();
+  if (!normalized) return "いつもの調子を崩さない方針です。";
+  return normalized
+    .replace(/ケアが合います。$/, "方針です。")
+    .replace(/ケアが合います$/, "方針です。")
+    .replace(/ケアです。$/, "方針です。")
+    .replace(/ケアです$/, "方針です。");
+}
+
 function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus }) {
   const labels = getForecastBackgroundFactors(triggerFactors).map((f) => f.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
@@ -1249,18 +1386,22 @@ function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus
   const keys = safeArray(policies).map((p) => p.key).filter(Boolean);
   const detail =
     keys.length >= 2
-      ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}ケアが合います。`
+      ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}方針です。`
       : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
-  const symptomContext = getCarePolicySymptomContext(symptomFocus, mode);
-  const withSymptomContext = (text) => [text, symptomContext].filter(Boolean).join(" ");
+  const policyDirection = toCarePolicyDirection(detail);
+  const symptomContext = buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode });
 
-  if (level <= 0) {
-    return withSymptomContext(`${weatherTarget}、${joined}の影響が少しだけある見込み。強い対策より、${detail}`);
-  }
-  if (level >= 2) {
-    return withSymptomContext(`${target}${joined}が響きやすい日。${detail}`);
-  }
-  return withSymptomContext(`${target}${joined}が少し響きやすい見込み。${detail}`);
+  const base = (() => {
+    if (level <= 0) {
+      return `${weatherTarget}、${joined}の影響が少しだけあるため、強い対策より、${policyDirection}`;
+    }
+    if (level >= 2) {
+      return `${target}${joined}が響きやすいため、${policyDirection}`;
+    }
+    return `${target}${joined}が少し響きやすいため、${policyDirection}`;
+  })();
+
+  return [base, symptomContext].filter(Boolean).join(" ");
 }
 
 export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow", symptomFocus = null } = {}) {
@@ -1523,7 +1664,5 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
-
 
 
