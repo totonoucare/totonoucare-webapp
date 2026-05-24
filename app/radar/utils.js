@@ -336,6 +336,20 @@ function humanizeLegacyPointSelectionReason(reason) {
   const raw = String(reason || "").trim();
   if (!raw) return "";
 
+  const mtestMotherMatch = raw.match(/^この日は、?(.+?)をやさしく支えたい流れです。?(.*)$/);
+  if (mtestMotherMatch) {
+    const line = String(mtestMotherMatch[1] || "負担が出やすいライン").trim();
+    const rest = String(mtestMotherMatch[2] || "").trim();
+    return `明日は${line}に負担が出やすい見込みです。${rest || "今夜のうちに軽く整える目的で、このツボを選んでいます。"}`;
+  }
+
+  const mtestChildMatch = raw.match(/^この日は、?(.+?)の詰まりをゆるめたい流れです。?(.*)$/);
+  if (mtestChildMatch) {
+    const line = String(mtestChildMatch[1] || "負担が出やすいライン").trim();
+    const rest = String(mtestChildMatch[2] || "").trim();
+    return `明日は${line}に張りや引っかかりが残りやすい見込みです。${rest || "こわばりを持ち越しにくくする目的で、このツボを選んでいます。"}`;
+  }
+
   const secondaryMatch = raw.match(/^(.+?)の影響も少し重なりそうなため、(.+?)ケアも少し入れられるように選んでいます。?$/);
   if (secondaryMatch) {
     const trigger = secondaryMatch[1];
@@ -1317,7 +1331,7 @@ export function getPointPressGuide(point) {
   }
 
   if (area === "abdomen_trunk") {
-    return `${name}はお腹・体幹まわりのツボです。親指で押し込まず、手のひらか2〜3本の指の腹を置くように触ります。お腹が軽く動くくらいのやさしい圧で、小さく円を描きます。20〜30秒を1〜2回。苦しさや痛みがあればやめてください。`;
+    return `${name}はお腹・体幹まわりのツボです。親指で押し込まず、手のひらか2〜3本の指の腹を置くように触ります。息を吐きながら、お腹が軽く動くくらいのやさしい圧で小さく円を描きます。20〜30秒を1〜2回。苦しさや痛みがあればやめてください。`;
   }
 
   if (area === "hand_arm") {
