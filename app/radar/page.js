@@ -1259,13 +1259,25 @@ export default function RadarPage() {
                   <span
                     key={policy.key}
                     className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]"
-                    title={policy.short}
+                    title={policy.guide || policy.short}
                   >
                     <span className="h-2 w-2 rounded-full bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.22)]" />
                     {policy.label}
                   </span>
                 ))}
               </div>
+
+              {safeArray(carePolicies?.policies).some((policy) => policy?.guide || policy?.short) ? (
+                <div className="mt-2.5 grid gap-1.5">
+                  {safeArray(carePolicies?.policies).map((policy) => (
+                    <div key={`${policy.key}-guide`} className="text-[11px] font-extrabold leading-5 text-[#255F4F]/80">
+                      <span className="text-[#255F4F]">{policy.label}</span>
+                      <span className="mx-1 text-[#255F4F]/35">＝</span>
+                      {policy.guide || policy.short}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mt-3 text-[13px] font-bold leading-6 text-slate-700">
                 {carePolicies?.summary || careStrategyLead}
@@ -1774,5 +1786,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
 
