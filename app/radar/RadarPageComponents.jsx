@@ -9,7 +9,6 @@ import {
   getPointCautions,
   getPointImageCandidates,
   getPointImageSearchQuery,
-  getPointMatchTags,
   getPointPressGuide,
   getPointReading,
   getPointRegionLabel,
@@ -412,7 +411,6 @@ export function LocationEditor({
 export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
   if (!point) return null;
 
-  const reasonTags = getPointMatchTags(point);
   const cautions = getPointCautions(point);
 
   return (
@@ -495,19 +493,6 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
             )}
           </div>
 
-          {reasonTags.length > 0 ? (
-            <ul className="mt-4 space-y-2.5">
-              {reasonTags.map((label) => (
-                <li
-                  key={label}
-                  className="flex items-start gap-2.5 text-[12px] font-extrabold leading-5 text-slate-600"
-                >
-                  <span className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/40" />
-                  <span>{label}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </div>
 
         <div className="mt-4 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-amber-200/50 shadow-sm">
