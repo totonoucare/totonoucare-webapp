@@ -47,7 +47,7 @@ function SegmentedTabs({ items, active, onChange }) {
 /* -----------------------------
  * ガイドカード
  * ---------------------------- */
-function GuideCard({ title, icon, tone = "mint", children }) {
+function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
   const tones = {
     mint: "text-[var(--accent-ink)] bg-[#E2F1EA]",
     amber: "text-amber-800 bg-amber-100",
@@ -57,18 +57,37 @@ function GuideCard({ title, icon, tone = "mint", children }) {
   };
 
   return (
-    <div className="rounded-[24px] bg-white ring-1 ring-[var(--ring)] p-5 shadow-sm">
-      <div className="flex items-center gap-3">
+    <div
+      className={[
+        "rounded-[24px] bg-white ring-1 ring-[var(--ring)] shadow-sm",
+        compact ? "p-4" : "p-5",
+      ].join(" ")}
+    >
+      <div className={compact ? "flex items-center gap-2.5" : "flex items-center gap-3"}>
         <div
-          className={`grid h-11 w-11 shrink-0 place-items-center rounded-[14px] ring-1 ring-[var(--ring)] shadow-sm ${tones[tone]}`}
+          className={[
+            "grid shrink-0 place-items-center ring-1 ring-[var(--ring)] shadow-sm",
+            compact ? "h-10 w-10 rounded-[13px]" : "h-11 w-11 rounded-[14px]",
+            tones[tone],
+          ].join(" ")}
         >
           {icon}
         </div>
-        <div className="text-[16px] font-black tracking-tight text-slate-900">
+        <div
+          className={[
+            "font-black tracking-tight text-slate-900",
+            compact ? "text-[14px]" : "text-[16px]",
+          ].join(" ")}
+        >
           {title}
         </div>
       </div>
-      <div className="mt-3.5 text-[13px] font-bold leading-6 text-slate-700">
+      <div
+        className={[
+          "font-bold text-slate-700",
+          compact ? "mt-3 text-[12px] leading-5" : "mt-3.5 text-[13px] leading-6",
+        ].join(" ")}
+      >
         {children}
       </div>
     </div>
@@ -98,13 +117,13 @@ function CheckList({ items }) {
 
 function FlowItem({ num, title, children }) {
   return (
-    <div className="flex gap-3 rounded-[22px] bg-[#E2F1EA]/55 p-4 ring-1 ring-[#BFD9CC]/70">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[12px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
+    <div className="flex gap-3.5 rounded-[22px] bg-[#E2F1EA]/55 p-4 ring-1 ring-[#BFD9CC]/70">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
         {num}
       </div>
       <div className="min-w-0">
-        <div className="text-[13px] font-black text-slate-900">{title}</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+        <div className="text-[15px] font-black leading-6 text-slate-900">{title}</div>
+        <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
           {children}
         </div>
       </div>
@@ -189,7 +208,7 @@ export default function GuidePage() {
               全部やる必要はありません。服装、食事、ツボケアの中から、その日に取り入れやすいものを選びます。
             </FlowItem>
 
-            <GuideCard tone="mint" title="今気になる不調を切り替える" icon={<IconBodyLine />}>
+            <GuideCard tone="mint" title="今気になる不調を切り替える" icon={<IconBodyLine />} compact>
               予報ページでは、頭痛・首肩・腰・むくみなど、今いちばん見たい不調を切り替えられます。切り替えると、予報カードやケア文言もその不調に合わせて変わります。
             </GuideCard>
 
@@ -297,7 +316,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              不調マップやPlus導線は、今後さらに詳しく自分の傾向を見るための入口です。MVPではまず、カルテと今日・明日の予報を日常で使うことを中心にしてください。
+              不調マップやPlusは、自分の傾向をさらに詳しく見るための入口です。まずは、カルテと今日・明日の予報を日常で使うところから始めてください。
             </MiniNote>
 
             <div className="pt-2">
@@ -311,4 +330,3 @@ export default function GuidePage() {
     </AppShell>
   );
 }
-
