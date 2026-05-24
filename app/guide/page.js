@@ -115,6 +115,31 @@ function CheckList({ items }) {
   );
 }
 
+const CARE_POLICY_GUIDE_ITEMS = [
+  ["しずめる", "熱・冴え・高ぶりを落ち着ける"],
+  ["ゆるめる", "力み・こわばり・緊張をほどく"],
+  ["めぐらせる", "滞りやこもりに逃げ道を作る"],
+  ["ながす", "湿気・重だるさ・水っぽさをためない"],
+  ["うるおす", "乾き・消耗を残さない"],
+  ["ぬくめる", "冷えの入口を守る"],
+  ["ささえる", "胃腸・回復力・余力を削らない"],
+];
+
+function PolicyMeaningList() {
+  return (
+    <div className="mt-3 grid gap-2">
+      {CARE_POLICY_GUIDE_ITEMS.map(([label, meaning]) => (
+        <div key={label} className="rounded-[14px] bg-[#E2F1EA]/55 px-3 py-2 ring-1 ring-[#BFD9CC]/60">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[12px] font-black text-[#255F4F]">{label}</span>
+            <span className="text-[11px] font-extrabold leading-5 text-slate-600">{meaning}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function FlowItem({ num, title, children }) {
   return (
     <div className="flex gap-3.5 rounded-[22px] bg-[#E2F1EA]/55 p-4 ring-1 ring-[#BFD9CC]/70">
@@ -303,9 +328,10 @@ export default function GuidePage() {
 
             <GuideCard tone="mint" title="この日の方針を見る" icon={<IconSpark />}>
               「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは下のカードから選びます。
+              <PolicyMeaningList />
             </GuideCard>
 
-            <GuideCard tone="teal" title="「暮らす」を見る" icon={<IconCalendar />}>
+            <GuideCard tone="teal" title="暮らすを見る" icon={<IconCalendar />}>
               服装、予定量、休み方、動き出しなど、生活の中ですぐ試しやすい工夫をまとめています。時間がない時は、まず暮らすカードを見るのが使いやすいです。
               <CheckList
                 items={[
@@ -315,7 +341,7 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="mint" title="「食べる」を見る" icon={<IconBowl />}>
+            <GuideCard tone="mint" title="食べるを見る" icon={<IconBowl />}>
               食事を完璧に変える場所ではありません。今日・明日に合わせて「足すもの」「重ねすぎ注意」「迷ったらこれ」を見る場所です。
               <CheckList
                 items={[
@@ -326,7 +352,7 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="「ほぐす」を見る" icon={<IconTsubo />}>
+            <GuideCard tone="violet" title="ほぐすを見る" icon={<IconTsubo />}>
               天気や今気になる不調に合わせて、軽くほぐしたいツボを表示します。ツボ詳細では、選んだ理由、ほぐし方の目安、場所の確認ができます。
               <CheckList
                 items={[
