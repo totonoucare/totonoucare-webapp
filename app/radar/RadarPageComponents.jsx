@@ -430,7 +430,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
-              {sourceLabel(point.source)} / {getPointRegionLabel(point.point_region)}
+              {sourceLabel(point.source)} / {getPointRegionLabel(point)}
             </div>
             <div
               id="point-detail-title"
@@ -512,7 +512,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
 
         <div className="mt-4 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-amber-200/50 shadow-sm">
           <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">
-            押し方の目安
+            ほぐし方の目安
           </div>
           <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-amber-900">
             {getPointPressGuide(point)}
@@ -543,3 +543,4 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
     </div>
   );
 }
+
