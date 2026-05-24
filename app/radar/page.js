@@ -1285,7 +1285,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     ほぐす
                   </div>
-                  <div className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <div className="rounded-full bg-[#E2F1EA]/55 px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
                     ツボケア
                   </div>
                 </div>
@@ -1339,7 +1339,7 @@ export default function RadarPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-[22px] bg-[#F7FAF7] px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
+                  <div className="rounded-[22px] bg-[#E2F1EA]/55 px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#D3E1D5]">
                     体質データに合わせたツボを準備しています。
                   </div>
                 )}
@@ -1356,7 +1356,7 @@ export default function RadarPage() {
                     <button
                       type="button"
                       onClick={() => setTsuboExtraOpen((v) => !v)}
-                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#D3E1D5] text-left shadow-sm transition-all hover:bg-[#F7FAF7]"
+                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#D3E1D5] text-left shadow-sm transition-all hover:bg-[#E2F1EA]/55"
                     >
                       <div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1387,7 +1387,7 @@ export default function RadarPage() {
                         {extraTsuboPoints.map((p, i) => (
                           <div
                             key={`${p.code}-${i + 1}`}
-                            className="relative rounded-[20px] bg-[#F7FAF7] p-4 ring-1 ring-inset ring-[#D3E1D5] transition-all hover:bg-white cursor-pointer"
+                            className="relative rounded-[20px] bg-[#E2F1EA]/55 p-4 ring-1 ring-inset ring-[#D3E1D5] transition-all hover:bg-white cursor-pointer"
                             onClick={() => setSelectedPoint(p)}
                           >
                             <div className="flex items-center gap-3 pr-8">
@@ -1436,7 +1436,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     食べる
                   </div>
-                  <div className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <div className="rounded-full bg-[#E2F1EA]/55 px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
                     食養生
                   </div>
                 </div>
@@ -1509,7 +1509,7 @@ export default function RadarPage() {
                                 {safeArray(card.items).map((item, itemIdx) => (
                                   <span
                                     key={`${card.key}-${item}-${itemIdx}`}
-                                    className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#E1E6E1]"
+                                    className="rounded-full bg-[#E2F1EA]/55 px-2.5 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#E1E6E1]"
                                   >
                                     {item}
                                   </span>
@@ -1630,7 +1630,7 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     暮らす
                   </div>
-                  <div className="rounded-full bg-[#F7FAF7] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <div className="rounded-full bg-[#E2F1EA]/55 px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D3E1D5]">
                     生活ケア
                   </div>
                 </div>
