@@ -323,7 +323,7 @@ export default function GuidePage() {
 
           <div className="space-y-4">
             <GuideCard tone="amber" title="まずゲージを見る" icon={<IconWeather />}>
-              今日・明日の天気影響がどのくらい出そうかを確認します。「安定モード」「いたわりモード」「守りモード」として、その日のケアの量や優先度を決める目安になります。
+              今日・明日の天気影響がどのくらい出そうかを確認します。「安定モード（影響は少なめの日）」「いたわりモード（早めに整える日）」「守りモード（無理を重ねない日）」を、ケアの量や優先度を決める目安にします。
             </GuideCard>
 
             <GuideCard tone="mint" title="この日の方針を見る" icon={<IconSpark />}>
@@ -381,5 +381,4 @@ export default function GuidePage() {
     </AppShell>
   );
 }
-
 
