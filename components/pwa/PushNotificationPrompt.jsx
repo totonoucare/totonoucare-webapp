@@ -209,7 +209,7 @@ export default function PushNotificationPrompt() {
       });
 
       setStatus("done");
-      setMessage("通知をオンにしました。スコア6以上の警戒日だけお知らせします。");
+      setMessage("通知をオンにしました。天気の影響が強めの日だけお知らせします。");
       setTimeout(() => setVisible(false), 2800);
     } catch (error) {
       setStatus("error");
@@ -227,9 +227,9 @@ export default function PushNotificationPrompt() {
             🔔
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-black text-[#101827]">警戒日の通知を受け取る</p>
+            <p className="text-sm font-black text-[#101827]">未病予報の通知を受け取る</p>
             <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#536477]">
-              前日夜と当日朝に、スコア6以上の日だけお知らせします。通知文は短く、予報スコア・主因・時間帯だけで作ります。
+              前日夜と当日朝に、天気の影響が強めの日だけお知らせします。通知文は短く、主因と時間帯を中心に作ります。
             </p>
             {message ? (
               <p className={`mt-2 text-xs font-black ${status === "error" ? "text-rose-600" : "text-[#2F7668]"}`}>
@@ -259,4 +259,5 @@ export default function PushNotificationPrompt() {
     </div>
   );
 }
+
 
