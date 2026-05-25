@@ -13,15 +13,30 @@ const zen = Zen_Kaku_Gothic_New({
 });
 
 const appName = "未病レーダー";
-const appDescription = "体質チェック×天気で、今日を崩しにくくする。";
+const appDescription =
+  "体質チェックと天気変化から、今日・明日の整え方を提案するセルフケアアプリ。";
+const appUrl = "https://mibyo-radar.totonoucare.com";
 
 export const metadata = {
+  metadataBase: new URL(appUrl),
   title: {
     default: appName,
     template: `%s | ${appName}`,
   },
   description: appDescription,
   applicationName: appName,
+  keywords: [
+    "未病レーダー",
+    "未病",
+    "体質チェック",
+    "天気痛",
+    "気圧",
+    "セルフケア",
+    "東洋医学",
+  ],
+  authors: [{ name: "ととのうケアデザイン", url: "https://totonoucare.com" }],
+  creator: "ととのうケアデザイン",
+  publisher: "ととのうケアデザイン",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -29,6 +44,28 @@ export const metadata = {
       { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  openGraph: {
+    title: appName,
+    description: appDescription,
+    url: appUrl,
+    siteName: appName,
+    type: "website",
+    locale: "ja_JP",
+    images: [
+      {
+        url: "/icons/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: appName,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: appName,
+    description: appDescription,
+    images: ["/icons/icon-512.png"],
   },
   appleWebApp: {
     capable: true,
@@ -59,4 +96,5 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
 
