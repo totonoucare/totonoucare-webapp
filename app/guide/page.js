@@ -327,11 +327,11 @@ export default function GuidePage() {
             </GuideCard>
 
             <GuideCard tone="mint" title="この日の方針を見る" icon={<IconSpark />}>
-              「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは下のカードから選びます。
+              「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは「暮らす」「食べる」「ほぐす」の各タブで提案します。
               <PolicyMeaningList />
             </GuideCard>
 
-            <GuideCard tone="teal" title="暮らすを見る" icon={<IconCalendar />}>
+            <GuideCard tone="teal" title=「暮らす」タブを見る" icon={<IconCalendar />}>
               服装、予定量、休み方、動き出しなど、生活の中ですぐ試しやすい工夫をまとめています。時間がない時は、まず暮らすカードを見るのが使いやすいです。
               <CheckList
                 items={[
@@ -341,7 +341,7 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="mint" title="食べるを見る" icon={<IconBowl />}>
+            <GuideCard tone="mint" title="「食べる」タブを見る" icon={<IconBowl />}>
               食事を完璧に変える場所ではありません。今日・明日に合わせて「足すもの」「重ねすぎ注意」「迷ったらこれ」を見る場所です。
               <CheckList
                 items={[
@@ -352,7 +352,7 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="ほぐすを見る" icon={<IconTsubo />}>
+            <GuideCard tone="violet" title="「ほぐす」タブを見る" icon={<IconTsubo />}>
               天気や今気になる不調に合わせて、軽くほぐしたいツボを表示します。ツボ詳細では、選んだ理由、ほぐし方の目安、場所の確認ができます。
               <CheckList
                 items={[
