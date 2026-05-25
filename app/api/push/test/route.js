@@ -24,7 +24,7 @@ export async function POST(req) {
 
     const payload = {
       title: "未病レーダーの通知テスト",
-      body: "通知の土台は動いています。警戒日の前日夜・当日朝だけお知らせします。",
+      body: "通知設定は有効です。いたわりモード・守りモードの日に、前日夜と当日朝のお知らせが届きます。",
       url: "/radar",
       tag: "mibyo-radar-test",
       data: { kind: "test" },
