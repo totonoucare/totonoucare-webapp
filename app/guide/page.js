@@ -331,7 +331,7 @@ export default function GuidePage() {
               <PolicyMeaningList />
             </GuideCard>
 
-            <GuideCard tone="teal" title=「暮らす」タブを見る" icon={<IconCalendar />}>
+            <GuideCard tone="teal" title="「暮らす」タブを見る" icon={<IconCalendar />}>
               服装、予定量、休み方、動き出しなど、生活の中ですぐ試しやすい工夫をまとめています。時間がない時は、まず暮らすカードを見るのが使いやすいです。
               <CheckList
                 items={[
