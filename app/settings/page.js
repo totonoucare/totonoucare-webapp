@@ -376,7 +376,7 @@ export default function SettingsPage() {
             天気の影響が強めの日を、前日夜・当日朝に短くお知らせします。
           </div>
           <div className="mt-3 rounded-[18px] bg-[#E2F1EA]/55 p-4 text-[12px] font-bold leading-6 text-[#255F4F] ring-1 ring-[#BFD9CC]/70">
-            iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。
+            iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。
             <button
               type="button"
               onClick={() => setPwaGuideOpen(true)}
