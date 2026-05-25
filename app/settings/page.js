@@ -247,7 +247,7 @@ export default function SettingsPage() {
         body: JSON.stringify(next),
       });
       setNotificationSettings(json.settings);
-      setNotificationMessage("通知をオンにしました。警戒日の前日夜・当日朝にお知らせします。");
+      setNotificationMessage("通知をオンにしました。天気の影響が強めの日を、前日夜・当日朝にお知らせします。");
     } catch (e) {
       setNotificationMessage(e?.message || "通知をオンにできませんでした。");
     } finally {
@@ -349,7 +349,7 @@ export default function SettingsPage() {
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[22px] font-black tracking-tight text-slate-900">設定</div>
         <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
-          通知、地域、使い方、ホーム画面追加をここから確認できます。
+          通知、地域、使い方、報告をここから確認できます。
         </div>
       </Module>
 
@@ -373,12 +373,22 @@ export default function SettingsPage() {
         <div className="px-5 py-4 border-b border-slate-100">
           <div className="text-[16px] font-black tracking-tight text-slate-900">通知設定</div>
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
-            スコア{minScore}以上の日を、前日夜・当日朝に短くお知らせします。
+            天気の影響が強めの日を、前日夜・当日朝に短くお知らせします。
+          </div>
+          <div className="mt-3 rounded-[18px] bg-[#E2F1EA]/55 p-4 text-[12px] font-bold leading-6 text-[#255F4F] ring-1 ring-[#BFD9CC]/70">
+            iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。
+            <button
+              type="button"
+              onClick={() => setPwaGuideOpen(true)}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2.5 text-[12px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#BFD9CC] active:scale-[0.99]"
+            >
+              {standalone ? "ホーム画面追加済み" : "ホーム画面追加の手順を見る"}
+            </button>
           </div>
         </div>
         <ToggleRow
           label="通知を受け取る"
-          description={notificationEnabled ? "オン：警戒日だけ通知します" : "オフ：通知は送信されません"}
+          description={notificationEnabled ? "オン：影響が強めの日だけ通知します" : "オフ：通知は送信されません"}
           checked={notificationEnabled}
           disabled={!user || savingNotifications || loading}
           onChange={handleToggleNotifications}
@@ -524,15 +534,12 @@ export default function SettingsPage() {
       </Module>
 
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="text-[16px] font-black tracking-tight text-slate-900">使い方・ホーム画面追加</div>
+        <div className="text-[16px] font-black tracking-tight text-slate-900">使い方ガイド</div>
         <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
-          迷った時はガイドへ。毎日見るならホーム画面追加がおすすめです。
+          カルテ、予報、ケアカードの見方に迷った時はこちらから確認できます。
         </div>
-        <div className="mt-4 grid gap-3">
+        <div className="mt-4">
           <Button variant="secondary" className="w-full bg-white" onClick={() => router.push("/guide")}>使い方ガイドを開く</Button>
-          <Button variant="secondary" className="w-full bg-white" onClick={() => setPwaGuideOpen(true)}>
-            {standalone ? "ホーム画面追加済み" : "ホーム画面追加の手順を見る"}
-          </Button>
         </div>
       </Module>
 
@@ -575,4 +582,5 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
 
