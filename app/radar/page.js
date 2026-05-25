@@ -1267,18 +1267,6 @@ export default function RadarPage() {
                 ))}
               </div>
 
-              {safeArray(carePolicies?.policies).some((policy) => policy?.guide || policy?.short) ? (
-                <div className="mt-2.5 grid gap-1.5">
-                  {safeArray(carePolicies?.policies).map((policy) => (
-                    <div key={`${policy.key}-guide`} className="text-[11px] font-extrabold leading-5 text-[#255F4F]/80">
-                      <span className="text-[#255F4F]">{policy.label}</span>
-                      <span className="mx-1 text-[#255F4F]/35">＝</span>
-                      {policy.guide || policy.short}
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-
               <div className="mt-3 text-[13px] font-bold leading-6 text-slate-700">
                 {carePolicies?.summary || careStrategyLead}
               </div>
@@ -1786,4 +1774,5 @@ export default function RadarPage() {
     </AppShell>
   );
 }
+
 
