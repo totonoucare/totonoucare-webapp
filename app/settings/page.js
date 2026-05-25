@@ -504,6 +504,26 @@ export default function SettingsPage() {
       </Module>
 
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[16px] font-black tracking-tight text-slate-900">バグ・改善点を報告</div>
+            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+              表示崩れ、文言の違和感、使いにくいところを送れます。
+            </div>
+          </div>
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#E2F1EA] text-[18px] ring-1 ring-[#BFD9CC]">
+            💬
+          </div>
+        </div>
+        <div className="mt-4 rounded-[18px] bg-[#E2F1EA]/55 p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#BFD9CC]/70">
+          メールアドレスや名前は自動送信されません。返信を希望する場合だけ、連絡先を入力できます。
+        </div>
+        <Button variant="secondary" className="mt-4 w-full bg-white" onClick={() => router.push("/feedback")}>
+          報告フォームを開く
+        </Button>
+      </Module>
+
+      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[16px] font-black tracking-tight text-slate-900">使い方・ホーム画面追加</div>
         <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
           迷った時はガイドへ。毎日見るならホーム画面追加がおすすめです。
