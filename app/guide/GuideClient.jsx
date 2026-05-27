@@ -299,7 +299,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              カルテは一度作ると、未病予報の土台になります。未病カルテPlus（不調マップ）は、自分の傾向をさらに詳しく見るための追加ページです。
+              カルテは一度作ると、未病予報の土台になります。未病カルテ Plusは、不調がくり返される流れと整える優先順位をさらに詳しく見るための追加ページです。
             </MiniNote>
 
             <div className="pt-2">
@@ -381,4 +381,5 @@ export default function GuidePage() {
     </AppShell>
   );
 }
+
 
