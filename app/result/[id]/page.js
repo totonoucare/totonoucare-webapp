@@ -122,7 +122,7 @@ function SegmentedTabs({ value, onChange }) {
   const tabs = [
     { key: "overview", label: "カルテ概要" },
     { key: "compat", label: "天気相性" },
-    { key: "map", label: "不調マップ" },
+    { key: "map", label: "不調ループ" },
   ];
 
   return (
@@ -344,10 +344,10 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
             <div className="min-w-0">
               <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">未病カルテ Plus</div>
               <h2 className="mt-2 text-[25px] font-black leading-[1.35] tracking-[-0.05em] text-[#10182d]">
-                あなたの不調マップ
+                あなたの不調ループ
               </h2>
               <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
-                {focusLabel}が、どこから始まり、どの天気・季節で強まりやすいかを読み解きます。
+                {focusLabel}が、どの条件が重なり、どの天気・季節で強まりやすいかを読み解きます。
               </p>
             </div>
           </div>
@@ -355,7 +355,7 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
           <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
             <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料カルテの先でわかること</div>
             <p className="mt-3 text-[14px] font-bold leading-7 text-[#475569]">
-              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、今気になる「{focusLabel}」を主役にして、前触れ・天気・季節・体のライン・相談時に伝えることまで、ひとつながりの地図として整理します。
+              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、今気になる「{focusLabel}」を主役にして、前触れ・天気・生活負荷・7つの方針・相談時に伝えることまで、ひとつながりのループとして整理します。
             </p>
           </div>
 
@@ -363,10 +363,10 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
             {[
               "不調が強くなる前の前触れサイン",
               "天気・季節で揺れやすい理由",
-              "経絡ラインから見た負担の出方",
+              "生活負荷と経絡ラインの見方",
               "今日・明日の予報ページをどう使うか",
-              "鍼灸・整体・漢方相談で伝えやすいメモ",
-              "肌・むくみ・顔色に出やすいサイン",
+              "相談時に伝えやすい共有メモ",
+              "7日間で試す整え方プラン",
             ].map((title) => (
               <div key={title} className="flex items-center gap-3 rounded-[22px] border border-[#e6eee9] bg-white/80 px-4 py-3">
                 <span className="h-2 w-2 rounded-full bg-[#dfa42d] shadow-[0_0_8px_rgba(223,164,45,0.35)]" />
@@ -377,7 +377,7 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
 
           <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
             <p className="text-[13px] font-black leading-7 text-[#8a4b1d]">
-              体質を知って終わりではなく、「自分の不調がどう出るか」を見返せる形にします。将来、専門家に相談するときの整理メモとしても使いやすい内容です。
+              体質を知って終わりではなく、「自分の不調がどうくり返されるか」を見返せる形にします。将来、専門家に相談するときの整理メモとしても使いやすい内容です。
             </p>
           </div>
 
@@ -385,7 +385,7 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
             href={`/karte/${resultId}`}
             className="mt-5 flex w-full items-center justify-center rounded-full bg-[#2f7567] px-6 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.26)] active:translate-y-[1px]"
           >
-            未病カルテ Plusで不調マップを見る
+            未病カルテ Plusで不調ループを見る
           </a>
         </div>
       </div>
@@ -808,7 +808,7 @@ function ResultPage({ params }) {
                     <h3 className="text-[16px] font-black text-slate-900">未病レーダーで分かること</h3>
                   </div>
                   <div className="text-[13px] leading-relaxed font-bold text-slate-700 mb-6">{weatherCompat.radarBridge}</div>
-                  <Button onClick={() => setTab("map")} className="w-full shadow-md py-4">不調マップを見る</Button>
+                  <Button onClick={() => setTab("map")} className="w-full shadow-md py-4">不調ループを見る</Button>
                 </div>
               </div>
             </Card>
@@ -826,4 +826,5 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
 
