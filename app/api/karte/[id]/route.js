@@ -312,6 +312,8 @@ export async function GET(req, { params }) {
           quickTakeaways: baseKarte.quickTakeaways,
           mapFlow: baseKarte.mapFlow,
           forecastUsage: baseKarte.forecastUsage,
+          kartePlusLoop: baseKarte.kartePlusLoop,
+          plusIntakeProvided: baseKarte.plusIntakeProvided,
           beautyColumn: baseKarte.beautyColumn,
           sections: getKartePreviewSections(baseKarte),
         },
@@ -351,4 +353,5 @@ export async function GET(req, { params }) {
     );
   }
 }
+
 
