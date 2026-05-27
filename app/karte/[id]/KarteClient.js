@@ -1,524 +1,648 @@
-import crypto from "crypto";
-import { getOpenAIClient } from "@/lib/openai/server";
-import { buildPersonalKarteContext } from "@/lib/personalKarte";
-import { buildKartePlusLoopProfile } from "@/lib/karte_plus/loopAnalysis";
+"use client";
 
-const PROMPT_VERSION = "personal-karte-plus-v5.0-loop-report";
-const DEFAULT_MODEL = process.env.OPENAI_PERSONAL_KARTE_MODEL || "gpt-5.5"
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
+const PRICE_LABEL = "¥1,980";
 
-const SUB_TCM_TERMS = {
-  qi_stagnation: { term: "気滞", reading: "きたい" },
-  qi_deficiency: { term: "気虚", reading: "ききょ" },
-  blood_deficiency: { term: "血虚", reading: "けっきょ" },
-  blood_stasis: { term: "血瘀", reading: "けつお" },
-  fluid_damp: { term: "痰湿", reading: "たんしつ" },
-  fluid_deficiency: { term: "津液不足", reading: "しんえきぶそく" },
-};
-
-function termForSub(code) {
-  return SUB_TCM_TERMS[code] || SUB_TCM_TERMS.qi_stagnation;
+function cn(...values) {
+  return values.filter(Boolean).join(" ");
 }
 
+function GenerationLabel({ generation }) {
+  if (!generation?.aiEnabled) return null;
+  const label =
+    generation.source === "openai-generated"
+      ? "AI生成しました"
+      : generation.source === "openai-cache"
+        ? "AI生成済み"
+        : generation.source === "rules-ai-fallback"
+          ? "標準本文で表示中"
+          : "標準本文";
 
-const SECTION_IDS = [
-  "loop-overview",
-  "body-pattern",
-  "weather-trigger",
-  "daily-loop",
-  "care-priority",
-  "seven-day-plan",
-  "season-strategy",
-  "consultation-sheet",
-];
-
-const KARTE_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: ["productName", "subtitle", "heroLead", "sections", "beautyColumn"],
-  properties: {
-    productName: { type: "string" },
-    subtitle: { type: "string" },
-    heroLead: { type: "string" },
-    beautyColumn: {
-      type: "object",
-      additionalProperties: false,
-      required: ["badge", "title", "teaser", "preview", "body", "points"],
-      properties: {
-        badge: { type: "string" },
-        title: { type: "string" },
-        teaser: { type: "string" },
-        preview: { type: "string" },
-        body: {
-          type: "array",
-          minItems: 2,
-          maxItems: 3,
-          items: { type: "string" },
-        },
-        points: {
-          type: "array",
-          minItems: 3,
-          maxItems: 3,
-          items: { type: "string" },
-        },
-      },
-    },
-    sections: {
-      type: "array",
-      minItems: 8,
-      maxItems: 8,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["id", "badge", "title", "teaser", "preview", "body", "bullets", "steps"],
-        properties: {
-          id: { type: "string", enum: SECTION_IDS },
-          badge: { type: "string" },
-          title: { type: "string" },
-          teaser: { type: "string" },
-          preview: { type: "string" },
-          body: {
-            type: "array",
-            minItems: 2,
-            maxItems: 2,
-            items: { type: "string" },
-          },
-          bullets: {
-            type: "array",
-            minItems: 0,
-            maxItems: 2,
-            items: { type: "string" },
-          },
-          steps: {
-            type: "array",
-            minItems: 0,
-            maxItems: 2,
-            items: { type: "string" },
-          },
-        },
-      },
-    },
-  },
-};
-
-function stableValue(value) {
-  if (Array.isArray(value)) return value.map(stableValue);
-  if (value && typeof value === "object") {
-    return Object.keys(value)
-      .sort()
-      .reduce((acc, key) => {
-        acc[key] = stableValue(value[key]);
-        return acc;
-      }, {});
-  }
-  return value;
-}
-
-export function isPersonalKarteAiEnabled() {
-  return process.env.PERSONAL_KARTE_AI_ENABLED === "true";
-}
-
-export function getPersonalKartePromptVersion() {
-  return PROMPT_VERSION;
-}
-
-export function getPersonalKarteModel() {
-  return DEFAULT_MODEL;
-}
-
-function cleanObject(value) {
-  if (Array.isArray(value)) {
-    const cleaned = value.map(cleanObject).filter((item) => {
-      if (item == null) return false;
-      if (Array.isArray(item)) return item.length > 0;
-      if (typeof item === "object") return Object.keys(item).length > 0;
-      if (typeof item === "string") return item.trim().length > 0;
-      return true;
-    });
-    return cleaned;
-  }
-  if (value && typeof value === "object") {
-    return Object.entries(value).reduce((acc, [key, item]) => {
-      const cleaned = cleanObject(item);
-      if (cleaned == null) return acc;
-      if (Array.isArray(cleaned) && cleaned.length === 0) return acc;
-      if (typeof cleaned === "object" && !Array.isArray(cleaned) && Object.keys(cleaned).length === 0) return acc;
-      if (typeof cleaned === "string" && cleaned.trim().length === 0) return acc;
-      acc[key] = cleaned;
-      return acc;
-    }, {});
-  }
-  if (typeof value === "string") return value.trim();
-  return value ?? null;
-}
-
-function compactPattern(pattern) {
-  if (!pattern) return null;
-  const mechanism = pattern.mechanism || {};
-  return cleanObject({
-    code: pattern.code,
-    label: pattern.title || pattern.label || pattern.short,
-    tcmTerm: termForSub(pattern.code),
-    plainMeaning: pattern.short,
-    visibleSigns: mechanism.surface,
-    earlySigns: mechanism.earlySigns,
-  });
-}
-
-function compactWeatherItem(item) {
-  if (!item) return null;
-  return cleanObject({
-    rank: item.rank,
-    key: item.key,
-    label: item.label,
-    dayLabel: item.day,
-    bodySignal: item.note,
-    seasonHint: item.season,
-  });
-}
-
-function compactMovement(item) {
-  if (!item) return null;
-  return cleanObject({
-    selectedMovement: item.movementLabel,
-    movementMeaning: item.movementMeaning,
-    bodyZone: item.bodyArea,
-    lineName: item.lineTitle,
-    meridianCode: item.meridianCode,
-    meridianNames: item.meridians,
-    meridianNamesWithReadings: item.meridiansWithReadings,
-    meridianText: item.meridianText,
-    organHint: item.organHint || item.organsHint,
-    description: item.description,
-    order: item.order,
-  });
-}
-
-function getPlusIntakeFromEvent(event) {
   return (
-    event?.karte_plus_intake ||
-    event?.kartePlusIntake ||
-    event?.plus_intake ||
-    event?.plusIntake ||
-    event?.answers?.karte_plus_intake ||
-    event?.answers?.kartePlusIntake ||
-    {}
+    <span className="rounded-full border border-[#d7e6df] bg-white/80 px-3 py-1 text-[11px] font-black text-[#2f7567]">
+      {label}
+    </span>
   );
 }
 
-function buildPlusLoopForSource({ event, computed, ctx }) {
-  const intake = getPlusIntakeFromEvent(event);
-  const diagnosis = {
-    sub_labels: [ctx?.subLabels?.primary?.code, ctx?.subLabels?.secondary?.code].filter(Boolean),
-    env_vectors: Array.isArray(ctx?.weather?.selfReported)
-      ? ctx.weather.selfReported.map((item) => item.key).filter(Boolean)
-      : computed?.env?.vectors || [],
-  };
+function MiniStat({ label, value, tone = "green" }) {
+  const toneClass =
+    tone === "amber"
+      ? "border-[#ead7a5] bg-[#fffaf0] text-[#9a5b1e]"
+      : "border-[#e6eee9] bg-[#f8fbf9] text-[#2f7567]";
 
-  return {
-    intakeProvided: Boolean(intake && Object.keys(intake).length > 0),
-    intake,
-    profile: buildKartePlusLoopProfile({ diagnosis, intake }),
-  };
+  return (
+    <div className={cn("rounded-[24px] border p-4", toneClass)}>
+      <div className="text-[11px] font-black tracking-[0.14em] opacity-70">{label}</div>
+      <div className="mt-2 text-[18px] font-black tracking-[-0.03em]">{value || "—"}</div>
+    </div>
+  );
 }
 
-function buildAiKarteFacts(ctx) {
-  const readable = ctx?.answers?.readable || {};
-  const primaryPattern = compactPattern(ctx?.subLabels?.primary);
-  const secondaryPattern = compactPattern(ctx?.subLabels?.secondary);
-  const weatherRanked = Array.isArray(ctx?.weather?.ranked)
-    ? ctx.weather.ranked.map(compactWeatherItem).filter(Boolean)
-    : [];
+function TakeawayCards({ items = [] }) {
+  if (!items.length) return null;
 
-  return cleanObject({
-    profile: {
-      animalType: ctx?.core?.title,
-      animalTypeShort: ctx?.core?.short,
-      tendencyAxis: ctx?.core?.yinYangText,
-      recoveryReserve: ctx?.core?.driveText,
-      tcmHint: ctx?.core?.tcmHint,
-      careBoundary: ctx?.core?.strategy?.boundary,
-      rescueCare: ctx?.core?.strategy?.rescue,
-    },
-    mainConcern: {
-      label: ctx?.symptom?.label,
-      usualArea: ctx?.symptom?.bodySign,
-      commonTrigger: ctx?.symptom?.watch,
-      consultHint: ctx?.symptom?.consultation,
-    },
-    patterns: {
-      primary: primaryPattern,
-      second: secondaryPattern,
-      earlySigns: ctx?.mechanism?.earlySigns,
-    },
-    weatherSignals: {
-      appAttentionWeather: weatherRanked,
-      userFeltTriggers: ctx?.weather?.selfReportedText,
-    },
-    movementChecks: {
-      concernArea: compactMovement(ctx?.movement?.symptomLine),
-      first: compactMovement(ctx?.movement?.primary),
-      second: compactMovement(ctx?.movement?.secondary),
-      zonesAreDifferent: Boolean(
-        ctx?.movement?.primary?.lineTitle &&
-        ctx?.movement?.symptomLine?.lineTitle &&
-        ctx.movement.primary.lineTitle !== ctx.movement.symptomLine.lineTitle
-      ),
-      methodNote: "M-testの要領で、動作時の張り・重さ・動きづらさから、不調の背景にある経絡ラインの負担を探る材料。経絡ラインは、気血水の過不足・偏り、姿勢、冷え、生活負担などが表に出る通り道として扱う。movementChecks.first/second/concernArea には経絡名と読み仮名つきの meridianNamesWithReadings が入る。経絡章では、まず mainConcern.label と concernArea を確認し、次に first/second が同じラインなのか、違うラインなのかを読み分ける。違うラインが出ている場合は、前面・後面・側面など別の通り道の張りや縮こまりが、今お困りの不調へどう関わり得るかを自然に説明する。経絡名の臓腑説明だけで終わらせず、身体のつながり・動きやすさ・体質の偏りとの関係まで書く。予報ページのラインケアのツボには、体質・注意天気に加えて、この動作負担チェックで見えた経絡ラインの情報も反映される。",
-    },
-    seasonSignals: {
-      focus: ctx?.season?.headline,
-      primary: ctx?.season?.body,
-      secondary: ctx?.season?.secondary,
-    },
-    questionnaire: readable,
-  });
+  return (
+    <section className="grid gap-3 md:grid-cols-3">
+      {items.slice(0, 3).map((item, index) => (
+        <div key={`${item.label}-${index}`} className="rounded-[28px] border border-[#e6eee9] bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+          <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#eff8f4] text-[16px] font-black text-[#2f7567]">
+            {index + 1}
+          </div>
+          <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
+          <div className="mt-2 text-[18px] font-black leading-[1.45] tracking-[-0.04em] text-[#10182d]">{item.value}</div>
+          {item.note ? <p className="mt-3 text-[13px] font-bold leading-6 text-[#64748b]">{item.note}</p> : null}
+        </div>
+      ))}
+    </section>
+  );
 }
 
-export function buildKarteSourcePayload({ event, computed, baseKarte }) {
-  const computedPayload = computed || event?.computed || {};
-  const karteContext = buildPersonalKarteContext({
-    ...(event || {}),
-    computed: computedPayload,
-  });
-  const plusLoop = buildPlusLoopForSource({ event, computed: computedPayload, ctx: karteContext });
+function MapFlow({ items = [] }) {
+  if (!items.length) return null;
 
-  return {
-    promptVersion: PROMPT_VERSION,
-    diagnosisEventId: event?.id || null,
-    createdAt: event?.created_at || null,
-    facts: buildAiKarteFacts(karteContext),
-    plusLoop,
-    outputContract: {
-      productName: baseKarte?.productName || "未病カルテ Plus",
-      sectionOrder: SECTION_IDS,
-      sectionTitles: (baseKarte?.sections || []).map((section) => ({ id: section.id, title: section.title })),
-      priceLabel: "¥1,980",
-      extraColumn: "相談前シート・実践チェックリスト",
-    },
-  };
+  return (
+    <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-6">
+      <div className="mb-5 flex items-end justify-between gap-3">
+        <div>
+          <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">KARTE GUIDE</div>
+          <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">カルテの読み方</h2>
+        </div>
+        <span className="hidden rounded-full border border-[#ead7a5] bg-[#fffaf0] px-3 py-2 text-[11px] font-black text-[#b17425] md:inline-flex">
+          順番で読む
+        </span>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-4">
+        {items.map((item, index) => (
+          <div key={`${item.label}-${index}`} className="relative rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-4">
+            {index < items.length - 1 ? (
+              <div className="absolute -right-[11px] top-1/2 z-10 hidden h-[2px] w-[20px] bg-[#d9e3dc] md:block" />
+            ) : null}
+            <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
+            <div className="mt-2 text-[16px] font-black leading-[1.55] text-[#10182d]">{item.title}</div>
+            <p className="mt-2 text-[12px] font-bold leading-6 text-[#64748b]">{item.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
-export function hashKarteSource(source) {
-  return crypto
-    .createHash("sha256")
-    .update(JSON.stringify(stableValue(source)))
-    .digest("hex");
+function ForecastCTA({ usage }) {
+  if (!usage) return null;
+  const bullets = Array.isArray(usage.bullets) ? usage.bullets : [];
+
+  return (
+    <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 shadow-[0_14px_34px_rgba(180,116,37,0.08)]">
+      <div className="text-[12px] font-black tracking-[0.18em] text-[#b17425]">DAILY FORECAST</div>
+      <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">{usage.title || "今日・明日のケアは予報ページで確認"}</h2>
+      {usage.body ? <p className="mt-3 text-[14px] font-bold leading-7 text-[#6b4a2a]">{usage.body}</p> : null}
+      {bullets.length ? (
+        <div className="mt-5 grid gap-2">
+          {bullets.slice(0, 3).map((item, index) => (
+            <div key={`${item}-${index}`} className="flex gap-3 rounded-[22px] border border-[#ead7a5] bg-white/70 px-4 py-3 text-[13px] font-black leading-6 text-[#6b4a2a]">
+              <span>☀️</span>
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <Link
+        href={usage.href || "/radar"}
+        className="mt-5 inline-flex rounded-full bg-[#2f7567] px-6 py-3 text-[14px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.24)]"
+      >
+        予報ページを見る
+      </Link>
+    </section>
+  );
 }
 
-function extractJson(text) {
-  const raw = String(text || "").trim();
-  if (!raw) throw new Error("OpenAI returned empty text");
+const SUB_TERM_LABELS = {
+  qi_stagnation: "気滞（きたい）",
+  qi_deficiency: "気虚（ききょ）",
+  blood_deficiency: "血虚（けっきょ）",
+  blood_stasis: "血瘀（けつお）",
+  fluid_damp: "痰湿（たんしつ）",
+  fluid_deficiency: "津液不足（しんえきぶそく）",
+};
 
-  try {
-    return JSON.parse(raw);
-  } catch {}
+const LOCKED_SECTION_LABELS = {
+  "loop-overview": "全体像",
+  "body-pattern": "土台",
+  "weather-trigger": "天気",
+  "daily-loop": "生活",
+  "care-priority": "優先順位",
+  "seven-day-plan": "7日間",
+  "season-strategy": "季節",
+  "consultation-sheet": "相談",
+  // 旧レポート互換
+  "core-pattern": "体質",
+  "inner-pattern": "気血水",
+  "weather-switch": "天気",
+  "early-signs": "前触れ",
+  "meridian-care": "経絡",
+  "alert-day-care": "警戒日",
+  "season-care": "季節",
+  "consult-list": "相談",
+};
 
-  const fenceStripped = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+function buildLockedPreviewBody({ section, karte, core, symptom, patternText, weatherText }) {
+  const meridian = karte?.meridianPreview || {};
+  const primaryLine = meridian.primary;
+  const secondaryLine = meridian.secondary;
+  const primaryLineText = primaryLine?.description || primaryLine?.lineTitle;
+  const secondaryLineText = secondaryLine?.description || secondaryLine?.lineTitle;
 
-  try {
-    return JSON.parse(fenceStripped);
-  } catch {}
+  switch (section?.id) {
+    case "loop-overview":
+      return `${core}・${patternText}・${weatherText}・${symptom}をつなげ、不調がくり返されやすい流れを整理します。`;
+    case "body-pattern":
+      return `${patternText}を、だるさ・こわばり・眠気・気分の波など生活の体感に翻訳します。`;
+    case "weather-trigger":
+      return `${weatherText}が、${symptom}や軽いサインにどうつながるかを体質と一緒に読みます。`;
+    case "daily-loop":
+      return `${symptom}が強くなる前に出やすいサインと、生活内で固定化しやすい流れを整理します。`;
+    case "care-priority":
+      return `7つの方針から、まず減らす負担・足すケア・やりすぎ注意を整理します。`;
+    case "seven-day-plan":
+      return `1週間で体質を変えるのではなく、前触れを観察し、崩れやすい条件を1つ減らす練習に落とし込みます。`;
+    case "season-strategy":
+      return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
+    case "consultation-sheet":
+      return "相談時に、体質・天気・不調・時間帯・悪化条件・動作ラインを短く共有できる形にします。";
+    case "core-pattern":
+      return `${core}のタイプから、天気・予定量・疲れが重なったときの崩れ方を整理します。`;
+    case "inner-pattern":
+      return `${patternText}を、だるさ・こわばり・眠気・気分の波など生活の体感に翻訳します。`;
+    case "weather-switch":
+      return `${weatherText}が、${symptom}や軽いサインにどうつながるかを体質と一緒に読みます。`;
+    case "early-signs":
+      return `${symptom}が強くなる前に出やすいサインと、今後も注意したい軽い不調を整理します。`;
+    case "meridian-care":
+      if (primaryLineText && secondaryLineText && primaryLine?.lineTitle !== secondaryLine?.lineTitle) {
+        return `動作負担チェックでは、${primaryLineText}と${secondaryLineText}にサイン。購入後は、不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
+      }
+      if (primaryLineText) {
+        return `動作負担チェックでは、${primaryLineText}にサイン。購入後は、このラインが不調の背景でどう関わるかと、予報ページのツボケアへの使い方を整理します。`;
+      }
+      return "動作負担チェックから、不調の背景にある経絡ラインとケアの見方を整理します。";
+    case "alert-day-care":
+      return "予報ページの点数・主因・ツボ・食養生を、警戒日の前日〜当日の行動に落とし込む見方を整理します。";
+    case "season-care":
+      return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
+    case "consult-list":
+      return "鍼灸・整体・漢方などで相談するときに、体質・天気・不調・動作の要点を短く伝えられる形にします。";
+    default:
+      return section?.teaser || section?.preview || "購入後に本文を表示します。";
+  }
+}
 
-  const start = raw.indexOf("{");
-  const end = raw.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    return JSON.parse(raw.slice(start, end + 1));
+function LockedPreview({ karte }) {
+  const weatherList = Array.isArray(karte?.weatherRankings) && karte.weatherRankings.length
+    ? karte.weatherRankings.map((item) => item.label).filter(Boolean)
+    : [karte?.mainWeatherLabel].filter(Boolean);
+  const weatherText = weatherList.length ? weatherList.join("・") : "注意天気";
+  const symptom = karte?.symptomLabel || "今お困りの不調";
+  const core = karte?.coreTitle || "あなたの体質";
+  const patterns = [karte?.primarySub?.code, karte?.secondarySub?.code]
+    .map((code) => SUB_TERM_LABELS[code])
+    .filter(Boolean);
+  const patternText = patterns.length ? patterns.join("・") : "気血津液（きけつしんえき）の偏り";
+  const sections = Array.isArray(karte?.sections) ? karte.sections : [];
+  const previewItems = sections.map((section, index) => ({
+    label: `${index + 1}｜${LOCKED_SECTION_LABELS[section.id] || section.badge || "項目"}`,
+    title: section.title,
+    body: buildLockedPreviewBody({ section, karte, core, symptom, patternText, weatherText }),
+  }));
+  const beauty = karte?.beautyColumn;
+
+  return (
+    <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-7">
+      <div className="mb-5">
+        <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">PREVIEW</div>
+        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める8項目＋相談前シート</h2>
+        <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">
+          {core}・{patternText}・{weatherText}・{symptom}をもとに、不調がくり返されやすい流れ、7つの方針、7日間の試し方までまとめます。
+        </p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {previewItems.map((item) => (
+          <div key={item.label} className="rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+            <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
+            <div className="mt-2 text-[16px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{item.title}</div>
+            <p className="mt-2 text-[13px] font-bold leading-6 text-[#64748b]">{item.body}</p>
+          </div>
+        ))}
+        {beauty ? (
+          <div className="rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-5 md:col-span-2">
+            <div className="text-[11px] font-black tracking-[0.16em] text-[#b17425]">まとめ</div>
+            <div className="mt-2 text-[16px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{beauty.title}</div>
+            <p className="mt-2 text-[13px] font-bold leading-6 text-[#6b4a2a]">{beauty.teaser || beauty.preview}</p>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function BeautyColumn({ column }) {
+  if (!column) return null;
+  const body = Array.isArray(column.body) ? column.body : [];
+  const points = Array.isArray(column.points) ? column.points : [];
+
+  return (
+    <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 shadow-[0_14px_34px_rgba(180,116,37,0.08)] md:p-7">
+      <div className="mb-3 inline-flex rounded-full border border-[#ead7a5] bg-white/70 px-3 py-1 text-[11px] font-black tracking-[0.18em] text-[#b17425]">
+        {column.badge || "まとめ"}
+      </div>
+      <h2 className="text-[24px] font-black leading-[1.45] tracking-[-0.05em] text-[#10182d] md:text-[29px]">
+        {column.title}
+      </h2>
+      {column.teaser ? <p className="mt-3 text-[14px] font-black leading-7 text-[#6b4a2a]">{column.teaser}</p> : null}
+      {body.length ? (
+        <div className="mt-5 space-y-4">
+          {body.slice(0, 3).map((text, index) => (
+            <p key={`beauty-p-${index}`} className="text-[15px] font-bold leading-[1.9] text-[#334155]">
+              {text}
+            </p>
+          ))}
+        </div>
+      ) : null}
+      {points.length ? (
+        <div className="mt-5 flex flex-wrap gap-2">
+          {points.slice(0, 3).map((item, index) => (
+            <span key={`beauty-point-${index}`} className="rounded-full border border-[#ead7a5] bg-white/80 px-4 py-2 text-[13px] font-black leading-6 text-[#6b4a2a]">
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+
+function SectionCard({ section, locked, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const body = Array.isArray(section.body) ? section.body : [];
+  const bullets = Array.isArray(section.bullets) ? section.bullets : [];
+  const steps = Array.isArray(section.steps) ? section.steps : [];
+  const hideExtraLists = ["consult-list", "consultation-sheet"].includes(section.id);
+  const showSteps = !hideExtraLists && steps.length > 0;
+  const showBullets = !hideExtraLists && bullets.length > 0 && !showSteps;
+  const hasDetail = body.length || showBullets || showSteps;
+
+  return (
+    <section className="relative overflow-hidden rounded-[34px] border border-[#d9e3dc] bg-white shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
+      <div className="p-6 md:p-8">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <span className="rounded-full border border-[#ead7a5] bg-[#fff8df] px-3 py-1 text-[11px] font-black tracking-[0.18em] text-[#b17425]">
+            {section.badge}
+          </span>
+          <span className="text-[11px] font-black tracking-[0.18em] text-[#9aa7b8]">PERSONAL FILE</span>
+        </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="text-[24px] font-black leading-[1.45] tracking-[-0.05em] text-[#10182d] md:text-[29px]">
+              {section.title}
+            </h2>
+            {section.teaser ? <p className="mt-3 text-[14px] font-black leading-7 text-[#64748b]">{section.teaser}</p> : null}
+          </div>
+
+          {!locked && hasDetail ? (
+            <button
+              type="button"
+              onClick={() => setOpen((value) => !value)}
+              className="shrink-0 rounded-full border border-[#d9e3dc] bg-[#f8fbf9] px-5 py-3 text-[13px] font-black text-[#2f7567] shadow-sm"
+            >
+              {open ? "閉じる" : "詳しく読む"}
+            </button>
+          ) : null}
+        </div>
+
+        {(!open || locked) ? (
+          <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+            <div className="mb-2 text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">要点</div>
+            <p className="text-[15px] font-black leading-[1.9] text-[#39475a]">{section.preview || body[0]}</p>
+          </div>
+        ) : null}
+
+        {locked ? (
+          <div className="relative mt-4 rounded-[28px] border border-[#e4ebe6] bg-[#f7faf8] p-5">
+            <p className="line-clamp-3 text-[15px] font-bold leading-[2] text-[#64748b]">
+              {body[0] || section.preview || "続きでは、具体的な見分け方と戻し方まで整理します。"}
+            </p>
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#f7faf8] via-[#f7faf8]/90 to-transparent" />
+            <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[#d7e6df] bg-white px-4 py-3 text-[13px] font-black text-[#2f7567] shadow-sm">
+              <span>🔒</span>
+              <span>続きはアンロック後に表示</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {!locked && open ? (
+        <div className="border-t border-[#edf2ef] bg-white px-6 pb-6 md:px-8 md:pb-8">
+          {body.length ? (
+            <div className="space-y-4 pt-6">
+              {body.slice(0, 2).map((text, index) => (
+                <p key={`${section.id}-p-${index}`} className="text-[15px] font-bold leading-[1.9] text-[#334155]">
+                  {text}
+                </p>
+              ))}
+            </div>
+          ) : null}
+
+          {showBullets ? (
+            <div className="mt-6 rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+              <div className="mb-3 text-[12px] font-black tracking-[0.14em] text-[#9aa7b8]">見るポイント</div>
+              <div className="flex flex-wrap gap-2">
+                {bullets.slice(0, 2).map((item, index) => (
+                  <span key={`${section.id}-b-${index}`} className="rounded-full border border-[#d7e6df] bg-white px-4 py-2 text-[13px] font-black leading-6 text-[#334155]">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {showSteps ? (
+            <div className="mt-5 grid gap-3">
+              {steps.slice(0, 2).map((item, index) => (
+                <div key={`${section.id}-s-${index}`} className="flex gap-4 rounded-[24px] border border-[#e6eee9] bg-[#f8fbf9] px-5 py-4 text-[14px] font-black leading-7 text-[#334155]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f7567] text-[12px] text-white">{index + 1}</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function LoadingView() {
+  return (
+    <div className="min-h-screen bg-[#f7f7f1] px-6 py-20 text-center">
+      <div className="mx-auto max-w-[680px] rounded-[34px] border border-[#d9e3dc] bg-white p-8 shadow-sm">
+        <div className="mx-auto mb-5 h-12 w-12 animate-pulse rounded-full bg-[#dfeee8]" />
+        <p className="text-[16px] font-black text-[#64748b]">カルテを読み込み中です。</p>
+      </div>
+    </div>
+  );
+}
+
+function ErrorView({ message }) {
+  return (
+    <div className="min-h-screen bg-[#f7f7f1] px-6 py-20">
+      <div className="mx-auto max-w-[680px] rounded-[34px] border border-[#d9e3dc] bg-white p-8 text-center shadow-sm">
+        <p className="text-[18px] font-black text-[#10182d]">カルテを表示できませんでした</p>
+        <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">{message}</p>
+        <Link href="/" className="mt-7 inline-flex rounded-full bg-[#2f7567] px-8 py-4 text-[15px] font-black text-white shadow-[0_10px_22px_rgba(47,117,103,0.24)]">
+          ホームへ戻る
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export default function KarteClient() {
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = params?.id;
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const checkoutState = searchParams.get("checkout");
+
+  async function loadKarte() {
+    setLoading(true);
+    setError("");
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      const res = await fetch(`/api/karte/${id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        cache: "no-store",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "カルテの取得に失敗しました。");
+      setData(json);
+    } catch (err) {
+      setError(err?.message || "カルテの取得に失敗しました。");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  throw new Error("Failed to parse OpenAI JSON");
-}
+  useEffect(() => {
+    if (!id) return;
+    loadKarte();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
-function clampText(value, max = 900) {
-  return String(value || "").replace(/\s+/g, " ").trim().slice(0, max);
-}
+  useEffect(() => {
+    if (checkoutState === "success") {
+      const timer = setTimeout(() => loadKarte(), 1200);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutState]);
 
-function polishUserText(value) {
-  return String(value || "")
-    .replace(/主訴/g, "今お困りの不調")
-    .replace(/不調名を決めるものではなく、?/g, "")
-    .replace(/診断名を決めるものではなく、?/g, "")
-    .replace(/このチェックは、不調そのものを決めつけるものではありません。?/g, "")
-    .replace(/不調そのものを決めつけるものではありません。?/g, "")
-    .replace(/原因を断定するものではありません。?/g, "")
-    .replace(/その日の天気とこの経絡ラインを組み合わせて確認してください/g, "その日の天気・体質・経絡ラインを反映したツボ提案を確認してください")
-    .replace(/予報ページのツボ提案は、その日の天気とこの経絡ラインを組み合わせて確認してください/g, "予報ページのラインケアのツボは、その日の天気・体質・動作負担チェックで見えた経絡ラインを反映して提案されます。")
-    .replace(/予報ページでその日のツボ提案を確認し、軽いケアにつなげてください/g, "予報ページでは、その日の天気・体質・動作負担チェックで見えた経絡ラインを反映したラインケアのツボも提案されます。")
-    .replace(/六淫（ろくいん）|六淫/g, "天気の負担")
-    .replace(/湿邪（しつじゃ）|寒邪（かんじゃ）|風邪（ふうじゃ）|暑邪（しょじゃ）|燥邪（そうじゃ）/g, "天気の負担")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+  const karte = data?.karte;
+  const locked = data ? !data.unlocked : true;
+  const generation = data?.generation || {};
 
-function normalizeSection(generated, fallback) {
-  const section = generated && typeof generated === "object" ? generated : {};
-  return {
-    id: fallback.id,
-    badge: clampText(polishUserText(fallback.badge || section.badge), 20),
-    title: clampText(polishUserText(fallback.title || section.title), 90),
-    teaser: clampText(polishUserText(section.teaser || fallback.teaser || ""), 120),
-    preview: clampText(polishUserText(section.preview || fallback.preview || fallback.body?.[0] || ""), 240),
-    body: (Array.isArray(section.body) && section.body.length ? section.body : fallback.body || [])
-      .slice(0, 2)
-      .map((text) => clampText(polishUserText(text), 620))
-      .filter(Boolean),
-    bullets: (Array.isArray(section.bullets) ? section.bullets : fallback.bullets || [])
-      .slice(0, 2)
-      .map((text) => clampText(polishUserText(text), 170))
-      .filter(Boolean),
-    steps: (Array.isArray(section.steps) ? section.steps : fallback.steps || [])
-      .slice(0, 2)
-      .map((text) => clampText(polishUserText(text), 210))
-      .filter(Boolean),
-  };
-}
+  const completionLabel = useMemo(() => {
+    if (!karte?.sections?.length) return "8項目＋相談前シート";
+    return karte?.beautyColumn ? `${karte.sections.length}項目＋相談前シート` : `${karte.sections.length}項目`;
+  }, [karte]);
 
+  const quickTakeaways = useMemo(() => {
+    if (karte?.quickTakeaways?.length) return karte.quickTakeaways;
+    const firstSections = Array.isArray(karte?.sections) ? karte.sections.slice(0, 3) : [];
+    return firstSections.map((section) => ({
+      label: section.badge || "要点",
+      value: section.title,
+      note: section.preview || section.teaser,
+    }));
+  }, [karte]);
 
-function normalizeBeautyColumn(generated, fallback = {}) {
-  const source = generated && typeof generated === "object" ? generated : {};
-  return {
-    badge: clampText(polishUserText(source.badge || fallback.badge || "コラム"), 20),
-    title: clampText(polishUserText(source.title || fallback.title || "肌・むくみ・顔色を内側から整えるポイント3選"), 90),
-    teaser: clampText(polishUserText(source.teaser || fallback.teaser || "相談前に見返す要点と実践チェックをまとめます。"), 150),
-    preview: clampText(polishUserText(source.preview || fallback.preview || "肌・むくみ・顔色に出やすい変化を、内側から整えるヒントとしてまとめます。"), 240),
-    body: (Array.isArray(source.body) && source.body.length ? source.body : fallback.body || [])
-      .slice(0, 3)
-      .map((text) => clampText(polishUserText(text), 520))
-      .filter(Boolean),
-    points: (Array.isArray(source.points) && source.points.length ? source.points : fallback.points || [])
-      .slice(0, 3)
-      .map((text) => clampText(polishUserText(text), 80))
-      .filter(Boolean),
-  };
-}
+  async function startCheckout() {
+    setCheckoutLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
 
-export function normalizeAiKarte(generated, baseKarte, { model = DEFAULT_MODEL } = {}) {
-  const generatedSections = Array.isArray(generated?.sections) ? generated.sections : [];
-  const generatedById = new Map(generatedSections.map((section) => [section?.id, section]));
-  const fallbackSections = Array.isArray(baseKarte?.sections) ? baseKarte.sections : [];
+      if (!token) {
+        const next = encodeURIComponent(`/karte/${id}`);
+        router.push(`/signup?result=${encodeURIComponent(id)}&next=${next}`);
+        return;
+      }
 
-  return {
-    ...baseKarte,
-    productName: clampText(polishUserText(generated?.productName || baseKarte?.productName || "未病カルテ Plus"), 40),
-    subtitle: clampText(polishUserText(generated?.subtitle || baseKarte?.subtitle || ""), 120),
-    heroLead: clampText(polishUserText(generated?.heroLead || baseKarte?.heroLead || ""), 190),
-    sections: fallbackSections.map((fallback) => normalizeSection(generatedById.get(fallback.id), fallback)),
-    beautyColumn: normalizeBeautyColumn(generated?.beautyColumn, baseKarte?.beautyColumn),
-    meta: {
-      ...(baseKarte?.meta || {}),
-      version: PROMPT_VERSION,
-      generatedBy: "openai",
-      model,
-      generatedAt: new Date().toISOString(),
-    },
-  };
-}
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product: "personal_mibyo_karte",
+          resultId: id,
+        }),
+      });
+      const json = await res.json();
 
-function buildPrompt(source) {
-  return [
-    "WEBアプリ『未病レーダー』内の有料コンテンツ『未病カルテ Plus』を書きます。",
-    "今回の完成物は、無料カルテの延長ではなく『不調ループ見える化レポート』です。",
-    "あなたの役割は、体質チェック結果・天気感受性・動作負担チェック・Plus深掘りチェックを統合し、ユーザーが自分の不調のくり返し方を理解し、今日から整える優先順位を決められる読み物へ編集することです。",
-    "",
-    "# 商品の位置づけ",
-    "- 商品名は『未病カルテ Plus』。中身は『不調ループ見える化レポート』。",
-    "- 無料の未病カルテは、体質・気血水・天気相性・経絡ライン・今日明日のケアの入口を示す。",
-    "- Plusは、そこに時間帯・悪化条件・楽になる条件・生活負荷・睡眠/食事・続けやすさを重ねて、なぜ不調がくり返されるのか、どこから抜けるのかを整理する。",
-    "- 予報ページは『今日・明日の作戦表』。Plusは『なぜその作戦が必要になりやすいかを理解する保存版』。",
-    "",
-    "# 未病レーダーの前提",
-    "- 未病レーダーは、中医学的体質傾向、天気変化感受性、今お困りの不調、動作負担チェック（M-testの要領）を合わせて、天気で体調が揺れやすい日の見立てとセルフケアの手がかりを整理するアプリです。",
-    "- 動物タイプ（アクセル優位・ブレーキ優位×余力の大・中・小）は、陰陽の傾きやすさ、気血の総量、回復力をまとめたメタファーです。キャラ診断として盛らず、崩れ方と回復余力の説明に使います。",
-    "- 気血津液（きけつしんえき）の偏りは、体に出やすいサインを読む材料です。気虚（ききょ）・痰湿（たんしつ）などの用語は読み仮名つきで出し、説明は生活語で行います。",
-    "- 天気シグナルは、体質から見た注意天気と本人の自覚を合わせて読む材料です。湿気・冷え込み・気圧低下・乾燥・暑さなど、現代の天気の言葉で説明します。",
-    "- 動作負担チェックは、動作時の張り・重さ・動きづらさから、不調の背景にある経絡（けいらく）ラインの負担を探る材料です。経絡名の臓腑説明だけで終わらせず、姿勢・冷え・生活負担が表に出る通り道として扱います。",
-    "- plusLoop.profile.rankedDirections は、7方針（しずめる・ゆるめる・めぐらせる・ながす・うるおす・ぬくめる・ささえる）の優先順位です。本文の中心に置いてください。",
-    "- plusLoop.intakeProvided が false の場合は、Plus深掘りチェック未回答の暫定カルテとして、体質チェック結果から見える仮説にとどめ、断定を弱めて書きます。",
-    "",
-    "# 絶対に守る表現ルール",
-    "- 医学的な診断、治療、改善保証、原因の断定はしない。",
-    "- 『治る』『改善する』『原因はこれです』『病気です』と書かない。",
-    "- 『主訴』という表現は使わず、『今お困りの不調』または具体的な不調名で書く。",
-    "- 不安を煽らない。『危険』『放置すると悪化』のような煽りは使わない。",
-    "- 『〇〇するべき』ではなく、『まずは〇〇から』『〇〇を目安に』『〇〇が合いやすい』と書く。",
-    "- 専門用語だけで終わらせず、体感・時間帯・天気・食事・姿勢・予定量に翻訳する。",
-    "- 詳しいツボケアや食養生はその日の気象データで変わるため、予報ページで今日・明日の内容を確認する使い方につなげる。",
-    "- 強い痛み、しびれ、麻痺、発熱、転倒後から続く症状、胸痛、息苦しさ、排尿・排便異常などは医療機関相談の文脈で自然に触れる。",
-    "",
-    "# 文章の基本構造",
-    "- まず『この人は何が重なると崩れやすいのか』を説明する。",
-    "- 次に『前触れ→悪化条件→戻しやすい条件→優先方針』をつなげる。",
-    "- 最後に『今日から減らす負担』『足すケア』『相談時に伝えること』へ落とし込む。",
-    "- 同じ助言を繰り返さず、章ごとに役割を分ける。",
-    "- 語り口は、専門家が隣で整理してくれるような、落ち着いた自然な日本語にする。",
-    "",
-    "# 8章の狙い",
-    "loop-overview：不調ループの全体像。体質・天気・時間帯・生活負荷がどう重なり、今お困りの不調として出やすいかを1枚の流れとして説明する。",
-    "body-pattern：体質と気血水の土台。動物タイプと気血津液の偏りを、ループの入口として生活語に翻訳する。",
-    "weather-trigger：天気トリガー。注意天気が単独で不調を作るのではなく、内側の偏りと重なったときにスイッチになりやすいことを書く。",
-    "daily-loop：生活内で固定化しやすい流れ。Plus深掘りチェックの時間帯・悪化条件・睡眠/食事/作業負荷を使い、前触れから崩れ方まで整理する。",
-    "care-priority：7方針の優先順位。plusLoop.profile.rankedDirections を中心に、まず減らす負担、足すケア、やりすぎ注意をまとめる。",
-    "seven-day-plan：7日間の整え方。完璧な計画ではなく、1〜7日目の軽い実践ステップを作る。ケア嗜好があれば反映する。",
-    "season-strategy：季節・天気の先回り。季節別パックや養生キットにつなげられるよう、春/梅雨/夏/秋/冬のうち注意時期を整理する。",
-    "consultation-sheet：相談前シート。鍼灸・整体・漢方・医療機関などに相談する際、体質・天気・不調・時間帯・悪化条件・楽になる条件・動作ラインを短く共有できる形にする。",
-    "beautyColumn：名称は既存UI互換のため beautyColumn だが、中身は『相談前シート・実践チェックリスト』として書く。美容コラムにはしない。",
-    "",
-    "# 出力",
-    "- 指定JSON Schemaに一致するJSONだけを返します。",
-    "- section id は loop-overview, body-pattern, weather-trigger, daily-loop, care-priority, seven-day-plan, season-strategy, consultation-sheet の8個をこの順番にします。",
-    "- section.title は outputContract.sectionTitles の章名に合わせます。本文は入力データに合わせて書き直します。",
-    "- 各 section.body は2段落。1段落は短めにします。",
-    "- bullets は見返し用のチェック項目を0〜2個に絞ります。",
-    "- steps は実行手順が本当に必要な章だけ、0〜2個に絞ります。",
-    "- beautyColumn は sections とは別に作り、body は2〜3段落、points は3個にします。相談前に見返す短いメモとして使える内容にしてください。",
-    "",
-    "# 入力データ",
-    JSON.stringify(source, null, 2),
-  ].join("\n");
-}
-
-export async function generatePersonalKarteAi({ source, baseKarte }) {
-  const client = getOpenAIClient();
-  const model = DEFAULT_MODEL;
-  const prompt = buildPrompt(source);
-  const reasoningEffort = process.env.OPENAI_PERSONAL_KARTE_REASONING_EFFORT || "high";
-
-  const request = {
-    model,
-    input: prompt,
-    reasoning: { effort: reasoningEffort },
-    max_output_tokens: 8000,
-    text: {
-      format: {
-        type: "json_schema",
-        name: "personal_mibyo_karte",
-        strict: true,
-        schema: KARTE_SCHEMA,
-      },
-    },
-  };
-
-  let response;
-  try {
-    response = await client.responses.create(request);
-  } catch (error) {
-    // Some SDK/runtime combinations are stricter about the Responses API structured-output shape.
-    // Retry as plain JSON generation so the purchased page can still be generated instead of failing hard.
-    console.warn("[personalKarteAi] structured output retrying as plain JSON:", error?.message || error);
-    response = await client.responses.create({
-      model,
-      input: `${prompt}\n\nJSON以外の文字を絶対に含めないでください。`,
-      reasoning: { effort: reasoningEffort },
-      max_output_tokens: 8000,
-    });
+      if (!res.ok) throw new Error(json?.error || "決済ページを開けませんでした。");
+      window.location.href = json.url;
+    } catch (err) {
+      setError(err?.message || "決済ページを開けませんでした。");
+      setCheckoutLoading(false);
+    }
   }
 
-  const parsed = extractJson(response.output_text || "");
-  return normalizeAiKarte(parsed, baseKarte, { model });
+  if (loading) return <LoadingView />;
+  if (error && !data) return <ErrorView message={error} />;
+  if (!karte) return <ErrorView message="カルテ情報が見つかりませんでした。" />;
+
+  return (
+    <main className="min-h-screen bg-[#f7f7f1] pb-16 text-[#10182d]">
+      <div className="sticky top-0 z-20 border-b border-[#eef1ed] bg-white/88 px-5 py-4 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[780px] items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="rounded-full border border-[#d9e3dc] bg-white px-5 py-3 text-[14px] font-black text-[#334155] shadow-sm"
+          >
+            ← 戻る
+          </button>
+          <div className="text-center">
+            <div className="text-[18px] font-black tracking-[-0.04em]">未病カルテ Plus</div>
+            <div className="text-[12px] font-black text-[#8290a4]">LOOP REPORT</div>
+          </div>
+          <Link href="/" className="rounded-full border border-[#d9e3dc] bg-white px-5 py-3 text-[14px] font-black text-[#334155] shadow-sm">
+            ホーム
+          </Link>
+        </div>
+      </div>
+
+      {checkoutState === "success" && !data?.unlocked ? (
+        <div className="mx-auto mt-5 max-w-[780px] px-5">
+          <div className="rounded-[24px] border border-[#d7e6df] bg-[#eff8f4] px-5 py-4 text-[14px] font-black leading-7 text-[#2f7567]">
+            決済を確認中です。数秒後にカルテが開かない場合は、ページを再読み込みしてください。
+          </div>
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="mx-auto mt-5 max-w-[780px] px-5">
+          <div className="rounded-[24px] border border-[#f6d4c5] bg-[#fff7ed] px-5 py-4 text-[14px] font-black leading-7 text-[#9a4b20]">
+            {error}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mx-auto max-w-[780px] space-y-7 px-5 pt-8">
+        <section className="overflow-hidden rounded-[38px] border border-[#d9e3dc] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)]">
+          <div className="relative p-7 md:p-9">
+            <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full bg-[#f7e8b9] opacity-60" />
+            <div className="pointer-events-none absolute right-10 top-20 h-28 w-28 rounded-full border border-[#d9e3dc]" />
+            <div className="relative">
+              <span className="inline-flex rounded-full border border-[#d9e3dc] bg-[#f8fbf9] px-4 py-2 text-[12px] font-black tracking-[0.16em] text-[#2f7567]">
+                LOOP REPORT
+              </span>
+              <h1 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.06em] text-[#10182d] md:text-[44px]">
+                {karte.productName}
+              </h1>
+              <p className="mt-4 text-[17px] font-black leading-[1.8] text-[#475569]">{karte.subtitle}</p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <MiniStat label="体質軸" value={karte.coreTitle} />
+                <MiniStat label="今お困りの不調" value={karte.symptomLabel} tone="green" />
+                <MiniStat label="収録" value={completionLabel} tone="amber" />
+              </div>
+              <p className="mt-6 rounded-[26px] border border-[#e6eee9] bg-white/78 p-5 text-[15px] font-bold leading-[1.9] text-[#475569]">
+                {karte.heroLead}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {locked ? (
+          <section className="rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-6 shadow-[0_14px_38px_rgba(47,117,103,0.10)]">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">LOCKED</div>
+                <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">
+                  あなた専用の体調パターンをアンロック
+                </h2>
+                <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
+                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せます。
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={startCheckout}
+                disabled={checkoutLoading}
+                className={cn(
+                  "shrink-0 rounded-full px-7 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.28)]",
+                  checkoutLoading ? "bg-[#8fb8ad]" : "bg-[#2f7567] active:translate-y-[1px]"
+                )}
+              >
+                {checkoutLoading ? "決済ページを準備中…" : `アンロックする（${PRICE_LABEL}）`}
+              </button>
+            </div>
+          </section>
+        ) : (
+          <section className="flex flex-wrap items-center gap-3 rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-5 text-[15px] font-black leading-7 text-[#2f7567]">
+            <span>✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。</span>
+            <GenerationLabel generation={generation} />
+          </section>
+        )}
+
+        {locked ? (
+          <LockedPreview karte={karte} />
+        ) : (
+          <div className="grid gap-5">
+            {(karte.sections || []).map((section, index) => (
+              <SectionCard key={section.id || index} section={section} locked={locked} defaultOpen={index === 0} />
+            ))}
+          </div>
+        )}
+
+        {!locked ? <BeautyColumn column={karte.beautyColumn} /> : null}
+
+        {!locked ? <ForecastCTA usage={karte.forecastUsage} /> : null}
+
+        {locked ? (
+          <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 text-center shadow-sm">
+            <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
+            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立て</h2>
+            <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
+              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・注意天気・生活負荷・7つの方針をつなげた不調ループの読み物として、あとから何度でも見返せます。
+            </p>
+            <button
+              type="button"
+              onClick={startCheckout}
+              disabled={checkoutLoading}
+              className="mt-6 rounded-full bg-[#2f7567] px-8 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.28)]"
+            >
+              {checkoutLoading ? "決済ページを準備中…" : `カルテをアンロック（${PRICE_LABEL}）`}
+            </button>
+          </section>
+        ) : null}
+      </div>
+    </main>
+  );
 }
-
-
