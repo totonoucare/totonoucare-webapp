@@ -4,7 +4,7 @@ import { buildPersonalKarteContext } from "@/lib/personalKarte";
 import { buildKartePlusLoopProfile } from "@/lib/karte_plus/loopAnalysis";
 
 const PROMPT_VERSION = "personal-karte-plus-v5.0-loop-report";
-const DEFAULT_MODEL = process.env.OPENAI_PERSONAL_KARTE_MODEL || "gpt-5.5";
+const DEFAULT_MODEL = process.env.OPENAI_PERSONAL_KARTE_MODEL || "gpt-5.5"
 
 
 const SUB_TCM_TERMS = {
