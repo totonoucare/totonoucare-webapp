@@ -132,14 +132,22 @@ const SUB_TERM_LABELS = {
 };
 
 const LOCKED_SECTION_LABELS = {
+  "my-torisetsu-card": "トリセツ",
+  "loop-core": "ループ",
+  "early-signs": "前触れ",
+  "ng-combo-checker": "重ねすぎ",
+  "ng-combo-cards": "重ねすぎ",
+  "body-lines": "負担ライン",
+  "season-guard": "季節",
+  "forecast-bridge": "予報活用",
+  "consultation-sheet": "相談メモ",
   "loop-overview": "全体像",
   "body-pattern": "土台",
   "weather-trigger": "天気",
   "daily-loop": "生活",
-  "care-priority": "優先順位",
-  "seven-day-plan": "7日間",
+  "care-priority": "戻し方",
+  "seven-day-plan": "旧プラン",
   "season-strategy": "季節",
-  "consultation-sheet": "相談",
   // 旧レポート互換
   "core-pattern": "体質",
   "inner-pattern": "気血水",
@@ -159,6 +167,21 @@ function buildLockedPreviewBody({ section, karte, core, symptom, patternText, we
   const secondaryLineText = secondaryLine?.description || secondaryLine?.lineTitle;
 
   switch (section?.id) {
+    case "my-torisetsu-card":
+      return `${core}・${symptom}・${weatherText}を、あとで見返せる1枚のトリセツとして整理します。`;
+    case "loop-core":
+      return `${core}・${patternText}・${weatherText}・生活負荷がどう重なり、${symptom}として出やすいかを整理します。`;
+    case "early-signs":
+      return `${symptom}が強くなる前の小さなサインを、観察しやすい生活語にします。`;
+    case "ng-combo-checker":
+    case "ng-combo-cards":
+      return `避けたい習慣・飲食の組み合わせをカード化し、警戒日前に外す負担を整理します。`;
+    case "body-lines":
+      return `動作負担チェックで見えた身体ラインと、保存版のツボ候補カードを表示します。`;
+    case "season-guard":
+      return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
+    case "forecast-bridge":
+      return "Plusを保存版、予報ページを当日の作戦表として使う見方を整理します。";
     case "loop-overview":
       return `${core}・${patternText}・${weatherText}・${symptom}をつなげ、不調がくり返されやすい流れを整理します。`;
     case "body-pattern":
@@ -168,9 +191,9 @@ function buildLockedPreviewBody({ section, karte, core, symptom, patternText, we
     case "daily-loop":
       return `${symptom}が強くなる前に出やすいサインと、生活内で固定化しやすい流れを整理します。`;
     case "care-priority":
-      return `7つの方針から、まず減らす負担・足すケア・やりすぎ注意を整理します。`;
+      return `7つの方針を背景材料として、戻しやすい方向と外したい負担を整理します。`;
     case "seven-day-plan":
-      return `1週間で体質を変えるのではなく、前触れを観察し、崩れやすい条件を1つ減らす練習に落とし込みます。`;
+      return `旧レポート互換の項目です。新しいPlusでは、重ねすぎ注意カードと予報ページ活用に役割を分けます。`;
     case "season-strategy":
       return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
     case "consultation-sheet":
@@ -225,9 +248,9 @@ function LockedPreview({ karte }) {
     <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-7">
       <div className="mb-5">
         <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">PREVIEW</div>
-        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める8項目＋相談前シート</h2>
+        <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">購入後に読める8項目＋同梱ツール</h2>
         <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">
-          {core}・{patternText}・{weatherText}・{symptom}をもとに、不調がくり返されやすい流れ、7つの方針、7日間の試し方までまとめます。
+          {core}・{patternText}・{weatherText}・{symptom}をもとに、不調がくり返されやすい流れ、NG組み合わせ、身体ライン、予報ページの使いどころまでまとめます。
         </p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -292,10 +315,11 @@ function SectionCard({ section, locked, defaultOpen = false }) {
   const body = Array.isArray(section.body) ? section.body : [];
   const bullets = Array.isArray(section.bullets) ? section.bullets : [];
   const steps = Array.isArray(section.steps) ? section.steps : [];
+  const cards = Array.isArray(section.cards) ? section.cards : [];
   const hideExtraLists = ["consult-list", "consultation-sheet"].includes(section.id);
   const showSteps = !hideExtraLists && steps.length > 0;
   const showBullets = !hideExtraLists && bullets.length > 0 && !showSteps;
-  const hasDetail = body.length || showBullets || showSteps;
+  const hasDetail = body.length || showBullets || showSteps || cards.length > 0;
 
   return (
     <section className="relative overflow-hidden rounded-[34px] border border-[#d9e3dc] bg-white shadow-[0_16px_42px_rgba(15,23,42,0.07)]">
@@ -355,6 +379,26 @@ function SectionCard({ section, locked, defaultOpen = false }) {
                 <p key={`${section.id}-p-${index}`} className="text-[15px] font-bold leading-[1.9] text-[#334155]">
                   {text}
                 </p>
+              ))}
+            </div>
+          ) : null}
+
+
+          {cards.length ? (
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              {cards.slice(0, 8).map((card, index) => (
+                <div key={`${section.id}-card-${card.code || card.title || index}`} className="rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className="rounded-full border border-[#d7e6df] bg-white px-3 py-1 text-[11px] font-black tracking-[0.12em] text-[#2f7567]">
+                      {card.type === "mtest_point" ? "ツボ候補" : card.type === "food" ? "飲食" : card.type === "torisetsu" ? "カード" : "NG候補"}
+                    </span>
+                    <span className="text-[11px] font-black text-[#9aa7b8]">{String(index + 1).padStart(2, "0")}</span>
+                  </div>
+                  <div className="text-[17px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{card.title}</div>
+                  {card.risk ? <p className="mt-2 text-[13px] font-black leading-6 text-[#2f7567]">{card.risk}</p> : null}
+                  {card.reason ? <p className="mt-3 text-[13px] font-bold leading-6 text-[#64748b]">{card.reason}</p> : null}
+                  {card.swap ? <p className="mt-3 rounded-[20px] border border-[#e6eee9] bg-white px-4 py-3 text-[13px] font-black leading-6 text-[#334155]">{card.swap}</p> : null}
+                </div>
               ))}
             </div>
           ) : null}
@@ -630,7 +674,7 @@ export default function KarteClient() {
             <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
             <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立て</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
-              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・注意天気・生活負荷・7つの方針をつなげた不調ループの読み物として、あとから何度でも見返せます。
+              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・注意天気・生活負荷・NG組み合わせ・身体ラインをつなげた不調ループの読み物として、あとから何度でも見返せます。
             </p>
             <button
               type="button"
@@ -646,3 +690,4 @@ export default function KarteClient() {
     </main>
   );
 }
+
