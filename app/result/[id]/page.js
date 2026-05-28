@@ -355,18 +355,18 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
           <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
             <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料カルテの先でわかること</div>
             <p className="mt-3 text-[14px] font-bold leading-7 text-[#475569]">
-              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、今気になる「{focusLabel}」を主役にして、前触れ・天気・生活負荷・7つの方針・相談時に伝えることまで、ひとつながりのループとして整理します。
+              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、今気になる「{focusLabel}」を主役にして、前触れ・天気・生活負荷・NG組み合わせ・身体ライン・相談時に伝えることまで、ひとつながりのループとして整理します。
             </p>
           </div>
 
           <div className="mt-5 grid gap-3">
             {[
+              "私の未病トリセツカード",
               "不調が強くなる前の前触れサイン",
-              "天気・季節で揺れやすい理由",
-              "生活負荷と経絡ラインの見方",
-              "今日・明日の予報ページをどう使うか",
-              "相談時に伝えやすい共有メモ",
-              "7日間で試す整え方プラン",
+              "重ねすぎ注意カード",
+              "からだの負担ラインとツボ候補",
+              "今日・明日の予報ページの使いどころ",
+              "専門家に相談するときの共有メモ",
             ].map((title) => (
               <div key={title} className="flex items-center gap-3 rounded-[22px] border border-[#e6eee9] bg-white/80 px-4 py-3">
                 <span className="h-2 w-2 rounded-full bg-[#dfa42d] shadow-[0_0_8px_rgba(223,164,45,0.35)]" />
