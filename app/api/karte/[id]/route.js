@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabaseAdmin";
 import { hasValidGuestToken } from "@/lib/diagnosisGuestAccess";
 import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
-import { buildPersonalKarte, getKartePreviewSections } from "@/lib/personalKarte";
+import { buildPersonalKarte, buildPersonalKarteContext, getKartePreviewSections } from "@/lib/personalKarte";
 import {
   buildKarteSourcePayload,
   generatePersonalKarteAi,
@@ -12,6 +12,7 @@ import {
   hashKarteSource,
   isPersonalKarteAiEnabled,
 } from "@/lib/personalKarteAi";
+import { buildKartePlusMtestPointCards } from "@/lib/karte_plus/mtestPointCards";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -171,6 +172,38 @@ async function saveAiKarte(admin, { userId, diagnosisEventId, sourceHash, karte 
   }
 }
 
+function attachBodyLineCards(baseKarte, cards = []) {
+  const safeCards = Array.isArray(cards) ? cards.filter(Boolean) : [];
+  if (!safeCards.length) return baseKarte;
+
+  return {
+    ...baseKarte,
+    mtestPointCards: safeCards,
+    sections: (baseKarte.sections || []).map((section) => {
+      if (section.id !== "body-lines") return section;
+      return {
+        ...section,
+        cards: safeCards,
+      };
+    }),
+    meta: {
+      ...(baseKarte.meta || {}),
+      mtestPointCardsAttached: safeCards.length,
+    },
+  };
+}
+
+async function enrichKartePlusTools(baseKarte, eventForKarte) {
+  try {
+    const ctx = buildPersonalKarteContext(eventForKarte);
+    const cards = await buildKartePlusMtestPointCards({ movement: ctx?.movement || {} });
+    return attachBodyLineCards(baseKarte, cards);
+  } catch (error) {
+    console.warn("[api.karte.plusTools] skipped:", error?.message || error);
+    return baseKarte;
+  }
+}
+
 async function getOrCreatePurchasedKarte({ admin, event, computed, baseKarte, userId }) {
   if (!isPersonalKarteAiEnabled()) {
     return { karte: baseKarte, source: "rules", aiEnabled: false };
@@ -278,7 +311,7 @@ export async function GET(req, { params }) {
       diagnosis_symptom_focus: diagnosisSymptomFocus,
       active_symptom_focus: activeSymptomFocus,
     };
-    const baseKarte = buildPersonalKarte(eventForKarte);
+    const baseKarte = await enrichKartePlusTools(buildPersonalKarte(eventForKarte), eventForKarte);
 
     if (!unlocked) {
       return jsonNoStore({
@@ -353,5 +386,4 @@ export async function GET(req, { params }) {
     );
   }
 }
-
 
