@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 const PRICE_LABEL = "¥1,980";
+const PLUS_COMING_SOON = true;
 
 function cn(...values) {
   return values.filter(Boolean).join(" ");
@@ -525,6 +526,11 @@ export default function KarteClient() {
   }, [karte]);
 
   async function startCheckout() {
+    if (PLUS_COMING_SOON) {
+      setError("未病カルテ Plus はただいま準備中です。公開まで少しお待ちください。");
+      return;
+    }
+
     setCheckoutLoading(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -627,25 +633,17 @@ export default function KarteClient() {
           <section className="rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-6 shadow-[0_14px_38px_rgba(47,117,103,0.10)]">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">LOCKED</div>
+                <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">COMING SOON</div>
                 <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">
-                  あなた専用の体調パターンをアンロック
+                  未病カルテ Plus を準備中です
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せます。
+                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せる保存版カルテを準備しています。
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={startCheckout}
-                disabled={checkoutLoading}
-                className={cn(
-                  "shrink-0 rounded-full px-7 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.28)]",
-                  checkoutLoading ? "bg-[#8fb8ad]" : "bg-[#2f7567] active:translate-y-[1px]"
-                )}
-              >
-                {checkoutLoading ? "決済ページを準備中…" : `アンロックする（${PRICE_LABEL}）`}
-              </button>
+              <div className="shrink-0 rounded-full border border-[#d7e6df] bg-white px-6 py-4 text-[14px] font-black text-[#2f7567] shadow-sm">
+                公開までお待ちください
+              </div>
             </div>
           </section>
         ) : (
@@ -671,23 +669,19 @@ export default function KarteClient() {
 
         {locked ? (
           <section className="rounded-[34px] border border-[#ead7a5] bg-[#fffaf0] p-6 text-center shadow-sm">
-            <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ONE TIME</div>
-            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立て</h2>
+            <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">PREVIEW ONLY</div>
+            <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">読み返せる未病ケアの見立てを準備中</h2>
             <p className="mx-auto mt-3 max-w-[560px] text-[14px] font-bold leading-7 text-[#6b4a2a]">
-              一度アンロックすると、同じ診断結果のカルテをアプリ上で再表示できます。体質・注意天気・生活負荷・NG組み合わせ・身体ラインをつなげた不調ループの読み物として、あとから何度でも見返せます。
+              体質・注意天気・生活負荷・NG組み合わせ・身体ラインをつなげた不調ループの読み物として、あとから何度でも見返せる形にする予定です。現在は予告プレビューのみ公開しています。
             </p>
-            <button
-              type="button"
-              onClick={startCheckout}
-              disabled={checkoutLoading}
-              className="mt-6 rounded-full bg-[#2f7567] px-8 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.28)]"
-            >
-              {checkoutLoading ? "決済ページを準備中…" : `カルテをアンロック（${PRICE_LABEL}）`}
-            </button>
+            <div className="mt-6 inline-flex rounded-full border border-[#ead7a5] bg-white px-6 py-3 text-[14px] font-black text-[#8a4b1d] shadow-sm">
+              公開時期は後日ご案内します
+            </div>
           </section>
         ) : null}
       </div>
     </main>
   );
 }
+
 
