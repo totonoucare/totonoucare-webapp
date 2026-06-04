@@ -1,0 +1,73 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 背景の上品なグラデーション -->
+    <linearGradient id="bgGrad" x1="12" y1="10" x2="84" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#B8C8AA"/>
+      <stop offset="55%" stop-color="#A9BD98"/>
+      <stop offset="100%" stop-color="#94AB84"/>
+    </linearGradient>
+
+    <!-- 背景のふんわり光 -->
+    <radialGradient id="bgGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(33 28) rotate(45) scale(38)">
+      <stop offset="0%" stop-color="#F5F2E8" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#F5F2E8" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 薄円のやわらかい立体感 -->
+    <radialGradient id="paleCircle" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(48 46) scale(28)">
+      <stop offset="0%" stop-color="#E4E8DB" stop-opacity="0.58"/>
+      <stop offset="70%" stop-color="#D6DDCC" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#CCD5C2" stop-opacity="0.22"/>
+    </radialGradient>
+
+    <!-- ほんの少しだけ陰影 -->
+    <linearGradient id="darkStroke" x1="24" y1="23" x2="71" y2="43" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5A7871"/>
+      <stop offset="100%" stop-color="#466760"/>
+    </linearGradient>
+
+    <linearGradient id="lightStroke" x1="24" y1="61" x2="72" y2="61" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#EFE9DC"/>
+      <stop offset="100%" stop-color="#E4DDD0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect x="1" y="1" width="94" height="94" rx="22" fill="url(#bgGrad)"/>
+  <rect x="1" y="1" width="94" height="94" rx="22" fill="url(#bgGlow)"/>
+
+  <!-- 薄円 -->
+  <circle cx="48" cy="48" r="26.5" fill="url(#paleCircle)"/>
+
+  <!-- 上の巡り -->
+  <path
+    d="M20 49C20 33 32 21 47 21C58 21 67 25 73 33"
+    stroke="url(#darkStroke)"
+    stroke-width="6.8"
+    stroke-linecap="round"
+  />
+  <path
+    d="M73 33L71 25M73 33L65 31"
+    stroke="url(#darkStroke)"
+    stroke-width="5.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- 下の巡り -->
+  <path
+    d="M75 47C75 62 63 75 48 75C37 75 28 71 22 63"
+    stroke="url(#lightStroke)"
+    stroke-width="6.8"
+    stroke-linecap="round"
+  />
+  <path
+    d="M22 63L24 71M22 63L30 65"
+    stroke="url(#lightStroke)"
+    stroke-width="5.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
