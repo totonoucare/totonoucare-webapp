@@ -123,7 +123,7 @@ function SegmentedTabs({ value, onChange }) {
   const tabs = [
     { key: "overview", label: "カルテ概要" },
     { key: "compat", label: "天気相性" },
-    { key: "care", label: "合うケア" },
+    { key: "care", label: "整え方" },
   ];
 
   return (
@@ -307,36 +307,36 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
       return "気圧が下がり外圧が緩む日に、体内の膨張感が強まりやすく、巡りの詰まりから頭や首肩の不調につながりやすくなります。";
     }
     if (symptomKey === "swelling" || symptomKey === "low_back_pain") {
-      return "気圧が下がり外圧が緩む日に、体内の巡りが滞りやすく、下半身や全体の重だるさにつながりやすい方向です。";
+      return "気圧が下がり外圧が緩む日に、体内の巡りが滞りやすく、下半身や全体の重だるさにつながりやすくなります。";
     }
     return "気圧が下がり外圧が緩む日に、体内の圧力が相対的に高まり、緊張や巡りの詰まり、だるさが出やすくなります。";
   }
 
   if (key === "pressure_up") {
     if (symptomKey === "mood" || symptomKey === "sleep") {
-      return "外からの圧力が強まり、体がギュッと締め付けられることで、リラックスしにくく切り替えが難しくなる方向です。";
+      return "外からの圧力が強まる日は、体がギュッと締まりやすく、リラックスや気持ちの切り替えに時間がかかりやすくなります。";
     }
-    return "外からの圧力が強まり、体がギュッと締め付けられる方向です。無理に詰め込まず、少しゆるめる意識が合います。";
+    return "外からの圧力が強まる日は、体がギュッと締まりやすくなります。無理に詰め込まず、少しゆるめる意識が合います。";
   }
 
   if (key === "cold") {
     if (symptomKey === "neck_shoulder" || symptomKey === "low_back_pain") {
-      return "冷え込む日は、血管や筋肉が縮こまり、首肩や腰のこわばり・痛みとして出やすい方向です。";
+      return "冷え込む日は、血管や筋肉が縮こまり、首肩や腰のこわばり・痛みとして出やすくなります。";
     }
     if (hasBloodDef || isBattSmall || symptomKey === "fatigue") {
-      return "冷え込む日は、血管や筋肉が縮こまり、体を支える余力が削れやすく、消耗やだるさとして出やすい方向です。";
+      return "冷え込む日は、血管や筋肉が縮こまり、体を支える余力が削れやすく、消耗やだるさとして出やすくなります。";
     }
-    return "冷え込む日は、体がギュッと縮こまりやすく、こわばりやだるさとして出やすい方向です。";
+    return "冷え込む日は、体がギュッと縮こまりやすく、こわばりやだるさが残りやすくなります。";
   }
 
   if (key === "heat") {
     if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "sleep") {
-      return "気温が上がる日は、熱がこもりやすくのぼせ気味になり、上半身の張りや睡眠の質低下につながりやすい方向です。";
+      return "気温が上がる日は、熱がこもりやすくのぼせ気味になり、上半身の張りや睡眠の質低下につながりやすくなります。";
     }
     if (hasFluidDef || isAccel) {
-      return "気温が上がる日は、熱や刺激がこもりやすく、消耗やのぼせ感につながりやすい方向です。";
+      return "気温が上がる日は、熱や刺激がこもりやすく、消耗やのぼせ感につながりやすくなります。";
     }
-    return "暑さや熱こもりで、体力が奪われてだるさや疲れが出やすい方向です。";
+    return "暑さや熱こもりで体力が奪われ、だるさや疲れが出やすくなります。";
   }
 
   if (key === "damp") {
@@ -344,19 +344,19 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
       return "湿っぽい日は、体に余分な水分が溜まって重みが加わり、だるさやむくみ、頭の重さにつながりやすくなります。";
     }
     if (hasFluidDamp) {
-      return "湿っぽい日は、水分が停滞して重だるさやむくみ感が出やすく、体の軽さを保ちにくい方向です。";
+      return "湿っぽい日は、水分が停滞して重だるさやむくみ感が出やすく、体の軽さを保ちにくくなります。";
     }
-    return "湿っぽい日は、重さが増して動き出しにくくなりやすい方向です。";
+    return "湿っぽい日は、体の重さが増して、動き出しにくくなりやすいです。";
   }
 
   if (key === "dry") {
     if (hasFluidDef || hasBloodDef || symptomKey === "sleep" || symptomKey === "dizziness") {
-      return "乾燥しやすい日は、潤い不足が強まり、目・喉・皮膚の乾きや、睡眠の質低下として出やすい方向です。";
+      return "乾燥しやすい日は、うるおい不足が強まり、目・喉・皮膚の乾きや睡眠の質低下として出やすくなります。";
     }
-    return "乾燥しやすい日は、こわばりや疲れが残りやすい方向です。";
+    return "乾燥しやすい日は、こわばりや疲れが残りやすくなります。";
   }
 
-  return "この方向の天気変化で体調が揺れやすい傾向があります。";
+  return "この天気変化で、体調が揺れやすい傾向があります。";
 }
 
 function buildCompatIntro({ core, subLabels, symptomKey }) {
@@ -895,7 +895,7 @@ function ResultPage({ params }) {
                     <h3 className="text-[16px] font-black text-slate-900">未病レーダーで分かること</h3>
                   </div>
                   <div className="text-[13px] leading-relaxed font-bold text-slate-700 mb-6">{weatherCompat.radarBridge}</div>
-                  <Button onClick={() => setTab("care")} className="w-full shadow-md py-4">合いやすいケアを見る</Button>
+                  <Button onClick={() => setTab("care")} className="w-full shadow-md py-4">整え方を見る</Button>
                 </div>
 
 
@@ -920,19 +920,19 @@ function ResultPage({ params }) {
           {tab === "care" ? (
             <>
               <Card>
-                <CardHeader icon={<IconCompass />} title="合いやすいケア" sub="体質ベースで見た、整え方の方向性" />
+                <CardHeader icon={<IconCompass />} title="整え方" sub="体質ベースで見た、合いやすいケア方針" />
                 <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
                   <div className="rounded-[24px] bg-slate-50 p-6 ring-1 ring-slate-100 text-[14px] leading-relaxed font-bold text-slate-700">
                     {carePreferences.summary}
                     <div className="mt-3 text-[12px] font-bold leading-6 text-slate-500">
-                      これは体質チェック結果から見たベースの方向性です。実際に今日どれを優先するかは、その日の天気や今の不調に合わせて未病レーダーで調整されます。
+                      これは体質チェック結果から見た、基本の整え方です。実際に今日どれを優先するかは、その日の天気や今の不調に合わせて未病レーダーで調整します。
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2.5 mb-4">
                       <IconBolt className="h-5 w-5 text-amber-500" />
-                      <h3 className="text-[16px] font-black text-slate-900">体質から見て合いやすい3つの方針</h3>
+                      <h3 className="text-[16px] font-black text-slate-900">体質から見た3つの整え方</h3>
                     </div>
                     <div className="space-y-3">
                       {carePreferences.items.map((item) => (
@@ -960,7 +960,7 @@ function ResultPage({ params }) {
                   <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-5">
                     <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">この先につながること</div>
                     <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
-                      7つの整え方は、未病レーダーの日々のケア方針、今後の整うアイテム検索、読みもの、相談先探しをつなぐ共通言語として使っていきます。
+                      7つの整え方は、未病レーダーの日々のケア提案、今後の整うアイテム検索、読みもの、相談先探しを横断して使う目印です。
                     </div>
                   </div>
 
@@ -973,8 +973,8 @@ function ResultPage({ params }) {
                     onSignup={goSignupToRadar}
                     onLogin={goLoginToRadar}
                     compact={true}
-                    title="保存すると、その日の天気に合わせたケアが見られます"
-                    body="未病レーダーでは、今日・明日の天気や今の不調に合わせて、7つの方針から優先度を絞って提案します。"
+                    title="保存すると、その日の天気に合わせた整え方が見られます"
+                    body="未病レーダーでは、今日・明日の天気や今の不調に合わせて、7つの整え方から優先度を絞って提案します。"
                   />
                 </div>
               </Card>
@@ -991,6 +991,5 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
 
 
