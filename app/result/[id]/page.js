@@ -30,6 +30,7 @@ import {
   IconCloud,
 } from "@/components/illust/icons/result";
 import { WeatherIcon } from "@/components/illust/icons/weather";
+import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 
 export default function ResultPageWrapper({ params }) {
   return (
@@ -122,7 +123,7 @@ function SegmentedTabs({ value, onChange }) {
   const tabs = [
     { key: "overview", label: "カルテ概要" },
     { key: "compat", label: "天気相性" },
-    { key: "map", label: "不調ループ" },
+    { key: "care", label: "合うケア" },
   ];
 
   return (
@@ -147,6 +148,87 @@ function SegmentedTabs({ value, onChange }) {
               </button>
             );
           })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, onSignup, onLogin, compact = false, title, body }) {
+  if (isAttached) {
+    return (
+      <div className={compact ? "rounded-[24px] bg-emerald-50 p-5 ring-1 ring-emerald-200 text-center shadow-sm" : "rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 text-center shadow-sm"}>
+        <div className="text-[16px] font-black text-emerald-800">保存済み ✅</div>
+        <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このカルテは保存されています。今日・明日の未病予報に反映できます。</div>
+      </div>
+    );
+  }
+
+  if (isLoggedIn) {
+    return (
+      <div className="space-y-4">
+        <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
+          <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このカルテはまだ保存されていません"}</div>
+          <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の未病予報とケア提案に反映できます。"}</div>
+          {session?.user?.email ? (
+            <div className="mt-3 rounded-[18px] bg-white/80 px-4 py-3 text-[12px] font-bold text-slate-600 ring-1 ring-black/5">
+              ログイン中：{session.user.email}
+            </div>
+          ) : null}
+        </div>
+        <Button onClick={onSave} disabled={attaching} className="w-full shadow-md py-4 text-[15px]">
+          {attaching ? "保存中…" : "結果を保存して予報を見る（無料）"}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
+        <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このカルテはまだ保存されていません"}</div>
+        <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の未病予報とケア提案に進めます。"}</div>
+      </div>
+      <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">無料で保存して予報を見る</Button>
+      <Button variant="secondary" onClick={onLogin} className="w-full bg-white shadow-sm py-4">ログインはこちら</Button>
+    </div>
+  );
+}
+
+function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) {
+  if (isAttached) return null;
+  const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して予報へ") : "無料で保存して予報へ";
+  const onClick = isLoggedIn ? onSave : onSignup;
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
+      <div className="mx-auto flex w-full max-w-[440px] items-center gap-3 rounded-[24px] border border-[#d7e6df] bg-white/96 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
+        <div className="min-w-0 flex-1">
+          <div className="text-[12px] font-black tracking-[0.14em] text-[var(--accent-ink)]">SAVE KARTE</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">保存すると、今日・明日の未病予報に反映できます。</div>
+        </div>
+        <Button onClick={onClick} disabled={isLoggedIn && attaching} className="h-11 shrink-0 rounded-full px-5 text-[13px] shadow-md">
+          {ctaLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CarePolicyCard({ item }) {
+  if (!item) return null;
+  return (
+    <div className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
+      <div className="flex items-start gap-4">
+        <div className="grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-200 shadow-sm p-2">
+          <img src={item.icon} alt={item.label} className="h-full w-full object-contain" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black tracking-wide text-[var(--accent-ink)] ring-1 ring-inset ring-slate-200 shadow-sm">
+            {item.rankLabel}
+          </div>
+          <div className="mt-3 text-[18px] font-black tracking-tight text-slate-900">{item.label}</div>
+          <div className="mt-1 text-[12px] font-black uppercase tracking-wider text-slate-500">{item.guide}</div>
+          <div className="mt-3 text-[13px] font-bold leading-relaxed text-slate-600">{item.body}</div>
         </div>
       </div>
     </div>
@@ -328,7 +410,7 @@ function buildRadarBridge({ symptomKey }) {
 }
 
 
-function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
+function PersonalKarteTeaser({ coreTitle, symptomLabel }) {
   const focusLabel = symptomLabel || "今気になる不調";
 
   return (
@@ -342,20 +424,20 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
               🗺️
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">未病カルテ Plus</div>
+              <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">COMING SOON</div>
               <h2 className="mt-2 text-[25px] font-black leading-[1.35] tracking-[-0.05em] text-[#10182d]">
-                あなたの不調ループ
+                未病カルテ Plus を準備中
               </h2>
               <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
-                {focusLabel}が、どの条件が重なり、どの天気・季節で強まりやすいかを読み解きます。
+                {focusLabel}が、どの条件が重なり、どの天気・季節で強まりやすいかを読み解く保存版カルテを準備しています。
               </p>
             </div>
           </div>
 
           <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
-            <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料カルテの先でわかること</div>
+            <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料カルテの先で見えること</div>
             <p className="mt-3 text-[14px] font-bold leading-7 text-[#475569]">
-              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、今気になる「{focusLabel}」を主役にして、前触れ・天気・生活負荷・NG組み合わせ・身体ライン・相談時に伝えることまで、ひとつながりのループとして整理します。
+              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、「{focusLabel}」を主役にして、前触れ・天気・生活負荷・NG組み合わせ・身体ライン・相談時に伝えることまで、ひとつながりのループとして整理する予定です。
             </p>
           </div>
 
@@ -376,17 +458,11 @@ function PersonalKarteTeaser({ resultId, coreTitle, symptomLabel }) {
           </div>
 
           <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
-            <p className="text-[13px] font-black leading-7 text-[#8a4b1d]">
-              体質を知って終わりではなく、「自分の不調がどうくり返されるか」を見返せる形にします。将来、専門家に相談するときの整理メモとしても使いやすい内容です。
+            <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ただいま準備中</div>
+            <p className="mt-2 text-[13px] font-black leading-7 text-[#8a4b1d]">
+              体質を知って終わりではなく、「自分の不調がどうくり返されるか」を見返せる形にします。公開までしばらくお待ちください。
             </p>
           </div>
-
-          <a
-            href={`/karte/${resultId}`}
-            className="mt-5 flex w-full items-center justify-center rounded-full bg-[#2f7567] px-6 py-4 text-[15px] font-black text-white shadow-[0_12px_26px_rgba(47,117,103,0.26)] active:translate-y-[1px]"
-          >
-            未病カルテ Plusで不調ループを見る
-          </a>
         </div>
       </div>
     </section>
@@ -496,6 +572,10 @@ function ResultPage({ params }) {
     return buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels });
   }, [answers, computed, symptomKey, core, subLabels]);
 
+  const carePreferences = useMemo(() => {
+    return buildBaseCarePreferences({ answers, computed, symptomKey });
+  }, [answers, computed, symptomKey]);
+
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
@@ -590,6 +670,14 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
+      <SaveStickyBar
+        isLoggedIn={isLoggedIn}
+        isAttached={isAttached}
+        attaching={attaching}
+        onSave={() => attachToAccount(false)}
+        onSignup={goSignupToRadar}
+      />
+
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：入れ子をなくし、主役の「体質」を最大化 */}
@@ -644,10 +732,19 @@ function ResultPage({ params }) {
         </div>
       </div>
 
+      {!isAttached ? (
+        <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
+          <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
+            <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">まだ保存されていません</div>
+            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">このカルテは一時結果です。保存すると、今日・明日の未病予報やケア提案に反映できます。</div>
+          </div>
+        </div>
+      ) : null}
+
       <SegmentedTabs value={tab} onChange={setTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="space-y-6 pb-8 mt-3">
+        <div className="space-y-6 pb-28 mt-3">
           {tab === "overview" ? (
             <>
               <Card>
@@ -714,32 +811,22 @@ function ResultPage({ params }) {
               <Card>
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の未病予報に反映されます" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
-                  {isLoggedIn ? (
-                    <>
-                      <div className="rounded-[24px] bg-slate-50 p-5 ring-1 ring-slate-200 font-bold text-[13px] text-slate-700 text-center shadow-sm">
-                        ログイン：{session.user?.email}
-                      </div>
-                      {isAttached ? (
-                        <div className="rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 text-center shadow-sm">
-                          <div className="text-[16px] font-black text-emerald-800">保存済み ✅</div>
-                          <Button onClick={() => router.push("/radar")} className="mt-5 w-full shadow-md py-4">今日の予報と対策へ</Button>
-                        </div>
-                      ) : (
-                        <Button onClick={() => attachToAccount(false)} disabled={attaching} className="w-full shadow-md py-4 text-[15px]">
-                          {attaching ? "保存中…" : "結果を保存して予報を見る（無料）"}
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm">
-                         <div className="text-[16px] font-black tracking-tight text-slate-900">無料で保存して予報を見ましょう</div>
-                         <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">アカウント作成後、今日のあなたの崩れやすさをチェックできるようになります。</div>
-                      </div>
-                      <Button onClick={goSignupToRadar} className="w-full shadow-md py-4 text-[15px]">無料で保存して予報を見る</Button>
-                      <Button variant="secondary" onClick={goLoginToRadar} className="w-full bg-white shadow-sm py-4">ログインはこちら</Button>
-                    </div>
-                  )}
+                  <SavePromptCard
+                    isLoggedIn={isLoggedIn}
+                    isAttached={isAttached}
+                    session={session}
+                    attaching={attaching}
+                    onSave={() => attachToAccount(false)}
+                    onSignup={goSignupToRadar}
+                    onLogin={goLoginToRadar}
+                    title={isLoggedIn ? "このカルテを保存して予報につなげましょう" : "無料で保存して予報を見ましょう"}
+                    body={isLoggedIn
+                      ? "保存すると、今日・明日の未病予報や暮らす・食べる・ほぐす提案に反映できます。"
+                      : "アカウント作成後、今日・明日の崩れやすさと先回りケアを見られるようになります。"}
+                  />
+                  {isAttached ? (
+                    <Button onClick={() => router.push("/radar")} className="w-full shadow-md py-4">今日の予報と対策へ</Button>
+                  ) : null}
                 </div>
               </Card>
             </>
@@ -808,14 +895,92 @@ function ResultPage({ params }) {
                     <h3 className="text-[16px] font-black text-slate-900">未病レーダーで分かること</h3>
                   </div>
                   <div className="text-[13px] leading-relaxed font-bold text-slate-700 mb-6">{weatherCompat.radarBridge}</div>
-                  <Button onClick={() => setTab("map")} className="w-full shadow-md py-4">不調ループを見る</Button>
+                  <Button onClick={() => setTab("care")} className="w-full shadow-md py-4">合いやすいケアを見る</Button>
                 </div>
+
+
+                <div className="h-px w-full bg-slate-100" />
+
+                <SavePromptCard
+                  isLoggedIn={isLoggedIn}
+                  isAttached={isAttached}
+                  session={session}
+                  attaching={attaching}
+                  onSave={() => attachToAccount(false)}
+                  onSignup={goSignupToRadar}
+                  onLogin={goLoginToRadar}
+                  compact={true}
+                  title="このカルテを保存すると、予報で使えます"
+                  body="保存すると、今日・明日の未病予報やケア提案にこのカルテが反映されます。"
+                />
               </div>
             </Card>
           ) : null}
 
-          {tab === "map" ? (
-            <PersonalKarteTeaser resultId={id} coreTitle={core.title} symptomLabel={symptomLabel} />
+          {tab === "care" ? (
+            <>
+              <Card>
+                <CardHeader icon={<IconCompass />} title="合いやすいケア" sub="体質ベースで見た、整え方の方向性" />
+                <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
+                  <div className="rounded-[24px] bg-slate-50 p-6 ring-1 ring-slate-100 text-[14px] leading-relaxed font-bold text-slate-700">
+                    {carePreferences.summary}
+                    <div className="mt-3 text-[12px] font-bold leading-6 text-slate-500">
+                      これは体質チェック結果から見たベースの方向性です。実際に今日どれを優先するかは、その日の天気や今の不調に合わせて未病レーダーで調整されます。
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <IconBolt className="h-5 w-5 text-amber-500" />
+                      <h3 className="text-[16px] font-black text-slate-900">体質から見て合いやすい3つの方針</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {carePreferences.items.map((item) => (
+                        <CarePolicyCard key={item.key} item={item} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {carePreferences.reasons?.length ? (
+                    <div>
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <IconMemo className="h-5 w-5 text-amber-600" />
+                        <h3 className="text-[16px] font-black text-slate-900">見立ての補足</h3>
+                      </div>
+                      <div className="grid gap-2">
+                        {carePreferences.reasons.map((reason, idx) => (
+                          <div key={idx} className="rounded-[18px] bg-white px-5 py-4 text-[13px] font-bold leading-6 text-slate-700 ring-1 ring-slate-200 shadow-sm">
+                            {reason}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-5">
+                    <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">この先につながること</div>
+                    <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
+                      7つの整え方は、未病レーダーの日々のケア方針、今後の整うアイテム検索、読みもの、相談先探しをつなぐ共通言語として使っていきます。
+                    </div>
+                  </div>
+
+                  <SavePromptCard
+                    isLoggedIn={isLoggedIn}
+                    isAttached={isAttached}
+                    session={session}
+                    attaching={attaching}
+                    onSave={() => attachToAccount(false)}
+                    onSignup={goSignupToRadar}
+                    onLogin={goLoginToRadar}
+                    compact={true}
+                    title="保存すると、その日の天気に合わせたケアが見られます"
+                    body="未病レーダーでは、今日・明日の天気や今の不調に合わせて、7つの方針から優先度を絞って提案します。"
+                  />
+                </div>
+              </Card>
+
+              <PersonalKarteTeaser coreTitle={core.title} symptomLabel={symptomLabel} />
+            </>
           ) : null}
 
           <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300 pb-4">
@@ -826,5 +991,6 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
 
 
