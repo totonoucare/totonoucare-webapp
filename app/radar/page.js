@@ -13,8 +13,9 @@ import {
   IconRadar,
   IconRipple,
   IconBowl,
-} from "@/components/illust/icons/result";
-import { IconLocation } from "@/components/illust/icons/app";
+  IconLocation,
+  IconLifestyle,
+} from "@/components/illust/icons/app";
 import {
   getCoreLabel,
   getSubLabels,
@@ -879,7 +880,7 @@ export default function RadarPage() {
             onClick={() => setShowLocationEditor(true)}
             className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
           >
-            <IconLocation className="h-5 w-5" /> {locationDisplayLabel}
+            <IconLocation className="h-4 w-4" /> {locationDisplayLabel}
           </button>
         }
       >
@@ -943,7 +944,7 @@ export default function RadarPage() {
           onClick={() => setShowLocationEditor(true)}
           className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
         >
-          <IconLocation className="h-5 w-5" /> {locationDisplayLabel}
+          <IconLocation className="h-4 w-4" /> {locationDisplayLabel}
         </button>
       }
     >
@@ -1227,7 +1228,7 @@ export default function RadarPage() {
                 {careTab === "eat" ? (
                   <IconBowl className="h-8 w-8" />
                 ) : careTab === "live" ? (
-                  <IconBolt className="h-8 w-8" />
+                  <IconLifestyle className="h-8 w-8" />
                 ) : (
                   <IconRipple className="h-8 w-8" />
                 )}
