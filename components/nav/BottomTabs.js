@@ -34,7 +34,7 @@ export default function BottomTabs() {
               : "bg-transparent",
           ].join(" ")}
         >
-          <Icon className="h-7 w-7" />
+          <Icon className="h-6 w-6" />
         </span>
         <span className={`text-[10px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
