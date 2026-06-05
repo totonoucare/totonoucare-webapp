@@ -13,18 +13,10 @@ import {
   HomeHeaderMenu,
 } from "@/components/illust/home";
 import HeroGuideBot from "@/components/illust/home/HeroGuideBot";
-import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/result";
+import { IconRadar, IconBolt, IconCompass, AppIcon } from "@/components/illust/icons/app";
 import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { getDisplayableLocationName } from "@/lib/radar_v1/locationDisplay";
-import {
-  IconLocation as UnifiedIconLocation,
-  IconKarte as UnifiedIconKarte,
-  IconCheck as UnifiedIconCheck,
-  IconHistory as UnifiedIconHistory,
-  IconAnalysis as UnifiedIconAnalysis,
-  IconCare as UnifiedIconCare,
-} from "@/components/illust/icons/app";
 
 const SESSION_TIMEOUT_MS = 5000;
 
@@ -73,31 +65,27 @@ function HeroBgArt() {
 }
 
 function IconChevron({ className = "h-4 w-4", ...props }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M9 18l6-6-6-6" />
-    </svg>
-  );
+  return <AppIcon name="chevron" className={className} {...props} />;
 }
 
 function IconPin({ className = "h-4 w-4", ...props }) {
-  return <UnifiedIconLocation className={className} {...props} />;
+  return <AppIcon name="location" className={className} {...props} />;
 }
 
 function IconJournalCard() {
-  return <UnifiedIconKarte className="h-[28px] w-[28px]" />;
+  return <AppIcon name="memo" className="h-[22px] w-[22px]" />;
 }
 
 function IconCheckCard() {
-  return <UnifiedIconCheck className="h-[28px] w-[28px]" />;
+  return <AppIcon name="karte" className="h-[22px] w-[22px]" />;
 }
 
 function IconHistoryCard() {
-  return <UnifiedIconHistory className="h-[28px] w-[28px]" />;
+  return <AppIcon name="history" className="h-[22px] w-[22px]" />;
 }
 
 function IconReportCard() {
-  return <UnifiedIconAnalysis className="h-[28px] w-[28px]" />;
+  return <AppIcon name="analysis" className="h-[22px] w-[22px]" />;
 }
 
 function getJstDateString(offsetDays = 0) {
@@ -586,8 +574,8 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
               className="h-full w-full object-contain"
             />
           ) : (
-            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[#255F4F] ring-1 ring-[#D3E1D5]">
-              <UnifiedIconCare className="h-14 w-14" />
+            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[34px] ring-1 ring-[#D3E1D5]">
+              🌿
             </div>
           )}
         </div>
@@ -1306,4 +1294,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
