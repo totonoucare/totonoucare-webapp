@@ -17,6 +17,14 @@ import { IconRadar, IconBolt, IconCompass } from "@/components/illust/icons/resu
 import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { getDisplayableLocationName } from "@/lib/radar_v1/locationDisplay";
+import {
+  IconLocation as UnifiedIconLocation,
+  IconKarte as UnifiedIconKarte,
+  IconCheck as UnifiedIconCheck,
+  IconHistory as UnifiedIconHistory,
+  IconAnalysis as UnifiedIconAnalysis,
+  IconCare as UnifiedIconCare,
+} from "@/components/illust/icons/app";
 
 const SESSION_TIMEOUT_MS = 5000;
 
@@ -72,57 +80,24 @@ function IconChevron({ className = "h-4 w-4", ...props }) {
   );
 }
 
-function IconPin() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </svg>
-  );
+function IconPin({ className = "h-4 w-4", ...props }) {
+  return <UnifiedIconLocation className={className} {...props} />;
 }
 
 function IconJournalCard() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="3" width="16" height="18" rx="4" fill="currentColor" fillOpacity="0.15" stroke="none" />
-      <rect x="4" y="3" width="16" height="18" rx="4" />
-      <path d="M8 9h8" />
-      <path d="M8 13h5" />
-    </svg>
-  );
+  return <UnifiedIconKarte className="h-[28px] w-[28px]" />;
 }
 
 function IconCheckCard() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="4" width="16" height="16" rx="4" fill="currentColor" fillOpacity="0.15" stroke="none" />
-      <rect x="4" y="4" width="16" height="16" rx="4" />
-      <path d="M8 12.5l2.5 2.5 5-5" strokeWidth="2.5" />
-    </svg>
-  );
+  return <UnifiedIconCheck className="h-[28px] w-[28px]" />;
 }
 
 function IconHistoryCard() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" fill="currentColor" fillOpacity="0.15" stroke="none" />
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
-    </svg>
-  );
+  return <UnifiedIconHistory className="h-[28px] w-[28px]" />;
 }
 
 function IconReportCard() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="14" width="4" height="6" rx="1.5" fill="currentColor" fillOpacity="0.15" stroke="none" />
-      <rect x="10" y="9" width="4" height="11" rx="1.5" fill="currentColor" fillOpacity="0.15" stroke="none" />
-      <rect x="16" y="4" width="4" height="16" rx="1.5" fill="currentColor" fillOpacity="0.15" stroke="none" />
-      <rect x="4" y="14" width="4" height="6" rx="1.5" />
-      <rect x="10" y="9" width="4" height="11" rx="1.5" />
-      <rect x="16" y="4" width="4" height="16" rx="1.5" />
-    </svg>
-  );
+  return <UnifiedIconAnalysis className="h-[28px] w-[28px]" />;
 }
 
 function getJstDateString(offsetDays = 0) {
@@ -611,8 +586,8 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
               className="h-full w-full object-contain"
             />
           ) : (
-            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[34px] ring-1 ring-[#D3E1D5]">
-              🌿
+            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[#255F4F] ring-1 ring-[#D3E1D5]">
+              <UnifiedIconCare className="h-14 w-14" />
             </div>
           )}
         </div>
@@ -1331,3 +1306,4 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
