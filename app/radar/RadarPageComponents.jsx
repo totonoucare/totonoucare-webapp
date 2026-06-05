@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
-import { IconLock } from "@/components/illust/icons/app";
 import { RADAR_LOCATION_PRESETS } from "@/lib/radar_v1/locationPresets";
 import {
   getPointCautions,
@@ -39,7 +38,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[13px] font-black tracking-tight">{item.label}</span>
                 {item.locked ? (
-                  <IconLock className={active ? "h-4 w-4" : "h-4 w-4 opacity-55"} />
+                  <span className={active ? "text-[11px]" : "text-[11px] text-slate-400"}>🔒</span>
                 ) : null}
               </div>
               <div className={[
