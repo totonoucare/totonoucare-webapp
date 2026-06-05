@@ -28,9 +28,8 @@ import {
   IconAnalysis,
   IconBody,
   IconCloud,
-} from "@/components/illust/icons/result";
+} from "@/components/illust/icons/app";
 import { WeatherIcon } from "@/components/illust/icons/weather";
-import { IconCheck } from "@/components/illust/icons/app";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 
 export default function ResultPageWrapper({ params }) {
@@ -159,7 +158,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
   if (isAttached) {
     return (
       <div className={compact ? "rounded-[24px] bg-emerald-50 p-5 ring-1 ring-emerald-200 text-center shadow-sm" : "rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 text-center shadow-sm"}>
-        <div className="inline-flex items-center justify-center gap-2 text-[16px] font-black text-emerald-800"><IconCheck className="h-6 w-6" />保存済み</div>
+        <div className="text-[16px] font-black text-emerald-800">保存済み ✅</div>
         <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このカルテは保存されています。今日・明日の未病予報に反映できます。</div>
       </div>
     );
@@ -421,8 +420,8 @@ function PersonalKarteTeaser({ coreTitle, symptomLabel }) {
         <div className="pointer-events-none absolute right-12 top-24 h-24 w-24 rounded-full border border-[#d7e6df]" />
         <div className="relative">
           <div className="flex items-start gap-4">
-            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-[#d7e6df] bg-[#eff8f4] text-[#2f7567] shadow-sm">
-              <IconCompass className="h-10 w-10" />
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-[#d7e6df] bg-[#eff8f4] text-[24px] shadow-sm">
+              <IconAnalysis className="h-7 w-7" />
             </div>
             <div className="min-w-0">
               <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">COMING SOON</div>
