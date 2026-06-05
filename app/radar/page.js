@@ -14,6 +14,7 @@ import {
   IconRipple,
   IconBowl,
 } from "@/components/illust/icons/result";
+import { IconLocation } from "@/components/illust/icons/app";
 import {
   getCoreLabel,
   getSubLabels,
@@ -878,7 +879,7 @@ export default function RadarPage() {
             onClick={() => setShowLocationEditor(true)}
             className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
           >
-            <span className="text-[14px]">📍</span> {locationDisplayLabel}
+            <IconLocation className="h-5 w-5" /> {locationDisplayLabel}
           </button>
         }
       >
@@ -942,7 +943,7 @@ export default function RadarPage() {
           onClick={() => setShowLocationEditor(true)}
           className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[10px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
         >
-          <span className="text-[14px]">📍</span> {locationDisplayLabel}
+          <IconLocation className="h-5 w-5" /> {locationDisplayLabel}
         </button>
       }
     >
