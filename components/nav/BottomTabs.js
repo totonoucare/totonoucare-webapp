@@ -2,50 +2,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-
-function IconHome() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5 10v10h14V10" />
-      <path d="M9 20v-6h6v6" />
-    </svg>
-  );
-}
-
-function IconCheck() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.15" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3.5c3.2 0 5.8 2.3 5.8 5.3 0 4.2-5.8 8.9-5.8 8.9S6.2 13 6.2 8.8c0-3 2.6-5.3 5.8-5.3z" opacity="0.34" fill="currentColor" stroke="none" />
-      <path d="M12 3.5c3.2 0 5.8 2.3 5.8 5.3 0 4.2-5.8 8.9-5.8 8.9S6.2 13 6.2 8.8c0-3 2.6-5.3 5.8-5.3z" />
-      <path d="M9 20h6" />
-      <path d="M12 8.2v4.4" />
-      <path d="M9.8 10.4h4.4" />
-    </svg>
-  );
-}
-
-
-function IconSettings() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.15" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
-      <path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.04.04a2.15 2.15 0 1 1-3.04 3.04l-.04-.04a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.09 1.65V21.4a2.15 2.15 0 1 1-4.3 0v-.09a1.8 1.8 0 0 0-1.09-1.65 1.8 1.8 0 0 0-1.98.36l-.04.04a2.15 2.15 0 1 1-3.04-3.04l.04-.04A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-1.65-1.09H2.86a2.15 2.15 0 1 1 0-4.3h.09A1.8 1.8 0 0 0 4.6 8.52a1.8 1.8 0 0 0-.36-1.98l-.04-.04a2.15 2.15 0 1 1 3.04-3.04l.04.04a1.8 1.8 0 0 0 1.98.36A1.8 1.8 0 0 0 10.35 2.2V2.1a2.15 2.15 0 1 1 4.3 0v.1a1.8 1.8 0 0 0 1.09 1.65 1.8 1.8 0 0 0 1.98-.36l.04-.04A2.15 2.15 0 1 1 20.8 6.5l-.04.04a1.8 1.8 0 0 0-.36 1.98 1.8 1.8 0 0 0 1.65 1.09h.09a2.15 2.15 0 1 1 0 4.3h-.09A1.8 1.8 0 0 0 19.4 15z" opacity="0.9" />
-    </svg>
-  );
-}
-
-function IconRadar() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.05" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20z" opacity="0.34" />
-      <path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" opacity="0.34" />
-      <path d="M12 12V2" />
-      <path d="M12 12l5.5-5.5" strokeDasharray="1 3" opacity="0.82" />
-      <circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
+import { IconHome, IconKarte, IconRadar, IconSettings } from "@/components/illust/icons/app";
 
 export default function BottomTabs() {
   const router = useRouter();
@@ -53,7 +10,7 @@ export default function BottomTabs() {
 
   const active =
     pathname === "/" ? "home" :
-    pathname.startsWith("/check") ? "check" :
+    pathname.startsWith("/check") || pathname.startsWith("/result") ? "check" :
     pathname.startsWith("/radar") ? "radar" :
     pathname.startsWith("/settings") ? "settings" :
     "home";
@@ -77,7 +34,7 @@ export default function BottomTabs() {
               : "bg-transparent",
           ].join(" ")}
         >
-          <Icon />
+          <Icon className="h-7 w-7" />
         </span>
         <span className={`text-[10px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
@@ -94,7 +51,7 @@ export default function BottomTabs() {
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
-          {item("check", "未病カルテ", IconCheck, "/check")}
+          {item("check", "未病カルテ", IconKarte, "/check")}
           {item("radar", "未病予報", IconRadar, "/radar")}
           {item("settings", "設定", IconSettings, "/settings")}
         </div>
@@ -102,5 +59,3 @@ export default function BottomTabs() {
     </div>
   );
 }
-
-
