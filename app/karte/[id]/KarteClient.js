@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { IconCheck, IconLock, IconRadar } from "@/components/illust/icons/app";
+import { IconRadar } from "@/components/illust/icons/app";
 
 const PRICE_LABEL = "¥1,980";
 const PLUS_COMING_SOON = true;
@@ -108,7 +108,7 @@ function ForecastCTA({ usage }) {
         <div className="mt-5 grid gap-2">
           {bullets.slice(0, 3).map((item, index) => (
             <div key={`${item}-${index}`} className="flex gap-3 rounded-[22px] border border-[#ead7a5] bg-white/70 px-4 py-3 text-[13px] font-black leading-6 text-[#6b4a2a]">
-              <IconRadar className="h-5 w-5 shrink-0" />
+              <span className="text-[#b17425]"><IconRadar className="h-4 w-4" /></span>
               <span>{item}</span>
             </div>
           ))}
@@ -366,7 +366,7 @@ function SectionCard({ section, locked, defaultOpen = false }) {
             </p>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#f7faf8] via-[#f7faf8]/90 to-transparent" />
             <div className="mt-5 flex items-center gap-2 rounded-2xl border border-[#d7e6df] bg-white px-4 py-3 text-[13px] font-black text-[#2f7567] shadow-sm">
-              <IconLock className="h-5 w-5 shrink-0" />
+              <span>🔒</span>
               <span>続きはアンロック後に表示</span>
             </div>
           </div>
@@ -649,7 +649,7 @@ export default function KarteClient() {
           </section>
         ) : (
           <section className="flex flex-wrap items-center gap-3 rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-5 text-[15px] font-black leading-7 text-[#2f7567]">
-            <span className="inline-flex items-center gap-2"><IconCheck className="h-6 w-6" />アンロック済みです。このカルテはアプリ上でいつでも見返せます。</span>
+            <span>✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。</span>
             <GenerationLabel generation={generation} />
           </section>
         )}
