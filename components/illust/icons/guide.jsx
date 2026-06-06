@@ -1,12 +1,15 @@
+// components/illust/icons/guide.jsx
 "use client";
 
 export {
   IconSpark,
-  IconCheck as IconChecklist,
+  IconChecklist,
   IconWeather,
+  IconRadar,
+  IconCare,
   IconCalendar,
-  IconKarte as IconConstitution,
-  IconBody as IconBodyLine,
+  IconConstitution,
+  IconBodyLine,
   IconTsubo,
   IconBowl,
 } from "./app";

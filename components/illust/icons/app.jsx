@@ -57,9 +57,10 @@ export function IconRadar({ className = "h-6 w-6", ...props }) {
 export function IconWeather({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
-      <path d="M7.5 18A4.5 4.5 0 1 1 9 9.2a5.8 5.8 0 1 1 10.2 3.5A3.7 3.7 0 1 1 16.2 18H7.5Z" fill="currentColor" fillOpacity="0.12" stroke="none" />
-      <path d="M7.5 18A4.5 4.5 0 1 1 9 9.2a5.8 5.8 0 1 1 10.2 3.5A3.7 3.7 0 1 1 16.2 18H7.5Z" />
-      <path d="M12.5 13.5 10.8 17h3.1l-1.7 3.7" />
+      <circle cx="8.2" cy="8" r="3.1" fill="currentColor" fillOpacity="0.12" />
+      <path d="M8.2 2.8v1.2M8.2 12v1.2M3 8h1.2M12.2 8h1.2" opacity="0.82" />
+      <path d="M16.2 6.5c1.5 1.8 3.3 4.6 3.3 7.2a3.4 3.4 0 0 1-6.8 0c0-2.6 2-5.4 3.5-7.2Z" fill="currentColor" fillOpacity="0.1" />
+      <path d="M4.5 18.5c1.8-1 3.6-1 5.4 0s3.6 1 5.4 0 3.2-.9 4.2-.3" opacity="0.82" />
     </IconShell>
   );
 }
@@ -70,6 +71,16 @@ export function IconCare({ className = "h-6 w-6", ...props }) {
       <path d="M12 3.4l1.2 4.2L17.5 9l-4.3 1.4L12 14.6l-1.2-4.2L6.5 9l4.3-1.4L12 3.4Z" fill="currentColor" fillOpacity="0.14" />
       <path d="M18 15l.7 2.1L21 18l-2.3.9L18 21l-.7-2.1L15 18l2.3-.9L18 15Z" fill="currentColor" stroke="none" />
       <path d="M6.5 16.5c1.6 2.4 3.3 3.4 5.5 3.4 1.3 0 2.5-.4 3.5-1.2" opacity="0.75" />
+    </IconShell>
+  );
+}
+
+export function IconCheck({ className = "h-6 w-6", ...props }) {
+  return (
+    <IconShell className={className} {...props}>
+      <circle cx="12" cy="12" r="8.8" fill="currentColor" fillOpacity="0.1" stroke="none" />
+      <circle cx="12" cy="12" r="8.8" />
+      <path d="M8.2 12.2l2.4 2.5 5.3-5.8" strokeWidth="2.45" />
     </IconShell>
   );
 }
@@ -98,10 +109,11 @@ export function IconFood({ className = "h-6 w-6", ...props }) {
 export function IconTsubo({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
-      <circle cx="12" cy="12" r="8.8" fill="currentColor" fillOpacity="0.1" stroke="none" />
-      <circle cx="12" cy="12" r="8.8" />
-      <circle cx="12" cy="12" r="4" strokeDasharray="2 3" opacity="0.75" />
-      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <path d="M8.2 12.5V5.8a1.35 1.35 0 0 1 2.7 0v5.4" />
+      <path d="M10.9 11.1V4.8a1.35 1.35 0 0 1 2.7 0v6.1" />
+      <path d="M13.6 11.1V6a1.35 1.35 0 0 1 2.7 0v7.2" />
+      <path d="M8.2 12.4 6.8 11a1.45 1.45 0 0 0-2.1 1.98l4.8 5.8c.9 1.1 2.3 1.8 3.8 1.8h1.4c2.4 0 4.4-2 4.4-4.4v-5.3a1.35 1.35 0 0 0-2.7 0v2.1" />
+      <circle cx="13.1" cy="14" r="1.6" fill="currentColor" stroke="none" />
     </IconShell>
   );
 }
@@ -217,7 +229,7 @@ export function AppIcon({ name, className = "h-6 w-6", ...props }) {
   const icons = {
     home: IconHome,
     karte: IconKarte,
-    check: IconKarte,
+    check: IconCheck,
     radar: IconRadar,
     forecast: IconRadar,
     weather: IconWeather,
@@ -247,10 +259,10 @@ export function AppIcon({ name, className = "h-6 w-6", ...props }) {
 }
 
 // Backward-compatible aliases used in older pages.
-export const IconChecklist = IconKarte;
-export const IconCheck = IconKarte;
+export const IconChecklist = IconCare;
 export const IconConstitution = IconKarte;
 export const IconSpark = IconCare;
+export const IconForecast = IconRadar;
 export const IconCalendar = IconLifestyle;
 export const IconBodyLine = IconBody;
 export const IconBowl = IconFood;
