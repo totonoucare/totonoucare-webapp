@@ -9,6 +9,7 @@ import {
   IconSpark,
   IconChecklist,
   IconWeather,
+  IconRadar,
   IconCalendar,
   IconConstitution,
   IconBodyLine,
@@ -215,7 +216,7 @@ export default function GuidePage() {
               </div>
               <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
                 <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
-                  <IconWeather className="h-4 w-4" />
+                  <IconRadar className="h-4 w-4" />
                 </div>
                 <div className="mt-2 text-[11px] font-black text-slate-900">予報</div>
                 <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">影響を見る</div>
@@ -322,7 +323,7 @@ export default function GuidePage() {
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="amber" title="まずゲージを見る" icon={<IconWeather />}>
+            <GuideCard tone="amber" title="まずゲージを見る" icon={<IconRadar />}>
               今日・明日の天気影響がどのくらい出そうかを確認します。「影響は少なめ」「少し響きやすい」「守りたい日」のように、ケアの量や優先度を決める目安になります。
             </GuideCard>
 
