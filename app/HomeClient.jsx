@@ -507,7 +507,7 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
           </span>
           <div>
             <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日の未病予報</div>
-            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日の過ごし方を確認</div>
+            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日の崩れやすさを確認</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳細へ</Button>
@@ -828,7 +828,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
           {scoreVariant === "mode" ? (
             <div className="leading-tight">
               <div className={["text-[18px] font-black tracking-tight", signalScoreTextClass(forecast.signal)].join(" ")}>{modeActionLabel(forecast.signal)}</div>
-              <div className="mt-1 text-[10px] font-extrabold text-slate-400">今日の過ごし方</div>
+              <div className="mt-1 text-[10px] font-extrabold text-slate-400">今日の崩れやすさ</div>
             </div>
           ) : (
             <div className="flex items-end justify-end gap-1 leading-none">
@@ -1195,7 +1195,7 @@ export default function HomePage() {
                未病カルテを作って、自分向けの未病予報へ
              </div>
              <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
-               1〜2分の体質チェックで、あなたの「崩れ方のクセ」を未病カルテにまとめます。作成後は、今日・明日の過ごし方も自分向けに見られます。
+               1〜2分の体質チェックで、あなたの「崩れ方のクセ」を未病カルテにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
              </p>
              <div className="mt-5 grid gap-3">
                <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[14px] w-full">
