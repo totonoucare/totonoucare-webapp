@@ -81,8 +81,8 @@ function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationL
   const title = isLocationRefresh
     ? "地域の予報を更新中"
     : mode === "today"
-      ? "今日の過ごし方を確認中"
-      : "明日の過ごし方を確認中";
+      ? "今日の崩れやすさを確認中"
+      : "明日の崩れやすさを確認中";
   const lead = isLocationRefresh
     ? `${locationLabel || "新しい地域"}の天気と、体質への響き方を確認しています。`
     : mode === "today"

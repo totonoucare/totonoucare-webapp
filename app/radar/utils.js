@@ -97,7 +97,7 @@ export function inferModeFromSelectedDate(targetDate) {
 }
 
 export function getDefaultDateModeJST() {
-  // 未病レーダーの主役は「今日の過ごし方」。明日タブは備えとして扱う。
+  // 未病レーダーの主役は「今日の崩れやすさ」。明日タブは備えとして扱う。
   return "today";
 }
 
@@ -115,9 +115,9 @@ export function getDateModeLabel(mode) {
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
-  if (mode === "today") return "今日の過ごし方";
-  if (mode === "future") return `${formatTargetDate(targetDate)}の過ごし方`;
-  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の過ごし方`;
+  if (mode === "today") return "今日の崩れやすさ";
+  if (mode === "future") return `${formatTargetDate(targetDate)}の崩れやすさ`;
+  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の崩れやすさ`;
 }
 
 export function getSectionLabels(mode) {

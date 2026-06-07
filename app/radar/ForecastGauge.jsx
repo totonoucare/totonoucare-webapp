@@ -183,7 +183,7 @@ export function ForecastGauge({
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
   const midLabelPos = polarToCartesian(cx, cy, rangeRadius + 12, scoreToAngle(5));
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
-  const modePillLabel = settled ? mode.caption : "過ごし方を確認中";
+  const modePillLabel = settled ? mode.caption : "崩れやすさを確認中";
 
   return (
     <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
