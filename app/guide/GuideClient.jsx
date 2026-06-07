@@ -199,11 +199,11 @@ export default function GuidePage() {
 
             <div className="mt-5 text-[24px] font-black tracking-tight text-slate-900 leading-[1.32]">
               体質と天気から、<br />
-              今日・明日の<span className="text-[var(--accent-ink)]">整え方</span>を選ぶ。
+              今日・明日の<span className="text-[var(--accent-ink)]">崩れやすさ</span>を見る。
             </div>
 
             <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
-              カルテで自分の崩れ方のクセを知り、予報で今日・明日の過ごし方を選びます。迷ったら、まずは暮らすカードから見てください。
+              カルテで自分の崩れ方のクセを知り、予報で今日・明日の崩れやすさを見ます。迷ったら、まずは暮らすカードから整え方を選んでください。
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-2.5">
