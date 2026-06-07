@@ -1401,7 +1401,9 @@ function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus
     return `${target}${joined}が少し響きやすいため、${policyDirection}`;
   })();
 
-  return [base, symptomContext].filter(Boolean).join(" ");
+  // この日の方針カードは短く読めるよう、本文は天気×体質の1文に絞る。
+  // 不調フォーカスごとの詳しい補足は、下の「暮らす・食べる・ほぐす」各カードに回す。
+  return base;
 }
 
 export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow", symptomFocus = null } = {}) {
