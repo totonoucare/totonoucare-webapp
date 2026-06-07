@@ -88,10 +88,11 @@ export function IconCheck({ className = "h-6 w-6", ...props }) {
 export function IconLifestyle({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
-      <rect x="4.5" y="5" width="15" height="15.5" rx="3" fill="currentColor" fillOpacity="0.12" stroke="none" />
-      <rect x="4.5" y="5" width="15" height="15.5" rx="3" />
-      <path d="M8 3.5v3M16 3.5v3M4.5 10.5h15" />
-      <path d="M9 15l2 2 4-4" strokeWidth="2.35" />
+      <path d="M4.5 11.2 12 5l7.5 6.2" />
+      <path d="M6.2 10.5v9h11.6v-9" fill="currentColor" fillOpacity="0.08" />
+      <path d="M9.2 19.5v-5h5.6v5" />
+      <path d="M16.7 5.8h1.9v3.8" opacity="0.75" />
+      <path d="M8.4 8.4c1.4-.8 2.6-.8 3.6 0" opacity="0.6" />
     </IconShell>
   );
 }
@@ -109,11 +110,12 @@ export function IconFood({ className = "h-6 w-6", ...props }) {
 export function IconTsubo({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
-      <path d="M8.2 12.5V5.8a1.35 1.35 0 0 1 2.7 0v5.4" />
-      <path d="M10.9 11.1V4.8a1.35 1.35 0 0 1 2.7 0v6.1" />
-      <path d="M13.6 11.1V6a1.35 1.35 0 0 1 2.7 0v7.2" />
-      <path d="M8.2 12.4 6.8 11a1.45 1.45 0 0 0-2.1 1.98l4.8 5.8c.9 1.1 2.3 1.8 3.8 1.8h1.4c2.4 0 4.4-2 4.4-4.4v-5.3a1.35 1.35 0 0 0-2.7 0v2.1" />
-      <circle cx="13.1" cy="14" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M8.8 10.8V5.9a1.35 1.35 0 0 1 2.7 0v5.2" />
+      <path d="M11.5 10.7V4.9a1.35 1.35 0 0 1 2.7 0v6" />
+      <path d="M14.2 11.1V6.4a1.35 1.35 0 0 1 2.7 0v7.2" />
+      <path d="M8.8 11.8 7.5 10.7a1.35 1.35 0 0 0-1.9 1.9l4.1 5.1a5.2 5.2 0 0 0 4.1 2h1.1a4.4 4.4 0 0 0 4.4-4.4v-4.4a1.35 1.35 0 0 0-2.7 0v2.5" />
+      <circle cx="13.2" cy="14.2" r="1.45" fill="currentColor" stroke="none" />
+      <path d="M13.2 11.5v5.4M10.5 14.2h5.4" opacity="0.45" strokeWidth="1.65" />
     </IconShell>
   );
 }
