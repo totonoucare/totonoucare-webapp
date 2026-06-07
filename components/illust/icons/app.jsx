@@ -110,17 +110,12 @@ export function IconFood({ className = "h-6 w-6", ...props }) {
 export function IconTsubo({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
-      <path
-        d="M10.4 13.2V5.8a1.55 1.55 0 0 1 3.1 0v5.1h1.9c2.2 0 4 1.8 4 4v1.3a4 4 0 0 1-4 4h-4.5c-1.6 0-3.1-.7-4.1-2l-2-2.5a1.45 1.45 0 0 1 2.1-2l2.6 2.1"
-        fill="currentColor"
-        fillOpacity="0.08"
-      />
-      <path d="M10.4 13.2V5.8a1.55 1.55 0 0 1 3.1 0v5.1h1.9c2.2 0 4 1.8 4 4v1.3a4 4 0 0 1-4 4h-4.5c-1.6 0-3.1-.7-4.1-2l-2-2.5a1.45 1.45 0 0 1 2.1-2l2.6 2.1" />
-      <path d="M13.5 10.9v4.3" opacity="0.72" />
-      <path d="M15.6 12.2c.9.1 1.6.8 1.6 1.7M15.6 15.4h1.8" opacity="0.72" />
-      <circle cx="12" cy="8.2" r="1.25" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="8.2" r="3.1" opacity="0.28" strokeDasharray="1.2 2.4" />
-      <path d="M15.9 4.4 17.7 3M17.3 7.1h2.4M15.9 9.8l1.8 1.4" opacity="0.72" />
+      <path d="M8.8 10.8V5.9a1.35 1.35 0 0 1 2.7 0v5.2" />
+      <path d="M11.5 10.7V4.9a1.35 1.35 0 0 1 2.7 0v6" />
+      <path d="M14.2 11.1V6.4a1.35 1.35 0 0 1 2.7 0v7.2" />
+      <path d="M8.8 11.8 7.5 10.7a1.35 1.35 0 0 0-1.9 1.9l4.1 5.1a5.2 5.2 0 0 0 4.1 2h1.1a4.4 4.4 0 0 0 4.4-4.4v-4.4a1.35 1.35 0 0 0-2.7 0v2.5" />
+      <circle cx="13.2" cy="14.2" r="1.45" fill="currentColor" stroke="none" />
+      <path d="M13.2 11.5v5.4M10.5 14.2h5.4" opacity="0.45" strokeWidth="1.65" />
     </IconShell>
   );
 }
