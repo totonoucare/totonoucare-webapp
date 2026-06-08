@@ -2,7 +2,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { IconHome, IconKarte, IconRadar, IconSettings } from "@/components/illust/icons/app";
+import { IconHome, IconKarte, IconRadar, IconCare } from "@/components/illust/icons/app";
 
 export default function BottomTabs() {
   const router = useRouter();
@@ -10,10 +10,10 @@ export default function BottomTabs() {
 
   const active =
     pathname === "/" ? "home" :
-    pathname.startsWith("/check") || pathname.startsWith("/result") ? "check" :
+    pathname.startsWith("/check") || pathname.startsWith("/result") || pathname.startsWith("/karte") ? "check" :
     pathname.startsWith("/radar") ? "radar" :
-    pathname.startsWith("/settings") ? "settings" :
-    "home";
+    pathname.startsWith("/care-navi") ? "care" :
+    "none";
 
   const item = (key, label, Icon, href) => {
     const isActive = active === key;
@@ -51,9 +51,9 @@ export default function BottomTabs() {
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
-          {item("check", "未病カルテ", IconKarte, "/check")}
-          {item("radar", "未病予報", IconRadar, "/radar")}
-          {item("settings", "設定", IconSettings, "/settings")}
+          {item("check", "カルテ", IconKarte, "/check")}
+          {item("radar", "予報", IconRadar, "/radar")}
+          {item("care", "ケアナビ", IconCare, "/care-navi")}
         </div>
       </div>
     </div>
