@@ -78,6 +78,15 @@ const SEASON_POLICY_HINTS = {
   winter: ["nukumeru", "sasaeru"],
 };
 
+const SEASON_LABELS = {
+  spring: "春",
+  rainy: "梅雨",
+  summer: "夏",
+  autumn: "秋",
+  winter: "冬",
+};
+
+
 const CARE_ITEM_LIBRARY = {
   shizumeru: {
     live: [
@@ -255,8 +264,8 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1.5 text-[11px] font-black text-[#255F4F] ring-1 ring-[#D5E7DB]">
-      <img src={getPolicyIconPath(policyKey)} alt="" className="h-4 w-4 shrink-0" loading="lazy" />
+    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[#255F4F] ring-1 ring-[#D5E7DB] shadow-[0_8px_18px_-16px_rgba(37,95,79,0.35)]">
+      <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
   );
@@ -312,7 +321,7 @@ function ResultCard({ item }) {
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-black leading-5 text-slate-900">{item.title}</div>
           <div className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-black text-[#5F8D75]">
-            <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-3.5 w-3.5" loading="lazy" />
+            <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-4 w-4" loading="lazy" />
             {policy.label || item.policyKey}
           </div>
           <p className="mt-2 text-[11px] font-bold leading-5 text-slate-600">{item.reason}</p>
@@ -431,7 +440,11 @@ export default function CareNaviPage() {
   const items = useMemo(() => pickCandidates(policyKeys, category), [policyKeys, category]);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
+  const coreTitle = coreLabel?.title || coreLabel?.short || "";
   const subLabels = getSubLabels(profileLike.sub_labels).slice(0, 2);
+  const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
+  const seasonKey = getSeasonKey();
+  const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
   const categoryMeta = getCategoryMeta(category);
   const CategoryIcon = categoryMeta.icon;
 
@@ -472,7 +485,7 @@ export default function CareNaviPage() {
                   {loading
                     ? "カルテ情報を確認しています。"
                     : profile
-                      ? `${coreLabel || "体質傾向"}${subLabels.length ? ` / ${subLabels.map((s) => s.title).join("・")}` : ""} を手がかりにしています。`
+                      ? `${coreTitle || "体質傾向"}${subText ? ` / ${subText}` : ""} を手がかりにしています。`
                       : profileError || "条件だけでも候補を出せます。"}
                 </div>
               </div>
@@ -501,6 +514,7 @@ export default function CareNaviPage() {
               </div>
               <div className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
                 {BASIS_OPTIONS.find((item) => item.key === basis)?.lead}
+                {basis === "season" ? ` 現在は「${seasonLabel}」として見ています。` : ""}
               </div>
             </div>
 
@@ -535,7 +549,7 @@ export default function CareNaviPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-black tracking-[0.14em] text-[#6B8B78]">今回の方針</div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
+                  <div className="mt-2 flex flex-wrap gap-2">
                     {policyKeys.map((key) => (
                       <PolicyPill key={key} policyKey={key} />
                     ))}
