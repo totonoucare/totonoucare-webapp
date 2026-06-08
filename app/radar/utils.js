@@ -296,6 +296,7 @@ export const MATCH_TAG_LABELS = {
   // 今日タブのルール選定で使う内部キーを、ユーザー向けの言葉に変換する
   fatigue: "今見ている不調：だるさ・疲労",
   sleep: "今見ている不調：睡眠",
+  digestion: "今見ている不調：胃腸の調子",
   neck_shoulder: "今見ている不調：首肩のつらさ",
   low_back_pain: "今見ている不調：腰のつらさ",
   swelling: "今見ている不調：むくみ",
@@ -567,6 +568,7 @@ const PEAK_PREP_ITEMS = {
 const FORECAST_SYMPTOM_LABELS = {
   fatigue: "だるさ",
   sleep: "睡眠",
+  digestion: "胃腸",
   neck_shoulder: "首肩",
   low_back_pain: "腰",
   swelling: "むくみ",
@@ -582,6 +584,7 @@ function getSymptomFocusLabel(symptomFocus) {
 const SYMPTOM_BODY_SIGN_LABELS = {
   fatigue: ["だるさが残りやすい", "動き出しが重くなりやすい", "休んでも抜けにくく感じやすい"],
   sleep: ["画面・光の影響が夜まで残りやすい", "寝る前に体が休みに入りにくい", "朝の重さにつながりやすい"],
+  digestion: ["胃もたれやお腹の張りが残りやすい", "食後の重さが出やすい", "冷たいものや食べすぎが負担になりやすい"],
   neck_shoulder: ["首元・肩甲骨まわりがこわばりやすい", "画面姿勢で肩の力が抜けにくい", "頭〜首の重さとして感じやすい"],
   low_back_pain: ["腰腹・骨盤まわりが重くなりやすい", "座りっぱなしで腰に残りやすい", "動き出しでこわばりを感じやすい"],
   swelling: ["顔や脚の重さが残りやすい", "足首まわりが重く感じやすい", "冷たさ・甘さ・塩気が重なりやすい"],
@@ -593,6 +596,7 @@ const SYMPTOM_BODY_SIGN_LABELS = {
 const SYMPTOM_STABLE_BODY_POINTS = {
   fatigue: ["午後に残る小さな重だるさ", "動き出しの重さ", "休んでも抜けにくい感じ"],
   sleep: ["夕方以降の目・頭の冴え", "画面を見た後の休まりにくさ", "朝に残る重さ"],
+  digestion: ["食後に残る小さな重さ", "お腹の張り感", "朝の胃腸の重さ"],
   neck_shoulder: ["首元・肩甲骨まわりのこわばり感", "画面姿勢が続いた後の肩の重さ", "頭〜首に残る重さ"],
   low_back_pain: ["腰腹・骨盤まわりの重さ", "座りっぱなしの後のこわばり感", "動き出しの腰の重さ"],
   swelling: ["夕方の足首まわりの重さ", "顔や脚に残る重さ", "冷たさ・甘さ・塩気の残りやすさ"],
@@ -604,6 +608,7 @@ const SYMPTOM_STABLE_BODY_POINTS = {
 const SYMPTOM_PEAK_PREP_ITEMS = {
   fatigue: ["作業量を一つ減らして余白を残す", "空腹と食べすぎの差を小さくする", "休む余白を残して予定を詰めすぎない"],
   sleep: ["夕方以降の画面・光を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
+  digestion: ["冷たいものを続けない", "食べすぎを一つ減らす", "温かい汁物かお茶を足す"],
   neck_shoulder: ["首元を冷やしたまま固めない", "画面から目を離して肩を落とす", "耳まわりと肩甲骨まわりを一度ゆるめる"],
   low_back_pain: ["座りっぱなしを一度切る", "腰腹か足首を冷やさない", "深く座る前に骨盤を小さく動かす"],
   swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねない", "同じ姿勢を長く続けない"],
@@ -615,6 +620,7 @@ const SYMPTOM_PEAK_PREP_ITEMS = {
 const SYMPTOM_STABLE_PEAK_PREP_ITEMS = {
   fatigue: ["午後の予定を詰めすぎない", "空腹と食べすぎの差を大きくしない", "休む余白を一つ残す"],
   sleep: ["夕方以降の画面・光を少し控えめにする", "寝る前に目と首肩を一度休ませる", "夜の食べすぎ・飲みすぎを重ねすぎない"],
+  digestion: ["冷たい飲み物を続けすぎない", "食事量を少し軽くする", "温かい汁物かお茶を一つ足す"],
   neck_shoulder: ["首元が冷えていないか確認する", "画面が続いたら肩を一度落とす", "耳まわりを軽く動かす"],
   low_back_pain: ["座りっぱなしを一度だけ切る", "腰腹か足首の冷えを確認する", "深く座る前に骨盤を小さく動かす"],
   swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねすぎない", "同じ姿勢を続けすぎない"],
@@ -626,6 +632,7 @@ const SYMPTOM_STABLE_PEAK_PREP_ITEMS = {
 const SYMPTOM_HIGH_PEAK_PREP_ITEMS = {
   fatigue: ["山場前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "予定に休む余白を先に残す"],
   sleep: ["夕方以降の画面・光を先に減らす", "寝る前に首肩と目をしっかり休ませる", "夜の食べすぎ・飲みすぎを避ける"],
+  digestion: ["山場前に冷たいものを続けない", "食べすぎを先に避ける", "温かい汁物かお茶を早めに足す"],
   neck_shoulder: ["山場前に首元を冷やしたままにしない", "山場前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
   low_back_pain: ["山場前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
   swelling: ["山場前に足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を先に重ねない", "同じ姿勢を長く続けない"],
@@ -642,6 +649,10 @@ const SYMPTOM_MODE_HINTS = {
   sleep: {
     today: "睡眠を見ているなら、夜まで画面・光や食後の重さを持ち越さない流れに寄せます。",
     tomorrow: "睡眠を見ているなら、今夜から明朝にかけて冷え・画面時間・食べすぎを残さない準備が合います。",
+  },
+  digestion: {
+    today: "胃腸を見ているなら、冷たいもの・食べすぎ・急いで食べる流れを少し軽くします。",
+    tomorrow: "胃腸を見ているなら、今夜の重さを軽くして、明朝に胃腸の負担を残さない準備が合います。",
   },
   neck_shoulder: {
     today: "首肩を見ているなら、首元を冷やしたまま固めないことを優先します。",
@@ -683,6 +694,11 @@ const FORECAST_SYMPTOM_LEAD_CLAUSES = {
     low: "画面・光の影響が睡眠に少し残る見込み",
     middle: "睡眠に響きやすい",
     high: "睡眠に強く響きやすい",
+  },
+  digestion: {
+    low: "胃腸の重さは山場の時間に少し残る見込み",
+    middle: "胃腸に重さが出やすい",
+    high: "胃腸の重さが強く出やすい",
   },
   neck_shoulder: {
     low: "首肩は山場の時間に少し固まりやすい",
@@ -1127,6 +1143,7 @@ const SUB_LABEL_POLICY_SCORES = {
 const SYMPTOM_POLICY_SCORES = {
   fatigue: { sasaeru: 1.1, nagasu: 0.4 },
   sleep: { shizumeru: 1.0, sasaeru: 0.7, uruosu: 0.5 },
+  digestion: { sasaeru: 1.25, nukumeru: 0.75, nagasu: 0.55 },
   neck_shoulder: { yurumeru: 1.0, meguraseru: 0.8 },
   low_back_pain: { nukumeru: 0.9, meguraseru: 0.6, sasaeru: 0.6 },
   swelling: { nagasu: 1.2 },
@@ -1211,6 +1228,30 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
       return sentence(
         "冷えや食後の重さが夜まで残りやすいため、眠りに重さを持ち込まない方向で整えます。",
         "冷えと食後の重さを軽くし、明朝に眠りの重さを残さない方向で整えます。",
+      );
+
+    case "digestion":
+      if (has("cold")) {
+        return sentence(
+          "胃腸まわりが冷えで重くなりやすいため、冷たいものを続けず内側を守る方向で整えます。",
+          "冷たいものや夜の食べすぎを控えめにし、明朝の胃腸の重さを残さない方向で整えます。",
+        );
+      }
+      if (has("damp") || has("pressure_down")) {
+        return sentence(
+          "湿気や気圧低下で胃腸の重さが残りやすいため、詰め込みすぎない方向で整えます。",
+          "冷たいもの・甘いもの・食後の重さを控えめにし、明朝の胃腸を軽くする方向で整えます。",
+        );
+      }
+      if (has("heat")) {
+        return sentence(
+          "暑さで冷たいものが増えやすいため、胃腸を冷やしすぎない方向で整えます。",
+          "冷たい飲み物や刺激を控えめにし、胃腸に重さを残さない方向で整えます。",
+        );
+      }
+      return sentence(
+        "食後の重さやお腹の張りを残しやすいため、胃腸の余白を守る方向で整えます。",
+        "食べすぎや冷えを軽くし、明朝の胃腸の重さを残さない方向で整えます。",
       );
 
     case "neck_shoulder":
