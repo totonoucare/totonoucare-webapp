@@ -252,8 +252,8 @@ function Chip({ active, children, onClick }) {
       className={[
         "shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition-all ring-1",
         active
-          ? "bg-[#255F4F] text-white ring-[#255F4F] shadow-[0_12px_28px_-18px_rgba(37,95,79,0.6)]"
-          : "bg-white text-slate-600 ring-[#DDE8DF] hover:bg-[#F7FBF8]",
+          ? "bg-white text-[var(--accent-ink)] ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]"
+          : "bg-white/80 text-slate-500 ring-[#DDE8DF] hover:bg-[#F9FCFA] hover:text-slate-800",
       ].join(" ")}
     >
       {children}
@@ -264,8 +264,8 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[#255F4F] ring-1 ring-[#D5E7DB] shadow-[0_8px_18px_-16px_rgba(37,95,79,0.35)]">
-      <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
+    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]">
+      <img src={getPolicyIconPath(policyKey)} alt="" className="h-5 w-5 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
   );
@@ -273,29 +273,27 @@ function PolicyPill({ policyKey }) {
 
 function CategoryTabs({ value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-white/80 p-1.5 ring-1 ring-[#DDE8DF]">
-      <div className="grid grid-cols-3 gap-1.5">
-        {CATEGORY_OPTIONS.map((item) => {
-          const Icon = item.icon;
-          const active = value === item.key;
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onChange(item.key)}
-              className={[
-                "flex items-center justify-center gap-1.5 rounded-[16px] px-2 py-2.5 text-[12px] font-black transition-all",
-                active
-                  ? "bg-[#255F4F] text-white shadow-[0_14px_28px_-20px_rgba(37,95,79,0.75)]"
-                  : "text-slate-500 hover:bg-[#F7FBF8]",
-              ].join(" ")}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className="flex rounded-full bg-slate-200/55 p-1 ring-1 ring-inset ring-slate-200/70 shadow-inner">
+      {CATEGORY_OPTIONS.map((item) => {
+        const Icon = item.icon;
+        const active = value === item.key;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={[
+              "flex-1 h-[38px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
+              active
+                ? "bg-white text-slate-950 shadow-[0_8px_22px_-18px_rgba(15,23,42,0.28)] ring-1 ring-black/5"
+                : "text-slate-500 hover:text-slate-800",
+            ].join(" ")}
+          >
+            <Icon className="h-4 w-4" />
+            {item.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -306,31 +304,29 @@ function ResultCard({ item }) {
   const Icon = meta.icon;
 
   return (
-    <div className="rounded-[24px] bg-white p-3.5 ring-1 ring-[#E4EEE7] shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
+    <div className="relative overflow-hidden rounded-[24px] bg-[#E2F1EA]/45 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.05),inset_0_-18px_28px_rgba(255,255,255,0.32)]">
       <div className="flex gap-3">
-        <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-[#F4F8F5] ring-1 ring-[#E1EBE3]">
+        <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm">
           {item.imageUrl ? (
             <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
           ) : (
-            <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[#255F4F]">
-              <Icon className="h-7 w-7 opacity-80" />
-            </div>
+            <Icon className="h-7 w-7 opacity-85" />
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-black leading-5 text-slate-900">{item.title}</div>
-          <div className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-black text-[#5F8D75]">
-            <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-4 w-4" loading="lazy" />
+          <div className="text-[15px] font-black leading-6 text-slate-900">{item.title}</div>
+          <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#5F8D75]">
+            <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-4.5 w-4.5 max-h-[18px] max-w-[18px]" loading="lazy" />
             {policy.label || item.policyKey}
           </div>
-          <p className="mt-2 text-[11px] font-bold leading-5 text-slate-600">{item.reason}</p>
+          <p className="mt-2 text-[12px] font-bold leading-6 text-slate-600">{item.reason}</p>
         </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {(item.tags || []).map((tag) => (
-          <span key={tag} className="rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-slate-100">
+          <span key={tag} className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-white/90">
             {tag}
           </span>
         ))}
@@ -340,7 +336,7 @@ function ResultCard({ item }) {
         href={makeRakutenSearchUrl(item.query)}
         target="_blank"
         rel="noreferrer"
-        className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-[#255F4F] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_30px_-18px_rgba(37,95,79,0.75)]"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-white px-4 py-2.5 text-[12px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.28)] hover:bg-[#F9FCFA]"
       >
         楽天で探す
       </a>
@@ -472,9 +468,9 @@ export default function CareNaviPage() {
         />
 
         <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[24px] bg-[#F7FBF8] p-4 ring-1 ring-[#DDE8DF]">
+          <div className="rounded-[24px] bg-[#E2F1EA]/45 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.05),inset_0_-18px_28px_rgba(255,255,255,0.32)]">
             <div className="flex items-start gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-white text-[#255F4F] ring-1 ring-[#D5E7DB]">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3]">
                 <IconKarte className="h-5 w-5" />
               </div>
               <div className="min-w-0">
@@ -504,8 +500,8 @@ export default function CareNaviPage() {
                     className={[
                       "rounded-[16px] px-2 py-2 text-center text-[11px] font-black ring-1 transition-all",
                       basis === item.key
-                        ? "bg-[#255F4F] text-white ring-[#255F4F] shadow-[0_12px_26px_-20px_rgba(37,95,79,0.8)]"
-                        : "bg-white text-slate-600 ring-[#DDE8DF] hover:bg-[#F7FBF8]",
+                        ? "bg-white text-[var(--accent-ink)] ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]"
+                        : "bg-white/80 text-slate-500 ring-[#DDE8DF] hover:bg-[#F9FCFA] hover:text-slate-800",
                     ].join(" ")}
                   >
                     {item.label}
@@ -545,10 +541,10 @@ export default function CareNaviPage() {
               </div>
             ) : null}
 
-            <div className="rounded-[22px] bg-[#F7FBF8] p-3 ring-1 ring-[#DDE8DF]">
+            <div className="rounded-[24px] bg-[#E2F1EA]/45 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.05),inset_0_-18px_28px_rgba(255,255,255,0.32)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#6B8B78]">今回の方針</div>
+                  <div className="text-[11px] font-black tracking-[0.14em] text-[#255F4F]/65">今回の方針</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {policyKeys.map((key) => (
                       <PolicyPill key={key} policyKey={key} />
@@ -568,7 +564,7 @@ export default function CareNaviPage() {
 
       <Module className="p-4 sm:p-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-[#EAF5EE] text-[#255F4F] ring-1 ring-[#D5E7DB]">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
             <CategoryIcon className="h-5 w-5" />
           </div>
           <div>
