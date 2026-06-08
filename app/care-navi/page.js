@@ -479,6 +479,62 @@ function Chip({ active, children, onClick }) {
   );
 }
 
+
+function getPolicyIconPath(policyKey) {
+  return `/illust/policy/policy-${policyKey}.svg`;
+}
+
+function PolicyPill({ policyKey, compact = false }) {
+  const policy = POLICY_META[policyKey] || {};
+  return (
+    <span
+      className={[
+        "inline-flex items-center gap-1.5 rounded-full bg-white text-[#255F4F] ring-1 ring-[#D5E7DB]",
+        compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-[12px]",
+        "font-black",
+      ].join(" ")}
+    >
+      <img
+        src={getPolicyIconPath(policyKey)}
+        alt=""
+        className={compact ? "h-4 w-4 shrink-0" : "h-5 w-5 shrink-0"}
+        loading="lazy"
+      />
+      {policy.label || policyKey}
+    </span>
+  );
+}
+
+function CategoryTabs({ value, onChange }) {
+  return (
+    <div className="rounded-[24px] bg-white/80 p-1.5 ring-1 ring-[#DDE8DF]">
+      <div className="grid grid-cols-3 gap-1.5">
+        {CATEGORY_OPTIONS.map((item) => {
+          const meta = getCategoryMeta(item.key);
+          const Icon = meta.icon;
+          const active = value === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChange(item.key)}
+              className={[
+                "flex items-center justify-center gap-1.5 rounded-[18px] px-2 py-2.5 text-[12px] font-black transition-all",
+                active
+                  ? "bg-[#255F4F] text-white shadow-[0_14px_28px_-20px_rgba(37,95,79,0.75)]"
+                  : "text-slate-500 hover:bg-[#F7FBF8]",
+              ].join(" ")}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ResultCard({ item }) {
   const policy = POLICY_META[item.policyKey] || {};
   const meta = getCategoryMeta(item.category);
