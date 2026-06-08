@@ -293,25 +293,29 @@ function PointVisualPanel({ point }) {
 
 export function SegmentedTabs({ tabs, value, onChange }) {
   return (
-    <div className="flex rounded-full bg-slate-200/55 p-1 ring-1 ring-inset ring-slate-200/70 shadow-inner">
-      {tabs.map((t) => {
-        const active = value === t.key;
-        return (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => onChange(t.key)}
-            className={[
-              "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
-              active
-                ? "bg-white text-slate-950 shadow-[0_8px_22px_-18px_rgba(15,23,42,0.28)] ring-1 ring-black/5"
-                : "text-slate-500 hover:text-slate-800",
-            ].join(" ")}
-          >
-            {t.label}
-          </button>
-        );
-      })}
+    <div className="rounded-[22px] bg-slate-200/60 p-1 ring-1 ring-inset ring-slate-200/75 shadow-inner">
+      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+        {tabs.map((t) => {
+          const active = value === t.key;
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => onChange(t.key)}
+              className={[
+                "h-[40px] rounded-[18px] text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
+                active
+                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
+                  : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
+              ].join(" ")}
+            >
+              {Icon ? <Icon className="h-4 w-4" /> : null}
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
