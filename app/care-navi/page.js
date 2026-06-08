@@ -6,6 +6,13 @@ import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
+import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
+import {
+  deriveCarePolicies,
+  getForecastTriggerFactors,
+  getJstTodayTomorrow,
+  getRiskContext,
+} from "@/app/radar/utils";
 import {
   IconCare,
   IconFood,
@@ -206,14 +213,52 @@ function unique(items) {
   return Array.from(new Set((items || []).filter(Boolean)));
 }
 
-function mergePolicyKeys(...groups) {
-  const out = [];
-  for (const group of groups) {
-    for (const key of group || []) {
-      if (key && POLICY_META[key] && !out.includes(key)) out.push(key);
+function createPolicyScoreMap(initial = {}) {
+  const scores = Object.fromEntries(Object.keys(POLICY_META).map((key) => [key, 0]));
+  Object.entries(initial || {}).forEach(([key, value]) => {
+    if (Object.prototype.hasOwnProperty.call(scores, key)) {
+      scores[key] = Number(value || 0);
     }
-  }
-  return out.slice(0, 3);
+  });
+  return scores;
+}
+
+function addPolicyScore(scores, key, value = 1) {
+  if (!key || !Object.prototype.hasOwnProperty.call(scores, key)) return;
+  scores[key] += Number(value || 0);
+}
+
+function addPolicyKeys(scores, keys, weight = 1) {
+  safeArray(keys).forEach((key, index) => {
+    addPolicyScore(scores, key, Number(weight || 0) * (index === 0 ? 1 : 0.82));
+  });
+}
+
+function selectPolicyKeysFromScores(scores, fallbackKeys = ["sasaeru", "yurumeru"]) {
+  const ranked = Object.entries(scores || {})
+    .map(([key, score]) => ({ key, score: Number(score || 0) }))
+    .filter((item) => item.score > 0 && POLICY_META[item.key])
+    .sort((a, b) => b.score - a.score);
+
+  if (!ranked.length) return safeArray(fallbackKeys).filter((key) => POLICY_META[key]).slice(0, 2);
+
+  const selected = [ranked[0]];
+  const second = ranked.find((item) => item.key !== ranked[0].key);
+
+  if (second) selected.push(second);
+
+  const third = ranked.find((item) => !selected.some((selectedItem) => selectedItem.key === item.key));
+  const shouldShowThird =
+    third &&
+    second &&
+    (
+      third.score >= second.score * 0.9 ||
+      Math.abs(second.score - third.score) <= 0.28
+    );
+
+  if (shouldShowThird) selected.push(third);
+
+  return selected.map((item) => item.key).slice(0, 3);
 }
 
 function getSeasonKey() {
@@ -225,22 +270,47 @@ function getSeasonKey() {
   return "winter";
 }
 
-function getProfilePolicyKeys(profile, symptomKey) {
-  const fromSymptom = SYMPTOM_POLICY_HINTS[symptomKey] || [];
-  const fromSubs = safeArray(profile?.sub_labels).flatMap((key) => SUB_POLICY_HINTS[key] || []);
-  const fromCore = [];
-  const coreCode = String(profile?.core_code || "");
-  if (coreCode.includes("batt_small")) fromCore.push("sasaeru", "nukumeru");
-  if (coreCode.startsWith("accel_")) fromCore.push("yurumeru", "shizumeru");
-  if (coreCode.startsWith("brake_")) fromCore.push("nagasu", "meguraseru");
-  return mergePolicyKeys(fromSymptom, fromSubs, fromCore, ["sasaeru"]);
+function buildKarteCarePreferences(profile, symptomKey) {
+  const computed = profile?.computed || {};
+
+  return buildBaseCarePreferences({
+    answers: {
+      symptom_focus: symptomKey,
+      env_vectors: safeArray(computed?.env?.vectors),
+    },
+    computed: {
+      ...computed,
+      core_code: profile?.core_code || computed?.core_code || null,
+      sub_labels: safeArray(profile?.sub_labels || computed?.sub_labels),
+      symptom_focus: symptomKey,
+    },
+    symptomKey,
+  });
 }
 
-function getLifePolicyKeys(lifeKeys) {
-  const fromLife = LIFE_OPTIONS
-    .filter((item) => lifeKeys.includes(item.key))
-    .flatMap((item) => item.policies);
-  return mergePolicyKeys(fromLife, ["sasaeru"]);
+function buildConditionPolicyKeys({ baseScores, extraPolicyKeys = [], extraWeight = 1, baseWeight = 0.55, fallbackKeys = ["sasaeru", "yurumeru"] } = {}) {
+  const scores = createPolicyScoreMap();
+
+  Object.entries(baseScores || {}).forEach(([key, value]) => {
+    addPolicyScore(scores, key, Number(value || 0) * baseWeight);
+  });
+
+  addPolicyKeys(scores, extraPolicyKeys, extraWeight);
+
+  return selectPolicyKeysFromScores(scores, fallbackKeys);
+}
+
+function getLifePolicyKeys(lifeKeys, baseScores) {
+  const selectedLife = LIFE_OPTIONS.filter((item) => lifeKeys.includes(item.key));
+  const lifePolicyKeys = selectedLife.flatMap((item) => item.policies);
+
+  return buildConditionPolicyKeys({
+    baseScores,
+    extraPolicyKeys: lifePolicyKeys,
+    extraWeight: 1.25,
+    baseWeight: 0.52,
+    fallbackKeys: ["sasaeru", "yurumeru"],
+  });
 }
 
 function pickCandidates(policyKeys, categoryKey) {
@@ -389,6 +459,7 @@ export default function CareNaviPage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [profileError, setProfileError] = useState("");
+  const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
   const [basis, setBasis] = useState("karte");
   const [category, setCategory] = useState("live");
@@ -431,6 +502,21 @@ export default function CareNaviPage() {
           setProfile(null);
           setProfileError(json?.error || "未病カルテがまだありません。");
         }
+
+        try {
+          const { tomorrow } = getJstTodayTomorrow();
+          const qs = new URLSearchParams({ date: tomorrow });
+          const forecastRes = await fetch(`/api/radar/v1/forecast?${qs.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+          });
+          const forecastJson = await forecastRes.json().catch(() => ({}));
+          if (!cancelled && forecastRes.ok) {
+            setTomorrowBundle(forecastJson);
+          }
+        } catch {
+          if (!cancelled) setTomorrowBundle(null);
+        }
       } catch (error) {
         if (!cancelled) {
           setProfile(null);
@@ -456,21 +542,47 @@ export default function CareNaviPage() {
     return {
       core_code: profile?.core_code || computed.core_code || null,
       sub_labels: safeArray(profile?.sub_labels || computed.sub_labels),
+      computed,
     };
   }, [profile]);
 
+  const karteCarePreferences = useMemo(
+    () => buildKarteCarePreferences(profileLike, symptomKey),
+    [profileLike, symptomKey]
+  );
+
   const policyKeys = useMemo(() => {
+    const baseScores = karteCarePreferences?.scores || {};
+
+    if (basis === "tomorrow" && tomorrowBundle?.forecast) {
+      const derived = deriveCarePolicies({
+        forecast: tomorrowBundle.forecast,
+        triggerFactors: getForecastTriggerFactors(tomorrowBundle.forecast),
+        riskContext: getRiskContext(tomorrowBundle),
+        mode: "tomorrow",
+        symptomFocus: symptomKey,
+      });
+
+      const forecastKeys = safeArray(derived?.policies).map((policy) => policy.key).filter(Boolean);
+      if (forecastKeys.length) return forecastKeys;
+    }
+
     if (basis === "season") {
-      return mergePolicyKeys(SEASON_POLICY_HINTS[getSeasonKey()], getProfilePolicyKeys(profileLike, symptomKey));
+      return buildConditionPolicyKeys({
+        baseScores,
+        extraPolicyKeys: SEASON_POLICY_HINTS[getSeasonKey()],
+        extraWeight: 1.22,
+        baseWeight: 0.52,
+        fallbackKeys: ["sasaeru", "meguraseru"],
+      });
     }
+
     if (basis === "life") {
-      return mergePolicyKeys(getLifePolicyKeys(lifeKeys), getProfilePolicyKeys(profileLike, symptomKey));
+      return getLifePolicyKeys(lifeKeys, baseScores);
     }
-    if (basis === "tomorrow") {
-      return mergePolicyKeys(getProfilePolicyKeys(profileLike, symptomKey), ["sasaeru"]);
-    }
-    return getProfilePolicyKeys(profileLike, symptomKey);
-  }, [basis, profileLike, symptomKey, lifeKeys]);
+
+    return selectPolicyKeysFromScores(baseScores, ["sasaeru", "yurumeru"]);
+  }, [basis, karteCarePreferences, tomorrowBundle, symptomKey, lifeKeys]);
 
   const items = useMemo(() => pickCandidates(policyKeys, category), [policyKeys, category]);
 
