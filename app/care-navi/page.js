@@ -399,7 +399,7 @@ export default function CareNaviPage() {
 
         if (!cancelled && res.ok && json?.profile) {
           setProfile(json.profile);
-          setSelectedSymptom(json.profile.active_symptom_focus || json.profile.diagnosis_symptom_focus || "");
+          setSelectedSymptom(json.profile.active_symptom_focus || "");
         } else if (!cancelled) {
           setProfile(null);
           setProfileError(json?.error || "未病カルテがまだありません。");
@@ -421,7 +421,7 @@ export default function CareNaviPage() {
     };
   }, []);
 
-  const symptomKey = selectedSymptom || profile?.active_symptom_focus || profile?.diagnosis_symptom_focus || "fatigue";
+  const symptomKey = selectedSymptom || profile?.active_symptom_focus || "fatigue";
   const symptomLabel = SYMPTOM_LABELS[symptomKey] || "今気になること";
 
   const profileLike = useMemo(() => {
@@ -480,8 +480,12 @@ export default function CareNaviPage() {
         />
 
         <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[26px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF9EB_100%)] p-4 ring-1 ring-[#DCE8DD] shadow-[0_14px_34px_-26px_rgba(40,55,48,0.24)]">
-            <div className="flex items-start gap-3">
+          <div className="relative overflow-hidden rounded-[26px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF9EB_100%)] p-4 ring-1 ring-[#DCE8DD] shadow-[0_14px_34px_-26px_rgba(40,55,48,0.24)]">
+            <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full border-[3px] border-[#BFD9CC] opacity-80" />
+            <div aria-hidden="true" className="pointer-events-none absolute -right-2 -top-4 h-28 w-28 rounded-full border-[2.5px] border-[#D9EADF] opacity-90" />
+            <div aria-hidden="true" className="pointer-events-none absolute right-5 top-10 h-2.5 w-2.5 rounded-full bg-[#9DCCB7]" />
+            <div aria-hidden="true" className="pointer-events-none absolute right-1 top-1 h-8 w-8 rounded-full border-[4px] border-transparent border-t-[#E2C87A] border-r-[#E2C87A] opacity-90" />
+            <div className="relative flex items-start gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3]">
                 <IconKarte className="h-5 w-5" />
               </div>
