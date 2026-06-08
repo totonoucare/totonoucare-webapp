@@ -181,6 +181,19 @@ function getPolicyIconPath(policyKey) {
   return `/illust/policy/policy-${policyKey}.svg`;
 }
 
+function getCoreIconPath(coreCode) {
+  const fileMap = {
+    accel_batt_small: "cheetah.webp",
+    accel_batt_standard: "wolf.webp",
+    accel_batt_large: "orca.webp",
+    brake_batt_small: "hedgehog.webp",
+    brake_batt_standard: "penguin.webp",
+    brake_batt_large: "elephant.webp",
+  };
+
+  return fileMap[coreCode] ? `/illust/core/${fileMap[coreCode]}` : "";
+}
+
 function makeRakutenSearchUrl(query) {
   return `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(query)}/`;
 }
@@ -463,6 +476,7 @@ export default function CareNaviPage() {
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
+  const coreIconPath = getCoreIconPath(profileLike.core_code);
   const subLabels = getSubLabels(profileLike.sub_labels).slice(0, 2);
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
   const seasonKey = getSeasonKey();
@@ -499,8 +513,12 @@ export default function CareNaviPage() {
           <div className="px-1 pb-1 pt-4">
           <div className="rounded-[26px] bg-[#E2F1EA]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
             <div className="flex items-start gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3]">
-                <IconKarte className="h-5 w-5" />
+              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3] shadow-sm">
+                {coreIconPath ? (
+                  <img src={coreIconPath} alt="" className="h-10 w-10 object-contain" loading="lazy" />
+                ) : (
+                  <IconKarte className="h-5 w-5" />
+                )}
               </div>
               <div className="min-w-0">
                 <div className="text-[13px] font-black text-slate-900">
