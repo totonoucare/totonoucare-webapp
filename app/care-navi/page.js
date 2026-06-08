@@ -8,13 +8,9 @@ import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import {
   IconCare,
-  IconCheck,
   IconFood,
-  IconKarte,
   IconLifestyle,
-  IconRadar,
   IconTsubo,
-  IconWeather,
 } from "@/components/illust/icons/app";
 import {
   deriveCarePolicies,
@@ -25,7 +21,6 @@ import {
 } from "@/app/radar/utils";
 
 const CATEGORY_OPTIONS = [
-  { key: "all", label: "まとめて" },
   { key: "live", label: "暮らす" },
   { key: "eat", label: "食べる" },
   { key: "point", label: "ほぐす" },
@@ -484,44 +479,41 @@ function Chip({ active, children, onClick }) {
   );
 }
 
-function MiniStatus({ icon, label, body, tone = "green" }) {
-  const color =
-    tone === "amber"
-      ? "bg-amber-50 text-amber-800 ring-amber-100"
-      : tone === "slate"
-        ? "bg-slate-50 text-slate-700 ring-slate-100"
-        : "bg-[#F0F8F3] text-[#255F4F] ring-[#D3E7D8]";
-
-  return (
-    <div className={["rounded-[22px] p-3.5 ring-1", color].join(" ")}>
-      <div className="flex items-start gap-3">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[14px] bg-white/75 ring-1 ring-white/70">
-          {icon}
-        </div>
-        <div>
-          <div className="text-[12px] font-black">{label}</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 opacity-80">{body}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ResultCard({ item }) {
   const policy = POLICY_META[item.policyKey] || {};
-  return (
-    <div className="rounded-[24px] bg-white p-4 ring-1 ring-[#E4EEE7] shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[14px] font-black leading-5 text-slate-900">{item.title}</div>
-          <div className="mt-1 text-[11px] font-black text-[#5F8D75]">{policy.label || item.policyKey}</div>
-        </div>
-        <span className="shrink-0 rounded-full bg-[#F3F8F4] px-2.5 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D9E8DE]">
-          候補
-        </span>
-      </div>
+  const meta = getCategoryMeta(item.category);
+  const Icon = meta.icon;
 
-      <p className="mt-3 text-[12px] font-bold leading-6 text-slate-600">{item.reason}</p>
+  return (
+    <div className="rounded-[24px] bg-white p-3.5 ring-1 ring-[#E4EEE7] shadow-[0_12px_30px_-24px_rgba(15,23,42,0.22)]">
+      <div className="flex gap-3">
+        <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-[#F4F8F5] ring-1 ring-[#E1EBE3]">
+          {item.imageUrl ? (
+            <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+          ) : (
+            <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[#255F4F]">
+              <Icon className="h-7 w-7 opacity-80" />
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[13px] font-black leading-5 text-slate-900">{item.title}</div>
+              <div className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-black text-[#5F8D75]">
+                <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-3.5 w-3.5" loading="lazy" />
+                {policy.label || item.policyKey}
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full bg-[#F3F8F4] px-2 py-1 text-[10px] font-black text-[#255F4F] ring-1 ring-[#D9E8DE]">
+              候補
+            </span>
+          </div>
+
+          <p className="mt-2 line-clamp-2 text-[11px] font-bold leading-5 text-slate-600">{item.reason}</p>
+        </div>
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {(item.tags || []).map((tag) => (
@@ -535,7 +527,7 @@ function ResultCard({ item }) {
         href={makeRakutenSearchUrl(item.query)}
         target="_blank"
         rel="noreferrer"
-        className="mt-4 inline-flex w-full items-center justify-center rounded-[18px] bg-[#255F4F] px-4 py-3 text-[12px] font-black text-white shadow-[0_14px_30px_-18px_rgba(37,95,79,0.75)]"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-[#255F4F] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_30px_-18px_rgba(37,95,79,0.75)]"
       >
         楽天で「{item.query}」を探す
       </a>
@@ -552,16 +544,16 @@ function CategorySection({ category, items }) {
   return (
     <Module className="p-4 sm:p-5">
       <div className="flex items-center gap-3">
-        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#EAF5EE] text-[#255F4F] ring-1 ring-[#D5E7DB]">
-          <Icon className="h-6 w-6" />
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-[#EAF5EE] text-[#255F4F] ring-1 ring-[#D5E7DB]">
+          <Icon className="h-5 w-5" />
         </div>
         <div>
-          <div className="text-[17px] font-black tracking-tight text-slate-900">{meta.label}</div>
+          <div className="text-[16px] font-black tracking-tight text-slate-900">{meta.label}の候補</div>
           <div className="mt-0.5 text-[11px] font-bold text-slate-500">{meta.lead}</div>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-3 grid gap-3">
         {items.map((item, index) => (
           <ResultCard key={`${category}-${item.policyKey}-${item.title}-${index}`} item={item} />
         ))}
@@ -578,7 +570,7 @@ export default function CareNaviPage() {
   const [profileError, setProfileError] = useState("");
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState("live");
   const [basis, setBasis] = useState("karte");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
@@ -694,6 +686,8 @@ export default function CareNaviPage() {
     );
   }
 
+  const activeItems = resultGroups[category] || [];
+
   return (
     <AppShell
       title="ケアナビ"
@@ -704,178 +698,113 @@ export default function CareNaviPage() {
         </Button>
       }
     >
-      <Module className="relative overflow-hidden p-5 sm:p-6">
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#E2F1EA] blur-2xl" />
-        <div className="absolute -bottom-20 -left-16 h-52 w-52 rounded-full bg-amber-100/70 blur-3xl" />
+      <Module className="relative overflow-hidden p-4 sm:p-5">
+        <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#E2F1EA]/80 blur-2xl" />
+        <div className="absolute -bottom-24 -left-20 h-48 w-48 rounded-full bg-amber-100/60 blur-3xl" />
 
         <div className="relative">
-          <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black tracking-[0.16em] text-[#47786C] ring-1 ring-[#D4E6DA]">
-            CARE NAVI
-          </div>
-          <h1 className="mt-4 text-[25px] font-black leading-tight tracking-tight text-slate-900">
-            暮らす・食べる・ほぐすの
-            <br />
-            ケア候補を選ぶ。
-          </h1>
-          <p className="mt-3 text-[13px] font-bold leading-7 text-slate-600">
-            未病カルテや条件入力を手がかりに、今日だけでなく「次に同じ条件の日に備える」ためのケアアイテム候補を出します。
-          </p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black tracking-[0.16em] text-[#47786C] ring-1 ring-[#D4E6DA]">
+                CARE NAVI
+              </div>
+              <h1 className="mt-3 text-[22px] font-black leading-tight tracking-tight text-slate-900">
+                ケア候補を選ぶ。
+              </h1>
+              <p className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
+                カルテや条件から、暮らす・食べる・ほぐすの候補を出します。
+              </p>
+            </div>
 
-          <div className="mt-5 grid gap-3">
-            {profile ? (
-              <MiniStatus
-                icon={<IconKarte className="h-5 w-5" />}
-                label="未病カルテ反映済み"
-                body={`${coreLabel || "体質傾向"}${subLabels.length ? ` / ${subLabels.map((s) => s.title).join("・")}` : ""} を手がかりにしています。`}
-              />
-            ) : (
-              <MiniStatus
-                tone="amber"
-                icon={<IconKarte className="h-5 w-5" />}
-                label="未病カルテ未適用"
-                body={profileError || "条件だけでも探せます。体質チェックを保存すると、候補をさらに絞れます。"}
-              />
-            )}
-
-            <MiniStatus
-              tone={tomorrowBundle?.forecast ? "green" : "slate"}
-              icon={<IconRadar className="h-5 w-5" />}
-              label={tomorrowBundle?.forecast ? "明日の予報を反映できます" : "明日の予報は未反映"}
-              body={tomorrowBundle?.forecast ? "明日の崩れやすさに合わせた候補にも切り替えられます。" : "地域未設定などの場合は、カルテと条件だけで候補を出します。"}
-            />
-          </div>
-        </div>
-      </Module>
-
-      <Module className="p-4 sm:p-5">
-        <div className="flex items-center gap-3">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#EAF5EE] text-[#255F4F] ring-1 ring-[#D5E7DB]">
-            <IconCare className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="text-[17px] font-black tracking-tight text-slate-900">条件を調整</div>
-            <div className="mt-0.5 text-[11px] font-bold text-slate-500">ここで変えても、予報の不調設定は変更しません。</div>
-          </div>
-        </div>
-
-        <div className="mt-5 space-y-5">
-          <div>
-            <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">見るカテゴリ</div>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_OPTIONS.map((item) => (
-                <Chip key={item.key} active={category === item.key} onClick={() => setCategory(item.key)}>
-                  {item.label}
-                </Chip>
-              ))}
+            <div className="shrink-0 rounded-[18px] bg-white/85 px-3 py-2 text-right ring-1 ring-[#DDE8DF]">
+              <div className="text-[10px] font-black text-slate-400">STATUS</div>
+              <div className={`mt-0.5 text-[11px] font-black ${profile ? "text-[#255F4F]" : "text-amber-700"}`}>
+                {profile ? "カルテ反映済み" : "カルテ未適用"}
+              </div>
             </div>
           </div>
 
-          <div>
-            <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">合わせ方</div>
-            <div className="grid grid-cols-2 gap-2">
-              {BASIS_OPTIONS.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => setBasis(item.key)}
-                  className={[
-                    "rounded-[20px] p-3 text-left ring-1 transition-all",
-                    basis === item.key
-                      ? "bg-[#255F4F] text-white ring-[#255F4F] shadow-[0_14px_30px_-22px_rgba(37,95,79,0.7)]"
-                      : "bg-white text-slate-600 ring-[#DDE8DF] hover:bg-[#F7FBF8]",
-                  ].join(" ")}
-                >
-                  <div className="text-[13px] font-black">{item.label}</div>
-                  <div className={`mt-1 text-[10px] font-bold leading-4 ${basis === item.key ? "text-white/78" : "text-slate-400"}`}>
-                    {item.key === "tomorrow" && !tomorrowBundle?.forecast ? "予報未取得時はカルテ寄せ" : item.title.replace("に合わせる", "")}
-                  </div>
-                </button>
-              ))}
+          {profile ? (
+            <div className="mt-3 rounded-[18px] bg-white/75 px-3 py-2 text-[11px] font-bold leading-5 text-slate-500 ring-1 ring-white/90">
+              {coreLabel || "体質傾向"}{subLabels.length ? ` / ${subLabels.map((s) => s.title).join("・")}` : ""} を手がかりにしています。
             </div>
-          </div>
-
-          <div>
-            <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">気になること</div>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(SYMPTOM_LABELS).map(([key, label]) => (
-                <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>
-                  {label}
-                </Chip>
-              ))}
+          ) : (
+            <div className="mt-3 rounded-[18px] bg-amber-50/90 px-3 py-2 text-[11px] font-bold leading-5 text-amber-800 ring-1 ring-amber-100">
+              {profileError || "条件だけでも探せます。体質チェックを保存すると、候補をさらに絞れます。"}
             </div>
-          </div>
+          )}
 
-          {basis === "life" ? (
+          <div className="mt-5 space-y-4">
             <div>
-              <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活（最大3つ）</div>
-              <div className="flex flex-wrap gap-2">
-                {LIFE_OPTIONS.map((item) => (
-                  <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>
-                    {item.label}
+              <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">合わせ方</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {BASIS_OPTIONS.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setBasis(item.key)}
+                    className={[
+                      "rounded-[16px] px-2 py-2 text-center ring-1 transition-all",
+                      basis === item.key
+                        ? "bg-[#255F4F] text-white ring-[#255F4F] shadow-[0_14px_30px_-22px_rgba(37,95,79,0.7)]"
+                        : "bg-white text-slate-600 ring-[#DDE8DF] hover:bg-[#F7FBF8]",
+                    ].join(" ")}
+                  >
+                    <div className="text-[11px] font-black leading-4">{item.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になること</div>
+                <div className="text-[10px] font-bold text-slate-400">ページ内だけ反映</div>
+              </div>
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                {Object.entries(SYMPTOM_LABELS).map(([key, label]) => (
+                  <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>
+                    {label}
                   </Chip>
                 ))}
               </div>
             </div>
-          ) : null}
-        </div>
-      </Module>
 
-      <Module className="p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-[#FFF7E1] text-[#8A6A18] ring-1 ring-[#EFE0AC]">
-            <IconCheck className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="text-[17px] font-black tracking-tight text-slate-900">今回の見立て</div>
-            <div className="mt-1 text-[12px] font-bold leading-6 text-slate-600">
-              {basisMeta.lead}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-[24px] bg-[#F7FBF8] p-4 ring-1 ring-[#DDE8DF]">
-          <div className="text-[11px] font-black tracking-[0.14em] text-[#6B8B78]">CARE POLICIES</div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {policyKeys.map((key) => (
-              <span key={key} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#255F4F] ring-1 ring-[#D5E7DB]">
-                {POLICY_META[key]?.label || key}
-              </span>
-            ))}
-          </div>
-          <div className="mt-3 space-y-2">
-            {policyKeys.map((key) => (
-              <div key={`${key}-body`} className="text-[12px] font-bold leading-6 text-slate-600">
-                <span className="font-black text-slate-800">{POLICY_META[key]?.short}</span>
-                <span className="ml-1">{POLICY_META[key]?.body}</span>
+            {basis === "life" ? (
+              <div>
+                <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活（最大3つ）</div>
+                <div className="flex flex-wrap gap-2">
+                  {LIFE_OPTIONS.map((item) => (
+                    <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>
+                      {item.label}
+                    </Chip>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="mt-3 rounded-[18px] bg-white/80 p-3 text-[11px] font-bold leading-5 text-slate-500 ring-1 ring-white">
-            現在の不調条件：<span className="font-black text-slate-700">{symptomLabel}</span>
-            <br />
-            ※このページ内だけの検索条件です。設定画面や予報ページの保存済み不調は変更しません。
+            ) : null}
+
+            <div className="rounded-[22px] bg-[#F7FBF8] p-3 ring-1 ring-[#DDE8DF]">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-black tracking-[0.14em] text-[#6B8B78]">今回の方針</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {policyKeys.map((key) => (
+                      <PolicyPill key={key} policyKey={key} compact />
+                    ))}
+                  </div>
+                </div>
+                <div className="max-w-[132px] text-right text-[10px] font-bold leading-4 text-slate-500">
+                  {basisMeta.label} × {symptomLabel}
+                </div>
+              </div>
+            </div>
+
+            <CategoryTabs value={category} onChange={setCategory} />
           </div>
         </div>
       </Module>
 
-      {Object.entries(resultGroups).map(([key, items]) => (
-        <CategorySection key={key} category={key} items={items} />
-      ))}
-
-      <Module className="p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-slate-50 text-slate-500 ring-1 ring-slate-100">
-            <IconWeather className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="text-[15px] font-black text-slate-900">使い方メモ</div>
-            <p className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
-              今日の予報に合わせて通販で買うというより、崩れやすい条件が見えたときに「次に備えて持っておくもの」を選ぶためのページです。
-              近くのドラッグストアで探す時のメモとしても使えます。
-            </p>
-          </div>
-        </div>
-      </Module>
+      <CategorySection category={category} items={activeItems} />
     </AppShell>
   );
 }
