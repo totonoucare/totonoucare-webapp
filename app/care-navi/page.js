@@ -244,6 +244,20 @@ function getCategoryMeta(key) {
   return CATEGORY_OPTIONS.find((item) => item.key === key) || CATEGORY_OPTIONS[0];
 }
 
+function CheckOrbitMark() {
+  return (
+    <svg viewBox="0 0 160 160" className="absolute -right-5 -top-6 h-40 w-40 opacity-90" aria-hidden="true">
+      <circle cx="82" cy="78" r="46" fill="none" stroke="#d7e8dd" strokeWidth="1.8" />
+      <circle cx="82" cy="78" r="68" fill="none" stroke="#edf2ee" strokeWidth="1.5" />
+      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#6bb69a" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
+      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#dfa42d" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
+      <circle cx="122" cy="32" r="5" fill="#dfa42d" opacity="0.48" />
+      <circle cx="45" cy="109" r="4" fill="#4ea789" opacity="0.58" />
+    </svg>
+  );
+}
+
+
 function Chip({ active, children, onClick }) {
   return (
     <button
@@ -472,20 +486,19 @@ export default function CareNaviPage() {
         </Button>
       }
     >
-      <Module className="p-4 sm:p-5">
-        <ModuleHeader
-          icon={<IconCare className="h-6 w-6" />}
-          title="ケアアイテムナビ"
-          sub="暮らす・食べる・ほぐすの候補を選ぶ"
-        />
+      <Module className="relative p-4 sm:p-5">
+        <CheckOrbitMark />
 
-        <div className="px-1 pb-1 pt-4">
-          <div className="relative overflow-hidden rounded-[26px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF9EB_100%)] p-4 ring-1 ring-[#DCE8DD] shadow-[0_14px_34px_-26px_rgba(40,55,48,0.24)]">
-            <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-12 h-40 w-40 rounded-full border-[3px] border-[#BFD9CC] opacity-80" />
-            <div aria-hidden="true" className="pointer-events-none absolute -right-2 -top-4 h-28 w-28 rounded-full border-[2.5px] border-[#D9EADF] opacity-90" />
-            <div aria-hidden="true" className="pointer-events-none absolute right-5 top-10 h-2.5 w-2.5 rounded-full bg-[#9DCCB7]" />
-            <div aria-hidden="true" className="pointer-events-none absolute right-1 top-1 h-8 w-8 rounded-full border-[4px] border-transparent border-t-[#E2C87A] border-r-[#E2C87A] opacity-90" />
-            <div className="relative flex items-start gap-3">
+        <div className="relative z-10">
+          <ModuleHeader
+            icon={<IconCare className="h-6 w-6" />}
+            title="ケアアイテムナビ"
+            sub="暮らす・食べる・ほぐすの候補を選ぶ"
+          />
+
+          <div className="px-1 pb-1 pt-4">
+          <div className="rounded-[26px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF9EB_100%)] p-4 ring-1 ring-[#DCE8DD] shadow-[0_14px_34px_-26px_rgba(40,55,48,0.24)]">
+            <div className="flex items-start gap-3">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[16px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3]">
                 <IconKarte className="h-5 w-5" />
               </div>
@@ -576,6 +589,7 @@ export default function CareNaviPage() {
             <CategoryTabs value={category} onChange={setCategory} />
           </div>
         </div>
+      </div>
       </Module>
 
       <Module className="p-4 sm:p-5">
