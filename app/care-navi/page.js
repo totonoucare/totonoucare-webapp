@@ -486,7 +486,7 @@ export default function CareNaviPage() {
         </Button>
       }
     >
-      <Module className="relative bg-[#fbfcf8] p-4 sm:p-5">
+      <Module className="relative !bg-[#fbfcf8] p-4 sm:p-5">
         <CheckOrbitMark />
 
         <div className="relative z-10">
@@ -592,7 +592,7 @@ export default function CareNaviPage() {
       </div>
       </Module>
 
-      <Module className="p-4 sm:p-5">
+      <Module className="!bg-[#fbfcf8] p-4 sm:p-5">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
             <CategoryIcon className="h-5 w-5" />
