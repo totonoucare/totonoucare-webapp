@@ -67,6 +67,10 @@ import {
 
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
 
+function getPolicyIconPath(policyKey) {
+  return `/illust/policy/policy-${policyKey}.svg`;
+}
+
 /* -----------------------------
  * Main Page
  * ---------------------------- */
@@ -1260,10 +1264,10 @@ export default function RadarPage() {
                 {safeArray(carePolicies?.policies).map((policy) => (
                   <span
                     key={policy.key}
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-[0_10px_22px_-16px_rgba(37,95,79,0.32)]"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD9CC] shadow-[0_12px_24px_-18px_rgba(37,95,79,0.35)]"
                     title={policy.guide || policy.short}
                   >
-                    <span className="h-2 w-2 rounded-full bg-[#66B9A3] shadow-[0_0_10px_rgba(102,185,163,0.22)]" />
+                    <img src={getPolicyIconPath(policy.key)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
                     {policy.label}
                   </span>
                 ))}
@@ -1277,9 +1281,9 @@ export default function RadarPage() {
             <div className="mt-4">
               <SegmentedTabs
                 tabs={[
-                  { key: "live", label: "暮らす" },
-                  { key: "eat", label: "食べる" },
-                  { key: "loosen", label: "ほぐす" },
+                  { key: "live", label: "暮らす", icon: IconLifestyle },
+                  { key: "eat", label: "食べる", icon: IconBowl },
+                  { key: "loosen", label: "ほぐす", icon: IconRipple },
                 ]}
                 value={careTab}
                 onChange={setCareTab}
