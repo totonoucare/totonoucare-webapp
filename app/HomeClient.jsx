@@ -1237,7 +1237,7 @@ export default function HomePage() {
       headerRight={
         <HomeHeaderMenu
           onGuide={() => router.push("/guide")}
-          onRegionSettings={() => router.push("/radar")}
+          onSettings={() => router.push("/settings")}
           onLogout={handleLogout}
         />
       }
