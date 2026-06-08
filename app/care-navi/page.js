@@ -486,14 +486,14 @@ export default function CareNaviPage() {
         </Button>
       }
     >
-      <Module className="relative p-4 sm:p-5">
+      <Module className="relative bg-[#fbfcf8] p-4 sm:p-5">
         <CheckOrbitMark />
 
         <div className="relative z-10">
           <ModuleHeader
             icon={<IconCare className="h-6 w-6" />}
             title="ケアアイテムナビ"
-            sub="暮らす・食べる・ほぐすの候補を選ぶ"
+            sub="体質・条件・コンディションに合わせたケアアイテムを探す"
           />
 
           <div className="px-1 pb-1 pt-4">
@@ -548,7 +548,7 @@ export default function CareNaviPage() {
                 <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になること</div>
                 <div className="text-[10px] font-bold text-slate-400">このページだけ反映</div>
               </div>
-              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              <div className="flex flex-wrap gap-2">
                 {Object.entries(SYMPTOM_LABELS).map(([key, label]) => (
                   <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>
                     {label}
