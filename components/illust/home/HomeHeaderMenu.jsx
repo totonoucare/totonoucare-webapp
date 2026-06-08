@@ -12,7 +12,7 @@ function IconMenuDots() {
   );
 }
 
-export default function HomeHeaderMenu({ onGuide, onRegionSettings, onLogout }) {
+export default function HomeHeaderMenu({ onGuide, onSettings, onRegionSettings, onLogout }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -58,11 +58,11 @@ export default function HomeHeaderMenu({ onGuide, onRegionSettings, onLogout }) 
             type="button"
             onClick={() => {
               setOpen(false);
-              onRegionSettings?.();
+              (onSettings || onRegionSettings)?.();
             }}
             className="w-full border-t border-[color:var(--ring)] px-4 py-3 text-left text-sm font-bold text-[#5b6674] hover:bg-[color-mix(in_srgb,var(--mint),white_18%)]"
           >
-            地域設定
+            設定
           </button>
           <button
             type="button"
