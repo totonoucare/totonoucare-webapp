@@ -401,13 +401,18 @@ function ResultCard({ item }) {
   const policy = POLICY_META[item.policyKey] || {};
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
+  const itemUrl = item.itemUrl || makeRakutenSearchUrl(item.query);
+  const priceText = item.price ? `${Number(item.price).toLocaleString("ja-JP")}円` : "";
+  const reviewText = item.reviewAverage && item.reviewCount
+    ? `★${Number(item.reviewAverage).toFixed(1)} / ${Number(item.reviewCount).toLocaleString("ja-JP")}件`
+    : "";
 
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring)] shadow-[0_14px_34px_-24px_rgba(40,55,48,0.24)]">
       <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--accent)]/55" />
 
       <div className="flex gap-3 pl-1">
-        <div className="grid h-[70px] w-[70px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[var(--accent-ink)] ring-1 ring-[#D8E7DC] shadow-sm">
+        <div className="grid h-[78px] w-[78px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[var(--accent-ink)] ring-1 ring-[#D8E7DC] shadow-sm">
           {item.imageUrl ? (
             <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
           ) : (
@@ -418,18 +423,26 @@ function ResultCard({ item }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <div className="text-[15px] font-black leading-6 text-slate-900">{item.title}</div>
+              <div className="line-clamp-2 text-[14px] font-black leading-6 text-slate-900">{item.title}</div>
               <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#5F8D75]">
                 <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-5 w-5 shrink-0" loading="lazy" />
                 {policy.label || item.policyKey}
               </div>
             </div>
             <span className="shrink-0 rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[var(--accent-ink)] ring-1 ring-[#D3E1D5]">
-              候補
+              楽天
             </span>
           </div>
 
-          <p className="mt-2 text-[12px] font-bold leading-6 text-slate-600">{item.reason}</p>
+          <p className="mt-2 text-[11px] font-bold leading-5 text-slate-600">{item.reason}</p>
+
+          {priceText || item.shopName || reviewText ? (
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black text-slate-500">
+              {priceText ? <span className="text-[var(--accent-ink)]">{priceText}</span> : null}
+              {item.shopName ? <span>{item.shopName}</span> : null}
+              {reviewText ? <span>{reviewText}</span> : null}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -439,16 +452,65 @@ function ResultCard({ item }) {
             {tag}
           </span>
         ))}
+        {item.query ? (
+          <span className="rounded-full bg-[#FFF8E8] px-2.5 py-1 text-[10px] font-black text-[#8A6417] ring-1 ring-[#EFE0AC]">
+            {item.query}
+          </span>
+        ) : null}
       </div>
 
       <a
-        href={makeRakutenSearchUrl(item.query)}
+        href={itemUrl}
         target="_blank"
         rel="noreferrer"
         className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(53,95,82,0.58)] hover:bg-[var(--accent-ink)]"
       >
-        楽天で探す
+        楽天で見る
       </a>
+    </div>
+  );
+}
+
+function RakutenLoadingCards() {
+  return (
+    <>
+      {[0, 1, 2].map((index) => (
+        <div
+          key={index}
+          className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring)] shadow-[0_14px_34px_-24px_rgba(40,55,48,0.24)]"
+        >
+          <div className="flex gap-3">
+            <div className="h-[78px] w-[78px] shrink-0 animate-pulse rounded-[20px] bg-slate-100" />
+            <div className="min-w-0 flex-1 space-y-2 pt-1">
+              <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-3 w-1/3 animate-pulse rounded-full bg-slate-100" />
+              <div className="h-3 w-full animate-pulse rounded-full bg-slate-100" />
+              <div className="h-3 w-2/3 animate-pulse rounded-full bg-slate-100" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function RakutenStatusCard({ error, queries }) {
+  if (error) {
+    return (
+      <div className="rounded-[22px] bg-amber-50 p-4 text-[12px] font-bold leading-6 text-amber-800 ring-1 ring-amber-100">
+        {error}
+        <div className="mt-1 text-[11px] text-amber-700">
+          APIキー未設定の場合は、Vercelの環境変数に RAKUTEN_APPLICATION_ID / RAKUTEN_ACCESS_KEY を入れてください。
+        </div>
+      </div>
+    );
+  }
+
+  if (!queries?.length) return null;
+
+  return (
+    <div className="rounded-[18px] bg-[#F8FCF9] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#E3ECE5]">
+      検索軸：{queries.slice(0, 3).join(" / ")}
     </div>
   );
 }
@@ -465,6 +527,11 @@ export default function CareNaviPage() {
   const [category, setCategory] = useState("live");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
+
+  const [rakutenItems, setRakutenItems] = useState([]);
+  const [rakutenQueries, setRakutenQueries] = useState([]);
+  const [rakutenLoading, setRakutenLoading] = useState(false);
+  const [rakutenError, setRakutenError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -584,7 +651,65 @@ export default function CareNaviPage() {
     return selectPolicyKeysFromScores(baseScores, ["sasaeru", "yurumeru"]);
   }, [basis, karteCarePreferences, tomorrowBundle, symptomKey, lifeKeys]);
 
-  const items = useMemo(() => pickCandidates(policyKeys, category), [policyKeys, category]);
+  const policyKeySignature = policyKeys.join("|");
+  const lifeKeySignature = lifeKeys.join("|");
+
+  useEffect(() => {
+    if (!policyKeys.length) {
+      setRakutenItems([]);
+      setRakutenQueries([]);
+      setRakutenError("");
+      setRakutenLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function searchRakutenItems() {
+      setRakutenLoading(true);
+      setRakutenError("");
+
+      try {
+        const res = await fetch("/api/care-navi/rakuten", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+          signal: controller.signal,
+          body: JSON.stringify({
+            category,
+            policyKeys,
+            symptomKey,
+            basis,
+            lifeKeys,
+            limit: 8,
+          }),
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json?.ok) {
+          throw new Error(json?.error || "楽天の商品候補を取得できませんでした。");
+        }
+
+        setRakutenItems(Array.isArray(json.items) ? json.items : []);
+        setRakutenQueries(Array.isArray(json.queries) ? json.queries : []);
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        setRakutenItems([]);
+        setRakutenQueries([]);
+        setRakutenError(error?.message || "楽天の商品候補を取得できませんでした。");
+      } finally {
+        if (!controller.signal.aborted) setRakutenLoading(false);
+      }
+    }
+
+    searchRakutenItems();
+
+    return () => {
+      controller.abort();
+    };
+  }, [category, policyKeySignature, symptomKey, basis, lifeKeySignature]);
+
+  const items = rakutenItems;
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
@@ -734,9 +859,19 @@ export default function CareNaviPage() {
         </div>
 
         <div className="mt-3 grid gap-3">
-          {items.map((item, index) => (
-            <ResultCard key={`${category}-${item.policyKey}-${item.title}-${index}`} item={item} />
-          ))}
+          <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
+
+          {rakutenLoading ? (
+            <RakutenLoadingCards />
+          ) : items.length ? (
+            items.map((item, index) => (
+              <ResultCard key={`${category}-${item.itemCode || item.policyKey}-${item.title}-${index}`} item={item} />
+            ))
+          ) : (
+            <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
+              条件に合う楽天商品が見つかりませんでした。合わせ方や不調を変えると候補が出る場合があります。
+            </div>
+          )}
         </div>
       </Module>
     </AppShell>
