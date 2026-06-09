@@ -166,6 +166,263 @@ const SYMPTOM_QUERY_BOOSTS = {
   },
 };
 
+
+// 不調 × ケア方針 × カテゴリ。
+// 商品そのものを固定分類するのではなく、「その不調の時に、その方針でどう使うか」で検索語と説明を決める。
+// 未定義の組み合わせは、下の POLICY_QUERY_RULES / SYMPTOM_QUERY_BOOSTS にフォールバックする。
+const CARE_QUERY_MATRIX = {
+  fatigue: {
+    sasaeru: {
+      live: [
+        ["アイマスク 耳栓 睡眠", "疲れが残りやすい日に、まず休む環境を守る候補です。", ["不調直結", "休息"]],
+        ["腹巻き お腹 冷え", "疲れた日の胃腸や下腹部を冷やしすぎない候補です。", ["回復", "お腹"]],
+      ],
+      eat: [
+        ["味噌汁 フリーズドライ", "だるい日でも温かく軽く足しやすい候補です。", ["不調直結", "軽め"]],
+        ["スープ 常温 保存", "忙しい日でも回復を削りすぎない軽い食事候補です。", ["備蓄", "軽め"]],
+      ],
+      point: [
+        ["ストレッチポール ハーフ", "疲れで丸まりやすい姿勢を一度切る候補です。", ["不調直結", "姿勢"]],
+        ["足裏 マッサージ ローラー", "疲れの重さを足元から軽く逃がす候補です。", ["足元", "回復"]],
+      ],
+    },
+    yurumeru: {
+      live: [
+        ["入浴剤 リラックス 無香料", "疲れで入りっぱなしになった力みを、入浴でほどく候補です。", ["入浴", "切り替え"]],
+        ["ホットアイマスク 温熱", "疲れ目や首肩の緊張を一度ゆるめる候補です。", ["目元", "温熱"]],
+      ],
+      eat: [["ハーブティー ノンカフェイン リラックス", "疲れた日に焦りや力みを増やしにくい飲み物候補です。", ["温かい", "休息"]]],
+      point: [["マッサージボール 首 肩", "疲れで固まりやすい首肩をピンポイントで逃がす候補です。", ["首肩", "ほぐす"]]],
+    },
+    nagasu: {
+      live: [
+        ["入浴剤 リラックス 無香料", "疲れでこもった一日の重さを、入浴で切り替える候補です。", ["入浴", "切り替え"]],
+        ["除湿シート 寝具 湿気", "寝具まわりの湿気をためにくくし、朝の重さを残しにくくする候補です。", ["寝具", "湿気"]],
+      ],
+      eat: [["はとむぎ茶 ノンカフェイン", "重だるさがある日に、甘い冷たい飲み物へ偏りにくくする候補です。", ["お茶", "軽め"]]],
+      point: [["ふくらはぎ マッサージ ローラー", "下半身の重さを足元から逃がす候補です。", ["足元", "重だるさ"]]],
+    },
+    nukumeru: {
+      live: [["腹巻き 薄手 温活", "疲れた日にお腹や腰腹まわりを冷やしにくくする候補です。", ["お腹", "温活"]]],
+      eat: [["しょうが湯 ノンカフェイン", "疲れに冷えが重なる日に、内側を冷やしっぱなしにしない候補です。", ["温かい", "香味"]]],
+      point: [["湯たんぽ 足元", "足元から冷えをゆるめ、休みやすくする候補です。", ["足元", "温め"]]],
+    },
+    shizumeru: {
+      live: [["アイマスク 遮光 睡眠", "疲れているのに頭が冴える日の刺激を減らす候補です。", ["睡眠前", "遮光"]]],
+      eat: [["ノンカフェイン お茶 リラックス", "疲れをカフェインで押し切りすぎない候補です。", ["夜向き", "お茶"]]],
+      point: [["ホットアイマスク 温熱", "目元から頭の高ぶりを落としやすくする候補です。", ["目元", "温熱"]]],
+    },
+  },
+
+  sleep: {
+    shizumeru: {
+      live: [
+        ["アイマスク 遮光 睡眠", "寝る前の光刺激を減らし、休む方向へ入りやすくする候補です。", ["不調直結", "遮光"]],
+        ["耳栓 睡眠 遮音", "音の刺激を減らして、眠る環境を整える候補です。", ["音対策", "睡眠"]],
+      ],
+      eat: [["ノンカフェイン お茶 リラックス", "夜のカフェインを避け、頭の高ぶりを増やしにくい候補です。", ["夜", "ノンカフェイン"]]],
+      point: [["ホットアイマスク 温熱", "目元から休むスイッチを入れたい時の候補です。", ["目元", "睡眠前"]]],
+    },
+    yurumeru: {
+      live: [
+        ["入浴剤 リラックス 無香料", "寝る前の力みを、入浴でほどく候補です。", ["入浴", "夜"]],
+        ["バスソルト リラックス", "眠る前に体の張りをほどく入浴候補です。", ["入浴", "リラックス"]],
+      ],
+      eat: [["カモミールティー ノンカフェイン", "夜の緊張を増やしにくい飲み物候補です。", ["お茶", "夜向き"]]],
+      point: [["ストレッチバンド やわらかい", "強くほぐさず、寝る前に軽くゆるめる候補です。", ["やさしく", "伸ばす"]]],
+    },
+    nukumeru: {
+      live: [["湯たんぽ 足元 温熱", "足元の冷えで眠りに入りにくい時の候補です。", ["足元", "冷え"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷えで休みにくい夜の温かい飲み物候補です。", ["温かい", "夜"]]],
+      point: [["温熱パッド 腰 肩", "冷えてこわばる部分を温めて休みやすくする候補です。", ["温熱", "腰肩"]]],
+    },
+    sasaeru: {
+      live: [["アイマスク 耳栓 睡眠", "睡眠の土台を崩しにくくする候補です。", ["睡眠", "回復"]]],
+      eat: [["味噌汁 フリーズドライ", "夜に食べすぎず、温かく軽く済ませたい時の候補です。", ["軽め", "温かい"]]],
+      point: [["ヨガマット ストレッチ", "寝る前に無理なく体を整える候補です。", ["ストレッチ", "床ケア"]]],
+    },
+  },
+
+  digestion: {
+    sasaeru: {
+      live: [["腹巻き お腹 冷え", "胃腸まわりを冷やさず、調子を崩しにくくする候補です。", ["不調直結", "胃腸"]]],
+      eat: [
+        ["味噌汁 フリーズドライ", "胃腸が重い日でも温かく軽く足しやすい候補です。", ["不調直結", "軽め"]],
+        ["スープ 常温 保存", "食べすぎず胃腸を支えたい日の候補です。", ["スープ", "軽め"]],
+      ],
+      point: [["足裏 マッサージ ローラー", "胃腸まわりの重さを、足元から軽く整える候補です。", ["足元", "胃腸"]]],
+    },
+    nukumeru: {
+      live: [["腹巻き 薄手 温活", "冷えで胃腸が重くなりやすい日の候補です。", ["お腹", "温活"]]],
+      eat: [["しょうが湯 ノンカフェイン", "胃腸を冷やしっぱなしにしない温かい飲み物候補です。", ["温かい", "胃腸"]]],
+      point: [["湯たんぽ 足元", "足元や下腹部から冷えを残しにくくする候補です。", ["足元", "冷え"]]],
+    },
+    nagasu: {
+      live: [["除湿剤 湿気取り 部屋", "湿気で胃腸が重くなりやすい日の空間ケア候補です。", ["湿気", "部屋"]]],
+      eat: [["はとむぎ茶 ノンカフェイン", "胃腸の重さがある日に、甘い冷たい飲み物へ偏りにくくする候補です。", ["お茶", "湿気"]]],
+      point: [["足裏 マッサージ ローラー", "胃腸の重さやだるさを、足元から逃がす候補です。", ["足裏", "重だるさ"]]],
+    },
+    meguraseru: {
+      live: [["足湯 バケツ 折りたたみ", "足元から温めて、胃腸まわりのこわばりを切り替える候補です。", ["足元", "温活"]]],
+      eat: [["黒豆茶 ノンカフェイン", "冷えや停滞を増やしにくい飲み物候補です。", ["お茶", "巡り"]]],
+      point: [["フォームローラー", "固まった姿勢を切り、胃腸まわりの巡りを邪魔しにくくする候補です。", ["姿勢", "巡り"]]],
+    },
+  },
+
+  neck_shoulder: {
+    yurumeru: {
+      live: [["ネックウォーマー 首 肩 温め", "首肩を冷やさず、こわばりをほどきやすくする候補です。", ["不調直結", "首肩"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷えや力みが出やすい日の温かい飲み物候補です。", ["温かい", "香味"]]],
+      point: [["マッサージボール 首 肩", "首肩のこわばりをピンポイントで逃がす候補です。", ["不調直結", "首肩"]]],
+    },
+    meguraseru: {
+      live: [["炭酸 入浴剤 無香料", "温浴で首肩のこわばった巡りを切り替える候補です。", ["入浴", "巡り"]]],
+      eat: [["黒豆茶 ノンカフェイン", "巡りを止めにくく、日常に足しやすい飲み物候補です。", ["お茶", "巡り"]]],
+      point: [["フォームローラー 肩甲骨", "肩甲骨まわりを大きく動かし、停滞感を切る候補です。", ["肩甲骨", "巡り"]]],
+    },
+    nukumeru: {
+      live: [["ネックウォーマー 首 肩 温め", "冷えで首肩が固まりやすい日の候補です。", ["首肩", "温める"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷えによるこわばりを増やしにくい候補です。", ["温かい", "香味"]]],
+      point: [["温熱パッド 腰 肩", "肩まわりを冷やしっぱなしにしない候補です。", ["温熱", "肩"]]],
+    },
+    shizumeru: {
+      live: [["ホットアイマスク 目元 温熱", "目元から首肩の緊張を落としやすくする候補です。", ["目元", "温熱"]]],
+      eat: [["ノンカフェイン お茶", "カフェインで押し切らず、首肩の力みを増やしにくい候補です。", ["お茶", "ノンカフェイン"]]],
+      point: [["頭皮ブラシ シリコン", "頭皮や側頭部から首肩の緊張を逃がす候補です。", ["頭皮", "首肩"]]],
+    },
+  },
+
+  low_back_pain: {
+    nukumeru: {
+      live: [["腹巻き 腰 お腹 温活", "腰腹まわりを冷やしにくくする候補です。", ["不調直結", "腰腹"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷えで腰が重くなりやすい日の温かい候補です。", ["温かい", "冷え"]]],
+      point: [["湯たんぽ 足元", "足元や腰腹まわりから冷えを残しにくくする候補です。", ["足元", "冷え"]]],
+    },
+    yurumeru: {
+      live: [["入浴剤 リラックス 無香料", "腰背部の力みを、入浴でほどく候補です。", ["入浴", "腰背中"]]],
+      eat: [["ハーブティー ノンカフェイン リラックス", "痛みで力みやすい日の温かい飲み物候補です。", ["飲み物", "リラックス"]]],
+      point: [["フォームローラー 腰 背中", "腰背部まわりを大きくゆるめたい時の候補です。", ["不調直結", "腰背中"]]],
+    },
+    meguraseru: {
+      live: [["足湯 バケツ 折りたたみ", "下半身から温めて腰まわりの停滞を切り替える候補です。", ["足元", "温活"]]],
+      eat: [["黒豆茶 ノンカフェイン", "巡りを止めにくく、冷たい飲み物へ偏りにくい候補です。", ["お茶", "巡り"]]],
+      point: [["フォームローラー", "固まった姿勢を切り、腰まわりの巡りを作る候補です。", ["姿勢", "巡り"]]],
+    },
+    sasaeru: {
+      live: [["腹巻き お腹 冷え", "腰腹まわりを支え、無理に悪化させにくくする候補です。", ["腰腹", "支える"]]],
+      eat: [["味噌汁 フリーズドライ", "腰が重い日でも胃腸を削りすぎない軽い候補です。", ["軽め", "温かい"]]],
+      point: [["ストレッチポール ハーフ", "無理に強くほぐさず、姿勢から整える候補です。", ["姿勢", "回復"]]],
+    },
+  },
+
+  swelling: {
+    nagasu: {
+      live: [["レッグウォーマー 薄手 足首", "足元を冷やしすぎず、重さを残しにくくする候補です。", ["不調直結", "足元"]]],
+      eat: [["はとむぎ茶 ノンカフェイン", "重だるさや湿気の日に足しやすい飲み物候補です。", ["不調直結", "湿気"]]],
+      point: [["ふくらはぎ マッサージ ローラー", "むくみ感や下半身の重さを足元から逃がす候補です。", ["不調直結", "むくみ"]]],
+    },
+    meguraseru: {
+      live: [["足湯 バケツ 折りたたみ", "足元を温めて、下半身の停滞を切り替える候補です。", ["足元", "巡り"]]],
+      eat: [["黒豆茶 ノンカフェイン", "水分を取りながら巡りを止めにくい候補です。", ["お茶", "巡り"]]],
+      point: [["ふくらはぎ ローラー", "下半身の重さや同じ姿勢の停滞を切る候補です。", ["足元", "巡り"]]],
+    },
+    nukumeru: {
+      live: [["レッグウォーマー 薄手 足首", "冷えで水っぽさを残しやすい足元を守る候補です。", ["足元", "冷え対策"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷たい飲み物へ偏らず、足元の重さを増やしにくい候補です。", ["温かい", "冷え"]]],
+      point: [["湯たんぽ 足元", "足元の冷えを残しにくくする候補です。", ["足元", "温め"]]],
+    },
+    sasaeru: {
+      live: [["除湿シート 寝具 湿気", "寝具まわりの湿気をためにくくし、朝の重さを残しにくくする候補です。", ["寝具", "湿気"]]],
+      eat: [["味噌汁 フリーズドライ", "むくみ感がある日でも、重い食事へ寄せすぎない候補です。", ["軽め", "温かい"]]],
+      point: [["足裏 マッサージ ローラー", "足元から軽く整えたい時の候補です。", ["足裏", "重だるさ"]]],
+    },
+  },
+
+  headache: {
+    shizumeru: {
+      live: [["アイマスク 遮光 睡眠", "光刺激や目元の負担を減らし、頭の高ぶりを増やしにくい候補です。", ["不調直結", "光対策"]]],
+      eat: [["ノンカフェイン お茶", "カフェインで押し切らず、頭の高ぶりを増やしにくい候補です。", ["不調直結", "ノンカフェイン"]]],
+      point: [["ホットアイマスク 温熱", "目元から頭のこわばりを落としやすくする候補です。", ["目元", "温熱"]]],
+    },
+    yurumeru: {
+      live: [["入浴剤 リラックス 無香料", "頭や首肩の力みを、入浴でほどく候補です。", ["入浴", "力み"]]],
+      eat: [["カモミールティー ノンカフェイン", "焦りや力みを増やしにくい飲み物候補です。", ["お茶", "夜向き"]]],
+      point: [["頭皮ブラシ シリコン", "頭皮や側頭部まわりを軽くほぐす候補です。", ["不調直結", "頭皮"]]],
+    },
+    meguraseru: {
+      live: [["炭酸 入浴剤 無香料", "温浴で首肩から頭まわりの停滞を切り替える候補です。", ["入浴", "巡り"]]],
+      eat: [["黒豆茶 ノンカフェイン", "巡りを止めにくく、日常に足しやすい飲み物候補です。", ["お茶", "巡り"]]],
+      point: [["フォームローラー 肩甲骨", "肩甲骨まわりから頭のこもりを逃がす候補です。", ["肩甲骨", "巡り"]]],
+    },
+  },
+
+  dizziness: {
+    sasaeru: {
+      live: [["アイマスク 睡眠 遮光", "刺激量を減らし、休む余白を作りたい時の候補です。", ["不調直結", "刺激を減らす"]]],
+      eat: [["味噌汁 フリーズドライ", "無理に食べず、温かく軽く足しやすい候補です。", ["不調直結", "軽め"]]],
+      point: [["足裏 マッサージ ローラー", "足元から軽く整えたい時の候補です。", ["不調直結", "足元"]]],
+    },
+    shizumeru: {
+      live: [["アイマスク 遮光 睡眠", "光や情報量を減らし、ふらつきやすい日の刺激を抑える候補です。", ["遮光", "休息"]]],
+      eat: [["ノンカフェイン お茶", "カフェインで押し切らず、刺激を増やしにくい候補です。", ["お茶", "ノンカフェイン"]]],
+      point: [["ホットアイマスク 温熱", "目元から緊張を落としたい時の候補です。", ["目元", "温熱"]]],
+    },
+    nukumeru: {
+      live: [["腹巻き 薄手 温活", "冷えでふらつきやすい日の下腹部ケア候補です。", ["お腹", "温活"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷たい飲み物へ偏らず、内側を冷やしっぱなしにしない候補です。", ["温かい", "冷え"]]],
+      point: [["湯たんぽ 足元", "足元から冷えを残しにくくする候補です。", ["足元", "冷え"]]],
+    },
+  },
+
+  mood: {
+    shizumeru: {
+      live: [["アイマスク 遮光 睡眠", "予定や通知で高ぶった頭の刺激を減らす候補です。", ["刺激を減らす", "休息"]]],
+      eat: [["ノンカフェイン お茶 リラックス", "高ぶりや焦りを増やしにくい飲み物候補です。", ["不調直結", "リラックス"]]],
+      point: [["頭皮ブラシ シリコン", "頭や気分のこもりを軽く落ち着ける候補です。", ["頭まわり", "軽く"]]],
+    },
+    yurumeru: {
+      live: [
+        ["入浴剤 リラックス 無香料", "予定や通知に押されすぎた日の力みを、入浴でほどく候補です。", ["不調直結", "入浴"]],
+        ["バスソルト リラックス", "気分の張りを、入浴でゆるめる候補です。", ["入浴", "リラックス"]],
+      ],
+      eat: [["ハーブティー ノンカフェイン リラックス", "気分の張りを増やしにくい温かい飲み物候補です。", ["飲み物", "リラックス"]]],
+      point: [["頭皮ブラシ マッサージ シリコン", "頭や気分のこもりを軽く逃がす候補です。", ["不調直結", "頭まわり"]]],
+    },
+    meguraseru: {
+      live: [
+        ["重炭酸 入浴剤 無香料", "温浴でこわばった巡りを切り替え、停滞感を残しにくくする候補です。", ["入浴", "巡り"]],
+        ["炭酸 入浴剤 無香料", "入浴で気分と体のこもりを切り替える候補です。", ["温浴", "切り替え"]],
+      ],
+      eat: [["黒豆茶 ノンカフェイン", "気分の停滞を増やしにくい、日常に足しやすい飲み物候補です。", ["お茶", "巡り"]]],
+      point: [["フォームローラー", "固まった姿勢を切り、気分の停滞を動かす候補です。", ["姿勢", "巡り"]]],
+    },
+    nagasu: {
+      live: [
+        ["入浴剤 リラックス 無香料", "気分のこもりを、入浴で一度流して切り替える候補です。", ["入浴", "切り替え"]],
+        ["炭酸 入浴剤 無香料", "こもった一日の重さを、温浴で切り替える候補です。", ["温浴", "切り替え"]],
+      ],
+      eat: [["ノンカフェイン お茶 リラックス", "甘いものやカフェインで粘らず、気分の重さを残しにくい候補です。", ["お茶", "リラックス"]]],
+      point: [["頭皮ブラシ マッサージ シリコン", "頭や気分のこもりを軽く逃がす候補です。", ["頭まわり", "ながす"]]],
+    },
+    uruosu: {
+      live: [["卓上 加湿器 寝室", "乾きや情報量で消耗しやすい日の休む環境候補です。", ["乾燥", "寝室"]]],
+      eat: [["ルイボスティー ノンカフェイン", "カフェインや甘いものへ寄せすぎず、乾きや消耗を残しにくい候補です。", ["お茶", "ノンカフェイン"]]],
+      point: [["ヨガマット ストレッチ", "強く流すより、ゆったり戻す候補です。", ["ストレッチ", "やさしく"]]],
+    },
+    nukumeru: {
+      live: [["湯たんぽ 足元 温熱", "気分が沈みやすい日に、足元から冷えを残しにくくする候補です。", ["足元", "温め"]]],
+      eat: [["しょうが湯 ノンカフェイン", "冷えと気分の重さが重なる日の温かい飲み物候補です。", ["温かい", "香味"]]],
+      point: [["温熱パッド 腰 肩", "冷えで縮こまった体を温める候補です。", ["温熱", "こわばり"]]],
+    },
+    sasaeru: {
+      live: [["アイマスク 耳栓 睡眠", "気分の波がある日に、まず休む土台を守る候補です。", ["睡眠", "回復"]]],
+      eat: [["味噌汁 フリーズドライ", "気分で食事が乱れやすい日に、温かく軽く足す候補です。", ["軽め", "温かい"]]],
+      point: [["ストレッチポール ハーフ", "無理に変えようとせず、姿勢から整える候補です。", ["姿勢", "回復"]]],
+    },
+  },
+};
+
+
 function jsonUtf8(payload, status = 200) {
   return new Response(JSON.stringify(payload, null, 2), {
     status,
@@ -179,6 +436,44 @@ function asArray(value) {
 
 function cleanKeyword(keyword) {
   return String(keyword || "").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+function uniqueStrings(items) {
+  return Array.from(new Set(asArray(items).filter(Boolean).map((item) => String(item))));
+}
+
+function getPolicyKey(key, fallback = "sasaeru") {
+  return POLICY_LABELS[key] ? key : fallback;
+}
+
+function normalizeQueryRow(row) {
+  if (!row) return null;
+
+  if (Array.isArray(row)) {
+    return {
+      keyword: row[0],
+      reason: row[1],
+      tags: row[2] || [],
+    };
+  }
+
+  return {
+    keyword: row.keyword,
+    reason: row.reason,
+    tags: row.tags || [],
+  };
+}
+
+function contextRowsFor(symptomKey, policyKey, categoryKey) {
+  return asArray(CARE_QUERY_MATRIX[symptomKey]?.[policyKey]?.[categoryKey]);
+}
+
+function fallbackPolicyRowsFor(policyKey, categoryKey) {
+  return asArray(POLICY_QUERY_RULES[categoryKey]?.[policyKey]);
+}
+
+function fallbackSymptomRowsFor(symptomKey, categoryKey) {
+  return asArray(SYMPTOM_QUERY_BOOSTS[symptomKey]?.[categoryKey]);
 }
 
 function getRakutenCredentials() {
@@ -220,40 +515,61 @@ function getAppOrigin() {
 
 function buildQueryPlans({ category, policyKeys, symptomKey }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
+  const safePolicyKeys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
+  const primaryPolicyKey = safePolicyKeys[0] || "sasaeru";
   const plans = [];
+  const seenKeywords = new Set();
 
-  asArray(SYMPTOM_QUERY_BOOSTS[symptomKey]?.[safeCategory]).forEach((row) => {
+  function addPlanFromRow(row, { policyKey, source, sourceKey }) {
+    const normalized = normalizeQueryRow(row);
+    const keyword = cleanKeyword(normalized?.keyword);
+    if (!keyword || seenKeywords.has(keyword)) return false;
+
+    const resolvedPolicyKey = getPolicyKey(policyKey, primaryPolicyKey);
+    const tags =
+      source === "symptom"
+        ? uniqueStrings(normalized.tags).slice(0, 3)
+        : uniqueStrings([POLICY_LABELS[resolvedPolicyKey], ...asArray(normalized.tags)]).slice(0, 3);
+
     plans.push({
-      keyword: row[0],
-      reason: row[1],
-      tags: row[2] || [],
-      policyKey: asArray(policyKeys)[0] || "sasaeru",
-      source: "symptom",
+      keyword,
+      reason: normalized.reason,
+      tags,
+      policyKey: resolvedPolicyKey,
+      source,
+      sourceKey: sourceKey || (source === "symptom" ? "symptom" : resolvedPolicyKey),
+      category: safeCategory,
     });
+
+    seenKeywords.add(keyword);
+    return true;
+  }
+
+  // 1本目: 不調直結。ただし検索語は「不調 × 第1方針 × カテゴリ」で決める。
+  const symptomCandidates = [
+    ...contextRowsFor(symptomKey, primaryPolicyKey, safeCategory),
+    ...fallbackSymptomRowsFor(symptomKey, safeCategory),
+    ...fallbackPolicyRowsFor(primaryPolicyKey, safeCategory),
+  ];
+  for (const row of symptomCandidates) {
+    if (addPlanFromRow(row, { policyKey: primaryPolicyKey, source: "symptom", sourceKey: "symptom" })) break;
+  }
+
+  // 2本目以降: 方針別。ただし各方針も「不調 × 方針 × カテゴリ」を優先する。
+  safePolicyKeys.forEach((policyKey) => {
+    const contextRows = contextRowsFor(symptomKey, policyKey, safeCategory);
+    const candidates = [
+      ...(policyKey === primaryPolicyKey ? contextRows.slice(1) : contextRows),
+      ...fallbackPolicyRowsFor(policyKey, safeCategory),
+      ...contextRows,
+    ];
+
+    for (const row of candidates) {
+      if (addPlanFromRow(row, { policyKey, source: "policy", sourceKey: policyKey })) break;
+    }
   });
 
-  asArray(policyKeys).forEach((policyKey) => {
-    const rows = POLICY_QUERY_RULES[safeCategory]?.[policyKey] || [];
-    rows.slice(0, 1).forEach((row) => {
-      plans.push({
-        keyword: row[0],
-        reason: row[1],
-        tags: [POLICY_LABELS[policyKey] || policyKey, ...(row[2] || [])].filter(Boolean).slice(0, 3),
-        policyKey,
-        source: "policy",
-      });
-    });
-  });
-
-  const seen = new Set();
-  return plans
-    .map((plan) => ({ ...plan, keyword: cleanKeyword(plan.keyword) }))
-    .filter((plan) => {
-      if (!plan.keyword || seen.has(plan.keyword)) return false;
-      seen.add(plan.keyword);
-      return true;
-    })
-    .slice(0, 4);
+  return plans.slice(0, 4);
 }
 
 function firstImageUrl(item) {
@@ -286,7 +602,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     tags: plan.tags,
     query: plan.keyword,
     policyKey: plan.policyKey,
-    category: plan.category,
+    category: plan.category || "live",
     imageUrl: firstImageUrl(item),
     itemUrl: url,
     price: Number.isFinite(price) && price > 0 ? price : null,
@@ -296,7 +612,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     itemCode: item?.itemCode || url || `${plan.keyword}-${planIndex}-${itemIndex}`,
     source: "rakuten",
     sourceType: plan.source || "policy",
-    sourceKey: plan.source === "symptom" ? "symptom" : plan.policyKey,
+    sourceKey: plan.sourceKey || (plan.source === "symptom" ? "symptom" : plan.policyKey),
     planIndex,
     planRank: planIndex + 1,
     score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5),
@@ -375,8 +691,9 @@ function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit =
     .forEach((quota) => addFromGroup(quota.key, quota.count));
 
   const remainingQuota = quotas.find((quota) => quota.key === "__remaining__")?.count || 0;
+  const remainingTarget = Math.min(displayLimit, displayItems.length + remainingQuota);
   for (const item of sorted) {
-    if (displayItems.length >= Math.min(displayLimit, displayItems.length + remainingQuota)) break;
+    if (displayItems.length >= remainingTarget) break;
     addItem(item);
   }
 
@@ -426,7 +743,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials) {
     "reviewAverage",
     "reviewCount",
   ].join(","));
-  url.searchParams.set("NGKeyword", "中古 レンタル 福袋 訳あり 医薬品 サプリ プロテイン ダイエット");
+  url.searchParams.set("NGKeyword", "中古 レンタル 福袋 訳あり 医薬品 サプリ プロテイン ダイエット EMS 美顔器 フットマッサージャー マッサージ機");
 
   if (credentials.affiliateId) {
     url.searchParams.set("affiliateId", credentials.affiliateId);
