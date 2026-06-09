@@ -1014,7 +1014,7 @@ export default function RadarPage() {
               <div>
                 <p className="text-sm font-black text-[#101827]">今気になる不調を変更</p>
                 <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#647386]">
-                  体質データはそのままに、予報やカルテの内容を今見たい不調に合わせて反映し直します。
+                  体質データはそのままに、予報やトリセツの内容を今見たい不調に合わせて反映し直します。
                 </p>
               </div>
               <button
