@@ -200,6 +200,24 @@ function getRakutenCredentials() {
   };
 }
 
+function getAppOrigin() {
+  const raw =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+    process.env.VERCEL_URL ||
+    "https://mibyo-radar.totonoucare.com";
+
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    return "https://mibyo-radar.totonoucare.com";
+  }
+}
+
 function buildQueryPlans({ category, policyKeys, symptomKey }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
   const plans = [];
@@ -292,7 +310,9 @@ async function searchRakutenForPlan(plan, planIndex, credentials) {
   url.searchParams.set("page", "1");
   url.searchParams.set("availability", "1");
   url.searchParams.set("imageFlag", "1");
-  url.searchParams.set("field", "1");
+  url.searchParams.set("carrier", "2");
+  url.searchParams.set("field", "0");
+  url.searchParams.set("orFlag", "1");
   url.searchParams.set("sort", "standard");
   url.searchParams.set("elements", [
     "itemName",
@@ -313,7 +333,15 @@ async function searchRakutenForPlan(plan, planIndex, credentials) {
     url.searchParams.set("affiliateId", credentials.affiliateId);
   }
 
-  const res = await fetch(url.toString(), { cache: "no-store" });
+  const appOrigin = getAppOrigin();
+
+  const res = await fetch(url.toString(), {
+    cache: "no-store",
+    headers: {
+      Referer: `${appOrigin}/`,
+      Origin: appOrigin,
+    },
+  });
   const json = await res.json().catch(() => ({}));
 
   if (res.status === 404) return [];
@@ -384,6 +412,17 @@ export async function POST(req) {
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, 8);
+
+    if (!deduped.length && errors.length === plans.length) {
+      return jsonUtf8({
+        ok: false,
+        category,
+        items: [],
+        queries: plans.map((plan) => plan.keyword),
+        errors,
+        error: errors[0]?.message || "楽天APIから商品候補を取得できませんでした。",
+      }, errors[0]?.status && Number(errors[0].status) !== 404 ? Number(errors[0].status) : 502);
+    }
 
     return jsonUtf8({
       ok: true,
