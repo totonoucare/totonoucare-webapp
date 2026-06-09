@@ -230,6 +230,59 @@ function makeRakutenSearchUrl(query) {
   return `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(query)}/`;
 }
 
+function getCareNaviAnonId() {
+  if (typeof window === "undefined") return "";
+
+  const key = "totonoucare_care_navi_anon_id";
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+
+  const generated =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `anon_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+  window.localStorage.setItem(key, generated);
+  return generated;
+}
+
+function compactForecastSummary(bundle) {
+  const forecast = bundle?.forecast || {};
+  const riskContext = getRiskContext(bundle || {});
+
+  return {
+    date: bundle?.date || forecast?.date || null,
+    riskLevel: riskContext?.level || riskContext?.riskLevel || forecast?.risk_level || null,
+    triggerFactors: getForecastTriggerFactors(forecast).slice(0, 6),
+  };
+}
+
+async function postCareItemClick({ item, itemPosition, context }) {
+  if (!item) return;
+
+  const anonId = getCareNaviAnonId();
+  const { data: sessionData } = supabase?.auth
+    ? await supabase.auth.getSession()
+    : { data: { session: null } };
+
+  await fetch("/api/care-navi/click", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(sessionData?.session?.access_token
+        ? { Authorization: `Bearer ${sessionData.session.access_token}` }
+        : {}),
+    },
+    body: JSON.stringify({
+      anonId,
+      item,
+      itemPosition,
+      context,
+    }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 function safeArray(v) {
   return Array.isArray(v) ? v : [];
 }
@@ -446,7 +499,7 @@ function CategoryTabs({ value, onChange }) {
   );
 }
 
-function ResultCard({ item }) {
+function ResultCard({ item, itemPosition, trackingContext }) {
   const policy = POLICY_META[item.policyKey] || {};
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
@@ -455,6 +508,14 @@ function ResultCard({ item }) {
   const reviewText = item.reviewAverage && item.reviewCount
     ? `★${Number(item.reviewAverage).toFixed(1)} / ${Number(item.reviewCount).toLocaleString("ja-JP")}件`
     : "";
+
+  function handleClick() {
+    postCareItemClick({
+      item: { ...item, itemUrl },
+      itemPosition,
+      context: trackingContext,
+    });
+  }
 
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring)] shadow-[0_14px_34px_-24px_rgba(40,55,48,0.24)]">
@@ -512,6 +573,7 @@ function ResultCard({ item }) {
         href={itemUrl}
         target="_blank"
         rel="noreferrer"
+        onClick={handleClick}
         className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(53,95,82,0.58)] hover:bg-[var(--accent-ink)]"
       >
         楽天で見る
@@ -820,6 +882,24 @@ export default function CareNaviPage() {
   );
   const priceBandLabel = getPriceBandLabel(category, priceBand);
 
+  const trackingContext = useMemo(() => {
+    const weatherSummary = compactForecastSummary(tomorrowBundle);
+
+    return {
+      basis,
+      category,
+      priceBand,
+      symptomKey,
+      coreCode: profileLike.core_code || null,
+      subCodes: safeArray(profileLike.sub_labels),
+      policyKeys,
+      lifeKeys,
+      weatherDate: weatherSummary.date,
+      weatherRiskLevel: weatherSummary.riskLevel,
+      weatherSummary,
+    };
+  }, [basis, category, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
+
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
   const coreIconPath = getCoreIconPath(profileLike.core_code);
@@ -975,7 +1055,12 @@ export default function CareNaviPage() {
             <RakutenLoadingCards />
           ) : visibleItems.length ? (
             visibleItems.map((item, index) => (
-              <ResultCard key={`${category}-${item.itemCode || item.policyKey}-${item.title}-${index}`} item={item} />
+              <ResultCard
+                key={`${category}-${item.itemCode || item.policyKey}-${item.title}-${index}`}
+                item={item}
+                itemPosition={index + 1}
+                trackingContext={trackingContext}
+              />
             ))
           ) : rakutenItems.length && priceBand !== "all" ? (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
