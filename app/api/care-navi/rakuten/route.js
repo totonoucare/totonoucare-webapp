@@ -295,8 +295,107 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     reviewCount: Number.isFinite(reviewCount) && reviewCount > 0 ? reviewCount : 0,
     itemCode: item?.itemCode || url || `${plan.keyword}-${planIndex}-${itemIndex}`,
     source: "rakuten",
+    sourceType: plan.source || "policy",
+    sourceKey: plan.source === "symptom" ? "symptom" : plan.policyKey,
+    planIndex,
+    planRank: planIndex + 1,
     score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5),
   };
+}
+
+function buildDisplayQuotas(policyKeys) {
+  const keys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
+
+  if (keys.length >= 3) {
+    return [
+      { key: "symptom", count: 2 },
+      { key: keys[0], count: 2 },
+      { key: keys[1], count: 2 },
+      { key: keys[2], count: 1 },
+      { key: "__remaining__", count: 1 },
+    ];
+  }
+
+  if (keys.length >= 2) {
+    return [
+      { key: "symptom", count: 2 },
+      { key: keys[0], count: 3 },
+      { key: keys[1], count: 2 },
+      { key: "__remaining__", count: 1 },
+    ];
+  }
+
+  if (keys.length === 1) {
+    return [
+      { key: "symptom", count: 2 },
+      { key: keys[0], count: 4 },
+      { key: "__remaining__", count: 2 },
+    ];
+  }
+
+  return [
+    { key: "symptom", count: 2 },
+    { key: "__remaining__", count: 6 },
+  ];
+}
+
+function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit = 24 } = {}) {
+  const sorted = asArray(items)
+    .filter(Boolean)
+    .sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+
+  const used = new Set();
+  const displayItems = [];
+
+  function itemUniqueKey(item) {
+    return item?.itemCode || item?.itemUrl || item?.title || "";
+  }
+
+  function addItem(item) {
+    const key = itemUniqueKey(item);
+    if (!key || used.has(key)) return false;
+    used.add(key);
+    displayItems.push(item);
+    return true;
+  }
+
+  function addFromGroup(groupKey, count) {
+    if (count <= 0 || displayItems.length >= displayLimit) return;
+    const candidates = sorted.filter((item) => item?.sourceKey === groupKey);
+    for (const item of candidates) {
+      if (displayItems.length >= displayLimit) break;
+      if (displayItems.filter((current) => current?.sourceKey === groupKey).length >= count) break;
+      addItem(item);
+    }
+  }
+
+  const quotas = buildDisplayQuotas(policyKeys);
+  quotas
+    .filter((quota) => quota.key !== "__remaining__")
+    .forEach((quota) => addFromGroup(quota.key, quota.count));
+
+  const remainingQuota = quotas.find((quota) => quota.key === "__remaining__")?.count || 0;
+  for (const item of sorted) {
+    if (displayItems.length >= Math.min(displayLimit, displayItems.length + remainingQuota)) break;
+    addItem(item);
+  }
+
+  for (const item of sorted) {
+    if (displayItems.length >= displayLimit) break;
+    addItem(item);
+  }
+
+  const balanced = [...displayItems];
+
+  for (const item of sorted) {
+    if (balanced.length >= totalLimit) break;
+    const key = itemUniqueKey(item);
+    if (!key || used.has(key)) continue;
+    used.add(key);
+    balanced.push(item);
+  }
+
+  return balanced.slice(0, totalLimit);
 }
 
 async function searchRakutenForPlan(plan, planIndex, credentials) {
@@ -410,10 +509,11 @@ export async function POST(req) {
         seen.add(key);
         return true;
       })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
+      .sort((a, b) => b.score - a.score);
 
-    if (!deduped.length && errors.length === plans.length) {
+    const balancedItems = selectBalancedItems(deduped, policyKeys, { displayLimit: 8, totalLimit: 24 });
+
+    if (!balancedItems.length && errors.length === plans.length) {
       return jsonUtf8({
         ok: false,
         category,
@@ -427,7 +527,7 @@ export async function POST(req) {
     return jsonUtf8({
       ok: true,
       category,
-      items: deduped,
+      items: balancedItems,
       queries: plans.map((plan) => plan.keyword),
       errors,
     });
