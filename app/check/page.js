@@ -98,11 +98,11 @@ export default function CheckLandingPage() {
   const latestSubs = getSubLabels(latestResult?.sub_labels || []);
 
   return (
-    <AppShell title="未病カルテ">
+    <AppShell title="わたしのトリセツ">
       <Module className="mb-8">
         <ModuleHeader
           icon={<IconCheck />}
-          title="未病カルテ"
+          title="わたしのトリセツ"
           sub="体質のクセと天気との相性を見える化"
         />
 
@@ -117,10 +117,10 @@ export default function CheckLandingPage() {
                     <div className="min-w-0">
                       <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">LATEST KARTE</div>
                       <div className="mt-2 text-[22px] font-black leading-tight tracking-tight text-slate-950">
-                        最新の未病カルテ
+                        最新のわたしのトリセツ
                       </div>
                       <div className="mt-2 text-[13px] font-bold leading-6 text-[#536072]">
-                        {latestCore ? `${latestCore.title}：${latestCore.short}` : "保存済みのカルテを確認できます。"}
+                        {latestCore ? `${latestCore.title}：${latestCore.short}` : "保存済みのトリセツを確認できます。"}
                       </div>
                       {latestSubs.length ? (
                         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -155,7 +155,7 @@ export default function CheckLandingPage() {
                     PERSONAL KARTE
                   </div>
                   <h1 className="mt-1 text-[25px] font-black leading-[1.18] tracking-tight text-slate-950">
-                    未病カルテを
+                    わたしのトリセツを
                     <br />
                     {latestResult ? "更新する" : "作る"}
                   </h1>
@@ -164,8 +164,8 @@ export default function CheckLandingPage() {
 
               <p className="mt-5 text-[13px] font-bold leading-7 text-[#536072]">
                 {latestResult
-                  ? "体調や気になる不調が変わったら、再チェックしてカルテを更新できます。"
-                  : "約1〜2分の質問から、あなたの体質・崩れやすいサイン・天気との相性をまとめた未病カルテを作ります。"}
+                  ? "体調や気になる不調が変わったら、再チェックしてトリセツを更新できます。"
+                  : "約1〜2分の質問から、あなたの体質・崩れやすいサイン・天気との相性をまとめたわたしのトリセツを作ります。"}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -196,10 +196,10 @@ export default function CheckLandingPage() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-[16px] font-black tracking-tight text-slate-900">
-                      過去のカルテ
+                      過去のトリセツ
                     </div>
                     <div className="mt-0.5 text-[11px] font-bold text-slate-500">
-                      未病カルテを見返す
+                      わたしのトリセツを見返す
                     </div>
                   </div>
                 </div>
@@ -216,7 +216,7 @@ export default function CheckLandingPage() {
               </div>
 
               <p className="mt-4 text-[13px] font-bold leading-7 text-[#536072]">
-                保存した過去の未病カルテを見返して、体質の変化や崩れやすいパターンを確認できます。
+                保存した過去のわたしのトリセツを見返して、体質の変化や崩れやすいパターンを確認できます。
               </p>
 
               {!loadingAuth && !isLoggedIn ? (
