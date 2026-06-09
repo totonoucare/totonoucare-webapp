@@ -28,6 +28,31 @@ const CATEGORY_OPTIONS = [
   { key: "point", label: "ほぐす", icon: IconTsubo, lead: "首肩・足元・ツボまわりの候補" },
 ];
 
+const PRICE_BAND_OPTIONS = [
+  { key: "all", label: "すべて" },
+  { key: "light", label: "お手軽" },
+  { key: "standard", label: "標準" },
+  { key: "deep", label: "しっかり" },
+];
+
+const PRICE_BAND_RANGES = {
+  live: {
+    light: { max: 2000, label: "〜2,000円" },
+    standard: { min: 2000, max: 5000, label: "2,000〜5,000円" },
+    deep: { min: 5000, label: "5,000円〜" },
+  },
+  eat: {
+    light: { max: 1200, label: "〜1,200円" },
+    standard: { min: 1200, max: 3000, label: "1,200〜3,000円" },
+    deep: { min: 3000, label: "3,000円〜" },
+  },
+  point: {
+    light: { max: 2500, label: "〜2,500円" },
+    standard: { min: 2500, max: 6000, label: "2,500〜6,000円" },
+    deep: { min: 6000, label: "6,000円〜" },
+  },
+};
+
 const BASIS_OPTIONS = [
   { key: "karte", label: "カルテ", lead: "体質チェックで見えた崩れ方のクセを手がかりにします。" },
   { key: "tomorrow", label: "明日の予報", lead: "明日の崩れやすさに備える想定で候補を寄せます。" },
@@ -323,6 +348,30 @@ function pickCandidates(policyKeys, categoryKey) {
   return rows.slice(0, 8);
 }
 
+function getPriceBandRange(categoryKey, priceBand) {
+  if (priceBand === "all") return null;
+  return PRICE_BAND_RANGES[categoryKey]?.[priceBand] || null;
+}
+
+function itemMatchesPriceBand(item, categoryKey, priceBand) {
+  if (priceBand === "all") return true;
+
+  const price = Number(item?.price || 0);
+  if (!price) return false;
+
+  const range = getPriceBandRange(categoryKey, priceBand);
+  if (!range) return true;
+
+  if (range.min && price < range.min) return false;
+  if (range.max && price > range.max) return false;
+  return true;
+}
+
+function getPriceBandLabel(categoryKey, priceBand) {
+  if (priceBand === "all") return "おすすめ順";
+  return getPriceBandRange(categoryKey, priceBand)?.label || "";
+}
+
 function getCategoryMeta(key) {
   return CATEGORY_OPTIONS.find((item) => item.key === key) || CATEGORY_OPTIONS[0];
 }
@@ -494,6 +543,44 @@ function RakutenLoadingCards() {
   );
 }
 
+function PriceBandFilter({ value, onChange, categoryKey }) {
+  return (
+    <div className="rounded-[22px] bg-[#F8FCF9] p-3 ring-1 ring-[#E3ECE5]">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">価格帯</div>
+        <div className="text-[10px] font-bold text-slate-400">おすすめ順はそのまま</div>
+      </div>
+      <div className="grid grid-cols-4 gap-1.5">
+        {PRICE_BAND_OPTIONS.map((option) => {
+          const active = value === option.key;
+          const rangeLabel = getPriceBandLabel(categoryKey, option.key);
+
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => onChange(option.key)}
+              className={[
+                "rounded-[16px] px-2 py-2 text-center transition-all ring-1",
+                active
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
+                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F9FCFA] hover:text-slate-900",
+              ].join(" ")}
+            >
+              <div className="text-[11px] font-black leading-4">{option.label}</div>
+              {option.key !== "all" ? (
+                <div className={["mt-0.5 text-[8px] font-black leading-3", active ? "text-white/80" : "text-slate-400"].join(" ")}>
+                  {rangeLabel}
+                </div>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function RakutenStatusCard({ error, queries }) {
   if (error) {
     return (
@@ -525,6 +612,7 @@ export default function CareNaviPage() {
 
   const [basis, setBasis] = useState("karte");
   const [category, setCategory] = useState("live");
+  const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
 
@@ -600,6 +688,10 @@ export default function CareNaviPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setPriceBand("all");
+  }, [category]);
 
   const symptomKey = selectedSymptom || profile?.active_symptom_focus || "fatigue";
   const symptomLabel = SYMPTOM_LABELS[symptomKey] || "今気になること";
@@ -719,7 +811,14 @@ export default function CareNaviPage() {
     };
   }, [category, policyKeySignature, symptomKey, basis, lifeKeySignature]);
 
-  const items = rakutenItems;
+  const visibleItems = useMemo(
+    () =>
+      rakutenItems
+        .filter((item) => itemMatchesPriceBand(item, category, priceBand))
+        .slice(0, 8),
+    [rakutenItems, category, priceBand]
+  );
+  const priceBandLabel = getPriceBandLabel(category, priceBand);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
@@ -870,13 +969,18 @@ export default function CareNaviPage() {
 
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
+          <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={category} />
 
           {rakutenLoading ? (
             <RakutenLoadingCards />
-          ) : items.length ? (
-            items.map((item, index) => (
+          ) : visibleItems.length ? (
+            visibleItems.map((item, index) => (
               <ResultCard key={`${category}-${item.itemCode || item.policyKey}-${item.title}-${index}`} item={item} />
             ))
+          ) : rakutenItems.length && priceBand !== "all" ? (
+            <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
+              {priceBandLabel}の候補は見つかりませんでした。「すべて」に戻すと候補を確認できます。
+            </div>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
               楽天商品候補を表示できませんでした。APIキー・許可Webサイト・アクセスキー設定を確認してください。
