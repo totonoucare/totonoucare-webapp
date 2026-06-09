@@ -126,7 +126,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
             {tab === "report" ? "週次レポートは鋭意開発中です" : "記録カレンダーは鋭意開発中です"}
           </div>
           <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
-            まずは未病予報と未病カルテ Plusを安定して使えるように整えています。
+            まずは未病予報とわたしのトリセツ Plusを安定して使えるように整えています。
             記録・カレンダー・週次レポートは、リリース後のアップデートで提供予定です。
           </div>
 
@@ -150,7 +150,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
         <div className="mt-3 grid gap-2 text-[12px] font-bold leading-6 text-slate-600">
           <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">今日・明日の未病予報</div>
           <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">天気に合わせたツボ・食養生</div>
-          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">未病カルテ Plus</div>
+          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">わたしのトリセツ Plus</div>
         </div>
       </Module>
     </AppShell>
