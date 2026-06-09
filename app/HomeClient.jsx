@@ -555,10 +555,10 @@ function ActionTile({ icon, title, sub, onClick }) {
 
 function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecondary }) {
   const hasResult = Boolean(core);
-  const primaryLabel = hasResult ? "カルテを開く" : "体質チェックから作る";
+  const primaryLabel = hasResult ? "トリセツを開く" : "体質チェックから作る";
   const primarySub = hasResult
     ? "体質・天気・ツボ・食養生をつなげて見返せます。"
-    : "体質チェック後に、あなた専用のカルテ導線が表示されます。";
+    : "体質チェック後に、あなた専用のトリセツ導線が表示されます。";
 
   return (
     <Module className="relative overflow-hidden p-6 bg-[linear-gradient(135deg,#F7FBF8_0%,#FFF9EA_100%)] ring-1 ring-[#D3E1D5] shadow-[0_20px_48px_-34px_rgba(37,95,79,0.38)]">
@@ -585,7 +585,7 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
             PERSONAL KARTE
           </div>
           <h2 className="mt-3 text-[24px] font-black tracking-tight text-slate-950 leading-[1.25]">
-            あなた専用の未病カルテ
+            あなた専用のわたしのトリセツ
           </h2>
           <p className="mt-2 text-[13px] font-extrabold leading-6 text-slate-600">
             {primarySub}
@@ -648,7 +648,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
 
   let icon = <IconCheckCard />;
   let eyebrow = "PERSONAL KARTE";
-  let title = "未病カルテを作る";
+  let title = "わたしのトリセツを作る";
   let body = "約1〜2分の体質チェックで、あなたの崩れやすいパターンと天気との相性を見える化します。";
   let primaryLabel = "無料で体質チェックを始める";
   let secondaryLabel = "使い方を見る";
@@ -657,17 +657,17 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
     icon = <IconPin />;
     eyebrow = "LOCATION";
     title = "地域を設定して予報を完成";
-    body = "未病カルテはできています。次は地域を設定して、今日・明日の未病予報に反映しましょう。";
+    body = "わたしのトリセツはできています。次は地域を設定して、今日・明日の未病予報に反映しましょう。";
     primaryLabel = "地域を設定する";
-    secondaryLabel = "未病カルテを見る";
+    secondaryLabel = "わたしのトリセツを見る";
   } else if (hasResult) {
     icon = <IconCompass className="h-5 w-5" />;
-    eyebrow = core?.title ? `${core.title}のカルテ` : "YOUR KARTE";
-    title = "未病カルテを見返す";
+    eyebrow = core?.title ? `${core.title}のトリセツ` : "YOUR KARTE";
+    title = "わたしのトリセツを見返す";
     body = core?.short
       ? `${core.short}。体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。`
       : "体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。";
-    primaryLabel = "未病カルテを見る";
+    primaryLabel = "わたしのトリセツを見る";
     secondaryLabel = "体質チェックを更新する";
   }
 
@@ -1192,10 +1192,10 @@ export default function HomePage() {
           {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
              <div className="text-[15px] font-black tracking-tight text-[#255F4F]">
-               未病カルテを作って、自分向けの未病予報へ
+               わたしのトリセツを作って、自分向けの未病予報へ
              </div>
              <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
-               1〜2分の体質チェックで、あなたの「崩れ方のクセ」を未病カルテにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
+               1〜2分の体質チェックで、あなたの「崩れ方のクセ」をわたしのトリセツにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
              </p>
              <div className="mt-5 grid gap-3">
                <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[14px] w-full">
