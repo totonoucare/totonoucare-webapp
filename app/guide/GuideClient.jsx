@@ -164,7 +164,7 @@ export default function GuidePage() {
   const tabs = useMemo(
     () => [
       { key: "start", label: "全体像" },
-      { key: "check", label: "①カルテ" },
+      { key: "check", label: "①トリセツ" },
       { key: "radar", label: "②予報" },
     ],
     []
@@ -203,7 +203,7 @@ export default function GuidePage() {
             </div>
 
             <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
-              カルテで自分の崩れ方のクセを知り、予報で今日・明日の崩れやすさを見ます。迷ったら、まずは暮らすカードから整え方を選んでください。
+              トリセツで自分の崩れ方のクセを知り、予報で今日・明日の崩れやすさを見ます。迷ったら、まずは暮らすカードから整え方を選んでください。
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-2.5">
@@ -211,7 +211,7 @@ export default function GuidePage() {
                 <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
                   <IconConstitution className="h-4 w-4" />
                 </div>
-                <div className="mt-2 text-[11px] font-black text-slate-900">カルテ</div>
+                <div className="mt-2 text-[11px] font-black text-slate-900">トリセツ</div>
                 <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">体質を知る</div>
               </div>
               <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
@@ -245,11 +245,11 @@ export default function GuidePage() {
             基本の流れ
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            まずカルテを作り、その日の予報を見て、必要なケアだけ選びます。
+            まずトリセツを作り、その日の予報を見て、必要なケアだけ選びます。
           </div>
 
           <div className="space-y-4">
-            <FlowItem num="1" title="未病カルテを作る">
+            <FlowItem num="1" title="わたしのトリセツを作る">
               質問に答えて、体質・天気との相性・負担が出やすい場所を見える化します。
             </FlowItem>
             <FlowItem num="2" title="未病予報を見る">
@@ -260,12 +260,12 @@ export default function GuidePage() {
             </FlowItem>
 
             <MiniNote>
-              基本はこの3ステップです。詳しい見方は、①カルテ・②予報のタブで確認できます。
+              基本はこの3ステップです。詳しい見方は、①トリセツ・②予報のタブで確認できます。
             </MiniNote>
 
             <div className="grid gap-3 pt-4">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">
-                未病カルテを作る
+                わたしのトリセツを作る
               </Button>
               <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">
                 未病予報を見る
@@ -279,10 +279,10 @@ export default function GuidePage() {
       {tab === "check" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            未病カルテで分かること
+            わたしのトリセツで分かること
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            病名を当てるのではなく、体調が崩れやすい方向を整理するためのカルテです。
+            病名を当てるのではなく、体調が崩れやすい方向を整理するためのトリセツです。
           </div>
 
           <div className="space-y-4">
@@ -300,12 +300,12 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              カルテは一度作ると、未病予報の土台になります。未病カルテ Plusは、不調がくり返される流れ、避けたい組み合わせ、身体ラインをさらに詳しく見るための追加ページです。
+              トリセツは一度作ると、未病予報の土台になります。わたしのトリセツ Plusは、不調がくり返される流れ、避けたい組み合わせ、身体ラインをさらに詳しく見るための追加ページです。
             </MiniNote>
 
             <div className="pt-2">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">
-                未病カルテへ
+                わたしのトリセツへ
               </Button>
             </div>
           </div>
