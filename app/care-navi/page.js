@@ -690,8 +690,18 @@ export default function CareNaviPage() {
           throw new Error(json?.error || "楽天の商品候補を取得できませんでした。");
         }
 
-        setRakutenItems(Array.isArray(json.items) ? json.items : []);
+        const nextItems = Array.isArray(json.items) ? json.items : [];
+        const apiErrors = Array.isArray(json.errors) ? json.errors.filter(Boolean) : [];
+
+        setRakutenItems(nextItems);
         setRakutenQueries(Array.isArray(json.queries) ? json.queries : []);
+
+        if (!nextItems.length && apiErrors.length) {
+          const first = apiErrors[0] || {};
+          setRakutenError(
+            `楽天APIから商品候補を取得できませんでした。${first.status ? ` status: ${first.status}` : ""}${first.message ? ` / ${first.message}` : ""}`
+          );
+        }
       } catch (error) {
         if (error?.name === "AbortError") return;
         setRakutenItems([]);
@@ -869,7 +879,7 @@ export default function CareNaviPage() {
             ))
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              条件に合う楽天商品が見つかりませんでした。合わせ方や不調を変えると候補が出る場合があります。
+              楽天商品候補を表示できませんでした。APIキー・許可Webサイト・アクセスキー設定を確認してください。
             </div>
           )}
         </div>
