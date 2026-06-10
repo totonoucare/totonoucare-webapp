@@ -249,7 +249,7 @@ export default function GuidePage() {
           </div>
 
           <div className="space-y-4">
-            <FlowItem num="1" title="わたしのトリセツを作る">
+            <FlowItem num="1" title="体質トリセツを作る">
               質問に答えて、体質・天気との相性・負担が出やすい場所を見える化します。
             </FlowItem>
             <FlowItem num="2" title="未病予報を見る">
@@ -265,7 +265,7 @@ export default function GuidePage() {
 
             <div className="grid gap-3 pt-4">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">
-                わたしのトリセツを作る
+                体質トリセツを作る
               </Button>
               <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">
                 未病予報を見る
@@ -279,7 +279,7 @@ export default function GuidePage() {
       {tab === "check" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            わたしのトリセツで分かること
+            体質トリセツで分かること
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
             病名を当てるのではなく、体調が崩れやすい方向を整理するためのトリセツです。
@@ -300,12 +300,12 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              トリセツは一度作ると、未病予報の土台になります。わたしのトリセツ Plusは、不調がくり返される流れ、避けたい組み合わせ、身体ラインをさらに詳しく見るための追加ページです。
+              トリセツは一度作ると、未病予報やケアナビの土台になります。体質・天気との相性・負担が出やすい場所を、あとから見返せます。
             </MiniNote>
 
             <div className="pt-2">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">
-                わたしのトリセツへ
+                体質トリセツへ
               </Button>
             </div>
           </div>
