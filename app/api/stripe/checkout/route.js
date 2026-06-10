@@ -57,7 +57,7 @@ async function createPersonalKarteCheckout({ req, stripe, user, body }) {
 
   if (event.user_id && !ownedByUser) {
     return NextResponse.json(
-      { error: "この診断結果のカルテを購入する権限がありません。" },
+      { error: "この診断結果のトリセツを購入する権限がありません。" },
       { status: 403 }
     );
   }
