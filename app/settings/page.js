@@ -363,7 +363,7 @@ export default function SettingsPage() {
         <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
         <Row label="メールアドレス" value={user?.email || "未ログイン"} />
         <Row
-          label="購入済みカルテ"
+          label="購入済みトリセツ"
           value={loading ? "確認中…" : `${karteCount ?? 0}件`}
           action={<Button size="sm" variant="secondary" onClick={() => router.push("/history")}>履歴へ</Button>}
         />
@@ -482,7 +482,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
-          予報や未病カルテの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
+          予報やわたしのトリセツの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
         </div>
 
         <div className="mt-4">
@@ -536,7 +536,7 @@ export default function SettingsPage() {
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[16px] font-black tracking-tight text-slate-900">使い方ガイド</div>
         <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
-          カルテ、予報、ケアカードの見方に迷った時はこちらから確認できます。
+          トリセツ、予報、ケアカードの見方に迷った時はこちらから確認できます。
         </div>
         <div className="mt-4">
           <Button variant="secondary" className="w-full bg-white" onClick={() => router.push("/guide")}>使い方ガイドを開く</Button>
