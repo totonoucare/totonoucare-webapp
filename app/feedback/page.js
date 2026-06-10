@@ -17,7 +17,7 @@ const TYPE_OPTIONS = [
 
 const PAGE_OPTIONS = [
   { value: "home", label: "ホーム" },
-  { value: "karte", label: "わたしのトリセツ" },
+  { value: "karte", label: "体質トリセツ" },
   { value: "radar", label: "未病予報" },
   { value: "guide", label: "使い方ガイド" },
   { value: "settings", label: "設定" },
