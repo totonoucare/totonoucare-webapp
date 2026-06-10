@@ -582,10 +582,10 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
 
         <div className="min-w-0 flex-1">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9] shadow-sm">
-            PERSONAL KARTE
+            TYPE GUIDE
           </div>
           <h2 className="mt-3 text-[24px] font-black tracking-tight text-slate-950 leading-[1.25]">
-            あなた専用のわたしのトリセツ
+            あなた専用の体質トリセツ
           </h2>
           <p className="mt-2 text-[13px] font-extrabold leading-6 text-slate-600">
             {primarySub}
@@ -647,8 +647,8 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   }
 
   let icon = <IconCheckCard />;
-  let eyebrow = "PERSONAL KARTE";
-  let title = "わたしのトリセツを作る";
+  let eyebrow = "TYPE GUIDE";
+  let title = "体質トリセツを作る";
   let body = "約1〜2分の体質チェックで、あなたの崩れやすいパターンと天気との相性を見える化します。";
   let primaryLabel = "無料で体質チェックを始める";
   let secondaryLabel = "使い方を見る";
@@ -657,17 +657,17 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
     icon = <IconPin />;
     eyebrow = "LOCATION";
     title = "地域を設定して予報を完成";
-    body = "わたしのトリセツはできています。次は地域を設定して、今日・明日の未病予報に反映しましょう。";
+    body = "体質トリセツはできています。次は地域を設定して、今日・明日の未病予報に反映しましょう。";
     primaryLabel = "地域を設定する";
-    secondaryLabel = "わたしのトリセツを見る";
+    secondaryLabel = "体質トリセツを見る";
   } else if (hasResult) {
     icon = <IconCompass className="h-5 w-5" />;
-    eyebrow = core?.title ? `${core.title}のトリセツ` : "YOUR KARTE";
-    title = "わたしのトリセツを見返す";
+    eyebrow = core?.title ? `${core.title}のトリセツ` : "YOUR GUIDE";
+    title = "体質トリセツを見返す";
     body = core?.short
       ? `${core.short}。体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。`
       : "体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。";
-    primaryLabel = "わたしのトリセツを見る";
+    primaryLabel = "体質トリセツを見る";
     secondaryLabel = "体質チェックを更新する";
   }
 
@@ -1056,9 +1056,6 @@ export default function HomePage() {
       ? `/result/${encodeURIComponent(latestResult.notes.source_event_id)}?from=history`
       : null;
 
-  const latestKarteId = latestResult?.source_event_id || latestResult?.notes?.source_event_id || null;
-  const latestKarteHref = latestKarteId ? `/karte/${encodeURIComponent(latestKarteId)}` : null;
-
   const core = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
   const subs = getSubLabels(latestResult?.sub_labels || []);
 
@@ -1192,10 +1189,10 @@ export default function HomePage() {
           {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
              <div className="text-[15px] font-black tracking-tight text-[#255F4F]">
-               わたしのトリセツを作って、自分向けの未病予報へ
+               体質トリセツを作って、自分向けの未病予報へ
              </div>
              <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
-               1〜2分の体質チェックで、あなたの「崩れ方のクセ」をわたしのトリセツにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
+               1〜2分の体質チェックで、あなたの「崩れ方のクセ」を体質トリセツにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
              </p>
              <div className="mt-5 grid gap-3">
                <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[14px] w-full">
@@ -1283,11 +1280,11 @@ export default function HomePage() {
         onPrimary={() => {
           if (!latestResult || !core) return router.push("/check");
           if (!radarLocation) return router.push("/radar");
-          return router.push(latestResultHref || latestKarteHref || "/history");
+          return router.push(latestResultHref || "/history");
         }}
         onSecondary={() => {
           if (!latestResult || !core) return router.push("/guide");
-          if (!radarLocation) return router.push(latestResultHref || latestKarteHref || "/history");
+          if (!radarLocation) return router.push(latestResultHref || "/history");
           return router.push("/check/run");
         }}
       />
