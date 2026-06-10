@@ -121,7 +121,7 @@ function MeridianPanelContent({ line, tone = "violet" }) {
 
 function SegmentedTabs({ value, onChange }) {
   const tabs = [
-    { key: "overview", label: "カルテ概要" },
+    { key: "overview", label: "トリセツ概要" },
     { key: "compat", label: "天気相性" },
     { key: "care", label: "整え方" },
   ];
@@ -159,7 +159,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
     return (
       <div className={compact ? "rounded-[24px] bg-emerald-50 p-5 ring-1 ring-emerald-200 text-center shadow-sm" : "rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 text-center shadow-sm"}>
         <div className="text-[16px] font-black text-emerald-800">保存済み ✅</div>
-        <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このカルテは保存されています。今日・明日の未病予報に反映できます。</div>
+        <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このトリセツは保存されています。今日・明日の未病予報に反映できます。</div>
       </div>
     );
   }
@@ -168,7 +168,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
     return (
       <div className="space-y-4">
         <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
-          <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このカルテはまだ保存されていません"}</div>
+          <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
           <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の未病予報とケア提案に反映できます。"}</div>
           {session?.user?.email ? (
             <div className="mt-3 rounded-[18px] bg-white/80 px-4 py-3 text-[12px] font-bold text-slate-600 ring-1 ring-black/5">
@@ -186,7 +186,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
   return (
     <div className="space-y-4">
       <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
-        <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このカルテはまだ保存されていません"}</div>
+        <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
         <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の未病予報とケア提案に進めます。"}</div>
       </div>
       <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">無料で保存して予報を見る</Button>
@@ -426,18 +426,18 @@ function PersonalKarteTeaser({ coreTitle, symptomLabel }) {
             <div className="min-w-0">
               <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">COMING SOON</div>
               <h2 className="mt-2 text-[25px] font-black leading-[1.35] tracking-[-0.05em] text-[#10182d]">
-                未病カルテ Plus を準備中
+                わたしのトリセツ Plus を準備中
               </h2>
               <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
-                {focusLabel}が、どの条件が重なり、どの天気・季節で強まりやすいかを読み解く保存版カルテを準備しています。
+                {focusLabel}が、どの条件が重なり、どの天気・季節で強まりやすいかを読み解く保存版トリセツを準備しています。
               </p>
             </div>
           </div>
 
           <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
-            <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料カルテの先で見えること</div>
+            <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料トリセツの先で見えること</div>
             <p className="mt-3 text-[14px] font-bold leading-7 text-[#475569]">
-              無料カルテでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、「{focusLabel}」を主役にして、前触れ・天気・生活負荷・NG組み合わせ・身体ライン・相談時に伝えることまで、ひとつながりのループとして整理する予定です。
+              無料トリセツでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、「{focusLabel}」を主役にして、前触れ・天気・生活負荷・NG組み合わせ・身体ライン・相談時に伝えることまで、ひとつながりのループとして整理する予定です。
             </p>
           </div>
 
@@ -630,9 +630,9 @@ function ResultPage({ params }) {
 
   if (loadingEvent) {
     return (
-      <AppShell title="未病カルテ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="わたしのトリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module className="border-none shadow-none">
-          <ModuleHeader icon={<IconResult />} title="カルテを読み込み中…" sub="少し待ってください" />
+          <ModuleHeader icon={<IconResult />} title="トリセツを読み込み中…" sub="少し待ってください" />
           <div className="px-5 pb-6 pt-4">
             <div className="rounded-[32px] bg-white p-8 ring-1 ring-[var(--ring)] flex flex-col items-center gap-4 shadow-sm text-center">
               <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-100 border-t-[var(--accent)]" />
@@ -646,16 +646,16 @@ function ResultPage({ params }) {
 
   if (!event || event?.notFound) {
     return (
-      <AppShell title="未病カルテ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="わたしのトリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
-          <ModuleHeader icon={<IconResult />} title="カルテが見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
+          <ModuleHeader icon={<IconResult />} title="トリセツが見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-5">
             <div className="rounded-[28px] bg-rose-50 p-6 ring-1 ring-rose-200 text-center shadow-sm">
               <div className="text-[15px] leading-relaxed text-rose-800 font-bold">
-                未病カルテを取得できませんでした。<br/>恐れ入りますが、再度チェックをお願いします。
+                わたしのトリセツを取得できませんでした。<br/>恐れ入りますが、再度チェックをお願いします。
               </div>
             </div>
-            <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">未病カルテを作り直す</Button>
+            <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">わたしのトリセツを作り直す</Button>
           </div>
         </Module>
       </AppShell>
@@ -663,7 +663,7 @@ function ResultPage({ params }) {
   }
 
   return (
-    <AppShell title="未病カルテ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+    <AppShell title="わたしのトリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
         <div className="fixed left-1/2 top-4 z-[100] w-[92%] max-w-md -translate-x-1/2 rounded-full bg-slate-900/95 backdrop-blur-md px-5 py-3.5 text-[14px] font-extrabold text-white shadow-[0_16px_32px_-12px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-top-4">
           {toast}
@@ -698,7 +698,7 @@ function ResultPage({ params }) {
               {/* 体質の軸を堂々と表示 */}
               <div className="flex flex-col items-center text-center">
                 <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
-                  あなたの未病カルテ
+                  あなたのわたしのトリセツ
                 </div>
                 <div className="mt-2 text-[32px] font-black tracking-tight text-slate-900 leading-[1.15]">
                   {core?.title || "—"}
@@ -736,7 +736,7 @@ function ResultPage({ params }) {
         <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
             <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">まだ保存されていません</div>
-            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">このカルテは一時結果です。保存すると、今日・明日の未病予報やケア提案に反映できます。</div>
+            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の未病予報やケア提案に反映できます。</div>
           </div>
         </div>
       ) : null}
@@ -819,7 +819,7 @@ function ResultPage({ params }) {
                     onSave={() => attachToAccount(false)}
                     onSignup={goSignupToRadar}
                     onLogin={goLoginToRadar}
-                    title={isLoggedIn ? "このカルテを保存して予報につなげましょう" : "無料で保存して予報を見ましょう"}
+                    title={isLoggedIn ? "このトリセツを保存して予報につなげましょう" : "無料で保存して予報を見ましょう"}
                     body={isLoggedIn
                       ? "保存すると、今日・明日の未病予報や暮らす・食べる・ほぐす提案に反映できます。"
                       : "アカウント作成後、今日・明日の崩れやすさと先回りケアを見られるようになります。"}
@@ -910,8 +910,8 @@ function ResultPage({ params }) {
                   onSignup={goSignupToRadar}
                   onLogin={goLoginToRadar}
                   compact={true}
-                  title="このカルテを保存すると、予報で使えます"
-                  body="保存すると、今日・明日の未病予報やケア提案にこのカルテが反映されます。"
+                  title="このトリセツを保存すると、予報で使えます"
+                  body="保存すると、今日・明日の未病予報やケア提案にこのトリセツが反映されます。"
                 />
               </div>
             </Card>
