@@ -203,7 +203,7 @@ function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) 
     <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
       <div className="mx-auto flex w-full max-w-[440px] items-center gap-3 rounded-[24px] border border-[#d7e6df] bg-white/96 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-black tracking-[0.14em] text-[var(--accent-ink)]">SAVE KARTE</div>
+          <div className="text-[12px] font-black tracking-[0.14em] text-[var(--accent-ink)]">SAVE GUIDE</div>
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">保存すると、今日・明日の未病予報に反映できます。</div>
         </div>
         <Button onClick={onClick} disabled={isLoggedIn && attaching} className="h-11 shrink-0 rounded-full px-5 text-[13px] shadow-md">
@@ -410,68 +410,10 @@ function buildRadarBridge({ symptomKey }) {
 }
 
 
-function PersonalKarteTeaser({ coreTitle, symptomLabel }) {
-  const focusLabel = symptomLabel || "今気になる不調";
-
-  return (
-    <section className="overflow-hidden rounded-[34px] border border-[#d7e6df] bg-white shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
-      <div className="relative p-6">
-        <div className="pointer-events-none absolute -right-10 -top-12 h-44 w-44 rounded-full bg-[#f7e8b9] opacity-70" />
-        <div className="pointer-events-none absolute right-12 top-24 h-24 w-24 rounded-full border border-[#d7e6df]" />
-        <div className="relative">
-          <div className="flex items-start gap-4">
-            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] border border-[#d7e6df] bg-[#eff8f4] text-[24px] shadow-sm">
-              <IconAnalysis className="h-7 w-7" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[11px] font-black tracking-[0.18em] text-[#2f7567]">COMING SOON</div>
-              <h2 className="mt-2 text-[25px] font-black leading-[1.35] tracking-[-0.05em] text-[#10182d]">
-                わたしのトリセツ Plus を準備中
-              </h2>
-              <p className="mt-2 text-[14px] font-black leading-7 text-[#64748b]">
-                {focusLabel}が、どの条件が重なり、どの天気・季節で強まりやすいかを読み解く保存版トリセツを準備しています。
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-[28px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
-            <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">無料トリセツの先で見えること</div>
-            <p className="mt-3 text-[14px] font-bold leading-7 text-[#475569]">
-              無料トリセツでは、{coreTitle || "あなたの体質"}としての崩れやすさと天気相性を確認できます。Plusではさらに、「{focusLabel}」を主役にして、前触れ・天気・生活負荷・NG組み合わせ・身体ライン・相談時に伝えることまで、ひとつながりのループとして整理する予定です。
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-3">
-            {[
-              "私の未病トリセツカード",
-              "不調が強くなる前の前触れサイン",
-              "重ねすぎ注意カード",
-              "からだの負担ラインとツボ候補",
-              "今日・明日の予報ページの使いどころ",
-              "専門家に相談するときの共有メモ",
-            ].map((title) => (
-              <div key={title} className="flex items-center gap-3 rounded-[22px] border border-[#e6eee9] bg-white/80 px-4 py-3">
-                <span className="h-2 w-2 rounded-full bg-[#dfa42d] shadow-[0_0_8px_rgba(223,164,45,0.35)]" />
-                <span className="text-[13px] font-black leading-6 text-[#334155]">{title}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-4">
-            <div className="text-[12px] font-black tracking-[0.16em] text-[#b17425]">ただいま準備中</div>
-            <p className="mt-2 text-[13px] font-black leading-7 text-[#8a4b1d]">
-              体質を知って終わりではなく、「自分の不調がどうくり返されるか」を見返せる形にします。公開までしばらくお待ちください。
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+function PersonalKarteTeaser() {
+  return null;
 }
 
-/* -----------------------------
- * Main Page Component
- * ---------------------------- */
 function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -630,7 +572,7 @@ function ResultPage({ params }) {
 
   if (loadingEvent) {
     return (
-      <AppShell title="わたしのトリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module className="border-none shadow-none">
           <ModuleHeader icon={<IconResult />} title="トリセツを読み込み中…" sub="少し待ってください" />
           <div className="px-5 pb-6 pt-4">
@@ -646,16 +588,16 @@ function ResultPage({ params }) {
 
   if (!event || event?.notFound) {
     return (
-      <AppShell title="わたしのトリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
           <ModuleHeader icon={<IconResult />} title="トリセツが見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-5">
             <div className="rounded-[28px] bg-rose-50 p-6 ring-1 ring-rose-200 text-center shadow-sm">
               <div className="text-[15px] leading-relaxed text-rose-800 font-bold">
-                わたしのトリセツを取得できませんでした。<br/>恐れ入りますが、再度チェックをお願いします。
+                体質トリセツを取得できませんでした。<br/>恐れ入りますが、再度チェックをお願いします。
               </div>
             </div>
-            <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">わたしのトリセツを作り直す</Button>
+            <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">体質トリセツを作り直す</Button>
           </div>
         </Module>
       </AppShell>
@@ -663,7 +605,7 @@ function ResultPage({ params }) {
   }
 
   return (
-    <AppShell title="わたしのトリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+    <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
         <div className="fixed left-1/2 top-4 z-[100] w-[92%] max-w-md -translate-x-1/2 rounded-full bg-slate-900/95 backdrop-blur-md px-5 py-3.5 text-[14px] font-extrabold text-white shadow-[0_16px_32px_-12px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-top-4">
           {toast}
@@ -698,7 +640,7 @@ function ResultPage({ params }) {
               {/* 体質の軸を堂々と表示 */}
               <div className="flex flex-col items-center text-center">
                 <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
-                  あなたのわたしのトリセツ
+                  体質トリセツ
                 </div>
                 <div className="mt-2 text-[32px] font-black tracking-tight text-slate-900 leading-[1.15]">
                   {core?.title || "—"}
@@ -748,7 +690,7 @@ function ResultPage({ params }) {
           {tab === "overview" ? (
             <>
               <Card>
-                <CardHeader icon={<IconAnalysis />} title="詳しい見立て" sub="整えポイント・張りやすい場所" />
+                <CardHeader icon={<IconAnalysis />} title="見立ての要点" sub="整えポイント・張りやすい場所" />
                 
                 {/* ★ 概要タブ：SoftPanelの入れ子を廃止し、フラットで広々とした構成へ */}
                 <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
@@ -979,7 +921,6 @@ function ResultPage({ params }) {
                 </div>
               </Card>
 
-              <PersonalKarteTeaser coreTitle={core.title} symptomLabel={symptomLabel} />
             </>
           ) : null}
 
