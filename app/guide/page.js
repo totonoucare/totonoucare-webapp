@@ -3,7 +3,7 @@ import GuideClient from "./GuideClient";
 
 const pageTitle = "使い方ガイド｜未病レーダー";
 const pageDescription =
-  "わたしのトリセツの作り方、今日・明日の未病予報の見方、暮らす・食べる・ほぐすのケアカードの使い方をまとめたガイドです。";
+  "体質トリセツの作り方、今日・明日の未病予報の見方、暮らす・食べる・ほぐすのケアカードの使い方をまとめたガイドです。";
 
 export const metadata = {
   title: pageTitle,
@@ -48,7 +48,7 @@ const structuredData = {
   step: [
     {
       "@type": "HowToStep",
-      name: "わたしのトリセツを作る",
+      name: "体質トリセツを作る",
       text: "質問に答えて、体質・天気との相性・負担が出やすい場所を整理します。",
     },
     {
