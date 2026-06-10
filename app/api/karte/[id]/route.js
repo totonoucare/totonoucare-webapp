@@ -12,7 +12,7 @@ import {
   hashKarteSource,
   isPersonalKarteAiEnabled,
 } from "@/lib/personalKarteAi";
-import { buildKartePlusMtestPointCards } from "@/lib/karte_plus/mtestPointCards";
+import { buildKarteMtestPointCards } from "@/lib/karte_plus/mtestPointCards";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -193,10 +193,10 @@ function attachBodyLineCards(baseKarte, cards = []) {
   };
 }
 
-async function enrichKartePlusTools(baseKarte, eventForKarte) {
+async function enrichKarteTools(baseKarte, eventForKarte) {
   try {
     const ctx = buildPersonalKarteContext(eventForKarte);
-    const cards = await buildKartePlusMtestPointCards({ movement: ctx?.movement || {} });
+    const cards = await buildKarteMtestPointCards({ movement: ctx?.movement || {} });
     return attachBodyLineCards(baseKarte, cards);
   } catch (error) {
     console.warn("[api.karte.plusTools] skipped:", error?.message || error);
@@ -311,7 +311,7 @@ export async function GET(req, { params }) {
       diagnosis_symptom_focus: diagnosisSymptomFocus,
       active_symptom_focus: activeSymptomFocus,
     };
-    const baseKarte = await enrichKartePlusTools(buildPersonalKarte(eventForKarte), eventForKarte);
+    const baseKarte = await enrichKarteTools(buildPersonalKarte(eventForKarte), eventForKarte);
 
     if (!unlocked) {
       return jsonNoStore({
@@ -345,7 +345,7 @@ export async function GET(req, { params }) {
           quickTakeaways: baseKarte.quickTakeaways,
           mapFlow: baseKarte.mapFlow,
           forecastUsage: baseKarte.forecastUsage,
-          kartePlusLoop: baseKarte.kartePlusLoop,
+          karteLoop: baseKarte.karteLoop,
           plusIntakeProvided: baseKarte.plusIntakeProvided,
           beautyColumn: baseKarte.beautyColumn,
           sections: getKartePreviewSections(baseKarte),
