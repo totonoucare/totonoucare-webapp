@@ -272,7 +272,7 @@ export async function GET(req, { params }) {
     // アカウントに紐づいた診断結果は、本人以外には返さない。
     if (event.user_id && !ownedByUser) {
       return jsonNoStore(
-        { error: "このカルテを見る権限がありません。" },
+        { error: "このトリセツを見る権限がありません。" },
         { status: 403 }
       );
     }
@@ -381,7 +381,7 @@ export async function GET(req, { params }) {
   } catch (error) {
     console.error("[api.karte]", error);
     return jsonNoStore(
-      { error: error?.message || "カルテの取得に失敗しました。" },
+      { error: error?.message || "トリセツの取得に失敗しました。" },
       { status: 500 }
     );
   }
