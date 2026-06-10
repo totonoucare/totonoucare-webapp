@@ -72,7 +72,7 @@ function MapFlow({ items = [] }) {
       <div className="mb-5 flex items-end justify-between gap-3">
         <div>
           <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">KARTE GUIDE</div>
-          <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">カルテの読み方</h2>
+          <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">トリセツの読み方</h2>
         </div>
         <span className="hidden rounded-full border border-[#ead7a5] bg-[#fffaf0] px-3 py-2 text-[11px] font-black text-[#b17425] md:inline-flex">
           順番で読む
@@ -439,7 +439,7 @@ function LoadingView() {
     <div className="min-h-screen bg-[#f7f7f1] px-6 py-20 text-center">
       <div className="mx-auto max-w-[680px] rounded-[34px] border border-[#d9e3dc] bg-white p-8 shadow-sm">
         <div className="mx-auto mb-5 h-12 w-12 animate-pulse rounded-full bg-[#dfeee8]" />
-        <p className="text-[16px] font-black text-[#64748b]">カルテを読み込み中です。</p>
+        <p className="text-[16px] font-black text-[#64748b]">トリセツを読み込み中です。</p>
       </div>
     </div>
   );
@@ -449,7 +449,7 @@ function ErrorView({ message }) {
   return (
     <div className="min-h-screen bg-[#f7f7f1] px-6 py-20">
       <div className="mx-auto max-w-[680px] rounded-[34px] border border-[#d9e3dc] bg-white p-8 text-center shadow-sm">
-        <p className="text-[18px] font-black text-[#10182d]">カルテを表示できませんでした</p>
+        <p className="text-[18px] font-black text-[#10182d]">トリセツを表示できませんでした</p>
         <p className="mt-3 text-[14px] font-bold leading-7 text-[#64748b]">{message}</p>
         <Link href="/" className="mt-7 inline-flex rounded-full bg-[#2f7567] px-8 py-4 text-[15px] font-black text-white shadow-[0_10px_22px_rgba(47,117,103,0.24)]">
           ホームへ戻る
@@ -483,10 +483,10 @@ export default function KarteClient() {
         cache: "no-store",
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "カルテの取得に失敗しました。");
+      if (!res.ok) throw new Error(json?.error || "トリセツの取得に失敗しました。");
       setData(json);
     } catch (err) {
-      setError(err?.message || "カルテの取得に失敗しました。");
+      setError(err?.message || "トリセツの取得に失敗しました。");
     } finally {
       setLoading(false);
     }
@@ -528,7 +528,7 @@ export default function KarteClient() {
 
   async function startCheckout() {
     if (PLUS_COMING_SOON) {
-      setError("未病カルテ Plus はただいま準備中です。公開まで少しお待ちください。");
+      setError("わたしのトリセツ Plus はただいま準備中です。公開まで少しお待ちください。");
       return;
     }
 
@@ -566,7 +566,7 @@ export default function KarteClient() {
 
   if (loading) return <LoadingView />;
   if (error && !data) return <ErrorView message={error} />;
-  if (!karte) return <ErrorView message="カルテ情報が見つかりませんでした。" />;
+  if (!karte) return <ErrorView message="トリセツ情報が見つかりませんでした。" />;
 
   return (
     <main className="min-h-screen bg-[#f7f7f1] pb-16 text-[#10182d]">
@@ -580,7 +580,7 @@ export default function KarteClient() {
             ← 戻る
           </button>
           <div className="text-center">
-            <div className="text-[18px] font-black tracking-[-0.04em]">未病カルテ Plus</div>
+            <div className="text-[18px] font-black tracking-[-0.04em]">わたしのトリセツ Plus</div>
             <div className="text-[12px] font-black text-[#8290a4]">LOOP REPORT</div>
           </div>
           <Link href="/" className="rounded-full border border-[#d9e3dc] bg-white px-5 py-3 text-[14px] font-black text-[#334155] shadow-sm">
@@ -592,7 +592,7 @@ export default function KarteClient() {
       {checkoutState === "success" && !data?.unlocked ? (
         <div className="mx-auto mt-5 max-w-[780px] px-5">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[#eff8f4] px-5 py-4 text-[14px] font-black leading-7 text-[#2f7567]">
-            決済を確認中です。数秒後にカルテが開かない場合は、ページを再読み込みしてください。
+            決済を確認中です。数秒後にトリセツが開かない場合は、ページを再読み込みしてください。
           </div>
         </div>
       ) : null}
@@ -636,10 +636,10 @@ export default function KarteClient() {
               <div>
                 <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">COMING SOON</div>
                 <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">
-                  未病カルテ Plus を準備中です
+                  わたしのトリセツ Plus を準備中です
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せる保存版カルテを準備しています。
+                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せる保存版トリセツを準備しています。
                 </p>
               </div>
               <div className="shrink-0 rounded-full border border-[#d7e6df] bg-white px-6 py-4 text-[14px] font-black text-[#2f7567] shadow-sm">
@@ -649,7 +649,7 @@ export default function KarteClient() {
           </section>
         ) : (
           <section className="flex flex-wrap items-center gap-3 rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-5 text-[15px] font-black leading-7 text-[#2f7567]">
-            <span>✅ アンロック済みです。このカルテはアプリ上でいつでも見返せます。</span>
+            <span>✅ アンロック済みです。このトリセツはアプリ上でいつでも見返せます。</span>
             <GenerationLabel generation={generation} />
           </section>
         )}
