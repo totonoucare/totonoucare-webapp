@@ -363,7 +363,7 @@ export default function SettingsPage() {
         <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
         <Row label="メールアドレス" value={user?.email || "未ログイン"} />
         <Row
-          label="購入済みトリセツ"
+          label="保存済みトリセツ"
           value={loading ? "確認中…" : `${karteCount ?? 0}件`}
           action={<Button size="sm" variant="secondary" onClick={() => router.push("/history")}>履歴へ</Button>}
         />
@@ -482,7 +482,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
-          予報やわたしのトリセツの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
+          予報や体質トリセツの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
         </div>
 
         <div className="mt-4">
