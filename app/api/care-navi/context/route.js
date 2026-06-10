@@ -95,7 +95,7 @@ export async function GET(req) {
     const { profile, missingActiveColumn } = await loadProfile(admin, user.id);
 
     if (!profile) {
-      return jsonUtf8({ ok: false, error: "わたしのトリセツがまだ保存されていません。" }, 404);
+      return jsonUtf8({ ok: false, error: "体質トリセツがまだ保存されていません。" }, 404);
     }
 
     return jsonUtf8({
