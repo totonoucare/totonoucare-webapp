@@ -54,7 +54,7 @@ const PRICE_BAND_RANGES = {
 };
 
 const BASIS_OPTIONS = [
-  { key: "karte", label: "カルテ", lead: "体質チェックで見えた崩れ方のクセを手がかりにします。" },
+  { key: "karte", label: "トリセツ", lead: "体質チェックで見えた崩れ方のクセを手がかりにします。" },
   { key: "tomorrow", label: "明日の予報", lead: "明日の崩れやすさに備える想定で候補を寄せます。" },
   { key: "season", label: "季節", lead: "今の季節に起きやすい波に合わせます。" },
   { key: "life", label: "最近の生活", lead: "最近の生活のクセを追加条件にします。" },
@@ -693,7 +693,7 @@ export default function CareNaviPage() {
 
         if (!supabase?.auth) {
           setProfile(null);
-          setProfileError("未病カルテ未適用です。");
+          setProfileError("わたしのトリセツ未適用です。");
           return;
         }
 
@@ -702,7 +702,7 @@ export default function CareNaviPage() {
 
         if (!token) {
           setProfile(null);
-          setProfileError("ログインすると未病カルテを反映できます。");
+          setProfileError("ログインするとわたしのトリセツを反映できます。");
           return;
         }
 
@@ -717,7 +717,7 @@ export default function CareNaviPage() {
           setSelectedSymptom(json.profile.active_symptom_focus || "");
         } else if (!cancelled) {
           setProfile(null);
-          setProfileError(json?.error || "未病カルテがまだありません。");
+          setProfileError(json?.error || "わたしのトリセツがまだありません。");
         }
 
         try {
@@ -737,7 +737,7 @@ export default function CareNaviPage() {
       } catch (error) {
         if (!cancelled) {
           setProfile(null);
-          setProfileError(error?.message || "未病カルテ情報を読み込めませんでした。");
+          setProfileError(error?.message || "わたしのトリセツ情報を読み込めませんでした。");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -948,11 +948,11 @@ export default function CareNaviPage() {
               </div>
               <div className="min-w-0">
                 <div className="text-[13px] font-black text-slate-900">
-                  {profile ? "未病カルテ反映済み" : "未病カルテ未適用"}
+                  {profile ? "わたしのトリセツ反映済み" : "わたしのトリセツ未適用"}
                 </div>
                 <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
                   {loading
-                    ? "カルテ情報を確認しています。"
+                    ? "トリセツ情報を確認しています。"
                     : profile
                       ? `${coreTitle || "体質傾向"}${subText ? ` / ${subText}` : ""} を手がかりにしています。`
                       : profileError || "条件だけでも候補を出せます。"}
