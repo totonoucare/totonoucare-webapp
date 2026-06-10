@@ -693,7 +693,7 @@ export default function CareNaviPage() {
 
         if (!supabase?.auth) {
           setProfile(null);
-          setProfileError("わたしのトリセツ未適用です。");
+          setProfileError("体質トリセツ未適用です。");
           return;
         }
 
@@ -702,7 +702,7 @@ export default function CareNaviPage() {
 
         if (!token) {
           setProfile(null);
-          setProfileError("ログインするとわたしのトリセツを反映できます。");
+          setProfileError("ログインすると体質トリセツを反映できます。");
           return;
         }
 
@@ -717,7 +717,7 @@ export default function CareNaviPage() {
           setSelectedSymptom(json.profile.active_symptom_focus || "");
         } else if (!cancelled) {
           setProfile(null);
-          setProfileError(json?.error || "わたしのトリセツがまだありません。");
+          setProfileError(json?.error || "体質トリセツがまだありません。");
         }
 
         try {
@@ -737,7 +737,7 @@ export default function CareNaviPage() {
       } catch (error) {
         if (!cancelled) {
           setProfile(null);
-          setProfileError(error?.message || "わたしのトリセツ情報を読み込めませんでした。");
+          setProfileError(error?.message || "体質トリセツ情報を読み込めませんでした。");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -948,7 +948,7 @@ export default function CareNaviPage() {
               </div>
               <div className="min-w-0">
                 <div className="text-[13px] font-black text-slate-900">
-                  {profile ? "わたしのトリセツ反映済み" : "わたしのトリセツ未適用"}
+                  {profile ? "体質傾向を反映済み" : "体質トリセツ未適用"}
                 </div>
                 <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
                   {loading
