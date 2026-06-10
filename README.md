@@ -34,7 +34,7 @@ docs/PRODUCT_DIRECTION.md
 ケア提案
   ほぐす / 食べる / 暮らす の3方向で、今夜からできる整え方を提案する。
 
-パーソナル未病カルテ
+パーソナルわたしのトリセツ
   診断結果から、体質傾向とセルフケア方針をまとめる。
 
 通知
@@ -84,7 +84,7 @@ Netlify Production
 ```text
 app/              Next.js App Router。画面とAPI Routes
 components/       UIコンポーネント
-lib/              診断・予報・カルテ・通知などの主要ロジック
+lib/              診断・予報・トリセツ・通知などの主要ロジック
 public/           画像・PWA・service worker
 .github/          GitHub Actions
 docs/             AI引き継ぎ、プロダクト方針、DB/環境設定メモ
