@@ -6,8 +6,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { IconRadar } from "@/components/illust/icons/app";
 
-const PRICE_LABEL = "¥1,980";
-const PLUS_COMING_SOON = true;
+const PRICE_LABEL = "";
+const _COMING_SOON = true;
 
 function cn(...values) {
   return values.filter(Boolean).join(" ");
@@ -71,7 +71,7 @@ function MapFlow({ items = [] }) {
     <section className="rounded-[34px] border border-[#d9e3dc] bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)] md:p-6">
       <div className="mb-5 flex items-end justify-between gap-3">
         <div>
-          <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">KARTE GUIDE</div>
+          <div className="text-[12px] font-black tracking-[0.18em] text-[#2f7567]">TYPE GUIDE</div>
           <h2 className="mt-2 text-[24px] font-black tracking-[-0.05em] text-[#10182d]">トリセツの読み方</h2>
         </div>
         <span className="hidden rounded-full border border-[#ead7a5] bg-[#fffaf0] px-3 py-2 text-[11px] font-black text-[#b17425] md:inline-flex">
@@ -183,7 +183,7 @@ function buildLockedPreviewBody({ section, karte, core, symptom, patternText, we
     case "season-guard":
       return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
     case "forecast-bridge":
-      return "Plusを保存版、予報ページを当日の作戦表として使う見方を整理します。";
+      return "トリセツと予報ページを使い分ける見方を整理します。";
     case "loop-overview":
       return `${core}・${patternText}・${weatherText}・${symptom}をつなげ、不調がくり返されやすい流れを整理します。`;
     case "body-pattern":
@@ -195,7 +195,7 @@ function buildLockedPreviewBody({ section, karte, core, symptom, patternText, we
     case "care-priority":
       return `7つの方針を背景材料として、戻しやすい方向と外したい負担を整理します。`;
     case "seven-day-plan":
-      return `旧レポート互換の項目です。新しいPlusでは、重ねすぎ注意カードと予報ページ活用に役割を分けます。`;
+      return `旧レポート互換の項目です。体質傾向と予報ページ活用に役割を分けます。`;
     case "season-strategy":
       return "季節ごとの注意ポイントと、早めに守りたい生活の調整を整理します。";
     case "consultation-sheet":
@@ -527,8 +527,8 @@ export default function KarteClient() {
   }, [karte]);
 
   async function startCheckout() {
-    if (PLUS_COMING_SOON) {
-      setError("わたしのトリセツ Plus はただいま準備中です。公開まで少しお待ちください。");
+    if (_COMING_SOON) {
+      setError("このページは現在アプリ内の導線からは非表示です。");
       return;
     }
 
@@ -580,8 +580,8 @@ export default function KarteClient() {
             ← 戻る
           </button>
           <div className="text-center">
-            <div className="text-[18px] font-black tracking-[-0.04em]">わたしのトリセツ Plus</div>
-            <div className="text-[12px] font-black text-[#8290a4]">LOOP REPORT</div>
+            <div className="text-[18px] font-black tracking-[-0.04em]">体質トリセツ</div>
+            <div className="text-[12px] font-black text-[#8290a4]">TYPE GUIDE</div>
           </div>
           <Link href="/" className="rounded-full border border-[#d9e3dc] bg-white px-5 py-3 text-[14px] font-black text-[#334155] shadow-sm">
             ホーム
@@ -612,7 +612,7 @@ export default function KarteClient() {
             <div className="pointer-events-none absolute right-10 top-20 h-28 w-28 rounded-full border border-[#d9e3dc]" />
             <div className="relative">
               <span className="inline-flex rounded-full border border-[#d9e3dc] bg-[#f8fbf9] px-4 py-2 text-[12px] font-black tracking-[0.16em] text-[#2f7567]">
-                LOOP REPORT
+                TYPE GUIDE
               </span>
               <h1 className="mt-5 text-[34px] font-black leading-tight tracking-[-0.06em] text-[#10182d] md:text-[44px]">
                 {karte.productName}
@@ -634,22 +634,22 @@ export default function KarteClient() {
           <section className="rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-6 shadow-[0_14px_38px_rgba(47,117,103,0.10)]">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">COMING SOON</div>
+                <div className="text-[12px] font-black tracking-[0.16em] text-[#2f7567]">非表示中</div>
                 <h2 className="mt-2 text-[24px] font-black tracking-[-0.04em] text-[#10182d]">
-                  わたしのトリセツ Plus を準備中です
+                  このページは現在非表示です
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  体質・気血津液・注意天気・経絡ラインをつなげて、警戒日の前日〜当日に使える判断基準まで見返せる保存版トリセツを準備しています。
+                  現在は、体質トリセツ・未病予報・ケアナビを優先して提供しています。
                 </p>
               </div>
               <div className="shrink-0 rounded-full border border-[#d7e6df] bg-white px-6 py-4 text-[14px] font-black text-[#2f7567] shadow-sm">
-                公開までお待ちください
+                ホームへ戻る
               </div>
             </div>
           </section>
         ) : (
           <section className="flex flex-wrap items-center gap-3 rounded-[34px] border border-[#d7e6df] bg-[#eff8f4] p-5 text-[15px] font-black leading-7 text-[#2f7567]">
-            <span>✅ アンロック済みです。このトリセツはアプリ上でいつでも見返せます。</span>
+            <span>✅ このトリセツはアプリ上で見返せます。</span>
             <GenerationLabel generation={generation} />
           </section>
         )}
