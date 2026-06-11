@@ -188,7 +188,7 @@ export function signalPanelClass(signal) {
 
 export function signalPanelSubtext(signal) {
   if (signal === 2) return "無理を詰め込みすぎず、早めのケアを意識したい日です。";
-  if (signal === 1) return "少し崩れやすさがあるので、余白を持って過ごしたい日です。";
+  if (signal === 1) return "少し崩れやすさがあるので、予定を詰めすぎず、先に休憩を入れたい日です。";
   return "天気の影響は少なめ。山場の時間だけ軽く見ておきたい日です。";
 }
 
@@ -561,9 +561,455 @@ const PEAK_PREP_ITEMS = {
   damp: ["昼食を重くしすぎない", "甘いもの・冷たい飲み物を重ねない", "食後に少しだけ歩く"],
   humidity: ["昼食を重くしすぎない", "甘いもの・冷たい飲み物を重ねない", "食後に少しだけ歩く"],
   cold: ["足首かお腹を先に守る", "冷たい飲み物を続けない", "外に出る前に首元・腰元を確認する"],
-  heat: ["暑さを我慢して押し切らない", "水分を一気飲みせずこまめに入れる", "熱がこもる前に休憩を挟む"],
+  heat: ["暑さを我慢しすぎない", "水分を一気飲みせずこまめに入れる", "熱がこもる前に休憩を挟む"],
   dry: ["喉が渇く前に少しずつ潤す", "目と喉を使いすぎない", "夜更かしで消耗を重ねない"],
 };
+
+// 予報カード本文では、気象背景をそのまま雑に混ぜず、
+// 「気象変化 → 東洋医学的な偏り → 不調文脈 → 生活語」の順で通す。
+// 基本は上位1位の背景だけを本文に反映し、2位以降は背景タグに留める。
+function normalizeWeatherContextKey(key) {
+  if (key === "humidity") return "damp";
+  return key || "pressure_down";
+}
+
+function getPrimaryWeatherKey(keys) {
+  return normalizeWeatherContextKey(keys?.[0]);
+}
+
+const WEATHER_PAIR_LABELS = {
+  damp_heat: "湿気と気温上昇",
+  damp_cold: "湿気と冷え込み",
+  dry_heat: "乾燥と気温上昇",
+  dry_cold: "乾燥と冷え込み",
+  pressure_down_damp: "気圧低下と湿気",
+  pressure_up_heat: "気圧上昇と気温上昇",
+};
+
+// 2位背景は、東洋医学的な説明に通しやすい組み合わせだけ本文に使う。
+// それ以外は背景タグに留め、本文は1位背景だけで作文する。
+function getAllowedWeatherPairKey(keys) {
+  const set = new Set(safeArray(keys).map(normalizeWeatherContextKey).filter(Boolean));
+  if (set.has("damp") && set.has("heat")) return "damp_heat";
+  if (set.has("damp") && set.has("cold")) return "damp_cold";
+  if (set.has("dry") && set.has("heat")) return "dry_heat";
+  if (set.has("dry") && set.has("cold")) return "dry_cold";
+  if (set.has("pressure_down") && set.has("damp")) return "pressure_down_damp";
+  if (set.has("pressure_up") && set.has("heat")) return "pressure_up_heat";
+  return null;
+}
+
+function getSymptomWeatherCopyKey(dictionary, symptomFocus, keys) {
+  const pairKey = getAllowedWeatherPairKey(keys);
+  if (pairKey && dictionary?.[symptomFocus]?.[pairKey]) return pairKey;
+  return getPrimaryWeatherKey(keys);
+}
+
+function getWeatherCopyLabel(copyKey, factors) {
+  if (WEATHER_PAIR_LABELS[copyKey]) return WEATHER_PAIR_LABELS[copyKey];
+  const primary = safeArray(factors)[0];
+  return primary?.label || "天気変化";
+}
+
+const SYMPTOM_WEATHER_LEADS = {
+  fatigue: {
+    pressure_down: "頭や体が重く、だるさが抜けにくい流れです。",
+    pressure_up: "張りつめが続くと、疲れを感じやすい流れです。",
+    damp: "湿で体が重く、だるさが残りやすい流れです。",
+    cold: "冷えで動き出しが重くなりやすい流れです。",
+    heat: "暑さで消耗し、疲れが出やすい流れです。",
+    dry: "乾きでうるおいを削られ、消耗感が残りやすい流れです。",
+    damp_heat: "暑湿で体が重く、暑さの消耗も重なりやすい流れです。",
+    damp_cold: "寒湿で体が重く、動き出しも鈍りやすい流れです。",
+    dry_heat: "燥熱でうるおいを削られ、消耗感が出やすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、疲れが残りやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、重だるさが残りやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめと消耗が重なりやすい流れです。",
+  },
+  sleep: {
+    pressure_down: "頭の重さや日中の眠気が、夜のリズムにも残りやすい流れです。",
+    pressure_up: "張りつめが残り、寝る前に力が抜けにくい流れです。",
+    damp: "湿で体が重く、眠気や寝起きのだるさが残りやすい流れです。",
+    cold: "冷えで体がこわばり、休みに入りにくい流れです。",
+    heat: "熱がこもると、寝つきや眠りの浅さに響きやすい流れです。",
+    dry: "目やのどの乾きから、夜に休まりにくさが残りやすい流れです。",
+    damp_heat: "暑湿で体は重いのに熱がこもり、休みに入りにくい流れです。",
+    damp_cold: "寒湿で体が重く冷えやすく、眠気や寝起きのだるさが残りやすい流れです。",
+    dry_heat: "燥熱で目やのどを消耗し、寝る前まで頭が冴えやすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、休まりにくさが残りやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、眠気や体の重さが残りやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめと熱こもりが残りやすい流れです。",
+  },
+  digestion: {
+    pressure_down: "気の巡りが落ちると、お腹の張りや胃もたれを感じやすい流れです。",
+    pressure_up: "張りつめが胃腸にも出ると、食後の重さにつながりやすい流れです。",
+    damp: "湿で胃腸まわりが重くなり、もたれや張りが出やすい流れです。",
+    cold: "冷えで胃腸の動きが鈍り、重さが残りやすい流れです。",
+    heat: "暑さで冷たいものが増えると、胃腸の負担が出やすい流れです。",
+    dry: "乾きでのどや便通のリズムにも負担が出やすい流れです。",
+    damp_heat: "暑湿で胃腸まわりが重く、冷たいものの負担も出やすい流れです。",
+    damp_cold: "寒湿で胃腸が冷えて重くなりやすい流れです。",
+    dry_heat: "燥熱でのどが渇きやすく、冷たい飲み物が胃腸に響きやすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、胃腸のリズムが乱れやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、胃腸の重さや張りが残りやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめや冷たい飲み物が胃腸に出やすい流れです。",
+  },
+  neck_shoulder: {
+    pressure_down: "頭や首肩まわりに重さが残りやすい流れです。",
+    pressure_up: "張りつめが首肩の力みに出やすい流れです。",
+    damp: "湿で重だるさが首肩に残りやすい流れです。",
+    cold: "冷えで首肩がこわばりやすい流れです。",
+    heat: "暑さで力みが抜けにくく、首肩に疲れが残りやすい流れです。",
+    dry: "目やのどの乾きから、首肩の緊張が残りやすい流れです。",
+    damp_heat: "暑湿で重だるさと力みが首肩に残りやすい流れです。",
+    damp_cold: "寒湿で首肩が冷えて重く、こわばりやすい流れです。",
+    dry_heat: "燥熱で目やのどを消耗し、首肩の力みが抜けにくい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、首肩がこわばりやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、頭から首肩に重さが残りやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、上にのぼる力みが首肩に出やすい流れです。",
+  },
+  low_back_pain: {
+    pressure_down: "体の重さが腰腹まわりにも残りやすい流れです。",
+    pressure_up: "張りつめが腰まわりの力みに出やすい流れです。",
+    damp: "湿で腰腹・下半身に重だるさが残りやすい流れです。",
+    cold: "冷えで腰腹がこわばりやすい流れです。",
+    heat: "暑さで消耗すると、腰まわりの支えが抜けやすい流れです。",
+    dry: "乾きや疲れで、腰まわりのこわばりが残りやすい流れです。",
+    damp_heat: "暑湿で腰腹・下半身に重だるさが残りやすい流れです。",
+    damp_cold: "寒湿で腰腹・下半身が冷えて重くなりやすい流れです。",
+    dry_heat: "燥熱で消耗し、腰まわりの支えが抜けやすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、腰まわりがこわばりやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、腰腹・下半身に重さが残りやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめと消耗が腰まわりに出やすい流れです。",
+  },
+  swelling: {
+    pressure_down: "水の巡りが重くなり、むくみ感が残りやすい流れです。",
+    pressure_up: "張りつめが続くと、足元の巡りが鈍りやすい流れです。",
+    damp: "湿で水はけが鈍り、顔や脚のむくみ感が出やすい流れです。",
+    cold: "冷えで水の巡りが鈍り、足元に重だるさが残りやすい流れです。",
+    heat: "暑さで水分の入れ方が乱れると、むくみ感が残りやすい流れです。",
+    dry: "乾きで水分の入れ方が偏り、むくみ感も残りやすい流れです。",
+    damp_heat: "暑湿で水分の入れ方が乱れ、むくみ感が残りやすい流れです。",
+    damp_cold: "寒湿で水の巡りが鈍り、足元に重だるさが残りやすい流れです。",
+    dry_heat: "燥熱で水分の入れ方が乱れ、むくみ感が残りやすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、足元の巡りが鈍りやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、水の巡りが重く感じやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめと水分の乱れが重なりやすい流れです。",
+  },
+  headache: {
+    pressure_down: "頭・耳・首肩まわりに重さが出やすい流れです。",
+    pressure_up: "上にのぼる力みが、頭まわりの張りにつながりやすい流れです。",
+    damp: "湿で重だるさが残ると、頭まわりも重く感じやすい流れです。",
+    cold: "冷えで首肩がこわばると、頭まわりにも響きやすい流れです。",
+    heat: "熱がこもると、頭の重さやのぼせ感につながりやすい流れです。",
+    dry: "乾きで目やのどを消耗すると、頭まわりに疲れが出やすい流れです。",
+    damp_heat: "暑湿で重だるさと熱こもりが頭まわりに出やすい流れです。",
+    damp_cold: "寒湿で首肩が冷えて重く、頭まわりにも響きやすい流れです。",
+    dry_heat: "燥熱で目やのどを消耗し、頭まわりに疲れが出やすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、首肩のこわばりが頭に響きやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、頭・耳・首肩まわりに重さが出やすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、上にのぼる力みや熱こもりが出やすい流れです。",
+  },
+  dizziness: {
+    pressure_down: "頭が重く、立ち上がりのふわつきに気づきやすい流れです。",
+    pressure_up: "張りつめや上にのぼる感じが、ふわつきにつながりやすい流れです。",
+    damp: "湿で体が重く、動き出しのふわつきに気づきやすい流れです。",
+    cold: "冷えで首肩がこわばると、動き出しに揺れを感じやすい流れです。",
+    heat: "暑さで消耗すると、ふわつきが出やすい流れです。",
+    dry: "乾きや水分不足で、ふわつきに気づきやすい流れです。",
+    damp_heat: "暑湿で体が重く、消耗によるふわつきにも気づきやすい流れです。",
+    damp_cold: "寒湿で体が重く冷えやすく、動き出しのふわつきに気づきやすい流れです。",
+    dry_heat: "燥熱で乾きと消耗が重なり、ふわつきにつながりやすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、動き出しの揺れにつながりやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で、頭の重さやふわつきに気づきやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめや消耗がふわつきにつながりやすい流れです。",
+  },
+  mood: {
+    pressure_down: "頭の重さや沈み込みが、気分にも出やすい流れです。",
+    pressure_up: "張りつめが強いと、焦りや落ち着かなさが出やすい流れです。",
+    damp: "湿で胃腸まわりが重くなると、気分の重さやだるさも出やすい流れです。",
+    cold: "冷えで動き出しが重いと、気分も内向きになりやすい流れです。",
+    heat: "熱がこもると、そわそわ感や焦りが出やすい流れです。",
+    dry: "目やのどの乾きから、集中が切れて気分も揺れやすい流れです。",
+    damp_heat: "暑湿で気分は重いのに、暑さの高ぶりも重なりやすい流れです。",
+    damp_cold: "寒湿で体が重く冷えやすく、気分も内向きになりやすい流れです。",
+    dry_heat: "燥熱で目やのどを消耗し、そわそわ感が出やすい流れです。",
+    dry_cold: "寒燥で冷えと乾きが重なり、集中が切れやすい流れです。",
+    pressure_down_damp: "気圧低下と湿で重だるさが強まり、気分も沈みやすい流れです。",
+    pressure_up_heat: "気圧上昇と暑さで、張りつめや高ぶりが出やすい流れです。",
+  },
+};
+
+const SYMPTOM_WEATHER_BODY_SIGN_LABELS = {
+  fatigue: {
+    pressure_down: ["頭や体が重く、だるさが抜けにくい", "動き出しに時間がかかりやすい"],
+    pressure_up: ["張りつめた後に疲れが出やすい", "肩の力みで消耗しやすい"],
+    damp: ["体が重だるく感じやすい", "眠気やだるさが残りやすい"],
+    cold: ["冷えで動き出しが重くなりやすい", "手足やお腹の冷えで疲れやすい"],
+    heat: ["暑さで消耗しやすい", "汗や暑さで疲れが出やすい"],
+    dry: ["乾きで疲れが抜けにくい", "のどや目の乾きで集中が切れやすい"],
+    damp_heat: ["体は重いのに暑さで消耗しやすい", "だるさと熱こもりが重なりやすい"],
+    damp_cold: ["体が重く冷えて、動き出しが鈍りやすい", "だるさと冷えが重なりやすい"],
+    dry_heat: ["乾きと暑さで消耗感が出やすい", "のどや目の乾きで疲れやすい"],
+    dry_cold: ["冷えと乾きで疲れが残りやすい", "体がこわばって休まりにくい"],
+    pressure_down_damp: ["重だるさが強まりやすい", "眠気やだるさが残りやすい"],
+    pressure_up_heat: ["張りつめと暑さで疲れやすい", "急いだ後の消耗が出やすい"],
+  },
+  sleep: {
+    pressure_down: ["日中の眠気が夜のリズムにも残りやすい", "頭の重さで寝起きが重くなりやすい"],
+    pressure_up: ["張りつめが残って眠りに入りにくい", "肩の力が抜けにくい"],
+    damp: ["湿で眠気や寝起きのだるさが残りやすい", "食後の重さが夜まで残りやすい"],
+    cold: ["冷えで体が休みに入りにくい", "朝のだるさにつながりやすい"],
+    heat: ["熱がこもって寝つきに響きやすい", "寝る前まで頭が冴えやすい"],
+    dry: ["目やのどの乾きで休まりにくい", "乾きで眠りが浅く感じやすい"],
+    damp_heat: ["体は重いのに熱がこもって寝つきに響きやすい", "眠気と寝苦しさが重なりやすい"],
+    damp_cold: ["体が重く冷えて、休みに入りにくい", "寝起きのだるさが残りやすい"],
+    dry_heat: ["乾きと熱こもりで頭が冴えやすい", "目やのどの疲れが夜まで残りやすい"],
+    dry_cold: ["冷えと乾きで体が休まりにくい", "寝る前にこわばりが残りやすい"],
+    pressure_down_damp: ["眠気と体の重さが残りやすい", "寝起きのだるさにつながりやすい"],
+    pressure_up_heat: ["張りつめと熱こもりが残りやすい", "寝る前まで頭が冴えやすい"],
+  },
+  digestion: {
+    pressure_down: ["胃腸の動きが重く感じやすい", "お腹の張りやもたれが残りやすい"],
+    pressure_up: ["張りつめが胃腸の重さに出やすい", "急いで食べると負担が出やすい"],
+    damp: ["胃腸まわりが重く感じやすい", "食後のもたれが残りやすい"],
+    cold: ["冷えで胃腸の動きが鈍りやすい", "冷たいものが響きやすい"],
+    heat: ["冷たいものが増えると胃腸に負担が出やすい", "暑さで食べ方が乱れやすい"],
+    dry: ["のどや便通の乾きに気づきやすい", "水分の入れ方が乱れやすい"],
+    damp_heat: ["胃腸の重さと冷たい飲み物の負担が重なりやすい", "もたれや張りが出やすい"],
+    damp_cold: ["胃腸が冷えて重くなりやすい", "食後のもたれが残りやすい"],
+    dry_heat: ["のどの渇きで冷たい飲み物に寄りやすい", "冷たいものが胃腸に響きやすい"],
+    dry_cold: ["冷えと乾きで胃腸のリズムが乱れやすい", "温かい水分が不足しやすい"],
+    pressure_down_damp: ["胃腸の重さや張りが残りやすい", "食後のだるさが出やすい"],
+    pressure_up_heat: ["張りつめや暑さで食べ方が乱れやすい", "冷たい飲み物が胃腸に響きやすい"],
+  },
+  neck_shoulder: {
+    pressure_down: ["頭から首肩に重さが残りやすい", "首肩のこわばりが出やすい"],
+    pressure_up: ["張りつめが首肩の力みに出やすい", "肩に力が入りやすい"],
+    damp: ["首肩に重だるさが残りやすい", "肩まわりがすっきりしにくい"],
+    cold: ["冷えで首肩がこわばりやすい", "首元を冷やすと固まりやすい"],
+    heat: ["暑さで力みが抜けにくい", "汗冷えの後に首肩が固まりやすい"],
+    dry: ["目やのどの乾きから首肩が緊張しやすい", "画面作業の疲れが首肩に残りやすい"],
+    damp_heat: ["首肩に重だるさと力みが重なりやすい", "汗や暑さで肩の力が抜けにくい"],
+    damp_cold: ["首肩が冷えて重くなりやすい", "こわばりと重だるさが重なりやすい"],
+    dry_heat: ["目の乾きと熱こもりで首肩が張りやすい", "画面疲れが首肩に出やすい"],
+    dry_cold: ["冷えと乾きで首肩がこわばりやすい", "目の疲れと首元の冷えが重なりやすい"],
+    pressure_down_damp: ["頭から首肩に重さが出やすい", "首肩の重だるさが残りやすい"],
+    pressure_up_heat: ["上にのぼる力みが首肩に出やすい", "肩の力みと暑さの消耗が重なりやすい"],
+  },
+  low_back_pain: {
+    pressure_down: ["腰腹まわりに重さが残りやすい", "下半身の動き出しが重くなりやすい"],
+    pressure_up: ["張りつめが腰まわりの力みに出やすい", "急いだ動きで腰に負担が出やすい"],
+    damp: ["腰腹・下半身に重だるさが残りやすい", "座りっぱなしで腰が重くなりやすい"],
+    cold: ["冷えで腰腹がこわばりやすい", "足元の冷えが腰に響きやすい"],
+    heat: ["暑さで消耗すると腰まわりの支えが抜けやすい", "汗冷えで腰が固まりやすい"],
+    dry: ["乾きや疲れで腰まわりのこわばりが残りやすい", "水分不足で体が固まりやすい"],
+    damp_heat: ["腰腹・下半身に重だるさが残りやすい", "暑さの消耗で腰まわりの支えが抜けやすい"],
+    damp_cold: ["腰腹・下半身が冷えて重くなりやすい", "腰のこわばりと重だるさが重なりやすい"],
+    dry_heat: ["暑さと乾きで消耗し、腰まわりの支えが抜けやすい", "水分不足で体が固まりやすい"],
+    dry_cold: ["冷えと乾きで腰まわりがこわばりやすい", "足元の冷えが腰に響きやすい"],
+    pressure_down_damp: ["腰腹・下半身に重さが残りやすい", "座りっぱなしで腰が重くなりやすい"],
+    pressure_up_heat: ["張りつめと暑さで腰まわりが疲れやすい", "急いだ動きで腰に負担が出やすい"],
+  },
+  swelling: {
+    pressure_down: ["水の巡りが重く感じやすい", "顔や脚のむくみ感が残りやすい"],
+    pressure_up: ["張りつめで足元の巡りが鈍りやすい", "同じ姿勢でむくみ感が出やすい"],
+    damp: ["顔や脚のむくみ感が出やすい", "足首まわりが重だるくなりやすい"],
+    cold: ["冷えで足元の巡りが鈍りやすい", "足首まわりが重くなりやすい"],
+    heat: ["水分の入れ方が乱れるとむくみ感が残りやすい", "暑さでだるさが脚に出やすい"],
+    dry: ["水分の入れ方が偏りやすい", "乾きと塩気でむくみ感が残りやすい"],
+    damp_heat: ["湿気と暑さでむくみ感が残りやすい", "冷たい飲み物に寄ると脚が重くなりやすい"],
+    damp_cold: ["冷えと湿気で足元の巡りが鈍りやすい", "足首まわりに重だるさが残りやすい"],
+    dry_heat: ["乾きと暑さで水分の入れ方が乱れやすい", "塩気や冷たい飲み物に寄りやすい"],
+    dry_cold: ["冷えと乾きで足元の巡りが鈍りやすい", "水分の入れ方が偏りやすい"],
+    pressure_down_damp: ["水の巡りが重く感じやすい", "顔や脚のむくみ感が残りやすい"],
+    pressure_up_heat: ["張りつめと暑さで水分の入れ方が乱れやすい", "脚のだるさが残りやすい"],
+  },
+  headache: {
+    pressure_down: ["頭・耳まわりが重くなりやすい", "首肩のこわばりが頭に響きやすい"],
+    pressure_up: ["頭まわりに張りを感じやすい", "焦りや力みが頭に響きやすい"],
+    damp: ["重だるさが頭まわりにも残りやすい", "頭がすっきりしにくい"],
+    cold: ["冷えで首肩がこわばり、頭に響きやすい", "首元の冷えで頭が重くなりやすい"],
+    heat: ["熱がこもって頭が重く感じやすい", "のぼせ感が出やすい"],
+    dry: ["目の乾きや疲れが頭に響きやすい", "のどや目の乾きで頭が疲れやすい"],
+    damp_heat: ["重だるさと熱こもりが頭まわりに出やすい", "冷たい飲み物や刺激に寄りやすい"],
+    damp_cold: ["首肩が冷えて重く、頭まわりにも響きやすい", "頭の重さとこわばりが重なりやすい"],
+    dry_heat: ["目やのどの乾きと熱こもりが頭に響きやすい", "頭まわりが冴えて疲れやすい"],
+    dry_cold: ["冷えと乾きで首肩がこわばり、頭に響きやすい", "目の疲れと首元の冷えが重なりやすい"],
+    pressure_down_damp: ["頭・耳・首肩まわりに重さが出やすい", "頭がすっきりしにくい"],
+    pressure_up_heat: ["上にのぼる力みや熱こもりが出やすい", "頭まわりに張りを感じやすい"],
+  },
+  dizziness: {
+    pressure_down: ["頭が重く、立ち上がりでふわつきやすい", "動き出しに時間がかかりやすい"],
+    pressure_up: ["張りつめや上にのぼる感じでふわつきやすい", "急いで動くと揺れやすい"],
+    damp: ["体が重く、動き出しでふわつきやすい", "重だるさで足取りが乱れやすい"],
+    cold: ["冷えで首肩がこわばり、動き出しで揺れやすい", "足元の冷えでふわつきやすい"],
+    heat: ["暑さで消耗するとふわつきやすい", "汗や暑さで立ち上がりが不安定になりやすい"],
+    dry: ["乾きや水分不足でふわつきやすい", "のどの渇きや目の疲れが出やすい"],
+    damp_heat: ["体の重さと暑さの消耗でふわつきやすい", "冷たい飲み物に寄ると動き出しが乱れやすい"],
+    damp_cold: ["体が重く冷えて、動き出しでふわつきやすい", "足元の冷えと重だるさが重なりやすい"],
+    dry_heat: ["乾きと暑さで消耗し、ふわつきやすい", "水分不足に気づきやすい"],
+    dry_cold: ["冷えと乾きで体がこわばり、動き出しで揺れやすい", "足元の冷えがふわつきに響きやすい"],
+    pressure_down_damp: ["頭の重さやふわつきに気づきやすい", "動き出しに時間がかかりやすい"],
+    pressure_up_heat: ["張りつめや暑さの消耗でふわつきやすい", "急いで動くと揺れやすい"],
+  },
+  mood: {
+    pressure_down: ["頭の重さから気分が沈みやすい", "動き出しに時間がかかりやすい"],
+    pressure_up: ["焦りや落ち着かなさが出やすい", "肩の力みが気分にも出やすい"],
+    damp: ["胃腸まわりの重さから気分も重く感じやすい", "だるさで動き出しが遅れやすい"],
+    cold: ["冷えで動き出しが重くなりやすい", "気分が内向きになりやすい"],
+    heat: ["そわそわ感や焦りが出やすい", "甘いもの・カフェインで無理に上げたくなりやすい"],
+    dry: ["目やのどの疲れで集中が切れやすい", "小さな刺激が気になりやすい"],
+    damp_heat: ["体は重いのに気分が落ち着きにくい", "甘いもの・冷たい飲み物に寄りやすい"],
+    damp_cold: ["体が重く冷えて、動き出しが遅れやすい", "気分が内向きになりやすい"],
+    dry_heat: ["目やのどの疲れでそわそわしやすい", "小さな刺激が気になりやすい"],
+    dry_cold: ["体が冷えて、目やのどの疲れも出やすい", "集中が切れやすい"],
+    pressure_down_damp: ["重だるさから気分が沈みやすい", "動き出しに時間がかかりやすい"],
+    pressure_up_heat: ["焦りや落ち着かなさが出やすい", "肩の力みが気分にも出やすい"],
+  },
+};
+
+const SYMPTOM_WEATHER_PEAK_PREP_ITEMS = {
+  fatigue: {
+    pressure_down: ["最初の作業を一つに絞る", "早めに一度休憩を入れる"],
+    pressure_up: ["急いで片付けようとせず、休憩を先に入れる", "肩の力を抜いて一呼吸置く"],
+    damp: ["昼食を重くしすぎない", "食後に少しだけ歩く"],
+    cold: ["足元かお腹を冷やさない", "動き出す前に体を軽く温める"],
+    heat: ["涼しさと水分を先に入れる", "暑い場所で粘りすぎない"],
+    dry: ["喉が渇く前に少しずつ潤す", "目を休ませる時間を作る"],
+    damp_heat: ["涼しさと水分を先に入れる", "昼食を重くしすぎない"],
+    damp_cold: ["足元かお腹を冷やさない", "食後に少しだけ歩く"],
+    dry_heat: ["涼しさと水分を先に入れる", "目と喉を休ませる"],
+    dry_cold: ["温かい飲み物を少し足す", "足元を冷やさない"],
+    pressure_down_damp: ["最初の作業を一つに絞る", "食後に少しだけ歩く"],
+    pressure_up_heat: ["急いで片付けようとしない", "涼しさと水分を先に入れる"],
+  },
+  sleep: {
+    pressure_down: ["昼寝を長くしすぎない", "寝る前に首肩と目を休ませる"],
+    pressure_up: ["寝る前に肩の力を抜く時間を作る", "夜に急ぎの作業を増やさない"],
+    damp: ["夜の食べすぎ・飲みすぎを軽くする", "寝る前に胃腸を重くしすぎない"],
+    cold: ["寝る前に足元とお腹を冷やさない", "首元を冷やしたまま寝ない"],
+    heat: ["寝る前に熱がこもる行動を減らす", "入浴後は少し涼んでから寝る"],
+    dry: ["目と喉を休ませてから寝る", "温かい飲み物を少し足す"],
+    damp_heat: ["寝る前に熱がこもる行動を減らす", "夜の食べすぎ・飲みすぎを軽くする"],
+    damp_cold: ["足元とお腹を冷やさない", "夜の食べすぎを軽くする"],
+    dry_heat: ["画面作業を早めに区切る", "入浴後は少し涼んでから寝る"],
+    dry_cold: ["目と喉を休ませる", "足元とお腹を冷やさない"],
+    pressure_down_damp: ["夜の食べすぎ・飲みすぎを軽くする", "昼寝を長くしすぎない"],
+    pressure_up_heat: ["夜に急ぎの作業を増やさない", "寝る前に熱がこもる行動を減らす"],
+  },
+  digestion: {
+    pressure_down: ["食事量を少し軽くする", "急いで食べず、食後に少し歩く"],
+    pressure_up: ["急いで食べず、食事前に一呼吸置く", "刺激の強い飲食を重ねない"],
+    damp: ["食べすぎと冷たい飲み物を重ねない", "食後に少しだけ歩く"],
+    cold: ["冷たいものを続けず、温かい汁物を足す", "お腹を冷やさない"],
+    heat: ["冷たい飲み物を一気に入れず、こまめに潤す", "刺激の強い飲食を重ねない"],
+    dry: ["温かい飲み物を少し足す", "食事を急がずよく噛む"],
+    damp_heat: ["冷たい飲み物を一気に入れない", "食べすぎと甘いものを重ねない"],
+    damp_cold: ["温かい汁物を足す", "冷たいものを続けない"],
+    dry_heat: ["冷たい飲み物を一気に入れず、こまめに潤す", "刺激の強い飲食を重ねない"],
+    dry_cold: ["温かい飲み物を少し足す", "お腹を冷やさない"],
+    pressure_down_damp: ["食事量を少し軽くする", "食後に少しだけ歩く"],
+    pressure_up_heat: ["急いで食べず、食事前に一呼吸置く", "冷たい飲み物を一気に入れない"],
+  },
+  neck_shoulder: {
+    pressure_down: ["首・耳・目まわりを先にゆるめる", "画面姿勢を一度リセットする"],
+    pressure_up: ["肩の力を抜いて一呼吸置く", "急いで片付けようとしない"],
+    damp: ["肩甲骨まわりを軽く動かす", "食後に少しだけ歩く"],
+    cold: ["首元を冷やさない", "肩を一度落としてから動く"],
+    heat: ["汗冷えする前に首元を整える", "涼しさと水分を先に入れる"],
+    dry: ["目を休ませて首肩をゆるめる", "喉が渇く前に少し潤す"],
+    damp_heat: ["涼しさと水分を先に入れる", "肩甲骨まわりを軽く動かす"],
+    damp_cold: ["首元を冷やさない", "肩甲骨まわりを軽く動かす"],
+    dry_heat: ["画面作業を区切って目を休ませる", "首肩を一度ゆるめる"],
+    dry_cold: ["首元を冷やさない", "目を休ませて首肩をゆるめる"],
+    pressure_down_damp: ["首・耳・目まわりを先にゆるめる", "肩甲骨まわりを軽く動かす"],
+    pressure_up_heat: ["肩の力を抜いて一呼吸置く", "涼しさと水分を先に入れる"],
+  },
+  low_back_pain: {
+    pressure_down: ["座りっぱなしを一度切る", "立ち上がる前に腰を小さく動かす"],
+    pressure_up: ["急に立ち上がらない", "力んだ姿勢を続けすぎない"],
+    damp: ["座りっぱなしを一度切る", "食後に少しだけ歩く"],
+    cold: ["腰腹か足首を冷やさない", "深く座る前に骨盤を小さく動かす"],
+    heat: ["暑い場所で粘りすぎない", "水分をこまめに入れる"],
+    dry: ["水分を少しずつ入れる", "同じ姿勢を続けすぎない"],
+    damp_heat: ["座りっぱなしを一度切る", "涼しさと水分を先に入れる"],
+    damp_cold: ["腰腹か足首を冷やさない", "座りっぱなしを一度切る"],
+    dry_heat: ["水分を少しずつ入れる", "暑い場所で粘りすぎない"],
+    dry_cold: ["腰腹か足首を冷やさない", "同じ姿勢を続けすぎない"],
+    pressure_down_damp: ["座りっぱなしを一度切る", "立ち上がる前に腰を小さく動かす"],
+    pressure_up_heat: ["急に立ち上がらない", "涼しさと水分を先に入れる"],
+  },
+  swelling: {
+    pressure_down: ["同じ姿勢を長く続けず、足首を動かす", "塩気と甘いものを重ねない"],
+    pressure_up: ["力んだ姿勢を続けすぎない", "足首を小さく動かす"],
+    damp: ["甘いもの・塩気・冷たい飲み物を重ねない", "足首を小さく動かす"],
+    cold: ["足元を冷やさず、同じ姿勢を続けすぎない", "足首を小さく動かす"],
+    heat: ["水分を一気飲みせず、こまめに入れる", "塩気と冷たい飲み物を重ねない"],
+    dry: ["水分を少しずつ入れる", "塩気を重ねすぎない"],
+    damp_heat: ["水分を一気飲みせず、こまめに入れる", "甘いもの・塩気・冷たい飲み物を重ねない"],
+    damp_cold: ["足元を冷やさない", "足首を小さく動かす"],
+    dry_heat: ["水分を少しずつ入れる", "塩気と冷たい飲み物を重ねない"],
+    dry_cold: ["足元を冷やさない", "水分を少しずつ入れる"],
+    pressure_down_damp: ["同じ姿勢を長く続けず、足首を動かす", "甘いもの・塩気・冷たい飲み物を重ねない"],
+    pressure_up_heat: ["力んだ姿勢を続けすぎない", "水分を一気飲みせず、こまめに入れる"],
+  },
+  headache: {
+    pressure_down: ["首・耳・目まわりを先にゆるめる", "空腹のまま画面作業を続けない"],
+    pressure_up: ["急ぎすぎず、肩の力を一度抜く", "刺激の強い飲食を重ねない"],
+    damp: ["脂っこさやお酒を重ねすぎない", "首肩を一度ゆるめる"],
+    cold: ["首元を冷やさず、肩を一度落とす", "耳まわりを軽く動かす"],
+    heat: ["熱がこもる前に涼しさと水分を入れる", "刺激の強い飲食を重ねない"],
+    dry: ["目を休ませ、喉が渇く前に少し潤す", "画面作業を区切る"],
+    damp_heat: ["熱がこもる前に涼しさと水分を入れる", "脂っこさやお酒を重ねすぎない"],
+    damp_cold: ["首元を冷やさず、肩を一度落とす", "脂っこさやお酒を重ねすぎない"],
+    dry_heat: ["目を休ませ、涼しさと水分を入れる", "刺激の強い飲食を重ねない"],
+    dry_cold: ["首元を冷やさない", "目を休ませてから作業に戻る"],
+    pressure_down_damp: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒を重ねすぎない"],
+    pressure_up_heat: ["急ぎすぎず、肩の力を一度抜く", "熱がこもる前に涼しさと水分を入れる"],
+  },
+  dizziness: {
+    pressure_down: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない"],
+    pressure_up: ["急いで動かず、一呼吸置く", "肩や首の力を抜く"],
+    damp: ["食後に少しだけ歩く", "動き出しをゆっくりにする"],
+    cold: ["足元と首元を冷やさない", "動き出しをゆっくりにする"],
+    heat: ["涼しさと水分を先に入れる", "暑い場所で粘りすぎない"],
+    dry: ["水分を少しずつ入れる", "目を休ませる"],
+    damp_heat: ["涼しさと水分を先に入れる", "動き出しをゆっくりにする"],
+    damp_cold: ["足元と首元を冷やさない", "動き出しをゆっくりにする"],
+    dry_heat: ["水分を少しずつ入れる", "暑い場所で粘りすぎない"],
+    dry_cold: ["足元と首元を冷やさない", "水分を少しずつ入れる"],
+    pressure_down_damp: ["立ち上がる前に一呼吸置く", "動き出しをゆっくりにする"],
+    pressure_up_heat: ["急いで動かず、一呼吸置く", "涼しさと水分を先に入れる"],
+  },
+  mood: {
+    pressure_down: ["最初の予定を一つに絞る", "甘いもの・カフェインで無理に上げない"],
+    pressure_up: ["急いで片付けようとせず、休憩を先に入れる", "肩の力を抜いて一呼吸置く"],
+    damp: ["予定を詰めすぎず、軽く体を動かして気分を変える", "甘いもの・冷たい飲み物を重ねない"],
+    cold: ["首元や足元を冷やさず、最初の予定を軽めにする"],
+    heat: ["涼しさと水分を先に入れて、無理に上げない", "甘いもの・カフェインで勢いをつけすぎない"],
+    dry: ["画面作業を区切り、温かい飲み物で休憩を入れる"],
+    damp_heat: ["涼しさと水分を先に入れる", "甘いもの・冷たい飲み物を重ねない", "一度に片付けようとしない"],
+    damp_cold: ["首元や足元を冷やさない", "最初の予定を一つに絞る"],
+    dry_heat: ["画面作業を区切って目を休ませる", "涼しさと水分を先に入れる"],
+    dry_cold: ["首元や足元を冷やさない", "温かい飲み物で休憩を入れる"],
+    pressure_down_damp: ["最初の予定を一つに絞る", "軽く体を動かして気分を変える"],
+    pressure_up_heat: ["急いで片付けようとせず、休憩を先に入れる", "甘いもの・カフェインで勢いをつけすぎない"],
+  },
+};
+
+
+function getSymptomWeatherLead(symptomFocus, keys) {
+  const copyKey = getSymptomWeatherCopyKey(SYMPTOM_WEATHER_LEADS, symptomFocus, safeArray(keys));
+  return SYMPTOM_WEATHER_LEADS[symptomFocus]?.[copyKey] || null;
+}
+
+function getSymptomWeatherItems(dictionary, symptomFocus, keys) {
+  const copyKey = getSymptomWeatherCopyKey(dictionary, symptomFocus, keys);
+  const items = dictionary[symptomFocus]?.[copyKey] || [];
+  return safeArray(items);
+}
+
 
 const FORECAST_SYMPTOM_LABELS = {
   fatigue: "だるさ",
@@ -583,68 +1029,68 @@ function getSymptomFocusLabel(symptomFocus) {
 
 const SYMPTOM_BODY_SIGN_LABELS = {
   fatigue: ["だるさが残りやすい", "動き出しが重くなりやすい", "休んでも抜けにくく感じやすい"],
-  sleep: ["画面・光の影響が夜まで残りやすい", "寝る前に体が休みに入りにくい", "朝の重さにつながりやすい"],
+  sleep: ["画面・光の影響が夜まで残りやすい", "寝る前に体が休みに入りにくい", "朝のだるさにつながりやすい"],
   digestion: ["胃もたれやお腹の張りが残りやすい", "食後の重さが出やすい", "冷たいものや食べすぎが負担になりやすい"],
   neck_shoulder: ["首元・肩甲骨まわりがこわばりやすい", "画面姿勢で肩の力が抜けにくい", "頭〜首の重さとして感じやすい"],
   low_back_pain: ["腰腹・骨盤まわりが重くなりやすい", "座りっぱなしで腰に残りやすい", "動き出しでこわばりを感じやすい"],
   swelling: ["顔や脚の重さが残りやすい", "足首まわりが重く感じやすい", "冷たさ・甘さ・塩気が重なりやすい"],
   headache: ["頭・目・耳まわりにこもりやすい", "首肩のこわばりが頭に響きやすい", "空腹・画面刺激のあとに頭が重くなりやすい"],
   dizziness: ["ふわつき感が出やすい", "立ち上がりで揺れを感じやすい", "首や耳まわりの緊張が残りやすい"],
-  mood: ["気分の重さや焦りが出やすい", "通知・カフェインで押すほど揺れやすい", "予定の詰め込みが負担になりやすい"],
+  mood: ["気分の重さや焦りが出やすい", "甘いもの・カフェインで無理に上げたくなりやすい", "予定の詰め込みが負担になりやすい"],
 };
 
 const SYMPTOM_STABLE_BODY_POINTS = {
   fatigue: ["午後に残る小さな重だるさ", "動き出しの重さ", "休んでも抜けにくい感じ"],
-  sleep: ["夕方以降の目・頭の冴え", "画面を見た後の休まりにくさ", "朝に残る重さ"],
+  sleep: ["夕方以降の目・頭の冴え", "画面を見た後の休まりにくさ", "朝に残るだるさ"],
   digestion: ["食後に残る小さな重さ", "お腹の張り感", "朝の胃腸の重さ"],
   neck_shoulder: ["首元・肩甲骨まわりのこわばり感", "画面姿勢が続いた後の肩の重さ", "頭〜首に残る重さ"],
   low_back_pain: ["腰腹・骨盤まわりの重さ", "座りっぱなしの後のこわばり感", "動き出しの腰の重さ"],
-  swelling: ["夕方の足首まわりの重さ", "顔や脚に残る重さ", "冷たさ・甘さ・塩気の残りやすさ"],
+  swelling: ["夕方の足首まわりの重だるさ", "顔や脚のむくみ感", "冷たさ・甘さ・塩気の残りやすさ"],
   headache: ["頭・目・耳まわりの重さ", "首肩から頭にかけてのこわばり感", "空腹・画面刺激のあとに残る頭の重さ"],
   dizziness: ["立ち上がりのふわつき", "動き出しの揺れ感", "首や耳まわりの緊張感"],
-  mood: ["気分の重さや焦り", "通知や予定切り替えの疲れ", "予定を詰めた後の余裕のなさ"],
+  mood: ["気分の重さや焦り", "あれこれ同時に進めた後の疲れ", "予定を詰めた後の余裕のなさ"],
 };
 
 const SYMPTOM_PEAK_PREP_ITEMS = {
-  fatigue: ["作業量を一つ減らして余白を残す", "空腹と食べすぎの差を小さくする", "休む余白を残して予定を詰めすぎない"],
+  fatigue: ["午後の作業を一つ減らす", "空腹と食べすぎの差を小さくする", "休憩を一つ先に入れる"],
   sleep: ["夕方以降の画面・光を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
   digestion: ["冷たいものを続けない", "食べすぎを一つ減らす", "温かい汁物かお茶を足す"],
   neck_shoulder: ["首元を冷やしたまま固めない", "画面から目を離して肩を落とす", "耳まわりと肩甲骨まわりを一度ゆるめる"],
   low_back_pain: ["座りっぱなしを一度切る", "腰腹か足首を冷やさない", "深く座る前に骨盤を小さく動かす"],
   swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねない", "同じ姿勢を長く続けない"],
   headache: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を一度リセットする"],
-  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
-  mood: ["予定を一つに絞って始める", "通知や予定の切り替えを少し減らす", "甘いもの・カフェインで押し切らない"],
+  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らず、動き出しをゆっくりにする"],
+  mood: ["予定を一つに絞って始める", "途中で別件を増やさない", "甘いもの・カフェインで無理に上げない"],
 };
 
 const SYMPTOM_STABLE_PEAK_PREP_ITEMS = {
-  fatigue: ["午後の予定を詰めすぎない", "空腹と食べすぎの差を大きくしない", "休む余白を一つ残す"],
+  fatigue: ["午後の予定を詰めすぎない", "空腹と食べすぎの差を大きくしない", "休憩を一つ先に入れる"],
   sleep: ["夕方以降の画面・光を少し控えめにする", "寝る前に目と首肩を一度休ませる", "夜の食べすぎ・飲みすぎを重ねすぎない"],
   digestion: ["冷たい飲み物を続けすぎない", "食事量を少し軽くする", "温かい汁物かお茶を一つ足す"],
   neck_shoulder: ["首元が冷えていないか確認する", "画面が続いたら肩を一度落とす", "耳まわりを軽く動かす"],
   low_back_pain: ["座りっぱなしを一度だけ切る", "腰腹か足首の冷えを確認する", "深く座る前に骨盤を小さく動かす"],
   swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねすぎない", "同じ姿勢を続けすぎない"],
   headache: ["首・耳・目まわりを一度ゆるめる", "脂っこさやお酒を重ねすぎない", "画面姿勢を一度リセットする"],
-  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動きすぎない", "首を急に振らずゆっくり切り替える"],
-  mood: ["最初の予定を一つに絞る", "通知や予定の切り替えを少し控えめにする", "甘いもの・カフェインで押し切りすぎない"],
+  dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動きすぎない", "首を急に振らず、動き出しをゆっくりにする"],
+  mood: ["最初の予定を一つに絞る", "一度に片付けようとしない", "甘いもの・カフェインで無理に上げすぎない"],
 };
 
 const SYMPTOM_HIGH_PEAK_PREP_ITEMS = {
-  fatigue: ["山場前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "予定に休む余白を先に残す"],
+  fatigue: ["山場前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "山場前に休憩を一つ入れておく"],
   sleep: ["夕方以降の画面・光を先に減らす", "寝る前に首肩と目をしっかり休ませる", "夜の食べすぎ・飲みすぎを避ける"],
   digestion: ["山場前に冷たいものを続けない", "食べすぎを先に避ける", "温かい汁物かお茶を早めに足す"],
   neck_shoulder: ["山場前に首元を冷やしたままにしない", "山場前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
   low_back_pain: ["山場前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
   swelling: ["山場前に足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を先に重ねない", "同じ姿勢を長く続けない"],
-  headache: ["山場前に首・耳・目まわりをゆるめる", "脂っこさやお酒でこもらせない", "画面姿勢を先にリセットする"],
-  dizziness: ["動き出す前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らずゆっくり切り替える"],
-  mood: ["山場前に予定を一つに絞る", "通知や予定の切り替えを先に減らす", "甘いもの・カフェインで押し切らない"],
+  headache: ["山場前に首・耳・目まわりをゆるめる", "脂っこさやお酒を重ねすぎない", "画面姿勢を先にリセットする"],
+  dizziness: ["動き出す前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らず、動き出しをゆっくりにする"],
+  mood: ["山場前に予定を一つに絞る", "山場前に途中で別件を増やさない", "甘いもの・カフェインで無理に上げない"],
 };
 
 const SYMPTOM_MODE_HINTS = {
   fatigue: {
     today: "だるさを見ているなら、動きを増やすより消耗を足さないことを優先します。",
-    tomorrow: "だるさを見ているなら、今夜のうちに予定量を少し軽くしておくと安心です。",
+    tomorrow: "だるさを見ているなら、今夜のうちに予定を一つ軽くしておくと安心です。",
   },
   sleep: {
     today: "睡眠を見ているなら、夜まで画面・光や食後の重さを持ち越さない流れに寄せます。",
@@ -671,12 +1117,12 @@ const SYMPTOM_MODE_HINTS = {
     tomorrow: "頭痛を見ているなら、今夜から首肩と耳まわりを固めない準備が合います。",
   },
   dizziness: {
-    today: "めまいを見ているなら、空腹や急な姿勢変更を避けて、切り替えをゆっくりにします。",
+    today: "めまいを見ているなら、空腹や急な姿勢変更を避けて、動き出しをゆっくりにします。",
     tomorrow: "めまいを見ているなら、明朝の動き出しを急がない準備をしておくと安心です。",
   },
   mood: {
-    today: "気分を見ているなら、通知やカフェインで押し切るより、予定量を少し軽くします。",
-    tomorrow: "気分を見ているなら、今夜の通知・予定量を下げて、明日の始まりを軽くしておくのが合います。",
+    today: "気分を見ているなら、甘いものやカフェインで無理に上げるより、予定を一つ軽くします。",
+    tomorrow: "気分を見ているなら、今夜は予定を一つ軽くし、画面時間も早めに区切る準備が合います。",
   },
 };
 
@@ -726,7 +1172,7 @@ const FORECAST_SYMPTOM_LEAD_CLAUSES = {
     high: "ふわつきが強く出やすい",
   },
   mood: {
-    low: "通知や予定量の影響が気分に少し出る見込み",
+    low: "気分の重さや焦りが少し出る見込み",
     middle: "気分が揺れやすい",
     high: "気分が強く揺れやすい",
   },
@@ -799,9 +1245,9 @@ function softenPeakPrepItem(text) {
   const raw = String(text || "").trim();
   if (!raw) return "";
   return raw
-    .replace("作業量を一つ減らして余白を残す", "午後の予定を詰めすぎない")
+    .replace("午後の作業を一つ減らす", "午後の予定を詰めすぎない")
     .replace("空腹と食べすぎの差を小さくする", "空腹と食べすぎの差を大きくしない")
-    .replace("休む余白を残して予定を詰めすぎない", "休む余白を一つ残す")
+    .replace("休憩を一つ先に入れる", "休憩を一つ先に入れる")
     .replace("夕方以降の画面・光を少し減らす", "夕方以降の画面・光を少し控えめにする")
     .replace("寝る前に首肩と目を休ませる", "寝る前に目と首肩を一度休ませる")
     .replace("夜の食べすぎ・飲みすぎを避ける", "夜の食べすぎ・飲みすぎを重ねすぎない")
@@ -819,10 +1265,10 @@ function softenPeakPrepItem(text) {
     .replace("画面姿勢を一度リセットする", "画面姿勢を一度リセットする")
     .replace("立ち上がる前に一呼吸置く", "立ち上がる前に一呼吸置く")
     .replace("空腹のまま急に動かない", "空腹のまま急に動きすぎない")
-    .replace("首を急に振らずゆっくり切り替える", "首を急に振らずゆっくり切り替える")
+    .replace("首を急に振らず、動き出しをゆっくりにする", "首を急に振らず、動き出しをゆっくりにする")
     .replace("予定を一つに絞って始める", "最初の予定を一つに絞る")
-    .replace("通知や予定の切り替えを少し減らす", "通知や予定の切り替えを少し控えめにする")
-    .replace("甘いもの・カフェインで押し切らない", "甘いもの・カフェインで押し切りすぎない");
+    .replace("途中で別件を増やさない", "一度に片付けようとしない")
+    .replace("甘いもの・カフェインで無理に上げない", "甘いもの・カフェインで無理に上げすぎない");
 }
 
 function strengthenPeakPrepItem(text) {
@@ -836,18 +1282,20 @@ function strengthenPeakPrepItem(text) {
 export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
   const level = Number(signal ?? 0);
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
+  const focusedWeatherSigns = getSymptomWeatherItems(SYMPTOM_WEATHER_BODY_SIGN_LABELS, symptomFocus, keys);
 
   if (level === 0) {
     const stablePoints = SYMPTOM_STABLE_BODY_POINTS[symptomFocus] || [];
-    const weatherPoints = keys.flatMap((key) => BODY_SIGN_LABELS[key] || [])
+    const weatherPoints = keys.flatMap((key) => BODY_SIGN_LABELS[normalizeWeatherContextKey(key)] || [])
       .map((item) => String(item || "").replace(/やすい/g, "やすさ").replace(/出る/g, "出方"));
     return uniqueTake(
       [
+        ...focusedWeatherSigns,
         ...stablePoints,
         ...weatherPoints,
         "山場の時間の小さな違和感",
-        "いつもより少し残る重さ",
-        "切り替え時のこわばり",
+        "いつもより少し残るだるさ",
+        "動き出しのこわばり",
       ],
       3
     );
@@ -855,19 +1303,25 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
 
   const symptomSigns = (SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [])
     .map((item) => qualifyBodySignForSignal(item, level));
-  const signs = [...symptomSigns, ...keys.flatMap((key) => BODY_SIGN_LABELS[key] || [])];
+  const signs = [
+    ...focusedWeatherSigns,
+    ...symptomSigns,
+    ...keys.flatMap((key) => BODY_SIGN_LABELS[normalizeWeatherContextKey(key)] || []),
+  ];
   return uniqueTake(signs.length ? signs : ["重だるさが出やすい", "首肩がこわばりやすい", "疲れが残りやすい"], 3);
 }
 
 export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
   const level = Number(signal ?? 0);
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
-  const weatherItems = keys.flatMap((key) => PEAK_PREP_ITEMS[key] || []);
+  const weatherItems = keys.flatMap((key) => PEAK_PREP_ITEMS[normalizeWeatherContextKey(key)] || []);
+  const focusedWeatherItems = getSymptomWeatherItems(SYMPTOM_WEATHER_PEAK_PREP_ITEMS, symptomFocus, keys);
 
   if (level === 0) {
     const stableItems = SYMPTOM_STABLE_PEAK_PREP_ITEMS[symptomFocus] || [];
     return uniqueTake(
       [
+        ...focusedWeatherItems.map(softenPeakPrepItem),
         ...stableItems,
         ...weatherItems.map(softenPeakPrepItem),
         "山場前に一度だけ体勢を変える",
@@ -884,12 +1338,13 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
     const highWeatherItems = weatherItems.map(strengthenPeakPrepItem);
     return uniqueTake(
       [
+        ...focusedWeatherItems.map(strengthenPeakPrepItem),
         ...highSymptomItems,
         ...normalSymptomItems.map(strengthenPeakPrepItem),
         ...highWeatherItems,
         "山場前に首肩をゆるめる",
         "山場前に食事を重くしすぎない",
-        "予定に少し余白を残す",
+        "予定を一つ減らす",
       ],
       3
     );
@@ -898,11 +1353,12 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
   const symptomItems = SYMPTOM_PEAK_PREP_ITEMS[symptomFocus] || [];
   return uniqueTake(
     [
+      ...focusedWeatherItems,
       ...symptomItems,
       ...weatherItems,
       "山場前に首肩をゆるめる",
       "食事を重くしすぎない",
-      "予定に少し余白を残す",
+      "予定を一つ減らす",
     ],
     3
   );
@@ -911,26 +1367,36 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
 export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
   const level = Number(signal ?? 0);
   const factors = getForecastBackgroundFactors(triggerFactors);
-  const labels = factors.map((f) => f.label).filter(Boolean);
-  const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
+  const primary = factors[0] || { key: "pressure_down", label: "天気変化" };
+  const factorKeys = factors.map((factor) => factor?.key).filter(Boolean);
+  const copyKey = getSymptomWeatherCopyKey(SYMPTOM_WEATHER_LEADS, symptomFocus, factorKeys);
+  const primaryLabel = primary.label || "天気変化";
+  const copyLabel = getWeatherCopyLabel(copyKey, factors) || primaryLabel;
   const target = mode === "today" ? "今日は" : "明日は";
   const symptomClause = getForecastSymptomLeadClause(symptomFocus, level);
+  const symptomWeatherLead = getSymptomWeatherLead(symptomFocus, factorKeys);
 
   if (level >= 2) {
-    return symptomClause
-      ? `${target}${joined}の影響が強め。${symptomClause}です。`
-      : `${target}${joined}の影響が強め。守り気味に過ごしたい日です。`;
+    return symptomWeatherLead
+      ? `${target}${copyLabel}の影響が強め。${symptomWeatherLead}`
+      : symptomClause
+        ? `${target}${copyLabel}の影響が強め。${symptomClause}です。`
+        : `${target}${copyLabel}の影響が強め。守り気味に過ごしたい日です。`;
   }
 
   if (level >= 1) {
-    return symptomClause
-      ? `${target}${joined}が少し響きそう。${symptomClause}です。`
-      : `${target}${joined}が少し響きそう。早めに軽く整えたい日です。`;
+    return symptomWeatherLead
+      ? `${target}${copyLabel}が少し響きそう。${symptomWeatherLead}`
+      : symptomClause
+        ? `${target}${copyLabel}が少し響きそう。${symptomClause}です。`
+        : `${target}${copyLabel}が少し響きそう。早めに軽く整えたい日です。`;
   }
 
-  return symptomClause
-    ? `${target}${joined}の影響は少なめ。ただ、${symptomClause}です。`
-    : `${target}${joined}の影響は少なめ。ただ、山場の時間だけ軽く見ておきたい日です。`;
+  return symptomWeatherLead
+    ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomWeatherLead}`
+    : symptomClause
+      ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomClause}です。`
+      : `${target}${copyLabel}の影響は少なめ。ただ、山場の時間だけ軽く見ておきたい日です。`;
 }
 
 export function getMoodHeadline(triggerKey, signal) {
@@ -1058,7 +1524,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
     return `明日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い整え方を選びます。`;
   }
   if (signal === 2) {
-    return `${joined}が重なりやすい日です。明日は山場の前に余力を削られないよう、今夜のうちに身体の逃げ道を作っておきます。`;
+    return `${joined}が重なりやすい日です。明日は山場の前に余力を削られないよう、今夜のうちに体を軽く動かし、巡りを止めない準備をします。`;
   }
   return `${joined}が少し響きやすい日です。大きく構えすぎず、今夜のうちに一手だけ先回りしておきます。`;
 }
@@ -1081,7 +1547,7 @@ export const CARE_POLICY_DEFINITIONS = {
     key: "meguraseru",
     label: "めぐらせる",
     short: "巡りを止めない",
-    guide: "滞りやこもりに逃げ道を作る",
+    guide: "滞りやこもりを止めずにめぐらせる",
   },
   nagasu: {
     key: "nagasu",
@@ -1161,8 +1627,8 @@ const ENV_VECTOR_POLICY_SCORES = {
 };
 
 const POLICY_PAIR_SUMMARIES = {
-  "yurumeru+meguraseru": "首肩や呼吸を固めすぎず、巡りの逃げ道を作るケアが合います。",
-  "meguraseru+yurumeru": "首肩や呼吸を固めすぎず、巡りの逃げ道を作るケアが合います。",
+  "yurumeru+meguraseru": "首肩や呼吸を固めすぎず、巡りを止めないケアが合います。",
+  "meguraseru+yurumeru": "首肩や呼吸を固めすぎず、巡りを止めないケアが合います。",
   "nagasu+sasaeru": "重さをため込まず、胃腸と回復力を守るケアが合います。",
   "sasaeru+nagasu": "重さをため込まず、胃腸と回復力を守るケアが合います。",
   "nukumeru+sasaeru": "冷えの入口を守りながら、消耗を増やさないケアが合います。",
@@ -1195,9 +1661,8 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
   const has = (...targets) => targets.some((target) => keys.includes(target));
   const today = mode === "today";
   const weatherLead = (() => {
-    if (has("heat") && has("cold")) return "気温差";
-    if (has("damp") && has("cold")) return "湿気と冷え込み";
-    if (has("damp") && has("heat")) return "湿気と気温上昇";
+    const pairKey = getAllowedWeatherPairKey(keys);
+    if (pairKey) return WEATHER_PAIR_LABELS[pairKey];
     if (has("pressure_down")) return "気圧低下";
     if (has("pressure_up")) return "気圧上昇";
     if (has("damp")) return "湿気";
@@ -1226,8 +1691,8 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
         );
       }
       return sentence(
-        "冷えや食後の重さが夜まで残りやすいため、眠りに重さを持ち込まない方向で整えます。",
-        "冷えと食後の重さを軽くし、明朝に眠りの重さを残さない方向で整えます。",
+        "冷えや食後の重さが夜まで残りやすいため、寝る前まで重だるさを残しにくくします。",
+        "冷えと食後の重さを軽くし、明朝のだるさを残しにくくします。",
       );
 
     case "digestion":
@@ -1250,7 +1715,7 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
         );
       }
       return sentence(
-        "食後の重さやお腹の張りを残しやすいため、胃腸の余白を守る方向で整えます。",
+        "食後の重さやお腹の張りを残しやすいため、胃腸に負担を重ねない方向で整えます。",
         "食べすぎや冷えを軽くし、明朝の胃腸の重さを残さない方向で整えます。",
       );
 
@@ -1293,8 +1758,8 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
     case "swelling":
       if (has("damp")) {
         return sentence(
-          "顔や脚に水っぽい重さが出やすいため、冷たさ・甘さ・塩気を重ねすぎない方向で整えます。",
-          "冷たさ・甘さ・塩気を重ねすぎず、明朝の顔や脚の重さを増やさない方向で整えます。",
+          "顔や脚のむくみ感が出やすいため、冷たいもの・甘いもの・塩気を重ねすぎないようにします。",
+          "冷たいもの・甘いもの・塩気を重ねすぎず、明朝の顔や脚の重さを増やしにくくします。",
         );
       }
       return sentence(
@@ -1305,8 +1770,8 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
     case "headache":
       if (has("pressure_down")) {
         return sentence(
-          "首・耳・目まわりにこもりが残りやすいため、頭まわりに逃げ道を作る方向で整えます。",
-          "お酒・脂っこさ・画面の刺激を控えめにし、頭のこもりを持ち越さない方向で整えます。",
+          "首・耳・目まわりが固まりやすいため、先にゆるめて頭の重さを残しにくくします。",
+          "お酒・脂っこさ・画面の刺激を控えめにし、頭の重さを持ち越しにくくします。",
         );
       }
       if (has("heat") || has("pressure_up")) {
@@ -1316,14 +1781,14 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
         );
       }
       return sentence(
-        "首・耳・目まわりにこもりが残りやすいため、頭まわりを固めない方向で整えます。",
-        "首肩と耳まわりを固めず、頭のこもりを持ち越さない方向で整えます。",
+        "首・耳・目まわりが固まりやすいため、頭の重さにつながる前にゆるめます。",
+        "首肩と耳まわりを固めず、頭の重さを持ち越しにくくします。",
       );
 
     case "dizziness":
       if (has("pressure_down") || has("pressure_up")) {
         return sentence(
-          "切り替えや急な動きが負担になりやすいため、動き出しを急がない方向で整えます。",
+          "急な動きや立ち上がりが負担になりやすいため、動き出しを急がない方向で整えます。",
           "寝不足や食後の重さを控えめにし、明朝の動き出しを急がない方向で整えます。",
         );
       }
@@ -1335,25 +1800,25 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
     case "mood":
       if (has("heat") && has("cold")) {
         return sentence(
-          "頭の冴えと身構えが残りやすいため、予定や通知に押されすぎない方向で整えます。",
-          "光・通知・予定の詰め込みを控えめにし、明日の始まりを重くしない方向で整えます。",
+          "頭の冴えと身構えが残りやすいため、予定を詰めすぎず、情報量を少し軽くする方向で整えます。",
+          "画面時間を早めに区切り、明日の動き出しを重くしない形で整えます。",
         );
       }
       if (has("heat") || has("pressure_up")) {
         return sentence(
-          "頭の冴えや高ぶりが残りやすいため、予定や通知に押されすぎない方向で整えます。",
+          "頭の冴えや高ぶりが残りやすいため、急いで片付けようとせず、休憩を先に入れる方向で整えます。",
           "刺激と情報量を控えめにし、明日の始まりを軽くする方向で整えます。",
         );
       }
       if (has("damp") || has("pressure_down")) {
         return sentence(
-          "気分の重さや切り替えにくさが出やすいため、予定や通知に押されすぎない方向で整えます。",
-          "食後の重さと情報量を控えめにし、明日の切り替えを重くしない方向で整えます。",
+          "気分の重さや動き出しにくさが出やすいため、予定を詰めすぎず、体を軽く動かして気分を変える方向で整えます。",
+          "食後の重さと情報量を控えめにし、明日の動き出しを重くしない方向で整えます。",
         );
       }
       return sentence(
-        "気持ちの切り替えに負担が出やすいため、予定や通知に押されすぎない方向で整えます。",
-        "刺激と予定量を軽くし、明日の始まりを重くしない方向で整えます。",
+        "気分を変えるのに負担が出やすいため、予定を一つ減らして、休憩を先に入れる方向で整えます。",
+        "刺激を減らし、予定を一つ軽くして明日の始まりを重くしない形で整えます。",
       );
 
     default:
@@ -1364,11 +1829,11 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
 const SINGLE_POLICY_SUMMARIES = {
   shizumeru: "熱や頭の冴えをこもらせず、落ち着けるケアが合います。",
   yurumeru: "首肩・呼吸・気持ちの力みをほどくケアが合います。",
-  meguraseru: "止まりやすい巡りに、軽い動きの逃げ道を作るケアが合います。",
+  meguraseru: "止まりやすい巡りを、軽い動きでめぐらせるケアが合います。",
   nagasu: "湿気や重だるさをため込まないケアが合います。",
   uruosu: "乾きと消耗を残さないケアが合います。",
   nukumeru: "足元・お腹・腰まわりの冷えを守るケアが合います。",
-  sasaeru: "無理に押し切らず、回復力を削らないケアが合います。",
+  sasaeru: "無理を重ねず、回復力を削らないケアが合います。",
 };
 
 function addPolicyScores(scores, weights, multiplier = 1) {
