@@ -1438,6 +1438,22 @@ export default function RadarPage() {
                     ) : null}
                   </div>
                 ) : null}
+
+                <div className="rounded-[20px] bg-white px-4 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    ケアナビ
+                  </div>
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                    ここでは、その日のツボを提案しています。ケアナビでは、ツボ押し棒・お灸・電子灸に加えて、首肩や足元をほぐす道具も見られます。
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => router.push("/care-navi?category=point")}
+                    className="mt-3 w-full bg-white"
+                  >
+                    ほぐすケア用品を見る
+                  </Button>
+                </div>
               </div>
             ) : null}
 
@@ -1632,6 +1648,22 @@ export default function RadarPage() {
                     </div>
                   ) : null}
                 </div>
+
+                <div className="rounded-[20px] bg-white px-4 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    ケアナビ
+                  </div>
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                    日々の食べ方を支える飲み物・ストック品・補うものを、体質や季節の視点で探せます。
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => router.push("/care-navi?category=eat")}
+                    className="mt-3 w-full bg-white"
+                  >
+                    日常に置いておきたい食養生アイテムを見る
+                  </Button>
+                </div>
               </div>
             ) : null}
 
@@ -1685,6 +1717,22 @@ export default function RadarPage() {
                       {lifestylePlan.trap}
                     </div>
                   </div>
+                </div>
+
+                <div className="rounded-[20px] bg-white px-4 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    ケアナビ
+                  </div>
+                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                    温める・休む・眠るなどのケアを、日常で続けやすくする道具も見られます。
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => router.push("/care-navi?category=live")}
+                    className="mt-3 w-full bg-white"
+                  >
+                    暮らしのケア用品を見る
+                  </Button>
                 </div>
               </div>
             ) : null}
