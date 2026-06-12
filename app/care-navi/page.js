@@ -24,8 +24,8 @@ import {
 
 const CATEGORY_OPTIONS = [
   { key: "live", label: "暮らす", icon: IconLifestyle, lead: "環境・温め方・休み方の候補" },
-  { key: "eat", label: "食べる", icon: IconFood, lead: "飲み物・汁物・軽めの食べ方候補" },
-  { key: "point", label: "ほぐす", icon: IconTsubo, lead: "首肩・足元・ツボまわりの候補" },
+  { key: "eat", label: "食べる", icon: IconFood, lead: "飲む・補う・軽めに食べる候補" },
+  { key: "point", label: "ほぐす", icon: IconTsubo, lead: "ツボ押し・お灸・温熱・道具ケア候補" },
 ];
 
 const PRICE_BAND_OPTIONS = [
@@ -42,14 +42,14 @@ const PRICE_BAND_RANGES = {
     deep: { min: 5000, label: "5,000円〜" },
   },
   eat: {
-    light: { max: 1200, label: "〜1,200円" },
-    standard: { min: 1200, max: 3000, label: "1,200〜3,000円" },
-    deep: { min: 3000, label: "3,000円〜" },
+    light: { max: 1800, label: "〜1,800円" },
+    standard: { min: 1800, max: 5000, label: "1,800〜5,000円" },
+    deep: { min: 5000, label: "5,000円〜" },
   },
   point: {
     light: { max: 2500, label: "〜2,500円" },
-    standard: { min: 2500, max: 6000, label: "2,500〜6,000円" },
-    deep: { min: 6000, label: "6,000円〜" },
+    standard: { min: 2500, max: 8000, label: "2,500〜8,000円" },
+    deep: { min: 8000, label: "8,000円〜" },
   },
 };
 
@@ -122,11 +122,11 @@ const SEASON_LABELS = {
 const CARE_ITEM_LIBRARY = {
   shizumeru: {
     live: [
-      { title: "光と通知を減らすセット", query: "アイマスク 遮光 睡眠", reason: "頭の冴えや刺激を夜まで残しにくくします。", tags: ["睡眠前", "刺激を減らす"] },
+      { title: "光の刺激を減らすセット", query: "アイマスク 遮光 睡眠", reason: "頭の冴えや刺激を夜まで残しにくくします。", tags: ["睡眠前", "刺激を減らす"] },
       { title: "リラックス入浴まわり", query: "入浴剤 リラックス 無香料", reason: "高ぶりを一度落として、休む準備に入る候補です。", tags: ["入浴", "夜ケア"] },
     ],
     eat: [
-      { title: "ノンカフェインの温かい飲み物", query: "ノンカフェイン お茶 リラックス", reason: "カフェインで押し切らず、落ち着く時間を作ります。", tags: ["飲み物", "夜向き"] },
+      { title: "ノンカフェインの温かい飲み物", query: "ノンカフェイン お茶 リラックス", reason: "カフェインで無理に上げず、落ち着く時間を作ります。", tags: ["飲み物", "夜向き"] },
     ],
     point: [
       { title: "頭皮・こめかみまわりのセルフケア", query: "頭皮ブラシ マッサージ シリコン", reason: "頭や目まわりに残る力みを軽く逃がします。", tags: ["頭まわり", "ほぐす"] },
@@ -196,7 +196,7 @@ const CARE_ITEM_LIBRARY = {
   },
   sasaeru: {
     live: [
-      { title: "睡眠と回復を削らない環境", query: "睡眠 グッズ アイマスク 耳栓", reason: "無理に押し切らず、休む余白を作ります。", tags: ["睡眠", "回復"] },
+      { title: "睡眠と回復を削らない環境", query: "睡眠 グッズ アイマスク 耳栓", reason: "無理を重ねず、休む時間を先に確保します。", tags: ["睡眠", "回復"] },
       { title: "胃腸を冷やさない暮らし用品", query: "腹巻き 薄手 お腹 冷え", reason: "胃腸や下腹部の冷えを守ります。", tags: ["胃腸", "お腹"] },
     ],
     eat: [
