@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
@@ -666,11 +666,6 @@ function RakutenStatusCard({ error, queries }) {
 
 export default function CareNaviPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const initialCategory = CATEGORY_OPTIONS.some((option) => option.key === searchParams?.get("category"))
-    ? searchParams.get("category")
-    : "live";
 
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
@@ -678,7 +673,7 @@ export default function CareNaviPage() {
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
   const [basis, setBasis] = useState("karte");
-  const [category, setCategory] = useState(initialCategory);
+  const [category, setCategory] = useState("live");
   const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
@@ -757,11 +752,15 @@ export default function CareNaviPage() {
   }, []);
 
   useEffect(() => {
-    const nextCategory = searchParams?.get("category");
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const nextCategory = params.get("category");
+
     if (CATEGORY_OPTIONS.some((option) => option.key === nextCategory)) {
       setCategory(nextCategory);
     }
-  }, [searchParams]);
+  }, []);
 
   useEffect(() => {
     setPriceBand("all");
