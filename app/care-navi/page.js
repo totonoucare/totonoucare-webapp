@@ -835,6 +835,7 @@ export default function CareNaviPage() {
             symptomKey,
             basis,
             lifeKeys,
+            priceBand,
             limit: 8,
           }),
         });
@@ -871,7 +872,7 @@ export default function CareNaviPage() {
     return () => {
       controller.abort();
     };
-  }, [category, policyKeySignature, symptomKey, basis, lifeKeySignature]);
+  }, [category, priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature]);
 
   const visibleItems = useMemo(
     () =>
@@ -1064,7 +1065,7 @@ export default function CareNaviPage() {
             ))
           ) : rakutenItems.length && priceBand !== "all" ? (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              {priceBandLabel}の候補は見つかりませんでした。「すべて」に戻すと候補を確認できます。
+              {priceBandLabel}で表示できる候補は見つかりませんでした。「すべて」に戻すか、別の価格帯を選んでください。
             </div>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
