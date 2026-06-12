@@ -15,6 +15,29 @@ const CATEGORY_LABELS = {
   point: "ほぐす",
 };
 
+const PRICE_BAND_RANGES = {
+  live: {
+    light: { max: 2000, label: "〜2,000円" },
+    standard: { min: 2000, max: 5000, label: "2,000〜5,000円" },
+    deep: { min: 5000, label: "5,000円〜" },
+  },
+  eat: {
+    light: { max: 1800, label: "〜1,800円" },
+    standard: { min: 1800, max: 5000, label: "1,800〜5,000円" },
+    deep: { min: 5000, label: "5,000円〜" },
+  },
+  point: {
+    light: { max: 2500, label: "〜2,500円" },
+    standard: { min: 2500, max: 8000, label: "2,500〜8,000円" },
+    deep: { min: 8000, label: "8,000円〜" },
+  },
+};
+
+function getPriceBandRange(categoryKey, priceBand) {
+  if (!priceBand || priceBand === "all") return null;
+  return PRICE_BAND_RANGES[categoryKey]?.[priceBand] || null;
+}
+
 const POLICY_LABELS = {
   shizumeru: "しずめる",
   yurumeru: "ゆるめる",
@@ -929,7 +952,7 @@ function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit =
   return balanced.slice(0, totalLimit);
 }
 
-async function searchRakutenForPlan(plan, planIndex, credentials) {
+async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   const url = new URL(RAKUTEN_ITEM_SEARCH_ENDPOINT);
   url.searchParams.set("applicationId", credentials.applicationId);
   url.searchParams.set("accessKey", credentials.accessKey);
@@ -944,6 +967,17 @@ async function searchRakutenForPlan(plan, planIndex, credentials) {
   url.searchParams.set("field", "0");
   url.searchParams.set("orFlag", "1");
   url.searchParams.set("sort", "standard");
+
+  const minPrice = Number(priceRange?.min || 0);
+  const maxPrice = Number(priceRange?.max || 0);
+
+  if (Number.isFinite(minPrice) && minPrice > 0) {
+    url.searchParams.set("minPrice", String(Math.floor(minPrice)));
+  }
+
+  if (Number.isFinite(maxPrice) && maxPrice > 0) {
+    url.searchParams.set("maxPrice", String(Math.floor(maxPrice)));
+  }
   url.searchParams.set("elements", [
     "itemName",
     "catchcopy",
@@ -996,6 +1030,9 @@ export async function POST(req) {
     const category = CATEGORY_LABELS[body?.category] ? body.category : "live";
     const policyKeys = asArray(body?.policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
     const symptomKey = String(body?.symptomKey || "");
+    const rawPriceBand = String(body?.priceBand || "all");
+    const priceBand = rawPriceBand === "all" || PRICE_BAND_RANGES[category]?.[rawPriceBand] ? rawPriceBand : "all";
+    const priceRange = getPriceBandRange(category, priceBand);
 
     const credentials = getRakutenCredentials();
     if (!credentials.applicationId || !credentials.accessKey) {
@@ -1010,11 +1047,11 @@ export async function POST(req) {
 
     const plans = buildQueryPlans({ category, policyKeys, symptomKey });
     if (!plans.length) {
-      return jsonUtf8({ ok: true, items: [], queries: [], category });
+      return jsonUtf8({ ok: true, items: [], queries: [], category, priceBand, priceRange });
     }
 
     const settled = await Promise.allSettled(
-      plans.map((plan, index) => searchRakutenForPlan({ ...plan, category }, index, credentials))
+      plans.map((plan, index) => searchRakutenForPlan({ ...plan, category }, index, credentials, priceRange))
     );
 
     const items = [];
@@ -1048,6 +1085,8 @@ export async function POST(req) {
       return jsonUtf8({
         ok: false,
         category,
+        priceBand,
+        priceRange,
         items: [],
         queries: plans.map((plan) => plan.keyword),
         errors,
@@ -1058,6 +1097,8 @@ export async function POST(req) {
     return jsonUtf8({
       ok: true,
       category,
+      priceBand,
+      priceRange,
       items: balancedItems,
       queries: plans.map((plan) => plan.keyword),
       errors,
