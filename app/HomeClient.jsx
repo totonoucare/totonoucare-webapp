@@ -247,7 +247,7 @@ function formatPeakWindow(forecast) {
   const end = String(forecast?.peak_end || "").slice(0, 5);
   if (start && end) return `${start}–${end}`;
   if (start) return `${start}ごろ`;
-  return "まだ目立った山場なし";
+  return "まだ目立った注意時間なし";
 }
 
 function buildQuickLiveAdvice(forecast) {
@@ -273,10 +273,10 @@ function buildLiveGuideText(bundle) {
   const label = factor?.label || triggerLabel(forecast.main_trigger, forecast.trigger_dir);
 
   if (forecast.signal === 2) {
-    return `今日ここからは${peak}が山場かも。${label}に合わせて、無理を一段落としていこう。`;
+    return `今日ここからは${peak}に注意。${label}に合わせて、無理を一段減らしていこう。`;
   }
   if (forecast.signal === 1) {
-    return `今日ここからは${peak}を少し意識してね。${label}の波を早めに逃がそう。`;
+    return `今日ここからは${peak}を少し意識してね。${label}の影響を見ながら早めに休もう。`;
   }
   return `今日ここからは大きな波は小さめ。${label}だけ軽く見ておけば大丈夫そう。`;
 }
