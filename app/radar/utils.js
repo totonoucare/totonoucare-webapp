@@ -123,7 +123,7 @@ export function buildScoreCardTitle(mode, targetDate) {
 export function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "このあとの山場",
+      noticeTitle: "このあとの注意時間",
       tsuboTitle: "今日これから使えるツボケア",
       tsuboSubtitle: "このあとの不調に合わせた実用寄りの3点セット",
       foodTitle: "今日これからの食べ方",
@@ -189,7 +189,7 @@ export function signalPanelClass(signal) {
 export function signalPanelSubtext(signal) {
   if (signal === 2) return "無理を詰め込みすぎず、早めのケアを意識したい日です。";
   if (signal === 1) return "少し崩れやすさがあるので、予定を詰めすぎず、先に休憩を入れたい日です。";
-  return "天気の影響は少なめ。山場の時間だけ軽く見ておきたい日です。";
+  return "天気の影響は少なめ。注意したい時間だけ軽く見ておきたい日です。";
 }
 
 export function sourceLabel(source) {
@@ -556,10 +556,10 @@ const BODY_SIGN_LABELS = {
 };
 
 const PEAK_PREP_ITEMS = {
-  pressure_down: ["首肩を固めたまま山場に入らない", "目・耳まわりを一度ゆるめる", "大事な作業は早めに寄せる"],
-  pressure_up: ["予定を詰め込みすぎない", "肩の力を抜いて呼吸を一度整える", "刺激の強い飲食を重ねない"],
-  damp: ["昼食を重くしすぎない", "甘いもの・冷たい飲み物を重ねない", "食後に少しだけ歩く"],
-  humidity: ["昼食を重くしすぎない", "甘いもの・冷たい飲み物を重ねない", "食後に少しだけ歩く"],
+  pressure_down: ["首肩を固めたまま注意時間に入らない", "目・耳まわりを一度ゆるめる", "大事な作業は早めに寄せる"],
+  pressure_up: ["予定を詰め込みすぎない", "肩の力を抜いて呼吸を一度整える", "刺激の強い飲食を控える"],
+  damp: ["昼食を重くしすぎない", "甘いものと冷たい飲み物ばかりにしない", "食後に少しだけ歩く"],
+  humidity: ["昼食を重くしすぎない", "甘いものと冷たい飲み物ばかりにしない", "食後に少しだけ歩く"],
   cold: ["足首かお腹を先に守る", "冷たい飲み物を続けない", "外に出る前に首元・腰元を確認する"],
   heat: ["暑さを我慢しすぎない", "水分を一気飲みせずこまめに入れる", "熱がこもる前に休憩を挟む"],
   dry: ["喉が渇く前に少しずつ潤す", "目と喉を使いすぎない", "夜更かしで消耗を重ねない"],
@@ -900,14 +900,14 @@ const SYMPTOM_WEATHER_PEAK_PREP_ITEMS = {
   },
   digestion: {
     pressure_down: ["食事量を少し軽くする", "急いで食べず、食後に少し歩く"],
-    pressure_up: ["急いで食べず、食事前に一呼吸置く", "刺激の強い飲食を重ねない"],
+    pressure_up: ["急いで食べず、食事前に一呼吸置く", "刺激の強い飲食を控える"],
     damp: ["食べすぎと冷たい飲み物を重ねない", "食後に少しだけ歩く"],
     cold: ["冷たいものを続けず、温かい汁物を足す", "お腹を冷やさない"],
-    heat: ["冷たい飲み物を一気に入れず、こまめに潤す", "刺激の強い飲食を重ねない"],
+    heat: ["冷たい飲み物を一気に入れず、こまめに潤す", "刺激の強い飲食を控える"],
     dry: ["温かい飲み物を少し足す", "食事を急がずよく噛む"],
     damp_heat: ["冷たい飲み物を一気に入れない", "食べすぎと甘いものを重ねない"],
     damp_cold: ["温かい汁物を足す", "冷たいものを続けない"],
-    dry_heat: ["冷たい飲み物を一気に入れず、こまめに潤す", "刺激の強い飲食を重ねない"],
+    dry_heat: ["冷たい飲み物を一気に入れず、こまめに潤す", "刺激の強い飲食を控える"],
     dry_cold: ["温かい飲み物を少し足す", "お腹を冷やさない"],
     pressure_down_damp: ["食事量を少し軽くする", "食後に少しだけ歩く"],
     pressure_up_heat: ["急いで食べず、食事前に一呼吸置く", "冷たい飲み物を一気に入れない"],
@@ -956,16 +956,16 @@ const SYMPTOM_WEATHER_PEAK_PREP_ITEMS = {
   },
   headache: {
     pressure_down: ["首・耳・目まわりを先にゆるめる", "空腹のまま画面作業を続けない"],
-    pressure_up: ["急ぎすぎず、肩の力を一度抜く", "刺激の強い飲食を重ねない"],
-    damp: ["脂っこさやお酒を重ねすぎない", "首肩を一度ゆるめる"],
+    pressure_up: ["急ぎすぎず、肩の力を一度抜く", "刺激の強い飲食を控える"],
+    damp: ["脂っこいものとお酒をとりすぎない", "首肩を一度ゆるめる"],
     cold: ["首元を冷やさず、肩を一度落とす", "耳まわりを軽く動かす"],
-    heat: ["熱がこもる前に涼しさと水分を入れる", "刺激の強い飲食を重ねない"],
+    heat: ["熱がこもる前に涼しさと水分を入れる", "刺激の強い飲食を控える"],
     dry: ["目を休ませ、喉が渇く前に少し潤す", "画面作業を区切る"],
-    damp_heat: ["熱がこもる前に涼しさと水分を入れる", "脂っこさやお酒を重ねすぎない"],
-    damp_cold: ["首元を冷やさず、肩を一度落とす", "脂っこさやお酒を重ねすぎない"],
-    dry_heat: ["目を休ませ、涼しさと水分を入れる", "刺激の強い飲食を重ねない"],
+    damp_heat: ["熱がこもる前に涼しさと水分を入れる", "脂っこいものとお酒をとりすぎない"],
+    damp_cold: ["首元を冷やさず、肩を一度落とす", "脂っこいものとお酒をとりすぎない"],
+    dry_heat: ["目を休ませ、涼しさと水分を入れる", "刺激の強い飲食を控える"],
     dry_cold: ["首元を冷やさない", "目を休ませてから作業に戻る"],
-    pressure_down_damp: ["首・耳・目まわりを先にゆるめる", "脂っこさやお酒を重ねすぎない"],
+    pressure_down_damp: ["首・耳・目まわりを先にゆるめる", "脂っこいものとお酒をとりすぎない"],
     pressure_up_heat: ["急ぎすぎず、肩の力を一度抜く", "熱がこもる前に涼しさと水分を入れる"],
   },
   dizziness: {
@@ -985,11 +985,11 @@ const SYMPTOM_WEATHER_PEAK_PREP_ITEMS = {
   mood: {
     pressure_down: ["最初の予定を一つに絞る", "甘いもの・カフェインで無理に上げない"],
     pressure_up: ["急いで片付けようとせず、休憩を先に入れる", "肩の力を抜いて一呼吸置く"],
-    damp: ["予定を詰めすぎず、軽く体を動かして気分を変える", "甘いもの・冷たい飲み物を重ねない"],
+    damp: ["予定を詰めすぎず、軽く体を動かして気分を変える", "甘いものと冷たい飲み物ばかりにしない"],
     cold: ["首元や足元を冷やさず、最初の予定を軽めにする"],
     heat: ["涼しさと水分を先に入れて、無理に上げない", "甘いもの・カフェインで勢いをつけすぎない"],
     dry: ["画面作業を区切り、温かい飲み物で休憩を入れる"],
-    damp_heat: ["涼しさと水分を先に入れる", "甘いもの・冷たい飲み物を重ねない", "一度に片付けようとしない"],
+    damp_heat: ["涼しさと水分を先に入れる", "甘いものと冷たい飲み物ばかりにしない", "一度に片付けようとしない"],
     damp_cold: ["首元や足元を冷やさない", "最初の予定を一つに絞る"],
     dry_heat: ["画面作業を区切って目を休ませる", "涼しさと水分を先に入れる"],
     dry_cold: ["首元や足元を冷やさない", "温かい飲み物で休憩を入れる"],
@@ -1070,26 +1070,26 @@ const SYMPTOM_STABLE_PEAK_PREP_ITEMS = {
   neck_shoulder: ["首元が冷えていないか確認する", "画面が続いたら肩を一度落とす", "耳まわりを軽く動かす"],
   low_back_pain: ["座りっぱなしを一度だけ切る", "腰腹か足首の冷えを確認する", "深く座る前に骨盤を小さく動かす"],
   swelling: ["足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を重ねすぎない", "同じ姿勢を続けすぎない"],
-  headache: ["首・耳・目まわりを一度ゆるめる", "脂っこさやお酒を重ねすぎない", "画面姿勢を一度リセットする"],
+  headache: ["首・耳・目まわりを一度ゆるめる", "脂っこいものとお酒をとりすぎない", "画面姿勢を一度リセットする"],
   dizziness: ["立ち上がる前に一呼吸置く", "空腹のまま急に動きすぎない", "首を急に振らず、動き出しをゆっくりにする"],
   mood: ["最初の予定を一つに絞る", "一度に片付けようとしない", "甘いもの・カフェインで無理に上げすぎない"],
 };
 
 const SYMPTOM_HIGH_PEAK_PREP_ITEMS = {
-  fatigue: ["山場前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "山場前に休憩を一つ入れておく"],
+  fatigue: ["注意時間の前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "注意時間の前に休憩を一つ入れておく"],
   sleep: ["夕方以降の画面・光を先に減らす", "寝る前に首肩と目をしっかり休ませる", "夜の食べすぎ・飲みすぎを避ける"],
-  digestion: ["山場前に冷たいものを続けない", "食べすぎを先に避ける", "温かい汁物かお茶を早めに足す"],
-  neck_shoulder: ["山場前に首元を冷やしたままにしない", "山場前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
-  low_back_pain: ["山場前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
-  swelling: ["山場前に足首を小さく動かす", "甘いもの・塩気・冷たい飲み物を先に重ねない", "同じ姿勢を長く続けない"],
-  headache: ["山場前に首・耳・目まわりをゆるめる", "脂っこさやお酒を重ねすぎない", "画面姿勢を先にリセットする"],
+  digestion: ["注意時間の前に冷たいものを続けない", "食べすぎを先に避ける", "温かい汁物かお茶を早めにとる"],
+  neck_shoulder: ["注意時間の前に首元を冷やしたままにしない", "注意時間の前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
+  low_back_pain: ["注意時間の前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
+  swelling: ["注意時間の前に足首を小さく動かす", "甘いもの・塩辛いもの・冷たい飲み物ばかりにしない", "同じ姿勢を長く続けない"],
+  headache: ["注意時間の前に首・耳・目まわりをゆるめる", "脂っこいものとお酒をとりすぎない", "画面姿勢を先にリセットする"],
   dizziness: ["動き出す前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らず、動き出しをゆっくりにする"],
-  mood: ["山場前に予定を一つに絞る", "山場前に途中で別件を増やさない", "甘いもの・カフェインで無理に上げない"],
+  mood: ["注意時間の前に予定を一つに絞る", "注意時間の前に途中で別件を増やさない", "甘いもの・カフェインで無理に上げない"],
 };
 
 const SYMPTOM_MODE_HINTS = {
   fatigue: {
-    today: "だるさを見ているなら、動きを増やすより消耗を足さないことを優先します。",
+    today: "だるさを見ているなら、動きを増やすより疲れを増やさないことを優先します。",
     tomorrow: "だるさを見ているなら、今夜のうちに予定を一つ軽くしておくと安心です。",
   },
   sleep: {
@@ -1132,7 +1132,7 @@ function getSymptomModeHint(symptomFocus, mode = "today") {
 
 const FORECAST_SYMPTOM_LEAD_CLAUSES = {
   fatigue: {
-    low: "だるさは山場の時間に少し残る見込み",
+    low: "だるさは注意したい時間に少し残る見込み",
     middle: "だるさが残りやすい",
     high: "だるさが強く残りやすい",
   },
@@ -1142,17 +1142,17 @@ const FORECAST_SYMPTOM_LEAD_CLAUSES = {
     high: "睡眠に強く響きやすい",
   },
   digestion: {
-    low: "胃腸の重さは山場の時間に少し残る見込み",
+    low: "胃腸の重さは注意したい時間に少し残る見込み",
     middle: "胃腸に重さが出やすい",
     high: "胃腸の重さが強く出やすい",
   },
   neck_shoulder: {
-    low: "首肩は山場の時間に少し固まりやすい",
+    low: "首肩は注意したい時間に少し固まりやすい",
     middle: "首肩がこわばりやすい",
     high: "首肩が強くこわばりやすい",
   },
   low_back_pain: {
-    low: "腰まわりは山場の時間に少し重さが出る見込み",
+    low: "腰まわりは注意したい時間に少し重さが出る見込み",
     middle: "腰まわりが重くなりやすい",
     high: "腰まわりが強く重くなりやすい",
   },
@@ -1162,7 +1162,7 @@ const FORECAST_SYMPTOM_LEAD_CLAUSES = {
     high: "むくみが強く残りやすい",
   },
   headache: {
-    low: "頭まわりは山場の時間に少し重さが出る見込み",
+    low: "頭まわりは注意したい時間に少し重さが出る見込み",
     middle: "頭まわりが重くなりやすい",
     high: "頭まわりが強く重くなりやすい",
   },
@@ -1251,7 +1251,7 @@ function softenPeakPrepItem(text) {
     .replace("夕方以降の画面・光を少し減らす", "夕方以降の画面・光を少し控えめにする")
     .replace("寝る前に首肩と目を休ませる", "寝る前に目と首肩を一度休ませる")
     .replace("夜の食べすぎ・飲みすぎを避ける", "夜の食べすぎ・飲みすぎを重ねすぎない")
-    .replace("首元を冷やしたまま固めない", "山場前に首元の冷えだけ確認する")
+    .replace("首元を冷やしたまま固めない", "注意時間の前に首元の冷えだけ確認する")
     .replace("画面から目を離して肩を落とす", "画面姿勢が続いたら肩を一度落とす")
     .replace("耳まわりと肩甲骨まわりを一度ゆるめる", "耳まわりか肩甲骨まわりを軽くゆるめる")
     .replace("座りっぱなしを一度切る", "座りっぱなしを一度だけ切る")
@@ -1261,7 +1261,7 @@ function softenPeakPrepItem(text) {
     .replace("甘いもの・塩気・冷たい飲み物を重ねない", "甘いもの・塩気・冷たい飲み物を重ねすぎない")
     .replace("同じ姿勢を長く続けない", "同じ姿勢を続けすぎない")
     .replace("首・耳・目まわりを先にゆるめる", "首・耳・目まわりを一度ゆるめる")
-    .replace("脂っこさやお酒でこもらせない", "脂っこさやお酒を重ねすぎない")
+    .replace("脂っこさやお酒でこもらせない", "脂っこいものとお酒をとりすぎない")
     .replace("画面姿勢を一度リセットする", "画面姿勢を一度リセットする")
     .replace("立ち上がる前に一呼吸置く", "立ち上がる前に一呼吸置く")
     .replace("空腹のまま急に動かない", "空腹のまま急に動きすぎない")
@@ -1274,9 +1274,9 @@ function softenPeakPrepItem(text) {
 function strengthenPeakPrepItem(text) {
   const raw = String(text || "").trim();
   if (!raw) return "";
-  if (raw.includes("先に") || raw.includes("山場前に")) return raw;
-  if (raw.includes("一度")) return raw.replace("一度", "山場前に一度");
-  return `山場前に${raw}`;
+  if (raw.includes("先に") || raw.includes("注意時間の前に")) return raw;
+  if (raw.includes("一度")) return raw.replace("一度", "注意時間の前に一度");
+  return `注意時間の前に${raw}`;
 }
 
 export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
@@ -1293,7 +1293,7 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
         ...focusedWeatherSigns,
         ...stablePoints,
         ...weatherPoints,
-        "山場の時間の小さな違和感",
+        "注意したい時間の小さな違和感",
         "いつもより少し残るだるさ",
         "動き出しのこわばり",
       ],
@@ -1324,7 +1324,7 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
         ...focusedWeatherItems.map(softenPeakPrepItem),
         ...stableItems,
         ...weatherItems.map(softenPeakPrepItem),
-        "山場前に一度だけ体勢を変える",
+        "注意時間の前に一度だけ体勢を変える",
         "食事と休憩のリズムを大きく崩さない",
         "違和感が出たら早めに一息入れる",
       ],
@@ -1342,8 +1342,8 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
         ...highSymptomItems,
         ...normalSymptomItems.map(strengthenPeakPrepItem),
         ...highWeatherItems,
-        "山場前に首肩をゆるめる",
-        "山場前に食事を重くしすぎない",
+        "注意時間の前に首肩をゆるめる",
+        "注意時間の前に食事を重くしすぎない",
         "予定を一つ減らす",
       ],
       3
@@ -1356,7 +1356,7 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
       ...focusedWeatherItems,
       ...symptomItems,
       ...weatherItems,
-      "山場前に首肩をゆるめる",
+      "注意時間の前に首肩をゆるめる",
       "食事を重くしすぎない",
       "予定を一つ減らす",
     ],
@@ -1396,7 +1396,7 @@ export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", 
     ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomWeatherLead}`
     : symptomClause
       ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomClause}です。`
-      : `${target}${copyLabel}の影響は少なめ。ただ、山場の時間だけ軽く見ておきたい日です。`;
+      : `${target}${copyLabel}の影響は少なめ。ただ、注意したい時間だけ軽く見ておきたい日です。`;
 }
 
 export function getMoodHeadline(triggerKey, signal) {
@@ -1516,7 +1516,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
 
   if (mode === "today") {
     if (signal === 0) return `今日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い一手にします。`;
-    if (signal === 2) return `${joined}がこのあと響きやすい時間があります。山場の前に、ほぐす・食べる・暮らすを少しだけ今日用に整えます。`;
+    if (signal === 2) return `${joined}がこのあと響きやすい時間があります。注意時間の前に、ほぐす・食べる・暮らすを今日用に少し調整します。`;
     return `${joined}が少し響きやすい見込みです。今からできる範囲で、こもり・冷え・重さを残さないようにします。`;
   }
 
@@ -1524,7 +1524,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
     return `明日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い整え方を選びます。`;
   }
   if (signal === 2) {
-    return `${joined}が重なりやすい日です。明日は山場の前に余力を削られないよう、今夜のうちに体を軽く動かし、巡りを止めない準備をします。`;
+    return `${joined}の影響が出やすい日です。明日は注意時間の前に疲れすぎないよう、今夜のうちに体を軽く動かしておきます。`;
   }
   return `${joined}が少し響きやすい日です。大きく構えすぎず、今夜のうちに一手だけ先回りしておきます。`;
 }
