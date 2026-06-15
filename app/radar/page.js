@@ -1196,14 +1196,14 @@ export default function RadarPage() {
                           <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
                             <IconBolt className="h-5 w-5" />
                           </span>
-                          {selectedIsToday ? "山場前に" : "明日の山場前に"}
+                          {selectedIsToday ? "注意時間の前に" : "明日の注意時間の前に"}
                         </div>
                         <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
                           {forecast.peak_start && forecast.peak_end
-                            ? `山場：${String(forecast.peak_start).slice(0, 5)}–${String(
+                            ? `注意時間：${String(forecast.peak_start).slice(0, 5)}–${String(
                                 forecast.peak_end
                               ).slice(0, 5)}`
-                            : "山場：—"}
+                            : "注意時間：—"}
                         </div>
                       </div>
 
