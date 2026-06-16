@@ -52,7 +52,7 @@ export default function BottomTabs() {
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
           {item("check", "トリセツ", IconKarte, "/check")}
-          {item("radar", "予報", IconRadar, "/radar")}
+          {item("radar", "体調予報", IconRadar, "/radar")}
           {item("care", "ケアナビ", IconCare, "/care-navi")}
         </div>
       </div>
