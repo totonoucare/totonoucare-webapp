@@ -227,7 +227,7 @@ export default function PushNotificationPrompt() {
             🔔
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-black text-[#101827]">未病予報の通知を受け取る</p>
+            <p className="text-sm font-black text-[#101827]">体調予報の通知を受け取る</p>
             <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#536477]">
               前日夜と当日朝に、天気の影響が強めの日だけお知らせします。通知文は短く、主因と時間帯を中心に作ります。
             </p>
