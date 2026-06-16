@@ -23,8 +23,8 @@ export default function HeroMiniCards({ compact = false }) {
       <div className="rounded-[32px] border border-[color:var(--ring)] bg-white p-2 shadow-[0_26px_56px_-26px_rgba(40,55,48,0.22)]">
         <div className="relative h-[320px] overflow-hidden rounded-[26px] bg-[#fcfcf8] ring-1 ring-inset ring-[color:var(--ring)]">
           <svg viewBox="0 0 320 320" className="absolute inset-0 h-full w-full" aria-hidden="true">
-            <circle cx="30" cy="250" r="180" fill="#edf3ee" fillOpacity="0.97" />
-            <circle cx="30" cy="250" r="102" fill="#edf3ee" fillOpacity="0.77" />
+            <circle cx="30" cy="250" r="180" fill="#EAF5EF" fillOpacity="0.97" />
+            <circle cx="30" cy="250" r="102" fill="#EAF5EF" fillOpacity="0.77" />
 
             <circle cx="30" cy="250" r="72" fill="none" stroke="#c7d8d0" strokeWidth="1.6" strokeOpacity="0.82" />
             <circle cx="30" cy="250" r="112" fill="none" stroke="#c7d8d0" strokeWidth="1.5" strokeOpacity="0.58" />
@@ -33,7 +33,7 @@ export default function HeroMiniCards({ compact = false }) {
             <path
               d="M30 96 A154 154 0 0 1 170 190"
               fill="none"
-              stroke="#5c9f88"
+              stroke="#3BA58B"
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeOpacity="0.38"
@@ -41,7 +41,7 @@ export default function HeroMiniCards({ compact = false }) {
             <path
               d="M30 138 A112 112 0 0 1 128 206"
               fill="none"
-              stroke="#e2aa3b"
+              stroke="#F9B02D"
               strokeWidth="2.1"
               strokeLinecap="round"
               strokeOpacity="0.3"
@@ -61,7 +61,7 @@ export default function HeroMiniCards({ compact = false }) {
           </div>
 
           <div className="absolute right-4 top-[120px] z-10 w-[170px] rounded-[22px] bg-white p-4 shadow-[0_16px_30px_-12px_rgba(40,55,48,0.16)] ring-1 ring-[color:var(--ring)] transition-all hover:shadow-[0_20px_36px_-12px_rgba(40,55,48,0.2)]">
-            <div className="text-[10px] font-black uppercase tracking-widest text-[#9ea6b0]">未病予報</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-[#9ea6b0]">体調予報</div>
             <div className="mt-1 text-sm font-black text-slate-900">明日：気圧上昇</div>
             <div className="mt-3 flex items-end justify-between">
               <div className="text-[11px] font-bold leading-tight text-[#76808d]">
@@ -90,8 +90,8 @@ export default function HeroMiniCards({ compact = false }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="group relative overflow-hidden rounded-[30px] border border-[color:var(--ring)] bg-white p-5 shadow-[0_18px_34px_-14px_rgba(40,55,48,0.12)] transition-all hover:shadow-[0_22px_42px_-14px_rgba(40,55,48,0.16)]">
         <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[#98a1ae]">未病予報サマリー</div>
-          <div className="mt-1 text-base font-black leading-tight text-slate-900">明日のあなたの未病予報</div>
+          <div className="text-[11px] font-black uppercase tracking-widest text-[#98a1ae]">体調予報サマリー</div>
+          <div className="mt-1 text-base font-black leading-tight text-slate-900">明日のあなたの体調予報</div>
           <div className="mt-8 flex items-end justify-between">
             <div className="text-[11px] font-bold text-[#98a1ae]">
               目安スコア
@@ -122,8 +122,8 @@ export default function HeroMiniCards({ compact = false }) {
 
           <div className="mt-8 h-12 w-full overflow-hidden rounded-xl bg-white/88 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] ring-1 ring-[color:var(--ring)]">
             <svg viewBox="0 0 200 40" className="h-full w-full">
-              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#5c9f88" strokeOpacity="0.52" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="90" cy="20" r="3" fill="#e2aa3b" />
+              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#3BA58B" strokeOpacity="0.52" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="90" cy="20" r="3" fill="#F9B02D" />
             </svg>
           </div>
         </div>
