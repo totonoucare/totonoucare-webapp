@@ -14,7 +14,7 @@ const zen = Zen_Kaku_Gothic_New({
 
 const appName = "未病レーダー";
 const appDescription =
-  "体質チェックと天気変化から、今日・明日の整え方を提案するセルフケアアプリ。";
+  "体質チェックと天気変化から、今日・明日の体調予報とセルフケアを見やすくするアプリ。";
 const appUrl = "https://mibyo-radar.totonoucare.com";
 
 export const metadata = {
@@ -81,7 +81,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f7fbf8",
+  themeColor: "#FAFAF6",
 };
 
 export default function RootLayout({ children }) {

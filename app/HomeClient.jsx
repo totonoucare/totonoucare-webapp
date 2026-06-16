@@ -302,7 +302,7 @@ function buildGuestSignHints(forecast) {
 }
 
 function buildFixedGuideText(bundle) {
-  if (!bundle?.ok || !bundle?.forecast) return "今日の未病予報を確認しています。";
+  if (!bundle?.ok || !bundle?.forecast) return "今日の体調予報を確認しています。";
 
   const forecast = bundle.forecast;
   const factor = getForecastTriggerFactors(forecast)[0];
@@ -506,7 +506,7 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
             <IconRadar className="h-5 w-5" />
           </span>
           <div>
-            <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日の未病予報</div>
+            <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日の体調予報</div>
             <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日の崩れやすさを確認</div>
           </div>
         </div>
@@ -541,7 +541,7 @@ function ActionTile({ icon, title, sub, onClick }) {
       className="rounded-[24px] bg-white p-5 text-left ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.34)] transition-all hover:-translate-y-0.5 hover:bg-[#FBFCF8] hover:shadow-[0_18px_36px_-22px_rgba(37,95,79,0.38)] active:scale-[0.98] group"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC] shadow-sm transition-transform group-hover:scale-105">
+        <div className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA] shadow-sm transition-transform group-hover:scale-105">
           {icon}
         </div>
         <IconChevron className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
@@ -593,7 +593,7 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
 
           {hasResult ? (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="rounded-lg bg-white/85 px-2.5 py-1 text-[11px] font-black text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm">
+              <span className="rounded-lg bg-white/85 px-2.5 py-1 text-[11px] font-black text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm">
                 {core.title}
               </span>
               {subs.slice(0, 2).map((sub) => (
@@ -657,7 +657,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
     icon = <IconPin />;
     eyebrow = "LOCATION";
     title = "地域を設定して予報を完成";
-    body = "体質トリセツはできています。次は地域を設定して、今日・明日の未病予報に反映しましょう。";
+    body = "体質トリセツはできています。次は地域を設定して、今日・明日の体調予報に反映しましょう。";
     primaryLabel = "地域を設定する";
     secondaryLabel = "体質トリセツを見る";
   } else if (hasResult) {
@@ -675,7 +675,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
     <Module className="relative overflow-hidden p-6 bg-[linear-gradient(135deg,#F7FBF8_0%,#FFF9EA_100%)] ring-1 ring-[#D3E1D5] shadow-[0_20px_48px_-34px_rgba(37,95,79,0.38)]">
       <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#F4D68A]/35 blur-2xl" />
       <div className="relative z-10 flex items-start gap-4">
-        <div className="grid h-[74px] w-[74px] shrink-0 place-items-center overflow-hidden rounded-[24px] bg-white p-2 text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-[0_14px_30px_-22px_rgba(37,95,79,0.36)]">
+        <div className="grid h-[74px] w-[74px] shrink-0 place-items-center overflow-hidden rounded-[24px] bg-white p-2 text-[#24564C] ring-1 ring-[#CFE0D3] shadow-[0_14px_30px_-22px_rgba(37,95,79,0.36)]">
           {hasResult && core ? (
             <CoreIllust
               code={coreCode}
@@ -683,7 +683,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
               className="h-full w-full object-contain"
             />
           ) : (
-            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[#255F4F] ring-1 ring-[#D3E1D5]">
+            <div className="grid h-full w-full place-items-center rounded-[18px] bg-[#EEF6F0] text-[#24564C] ring-1 ring-[#D3E1D5]">
               {icon}
             </div>
           )}
@@ -705,7 +705,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
               {subs.slice(0, 3).map((sub) => (
                 <span
                   key={sub.code}
-                  className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#CFE0D3] shadow-sm"
+                  className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm"
                 >
                   {sub.short}
                 </span>
@@ -727,7 +727,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   );
 }
 
-function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", memo = null, ctaLabel = "未病予報を開く", scoreVariant = "score" }) {
+function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", memo = null, ctaLabel = "体調予報を開く", scoreVariant = "score" }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)]">
@@ -971,7 +971,7 @@ export default function HomePage() {
           if (!bundle?.forecast) {
             setter({
               ok: false,
-              error: `${label}の予報はまだ準備中です。未病予報ページで確認してください。`,
+              error: `${label}の予報はまだ準備中です。体調予報ページで確認してください。`,
             });
           } else {
             setter(bundle);
@@ -1081,7 +1081,7 @@ export default function HomePage() {
       0: `今日はおだやかな日。自分のペースで進んでいこう！`,
     };
     const botMessage = publicForecastLoading
-      ? "今日の未病予報デモを確認中…"
+      ? "今日の体調予報デモを確認中…"
       : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
     const guestSignHints = pf ? buildGuestSignHints(pf) : [];
 
@@ -1135,18 +1135,18 @@ export default function HomePage() {
           {/* mb-5に広げてタイトルとカード本体との余白を調整 */}
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <div className="text-[15px] font-black tracking-tight text-slate-900">天気だけで見る未病予報デモ</div>
+              <div className="text-[15px] font-black tracking-tight text-slate-900">天気だけで見る体調予報デモ</div>
               <div className="mt-0.5 text-[10px] font-extrabold text-slate-500">体質チェック前のため、天気要素だけで表示しています</div>
             </div>
-            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#BFD9CC]">
-              <IconPin className="w-3.5 h-3.5 text-[#255F4F]" />
+            <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#CFE3DA]">
+              <IconPin className="w-3.5 h-3.5 text-[#24564C]" />
               <select
                 value={publicLocation.key}
                 onChange={(e) => {
                   const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
                   if (preset) setPublicLocation(preset);
                 }}
-                className="appearance-none bg-transparent text-[13px] font-black tracking-tight text-[#255F4F] outline-none pr-5 cursor-pointer relative z-10"
+                className="appearance-none bg-transparent text-[13px] font-black tracking-tight text-[#24564C] outline-none pr-5 cursor-pointer relative z-10"
               >
                 {QUICK_PRESETS.map((p) => (
                   <option key={p.key} value={p.key}>{p.label}</option>
@@ -1178,7 +1178,7 @@ export default function HomePage() {
               <div className="text-[12px] font-black tracking-tight text-slate-900">出やすいサイン</div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {guestSignHints.map((sign) => (
-                  <span key={sign} className="rounded-full bg-[#F4F9F6] px-3 py-1.5 text-[12px] font-extrabold text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                  <span key={sign} className="rounded-full bg-[#F4F9F6] px-3 py-1.5 text-[12px] font-extrabold text-[#24564C] ring-1 ring-[#D3E1D5]">
                     {sign}
                   </span>
                 ))}
@@ -1188,8 +1188,8 @@ export default function HomePage() {
 
           {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
-             <div className="text-[15px] font-black tracking-tight text-[#255F4F]">
-               体質トリセツを作って、自分向けの未病予報へ
+             <div className="text-[15px] font-black tracking-tight text-[#24564C]">
+               体質トリセツを作って、自分向けの体調予報へ
              </div>
              <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
                1〜2分の体質チェックで、あなたの「崩れ方のクセ」を体質トリセツにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
@@ -1209,7 +1209,7 @@ export default function HomePage() {
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              体質チェック・ログイン後の未病予報は
+              体質チェック・ログイン後の体調予報は
               <span className="font-extrabold text-slate-700">ずっと無料</span>
             </li>
           </ul>
@@ -1225,12 +1225,12 @@ export default function HomePage() {
   const targetSignal = !todayLoading && todayBundle?.ok ? (todayBundle.forecast?.signal ?? 0) : null;
   const guideBotText = targetSignal !== null
     ? buildFixedGuideText(todayBundle)
-    : "今日の未病予報を確認しています。";
+    : "今日の体調予報を確認しています。";
 
   return (
     <AppShell
       title="ホーム"
-      subtitle="今日の未病予報"
+      subtitle="今日の体調予報"
       headerRight={
         <HomeHeaderMenu
           onGuide={() => router.push("/guide")}

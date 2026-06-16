@@ -16,22 +16,27 @@ body {
   - アイコンに負けない文字色 / ボタン色 / キャラ色へ調整
 */
 :root {
-  --bg: #f6f6f1;
+  --bg: #FAFAF6;
+  --bg-soft: #F2F5EE;
   --panel: #ffffff;
-  --mint: #edf3ee;
-  --accent: #5c9f88;
-  --accent-ink: #355f52;
-  --gold: #e2aa3b;
-  --gold-soft: #f6ebc7;
-  --ring: rgba(53, 95, 82, 0.16);
-  --ring-strong: rgba(53, 95, 82, 0.22);
+  --mint: #EAF5EF;
+  --accent: #3BA58B;
+  --accent-dark: #2F8F79;
+  --accent-ink: #24564C;
+  --gold: #F9B02D;
+  --gold-soft: #FFF3D4;
+  --ring: rgba(36, 86, 76, 0.13);
+  --ring-strong: rgba(36, 86, 76, 0.22);
   --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
   --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
 }
 
 @layer base {
   body {
-    background: var(--bg);
+    background:
+      radial-gradient(circle at 18% 0%, rgba(59, 165, 139, 0.08), transparent 30%),
+      radial-gradient(circle at 94% 8%, rgba(249, 176, 45, 0.06), transparent 25%),
+      linear-gradient(180deg, #FAFAF6 0%, #F2F5EE 100%);
     color: #0f172a;
     font-family: var(--font-zenkaku), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
@@ -44,7 +49,10 @@ body {
 
 @layer utilities {
   .bg-app {
-    background: var(--bg);
+    background:
+      radial-gradient(circle at 18% 0%, rgba(59, 165, 139, 0.08), transparent 30%),
+      radial-gradient(circle at 94% 8%, rgba(249, 176, 45, 0.06), transparent 25%),
+      linear-gradient(180deg, #FAFAF6 0%, #F2F5EE 100%);
   }
 
   .font-app {
