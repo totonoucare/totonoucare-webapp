@@ -375,12 +375,12 @@ export default function SettingsPage() {
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
             天気の影響が強めの日を、前日夜・当日朝に短くお知らせします。
           </div>
-          <div className="mt-3 rounded-[18px] bg-[#E2F1EA]/55 p-4 text-[12px] font-bold leading-6 text-[#255F4F] ring-1 ring-[#BFD9CC]/70">
+          <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[12px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
             iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。
             <button
               type="button"
               onClick={() => setPwaGuideOpen(true)}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2.5 text-[12px] font-black text-[#255F4F] shadow-sm ring-1 ring-[#BFD9CC] active:scale-[0.99]"
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2.5 text-[12px] font-black text-[#24564C] shadow-sm ring-1 ring-[#CFE3DA] active:scale-[0.99]"
             >
               {standalone ? "ホーム画面追加済み" : "ホーム画面追加の手順を見る"}
             </button>
@@ -427,7 +427,7 @@ export default function SettingsPage() {
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[16px] font-black tracking-tight text-slate-900">未病予報の地域</div>
+            <div className="text-[16px] font-black tracking-tight text-slate-900">体調予報の地域</div>
             <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
               現在の地域：{loading ? "確認中…" : locationLabel}
             </div>
@@ -521,11 +521,11 @@ export default function SettingsPage() {
               表示崩れ、文言の違和感、使いにくいところを送れます。
             </div>
           </div>
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#E2F1EA] text-[18px] ring-1 ring-[#BFD9CC]">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#EAF5EF] text-[18px] ring-1 ring-[#CFE3DA]">
             💬
           </div>
         </div>
-        <div className="mt-4 rounded-[18px] bg-[#E2F1EA]/55 p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#BFD9CC]/70">
+        <div className="mt-4 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#CFE3DA]/70">
           メールアドレスや名前は自動送信されません。返信を希望する場合だけ、連絡先を入力できます。
         </div>
         <Button variant="secondary" className="mt-4 w-full bg-white" onClick={() => router.push("/feedback")}>
