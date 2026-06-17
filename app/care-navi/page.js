@@ -463,7 +463,7 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD9CC] shadow-[0_12px_24px_-18px_rgba(37,95,79,0.35)]">
+    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#CFE3DA] shadow-[0_12px_24px_-18px_rgba(37,95,79,0.35)]">
       <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
@@ -949,7 +949,7 @@ export default function CareNaviPage() {
           />
 
           <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[26px] bg-[#E2F1EA]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+          <div className="rounded-[26px] bg-[#EAF5EF]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
             <div className="flex items-start gap-3">
               <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3] shadow-sm">
                 {coreIconPath ? (
@@ -1026,10 +1026,10 @@ export default function CareNaviPage() {
               </div>
             ) : null}
 
-            <div className="rounded-[26px] bg-[#E2F1EA]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className="rounded-[26px] bg-[#EAF5EF]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#255F4F]/65">今回の方針</div>
+                  <div className="text-[11px] font-black tracking-[0.14em] text-[#24564C]/65">今回の方針</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {policyKeys.map((key) => (
                       <PolicyPill key={key} policyKey={key} />
