@@ -18,7 +18,7 @@ const TYPE_OPTIONS = [
 const PAGE_OPTIONS = [
   { value: "home", label: "ホーム" },
   { value: "karte", label: "体質トリセツ" },
-  { value: "radar", label: "未病予報" },
+  { value: "radar", label: "体調予報" },
   { value: "guide", label: "使い方ガイド" },
   { value: "settings", label: "設定" },
   { value: "other", label: "その他" },
@@ -153,11 +153,11 @@ export default function FeedbackPage() {
   return (
     <AppShell title="バグ・改善点を報告" subtitle="使いにくさを送る" headerLeft={headerLeft}>
       <Module className="overflow-hidden border-none bg-transparent shadow-none ring-0">
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#DDEFE6] via-[#F7FBF8] to-white px-6 py-7 shadow-[0_18px_45px_rgba(37,95,79,0.12)] ring-1 ring-[#BFD9CC]/70">
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#DDEFE6] via-[#F7FBF8] to-white px-6 py-7 shadow-[0_18px_45px_rgba(37,95,79,0.12)] ring-1 ring-[#CFE3DA]/70">
           <div className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-white/80 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[#8DC7AD]/25 blur-3xl" />
           <div className="relative z-10">
-            <div className="inline-flex items-center rounded-full bg-white/85 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#255F4F] shadow-sm ring-1 ring-[#BFD9CC]/70 backdrop-blur-md">
+            <div className="inline-flex items-center rounded-full bg-white/85 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#24564C] shadow-sm ring-1 ring-[#CFE3DA]/70 backdrop-blur-md">
               feedback
             </div>
             <div className="mt-5 text-[24px] font-black leading-[1.32] tracking-tight text-slate-900">
@@ -177,8 +177,8 @@ export default function FeedbackPage() {
       ) : null}
 
       {notice ? (
-        <Module className="p-5 bg-[#E2F1EA]/70 ring-1 ring-[#BFD9CC]/70">
-          <div className="text-[13px] font-black leading-6 text-[#255F4F]">{notice}</div>
+        <Module className="p-5 bg-[#EAF5EF]/70 ring-1 ring-[#CFE3DA]/70">
+          <div className="text-[13px] font-black leading-6 text-[#24564C]">{notice}</div>
         </Module>
       ) : null}
 
@@ -218,7 +218,7 @@ export default function FeedbackPage() {
               onChange={(e) => setMessage(e.target.value.slice(0, 1200))}
               disabled={!user || submitting || loading}
               rows={7}
-              placeholder="例：未病予報の食べるタブで、文が少し長く感じた / ツボ詳細の説明が分かりにくかった など"
+              placeholder="例：体調予報の食べるタブで、文が少し長く感じた / ツボ詳細の説明が分かりにくかった など"
               className="w-full resize-none rounded-[18px] bg-slate-50 px-4 py-3.5 text-sm font-bold leading-6 text-slate-900 outline-none ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
             />
             <div className="mt-1.5 text-right text-[10px] font-extrabold text-slate-400">
@@ -226,7 +226,7 @@ export default function FeedbackPage() {
             </div>
           </div>
 
-          <label className="flex items-start gap-3 rounded-[18px] bg-[#E2F1EA]/55 p-4 ring-1 ring-[#BFD9CC]/70">
+          <label className="flex items-start gap-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 ring-1 ring-[#CFE3DA]/70">
             <input
               type="checkbox"
               checked={wantsReply}
@@ -235,7 +235,7 @@ export default function FeedbackPage() {
               className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--accent)] focus:ring-[var(--accent)]"
             />
             <span className="min-w-0">
-              <span className="block text-[12px] font-black text-[#255F4F]">返信を希望する</span>
+              <span className="block text-[12px] font-black text-[#24564C]">返信を希望する</span>
               <span className="mt-1 block text-[11px] font-bold leading-5 text-slate-600">
                 通常は返信なしで受け取ります。必要な場合だけ、下に連絡先を入力してください。
               </span>
