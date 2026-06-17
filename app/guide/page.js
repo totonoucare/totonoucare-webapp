@@ -3,7 +3,7 @@ import GuideClient from "./GuideClient";
 
 const pageTitle = "使い方ガイド｜未病レーダー";
 const pageDescription =
-  "体質トリセツの作り方、今日・明日の未病予報の見方、暮らす・食べる・ほぐすのケアカードの使い方をまとめたガイドです。";
+  "体質トリセツの作り方、今日・明日の体調予報の見方、暮らす・食べる・ほぐすのケアカードの使い方をまとめたガイドです。";
 
 export const metadata = {
   title: pageTitle,
@@ -53,7 +53,7 @@ const structuredData = {
     },
     {
       "@type": "HowToStep",
-      name: "未病予報を見る",
+      name: "体調予報を見る",
       text: "今日と明日の天気が、今の体質や気になる不調にどう響きそうかを確認します。",
     },
     {

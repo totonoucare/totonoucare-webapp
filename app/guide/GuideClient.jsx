@@ -50,7 +50,7 @@ function SegmentedTabs({ items, active, onChange }) {
  * ---------------------------- */
 function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
   const tones = {
-    mint: "text-[var(--accent-ink)] bg-[#E2F1EA]",
+    mint: "text-[var(--accent-ink)] bg-[#EAF5EF]",
     amber: "text-amber-800 bg-amber-100",
     indigo: "text-indigo-800 bg-indigo-100",
     violet: "text-violet-800 bg-violet-100",
@@ -97,7 +97,7 @@ function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
 
 function MiniNote({ children }) {
   return (
-    <div className="rounded-[20px] bg-[#E2F1EA]/55 p-4 text-[12px] font-extrabold leading-6 text-[#255F4F] ring-1 ring-[#BFD9CC]/70">
+    <div className="rounded-[20px] bg-[#EAF5EF]/55 p-4 text-[12px] font-extrabold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
       {children}
     </div>
   );
@@ -130,9 +130,9 @@ function PolicyMeaningList() {
   return (
     <div className="mt-3 grid gap-2">
       {CARE_POLICY_GUIDE_ITEMS.map(([label, meaning]) => (
-        <div key={label} className="rounded-[14px] bg-[#E2F1EA]/55 px-3 py-2 ring-1 ring-[#BFD9CC]/60">
+        <div key={label} className="rounded-[14px] bg-[#EAF5EF]/55 px-3 py-2 ring-1 ring-[#CFE3DA]/60">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[12px] font-black text-[#255F4F]">{label}</span>
+            <span className="text-[12px] font-black text-[#24564C]">{label}</span>
             <span className="text-[11px] font-extrabold leading-5 text-slate-600">{meaning}</span>
           </div>
         </div>
@@ -143,8 +143,8 @@ function PolicyMeaningList() {
 
 function FlowItem({ num, title, children }) {
   return (
-    <div className="flex gap-3.5 rounded-[22px] bg-[#E2F1EA]/55 p-4 ring-1 ring-[#BFD9CC]/70">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[13px] font-black text-[#255F4F] ring-1 ring-[#BFD9CC]">
+    <div className="flex gap-3.5 rounded-[22px] bg-[#EAF5EF]/55 p-4 ring-1 ring-[#CFE3DA]/70">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[13px] font-black text-[#24564C] ring-1 ring-[#CFE3DA]">
         {num}
       </div>
       <div className="min-w-0">
@@ -165,7 +165,7 @@ export default function GuidePage() {
     () => [
       { key: "start", label: "全体像" },
       { key: "check", label: "①トリセツ" },
-      { key: "radar", label: "②予報" },
+      { key: "radar", label: "②体調予報" },
       { key: "care", label: "③ケアナビ" },
     ],
     []
@@ -185,13 +185,13 @@ export default function GuidePage() {
     <AppShell title="使い方ガイド" noTabs={true} headerLeft={headerLeft}>
       {/* ヒーローセクション */}
       <Module className="mb-4 overflow-hidden border-none bg-transparent shadow-none ring-0">
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#DDEFE6] via-[#F4FAF7] to-white px-6 py-7 shadow-[0_18px_45px_rgba(37,95,79,0.12)] ring-1 ring-[#BFD9CC]/70">
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#DDEFE6] via-[#F4FAF7] to-white px-6 py-7 shadow-[0_18px_45px_rgba(37,95,79,0.12)] ring-1 ring-[#CFE3DA]/70">
           <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/80 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-[#8DC7AD]/25 blur-3xl" />
           <div className="pointer-events-none absolute bottom-5 right-5 h-20 w-20 rounded-full border border-white/70 bg-white/20" />
 
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3.5 py-1.5 shadow-sm ring-1 ring-[#BFD9CC]/70 backdrop-blur-md">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3.5 py-1.5 shadow-sm ring-1 ring-[#CFE3DA]/70 backdrop-blur-md">
               <IconSpark className="h-4 w-4 text-[var(--accent)]" />
               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
                 未病レーダーの使い方
@@ -209,21 +209,21 @@ export default function GuidePage() {
 
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
               <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
-                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
                   <IconConstitution className="h-4 w-4" />
                 </div>
                 <div className="mt-2 text-[11px] font-black text-slate-900">トリセツ</div>
                 <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">体質を知る</div>
               </div>
               <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
-                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
                   <IconRadar className="h-4 w-4" />
                 </div>
-                <div className="mt-2 text-[11px] font-black text-slate-900">予報</div>
+                <div className="mt-2 text-[11px] font-black text-slate-900">体調予報</div>
                 <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">影響を見る</div>
               </div>
               <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
-                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#E2F1EA] text-[#255F4F] ring-1 ring-[#BFD9CC]">
+                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
                   <IconChecklist className="h-4 w-4" />
                 </div>
                 <div className="mt-2 text-[11px] font-black text-slate-900">ケアナビ</div>
@@ -253,7 +253,7 @@ export default function GuidePage() {
             <FlowItem num="1" title="体質トリセツを作る">
               質問に答えて、体質・天気との相性・負担が出やすい場所を見える化します。
             </FlowItem>
-            <FlowItem num="2" title="未病予報を見る">
+            <FlowItem num="2" title="体調予報を見る">
               今日・明日の天気が、今の体質や不調にどう響きそうかを確認します。予報ページのケアは、道具なしでも今できる工夫が中心です。
             </FlowItem>
             <FlowItem num="3" title="ケアナビで候補を見る">
@@ -269,7 +269,7 @@ export default function GuidePage() {
                 体質トリセツを作る
               </Button>
               <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">
-                未病予報を見る
+                体調予報を見る
               </Button>
               <Button variant="secondary" onClick={() => router.push("/care-navi")} className="w-full">
                 ケアナビを見る
@@ -304,7 +304,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              トリセツは一度作ると、未病予報やケアナビの土台になります。体質・天気との相性・負担が出やすい場所を、あとから見返せます。
+              トリセツは一度作ると、体調予報やケアナビの土台になります。体質・天気との相性・負担が出やすい場所を、あとから見返せます。
             </MiniNote>
 
             <div className="pt-2">
@@ -316,11 +316,11 @@ export default function GuidePage() {
         </Module>
       ) : null}
 
-      {/* 3. 未病予報詳細タブ */}
+      {/* 3. 体調予報詳細タブ */}
       {tab === "radar" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            未病予報の見方
+            体調予報の見方
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
             予報は「影響の強さ」だけでなく、道具なしでも今日できるケアまで見るページです。
@@ -368,7 +368,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <GuideCard tone="indigo" title="地域と不調も確認する" icon={<IconCalendar />}>
-              未病予報は、設定した地域の天気と、今見ている不調をもとに作られます。引っ越しや旅行の時は設定ページで地域を変更し、頭痛・首肩・腰・むくみなど見たい不調は予報ページで切り替えてください。
+              体調予報は、設定した地域の天気と、今見ている不調をもとに作られます。引っ越しや旅行の時は設定ページで地域を変更し、頭痛・首肩・腰・むくみなど見たい不調は予報ページで切り替えてください。
             </GuideCard>
 
             <MiniNote>
@@ -377,7 +377,7 @@ export default function GuidePage() {
 
             <div className="pt-2">
               <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
-                未病予報へ
+                体調予報へ
               </Button>
               <Button variant="secondary" onClick={() => router.push("/care-navi")} className="w-full">
                 ケアナビで候補を見る
