@@ -159,7 +159,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
     return (
       <div className={compact ? "rounded-[24px] bg-emerald-50 p-5 ring-1 ring-emerald-200 text-center shadow-sm" : "rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 text-center shadow-sm"}>
         <div className="text-[16px] font-black text-emerald-800">保存済み ✅</div>
-        <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このトリセツは保存されています。今日・明日の未病予報に反映できます。</div>
+        <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このトリセツは保存されています。今日・明日の体調予報に反映できます。</div>
       </div>
     );
   }
@@ -169,7 +169,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
       <div className="space-y-4">
         <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
           <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
-          <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の未病予報とケア提案に反映できます。"}</div>
+          <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の体調予報とケア提案に反映できます。"}</div>
           {session?.user?.email ? (
             <div className="mt-3 rounded-[18px] bg-white/80 px-4 py-3 text-[12px] font-bold text-slate-600 ring-1 ring-black/5">
               ログイン中：{session.user.email}
@@ -187,7 +187,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
     <div className="space-y-4">
       <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
         <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
-        <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の未病予報とケア提案に進めます。"}</div>
+        <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の体調予報とケア提案に進めます。"}</div>
       </div>
       <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">無料で保存して予報を見る</Button>
       <Button variant="secondary" onClick={onLogin} className="w-full bg-white shadow-sm py-4">ログインはこちら</Button>
@@ -204,7 +204,7 @@ function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) 
       <div className="mx-auto flex w-full max-w-[440px] items-center gap-3 rounded-[24px] border border-[#d7e6df] bg-white/96 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="min-w-0 flex-1">
           <div className="text-[12px] font-black tracking-[0.14em] text-[var(--accent-ink)]">SAVE GUIDE</div>
-          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">保存すると、今日・明日の未病予報に反映できます。</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">保存すると、今日・明日の体調予報に反映できます。</div>
         </div>
         <Button onClick={onClick} disabled={isLoggedIn && attaching} className="h-11 shrink-0 rounded-full px-5 text-[13px] shadow-md">
           {ctaLabel}
@@ -678,7 +678,7 @@ function ResultPage({ params }) {
         <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
             <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">まだ保存されていません</div>
-            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の未病予報やケア提案に反映できます。</div>
+            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の体調予報やケア提案に反映できます。</div>
           </div>
         </div>
       ) : null}
@@ -751,7 +751,7 @@ function ResultPage({ params }) {
               </Card>
 
               <Card>
-                <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の未病予報に反映されます" />
+                <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の体調予報に反映されます" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   <SavePromptCard
                     isLoggedIn={isLoggedIn}
@@ -763,7 +763,7 @@ function ResultPage({ params }) {
                     onLogin={goLoginToRadar}
                     title={isLoggedIn ? "このトリセツを保存して予報につなげましょう" : "無料で保存して予報を見ましょう"}
                     body={isLoggedIn
-                      ? "保存すると、今日・明日の未病予報や暮らす・食べる・ほぐす提案に反映できます。"
+                      ? "保存すると、今日・明日の体調予報や暮らす・食べる・ほぐす提案に反映できます。"
                       : "アカウント作成後、今日・明日の崩れやすさと先回りケアを見られるようになります。"}
                   />
                   {isAttached ? (
@@ -853,7 +853,7 @@ function ResultPage({ params }) {
                   onLogin={goLoginToRadar}
                   compact={true}
                   title="このトリセツを保存すると、予報で使えます"
-                  body="保存すると、今日・明日の未病予報やケア提案にこのトリセツが反映されます。"
+                  body="保存すると、今日・明日の体調予報やケア提案にこのトリセツが反映されます。"
                 />
               </div>
             </Card>
