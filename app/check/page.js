@@ -125,7 +125,7 @@ export default function CheckLandingPage() {
                       {latestSubs.length ? (
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {latestSubs.slice(0, 3).map((sub) => (
-                            <span key={sub.code} className="rounded-lg bg-[#F4F9F6] px-2.5 py-1 text-[11px] font-extrabold text-[#255F4F] ring-1 ring-[#D3E1D5]">
+                            <span key={sub.code} className="rounded-lg bg-[#F4F9F6] px-2.5 py-1 text-[11px] font-extrabold text-[#24564C] ring-1 ring-[#D3E1D5]">
                               {sub.short}
                             </span>
                           ))}
