@@ -64,7 +64,7 @@ function PreviewReport() {
   return (
     <div className="rounded-[28px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
       <div className="flex items-center gap-2">
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-[#E2F1EA] text-[18px] ring-1 ring-[#BFD9CC]">
+        <div className="grid h-10 w-10 place-items-center rounded-full bg-[#EAF5EF] text-[18px] ring-1 ring-[#CFE3DA]">
           ✨
         </div>
         <div>
@@ -117,7 +117,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
       />
 
       <Module className="relative overflow-hidden p-6 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#E2F1EA] blur-3xl" />
+        <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#EAF5EF] blur-3xl" />
         <div className="relative z-10">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3D8] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9]">
             準備中
@@ -126,7 +126,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
             {tab === "report" ? "週次レポートは鋭意開発中です" : "記録カレンダーは鋭意開発中です"}
           </div>
           <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
-            まずは体質トリセツ・未病予報・ケアナビを安定して使えるように整えています。
+            まずは体質トリセツ・体調予報・ケアナビを安定して使えるように整えています。
           </div>
 
           <div className="mt-6">
@@ -135,7 +135,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
-              未病予報へ戻る
+              体調予報へ戻る
             </Button>
             <Button variant="secondary" onClick={() => router.push("/guide")} className="w-full bg-white">
               使い方を見る
@@ -147,7 +147,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
       <Module className="p-5 bg-[#FBFCF8] ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[14px] font-black tracking-tight text-slate-900">今使える機能</div>
         <div className="mt-3 grid gap-2 text-[12px] font-bold leading-6 text-slate-600">
-          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">今日・明日の未病予報</div>
+          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">今日・明日の体調予報</div>
           <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">天気に合わせたツボ・食養生</div>
           <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">体質トリセツ</div>
         </div>
