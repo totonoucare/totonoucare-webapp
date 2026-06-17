@@ -1,14 +1,14 @@
 {
   "name": "未病レーダー",
   "short_name": "未病レーダー",
-  "description": "体質と天気から、今日・明日の崩れやすさを予報するセルフケアアプリ。",
+  "description": "体質と天気から、今日・明日の体調予報とセルフケアを見やすくするアプリ。",
   "id": "/?source=pwa",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F7FBF4",
-  "theme_color": "#F7FBF4",
+  "background_color": "#FAFAF6",
+  "theme_color": "#FAFAF6",
   "lang": "ja",
   "categories": ["health", "lifestyle", "weather"],
   "icons": [
