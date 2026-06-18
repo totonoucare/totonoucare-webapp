@@ -114,13 +114,13 @@ function signalText(signal) {
 
 function signalBadge(signal) {
   if (signal === 2) return "bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200";
-  if (signal === 1) return "bg-amber-100 text-amber-800 ring-1 ring-inset ring-amber-200";
+  if (signal === 1) return "bg-[#FFF9ED] text-[#AD7A18] ring-1 ring-inset ring-[#EAD8A6]";
   return "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200";
 }
 
 function signalDotClass(signal) {
   if (signal === 2) return "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
-  if (signal === 1) return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]";
+  if (signal === 1) return "bg-[#C99A35] shadow-[0_0_8px_rgba(201,154,53,0.48)]";
   return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
 }
 
@@ -132,7 +132,7 @@ function signalCardBg(signal) {
 
 function signalScoreTextClass(signal) {
   if (signal === 2) return "text-rose-700";
-  if (signal === 1) return "text-amber-700";
+  if (signal === 1) return "text-[#AD7A18]";
   return "text-emerald-700";
 }
 

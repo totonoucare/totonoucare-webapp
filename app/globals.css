@@ -10,21 +10,21 @@ body {
 
 /*
   Design tokens
-  v11: brand-strength pass
-  - v10 の構造感・影・面の設計は維持
-  - ブランドカラーの出力強度だけ一段引き上げる
-  - アイコンに負けない文字色 / ボタン色 / キャラ色へ調整
+  v12: app-readable brand tone
+  - 背景は旧版寄りの単色に戻す
+  - ボタンは新版ティールを維持
+  - UI文字のアンバーはオレンジを抑えた金茶へ調整
 */
 :root {
-  --bg: #FAFAF6;
-  --bg-soft: #F2F5EE;
+  --bg: #F7FAF6;
+  --bg-soft: #F2F7F1;
   --panel: #ffffff;
   --mint: #EAF5EF;
   --accent: #3BA58B;
   --accent-dark: #2F8F79;
   --accent-ink: #24564C;
-  --gold: #F9B02D;
-  --gold-soft: #FFF3D4;
+  --gold: #AD7A18;
+  --gold-soft: #FFF9ED;
   --ring: rgba(36, 86, 76, 0.13);
   --ring-strong: rgba(36, 86, 76, 0.22);
   --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
@@ -33,10 +33,7 @@ body {
 
 @layer base {
   body {
-    background:
-      radial-gradient(circle at 18% 0%, rgba(59, 165, 139, 0.08), transparent 30%),
-      radial-gradient(circle at 94% 8%, rgba(249, 176, 45, 0.06), transparent 25%),
-      linear-gradient(180deg, #FAFAF6 0%, #F2F5EE 100%);
+    background: var(--bg);
     color: #0f172a;
     font-family: var(--font-zenkaku), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
@@ -49,10 +46,7 @@ body {
 
 @layer utilities {
   .bg-app {
-    background:
-      radial-gradient(circle at 18% 0%, rgba(59, 165, 139, 0.08), transparent 30%),
-      radial-gradient(circle at 94% 8%, rgba(249, 176, 45, 0.06), transparent 25%),
-      linear-gradient(180deg, #FAFAF6 0%, #F2F5EE 100%);
+    background: var(--bg);
   }
 
   .font-app {
