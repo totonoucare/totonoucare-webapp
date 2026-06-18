@@ -816,7 +816,7 @@ function ResultPage({ params }) {
 
                 <div>
                   <div className="flex items-center gap-2.5 mb-4">
-                    <IconBolt className="h-5 w-5 text-amber-500" />
+                    <IconBolt className="h-5 w-5 text-[#e2aa3b]" />
                     <h3 className="text-[16px] font-black text-slate-900">天気が重なると出やすいサイン</h3>
                   </div>
                   <ul className="grid gap-2">
@@ -873,7 +873,7 @@ function ResultPage({ params }) {
 
                   <div>
                     <div className="flex items-center gap-2.5 mb-4">
-                      <IconBolt className="h-5 w-5 text-amber-500" />
+                      <IconBolt className="h-5 w-5 text-[#e2aa3b]" />
                       <h3 className="text-[16px] font-black text-slate-900">体質から見た3つの整え方</h3>
                     </div>
                     <div className="space-y-3">
