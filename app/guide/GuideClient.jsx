@@ -51,7 +51,7 @@ function SegmentedTabs({ items, active, onChange }) {
 function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
   const tones = {
     mint: "text-[var(--accent-ink)] bg-[#EAF5EF]",
-    amber: "text-amber-800 bg-amber-100",
+    amber: "text-[#AD7A18] bg-[#FFF9ED]",
     indigo: "text-indigo-800 bg-indigo-100",
     violet: "text-violet-800 bg-violet-100",
     teal: "text-teal-800 bg-teal-100",
