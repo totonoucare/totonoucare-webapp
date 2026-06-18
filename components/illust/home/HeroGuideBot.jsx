@@ -48,7 +48,7 @@ function GuideBotSvg({ signal = 0, className = "h-full w-full" }) {
           <stop offset="100%" stopColor="#bfdacb" />
         </linearGradient>
         <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#F9B02D" stopOpacity="0.92" />
+          <stop offset="0%" stopColor="#C99A35" stopOpacity="0.92" />
           <stop offset="100%" stopColor="#efbf56" stopOpacity="0.28" />
         </linearGradient>
         <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
@@ -141,7 +141,7 @@ export default function HeroGuideBot({
               <stop offset="100%" stopColor="#bfdacb" />
             </linearGradient>
             <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#F9B02D" stopOpacity="0.92" />
+              <stop offset="0%" stopColor="#C99A35" stopOpacity="0.92" />
               <stop offset="100%" stopColor="#efbf56" stopOpacity="0.28" />
             </linearGradient>
             {/* ★ shadowOpacity を 0.16 -> 0.28 に上げて輪郭をはっきりさせる */}

@@ -15,8 +15,8 @@ export default function HeroDashboardArt({ className = "" }) {
             <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
           </filter>
           <radialGradient id="lifeForceGold" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#F9B02D" />
-            <stop offset="100%" stopColor="#F9B02D" stopOpacity="0.14" />
+            <stop offset="0%" stopColor="#C99A35" />
+            <stop offset="100%" stopColor="#C99A35" stopOpacity="0.14" />
           </radialGradient>
         </defs>
 
@@ -47,14 +47,14 @@ export default function HeroDashboardArt({ className = "" }) {
         <path
           d="M35 138 A82 82 0 0 1 130 38"
           fill="none"
-          stroke="#F9B02D"
+          stroke="#C99A35"
           strokeOpacity="0.24"
           strokeWidth="2.4"
           strokeLinecap="round"
         />
 
         <circle cx="100" cy="100" r="24" fill="url(#lifeForceGold)" filter="url(#corePulseGlow)" opacity="0.94" />
-        <circle cx="100" cy="100" r="7" fill="#F9B02D" opacity="0.98" />
+        <circle cx="100" cy="100" r="7" fill="#C99A35" opacity="0.98" />
 
         <circle cx="100" cy="28" r="3" fill="#3BA58B" opacity="0.26" />
         <circle cx="100" cy="172" r="3" fill="#3BA58B" opacity="0.26" />
