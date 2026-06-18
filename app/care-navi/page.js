@@ -646,9 +646,9 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
 function RakutenStatusCard({ error, queries }) {
   if (error) {
     return (
-      <div className="rounded-[22px] bg-amber-50 p-4 text-[12px] font-bold leading-6 text-amber-800 ring-1 ring-amber-100">
+      <div className="rounded-[22px] bg-[#FFF9ED] p-4 text-[12px] font-bold leading-6 text-[#7B5619] ring-1 ring-[#EAD8A6]/70">
         {error}
-        <div className="mt-1 text-[11px] text-amber-700">
+        <div className="mt-1 text-[11px] text-[#AD7A18]">
           APIキー未設定の場合は、Vercelの環境変数に RAKUTEN_APPLICATION_ID / RAKUTEN_ACCESS_KEY を入れてください。
         </div>
       </div>
