@@ -499,11 +499,11 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
 
         </div>
 
-        <div className="mt-4 rounded-[20px] bg-amber-50 px-5 py-4 ring-1 ring-amber-200/50 shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-widest text-amber-700/80">
+        <div className="mt-4 rounded-[20px] bg-[#FFF9ED] px-5 py-4 ring-1 ring-[#EAD8A6]/60 shadow-sm">
+          <div className="text-[11px] font-black uppercase tracking-widest text-[#AD7A18]/85">
             ほぐし方の目安
           </div>
-          <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-amber-900">
+          <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-[#7B5619]">
             {getPointPressGuide(point)}
           </div>
         </div>
