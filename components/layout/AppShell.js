@@ -11,7 +11,7 @@ import BottomTabs from "@/components/nav/BottomTabs";
  */
 export function AppHeader({ title, left, right, subtitle }) {
   return (
-    <div className="sticky top-0 z-40 bg-[#FAFAF6]/86 backdrop-blur-xl supports-[backdrop-filter]:bg-[#FAFAF6]/68 transition-all">
+    <div className="sticky top-0 z-40 bg-[var(--bg)]/92 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--bg)]/76 transition-all">
       <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="w-[88px] shrink-0">{left || null}</div>
@@ -31,7 +31,7 @@ export function AppHeader({ title, left, right, subtitle }) {
         </div>
       </div>
       {/* コンテンツとの境界を上品に区切る、消えるグラデーションライン */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D3E1D5]/80 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-[#DDE8E0]" />
     </div>
   );
 }
