@@ -171,7 +171,7 @@ export default function FeedbackPage() {
       </Module>
 
       {error ? (
-        <Module className="p-5 bg-[#fff7ed] ring-1 ring-orange-100">
+        <Module className="p-5 bg-[#FFF9ED] ring-1 ring-[#EAD8A6]/60">
           <div className="text-[13px] font-black leading-6 text-orange-800">{error}</div>
         </Module>
       ) : null}
