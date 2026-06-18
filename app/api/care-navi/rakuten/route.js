@@ -662,6 +662,53 @@ function getPolicyKey(key, fallback = "sasaeru") {
   return POLICY_LABELS[key] ? key : fallback;
 }
 
+function polishCareReason(reason) {
+  let text = String(reason || "").trim();
+  if (!text) return "今の条件に合わせて選びやすいアイテムです。";
+
+  const exact = {
+    "胃腸まわりの重さを直接商品名にせず、足元から整える候補です。": "胃腸の重さが気になる日に、足元から軽く整えます。",
+    "甘いものやカフェインだけで粘らないための候補です。": "甘いものやカフェインだけで粘らず、温かく軽く整えます。",
+    "活動量が落ちやすい日の補う候補です。": "活動量が落ちやすい日に、不足しやすい栄養を補いやすくします。",
+    "乾きが夜〜朝に残りやすい人の候補です。": "夜〜朝に乾きが残りやすいとき、口元や喉を守りやすくします。",
+    "冷えや重さを残しにくい軽い温かい候補です。": "冷えや重さを残しにくい、軽く温かい選択です。",
+    "冷えで腰が重くなりやすい日の温かい候補です。": "冷えで腰が重くなりやすい日に、温かく整えます。",
+    "眠る前に体の張りをほどく入浴候補です。": "眠る前の体の張りを、入浴でほどきやすくします。",
+  };
+  if (exact[text]) return exact[text];
+
+  text = text
+    .replace(/飲み物候補です。/g, "飲み物として選びやすいです。")
+    .replace(/入浴候補です。/g, "入浴まわりの選択肢です。")
+    .replace(/セルフケア候補です。/g, "セルフケアとして選びやすいです。")
+    .replace(/ケア候補です。/g, "ケアとして選びやすいです。")
+    .replace(/食事候補です。/g, "食事として選びやすいです。")
+    .replace(/休息習慣に合わせる候補です。/g, "休息習慣に合わせやすいです。")
+    .replace(/休息習慣へ寄せる候補です。/g, "休息習慣へ寄せやすいです。")
+    .replace(/休む環境づくりに向いた候補です。/g, "休む環境づくりに向いています。")
+    .replace(/選びやすい候補です。/g, "選びやすいです。")
+    .replace(/足しやすい候補です。/g, "足しやすいです。")
+    .replace(/使いやすい候補です。/g, "使いやすいです。")
+    .replace(/残しにくくする候補です。/g, "残しにくくします。")
+    .replace(/増やしにくい候補です。/g, "増やしにくい選択です。")
+    .replace(/偏りにくくする候補です。/g, "偏りにくくします。")
+    .replace(/冷やしにくくする候補です。/g, "冷やしにくくします。")
+    .replace(/守りやすい候補です。/g, "守りやすくします。")
+    .replace(/温める候補です。/g, "温めやすくします。")
+    .replace(/整える候補です。/g, "整えやすくします。")
+    .replace(/作る候補です。/g, "作りやすくします。")
+    .replace(/切り替える候補です。/g, "切り替えやすくします。")
+    .replace(/逃がす候補です。/g, "逃がしやすくします。")
+    .replace(/ほどく候補です。/g, "ほどきやすくします。")
+    .replace(/補う候補です。/g, "補いやすくします。")
+    .replace(/足す候補です。/g, "足しやすくします。")
+    .replace(/減らす候補です。/g, "減らしやすくします。")
+    .replace(/高ぶりを残しにくくする候補です。/g, "高ぶりを残しにくくします。")
+    .replace(/候補です。/g, "選択肢です。");
+
+  return text;
+}
+
 function normalizeQueryRow(row) {
   if (!row) return null;
 
@@ -835,7 +882,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
 
   return {
     title: item?.itemName || item?.catchcopy || plan.keyword,
-    reason: plan.reason,
+    reason: polishCareReason(plan.reason),
     tags: plan.tags,
     query: plan.keyword,
     policyKey: plan.policyKey,
