@@ -33,7 +33,7 @@ export default function HeroMiniCards({ compact = false }) {
             <path
               d="M30 96 A154 154 0 0 1 170 190"
               fill="none"
-              stroke="#3BA58B"
+              stroke="#349B83"
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeOpacity="0.38"
@@ -41,7 +41,7 @@ export default function HeroMiniCards({ compact = false }) {
             <path
               d="M30 138 A112 112 0 0 1 128 206"
               fill="none"
-              stroke="#C99A35"
+              stroke="#e2aa3b"
               strokeWidth="2.1"
               strokeLinecap="round"
               strokeOpacity="0.3"
@@ -122,8 +122,8 @@ export default function HeroMiniCards({ compact = false }) {
 
           <div className="mt-8 h-12 w-full overflow-hidden rounded-xl bg-white/88 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] ring-1 ring-[color:var(--ring)]">
             <svg viewBox="0 0 200 40" className="h-full w-full">
-              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#3BA58B" strokeOpacity="0.52" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="90" cy="20" r="3" fill="#C99A35" />
+              <path d="M0 20 C 30 10, 60 30, 90 20 S 150 10, 200 20" fill="none" stroke="#349B83" strokeOpacity="0.52" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="90" cy="20" r="3" fill="#e2aa3b" />
             </svg>
           </div>
         </div>

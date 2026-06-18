@@ -15,8 +15,8 @@ export default function HeroDashboardArt({ className = "" }) {
             <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
           </filter>
           <radialGradient id="lifeForceGold" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#C99A35" />
-            <stop offset="100%" stopColor="#C99A35" stopOpacity="0.14" />
+            <stop offset="0%" stopColor="#e2aa3b" />
+            <stop offset="100%" stopColor="#e2aa3b" stopOpacity="0.14" />
           </radialGradient>
         </defs>
 
@@ -28,7 +28,7 @@ export default function HeroDashboardArt({ className = "" }) {
         <path
           d="M18 96 C 44 58, 82 138, 112 100 S 160 62, 188 98"
           fill="none"
-          stroke="#3BA58B"
+          stroke="#349B83"
           strokeOpacity="0.24"
           strokeWidth="4"
           strokeLinecap="round"
@@ -37,7 +37,7 @@ export default function HeroDashboardArt({ className = "" }) {
         <path
           d="M22 122 C 52 88, 92 154, 124 120 S 172 92, 198 122"
           fill="none"
-          stroke="#3BA58B"
+          stroke="#349B83"
           strokeOpacity="0.15"
           strokeWidth="4"
           strokeLinecap="round"
@@ -47,19 +47,19 @@ export default function HeroDashboardArt({ className = "" }) {
         <path
           d="M35 138 A82 82 0 0 1 130 38"
           fill="none"
-          stroke="#C99A35"
+          stroke="#e2aa3b"
           strokeOpacity="0.24"
           strokeWidth="2.4"
           strokeLinecap="round"
         />
 
         <circle cx="100" cy="100" r="24" fill="url(#lifeForceGold)" filter="url(#corePulseGlow)" opacity="0.94" />
-        <circle cx="100" cy="100" r="7" fill="#C99A35" opacity="0.98" />
+        <circle cx="100" cy="100" r="7" fill="#e2aa3b" opacity="0.98" />
 
-        <circle cx="100" cy="28" r="3" fill="#3BA58B" opacity="0.26" />
-        <circle cx="100" cy="172" r="3" fill="#3BA58B" opacity="0.26" />
-        <circle cx="28" cy="100" r="3" fill="#3BA58B" opacity="0.22" />
-        <circle cx="172" cy="100" r="3" fill="#3BA58B" opacity="0.22" />
+        <circle cx="100" cy="28" r="3" fill="#349B83" opacity="0.26" />
+        <circle cx="100" cy="172" r="3" fill="#349B83" opacity="0.26" />
+        <circle cx="28" cy="100" r="3" fill="#349B83" opacity="0.22" />
+        <circle cx="172" cy="100" r="3" fill="#349B83" opacity="0.22" />
       </svg>
     </div>
   );
