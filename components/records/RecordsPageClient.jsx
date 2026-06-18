@@ -48,7 +48,7 @@ function PreviewCalendar() {
               i % 9 === 0
                 ? "bg-rose-100"
                 : i % 5 === 0
-                  ? "bg-amber-100"
+                  ? "bg-[#FFF9ED]"
                   : i % 4 === 0
                     ? "bg-emerald-100"
                     : "bg-slate-50",
@@ -74,7 +74,7 @@ function PreviewReport() {
       </div>
       <div className="mt-5 space-y-3 blur-[2px]">
         <div className="h-16 rounded-[18px] bg-slate-50 ring-1 ring-inset ring-slate-100" />
-        <div className="h-16 rounded-[18px] bg-[#F3EBDD] ring-1 ring-inset ring-amber-100" />
+        <div className="h-16 rounded-[18px] bg-[#FFF9ED] ring-1 ring-inset ring-[#EAD8A6]" />
         <div className="h-16 rounded-[18px] bg-[#EAF4F0] ring-1 ring-inset ring-emerald-100" />
       </div>
     </div>
