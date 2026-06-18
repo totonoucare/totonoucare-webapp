@@ -599,7 +599,7 @@ export default function KarteClient() {
 
       {error ? (
         <div className="mx-auto mt-5 max-w-[780px] px-5">
-          <div className="rounded-[24px] border border-[#f6d4c5] bg-[#fff7ed] px-5 py-4 text-[14px] font-black leading-7 text-[#9a4b20]">
+          <div className="rounded-[24px] border border-[#EAD8A6] bg-[#FFF9ED] px-5 py-4 text-[14px] font-black leading-7 text-[#7B5619]">
             {error}
           </div>
         </div>
