@@ -120,7 +120,7 @@ function signalBadge(signal) {
 
 function signalDotClass(signal) {
   if (signal === 2) return "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]";
-  if (signal === 1) return "bg-[#C99A35] shadow-[0_0_8px_rgba(201,154,53,0.48)]";
+  if (signal === 1) return "bg-[#e2aa3b] shadow-[0_0_8px_rgba(226,170,59,0.48)]";
   return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]";
 }
 
@@ -581,7 +581,7 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9] shadow-sm">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[var(--gold)] ring-1 ring-[#E9D8A9] shadow-sm">
             TYPE GUIDE
           </div>
           <h2 className="mt-3 text-[24px] font-black tracking-tight text-slate-950 leading-[1.25]">
@@ -690,7 +690,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9] shadow-sm">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[var(--gold)] ring-1 ring-[#E9D8A9] shadow-sm">
             {eyebrow}
           </div>
           <h2 className="mt-3 text-[22px] font-black tracking-tight text-slate-950 leading-[1.25]">
