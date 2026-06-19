@@ -624,43 +624,71 @@ function ResultPage({ params }) {
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
-            {/* 共通モチーフ：右上に逃がした見切れ円弧。文字に触れない範囲で、ティールとアンバーを重ねる */}
-            <div className="pointer-events-none absolute -right-[76px] -top-[62px] h-[232px] w-[232px] opacity-95 sm:-right-[70px] sm:-top-[58px]" aria-hidden="true">
-              <svg viewBox="0 0 232 232" className="h-full w-full overflow-visible" fill="none">
-                {/* ティール主円弧：元の雰囲気を残しつつ、右上へ退避 */}
+            {/* 共通モチーフ：右上に見切れる円弧。ティール基準＋アンバーを少しズラして重ねる */}
+            <div className="pointer-events-none absolute -right-[68px] -top-[38px] h-[224px] w-[224px] opacity-90 sm:-right-[62px] sm:-top-[34px]" aria-hidden="true">
+              <svg viewBox="0 0 224 224" className="h-full w-full overflow-visible" fill="none">
+                {/* 基準のティール主円弧と小丸 */}
                 <path
-                  d="M 54 184 A 96 96 0 1 1 190 52"
+                  d="M 42 158 A 88 88 0 1 1 180 48"
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth="4.5"
                   strokeLinecap="round"
-                  opacity="0.26"
+                  opacity="0.27"
                 />
+                <circle cx="54" cy="155" r="6" fill="var(--accent)" opacity="0.34" />
 
-                {/* アンバー主円弧：ティールの外側を沿わせる。カード右端で自然に見切れる */}
+                {/* ティールの細い補助円弧：空洞感を減らす内側ライン */}
                 <path
-                  d="M 142 32 A 106 106 0 0 1 216 118"
+                  d="M 96 66 A 62 62 0 0 1 178 106"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="2.1"
+                  strokeLinecap="round"
+                  opacity="0.15"
+                />
+                <path
+                  d="M 87 170 A 66 66 0 0 0 150 188"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="2.1"
+                  strokeLinecap="round"
+                  opacity="0.11"
+                />
+                <circle cx="132" cy="62" r="3.8" fill="var(--accent)" opacity="0.24" />
+
+                {/* アンバー主円弧：ティールと同じ並びにせず、右上外周へ逃がす */}
+                <path
+                  d="M 156 27 A 98 98 0 0 1 212 126"
                   fill="none"
                   stroke="var(--gold)"
                   strokeWidth="4.5"
                   strokeLinecap="round"
-                  opacity="0.52"
+                  opacity="0.54"
                 />
 
-                {/* アンバー補助円弧：下に置かず、右上内側の短いアクセントにする */}
+                {/* アンバーの細い補助円弧：内側と右下に短く散らす */}
                 <path
-                  d="M 170 54 A 74 74 0 0 1 214 104"
+                  d="M 174 52 A 74 74 0 0 1 205 142"
                   fill="none"
                   stroke="var(--gold)"
-                  strokeWidth="4.5"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
-                  opacity="0.32"
+                  opacity="0.30"
+                />
+                <path
+                  d="M 116 136 A 54 54 0 0 0 178 166"
+                  fill="none"
+                  stroke="var(--gold)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  opacity="0.24"
                 />
 
-                {/* 小丸：カード右上の外側寄りに寄せて、タイトル周辺には置かない */}
-                <circle cx="70" cy="181" r="5.8" fill="var(--accent)" opacity="0.36" />
-                <circle cx="214" cy="119" r="6.4" fill="var(--gold)" opacity="0.56" />
-                <circle cx="188" cy="57" r="4.8" fill="var(--gold)" opacity="0.40" />
+                {/* 小丸は円弧の端に揃えすぎず、少しランダムに散らす */}
+                <circle cx="194" cy="65" r="6.4" fill="var(--gold)" opacity="0.58" />
+                <circle cx="211" cy="126" r="4.9" fill="var(--gold)" opacity="0.42" />
+                <circle cx="174" cy="166" r="3.9" fill="var(--gold)" opacity="0.34" />
               </svg>
             </div>
             <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
@@ -971,8 +999,5 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
-
-
 
 
