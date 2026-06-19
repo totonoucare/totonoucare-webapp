@@ -625,7 +625,7 @@ function ResultPage({ params }) {
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
             {/* 共通モチーフ：グレー塗りつぶし版のサイズ・配置を基準に、線と小丸だけで描画 */}
-            <div className="pointer-events-none absolute -right-12 -top-8 h-[212px] w-[212px] sm:-right-10 sm:-top-6" aria-hidden="true">
+            <div className="pointer-events-none absolute -right-6 -top-8 h-[212px] w-[212px] sm:-right-5 sm:-top-6" aria-hidden="true">
               <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible">
                 <path
                   d="M 42 156 A 86 86 0 1 1 178 48"
