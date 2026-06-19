@@ -622,15 +622,18 @@ function ResultPage({ params }) {
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
-          {/* ★ ヒーローカード：入れ子をなくし、主役の「体質」を最大化 */}
-          <div className="relative rounded-[36px] bg-white ring-1 ring-[var(--ring)] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-[220px] bg-gradient-to-b from-[color-mix(in_srgb,var(--mint),white_30%)] to-white" />
+          {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
+          <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_72%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.22)]">
+            <div className="pointer-events-none absolute -right-20 -top-24 h-[250px] w-[250px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_34%)] opacity-80 ring-1 ring-[color-mix(in_srgb,var(--accent),white_78%)]" />
+            <div className="pointer-events-none absolute -right-7 -top-12 h-[184px] w-[184px] rounded-full border-[2px] border-[color-mix(in_srgb,var(--accent),transparent_74%)]" />
+            <div className="pointer-events-none absolute right-8 top-12 h-[86px] w-[86px] rounded-full border-[2px] border-[color-mix(in_srgb,var(--gold),transparent_70%)]" />
+            <div className="pointer-events-none absolute -left-16 bottom-[-72px] h-[170px] w-[170px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_62%)] opacity-60" />
             
             <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
               
               {/* お困りの不調はバッジ化して邪魔にならないように */}
-              <div className="flex justify-center mb-6">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur-md px-3.5 py-1.5 ring-1 ring-black/5 shadow-sm">
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.86)] px-3.5 py-1.5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-sm backdrop-blur-md">
                   <span className="text-[10px] font-extrabold text-slate-500">
                     現在の不調：{symptomLabel}{symptomChanged ? `（チェック時：${diagnosisSymptomLabel}）` : ""}
                   </span>
@@ -639,24 +642,24 @@ function ResultPage({ params }) {
 
               {/* 体質の軸を堂々と表示 */}
               <div className="flex flex-col items-center text-center">
-                <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+                <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/72">
                   体質トリセツ
                 </div>
-                <div className="mt-2 text-[32px] font-black tracking-tight text-slate-900 leading-[1.15]">
+                <div className="mt-2 text-[34px] font-black tracking-tight text-slate-900 leading-[1.12]">
                   {core?.title || "—"}
                 </div>
                 {core?.short ? (
                   <div className="mt-3">
-                    <span className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-[12px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-[var(--ring)] shadow-sm">
+                    <span className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-[12px] font-extrabold text-[var(--accent-ink)] ring-1 ring-inset ring-[color-mix(in_srgb,var(--accent),white_70%)] shadow-sm">
                       {core.short}
                     </span>
                   </div>
                 ) : null}
               </div>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+              <div className="mt-7 flex flex-col items-center gap-5 sm:flex-row sm:items-start">
                 <div className="shrink-0">
-                  <div className="grid h-[132px] w-[132px] place-items-center overflow-hidden rounded-[26px] bg-[#fdfefc] ring-1 ring-[var(--ring)] shadow-sm transition-transform hover:scale-105 p-2">
+                  <div className="grid h-[138px] w-[138px] place-items-center overflow-hidden rounded-[28px] bg-white p-2 ring-1 ring-[color-mix(in_srgb,var(--accent),white_74%)] shadow-[0_16px_34px_-24px_rgba(36,86,76,0.38)] transition-transform hover:scale-105">
                     <CoreIllust
                       code={computed?.core_code}
                       title={core?.title || "体質タイプ"}
@@ -664,7 +667,7 @@ function ResultPage({ params }) {
                     />
                   </div>
                 </div>
-                <div className="text-[14px] font-bold leading-relaxed text-slate-600 text-center sm:text-left pt-2">
+                <div className="w-full rounded-[26px] bg-[color-mix(in_srgb,var(--mint),white_58%)] px-4 py-4 text-center text-[14px] font-bold leading-relaxed text-slate-600 ring-1 ring-[color-mix(in_srgb,var(--accent),white_80%)] sm:text-left">
                   {core?.tcm_hint || ""}
                 </div>
               </div>
