@@ -625,34 +625,34 @@ function ResultPage({ params }) {
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
             {/* 共通モチーフ：グレー円版で良かったティール円弧のサイズ・配置を基準に、塗りつぶしなしでアンバー要素を内側へ調整 */}
-            <div className="pointer-events-none absolute -right-10 -top-7 h-[204px] w-[204px] opacity-70 sm:-right-8 sm:-top-5" aria-hidden="true">
+            <div className="pointer-events-none absolute -right-10 -top-7 h-[204px] w-[204px] opacity-74 sm:-right-8 sm:-top-5" aria-hidden="true">
               <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible">
                 <path
-                  d="M 42 156 A 86 86 0 1 1 178 48"
+                  d="M 34 166 A 94 94 0 1 1 186 40"
                   fill="none"
                   stroke="var(--accent)"
-                  strokeWidth="4.5"
+                  strokeWidth="4.6"
                   strokeLinecap="round"
                   opacity="0.28"
                 />
                 <path
-                  d="M 127 26 A 86 86 0 0 1 188 118"
+                  d="M 120 32 A 79 79 0 0 1 188 116"
                   fill="none"
                   stroke="var(--gold)"
-                  strokeWidth="5.5"
+                  strokeWidth="5.6"
                   strokeLinecap="round"
-                  opacity="0.58"
+                  opacity="0.68"
                 />
                 <path
-                  d="M 74 174 A 72 72 0 0 0 153 178"
+                  d="M 86 176 A 74 74 0 0 0 164 170"
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth="2.2"
                   strokeLinecap="round"
                   opacity="0.14"
                 />
-                <circle cx="54" cy="153" r="6" fill="var(--accent)" opacity="0.34" />
-                <circle cx="170" cy="66" r="6.4" fill="var(--gold)" opacity="0.72" />
+                <circle cx="160" cy="134" r="6.2" fill="var(--accent)" opacity="0.40" />
+                <circle cx="170" cy="52" r="6.6" fill="var(--gold)" opacity="0.76" />
               </svg>
             </div>
             <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
