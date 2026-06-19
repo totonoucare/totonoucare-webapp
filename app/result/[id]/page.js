@@ -624,35 +624,47 @@ function ResultPage({ params }) {
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
-            {/* 共通モチーフ：パーツ数・色・太さは維持しつつ、右上に逃がして重なりを自然に調整 */}
-            <div className="pointer-events-none absolute -right-[56px] -top-[46px] h-[232px] w-[232px] opacity-90 sm:-right-[52px] sm:-top-[42px]" aria-hidden="true">
-              <svg viewBox="0 0 260 260" className="h-full w-full overflow-visible" fill="none">
-                <path
-                  d="M 54 220 A 112 112 0 0 1 206 42"
+            {/* 共通モチーフ：ティール＋アンバーの円弧と小さな丸。失敗版の大きめ配置に戻しつつ、塗りつぶしは使わない */}
+            <div className="pointer-events-none absolute -right-10 -top-2 h-[246px] w-[246px] opacity-90 sm:-right-9 sm:-top-2" aria-hidden="true">
+              <svg viewBox="0 0 260 260" className="h-full w-full overflow-visible">
+                <circle
+                  cx="126"
+                  cy="128"
+                  r="106"
                   fill="none"
                   stroke="#349B83"
-                  strokeWidth="4.8"
+                  strokeWidth="4.4"
                   strokeLinecap="round"
-                  opacity="0.28"
+                  strokeDasharray="226 650"
+                  transform="rotate(210 126 128)"
+                  opacity="0.24"
                 />
-                <path
-                  d="M 178 30 A 100 100 0 0 1 240 154"
+                <circle
+                  cx="126"
+                  cy="128"
+                  r="99"
                   fill="none"
                   stroke="#E2AA3B"
-                  strokeWidth="5.6"
+                  strokeWidth="5.2"
                   strokeLinecap="round"
-                  opacity="0.72"
+                  strokeDasharray="112 650"
+                  transform="rotate(300 126 128)"
+                  opacity="0.70"
                 />
-                <path
-                  d="M 86 186 A 76 76 0 0 0 174 198"
+                <circle
+                  cx="126"
+                  cy="128"
+                  r="72"
                   fill="none"
                   stroke="#349B83"
-                  strokeWidth="2.1"
+                  strokeWidth="2"
                   strokeLinecap="round"
-                  opacity="0.12"
+                  strokeDasharray="138 650"
+                  transform="rotate(36 126 128)"
+                  opacity="0.10"
                 />
-                <circle cx="86" cy="172" r="7.2" fill="#349B83" opacity="0.48" />
-                <circle cx="210" cy="86" r="7.0" fill="#E2AA3B" opacity="0.78" />
+                <circle cx="222" cy="143" r="7" fill="#349B83" opacity="0.46" />
+                <circle cx="210" cy="55" r="7" fill="#E2AA3B" opacity="0.78" />
               </svg>
             </div>
             
