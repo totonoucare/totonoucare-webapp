@@ -624,49 +624,64 @@ function ResultPage({ params }) {
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
-            {/* 共通モチーフ：ティール＋アンバーの円弧と小さな丸。失敗版の大きめ配置に戻しつつ、塗りつぶしは使わない */}
-            <div className="pointer-events-none absolute -right-8 -top-8 h-[258px] w-[258px] opacity-95 sm:-right-7 sm:-top-7" aria-hidden="true">
+            
+            {/* 共通モチーフ：ティール＋アンバーの円弧と小さな丸。大きさ、位置、線の太さを洗練されたバランスに調整 */}
+            <div className="pointer-events-none absolute -right-10 -top-10 h-[220px] w-[220px] opacity-95 sm:-right-9 sm:-top-9" aria-hidden="true">
               <svg viewBox="0 0 260 260" className="h-full w-full overflow-visible">
                 <circle
                   cx="126"
                   cy="128"
                   r="106"
                   fill="none"
-                  stroke="#349B83"
-                  strokeWidth="4.8"
+                  stroke="#349B83" // Teal
+                  strokeWidth="4.0" // 少し細く（元4.8）
                   strokeLinecap="round"
                   strokeDasharray="246 650"
                   transform="rotate(202 126 128)"
-                  opacity="0.28"
+                  opacity="0.35" // 少し濃く（元0.28）
                 />
                 <circle
                   cx="126"
                   cy="128"
                   r="98"
                   fill="none"
-                  stroke="#E2AA3B"
-                  strokeWidth="5.6"
+                  stroke="#E2AA3B" // Amber
+                  strokeWidth="5.0" // 少し細く（元5.6）
                   strokeLinecap="round"
                   strokeDasharray="122 650"
                   transform="rotate(292 126 128)"
-                  opacity="0.72"
+                  opacity="0.65" // 少し薄く（元0.72）
                 />
                 <circle
                   cx="126"
                   cy="128"
                   r="72"
                   fill="none"
-                  stroke="#349B83"
+                  stroke="#349B83" // Teal (thinner)
                   strokeWidth="2.1"
                   strokeLinecap="round"
                   strokeDasharray="160 650"
                   transform="rotate(28 126 128)"
                   opacity="0.12"
                 />
-                <circle cx="216" cy="151" r="7.2" fill="#349B83" opacity="0.48" />
-                <circle cx="213" cy="58" r="7.0" fill="#E2AA3B" opacity="0.78" />
+                {/* ドットを少し小さく（元r="7.2", r="7.0"） */}
+                <circle cx="216" cy="151" r="6.5" fill="#349B83" opacity="0.48" />
+                <circle cx="213" cy="58" r="6.0" fill="#E2AA3B" opacity="0.78" />
               </svg>
             </div>
+            {/* ★★★【修正箇所ここまで】★★★ */}
+            
+            <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
+              
+              {/* お困りの不調はバッジ化して邪魔にならないように */}
+              <div className="mb-6 flex justify-center">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.86)] px-3.5 py-1.5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-sm backdrop-blur-md">
+                  <span className="text-[10px] font-extrabold text-slate-500">
+                    現在の不調：{symptomLabel}{symptomChanged ? `（チェック時：${diagnosisSymptomLabel}）` : ""}
+                  </span>
+                </div>
+              </div>
+
             
             <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
               
