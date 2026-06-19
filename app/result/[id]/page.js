@@ -636,12 +636,12 @@ function ResultPage({ params }) {
                   opacity="0.28"
                 />
                 <path
-                  d="M 142 25 A 91 91 0 0 1 204 103"
+                  d="M 120 26 A 94 94 0 0 1 185 140"
                   fill="none"
                   stroke="#E2AA3B"
-                  strokeWidth="5.2"
+                  strokeWidth="5.4"
                   strokeLinecap="round"
-                  opacity="0.62"
+                  opacity="0.74"
                 />
                 <path
                   d="M 74 174 A 72 72 0 0 0 153 178"
@@ -652,7 +652,7 @@ function ResultPage({ params }) {
                   opacity="0.16"
                 />
                 <circle cx="54" cy="153" r="6" fill="#349B83" opacity="0.36" />
-                <circle cx="199" cy="101" r="6.5" fill="#E2AA3B" opacity="0.78" />
+                <circle cx="166" cy="42" r="6.8" fill="#E2AA3B" opacity="0.82" />
               </svg>
             </div>
             <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
