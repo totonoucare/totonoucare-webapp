@@ -624,74 +624,49 @@ function ResultPage({ params }) {
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
-            {/* 共通モチーフ：右上に見切れる円弧。ティール基準＋アンバーを少しズラして重ねる */}
-            <div className="pointer-events-none absolute -right-[68px] -top-[38px] h-[224px] w-[224px] opacity-90 sm:-right-[62px] sm:-top-[34px]" aria-hidden="true">
-              <svg viewBox="0 0 224 224" className="h-full w-full overflow-visible" fill="none">
-                {/* 基準のティール主円弧と小丸 */}
-                <path
-                  d="M 42 158 A 88 88 0 1 1 180 48"
+            {/* 共通モチーフ：ティール＋アンバーの円弧と小さな丸。失敗版の大きめ配置に戻しつつ、塗りつぶしは使わない */}
+            <div className="pointer-events-none absolute -right-8 -top-8 h-[258px] w-[258px] opacity-95 sm:-right-7 sm:-top-7" aria-hidden="true">
+              <svg viewBox="0 0 260 260" className="h-full w-full overflow-visible">
+                <circle
+                  cx="126"
+                  cy="128"
+                  r="106"
                   fill="none"
-                  stroke="var(--accent)"
-                  strokeWidth="4.5"
+                  stroke="#349B83"
+                  strokeWidth="4.8"
                   strokeLinecap="round"
-                  opacity="0.27"
+                  strokeDasharray="246 650"
+                  transform="rotate(202 126 128)"
+                  opacity="0.28"
                 />
-                <circle cx="54" cy="155" r="6" fill="var(--accent)" opacity="0.34" />
-
-                {/* ティールの細い補助円弧：空洞感を減らす内側ライン */}
-                <path
-                  d="M 96 66 A 62 62 0 0 1 178 106"
+                <circle
+                  cx="126"
+                  cy="128"
+                  r="98"
                   fill="none"
-                  stroke="var(--accent)"
+                  stroke="#E2AA3B"
+                  strokeWidth="5.6"
+                  strokeLinecap="round"
+                  strokeDasharray="122 650"
+                  transform="rotate(292 126 128)"
+                  opacity="0.72"
+                />
+                <circle
+                  cx="126"
+                  cy="128"
+                  r="72"
+                  fill="none"
+                  stroke="#349B83"
                   strokeWidth="2.1"
                   strokeLinecap="round"
-                  opacity="0.15"
+                  strokeDasharray="160 650"
+                  transform="rotate(28 126 128)"
+                  opacity="0.12"
                 />
-                <path
-                  d="M 87 170 A 66 66 0 0 0 150 188"
-                  fill="none"
-                  stroke="var(--accent)"
-                  strokeWidth="2.1"
-                  strokeLinecap="round"
-                  opacity="0.11"
-                />
-                <circle cx="132" cy="62" r="3.8" fill="var(--accent)" opacity="0.24" />
-
-                {/* アンバー主円弧：ティールと同じ並びにせず、右上外周へ逃がす */}
-                <path
-                  d="M 156 27 A 98 98 0 0 1 212 126"
-                  fill="none"
-                  stroke="var(--gold)"
-                  strokeWidth="4.5"
-                  strokeLinecap="round"
-                  opacity="0.54"
-                />
-
-                {/* アンバーの細い補助円弧：内側と右下に短く散らす */}
-                <path
-                  d="M 174 52 A 74 74 0 0 1 205 142"
-                  fill="none"
-                  stroke="var(--gold)"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  opacity="0.30"
-                />
-                <path
-                  d="M 116 136 A 54 54 0 0 0 178 166"
-                  fill="none"
-                  stroke="var(--gold)"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  opacity="0.24"
-                />
-
-                {/* 小丸は円弧の端に揃えすぎず、少しランダムに散らす */}
-                <circle cx="194" cy="65" r="6.4" fill="var(--gold)" opacity="0.58" />
-                <circle cx="211" cy="126" r="4.9" fill="var(--gold)" opacity="0.42" />
-                <circle cx="174" cy="166" r="3.9" fill="var(--gold)" opacity="0.34" />
+                <circle cx="216" cy="151" r="7.2" fill="#349B83" opacity="0.48" />
+                <circle cx="213" cy="58" r="7.0" fill="#E2AA3B" opacity="0.78" />
               </svg>
             </div>
-            <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
             
             <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
               
