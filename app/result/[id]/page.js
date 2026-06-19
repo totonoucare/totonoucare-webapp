@@ -623,11 +623,40 @@ function ResultPage({ params }) {
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
-          <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_72%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.22)]">
-            <div className="pointer-events-none absolute -right-20 -top-24 h-[250px] w-[250px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_34%)] opacity-80 ring-1 ring-[color-mix(in_srgb,var(--accent),white_78%)]" />
-            <div className="pointer-events-none absolute -right-7 -top-12 h-[184px] w-[184px] rounded-full border-[2px] border-[color-mix(in_srgb,var(--accent),transparent_74%)]" />
-            <div className="pointer-events-none absolute right-8 top-12 h-[86px] w-[86px] rounded-full border-[2px] border-[color-mix(in_srgb,var(--gold),transparent_70%)]" />
-            <div className="pointer-events-none absolute -left-16 bottom-[-72px] h-[170px] w-[170px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_62%)] opacity-60" />
+          <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
+            {/* 共通モチーフ：ティール＋アンバーの軌道円と小さな丸。主役を邪魔しない右上背景に固定 */}
+            <div className="pointer-events-none absolute -right-12 -top-8 h-[212px] w-[212px] opacity-70 sm:-right-10 sm:-top-6" aria-hidden="true">
+              <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible">
+                <circle cx="116" cy="106" r="78" fill="color-mix(in_srgb,var(--mint),white 50%)" opacity="0.28" />
+                <path
+                  d="M 42 156 A 86 86 0 1 1 178 48"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="4.5"
+                  strokeLinecap="round"
+                  opacity="0.28"
+                />
+                <path
+                  d="M 144 24 A 91 91 0 0 1 203 96"
+                  fill="none"
+                  stroke="var(--gold)"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  opacity="0.36"
+                />
+                <path
+                  d="M 74 174 A 72 72 0 0 0 153 178"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  opacity="0.14"
+                />
+                <circle cx="54" cy="153" r="6" fill="var(--accent)" opacity="0.34" />
+                <circle cx="201" cy="97" r="6.5" fill="var(--gold)" opacity="0.52" />
+              </svg>
+            </div>
+            <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
             
             <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
               
@@ -667,7 +696,7 @@ function ResultPage({ params }) {
                     />
                   </div>
                 </div>
-                <div className="w-full rounded-[26px] bg-[color-mix(in_srgb,var(--mint),white_58%)] px-4 py-4 text-center text-[14px] font-bold leading-relaxed text-slate-600 ring-1 ring-[color-mix(in_srgb,var(--accent),white_80%)] sm:text-left">
+                <div className="w-full rounded-[26px] bg-[color-mix(in_srgb,var(--mint),white_64%)] px-4 py-4 text-center text-[14px] font-bold leading-relaxed text-slate-600 ring-1 ring-[color-mix(in_srgb,var(--accent),white_80%)] sm:text-left">
                   {core?.tcm_hint || ""}
                 </div>
               </div>
