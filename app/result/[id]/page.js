@@ -624,43 +624,43 @@ function ResultPage({ params }) {
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
-            {/* 共通モチーフ：ティールを軸に、アンバーの円弧と小丸を重ねて右上に見切れ配置 */}
-            <div className="pointer-events-none absolute -right-12 -top-8 h-[212px] w-[212px] opacity-78 sm:-right-10 sm:-top-6" aria-hidden="true">
-              <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible" fill="none">
-                {/* 基準のティール円弧と小丸はそのまま */}
+            {/* 共通モチーフ：右上に逃がした見切れ円弧。文字に触れない範囲で、ティールとアンバーを重ねる */}
+            <div className="pointer-events-none absolute -right-[76px] -top-[62px] h-[232px] w-[232px] opacity-95 sm:-right-[70px] sm:-top-[58px]" aria-hidden="true">
+              <svg viewBox="0 0 232 232" className="h-full w-full overflow-visible" fill="none">
+                {/* ティール主円弧：元の雰囲気を残しつつ、右上へ退避 */}
                 <path
-                  d="M 42 156 A 86 86 0 1 1 178 48"
+                  d="M 54 184 A 96 96 0 1 1 190 52"
                   fill="none"
                   stroke="var(--accent)"
                   strokeWidth="4.5"
                   strokeLinecap="round"
-                  opacity="0.28"
+                  opacity="0.26"
                 />
-                <circle cx="54" cy="153" r="6" fill="var(--accent)" opacity="0.34" />
 
-                {/* アンバーの主円弧：ティールと重なりすぎず、上側に抜ける軌道 */}
+                {/* アンバー主円弧：ティールの外側を沿わせる。カード右端で自然に見切れる */}
                 <path
-                  d="M 136 26 A 92 92 0 0 1 203 96"
+                  d="M 142 32 A 106 106 0 0 1 216 118"
                   fill="none"
                   stroke="var(--gold)"
                   strokeWidth="4.5"
                   strokeLinecap="round"
-                  opacity="0.58"
+                  opacity="0.52"
                 />
 
-                {/* 細いティール円弧をアンバーの補助円弧に置き換え */}
+                {/* アンバー補助円弧：下に置かず、右上内側の短いアクセントにする */}
                 <path
-                  d="M 78 174 A 72 72 0 0 0 156 176"
+                  d="M 170 54 A 74 74 0 0 1 214 104"
                   fill="none"
                   stroke="var(--gold)"
                   strokeWidth="4.5"
                   strokeLinecap="round"
-                  opacity="0.30"
+                  opacity="0.32"
                 />
 
-                {/* アンバーの小丸を2つにして、重なり感を出す */}
-                <circle cx="201" cy="97" r="6.5" fill="var(--gold)" opacity="0.58" />
-                <circle cx="163" cy="176" r="4.8" fill="var(--gold)" opacity="0.42" />
+                {/* 小丸：カード右上の外側寄りに寄せて、タイトル周辺には置かない */}
+                <circle cx="70" cy="181" r="5.8" fill="var(--accent)" opacity="0.36" />
+                <circle cx="214" cy="119" r="6.4" fill="var(--gold)" opacity="0.56" />
+                <circle cx="188" cy="57" r="4.8" fill="var(--gold)" opacity="0.40" />
               </svg>
             </div>
             <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
@@ -971,6 +971,7 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
+
 
 
 
