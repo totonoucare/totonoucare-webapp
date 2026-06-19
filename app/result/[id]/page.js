@@ -624,37 +624,47 @@ function ResultPage({ params }) {
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
-            {/* 共通モチーフ：ティール＋アンバーの円弧と小さな丸。SVGのfill面は使わず、線だけで安全に描画 */}
-            <div className="pointer-events-none absolute -right-9 -top-7 h-[196px] w-[196px] opacity-90 sm:-right-8 sm:-top-6" aria-hidden="true">
-              <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible">
-                <path
-                  d="M 58 166 A 78 78 0 1 1 174 54"
+            {/* 共通モチーフ：ティール＋アンバーの軌道円と小さな丸。主役を邪魔しない右上背景に固定 */}
+            <div className="pointer-events-none absolute -right-12 -top-8 h-[212px] w-[212px] opacity-70 sm:-right-10 sm:-top-6" aria-hidden="true">
+              <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible" fill="none">
+                <circle
+                  cx="116"
+                  cy="106"
+                  r="78"
                   fill="none"
-                  stroke="#349B83"
-                  strokeWidth="4.2"
-                  strokeLinecap="round"
-                  opacity="0.26"
+                  stroke="var(--accent)"
+                  strokeWidth="2"
+                  opacity="0.10"
                 />
                 <path
-                  d="M 139 29 A 91 91 0 0 1 204 96"
+                  d="M 42 156 A 86 86 0 1 1 178 48"
                   fill="none"
-                  stroke="#E2AA3B"
-                  strokeWidth="5.2"
+                  stroke="var(--accent)"
+                  strokeWidth="4.5"
                   strokeLinecap="round"
-                  opacity="0.52"
+                  opacity="0.28"
                 />
                 <path
-                  d="M 76 178 A 72 72 0 0 0 154 180"
+                  d="M 144 24 A 91 91 0 0 1 203 96"
                   fill="none"
-                  stroke="#349B83"
-                  strokeWidth="2.1"
+                  stroke="var(--gold)"
+                  strokeWidth="5"
                   strokeLinecap="round"
-                  opacity="0.15"
+                  opacity="0.36"
                 />
-                <circle cx="62" cy="163" r="6.2" fill="#349B83" opacity="0.42" />
-                <circle cx="204" cy="96" r="6.8" fill="#E2AA3B" opacity="0.66" />
+                <path
+                  d="M 74 174 A 72 72 0 0 0 153 178"
+                  fill="none"
+                  stroke="var(--accent)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  opacity="0.14"
+                />
+                <circle cx="54" cy="153" r="6" fill="var(--accent)" opacity="0.34" />
+                <circle cx="201" cy="97" r="6.5" fill="var(--gold)" opacity="0.52" />
               </svg>
             </div>
+            <div className="pointer-events-none absolute left-[-54px] bottom-[-62px] h-[150px] w-[150px] rounded-full bg-[color-mix(in_srgb,var(--mint),white_64%)] opacity-36" aria-hidden="true" />
             
             <div className="relative z-10 px-6 pt-8 pb-8 sm:px-8">
               
