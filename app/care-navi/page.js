@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
+import { buildApproachTags, scorePartnerOffers } from "@/lib/care-navi/partnerOffers";
 import {
   deriveCarePolicies,
   getForecastTriggerFactors,
@@ -53,11 +54,9 @@ const PRICE_BAND_RANGES = {
   },
 };
 
-const BASIS_OPTIONS = [
-  { key: "karte", label: "トリセツ", lead: "体質チェックで見えた崩れ方のクセを手がかりにします。" },
-  { key: "tomorrow", label: "明日の予報", lead: "明日の崩れやすさに備える想定で候補を寄せます。" },
-  { key: "season", label: "季節", lead: "今の季節に起きやすい波に合わせます。" },
-  { key: "life", label: "最近の生活", lead: "最近の生活のクセを追加条件にします。" },
+const WEATHER_FILTER_OPTIONS = [
+  { key: "tomorrow", label: "明日の予報", lead: "明日の崩れやすさに備える条件を重ねます。" },
+  { key: "season", label: "季節の天候", lead: "今の季節に起きやすい波を重ねます。" },
 ];
 
 const LIFE_OPTIONS = [
@@ -391,6 +390,23 @@ function getLifePolicyKeys(lifeKeys, baseScores) {
   });
 }
 
+function mergePolicyKeysWithLife(policyKeys, lifeKeys, baseScores) {
+  if (!lifeKeys?.length) return policyKeys;
+
+  const selectedLife = LIFE_OPTIONS.filter((item) => lifeKeys.includes(item.key));
+  const lifePolicyKeys = selectedLife.flatMap((item) => item.policies);
+  const scores = createPolicyScoreMap();
+
+  Object.entries(baseScores || {}).forEach(([key, value]) => {
+    addPolicyScore(scores, key, Number(value || 0) * 0.32);
+  });
+
+  addPolicyKeys(scores, policyKeys, 1.45);
+  addPolicyKeys(scores, lifePolicyKeys, 1.25);
+
+  return selectPolicyKeysFromScores(scores, policyKeys?.length ? policyKeys : ["sasaeru", "yurumeru"]);
+}
+
 function pickCandidates(policyKeys, categoryKey) {
   const rows = [];
   for (const policyKey of policyKeys) {
@@ -550,11 +566,13 @@ function ResultCard({ item, itemPosition, trackingContext }) {
   const policy = POLICY_META[item.policyKey] || {};
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
-  const itemUrl = item.itemUrl || makeRakutenSearchUrl(item.query);
+  const isPartner = item.source === "a8" || item.sourceType === "partner";
+  const itemUrl = item.itemUrl || item.clickUrl || makeRakutenSearchUrl(item.query);
   const priceText = item.price ? `${Number(item.price).toLocaleString("ja-JP")}円` : "";
   const reviewText = item.reviewAverage && item.reviewCount
     ? `★${Number(item.reviewAverage).toFixed(1)} / ${Number(item.reviewCount).toLocaleString("ja-JP")}件`
     : "";
+  const buttonText = item.buttonText || (isPartner ? "公式サイトで詳しく見る" : "楽天で見る");
 
   function handleClick() {
     postCareItemClick({
@@ -568,10 +586,31 @@ function ResultCard({ item, itemPosition, trackingContext }) {
     <div className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring)] shadow-[0_14px_34px_-24px_rgba(40,55,48,0.24)]">
       <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--accent)]/55" />
 
+      {isPartner && item.impressionUrl ? (
+        <img
+          src={item.impressionUrl}
+          alt=""
+          width="1"
+          height="1"
+          className="pointer-events-none absolute h-px w-px opacity-0"
+          loading="lazy"
+        />
+      ) : null}
+
       <div className="flex gap-3 pl-1">
-        <div className="grid h-[78px] w-[78px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[var(--accent-ink)] ring-1 ring-[#D8E7DC] shadow-sm">
+        <div
+          className={[
+            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[var(--accent-ink)] ring-1 ring-[#D8E7DC] shadow-sm",
+            isPartner ? "h-[92px] w-[112px]" : "h-[88px] w-[88px]",
+          ].join(" ")}
+        >
           {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+            <img
+              src={item.imageUrl}
+              alt=""
+              className={isPartner ? "h-full w-full object-contain" : "h-full w-full object-cover"}
+              loading="lazy"
+            />
           ) : (
             <Icon className="h-8 w-8 opacity-85" />
           )}
@@ -586,9 +625,6 @@ function ResultCard({ item, itemPosition, trackingContext }) {
                 {policy.label || item.policyKey}
               </div>
             </div>
-            <span className="shrink-0 rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[var(--accent-ink)] ring-1 ring-[#D3E1D5]">
-              楽天
-            </span>
           </div>
 
           <p className="mt-2 text-[11px] font-bold leading-5 text-slate-600">{polishCareReason(item.reason)}</p>
@@ -604,12 +640,15 @@ function ResultCard({ item, itemPosition, trackingContext }) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5 pl-1">
-        {(item.tags || []).map((tag) => (
-          <span key={tag} className="rounded-full bg-[#F8FCF9] px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E3ECE5]">
-            {tag}
-          </span>
-        ))}
-        {item.query ? (
+        {(item.tags || []).map((tag) => {
+          const label = POLICY_META[tag]?.label || tag;
+          return (
+            <span key={tag} className="rounded-full bg-[#F8FCF9] px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E3ECE5]">
+              {label}
+            </span>
+          );
+        })}
+        {!isPartner && item.query ? (
           <span className="rounded-full bg-[#FFF8E8] px-2.5 py-1 text-[10px] font-black text-[#8A6417] ring-1 ring-[#EFE0AC]">
             {item.query}
           </span>
@@ -619,11 +658,11 @@ function ResultCard({ item, itemPosition, trackingContext }) {
       <a
         href={itemUrl}
         target="_blank"
-        rel="noreferrer"
+        rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
         className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(53,95,82,0.58)] hover:bg-[var(--accent-ink)]"
       >
-        楽天で見る
+        {buttonText}
       </a>
     </div>
   );
@@ -719,7 +758,7 @@ export default function CareNaviPage() {
   const [profileError, setProfileError] = useState("");
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
-  const [basis, setBasis] = useState("karte");
+  const [basis, setBasis] = useState("base");
   const [category, setCategory] = useState("live");
   const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
@@ -761,7 +800,7 @@ export default function CareNaviPage() {
 
         if (!cancelled && res.ok && json?.profile) {
           setProfile(json.profile);
-          setSelectedSymptom(json.profile.active_symptom_focus || "");
+          setSelectedSymptom((prev) => prev || json.profile.active_symptom_focus || "");
         } else if (!cancelled) {
           setProfile(null);
           setProfileError(json?.error || "体質トリセツがまだありません。");
@@ -802,10 +841,31 @@ export default function CareNaviPage() {
     if (typeof window === "undefined") return;
 
     const params = new URLSearchParams(window.location.search);
-    const nextCategory = params.get("category");
+    const nextCategoryRaw = params.get("category");
+    const nextCategory = nextCategoryRaw === "loosen" ? "point" : nextCategoryRaw;
+    const weather = params.get("weather") || params.get("basis");
+    const nextSymptom = params.get("symptom");
+    const nextLifeKeys = String(params.get("life") || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
     if (CATEGORY_OPTIONS.some((option) => option.key === nextCategory)) {
       setCategory(nextCategory);
+    }
+
+    if (weather === "tomorrow" || weather === "season") {
+      setBasis(weather);
+    } else if (weather === "none" || weather === "base") {
+      setBasis("base");
+    }
+
+    if (nextSymptom && SYMPTOM_LABELS[nextSymptom]) {
+      setSelectedSymptom(nextSymptom);
+    }
+
+    if (nextLifeKeys.length) {
+      setLifeKeys(nextLifeKeys.filter((key) => LIFE_OPTIONS.some((item) => item.key === key)).slice(0, 3));
     }
   }, []);
 
@@ -830,24 +890,27 @@ export default function CareNaviPage() {
     [profileLike, symptomKey]
   );
 
+  const forecastCarePolicies = useMemo(() => {
+    if (!tomorrowBundle?.forecast) return null;
+    return deriveCarePolicies({
+      forecast: tomorrowBundle.forecast,
+      triggerFactors: getForecastTriggerFactors(tomorrowBundle.forecast),
+      riskContext: getRiskContext(tomorrowBundle),
+      mode: "tomorrow",
+      symptomFocus: symptomKey,
+    });
+  }, [tomorrowBundle, symptomKey]);
+
   const policyKeys = useMemo(() => {
     const baseScores = karteCarePreferences?.scores || {};
+    let keys = [];
 
-    if (basis === "tomorrow" && tomorrowBundle?.forecast) {
-      const derived = deriveCarePolicies({
-        forecast: tomorrowBundle.forecast,
-        triggerFactors: getForecastTriggerFactors(tomorrowBundle.forecast),
-        riskContext: getRiskContext(tomorrowBundle),
-        mode: "tomorrow",
-        symptomFocus: symptomKey,
-      });
-
-      const forecastKeys = safeArray(derived?.policies).map((policy) => policy.key).filter(Boolean);
-      if (forecastKeys.length) return forecastKeys;
+    if (basis === "tomorrow" && forecastCarePolicies) {
+      keys = safeArray(forecastCarePolicies?.policies).map((policy) => policy.key).filter(Boolean);
     }
 
-    if (basis === "season") {
-      return buildConditionPolicyKeys({
+    if (!keys.length && basis === "season") {
+      keys = buildConditionPolicyKeys({
         baseScores,
         extraPolicyKeys: SEASON_POLICY_HINTS[getSeasonKey()],
         extraWeight: 1.22,
@@ -856,15 +919,35 @@ export default function CareNaviPage() {
       });
     }
 
-    if (basis === "life") {
-      return getLifePolicyKeys(lifeKeys, baseScores);
+    if (!keys.length) {
+      keys = selectPolicyKeysFromScores(baseScores, ["sasaeru", "yurumeru"]);
     }
 
-    return selectPolicyKeysFromScores(baseScores, ["sasaeru", "yurumeru"]);
-  }, [basis, karteCarePreferences, tomorrowBundle, symptomKey, lifeKeys]);
+    return mergePolicyKeysWithLife(keys, lifeKeys, baseScores);
+  }, [basis, karteCarePreferences, forecastCarePolicies, lifeKeys]);
 
   const policyKeySignature = policyKeys.join("|");
   const lifeKeySignature = lifeKeys.join("|");
+  const seasonKey = getSeasonKey();
+  const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
+  const tomorrowTriggerFactors = useMemo(
+    () => (tomorrowBundle?.forecast ? getForecastTriggerFactors(tomorrowBundle.forecast) : []),
+    [tomorrowBundle]
+  );
+  const registeredSymptomKey = profile?.active_symptom_focus || profile?.symptom_focus || profile?.diagnosis_symptom_focus || "";
+  const symptomChanged = Boolean(registeredSymptomKey && symptomKey && symptomKey !== registeredSymptomKey);
+  const approachTags = useMemo(
+    () =>
+      buildApproachTags({
+        environmentMode: basis,
+        triggerFactors: tomorrowTriggerFactors,
+        seasonLabel,
+        lifeKeys,
+        symptomChanged,
+        symptomLabel,
+      }),
+    [basis, tomorrowTriggerFactors, seasonLabel, lifeKeys, symptomChanged, symptomLabel]
+  );
 
   useEffect(() => {
     if (!policyKeys.length) {
@@ -932,13 +1015,47 @@ export default function CareNaviPage() {
     };
   }, [category, priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature]);
 
-  const visibleItems = useMemo(
+  const partnerItems = useMemo(
     () =>
-      rakutenItems
-        .filter((item) => itemMatchesPriceBand(item, category, priceBand))
-        .slice(0, 8),
-    [rakutenItems, category, priceBand]
+      scorePartnerOffers({
+        category,
+        policyKeys,
+        symptomKey,
+        symptomLabel,
+        profile: profileLike,
+        environmentMode: basis,
+        triggerFactors: tomorrowTriggerFactors,
+        seasonKey,
+        seasonLabel,
+        lifeKeys,
+        priceBand,
+        limit: 4,
+      }),
+    [category, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys, priceBand]
   );
+
+  const visibleItems = useMemo(() => {
+    const rakutenVisible = rakutenItems
+      .filter((item) => itemMatchesPriceBand(item, category, priceBand))
+      .map((item) => ({ ...item, source: item.source || "rakuten", sourceType: item.sourceType || "rakuten", buttonText: "楽天で見る" }));
+
+    const mixed = [];
+    if (partnerItems[0]) mixed.push(partnerItems[0]);
+    if (rakutenVisible[0]) mixed.push(rakutenVisible[0]);
+    if (partnerItems[1]) mixed.push(partnerItems[1]);
+    if (rakutenVisible[1]) mixed.push(rakutenVisible[1]);
+    if (partnerItems[2]) mixed.push(partnerItems[2]);
+
+    for (let i = 2; i < rakutenVisible.length && mixed.length < 8; i += 1) {
+      mixed.push(rakutenVisible[i]);
+    }
+
+    for (let i = 3; i < partnerItems.length && mixed.length < 8; i += 1) {
+      mixed.push(partnerItems[i]);
+    }
+
+    return mixed.slice(0, 8);
+  }, [partnerItems, rakutenItems, category, priceBand]);
   const priceBandLabel = getPriceBandLabel(category, priceBand);
 
   const trackingContext = useMemo(() => {
@@ -964,8 +1081,6 @@ export default function CareNaviPage() {
   const coreIconPath = getCoreIconPath(profileLike.core_code);
   const subLabels = getSubLabels(profileLike.sub_labels).slice(0, 2);
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
-  const seasonKey = getSeasonKey();
-  const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
   const categoryMeta = getCategoryMeta(category);
   const CategoryIcon = categoryMeta.icon;
 
@@ -1021,35 +1136,66 @@ export default function CareNaviPage() {
           </div>
 
           <div className="mt-4 space-y-4">
-            <div>
-              <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">合わせ方</div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {BASIS_OPTIONS.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setBasis(item.key)}
-                    className={[
-                      "rounded-[16px] px-2 py-2 text-center text-[11px] font-black ring-1 transition-all",
-                      basis === item.key
-                        ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
-                        : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F9FCFA] hover:text-slate-900",
-                    ].join(" ")}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
-                {BASIS_OPTIONS.find((item) => item.key === basis)?.lead}
-                {basis === "season" ? ` 現在は「${seasonLabel}」として見ています。` : ""}
+            <div className="rounded-[22px] bg-white/85 p-3 ring-1 ring-[#DDE9E1]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">基準</div>
+                  <div className="mt-1 text-[13px] font-black text-slate-900">体質トリセツ ＋ 登録中の不調</div>
+                  <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
+                    ここを土台に、必要なときだけ天候・生活・別の不調を重ねます。
+                  </div>
+                </div>
+                <div className="shrink-0 rounded-full bg-[#F8FCF9] px-2.5 py-1 text-[10px] font-black text-[#24564C] ring-1 ring-[#D3E1D5]">
+                  常時反映
+                </div>
               </div>
             </div>
 
             <div>
               <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になること</div>
-                <div className="text-[10px] font-bold text-slate-400">このページだけ反映</div>
+                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">合わせる天候</div>
+                <button
+                  type="button"
+                  onClick={() => setBasis("base")}
+                  className="text-[10px] font-black text-slate-400 underline decoration-slate-300 underline-offset-2"
+                >
+                  外す
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {WEATHER_FILTER_OPTIONS.map((item) => {
+                  const active = basis === item.key;
+                  const label = item.key === "season" ? `季節（${seasonLabel}）の天候` : item.label;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => setBasis(active ? "base" : item.key)}
+                      className={[
+                        "rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all",
+                        active
+                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
+                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F9FCFA] hover:text-slate-900",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
+                {basis === "tomorrow"
+                  ? "予報ページの明日タブと同じ方針エンジンを使います。"
+                  : basis === "season"
+                    ? `${seasonLabel}に起きやすい天候の波を重ねます。`
+                    : "未選択時は、天候に左右されすぎない通年の候補を優先します。"}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になる不調を変更</div>
+                <div className="text-[10px] font-bold text-slate-400">このページだけ</div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {Object.entries(SYMPTOM_LABELS).map(([key, label]) => (
@@ -1057,21 +1203,27 @@ export default function CareNaviPage() {
                     {label}
                   </Chip>
                 ))}
+                {registeredSymptomKey && symptomChanged ? (
+                  <Chip active={false} onClick={() => setSelectedSymptom(registeredSymptomKey)}>
+                    登録中に戻す
+                  </Chip>
+                ) : null}
               </div>
             </div>
 
-            {basis === "life" ? (
-              <div>
-                <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活（最大3つ）</div>
-                <div className="flex flex-wrap gap-2">
-                  {LIFE_OPTIONS.map((item) => (
-                    <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>
-                      {item.label}
-                    </Chip>
-                  ))}
-                </div>
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活を足す</div>
+                <div className="text-[10px] font-bold text-slate-400">任意・最大3つ</div>
               </div>
-            ) : null}
+              <div className="flex flex-wrap gap-2">
+                {LIFE_OPTIONS.map((item) => (
+                  <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>
+                    {item.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
 
             <div className="rounded-[26px] bg-[#EAF5EF]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-start justify-between gap-3">
@@ -1086,6 +1238,13 @@ export default function CareNaviPage() {
                 <div className="max-w-[120px] text-right text-[10px] font-bold leading-4 text-slate-500">
                   {symptomLabel}
                 </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {approachTags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-[#24564C]/75 ring-1 ring-[#D3E1D5]">
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -1109,13 +1268,16 @@ export default function CareNaviPage() {
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
           <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={category} />
+          <div className="rounded-[18px] bg-[#F8FCF9] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#E3ECE5]">
+            このページには広告リンクを含みます。体質・天気・気になるサインとの関連性をもとに、ケア候補を並べています。
+          </div>
 
           {rakutenLoading ? (
             <RakutenLoadingCards />
           ) : visibleItems.length ? (
             visibleItems.map((item, index) => (
               <ResultCard
-                key={`${category}-${item.itemCode || item.policyKey}-${item.title}-${index}`}
+                key={`${category}-${item.source || "item"}-${item.itemCode || item.sourceKey || item.policyKey}-${item.title}-${index}`}
                 item={item}
                 itemPosition={index + 1}
                 trackingContext={trackingContext}
@@ -1127,7 +1289,7 @@ export default function CareNaviPage() {
             </div>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              楽天商品候補を表示できませんでした。APIキー・許可Webサイト・アクセスキー設定を確認してください。
+              表示できるケア候補が見つかりませんでした。条件を変えるか、価格帯を「すべて」に戻してください。
             </div>
           )}
         </div>
