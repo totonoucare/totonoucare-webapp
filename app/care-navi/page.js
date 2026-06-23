@@ -103,10 +103,10 @@ const SUB_POLICY_HINTS = {
 
 const SEASON_POLICY_HINTS = {
   spring: ["yurumeru", "meguraseru"],
-  rainy: ["nagasu", "sasaeru"],
+  rainy: ["nagasu", "meguraseru"],
   summer: ["shizumeru", "uruosu"],
-  autumn: ["uruosu", "sasaeru"],
-  winter: ["nukumeru", "sasaeru"],
+  autumn: ["uruosu", "shizumeru"],
+  winter: ["nukumeru", "meguraseru"],
 };
 
 const SEASON_LABELS = {
@@ -311,7 +311,7 @@ function addPolicyKeys(scores, keys, weight = 1) {
   });
 }
 
-function selectPolicyKeysFromScores(scores, fallbackKeys = ["sasaeru", "yurumeru"]) {
+function selectPolicyKeysFromScores(scores, fallbackKeys = ["yurumeru", "nagasu"]) {
   const ranked = Object.entries(scores || {})
     .map(([key, score]) => ({ key, score: Number(score || 0) }))
     .filter((item) => item.score > 0 && POLICY_META[item.key])
@@ -365,7 +365,7 @@ function buildKarteCarePreferences(profile, symptomKey) {
   });
 }
 
-function buildConditionPolicyKeys({ baseScores, extraPolicyKeys = [], extraWeight = 1, baseWeight = 0.55, fallbackKeys = ["sasaeru", "yurumeru"] } = {}) {
+function buildConditionPolicyKeys({ baseScores, extraPolicyKeys = [], extraWeight = 1, baseWeight = 0.55, fallbackKeys = ["yurumeru", "nagasu"] } = {}) {
   const scores = createPolicyScoreMap();
 
   Object.entries(baseScores || {}).forEach(([key, value]) => {
@@ -915,12 +915,12 @@ export default function CareNaviPage() {
         extraPolicyKeys: SEASON_POLICY_HINTS[getSeasonKey()],
         extraWeight: 1.22,
         baseWeight: 0.52,
-        fallbackKeys: ["sasaeru", "meguraseru"],
+        fallbackKeys: ["nagasu", "meguraseru"],
       });
     }
 
     if (!keys.length) {
-      keys = selectPolicyKeysFromScores(baseScores, ["sasaeru", "yurumeru"]);
+      keys = selectPolicyKeysFromScores(baseScores, ["yurumeru", "nagasu"]);
     }
 
     return mergePolicyKeysWithLife(keys, lifeKeys, baseScores);
