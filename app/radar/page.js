@@ -666,6 +666,10 @@ export default function RadarPage() {
       }),
     [activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]
   );
+  const careNaviWeatherQuery = selectedIsToday ? "" : "&weather=tomorrow";
+  const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
+  const buildCareNaviUrl = (category) => `/care-navi?category=${category}${careNaviWeatherQuery}${careNaviSymptomQuery}`;
+
   const derivedLifestylePlan = useMemo(
     () =>
       getLifestylePlan(
@@ -1448,7 +1452,7 @@ export default function RadarPage() {
                   </div>
                   <Button
                     variant="secondary"
-                    onClick={() => router.push("/care-navi?category=point")}
+                    onClick={() => router.push(buildCareNaviUrl("point"))}
                     className="mt-3 w-full bg-white"
                   >
                     ほぐすケア用品を見る
@@ -1658,7 +1662,7 @@ export default function RadarPage() {
                   </div>
                   <Button
                     variant="secondary"
-                    onClick={() => router.push("/care-navi?category=eat")}
+                    onClick={() => router.push(buildCareNaviUrl("eat"))}
                     className="mt-3 w-full bg-white"
                   >
                     日常に置いておきたい食養生アイテムを見る
@@ -1728,7 +1732,7 @@ export default function RadarPage() {
                   </div>
                   <Button
                     variant="secondary"
-                    onClick={() => router.push("/care-navi?category=live")}
+                    onClick={() => router.push(buildCareNaviUrl("live"))}
                     className="mt-3 w-full bg-white"
                   >
                     暮らしのケア用品を見る
