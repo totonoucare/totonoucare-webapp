@@ -24,9 +24,9 @@ import {
 } from "@/components/illust/icons/app";
 
 const CATEGORY_OPTIONS = [
-  { key: "live", label: "暮らす", icon: IconLifestyle, lead: "環境・温め方・休み方の候補" },
-  { key: "eat", label: "食べる", icon: IconFood, lead: "飲む・補う・軽めに食べる候補" },
-  { key: "point", label: "ほぐす", icon: IconTsubo, lead: "ツボ押し・お灸・温熱・道具ケア候補" },
+  { key: "live", label: "暮らす", icon: IconLifestyle, lead: "睡眠・入浴・空気・温度湿度まわり" },
+  { key: "eat", label: "食べる", icon: IconFood, lead: "食事・飲み物・栄養の整え方" },
+  { key: "point", label: "ほぐす", icon: IconTsubo, lead: "首肩・腰・手足など、体に直接使うケア" },
 ];
 
 const PRICE_BAND_OPTIONS = [
@@ -146,8 +146,8 @@ const CARE_ITEM_LIBRARY = {
   },
   meguraseru: {
     live: [
-      { title: "入浴・足湯まわり", query: "足湯 バケツ 折りたたみ 入浴", reason: "軽く温めて巡りのきっかけを作ります。", tags: ["入浴", "足元"] },
-      { title: "姿勢リセット用品", query: "ストレッチポール ハーフポール", reason: "座りっぱなしや固まった姿勢を一度切ります。", tags: ["姿勢", "リセット"] },
+      { title: "温浴でめぐらせる入浴まわり", query: "炭酸 入浴剤 温浴", reason: "湯船の時間で、巡りのきっかけを作ります。", tags: ["入浴", "温浴"] },
+      { title: "湯船・足湯まわり", query: "足湯 バケツ 折りたたみ 入浴", reason: "足元を温めて、重さをためにくくします。", tags: ["入浴", "足元"] },
     ],
     eat: [
       { title: "温かい飲み物・香味系", query: "しょうが湯 ノンカフェイン", reason: "冷たさや停滞を増やしにくく、動き出しを助けます。", tags: ["温かい", "香味"] },
