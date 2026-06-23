@@ -1578,11 +1578,11 @@ export const CARE_POLICY_DEFINITIONS = {
 const TRIGGER_POLICY_SCORES = {
   pressure_down: { meguraseru: 6, yurumeru: 3.5 },
   pressure_up: { yurumeru: 6, shizumeru: 3.5 },
-  damp: { nagasu: 6, sasaeru: 3.5 },
-  humidity: { nagasu: 6, sasaeru: 3.5 },
-  cold: { nukumeru: 6, sasaeru: 3.5 },
+  damp: { nagasu: 6, sasaeru: 2.1 },
+  humidity: { nagasu: 6, sasaeru: 2.1 },
+  cold: { nukumeru: 6, sasaeru: 2.2 },
   heat: { shizumeru: 6, uruosu: 3.5 },
-  dry: { uruosu: 6, sasaeru: 3.5 },
+  dry: { uruosu: 6, sasaeru: 2.1 },
 };
 
 const TCM_ACTION_POLICY_SCORES = {
@@ -1971,8 +1971,8 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
       forecast?.computed?.radar_plan_meta?.risk_context?.target?.signal ??
       0
   );
-  if (signal >= 2) addPolicyScores(scores, { sasaeru: 0.75 }, 1);
-  if (signal === 1) addPolicyScores(scores, { sasaeru: 0.3 }, 1);
+  if (signal >= 2) addPolicyScores(scores, { sasaeru: 0.45 }, 1);
+  if (signal === 1) addPolicyScores(scores, { sasaeru: 0.15 }, 1);
 
   // The primary policy should stay anchored to the personalized forecast trigger.
   // Constitution, symptoms, and TCM actions only translate that trigger into care language.
