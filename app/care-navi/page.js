@@ -23,6 +23,20 @@ import {
   IconTsubo,
 } from "@/components/illust/icons/app";
 
+const CARE_NAVI_THEME = {
+  "--bg": "#F6F8F7",
+  "--bg-soft": "#EEF4F3",
+  "--panel": "#FFFFFF",
+  "--mint": "#EEF4F3",
+  "--accent": "#0F766E",
+  "--accent-dark": "#0B5F59",
+  "--accent-ink": "#102A2A",
+  "--gold": "#D89A2B",
+  "--gold-soft": "#F3E7C9",
+  "--ring": "rgba(16, 42, 42, 0.13)",
+  "--ring-strong": "rgba(16, 42, 42, 0.24)",
+};
+
 const CATEGORY_OPTIONS = [
   { key: "live", label: "暮らす", icon: IconLifestyle, lead: "睡眠・入浴・空気・温度湿度まわり" },
   { key: "eat", label: "食べる", icon: IconFood, lead: "食事・飲み物・栄養の整え方" },
@@ -495,12 +509,12 @@ function polishCareReason(reason) {
 function CheckOrbitMark() {
   return (
     <svg viewBox="0 0 160 160" className="absolute -right-5 -top-6 h-40 w-40 opacity-90" aria-hidden="true">
-      <circle cx="82" cy="78" r="46" fill="none" stroke="#d7e8dd" strokeWidth="1.8" />
-      <circle cx="82" cy="78" r="68" fill="none" stroke="#edf2ee" strokeWidth="1.5" />
-      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#6bb69a" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
-      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#dfa42d" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
-      <circle cx="122" cy="32" r="5" fill="#dfa42d" opacity="0.48" />
-      <circle cx="45" cy="109" r="4" fill="#4ea789" opacity="0.58" />
+      <circle cx="82" cy="78" r="46" fill="none" stroke="#DDE5E2" strokeWidth="1.8" />
+      <circle cx="82" cy="78" r="68" fill="none" stroke="#EEF4F3" strokeWidth="1.5" />
+      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#0F766E" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
+      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#D89A2B" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
+      <circle cx="122" cy="32" r="5" fill="#D89A2B" opacity="0.48" />
+      <circle cx="45" cy="109" r="4" fill="#0F766E" opacity="0.58" />
     </svg>
   );
 }
@@ -514,8 +528,8 @@ function Chip({ active, children, onClick }) {
       className={[
         "shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition-all ring-1",
         active
-          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
-          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F9FCFA] hover:text-slate-900",
+          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
+          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F7F9F8] hover:text-slate-900",
       ].join(" ")}
     >
       {children}
@@ -526,7 +540,7 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#CFE3DA] shadow-[0_12px_24px_-18px_rgba(37,95,79,0.35)]">
+    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#D6E3E0] shadow-[0_12px_24px_-18px_rgba(15,118,110,0.30)]">
       <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
@@ -535,7 +549,7 @@ function PolicyPill({ policyKey }) {
 
 function CategoryTabs({ value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-slate-200/60 p-1 ring-1 ring-inset ring-slate-200/75 shadow-inner">
+    <div className="rounded-[22px] bg-[#EEF4F3] p-1 ring-1 ring-inset ring-[#DDE5E2] shadow-inner">
       <div className="grid grid-cols-3 gap-1">
         {CATEGORY_OPTIONS.map((item) => {
           const Icon = item.icon;
@@ -548,7 +562,7 @@ function CategoryTabs({ value, onChange }) {
               className={[
                 "h-[40px] rounded-[18px] text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
                 active
-                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
+                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
                   : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
               ].join(" ")}
             >
@@ -583,8 +597,8 @@ function ResultCard({ item, itemPosition, trackingContext }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring)] shadow-[0_14px_34px_-24px_rgba(40,55,48,0.24)]">
-      <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--accent)]/55" />
+    <div className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring-strong)] shadow-[0_16px_38px_-24px_rgba(15,35,35,0.28)]">
+      <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--accent)]/75" />
 
       {isPartner && item.impressionUrl ? (
         <img
@@ -600,7 +614,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
       <div className="flex gap-3 pl-1">
         <div
           className={[
-            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7FCF9_0%,#FFF8E5_100%)] text-[var(--accent-ink)] ring-1 ring-[#D8E7DC] shadow-sm",
+            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7F9F8_0%,#FFF6E3_100%)] text-[var(--accent-ink)] ring-1 ring-[#DDE5E2] shadow-sm",
             isPartner ? "h-[92px] w-[112px]" : "h-[88px] w-[88px]",
           ].join(" ")}
         >
@@ -620,7 +634,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="line-clamp-2 text-[14px] font-black leading-6 text-slate-900">{item.title}</div>
-              <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#5F8D75]">
+              <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#356B63]">
                 <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-5 w-5 shrink-0" loading="lazy" />
                 {policy.label || item.policyKey}
               </div>
@@ -643,13 +657,13 @@ function ResultCard({ item, itemPosition, trackingContext }) {
         {(item.tags || []).map((tag) => {
           const label = POLICY_META[tag]?.label || tag;
           return (
-            <span key={tag} className="rounded-full bg-[#F8FCF9] px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E3ECE5]">
+            <span key={tag} className="rounded-full bg-[#F3F6F5] px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DDE5E2]">
               {label}
             </span>
           );
         })}
         {!isPartner && item.query ? (
-          <span className="rounded-full bg-[#FFF8E8] px-2.5 py-1 text-[10px] font-black text-[#8A6417] ring-1 ring-[#EFE0AC]">
+          <span className="rounded-full bg-[#FFF5DF] px-2.5 py-1 text-[10px] font-black text-[#8A5F12] ring-1 ring-[#EAD7A0]">
             {item.query}
           </span>
         ) : null}
@@ -660,7 +674,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
-        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(53,95,82,0.58)] hover:bg-[var(--accent-ink)]"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(15,118,110,0.45)] hover:bg-[var(--accent-ink)]"
       >
         {buttonText}
       </a>
@@ -674,7 +688,7 @@ function RakutenLoadingCards() {
       {[0, 1, 2].map((index) => (
         <div
           key={index}
-          className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring)] shadow-[0_14px_34px_-24px_rgba(40,55,48,0.24)]"
+          className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring-strong)] shadow-[0_16px_38px_-24px_rgba(15,35,35,0.28)]"
         >
           <div className="flex gap-3">
             <div className="h-[78px] w-[78px] shrink-0 animate-pulse rounded-[20px] bg-slate-100" />
@@ -693,7 +707,7 @@ function RakutenLoadingCards() {
 
 function PriceBandFilter({ value, onChange, categoryKey }) {
   return (
-    <div className="rounded-[22px] bg-[#F8FCF9] p-3 ring-1 ring-[#E3ECE5]">
+    <div className="rounded-[22px] bg-[#F3F6F5] p-3 ring-1 ring-[#DDE5E2]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">価格帯</div>
         <div className="text-[10px] font-bold text-slate-400">おすすめ順はそのまま</div>
@@ -711,8 +725,8 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
               className={[
                 "rounded-[16px] px-2 py-2 text-center transition-all ring-1",
                 active
-                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
-                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F9FCFA] hover:text-slate-900",
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
+                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F7F9F8] hover:text-slate-900",
               ].join(" ")}
             >
               <div className="text-[11px] font-black leading-4">{option.label}</div>
@@ -732,9 +746,9 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
 function RakutenStatusCard({ error, queries }) {
   if (error) {
     return (
-      <div className="rounded-[22px] bg-[#FFF9ED] p-4 text-[12px] font-bold leading-6 text-[#7B5619] ring-1 ring-[#EAD8A6]/70">
+      <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[12px] font-bold leading-6 text-[#735118] ring-1 ring-[#E8D49B]/70">
         {error}
-        <div className="mt-1 text-[11px] text-[#AD7A18]">
+        <div className="mt-1 text-[11px] text-[#A36E14]">
           APIキー未設定の場合は、Vercelの環境変数に RAKUTEN_APPLICATION_ID / RAKUTEN_ACCESS_KEY を入れてください。
         </div>
       </div>
@@ -744,7 +758,7 @@ function RakutenStatusCard({ error, queries }) {
   if (!queries?.length) return null;
 
   return (
-    <div className="rounded-[18px] bg-[#F8FCF9] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#E3ECE5]">
+    <div className="rounded-[18px] bg-[#F3F6F5] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#DDE5E2]">
       検索軸：{queries.slice(0, 3).join(" / ")}
     </div>
   );
@@ -1091,7 +1105,8 @@ export default function CareNaviPage() {
   }
 
   return (
-    <AppShell
+    <div style={CARE_NAVI_THEME}>
+      <AppShell
       title="ケアナビ"
       subtitle="ケアアイテムナビ"
       headerRight={
@@ -1111,9 +1126,9 @@ export default function CareNaviPage() {
           />
 
           <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[26px] bg-[#EAF5EF]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+          <div className="rounded-[26px] bg-[#EEF4F3]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
             <div className="flex items-start gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#CFE0D3] shadow-sm">
+              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#D6E3E0] shadow-sm">
                 {coreIconPath ? (
                   <img src={coreIconPath} alt="" className="h-10 w-10 object-contain" loading="lazy" />
                 ) : (
@@ -1136,7 +1151,7 @@ export default function CareNaviPage() {
           </div>
 
           <div className="mt-4 space-y-4">
-            <div className="rounded-[22px] bg-white/85 p-3 ring-1 ring-[#DDE9E1]">
+            <div className="rounded-[22px] bg-white/85 p-3 ring-1 ring-[#DDE5E2]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">基準</div>
@@ -1145,7 +1160,7 @@ export default function CareNaviPage() {
                     ここを土台に、必要なときだけ天候・生活・別の不調を重ねます。
                   </div>
                 </div>
-                <div className="shrink-0 rounded-full bg-[#F8FCF9] px-2.5 py-1 text-[10px] font-black text-[#24564C] ring-1 ring-[#D3E1D5]">
+                <div className="shrink-0 rounded-full bg-[#F3F6F5] px-2.5 py-1 text-[10px] font-black text-[#102A2A] ring-1 ring-[#DDE5E2]">
                   常時反映
                 </div>
               </div>
@@ -1174,8 +1189,8 @@ export default function CareNaviPage() {
                       className={[
                         "rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all",
                         active
-                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
-                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F9FCFA] hover:text-slate-900",
+                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
+                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F7F9F8] hover:text-slate-900",
                       ].join(" ")}
                     >
                       {label}
@@ -1225,10 +1240,10 @@ export default function CareNaviPage() {
               </div>
             </div>
 
-            <div className="rounded-[26px] bg-[#EAF5EF]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className="rounded-[26px] bg-[#EEF4F3]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#24564C]/65">今回の方針</div>
+                  <div className="text-[11px] font-black tracking-[0.14em] text-[#102A2A]/65">今回の方針</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {policyKeys.map((key) => (
                       <PolicyPill key={key} policyKey={key} />
@@ -1241,7 +1256,7 @@ export default function CareNaviPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {approachTags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-[#24564C]/75 ring-1 ring-[#D3E1D5]">
+                  <span key={tag} className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-[#102A2A]/75 ring-1 ring-[#DDE5E2]">
                     {tag}
                   </span>
                 ))}
@@ -1268,7 +1283,7 @@ export default function CareNaviPage() {
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
           <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={category} />
-          <div className="rounded-[18px] bg-[#F8FCF9] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#E3ECE5]">
+          <div className="rounded-[18px] bg-[#F3F6F5] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#DDE5E2]">
             このページには広告リンクを含みます。体質・天気・気になるサインとの関連性をもとに、ケア候補を並べています。
           </div>
 
@@ -1294,6 +1309,7 @@ export default function CareNaviPage() {
           )}
         </div>
       </Module>
-    </AppShell>
+      </AppShell>
+    </div>
   );
 }
