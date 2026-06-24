@@ -642,77 +642,77 @@ const CARE_QUERY_MATRIX = {
 
 const EAT_YAKUZEN_BLEND_ROWS = {
   default: [
-    ["薬日本堂 和漢茶", "専門店系の和漢ブレンドを、日常の飲み物として選びやすい候補です。", ["和漢", "専門店"]],
+    ["薬日本堂 漢茶", "体質やコンディションに合わせた和漢ブレンドを、日常の一杯として選びやすい候補です。", ["漢茶", "薬日本堂"]],
+    ["薬日本堂 漢茶 お試し", "まずは少量から試しやすい、専門店系の和漢ブレンド候補です。", ["漢茶", "お試し"]],
     ["薬膳茶 ブレンド ノンカフェイン", "単素材のお茶より、今の方針に寄せて選びやすいブレンド候補です。", ["薬膳茶", "ブレンド"]],
     ["和漢茶 ブレンド ノンカフェイン", "体質寄りの飲み物として、毎日の一杯に足しやすい候補です。", ["和漢茶", "ノンカフェイン"]],
-    ["漢方茶 ブレンド ノンカフェイン", "素材感のあるお茶を、食べるケアとして選びやすい候補です。", ["漢方茶", "ブレンド"]],
   ],
   bySymptom: {
     fatigue: [
-      ["なつめ 黒豆 薬膳茶", "だるさが出やすい日に、温かい飲み物として取り入れやすい候補です。", ["薬膳茶", "なつめ"]],
-      ["薬日本堂 和漢茶", "日々のコンディションを崩しすぎないための飲み物候補です。", ["和漢", "専門店"]],
+      ["薬日本堂 漢茶 活元茶", "だるさが出やすい日に、温かい飲み物として取り入れやすい候補です。", ["漢茶", "活元茶"]],
+      ["薬日本堂 漢茶", "日々のコンディションを崩しすぎないための飲み物候補です。", ["漢茶", "薬日本堂"]],
     ],
     sleep: [
-      ["おやすみ 薬膳茶 ノンカフェイン", "夜の飲み物を、カフェイン控えめに切り替えたい時の候補です。", ["夜", "薬膳茶"]],
-      ["なつめ カモミール 薬膳茶", "寝る前に甘いものへ寄せすぎず、温かく整えやすい候補です。", ["なつめ", "夜向き"]],
+      ["薬日本堂 漢茶 利楽茶", "夜の飲み物を、カフェイン控えめに切り替えたい時の候補です。", ["漢茶", "夜向き"]],
+      ["おやすみ 薬膳茶 ノンカフェイン", "寝る前に甘いものへ寄せすぎず、温かく整えやすい候補です。", ["夜", "薬膳茶"]],
     ],
     digestion: [
-      ["食後 和漢茶 ブレンド", "食事の重さを残しすぎたくない日の飲み物候補です。", ["食後", "和漢茶"]],
+      ["薬日本堂 漢茶 潤快茶", "食事の重さを残しすぎたくない日の飲み物候補です。", ["漢茶", "食後"]],
       ["陳皮 なつめ 薬膳茶", "冷たい飲み物へ寄せすぎず、食事まわりを整えやすい候補です。", ["陳皮", "なつめ"]],
     ],
     neck_shoulder: [
-      ["生姜 なつめ 桂皮 薬膳茶", "冷えやこわばりが出やすい日の温かい飲み物候補です。", ["温かい", "薬膳茶"]],
+      ["薬日本堂 漢茶 暖宮茶", "冷えやこわばりが出やすい日の温かい飲み物候補です。", ["漢茶", "温かい"]],
       ["温活 薬膳茶 ブレンド", "冷たい飲み物が続いた時に、温かく切り替えやすい候補です。", ["温活", "ブレンド"]],
     ],
     low_back_pain: [
-      ["生姜 なつめ 桂皮 薬膳茶", "腰腹まわりを冷やしたくない日の温かい飲み物候補です。", ["温かい", "腰腹"]],
-      ["温活 薬膳茶 ブレンド", "冷え込みの日の食べるケアとして選びやすい候補です。", ["温活", "薬膳茶"]],
+      ["薬日本堂 漢茶 暖宮茶", "腰腹まわりを冷やしたくない日の温かい飲み物候補です。", ["漢茶", "腰腹"]],
+      ["生姜 なつめ 桂皮 薬膳茶", "冷え込みの日の食べるケアとして選びやすい候補です。", ["温かい", "薬膳茶"]],
     ],
     swelling: [
-      ["はとむぎ 小豆 とうもろこし 薬膳茶", "湿気や重だるさが気になる日に、飲み物を整える候補です。", ["湿気", "薬膳茶"]],
-      ["すっきり 薬膳茶 ブレンド", "水分の取り方を軽く見直したい日の候補です。", ["すっきり", "ブレンド"]],
+      ["薬日本堂 漢茶 軽軽茶", "湿気や重だるさが気になる日に、飲み物を整える候補です。", ["漢茶", "湿気"]],
+      ["はとむぎ 小豆 とうもろこし 薬膳茶", "水分の取り方を軽く見直したい日の候補です。", ["湿気", "薬膳茶"]],
     ],
     headache: [
-      ["ノンカフェイン 和漢茶 ブレンド", "カフェインに頼りすぎず、温かく休む候補です。", ["ノンカフェイン", "和漢茶"]],
-      ["菊花 なつめ 薬膳茶", "頭まわりがこもりやすい日に、飲み物を軽く整える候補です。", ["菊花", "なつめ"]],
+      ["薬日本堂 漢茶 花通茶", "頭まわりがこもりやすい日に、飲み物を軽く整える候補です。", ["漢茶", "季節"]],
+      ["菊花 なつめ 薬膳茶", "カフェインに頼りすぎず、温かく休む候補です。", ["菊花", "なつめ"]],
     ],
     dizziness: [
-      ["ノンカフェイン 和漢茶 ブレンド", "刺激を増やしすぎず、温かく軽く整えたい時の候補です。", ["ノンカフェイン", "和漢茶"]],
+      ["薬日本堂 漢茶 活元茶", "刺激を増やしすぎず、温かく軽く整えたい時の候補です。", ["漢茶", "ささえる"]],
       ["なつめ 黒豆 薬膳茶", "無理に食べられない日にも、飲み物から整えやすい候補です。", ["なつめ", "黒豆"]],
     ],
     mood: [
-      ["おやすみ 薬膳茶 ノンカフェイン", "気分が張りやすい日の夜に、飲み物を軽く切り替える候補です。", ["夜", "薬膳茶"]],
-      ["ローズ なつめ 薬膳茶", "香りのある温かい飲み物で、切り替えやすい候補です。", ["香り", "なつめ"]],
+      ["薬日本堂 漢茶 利楽茶", "気分が張りやすい日の夜に、飲み物を軽く切り替える候補です。", ["漢茶", "リラックス"]],
+      ["薬日本堂 漢茶 妃美茶", "香りのある温かい飲み物で、切り替えやすい候補です。", ["漢茶", "めぐり"]],
     ],
   },
   byPolicy: {
     shizumeru: [
-      ["おやすみ 薬膳茶 ノンカフェイン", "夜や高ぶりが気になる日に、飲み物から落ち着く時間を作りやすい候補です。", ["夜", "薬膳茶"]],
-      ["薬膳茶 リラックス ブレンド", "カフェインに頼りすぎず、温かい一杯へ寄せる候補です。", ["リラックス", "ブレンド"]],
+      ["薬日本堂 漢茶 利楽茶", "夜や高ぶりが気になる日に、飲み物から落ち着く時間を作りやすい候補です。", ["漢茶", "しずめる"]],
+      ["薬日本堂 漢茶 花通茶", "季節の変わり目に、温かい一杯へ寄せる候補です。", ["漢茶", "季節"]],
     ],
     yurumeru: [
-      ["薬膳茶 リラックス ブレンド", "力みが続く日に、甘いものへ寄せすぎない飲み物候補です。", ["薬膳茶", "ゆるめる"]],
-      ["なつめ カモミール 薬膳茶", "夜や休む前に、温かく軽く整えやすい候補です。", ["なつめ", "夜向き"]],
+      ["薬日本堂 漢茶 利楽茶", "力みが続く日に、甘いものへ寄せすぎない飲み物候補です。", ["漢茶", "ゆるめる"]],
+      ["薬膳茶 リラックス ブレンド", "夜や休む前に、温かく軽く整えやすい候補です。", ["薬膳茶", "ブレンド"]],
     ],
     meguraseru: [
-      ["薬膳茶 めぐり ブレンド", "冷たい飲み物に偏らず、動き出しを作りたい日の候補です。", ["めぐり", "薬膳茶"]],
-      ["陳皮 なつめ 桂皮 薬膳茶", "香味のある素材で、温かく切り替えやすい候補です。", ["陳皮", "桂皮"]],
+      ["薬日本堂 漢茶 妃美茶", "冷たい飲み物に偏らず、動き出しを作りたい日の候補です。", ["漢茶", "めぐり"]],
+      ["薬日本堂 漢茶 花通茶", "香味のある素材で、温かく切り替えやすい候補です。", ["漢茶", "香り"]],
     ],
     nagasu: [
-      ["すっきり 薬膳茶 ブレンド", "湿気や重さが気になる日に、飲み物を軽く整える候補です。", ["すっきり", "薬膳茶"]],
+      ["薬日本堂 漢茶 軽軽茶", "湿気や重さが気になる日に、飲み物を軽く整える候補です。", ["漢茶", "ながす"]],
       ["はとむぎ 小豆 とうもろこし 薬膳茶", "甘い冷たい飲み物へ偏りにくくする候補です。", ["湿気", "お茶"]],
     ],
     uruosu: [
-      ["なつめ クコの実 薬膳茶", "乾きや消耗が気になる日に、温かい飲み物として選びやすい候補です。", ["なつめ", "クコ"]],
-      ["白きくらげ なつめ 薬膳茶", "乾いた菓子やコーヒーへ偏りすぎない候補です。", ["白きくらげ", "なつめ"]],
+      ["薬日本堂 漢茶 潤快茶", "乾きや消耗が気になる日に、温かい飲み物として選びやすい候補です。", ["漢茶", "うるおす"]],
+      ["薬日本堂 漢茶 美麗茶", "乾いた菓子やコーヒーへ偏りすぎない候補です。", ["漢茶", "美容"]],
     ],
     nukumeru: [
-      ["温活 薬膳茶 ブレンド", "冷え込みの日に、温かい一杯として足しやすい候補です。", ["温活", "薬膳茶"]],
+      ["薬日本堂 漢茶 暖宮茶", "冷え込みの日に、温かい一杯として足しやすい候補です。", ["漢茶", "ぬくめる"]],
       ["生姜 なつめ 桂皮 薬膳茶", "冷たいものが続いた時に、飲み物から切り替えやすい候補です。", ["生姜", "桂皮"]],
     ],
     sasaeru: [
-      ["薬日本堂 和漢茶", "専門店系の和漢ブレンドを、日々の飲み物として選びやすい候補です。", ["和漢", "専門店"]],
-      ["養生茶 和漢茶 ブレンド", "無理を重ねた日の飲み物を、軽く整える候補です。", ["養生茶", "和漢茶"]],
+      ["薬日本堂 漢茶 活元茶", "無理を重ねた日の飲み物を、軽く整える候補です。", ["漢茶", "ささえる"]],
+      ["薬日本堂 漢茶", "専門店系の和漢ブレンドを、日々の飲み物として選びやすい候補です。", ["漢茶", "薬日本堂"]],
     ],
   },
 };
@@ -840,8 +840,6 @@ function categoryAnchorRowsFor(categoryKey, policyKey, symptomKey) {
 
 
 function yakuzenBlendRowsFor(policyKey, symptomKey, priceBand) {
-  if (priceBand === "light") return [];
-
   const rows = [
     ...asArray(EAT_YAKUZEN_BLEND_ROWS.bySymptom?.[symptomKey]),
     ...asArray(EAT_YAKUZEN_BLEND_ROWS.byPolicy?.[policyKey]),
@@ -849,7 +847,7 @@ function yakuzenBlendRowsFor(policyKey, symptomKey, priceBand) {
   ];
 
   const seen = new Set();
-  const limit = priceBand === "deep" ? 6 : 3;
+  const limit = priceBand === "deep" ? 6 : priceBand === "light" ? 3 : 4;
 
   return rows.filter((row) => {
     const keyword = cleanKeyword(normalizeQueryRow(row)?.keyword);
@@ -930,11 +928,9 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand }) {
 
   // 1本目: 不調直結。ただし検索語は「不調 × 第1方針 × カテゴリ」で決める。
   const yakuzenPrimaryRows = safeCategory === "eat" ? yakuzenBlendRowsFor(primaryPolicyKey, symptomKey, priceBand) : [];
-  const yakuzenRowsAfterAnchor = priceBand === "deep" ? [] : yakuzenPrimaryRows;
   const symptomCandidates = [
-    ...(priceBand === "deep" ? yakuzenPrimaryRows : []),
+    ...yakuzenPrimaryRows,
     ...categoryAnchorRowsFor(safeCategory, primaryPolicyKey, symptomKey),
-    ...yakuzenRowsAfterAnchor,
     ...contextRowsFor(symptomKey, primaryPolicyKey, safeCategory),
     ...fallbackSymptomRowsFor(symptomKey, safeCategory),
     ...fallbackPolicyRowsFor(primaryPolicyKey, safeCategory),
@@ -948,10 +944,9 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand }) {
     const contextRows = contextRowsFor(symptomKey, policyKey, safeCategory);
     const yakuzenRows = safeCategory === "eat" ? yakuzenBlendRowsFor(policyKey, symptomKey, priceBand) : [];
     const candidates = [
-      ...(priceBand === "deep" ? yakuzenRows : []),
+      ...yakuzenRows,
       ...(policyKey === primaryPolicyKey ? contextRows.slice(1) : contextRows),
       ...categoryAnchorRowsFor(safeCategory, policyKey, symptomKey),
-      ...(priceBand === "deep" ? [] : yakuzenRows),
       ...fallbackPolicyRowsFor(policyKey, safeCategory),
       ...contextRows,
     ];
@@ -982,6 +977,31 @@ function firstImageUrl(item) {
   return "";
 }
 
+const KANCHA_SERIES_NAMES = ["花通茶", "美麗茶", "潤快茶", "軽軽茶", "活元茶", "妃美茶", "暖宮茶", "利楽茶"];
+
+function scoreKanchaPriority(item, plan) {
+  const haystack = [
+    item?.itemName,
+    item?.catchcopy,
+    item?.shopName,
+    plan?.keyword,
+  ].filter(Boolean).join(" ");
+
+  let boost = 0;
+  if (/薬日本堂/.test(haystack)) boost += 26;
+  if (/漢茶/.test(haystack)) boost += 22;
+  if (/和漢|薬膳/.test(haystack)) boost += 8;
+
+  for (const name of KANCHA_SERIES_NAMES) {
+    if (haystack.includes(name)) {
+      boost += 18;
+      break;
+    }
+  }
+
+  return boost;
+}
+
 function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
   const reviewCount = Number(item?.reviewCount || 0);
   const reviewAverage = Number(item?.reviewAverage || 0);
@@ -1007,7 +1027,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     sourceKey: plan.sourceKey || (plan.source === "symptom" ? "symptom" : plan.policyKey),
     planIndex,
     planRank: planIndex + 1,
-    score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5),
+    score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5) + scoreKanchaPriority(item, plan),
   };
 }
 
