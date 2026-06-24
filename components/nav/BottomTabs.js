@@ -23,14 +23,14 @@ export default function BottomTabs() {
         onClick={() => router.push(href)}
         className={[
           "flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[18px] py-2 transition-all duration-200 active:scale-[0.95]",
-          isActive ? "text-[var(--accent-ink)]" : "text-slate-400 hover:text-slate-600",
+          isActive ? "text-[#173F3A]" : "text-slate-400 hover:text-slate-600",
         ].join(" ")}
       >
         <span
           className={[
             "grid h-10 w-10 place-items-center rounded-[14px] transition-all duration-300",
             isActive
-              ? "scale-110 bg-[color-mix(in_srgb,var(--mint),white_10%)] shadow-[0_12px_28px_-16px_rgba(39,111,98,0.55)] ring-1 ring-[color:var(--ring)]"
+              ? "scale-110 bg-[#DCEFEA] shadow-[0_12px_28px_-16px_rgba(19,138,115,0.42)] ring-1 ring-[#B6D8CF]"
               : "bg-transparent",
           ].join(" ")}
         >
