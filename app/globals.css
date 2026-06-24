@@ -10,23 +10,23 @@ body {
 
 /*
   Design tokens
-  v13: app-readable brand tone refined
-  - 背景は単色の薄いグリーンを維持
-  - ボタン/タイトルのティールはロゴより少し落ち着いた色に
-  - MIBYOU RADAR / TYPE GUIDE のアンバーは初期の上品なゴールドへ戻す
+  v14: shared brand teal for navigation and UI accents
+  - 背景は従来の薄いグリーンを維持
+  - ボトムタブなど共通UIの選択色をケアナビ寄りのティールに統一
+  - MIBYOU RADAR / TYPE GUIDE のアンバーは上品なゴールドを維持
 */
 :root {
   --bg: #F7FAF6;
   --bg-soft: #F2F7F1;
   --panel: #ffffff;
-  --mint: #EAF5EF;
-  --accent: #349B83;
-  --accent-dark: #2F8F79;
-  --accent-ink: #24564C;
-  --gold: #e2aa3b;
-  --gold-soft: #f6ebc7;
-  --ring: rgba(36, 86, 76, 0.13);
-  --ring-strong: rgba(36, 86, 76, 0.22);
+  --mint: #DCEFEA;
+  --accent: #138A73;
+  --accent-dark: #0C7163;
+  --accent-ink: #173F3A;
+  --gold: #E0A22A;
+  --gold-soft: #FFF1CC;
+  --ring: rgba(19, 138, 115, 0.22);
+  --ring-strong: rgba(19, 138, 115, 0.34);
   --shadow: 0 16px 36px -24px rgba(40, 55, 48, 0.22);
   --shadow-soft: 0 10px 24px -16px rgba(40, 55, 48, 0.16);
 }
