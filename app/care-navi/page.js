@@ -24,17 +24,17 @@ import {
 } from "@/components/illust/icons/app";
 
 const CARE_NAVI_THEME = {
-  "--bg": "#F6F8F7",
-  "--bg-soft": "#EEF4F3",
+  "--bg": "#F3FBF6",
+  "--bg-soft": "#E3F6EA",
   "--panel": "#FFFFFF",
-  "--mint": "#EEF4F3",
-  "--accent": "#0F766E",
-  "--accent-dark": "#0B5F59",
-  "--accent-ink": "#102A2A",
-  "--gold": "#D89A2B",
-  "--gold-soft": "#F3E7C9",
-  "--ring": "rgba(16, 42, 42, 0.13)",
-  "--ring-strong": "rgba(16, 42, 42, 0.24)",
+  "--mint": "#DCF3E4",
+  "--accent": "#13966A",
+  "--accent-dark": "#0B6F52",
+  "--accent-ink": "#173F35",
+  "--gold": "#E7A51B",
+  "--gold-soft": "#FFF0C8",
+  "--ring": "rgba(19, 150, 106, 0.22)",
+  "--ring-strong": "rgba(19, 150, 106, 0.34)",
 };
 
 const CATEGORY_OPTIONS = [
@@ -509,12 +509,12 @@ function polishCareReason(reason) {
 function CheckOrbitMark() {
   return (
     <svg viewBox="0 0 160 160" className="absolute -right-5 -top-6 h-40 w-40 opacity-90" aria-hidden="true">
-      <circle cx="82" cy="78" r="46" fill="none" stroke="#DDE5E2" strokeWidth="1.8" />
-      <circle cx="82" cy="78" r="68" fill="none" stroke="#EEF4F3" strokeWidth="1.5" />
-      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#0F766E" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
-      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#D89A2B" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
-      <circle cx="122" cy="32" r="5" fill="#D89A2B" opacity="0.48" />
-      <circle cx="45" cy="109" r="4" fill="#0F766E" opacity="0.58" />
+      <circle cx="82" cy="78" r="46" fill="none" stroke="#B7DEC7" strokeWidth="1.8" />
+      <circle cx="82" cy="78" r="68" fill="none" stroke="#E3F6EA" strokeWidth="1.5" />
+      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#13966A" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
+      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#E7A51B" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
+      <circle cx="122" cy="32" r="5" fill="#E7A51B" opacity="0.48" />
+      <circle cx="45" cy="109" r="4" fill="#13966A" opacity="0.58" />
     </svg>
   );
 }
@@ -526,10 +526,10 @@ function Chip({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition-all ring-1",
+        "shrink-0 rounded-full border px-3.5 py-2 text-[12px] font-black transition-all ring-1",
         active
-          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
-          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F7F9F8] hover:text-slate-900",
+          ? "border-[var(--accent-dark)] bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(19,150,106,0.42)]"
+          : "border-[#9ED7B8] bg-white text-[#2F6B5A] ring-[#B7DEC7] shadow-[0_6px_16px_-14px_rgba(19,80,56,0.45)] hover:border-[var(--accent)] hover:bg-[#EAF8EF] hover:text-[var(--accent-dark)]",
       ].join(" ")}
     >
       {children}
@@ -540,7 +540,7 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#D6E3E0] shadow-[0_12px_24px_-18px_rgba(15,118,110,0.30)]">
+    <span className="inline-flex items-center gap-2 rounded-full border border-[#9ED7B8] bg-[#EAF8EF] px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#B7DEC7] shadow-[0_12px_24px_-18px_rgba(19,150,106,0.30)]">
       <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
@@ -549,7 +549,7 @@ function PolicyPill({ policyKey }) {
 
 function CategoryTabs({ value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-[#EEF4F3] p-1 ring-1 ring-inset ring-[#DDE5E2] shadow-inner">
+    <div className="rounded-[22px] bg-[#DDF4E5] p-1 ring-1 ring-inset ring-[#9ED7B8] shadow-inner">
       <div className="grid grid-cols-3 gap-1">
         {CATEGORY_OPTIONS.map((item) => {
           const Icon = item.icon;
@@ -562,8 +562,8 @@ function CategoryTabs({ value, onChange }) {
               className={[
                 "h-[40px] rounded-[18px] text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
                 active
-                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
-                  : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
+                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(19,150,106,0.42)]"
+                  : "bg-white/65 text-[#537468] hover:bg-white hover:text-[var(--accent-dark)]",
               ].join(" ")}
             >
               <Icon className="h-4 w-4" />
@@ -614,7 +614,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
       <div className="flex gap-3 pl-1">
         <div
           className={[
-            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F7F9F8_0%,#FFF6E3_100%)] text-[var(--accent-ink)] ring-1 ring-[#DDE5E2] shadow-sm",
+            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F3FBF6_0%,#FFF2CF_100%)] text-[var(--accent-ink)] ring-1 ring-[#B7DEC7] shadow-sm",
             isPartner ? "h-[92px] w-[112px]" : "h-[88px] w-[88px]",
           ].join(" ")}
         >
@@ -657,13 +657,13 @@ function ResultCard({ item, itemPosition, trackingContext }) {
         {(item.tags || []).map((tag) => {
           const label = POLICY_META[tag]?.label || tag;
           return (
-            <span key={tag} className="rounded-full bg-[#F3F6F5] px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DDE5E2]">
+            <span key={tag} className="rounded-full border border-[#B7DEC7] bg-[#F3FBF6] px-2.5 py-1 text-[10px] font-black text-[#4C6D61] ring-1 ring-[#C6E6D4]">
               {label}
             </span>
           );
         })}
         {!isPartner && item.query ? (
-          <span className="rounded-full bg-[#FFF5DF] px-2.5 py-1 text-[10px] font-black text-[#8A5F12] ring-1 ring-[#EAD7A0]">
+          <span className="rounded-full bg-[#FFF2CC] px-2.5 py-1 text-[10px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">
             {item.query}
           </span>
         ) : null}
@@ -674,7 +674,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
-        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(15,118,110,0.45)] hover:bg-[var(--accent-ink)]"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(19,150,106,0.45)] hover:bg-[var(--accent-ink)]"
       >
         {buttonText}
       </a>
@@ -707,7 +707,7 @@ function RakutenLoadingCards() {
 
 function PriceBandFilter({ value, onChange, categoryKey }) {
   return (
-    <div className="rounded-[22px] bg-[#F3F6F5] p-3 ring-1 ring-[#DDE5E2]">
+    <div className="rounded-[22px] bg-[#EAF8EF] p-3 ring-1 ring-[#9ED7B8]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">価格帯</div>
         <div className="text-[10px] font-bold text-slate-400">おすすめ順はそのまま</div>
@@ -725,8 +725,8 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
               className={[
                 "rounded-[16px] px-2 py-2 text-center transition-all ring-1",
                 active
-                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
-                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F7F9F8] hover:text-slate-900",
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(19,150,106,0.42)]"
+                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF8EF] hover:text-slate-900",
               ].join(" ")}
             >
               <div className="text-[11px] font-black leading-4">{option.label}</div>
@@ -746,7 +746,7 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
 function RakutenStatusCard({ error, queries }) {
   if (error) {
     return (
-      <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[12px] font-bold leading-6 text-[#735118] ring-1 ring-[#E8D49B]/70">
+      <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[12px] font-bold leading-6 text-[#77540B] ring-1 ring-[#E4C56B]/70">
         {error}
         <div className="mt-1 text-[11px] text-[#A36E14]">
           APIキー未設定の場合は、Vercelの環境変数に RAKUTEN_APPLICATION_ID / RAKUTEN_ACCESS_KEY を入れてください。
@@ -758,7 +758,7 @@ function RakutenStatusCard({ error, queries }) {
   if (!queries?.length) return null;
 
   return (
-    <div className="rounded-[18px] bg-[#F3F6F5] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#DDE5E2]">
+    <div className="rounded-[18px] bg-[#F3FBF6] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B7DEC7]">
       検索軸：{queries.slice(0, 3).join(" / ")}
     </div>
   );
@@ -1126,9 +1126,9 @@ export default function CareNaviPage() {
           />
 
           <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[26px] bg-[#EEF4F3]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+          <div className="rounded-[26px] bg-[#EAF8EF] p-4 ring-1 ring-[#B7DEC7] shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
             <div className="flex items-start gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#D6E3E0] shadow-sm">
+              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#A9D9BE] shadow-sm">
                 {coreIconPath ? (
                   <img src={coreIconPath} alt="" className="h-10 w-10 object-contain" loading="lazy" />
                 ) : (
@@ -1151,7 +1151,7 @@ export default function CareNaviPage() {
           </div>
 
           <div className="mt-4 space-y-4">
-            <div className="rounded-[22px] bg-white/85 p-3 ring-1 ring-[#DDE5E2]">
+            <div className="rounded-[22px] bg-white p-3 ring-1 ring-[#B7DEC7]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">基準</div>
@@ -1160,7 +1160,7 @@ export default function CareNaviPage() {
                     ここを土台に、必要なときだけ天候・生活・別の不調を重ねます。
                   </div>
                 </div>
-                <div className="shrink-0 rounded-full bg-[#F3F6F5] px-2.5 py-1 text-[10px] font-black text-[#102A2A] ring-1 ring-[#DDE5E2]">
+                <div className="shrink-0 rounded-full bg-[#EEF8F2] px-2.5 py-1 text-[10px] font-black text-[#173F35] ring-1 ring-[#B7DEC7]">
                   常時反映
                 </div>
               </div>
@@ -1189,8 +1189,8 @@ export default function CareNaviPage() {
                       className={[
                         "rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all",
                         active
-                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(15,118,110,0.42)]"
-                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#F7F9F8] hover:text-slate-900",
+                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(19,150,106,0.42)]"
+                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF8EF] hover:text-slate-900",
                       ].join(" ")}
                     >
                       {label}
@@ -1240,10 +1240,10 @@ export default function CareNaviPage() {
               </div>
             </div>
 
-            <div className="rounded-[26px] bg-[#EEF4F3]/55 p-4 ring-1 ring-white/80 shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className="rounded-[26px] bg-[#EAF8EF] p-4 ring-1 ring-[#B7DEC7] shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#102A2A]/65">今回の方針</div>
+                  <div className="text-[11px] font-black tracking-[0.14em] text-[#173F35]/65">今回の方針</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {policyKeys.map((key) => (
                       <PolicyPill key={key} policyKey={key} />
@@ -1256,7 +1256,7 @@ export default function CareNaviPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {approachTags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-black text-[#102A2A]/75 ring-1 ring-[#DDE5E2]">
+                  <span key={tag} className="rounded-full border border-[#9ED7B8] bg-white px-2.5 py-1 text-[10px] font-black text-[#28634F] ring-1 ring-[#B7DEC7]">
                     {tag}
                   </span>
                 ))}
@@ -1283,7 +1283,7 @@ export default function CareNaviPage() {
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
           <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={category} />
-          <div className="rounded-[18px] bg-[#F3F6F5] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#DDE5E2]">
+          <div className="rounded-[18px] bg-[#F3FBF6] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B7DEC7]">
             このページには広告リンクを含みます。体質・天気・気になるサインとの関連性をもとに、ケア候補を並べています。
           </div>
 
