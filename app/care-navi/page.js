@@ -28,13 +28,14 @@ const CARE_NAVI_THEME = {
   "--bg-soft": "#E3F3EE",
   "--panel": "#FFFFFF",
   "--mint": "#DCEFEA",
-  "--accent": "#138A73",
-  "--accent-dark": "#0C7163",
-  "--accent-ink": "#173F3A",
-  "--gold": "#E0A22A",
-  "--gold-soft": "#FFF1CC",
-  "--ring": "rgba(19, 138, 115, 0.22)",
-  "--ring-strong": "rgba(19, 138, 115, 0.34)",
+  // Buttons and primary actions use the original app accent, not the darker care-navi teal.
+  "--accent": "#349B83",
+  "--accent-dark": "#2F8F79",
+  "--accent-ink": "#24564C",
+  "--gold": "#e2aa3b",
+  "--gold-soft": "#f6ebc7",
+  "--ring": "rgba(36, 86, 76, 0.13)",
+  "--ring-strong": "rgba(36, 86, 76, 0.22)",
 };
 
 const CATEGORY_OPTIONS = [
@@ -528,7 +529,7 @@ function Chip({ active, children, onClick }) {
       className={[
         "shrink-0 rounded-full border px-3.5 py-2 text-[12px] font-black transition-all ring-1",
         active
-          ? "border-[var(--accent-dark)] bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(19,138,115,0.42)]"
+          ? "border-[var(--accent-dark)] bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
           : "border-[#9CCFC4] bg-white text-[#2E6863] ring-[#B6D8CF] shadow-[0_6px_16px_-14px_rgba(19,80,56,0.45)] hover:border-[var(--accent)] hover:bg-[#EAF6F3] hover:text-[var(--accent-dark)]",
       ].join(" ")}
     >
@@ -540,7 +541,7 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-[#9CCFC4] bg-[#EAF6F3] px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] shadow-[0_12px_24px_-18px_rgba(19,138,115,0.30)]">
+    <span className="inline-flex items-center gap-2 rounded-full border border-[#9CCFC4] bg-[#EAF6F3] px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] shadow-[0_12px_24px_-18px_rgba(52,155,131,0.24)]">
       <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
@@ -562,7 +563,7 @@ function CategoryTabs({ value, onChange }) {
               className={[
                 "h-[40px] rounded-[18px] text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
                 active
-                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(19,138,115,0.42)]"
+                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
                   : "bg-white/65 text-[#54726E] hover:bg-white hover:text-[var(--accent-dark)]",
               ].join(" ")}
             >
@@ -674,7 +675,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
-        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(19,138,115,0.45)] hover:bg-[var(--accent-ink)]"
+        className="mt-3 inline-flex w-full items-center justify-center rounded-[18px] bg-[var(--accent)] px-4 py-2.5 text-[12px] font-black text-white shadow-[0_14px_28px_-18px_rgba(52,155,131,0.28)] hover:bg-[var(--accent-ink)]"
       >
         {buttonText}
       </a>
@@ -725,7 +726,7 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
               className={[
                 "rounded-[16px] px-2 py-2 text-center transition-all ring-1",
                 active
-                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(19,138,115,0.42)]"
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
                   : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
               ].join(" ")}
             >
@@ -1189,7 +1190,7 @@ export default function CareNaviPage() {
                       className={[
                         "rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all",
                         active
-                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(19,138,115,0.42)]"
+                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
                           : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
                       ].join(" ")}
                     >
