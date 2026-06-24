@@ -24,7 +24,7 @@ import {
 } from "@/components/illust/icons/app";
 
 const CARE_NAVI_THEME = {
-  "--bg": "#F5FBF8",
+  "--bg": "#F7FAF6",
   "--bg-soft": "#E3F3EE",
   "--panel": "#FFFFFF",
   "--mint": "#DCEFEA",
