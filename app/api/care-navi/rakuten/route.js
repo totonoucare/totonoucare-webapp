@@ -748,6 +748,18 @@ function careQueryRow(keyword, reason, tags = [], options = {}) {
   };
 }
 
+
+const LIFE_POLICY_HINTS = {
+  screen: ["yurumeru", "meguraseru"],
+  sleep_short: ["shizumeru", "sasaeru"],
+  cold_drinks: ["nukumeru", "sasaeru"],
+  overeating: ["nagasu", "sasaeru"],
+  no_bath: ["meguraseru", "yurumeru"],
+  low_activity: ["meguraseru", "nagasu"],
+  tense: ["yurumeru", "shizumeru"],
+  outdoor: ["uruosu", "sasaeru"],
+};
+
 // 生活サインを楽天検索語そのものへ反映するためのルール。
 // 「検索している感」を残しながら、冷たいもの・寝不足・画面作業などで商品棚が変わるようにする。
 const LIFE_QUERY_RULES = {
@@ -983,6 +995,8 @@ function normalizeQueryRow(row) {
       preferredProductTypes: asArray(options.preferredProductTypes),
       allowedProductTypes: asArray(options.allowedProductTypes),
       avoidProductTypes: asArray(options.avoidProductTypes),
+      lifeKey: options.lifeKey || null,
+      policyHints: asArray(options.policyHints),
     };
   }
 
@@ -996,6 +1010,8 @@ function normalizeQueryRow(row) {
     preferredProductTypes: asArray(row.preferredProductTypes),
     allowedProductTypes: asArray(row.allowedProductTypes),
     avoidProductTypes: asArray(row.avoidProductTypes),
+    lifeKey: row.lifeKey || null,
+    policyHints: asArray(row.policyHints),
   };
 }
 
@@ -1033,7 +1049,12 @@ function categoryAnchorRowsFor(categoryKey, policyKey, symptomKey) {
 function lifeRowsFor(lifeKeys, categoryKey) {
   const rows = [];
   for (const lifeKey of uniqueStrings(lifeKeys).slice(0, 4)) {
-    rows.push(...asArray(LIFE_QUERY_RULES[lifeKey]?.[categoryKey]));
+    const policyHints = asArray(LIFE_POLICY_HINTS[lifeKey]);
+    rows.push(...asArray(LIFE_QUERY_RULES[lifeKey]?.[categoryKey]).map((row) => ({
+      ...normalizeQueryRow(row),
+      lifeKey,
+      policyHints,
+    })));
   }
 
   const seen = new Set();
@@ -1116,6 +1137,11 @@ function getAppOrigin() {
   }
 }
 
+function resolveLifePolicyKey(normalized, safePolicyKeys, fallbackPolicyKey) {
+  const hints = asArray(normalized?.policyHints).filter((key) => POLICY_LABELS[key]);
+  return hints.find((key) => safePolicyKeys.includes(key)) || hints[0] || fallbackPolicyKey;
+}
+
 function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, lifeKeys, limit }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
   const safePolicyKeys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
@@ -1133,7 +1159,9 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
 
     if (safeCategory === "eat" && !canAddEatPlan(plans, normalized)) return false;
 
-    const resolvedPolicyKey = getPolicyKey(policyKey, primaryPolicyKey);
+    const resolvedPolicyKey = source === "life"
+      ? resolveLifePolicyKey(normalized, safePolicyKeys, getPolicyKey(policyKey, primaryPolicyKey))
+      : getPolicyKey(policyKey, primaryPolicyKey);
     const tags =
       source === "symptom" || source === "life"
         ? uniqueStrings(normalized.tags).slice(0, 3)
@@ -1160,31 +1188,35 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
     return true;
   }
 
-  // 1本目: 生活サインがある場合は、まず生活の実感に直結する検索語を優先する。
-  // 生活サインがなければ、不調 × 第1方針 × カテゴリを優先する。
+  // 1本目: 生活サインは「方針別検索の材料」ではなく、生活サイン自身の文脈で1本だけ先に立てる。
+  // これで味噌汁・スープのような中立アイテムが、たまたま別方針のラベルを背負う事故を減らす。
+  if (lifeRows.length) {
+    addPlanFromRow(lifeRows[0], { policyKey: primaryPolicyKey, source: "life", sourceKey: "life" });
+  }
+
   const primaryContextRows = contextRowsFor(symptomKey, primaryPolicyKey, safeCategory);
   const primaryCandidates = [
-    ...lifeRows,
     ...primaryContextRows,
     ...(safeCategory === "eat" ? eatPolicyDiversityRowsFor(primaryPolicyKey) : []),
     ...categoryAnchorRowsFor(safeCategory, primaryPolicyKey, symptomKey),
     ...fallbackSymptomRowsFor(symptomKey, safeCategory),
     ...fallbackPolicyRowsFor(primaryPolicyKey, safeCategory),
-    ...(safeCategory === "eat" ? yakuzenBlendRowsFor(primaryPolicyKey, symptomKey, priceBand).slice(0, 2) : []),
+    ...(safeCategory === "eat" ? yakuzenBlendRowsFor(primaryPolicyKey, symptomKey, priceBand).slice(0, 1) : []),
   ];
   for (const row of primaryCandidates) {
-    if (addPlanFromRow(row, { policyKey: primaryPolicyKey, source: lifeRows.includes(row) ? "life" : "symptom", sourceKey: lifeRows.includes(row) ? "life" : "symptom" })) break;
+    if (plans.length >= planLimit) break;
+    if (addPlanFromRow(row, { policyKey: primaryPolicyKey, source: "symptom", sourceKey: "symptom" })) break;
   }
 
-  // 2本目以降: 方針別。薬膳茶・和漢茶は候補として残すが、常に先頭固定にはしない。
+  // 2本目以降: 方針別。生活サイン行はここで再利用しない。
+  // 薬膳茶・和漢茶は候補として残すが、方針ごとに最大1本までに抑える。
   safePolicyKeys.forEach((policyKey) => {
     if (plans.length >= planLimit) return;
 
     const contextRows = contextRowsFor(symptomKey, policyKey, safeCategory);
     const diversityRows = safeCategory === "eat" ? eatPolicyDiversityRowsFor(policyKey) : [];
-    const yakuzenRows = safeCategory === "eat" ? yakuzenBlendRowsFor(policyKey, symptomKey, priceBand).slice(0, 2) : [];
+    const yakuzenRows = safeCategory === "eat" ? yakuzenBlendRowsFor(policyKey, symptomKey, priceBand).slice(0, 1) : [];
     const candidates = [
-      ...(policyKey === primaryPolicyKey ? lifeRows.slice(1) : lifeRows),
       ...(policyKey === primaryPolicyKey ? contextRows.slice(1) : contextRows),
       ...diversityRows,
       ...categoryAnchorRowsFor(safeCategory, policyKey, symptomKey),
@@ -1197,8 +1229,7 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
     let addedForPolicy = 0;
     for (const row of candidates) {
       if (plans.length >= planLimit || addedForPolicy >= 2) break;
-      const isLifeRow = lifeRows.includes(row);
-      if (addPlanFromRow(row, { policyKey, source: isLifeRow ? "life" : "policy", sourceKey: isLifeRow ? "life" : policyKey })) {
+      if (addPlanFromRow(row, { policyKey, source: "policy", sourceKey: policyKey })) {
         addedForPolicy += 1;
       }
     }
@@ -1243,9 +1274,10 @@ function firstImageUrl(item) {
 const BEVERAGE_REQUIRED_PATTERN = /(茶|ティー|tea|ハーブティー|ルイボス|カモミール|ティーバッグ|ティーパック|飲料|ドリンク|しょうが湯|生姜湯|葛湯|味噌汁|みそ汁|スープ|白湯|チャイ|なつめ|棗|クコ|枸杞|陳皮|白きくらげ|黒豆|はとむぎ|ハトムギ|小豆|生姜|しょうが|よもぎ|菊花|桑葉|山査子)/i;
 const BEVERAGE_REJECT_PATTERN = /(飴|のど飴|キャンディ|菓子|京菓|グミ|錠|粒|カプセル|タブレット|サプリ|サプリメント|医薬品|医薬部外品|着物|下ばき|肌着|インナー|メンズ|紳士|ステテコ|パンツ|衣類|下着|靴下|茶碗|茶器|湯呑|茶こし|ポット|急須|ペット用品|化粧品|石鹸|シャンプー|入浴剤)/i;
 const HEALTH_CLAIM_REJECT_PATTERN = /(増血|血糖|血圧|糖尿|便秘|痩せ|痩身|ダイエット|脂肪|肝臓|腎臓|精力|解毒|デトックス|排出|下剤|センナ|キャンドルブッシュ|利尿|便通|便秘茶|減肥)/i;
+const GIFT_REJECT_PATTERN = /(ギフト|贈答|贈り物|プレゼント|母の日|父の日|敬老の日|お中元|御中元|お歳暮|御歳暮|内祝い|出産祝い|結婚祝い|快気祝い|香典返し|お返し|御礼|御祝|お祝い|熨斗|のし|ラッピング|桐箱)/i;
 const DRINKWARE_PATTERN = /(水筒|ボトル|タンブラー|マグボトル|保温ボトル|ステンレスボトル)/i;
 const SOUP_MEAL_PATTERN = /(味噌汁|みそ汁|スープ|雑炊|おかゆ|リゾット|惣菜|宅食|ミール|GREEN SPOON|グリーンスプーン)/i;
-const SUPPLEMENT_PATTERN = /(サプリ|錠|粒|カプセル|タブレット|機能性表示食品|プロテイン|乳酸菌|酪酸菌|イヌリン|GABA|テアニン|グリシン|ビタミン|マグネシウム|鉄分|ヘム鉄)/i;
+const SUPPLEMENT_PATTERN = /(サプリ|錠|粒|カプセル|タブレット|機能性表示食品|プロテイン|乳酸菌|酪酸菌|イヌリン|GABA|テアニン|グリシン|ビタミン|マグネシウム|鉄分|ヘム鉄|コラーゲン|プラセンタ|NMN|青汁|酵素)/i;
 const YAKUZEN_INGREDIENT_PATTERN = /(なつめ|棗|クコ|枸杞|陳皮|白きくらげ|黒豆|はとむぎ|ハトムギ|小豆|生姜|しょうが|よもぎ|菊花|桑葉|山査子|桂皮|シナモン)/i;
 const TEA_PATTERN = /(茶|ティー|tea|ハーブティー|ルイボス|カモミール|ティーバッグ|ティーパック|しょうが湯|生姜湯|葛湯|チャイ)/i;
 const BLEND_TEA_PATTERN = /(薬膳|和漢|養生|漢茶|ブレンド|巡り|めぐり|温活|すっきり|おやすみ|ノンカフェイン)/i;
@@ -1263,6 +1295,41 @@ function getEatProductTypeFromText(text) {
   if (TEA_PATTERN.test(source)) return "tea";
   if (YAKUZEN_INGREDIENT_PATTERN.test(source)) return "yakuzenIngredient";
   return "foodOther";
+}
+
+function matchesPolicyTeaContext(text, plan) {
+  if (plan?.category !== "eat") return true;
+  const productType = getEatProductTypeFromText(text);
+  if (productType !== "tea" && productType !== "teaBlend" && productType !== "yakuzenIngredient") return true;
+
+  const source = String(text || "");
+  const policyKey = plan?.policyKey;
+  const keyword = String(plan?.keyword || "");
+
+  if (/カモミール/.test(keyword)) return /カモミール/.test(source);
+  if (/ルイボス/.test(keyword)) return /ルイボス/.test(source);
+  if (/はとむぎ|ハトムギ/.test(keyword)) return /はとむぎ|ハトムギ/.test(source);
+  if (/黒豆/.test(keyword)) return /黒豆/.test(source);
+  if (/しょうが|生姜|ジンジャー/.test(keyword)) return /しょうが|生姜|ジンジャー/.test(source);
+
+  if (policyKey === "yurumeru") {
+    return /カモミール|ラベンダー|レモンバーム|ルイボス|リラックス|おやすみ/.test(source) ||
+      (/しょうが|生姜|ジンジャー/.test(source) && /しょうが|生姜|ジンジャー|温活/.test(keyword));
+  }
+
+  if (policyKey === "meguraseru") {
+    return /しょうが|生姜|ジンジャー|黒豆|プーアル|プーアール|陳皮|シナモン|桂皮|巡り|めぐり|温活/.test(source);
+  }
+
+  if (policyKey === "nagasu") {
+    return /はとむぎ|ハトムギ|小豆|黒豆|どくだみ|とうもろこし|コーン|すっきり/.test(source);
+  }
+
+  if (policyKey === "uruosu") {
+    return /ルイボス|なつめ|棗|クコ|枸杞|白きくらげ|カモミール|ノンカフェイン|カフェインレス/.test(source);
+  }
+
+  return true;
 }
 
 function isAcceptableBeverageItem(item, plan) {
@@ -1290,8 +1357,11 @@ function isAcceptableForPlanProductType(item, plan) {
   if (allowed.length && !allowed.includes(productType)) return false;
   if (avoided.includes(productType)) return false;
 
-  if (plan?.intentType === "light_meal" && (productType === "teaBlend" || productType === "tea")) return false;
+  if (plan?.intentType === "light_meal" && (productType === "teaBlend" || productType === "tea" || productType === "supplement")) return false;
+  if (plan?.intentType === "warm_drink" && (productType === "supplement" || productType === "soupMeal")) return false;
   if (plan?.intentType === "nutrition_support" && productType === "teaBlend") return false;
+  if (productType === "supplement" && plan?.intentType !== "nutrition_support") return false;
+  if (!matchesPolicyTeaContext(rakutenItemText(item), plan)) return false;
 
   return true;
 }
@@ -1299,6 +1369,8 @@ function isAcceptableForPlanProductType(item, plan) {
 function isAcceptableRakutenItem(item, plan) {
   const text = rakutenItemText(item);
   if (!text) return false;
+
+  if (GIFT_REJECT_PATTERN.test(text)) return false;
 
   if (plan?.category === "eat") {
     if (HEALTH_CLAIM_REJECT_PATTERN.test(text)) return false;
@@ -1378,7 +1450,7 @@ function buildEatDisplayTags(item, plan, productType) {
     baseTags.push("栄養補助");
   }
 
-  if (policyLabel) baseTags.push(policyLabel);
+  if (policyLabel && plan?.category !== "eat") baseTags.push(policyLabel);
   return uniqueStrings(baseTags).slice(0, 3);
 }
 
@@ -1627,7 +1699,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   url.searchParams.set("format", "json");
   url.searchParams.set("formatVersion", "2");
   url.searchParams.set("keyword", plan.keyword);
-  url.searchParams.set("hits", "12");
+  url.searchParams.set("hits", "18");
   url.searchParams.set("page", "1");
   url.searchParams.set("availability", "1");
   url.searchParams.set("imageFlag", "1");
@@ -1661,7 +1733,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   ].join(","));
   // 楽天APIのNGKeywordは128文字未満制限があるため、長い除外語は送らない。
   // 商品ジャンルの除外は、API取得後のローカルフィルターで行う。
-  url.searchParams.set("NGKeyword", "中古 レンタル 福袋 訳あり 医薬品 医薬部外品");
+  url.searchParams.set("NGKeyword", "中古 レンタル 福袋 訳あり ギフト 贈答 お中元 お歳暮 医薬品");
 
   if (credentials.affiliateId) {
     url.searchParams.set("affiliateId", credentials.affiliateId);
