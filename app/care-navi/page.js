@@ -51,6 +51,9 @@ const PRICE_BAND_OPTIONS = [
   { key: "deep", label: "しっかり" },
 ];
 
+const CARE_NAVI_DISPLAY_LIMIT = 12;
+const CARE_NAVI_TOTAL_LIMIT = 32;
+
 const PRICE_BAND_RANGES = {
   live: {
     light: { max: 2000, label: "〜2,000円" },
@@ -992,7 +995,8 @@ export default function CareNaviPage() {
             basis,
             lifeKeys,
             priceBand,
-            limit: 8,
+            limit: CARE_NAVI_DISPLAY_LIMIT,
+            totalLimit: CARE_NAVI_TOTAL_LIMIT,
           }),
         });
 
@@ -1055,21 +1059,46 @@ export default function CareNaviPage() {
       .map((item) => ({ ...item, source: item.source || "rakuten", sourceType: item.sourceType || "rakuten", buttonText: "楽天で見る" }));
 
     const mixed = [];
-    if (partnerItems[0]) mixed.push(partnerItems[0]);
-    if (rakutenVisible[0]) mixed.push(rakutenVisible[0]);
-    if (partnerItems[1]) mixed.push(partnerItems[1]);
-    if (rakutenVisible[1]) mixed.push(rakutenVisible[1]);
-    if (partnerItems[2]) mixed.push(partnerItems[2]);
+    const used = new Set();
+    const maxPartnerSlots = 3;
 
-    for (let i = 2; i < rakutenVisible.length && mixed.length < 8; i += 1) {
-      mixed.push(rakutenVisible[i]);
+    function getItemKey(item) {
+      return item?.itemUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
     }
 
-    for (let i = 3; i < partnerItems.length && mixed.length < 8; i += 1) {
-      mixed.push(partnerItems[i]);
+    function addItem(item) {
+      if (!item || mixed.length >= CARE_NAVI_DISPLAY_LIMIT) return false;
+      const key = getItemKey(item);
+      if (!key || used.has(key)) return false;
+      used.add(key);
+      mixed.push(item);
+      return true;
     }
 
-    return mixed.slice(0, 8);
+    // 楽天検索の「今の自分用に探している感」を主役にしつつ、A8/提携候補を要所で混ぜる。
+    addItem(rakutenVisible[0]);
+    addItem(rakutenVisible[1]);
+    addItem(partnerItems[0]);
+    addItem(rakutenVisible[2]);
+    addItem(rakutenVisible[3]);
+    addItem(partnerItems[1]);
+
+    let rakutenIndex = 4;
+    while (rakutenIndex < rakutenVisible.length && mixed.filter((item) => item?.source === "rakuten").length < 9 && mixed.length < CARE_NAVI_DISPLAY_LIMIT) {
+      addItem(rakutenVisible[rakutenIndex]);
+      rakutenIndex += 1;
+    }
+
+    for (let partnerIndex = 2; partnerIndex < partnerItems.length && mixed.filter((item) => item?.source !== "rakuten").length < maxPartnerSlots; partnerIndex += 1) {
+      addItem(partnerItems[partnerIndex]);
+    }
+
+    while (rakutenIndex < rakutenVisible.length && mixed.length < CARE_NAVI_DISPLAY_LIMIT) {
+      addItem(rakutenVisible[rakutenIndex]);
+      rakutenIndex += 1;
+    }
+
+    return mixed.slice(0, CARE_NAVI_DISPLAY_LIMIT);
   }, [partnerItems, rakutenItems, category, priceBand]);
   const priceBandLabel = getPriceBandLabel(category, priceBand);
 
