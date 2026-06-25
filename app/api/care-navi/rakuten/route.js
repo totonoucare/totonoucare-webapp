@@ -647,6 +647,9 @@ function teaRow(keyword, reason, tags = []) {
     tags,
     strictBeverage: true,
     qualityTeaSearch: true,
+    intentType: "warm_drink",
+    preferredProductTypes: ["teaBlend", "tea", "yakuzenIngredient"],
+    avoidProductTypes: ["supplement", "drinkware"],
   };
 }
 
@@ -736,6 +739,157 @@ const EAT_YAKUZEN_BLEND_ROWS = {
   },
 };
 
+function careQueryRow(keyword, reason, tags = [], options = {}) {
+  return {
+    keyword,
+    reason,
+    tags,
+    ...options,
+  };
+}
+
+// 生活サインを楽天検索語そのものへ反映するためのルール。
+// 「検索している感」を残しながら、冷たいもの・寝不足・画面作業などで商品棚が変わるようにする。
+const LIFE_QUERY_RULES = {
+  screen: {
+    live: [
+      careQueryRow("ホットアイマスク 目元 温熱", "画面作業で目元や首肩が固まりやすい日に、刺激を切り替えやすい候補です。", ["画面作業", "目元"]),
+      careQueryRow("ブルーライトカット メガネ 軽量", "画面を見る時間が長い日の、目元への刺激を減らす候補です。", ["画面作業", "刺激を減らす"]),
+    ],
+    eat: [
+      careQueryRow("カフェインレス ハーブティー", "画面作業中のコーヒーや甘い飲み物に寄せすぎない候補です。", ["画面作業", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+      careQueryRow("味噌汁 フリーズドライ", "作業中に食事が雑になりやすい日に、温かく軽く足しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["tea", "teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("頭皮ブラシ シリコン", "画面姿勢で頭まわりが張りやすい日に、軽くほぐしやすい候補です。", ["頭まわり", "画面作業"]),
+      careQueryRow("マッサージボール 首 肩", "同じ姿勢で固まりやすい首肩を、ピンポイントで逃がす候補です。", ["首肩", "姿勢"]),
+    ],
+  },
+  sleep_short: {
+    live: [
+      careQueryRow("アイマスク 遮光 睡眠", "寝不足ぎみの日に、まず休む環境を守る候補です。", ["睡眠", "遮光"]),
+      careQueryRow("耳栓 睡眠 遮音", "睡眠時間が短い時に、刺激を減らして休みやすくする候補です。", ["睡眠", "刺激を減らす"]),
+    ],
+    eat: [
+      careQueryRow("味噌汁 フリーズドライ", "寝不足で食事を考える余力が少ない日に、温かく軽く足しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+      careQueryRow("カモミールティー ノンカフェイン", "寝不足の日にカフェインへ寄せすぎず、夜も選びやすい候補です。", ["夜", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("ホットアイマスク 温熱", "寝不足で目元や頭が張りやすい日に、休むスイッチを入れやすい候補です。", ["目元", "睡眠前"]),
+      careQueryRow("ストレッチポール ハーフ", "寝不足で丸まりやすい姿勢を、強く攻めずに整える候補です。", ["姿勢", "回復"]),
+    ],
+  },
+  cold_drinks: {
+    live: [
+      careQueryRow("腹巻き 薄手 温活", "冷たいものが続いた時に、お腹まわりを冷やしっぱなしにしない候補です。", ["お腹", "温活"]),
+      careQueryRow("保温ボトル 軽量", "冷たい飲み物から温かい一杯へ切り替えやすくする候補です。", ["温かい一杯", "持ち歩き"]),
+    ],
+    eat: [
+      careQueryRow("味噌汁 フリーズドライ", "冷たいものが続いた日に、温かく軽く戻しやすい食事候補です。", ["汁物", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+      careQueryRow("スープ 常温 保存", "食事を考える余力が少ない時でも、温かい汁物へ戻しやすい候補です。", ["スープ", "常備"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+      careQueryRow("しょうが湯 ノンカフェイン", "冷たい飲み物から、温かい一杯へ切り替えやすい候補です。", ["温かい", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("湯たんぽ 足元", "冷たいものが続いた日に、足元から冷えを残しにくくする候補です。", ["足元", "温め"]),
+      careQueryRow("温熱パッド 腰 お腹", "腰腹まわりを冷やしっぱなしにしない候補です。", ["腰腹", "温熱"]),
+    ],
+  },
+  overeating: {
+    live: [
+      careQueryRow("腹巻き お腹 冷え", "食べすぎぎみの日に、お腹まわりを冷やさず守る候補です。", ["お腹", "胃腸"]),
+      careQueryRow("入浴剤 無香料 温浴", "食後の重さを、入浴でゆるやかに切り替えやすくする候補です。", ["入浴", "切り替え"]),
+    ],
+    eat: [
+      careQueryRow("雑炊 レトルト 常温", "食べすぎぎみの日に、次の食事を軽く戻しやすい候補です。", ["軽食", "常備"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+      careQueryRow("味噌汁 フリーズドライ", "重い食事へ続けて寄せず、温かく軽く整えやすい候補です。", ["汁物", "軽め"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+      careQueryRow("はとむぎ茶 ノンカフェイン", "甘い冷たい飲み物へ寄せすぎず、水分の取り方を見直しやすい候補です。", ["湿気", "お茶"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("足裏 マッサージ ローラー", "胃腸まわりの重さを、足元から軽く整えやすい候補です。", ["足裏", "重だるさ"]),
+      careQueryRow("フォームローラー", "食後に固まりやすい姿勢を、無理なく切り替える候補です。", ["姿勢", "巡り"]),
+    ],
+  },
+  no_bath: {
+    live: [
+      careQueryRow("炭酸 入浴剤 無香料", "湯船に入れていない日に、短い入浴でも切り替えやすい候補です。", ["入浴", "温浴"]),
+      careQueryRow("足湯 バケツ 折りたたみ", "湯船が難しい時でも、足元から温めやすい候補です。", ["足湯", "温活"]),
+    ],
+    eat: [
+      careQueryRow("しょうが湯 ノンカフェイン", "湯船に入れていない日の冷えを、飲み物から切り替えやすい候補です。", ["温かい", "香味"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+      careQueryRow("スープ フリーズドライ", "入浴で切り替えられていない日に、温かい汁物を足しやすい候補です。", ["汁物", "軽め"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("フォームローラー 肩甲骨", "湯船に入れていない日のこわばりを、体を動かして切り替える候補です。", ["肩甲骨", "巡り"]),
+      careQueryRow("ふくらはぎ ローラー", "足元に残る重さを、短時間で逃がしやすい候補です。", ["ふくらはぎ", "巡り"]),
+    ],
+  },
+  low_activity: {
+    live: [
+      careQueryRow("足湯 バケツ 折りたたみ", "運動不足ぎみの日に、足元から巡りのきっかけを作る候補です。", ["足元", "温活"]),
+      careQueryRow("温湿度計 デジタル 室内", "動かない日にこもりやすい室内環境を見える化する候補です。", ["環境", "見える化"]),
+    ],
+    eat: [
+      careQueryRow("プロテイン スープ", "動く量が少ない日でも、軽くたんぱく質を足しやすい候補です。", ["たんぱく質", "軽め"], { intentType: "nutrition_support", preferredProductTypes: ["supplement", "soupMeal"], avoidProductTypes: ["teaBlend"] }),
+      careQueryRow("黒豆茶 ノンカフェイン", "冷たい甘い飲み物へ寄せすぎず、日常の一杯にしやすい候補です。", ["お茶", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("フォームローラー", "同じ姿勢で固まった体を、大きく切り替える候補です。", ["全身", "巡り"]),
+      careQueryRow("ふくらはぎ マッサージ ローラー", "動かない日に下半身へ残りやすい重さを逃がす候補です。", ["足元", "巡り"]),
+    ],
+  },
+  tense: {
+    live: [
+      careQueryRow("入浴剤 リラックス 無香料", "緊張が続いた日に、入浴で一度ゆるめる候補です。", ["入浴", "ゆるめる"]),
+      careQueryRow("アイマスク 遮光 睡眠", "緊張で頭が冴えやすい夜に、刺激を減らす候補です。", ["睡眠前", "刺激を減らす"]),
+    ],
+    eat: [
+      careQueryRow("ハーブティー ノンカフェイン リラックス", "緊張が続いた日に、カフェインや甘いものへ寄せすぎない候補です。", ["飲み物", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+      careQueryRow("味噌汁 フリーズドライ", "緊張で食事が雑になりやすい日に、温かく軽く足しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("頭皮ブラシ マッサージ シリコン", "緊張で頭まわりが張りやすい日に、軽くほぐしやすい候補です。", ["頭まわり", "ほぐす"]),
+      careQueryRow("マッサージボール 首 肩", "首肩に残った力みをピンポイントで逃がす候補です。", ["首肩", "ほぐす"]),
+    ],
+  },
+  outdoor: {
+    live: [
+      careQueryRow("就寝用 保湿 マスク", "外出が多く乾きやすい日に、喉や口元を守る候補です。", ["喉", "保湿"]),
+      careQueryRow("携帯 加湿器 卓上", "外出後の乾きやすい環境を、軽く整える候補です。", ["乾燥", "携帯"]),
+    ],
+    eat: [
+      careQueryRow("ルイボスティー ノンカフェイン", "外出が多い日に、カフェインや甘い飲み物へ寄せすぎない候補です。", ["お茶", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+      careQueryRow("味噌汁 フリーズドライ", "外出で食事が乱れやすい日に、温かく軽く戻しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    ],
+    point: [
+      careQueryRow("足裏 マッサージ ローラー", "外出後に足元へ残る重さを軽く逃がす候補です。", ["足裏", "外出後"]),
+      careQueryRow("ふくらはぎ ローラー", "歩いた日・立ちっぱなしの日の足元を整える候補です。", ["ふくらはぎ", "足元"]),
+    ],
+  },
+};
+
+const EAT_POLICY_DIVERSITY_ROWS = {
+  shizumeru: [
+    careQueryRow("味噌汁 フリーズドライ", "頭が冴えやすい日でも、食事を軽く温かく戻しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+  yurumeru: [
+    careQueryRow("スープ フリーズドライ", "力みが続く日に、甘いものだけで粘らず軽く足しやすい候補です。", ["スープ", "軽め"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+  meguraseru: [
+    careQueryRow("しょうが スープ フリーズドライ", "冷えや停滞が気になる日に、温かい汁物へ切り替えやすい候補です。", ["汁物", "香味"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+  nagasu: [
+    careQueryRow("雑炊 レトルト 常温", "重だるさがある日に、食べすぎず軽く済ませやすい候補です。", ["軽食", "常備"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+  uruosu: [
+    careQueryRow("スープ 常温 保存", "乾いた菓子やコーヒーだけに偏らず、温かく軽く足しやすい候補です。", ["スープ", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+  nukumeru: [
+    careQueryRow("味噌汁 フリーズドライ 生姜", "冷えが気になる日に、飲み物だけでなく温かい汁物へ戻しやすい候補です。", ["汁物", "温める"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+  sasaeru: [
+    careQueryRow("スープ 常温 保存", "忙しい日でも食事を抜きっぱなしにせず、軽く支えやすい候補です。", ["スープ", "常備"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+  ],
+};
 
 
 function jsonUtf8(payload, status = 200) {
@@ -755,6 +909,12 @@ function cleanKeyword(keyword) {
 
 function uniqueStrings(items) {
   return Array.from(new Set(asArray(items).filter(Boolean).map((item) => String(item))));
+}
+
+function clampNumber(value, fallback, min, max) {
+  const number = Number(value);
+  const resolved = Number.isFinite(number) ? number : fallback;
+  return Math.max(min, Math.min(resolved, max));
 }
 
 function getPolicyKey(key, fallback = "sasaeru") {
@@ -812,12 +972,17 @@ function normalizeQueryRow(row) {
   if (!row) return null;
 
   if (Array.isArray(row)) {
+    const options = row[3] && typeof row[3] === "object" ? row[3] : {};
     return {
       keyword: row[0],
       reason: row[1],
       tags: row[2] || [],
-      strictBeverage: false,
-      qualityTeaSearch: false,
+      strictBeverage: Boolean(options.strictBeverage),
+      qualityTeaSearch: Boolean(options.qualityTeaSearch),
+      intentType: options.intentType || null,
+      preferredProductTypes: asArray(options.preferredProductTypes),
+      allowedProductTypes: asArray(options.allowedProductTypes),
+      avoidProductTypes: asArray(options.avoidProductTypes),
     };
   }
 
@@ -827,6 +992,10 @@ function normalizeQueryRow(row) {
     tags: row.tags || [],
     strictBeverage: Boolean(row.strictBeverage),
     qualityTeaSearch: Boolean(row.qualityTeaSearch),
+    intentType: row.intentType || null,
+    preferredProductTypes: asArray(row.preferredProductTypes),
+    allowedProductTypes: asArray(row.allowedProductTypes),
+    avoidProductTypes: asArray(row.avoidProductTypes),
   };
 }
 
@@ -859,6 +1028,36 @@ function categoryAnchorRowsFor(categoryKey, policyKey, symptomKey) {
     seen.add(keyword);
     return true;
   }).slice(0, 4);
+}
+
+function lifeRowsFor(lifeKeys, categoryKey) {
+  const rows = [];
+  for (const lifeKey of uniqueStrings(lifeKeys).slice(0, 4)) {
+    rows.push(...asArray(LIFE_QUERY_RULES[lifeKey]?.[categoryKey]));
+  }
+
+  const seen = new Set();
+  return rows.filter((row) => {
+    const keyword = cleanKeyword(normalizeQueryRow(row)?.keyword);
+    if (!keyword || seen.has(keyword)) return false;
+    seen.add(keyword);
+    return true;
+  }).slice(0, 8);
+}
+
+function eatPolicyDiversityRowsFor(policyKey) {
+  return asArray(EAT_POLICY_DIVERSITY_ROWS[policyKey]);
+}
+
+function countPlansByIntent(plans, intentType) {
+  return plans.filter((plan) => plan?.intentType === intentType).length;
+}
+
+function canAddEatPlan(plans, normalized) {
+  const intentType = normalized?.intentType || null;
+  if (intentType === "warm_drink" && countPlansByIntent(plans, "warm_drink") >= 3) return false;
+  if (intentType === "light_meal" && countPlansByIntent(plans, "light_meal") >= 4) return false;
+  return true;
 }
 
 
@@ -917,21 +1116,26 @@ function getAppOrigin() {
   }
 }
 
-function buildQueryPlans({ category, policyKeys, symptomKey, priceBand }) {
+function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, lifeKeys, limit }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
   const safePolicyKeys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
   const primaryPolicyKey = safePolicyKeys[0] || "sasaeru";
+  const requestedLimit = clampNumber(limit, 12, 8, 24);
+  const planLimit = Math.min(8, Math.max(5, Math.ceil(requestedLimit / 2) + 2));
   const plans = [];
   const seenKeywords = new Set();
+  const lifeRows = lifeRowsFor(lifeKeys, safeCategory);
 
   function addPlanFromRow(row, { policyKey, source, sourceKey }) {
     const normalized = normalizeQueryRow(row);
     const keyword = cleanKeyword(normalized?.keyword);
     if (!keyword || seenKeywords.has(keyword)) return false;
 
+    if (safeCategory === "eat" && !canAddEatPlan(plans, normalized)) return false;
+
     const resolvedPolicyKey = getPolicyKey(policyKey, primaryPolicyKey);
     const tags =
-      source === "symptom"
+      source === "symptom" || source === "life"
         ? uniqueStrings(normalized.tags).slice(0, 3)
         : uniqueStrings([POLICY_LABELS[resolvedPolicyKey], ...asArray(normalized.tags)]).slice(0, 3);
 
@@ -945,43 +1149,77 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand }) {
       category: safeCategory,
       strictBeverage: Boolean(normalized.strictBeverage),
       qualityTeaSearch: Boolean(normalized.qualityTeaSearch),
+      intentType: normalized.intentType || null,
+      preferredProductTypes: asArray(normalized.preferredProductTypes),
+      allowedProductTypes: asArray(normalized.allowedProductTypes),
+      avoidProductTypes: asArray(normalized.avoidProductTypes),
+      basis: basis || null,
     });
 
     seenKeywords.add(keyword);
     return true;
   }
 
-  // 1本目: 不調直結。ただし検索語は「不調 × 第1方針 × カテゴリ」で決める。
-  const yakuzenPrimaryRows = safeCategory === "eat" ? yakuzenBlendRowsFor(primaryPolicyKey, symptomKey, priceBand) : [];
-  const symptomCandidates = [
-    ...yakuzenPrimaryRows,
+  // 1本目: 生活サインがある場合は、まず生活の実感に直結する検索語を優先する。
+  // 生活サインがなければ、不調 × 第1方針 × カテゴリを優先する。
+  const primaryContextRows = contextRowsFor(symptomKey, primaryPolicyKey, safeCategory);
+  const primaryCandidates = [
+    ...lifeRows,
+    ...primaryContextRows,
+    ...(safeCategory === "eat" ? eatPolicyDiversityRowsFor(primaryPolicyKey) : []),
     ...categoryAnchorRowsFor(safeCategory, primaryPolicyKey, symptomKey),
-    ...contextRowsFor(symptomKey, primaryPolicyKey, safeCategory),
     ...fallbackSymptomRowsFor(symptomKey, safeCategory),
     ...fallbackPolicyRowsFor(primaryPolicyKey, safeCategory),
+    ...(safeCategory === "eat" ? yakuzenBlendRowsFor(primaryPolicyKey, symptomKey, priceBand).slice(0, 2) : []),
   ];
-  for (const row of symptomCandidates) {
-    if (addPlanFromRow(row, { policyKey: primaryPolicyKey, source: "symptom", sourceKey: "symptom" })) break;
+  for (const row of primaryCandidates) {
+    if (addPlanFromRow(row, { policyKey: primaryPolicyKey, source: lifeRows.includes(row) ? "life" : "symptom", sourceKey: lifeRows.includes(row) ? "life" : "symptom" })) break;
   }
 
-  // 2本目以降: 方針別。ただし各方針も「不調 × 方針 × カテゴリ」を優先する。
+  // 2本目以降: 方針別。薬膳茶・和漢茶は候補として残すが、常に先頭固定にはしない。
   safePolicyKeys.forEach((policyKey) => {
+    if (plans.length >= planLimit) return;
+
     const contextRows = contextRowsFor(symptomKey, policyKey, safeCategory);
-    const yakuzenRows = safeCategory === "eat" ? yakuzenBlendRowsFor(policyKey, symptomKey, priceBand) : [];
+    const diversityRows = safeCategory === "eat" ? eatPolicyDiversityRowsFor(policyKey) : [];
+    const yakuzenRows = safeCategory === "eat" ? yakuzenBlendRowsFor(policyKey, symptomKey, priceBand).slice(0, 2) : [];
     const candidates = [
-      ...yakuzenRows,
+      ...(policyKey === primaryPolicyKey ? lifeRows.slice(1) : lifeRows),
       ...(policyKey === primaryPolicyKey ? contextRows.slice(1) : contextRows),
+      ...diversityRows,
       ...categoryAnchorRowsFor(safeCategory, policyKey, symptomKey),
       ...fallbackPolicyRowsFor(policyKey, safeCategory),
+      ...fallbackSymptomRowsFor(symptomKey, safeCategory),
+      ...yakuzenRows,
       ...contextRows,
     ];
 
+    let addedForPolicy = 0;
     for (const row of candidates) {
-      if (addPlanFromRow(row, { policyKey, source: "policy", sourceKey: policyKey })) break;
+      if (plans.length >= planLimit || addedForPolicy >= 2) break;
+      const isLifeRow = lifeRows.includes(row);
+      if (addPlanFromRow(row, { policyKey, source: isLifeRow ? "life" : "policy", sourceKey: isLifeRow ? "life" : policyKey })) {
+        addedForPolicy += 1;
+      }
     }
   });
 
-  return plans.slice(0, 5);
+  // 食べるタブは、飲み物だけに寄らないよう最低限の軽食検索を1本足す。
+  if (safeCategory === "eat" && countPlansByIntent(plans, "light_meal") === 0) {
+    const fallbackLightMeal = eatPolicyDiversityRowsFor(primaryPolicyKey)[0] ||
+      careQueryRow("味噌汁 フリーズドライ", "食事を考える余力が少ない時に、温かく軽く足しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] });
+    addPlanFromRow(fallbackLightMeal, { policyKey: primaryPolicyKey, source: "policy", sourceKey: primaryPolicyKey });
+  }
+
+  // 生活サインが複数ある時は、最初のサインだけで棚が固まらないよう追加で拾う。
+  if (lifeRows.length > 1) {
+    for (const row of lifeRows.slice(1)) {
+      if (plans.length >= planLimit) break;
+      addPlanFromRow(row, { policyKey: primaryPolicyKey, source: "life", sourceKey: "life" });
+    }
+  }
+
+  return plans.slice(0, planLimit);
 }
 
 function firstImageUrl(item) {
@@ -1042,6 +1280,22 @@ function isAcceptableBeverageItem(item, plan) {
   return true;
 }
 
+function isAcceptableForPlanProductType(item, plan) {
+  if (plan?.category !== "eat") return true;
+
+  const productType = getEatProductTypeFromText(rakutenItemText(item));
+  const allowed = asArray(plan?.allowedProductTypes);
+  const avoided = asArray(plan?.avoidProductTypes);
+
+  if (allowed.length && !allowed.includes(productType)) return false;
+  if (avoided.includes(productType)) return false;
+
+  if (plan?.intentType === "light_meal" && (productType === "teaBlend" || productType === "tea")) return false;
+  if (plan?.intentType === "nutrition_support" && productType === "teaBlend") return false;
+
+  return true;
+}
+
 function isAcceptableRakutenItem(item, plan) {
   const text = rakutenItemText(item);
   if (!text) return false;
@@ -1051,7 +1305,7 @@ function isAcceptableRakutenItem(item, plan) {
     if (plan?.qualityTeaSearch && BEVERAGE_REJECT_PATTERN.test(text)) return false;
   }
 
-  return isAcceptableBeverageItem(item, plan);
+  return isAcceptableBeverageItem(item, plan) && isAcceptableForPlanProductType(item, plan);
 }
 
 const KANCHA_SERIES_NAMES = ["花通茶", "美麗茶", "潤快茶", "軽軽茶", "活元茶", "妃美茶", "暖宮茶", "利楽茶"];
@@ -1186,6 +1440,52 @@ function productFamilyKey(item, productType) {
   return `${shop}:${productType}:${title.slice(0, 18)}`;
 }
 
+
+function scoreEatProductType(productType, plan) {
+  const base = {
+    soupMeal: 7,
+    teaBlend: 4,
+    tea: 3,
+    yakuzenIngredient: 4,
+    supplement: -2,
+    drinkware: -3,
+    foodOther: -5,
+  };
+
+  let score = base[productType] || 0;
+  const intentType = plan?.intentType || null;
+  const preferred = asArray(plan?.preferredProductTypes);
+  const avoided = asArray(plan?.avoidProductTypes);
+
+  if (preferred.includes(productType)) score += 8;
+  if (avoided.includes(productType)) score -= 14;
+
+  if (intentType === "light_meal") {
+    if (productType === "soupMeal") score += 13;
+    if (productType === "tea" || productType === "teaBlend") score -= 18;
+    if (productType === "supplement") score -= 8;
+  }
+
+  if (intentType === "warm_drink") {
+    if (productType === "teaBlend" || productType === "tea") score += 9;
+    if (productType === "yakuzenIngredient") score += 4;
+    if (productType === "soupMeal") score -= 5;
+  }
+
+  if (intentType === "ingredient") {
+    if (productType === "yakuzenIngredient") score += 12;
+    if (productType === "teaBlend") score -= 4;
+  }
+
+  if (intentType === "nutrition_support") {
+    if (productType === "supplement") score += 10;
+    if (productType === "soupMeal") score += 6;
+    if (productType === "teaBlend" || productType === "tea") score -= 10;
+  }
+
+  return score;
+}
+
 function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
   const reviewCount = Number(item?.reviewCount || 0);
   const reviewAverage = Number(item?.reviewAverage || 0);
@@ -1196,9 +1496,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
   const productType = category === "eat" ? getEatProductTypeFromText(rakutenItemText(item)) : "general";
   const tags = category === "eat" ? buildEatDisplayTags(item, plan, productType) : plan.tags;
   const reason = category === "eat" ? buildEatReason(item, plan, productType) : polishCareReason(plan.reason);
-  const typeBoost = category === "eat"
-    ? ({ teaBlend: 12, yakuzenIngredient: 8, tea: 5, soupMeal: 3, drinkware: -2, supplement: -6, foodOther: -4 }[productType] || 0)
-    : 0;
+  const typeBoost = category === "eat" ? scoreEatProductType(productType, plan) : 0;
 
   return {
     title,
@@ -1208,6 +1506,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     policyKey: plan.policyKey,
     category,
     productType,
+    intentType: plan.intentType || null,
     familyKey: productFamilyKey({ title, shopName: item?.shopName || "", query: plan.keyword }, productType),
     imageUrl: firstImageUrl(item),
     itemUrl: url,
@@ -1328,7 +1627,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   url.searchParams.set("format", "json");
   url.searchParams.set("formatVersion", "2");
   url.searchParams.set("keyword", plan.keyword);
-  url.searchParams.set("hits", "10");
+  url.searchParams.set("hits", "12");
   url.searchParams.set("page", "1");
   url.searchParams.set("availability", "1");
   url.searchParams.set("imageFlag", "1");
@@ -1405,6 +1704,10 @@ export async function POST(req) {
     const rawPriceBand = String(body?.priceBand || "all");
     const priceBand = rawPriceBand === "all" || PRICE_BAND_RANGES[category]?.[rawPriceBand] ? rawPriceBand : "all";
     const priceRange = getPriceBandRange(category, priceBand);
+    const displayLimit = clampNumber(body?.limit, 12, 8, 24);
+    const totalLimit = Math.max(displayLimit, clampNumber(body?.totalLimit, 32, displayLimit, 48));
+    const lifeKeys = uniqueStrings(body?.lifeKeys).slice(0, 4);
+    const basis = String(body?.basis || "");
 
     const credentials = getRakutenCredentials();
     if (!credentials.applicationId || !credentials.accessKey) {
@@ -1420,7 +1723,7 @@ export async function POST(req) {
       });
     }
 
-    const plans = buildQueryPlans({ category, policyKeys, symptomKey, priceBand });
+    const plans = buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, lifeKeys, limit: displayLimit });
     if (!plans.length) {
       return jsonUtf8({ ok: true, items: [], queries: [], category, priceBand, priceRange });
     }
@@ -1456,7 +1759,7 @@ export async function POST(req) {
       })
       .sort((a, b) => b.score - a.score);
 
-    const balancedItems = selectBalancedItems(deduped, policyKeys, { displayLimit: 8, totalLimit: 24 });
+    const balancedItems = selectBalancedItems(deduped, policyKeys, { displayLimit, totalLimit });
 
     if (!balancedItems.length && errors.length === plans.length) {
       return jsonUtf8({
