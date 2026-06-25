@@ -51,8 +51,9 @@ const PRICE_BAND_OPTIONS = [
   { key: "deep", label: "しっかり" },
 ];
 
-const CARE_NAVI_DISPLAY_LIMIT = 12;
-const CARE_NAVI_TOTAL_LIMIT = 32;
+const CARE_NAVI_INITIAL_LIMIT = 12;
+const CARE_NAVI_EXPANDED_LIMIT = 24;
+const CARE_NAVI_TOTAL_LIMIT = 48;
 
 const PRICE_BAND_RANGES = {
   live: {
@@ -81,11 +82,11 @@ const LIFE_OPTIONS = [
   { key: "screen", label: "画面作業が多い", policies: ["yurumeru", "meguraseru"] },
   { key: "sleep_short", label: "寝不足ぎみ", policies: ["shizumeru", "sasaeru"] },
   { key: "cold_drinks", label: "冷たいものが多い", policies: ["nukumeru", "sasaeru"] },
-  { key: "overeating", label: "食べすぎぎみ", policies: ["sasaeru", "nagasu"] },
+  { key: "overeating", label: "食べすぎぎみ", policies: ["nagasu", "sasaeru"] },
   { key: "no_bath", label: "湯船に入れていない", policies: ["meguraseru", "yurumeru"] },
   { key: "low_activity", label: "運動不足ぎみ", policies: ["meguraseru", "nagasu"] },
   { key: "tense", label: "緊張が続いた", policies: ["yurumeru", "shizumeru"] },
-  { key: "outdoor", label: "外出が多い", policies: ["sasaeru", "uruosu"] },
+  { key: "outdoor", label: "外出が多い", policies: ["uruosu", "sasaeru"] },
 ];
 
 const POLICY_META = {
@@ -96,6 +97,31 @@ const POLICY_META = {
   uruosu: { label: "うるおす", short: "乾きを補う" },
   nukumeru: { label: "ぬくめる", short: "冷やさない" },
   sasaeru: { label: "ささえる", short: "余力を守る" },
+};
+
+const PRODUCT_TYPE_LABELS = {
+  teaBlend: "ブレンド茶",
+  tea: "お茶・ハーブティー",
+  yakuzenIngredient: "和漢素材",
+  soupMeal: "軽い食事",
+  supplement: "栄養補助",
+  drinkware: "持ち歩き",
+  foodOther: "食品候補",
+};
+
+const INTENT_LABELS = {
+  warm_drink: "温かい飲み物",
+  light_meal: "軽めの食事",
+  nutrition_support: "栄養補助",
+  ingredient: "素材を足す",
+};
+
+const SOURCE_TYPE_LABELS = {
+  life: "生活サインから",
+  symptom: "不調フォーカスから",
+  policy: "今回の方針から",
+  partner: "編集候補",
+  a8: "編集候補",
 };
 
 const SYMPTOM_POLICY_HINTS = {
@@ -356,6 +382,25 @@ function selectPolicyKeysFromScores(scores, fallbackKeys = ["yurumeru", "nagasu"
   return selected.map((item) => item.key).slice(0, 3);
 }
 
+function softenSupportPolicy(scores, { hasDirectSupport = false } = {}) {
+  if (!scores || !Number(scores.sasaeru || 0)) return scores;
+
+  const topOther = Math.max(
+    0,
+    ...Object.entries(scores)
+      .filter(([key]) => key !== "sasaeru")
+      .map(([, value]) => Number(value || 0))
+  );
+
+  // 「ささえる」は回復土台として便利だが、何にでも出ると商品棚の意味がぼやける。
+  // 明確に必要な時以外は少しだけ緩衝し、ゆるめる/ながす/ぬくめる等の主方針を前に出す。
+  if (topOther > 0 && Number(scores.sasaeru || 0) < topOther * 1.22) {
+    scores.sasaeru *= hasDirectSupport ? 0.9 : 0.74;
+  }
+
+  return scores;
+}
+
 function getSeasonKey() {
   const month = new Date().getMonth() + 1;
   if (month >= 3 && month <= 4) return "spring";
@@ -391,6 +436,7 @@ function buildConditionPolicyKeys({ baseScores, extraPolicyKeys = [], extraWeigh
   });
 
   addPolicyKeys(scores, extraPolicyKeys, extraWeight);
+  softenSupportPolicy(scores, { hasDirectSupport: safeArray(extraPolicyKeys).includes("sasaeru") });
 
   return selectPolicyKeysFromScores(scores, fallbackKeys);
 }
@@ -421,6 +467,7 @@ function mergePolicyKeysWithLife(policyKeys, lifeKeys, baseScores) {
 
   addPolicyKeys(scores, policyKeys, 1.45);
   addPolicyKeys(scores, lifePolicyKeys, 1.25);
+  softenSupportPolicy(scores, { hasDirectSupport: safeArray(policyKeys).includes("sasaeru") || lifePolicyKeys.includes("sasaeru") });
 
   return selectPolicyKeysFromScores(scores, policyKeys?.length ? policyKeys : ["sasaeru", "yurumeru"]);
 }
@@ -580,8 +627,33 @@ function CategoryTabs({ value, onChange }) {
   );
 }
 
+function getItemContextLabel(item) {
+  const sourceLabel = SOURCE_TYPE_LABELS[item?.sourceType] || SOURCE_TYPE_LABELS[item?.sourceKey];
+  if (sourceLabel) return sourceLabel;
+  if (item?.category === "eat" && item?.intentType) return INTENT_LABELS[item.intentType] || "食べるケア";
+  const policy = POLICY_META[item?.policyKey];
+  return policy?.label ? `方針：${policy.label}` : "ケア候補";
+}
+
+function getReasonPills(item) {
+  const pills = [];
+  const sourceLabel = SOURCE_TYPE_LABELS[item?.sourceType] || SOURCE_TYPE_LABELS[item?.sourceKey];
+  const intentLabel = INTENT_LABELS[item?.intentType];
+  const productLabel = PRODUCT_TYPE_LABELS[item?.productType];
+  const policyLabel = POLICY_META[item?.policyKey]?.label;
+
+  if (sourceLabel) pills.push(sourceLabel);
+  if (intentLabel) pills.push(intentLabel);
+  if (productLabel) pills.push(productLabel);
+  safeArray(item?.tags).forEach((tag) => pills.push(POLICY_META[tag]?.label || tag));
+  if (policyLabel && item?.sourceType === "policy") pills.push(`方針：${policyLabel}`);
+
+  return unique(pills).slice(0, 5);
+}
+
 function ResultCard({ item, itemPosition, trackingContext }) {
-  const policy = POLICY_META[item.policyKey] || {};
+  const contextLabel = getItemContextLabel(item);
+  const reasonPills = getReasonPills(item);
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
   const isPartner = item.source === "a8" || item.sourceType === "partner";
@@ -640,12 +712,10 @@ function ResultCard({ item, itemPosition, trackingContext }) {
               <div className="line-clamp-2 text-[14px] font-black leading-6 text-slate-900">{item.title}</div>
               <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#356D68]">
                 <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-5 w-5 shrink-0" loading="lazy" />
-                {policy.label || item.policyKey}
+                {contextLabel}
               </div>
             </div>
           </div>
-
-          <p className="mt-2 text-[11px] font-bold leading-5 text-slate-600">{polishCareReason(item.reason)}</p>
 
           {priceText || item.shopName || reviewText ? (
             <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black text-slate-500">
@@ -658,8 +728,8 @@ function ResultCard({ item, itemPosition, trackingContext }) {
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5 pl-1">
-        {(item.tags || []).map((tag) => {
-          const label = POLICY_META[tag]?.label || tag;
+        {reasonPills.map((tag) => {
+          const label = tag;
           return (
             <span key={tag} className="rounded-full border border-[#B6D8CF] bg-[#F5FBF8] px-2.5 py-1 text-[10px] font-black text-[#4B6B67] ring-1 ring-[#C6E1DA]">
               {label}
@@ -786,6 +856,7 @@ export default function CareNaviPage() {
   const [rakutenQueries, setRakutenQueries] = useState([]);
   const [rakutenLoading, setRakutenLoading] = useState(false);
   const [rakutenError, setRakutenError] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(CARE_NAVI_INITIAL_LIMIT);
 
   useEffect(() => {
     let cancelled = false;
@@ -946,6 +1017,10 @@ export default function CareNaviPage() {
 
   const policyKeySignature = policyKeys.join("|");
   const lifeKeySignature = lifeKeys.join("|");
+  useEffect(() => {
+    setVisibleLimit(CARE_NAVI_INITIAL_LIMIT);
+  }, [category, priceBand, basis, lifeKeySignature, symptomKey, policyKeySignature]);
+
   const seasonKey = getSeasonKey();
   const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
   const tomorrowTriggerFactors = useMemo(
@@ -995,7 +1070,7 @@ export default function CareNaviPage() {
             basis,
             lifeKeys,
             priceBand,
-            limit: CARE_NAVI_DISPLAY_LIMIT,
+            limit: CARE_NAVI_EXPANDED_LIMIT,
             totalLimit: CARE_NAVI_TOTAL_LIMIT,
           }),
         });
@@ -1060,14 +1135,14 @@ export default function CareNaviPage() {
 
     const mixed = [];
     const used = new Set();
-    const maxPartnerSlots = 3;
+    const maxPartnerSlots = 4;
 
     function getItemKey(item) {
       return item?.itemUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
     }
 
     function addItem(item) {
-      if (!item || mixed.length >= CARE_NAVI_DISPLAY_LIMIT) return false;
+      if (!item || mixed.length >= CARE_NAVI_EXPANDED_LIMIT) return false;
       const key = getItemKey(item);
       if (!key || used.has(key)) return false;
       used.add(key);
@@ -1084,7 +1159,7 @@ export default function CareNaviPage() {
     addItem(partnerItems[1]);
 
     let rakutenIndex = 4;
-    while (rakutenIndex < rakutenVisible.length && mixed.filter((item) => item?.source === "rakuten").length < 9 && mixed.length < CARE_NAVI_DISPLAY_LIMIT) {
+    while (rakutenIndex < rakutenVisible.length && mixed.filter((item) => item?.source === "rakuten").length < 18 && mixed.length < CARE_NAVI_EXPANDED_LIMIT) {
       addItem(rakutenVisible[rakutenIndex]);
       rakutenIndex += 1;
     }
@@ -1093,14 +1168,17 @@ export default function CareNaviPage() {
       addItem(partnerItems[partnerIndex]);
     }
 
-    while (rakutenIndex < rakutenVisible.length && mixed.length < CARE_NAVI_DISPLAY_LIMIT) {
+    while (rakutenIndex < rakutenVisible.length && mixed.length < CARE_NAVI_EXPANDED_LIMIT) {
       addItem(rakutenVisible[rakutenIndex]);
       rakutenIndex += 1;
     }
 
-    return mixed.slice(0, CARE_NAVI_DISPLAY_LIMIT);
+    return mixed.slice(0, CARE_NAVI_EXPANDED_LIMIT);
   }, [partnerItems, rakutenItems, category, priceBand]);
   const priceBandLabel = getPriceBandLabel(category, priceBand);
+
+  const displayItems = visibleItems.slice(0, visibleLimit);
+  const canShowMore = visibleItems.length > visibleLimit;
 
   const trackingContext = useMemo(() => {
     const weatherSummary = compactForecastSummary(tomorrowBundle);
@@ -1319,15 +1397,26 @@ export default function CareNaviPage() {
 
           {rakutenLoading ? (
             <RakutenLoadingCards />
-          ) : visibleItems.length ? (
-            visibleItems.map((item, index) => (
+          ) : displayItems.length ? (
+            <>
+              {displayItems.map((item, index) => (
               <ResultCard
                 key={`${category}-${item.source || "item"}-${item.itemCode || item.sourceKey || item.policyKey}-${item.title}-${index}`}
                 item={item}
                 itemPosition={index + 1}
                 trackingContext={trackingContext}
               />
-            ))
+              ))}
+              {canShowMore ? (
+                <button
+                  type="button"
+                  onClick={() => setVisibleLimit((prev) => Math.min(CARE_NAVI_EXPANDED_LIMIT, prev + 12))}
+                  className="w-full rounded-[18px] bg-[#EAF6F3] px-4 py-3 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] hover:bg-[#DDF1EC]"
+                >
+                  もっと見る（{Math.min(CARE_NAVI_EXPANDED_LIMIT, visibleItems.length) - visibleLimit}件）
+                </button>
+              ) : null}
+            </>
           ) : rakutenItems.length && priceBand !== "all" ? (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
               {priceBandLabel}で表示できる候補は見つかりませんでした。「すべて」に戻すか、別の価格帯を選んでください。
