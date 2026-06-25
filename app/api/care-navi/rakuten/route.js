@@ -1002,11 +1002,29 @@ function firstImageUrl(item) {
   return "";
 }
 
-const BEVERAGE_REQUIRED_PATTERN = /(茶|ティー|tea|ハーブティー|ルイボス|カモミール|ティーバッグ|ティーパック|飲料|ドリンク|しょうが湯|生姜湯|葛湯|味噌汁|みそ汁|スープ|白湯|チャイ)/i;
-const BEVERAGE_REJECT_PATTERN = /(飴|のど飴|キャンディ|菓子|京菓|グミ|錠|粒|カプセル|タブレット|サプリ|サプリメント|医薬品|医薬部外品|着物|下ばき|肌着|インナー|メンズ|紳士|ステテコ|パンツ|衣類|下着|靴下|茶碗|茶器|湯呑|茶こし|ポット|急須|ペット用品)/i;
+const BEVERAGE_REQUIRED_PATTERN = /(茶|ティー|tea|ハーブティー|ルイボス|カモミール|ティーバッグ|ティーパック|飲料|ドリンク|しょうが湯|生姜湯|葛湯|味噌汁|みそ汁|スープ|白湯|チャイ|なつめ|棗|クコ|枸杞|陳皮|白きくらげ|黒豆|はとむぎ|ハトムギ|小豆|生姜|しょうが|よもぎ|菊花|桑葉|山査子)/i;
+const BEVERAGE_REJECT_PATTERN = /(飴|のど飴|キャンディ|菓子|京菓|グミ|錠|粒|カプセル|タブレット|サプリ|サプリメント|医薬品|医薬部外品|着物|下ばき|肌着|インナー|メンズ|紳士|ステテコ|パンツ|衣類|下着|靴下|茶碗|茶器|湯呑|茶こし|ポット|急須|ペット用品|化粧品|石鹸|シャンプー|入浴剤)/i;
+const HEALTH_CLAIM_REJECT_PATTERN = /(増血|血糖|血圧|糖尿|便秘|痩せ|痩身|ダイエット|脂肪|肝臓|腎臓|精力|解毒|デトックス|排出|下剤|センナ|キャンドルブッシュ|利尿|便通|便秘茶|減肥)/i;
+const DRINKWARE_PATTERN = /(水筒|ボトル|タンブラー|マグボトル|保温ボトル|ステンレスボトル)/i;
+const SOUP_MEAL_PATTERN = /(味噌汁|みそ汁|スープ|雑炊|おかゆ|リゾット|惣菜|宅食|ミール|GREEN SPOON|グリーンスプーン)/i;
+const SUPPLEMENT_PATTERN = /(サプリ|錠|粒|カプセル|タブレット|機能性表示食品|プロテイン|乳酸菌|酪酸菌|イヌリン|GABA|テアニン|グリシン|ビタミン|マグネシウム|鉄分|ヘム鉄)/i;
+const YAKUZEN_INGREDIENT_PATTERN = /(なつめ|棗|クコ|枸杞|陳皮|白きくらげ|黒豆|はとむぎ|ハトムギ|小豆|生姜|しょうが|よもぎ|菊花|桑葉|山査子|桂皮|シナモン)/i;
+const TEA_PATTERN = /(茶|ティー|tea|ハーブティー|ルイボス|カモミール|ティーバッグ|ティーパック|しょうが湯|生姜湯|葛湯|チャイ)/i;
+const BLEND_TEA_PATTERN = /(薬膳|和漢|養生|漢茶|ブレンド|巡り|めぐり|温活|すっきり|おやすみ|ノンカフェイン)/i;
 
 function rakutenItemText(item) {
   return [item?.itemName, item?.catchcopy, item?.shopName].filter(Boolean).join(" ");
+}
+
+function getEatProductTypeFromText(text) {
+  const source = String(text || "");
+  if (DRINKWARE_PATTERN.test(source)) return "drinkware";
+  if (SOUP_MEAL_PATTERN.test(source)) return "soupMeal";
+  if (SUPPLEMENT_PATTERN.test(source)) return "supplement";
+  if (TEA_PATTERN.test(source) && BLEND_TEA_PATTERN.test(source)) return "teaBlend";
+  if (TEA_PATTERN.test(source)) return "tea";
+  if (YAKUZEN_INGREDIENT_PATTERN.test(source)) return "yakuzenIngredient";
+  return "foodOther";
 }
 
 function isAcceptableBeverageItem(item, plan) {
@@ -1015,9 +1033,25 @@ function isAcceptableBeverageItem(item, plan) {
   const text = rakutenItemText(item);
   if (!text) return false;
   if (BEVERAGE_REJECT_PATTERN.test(text)) return false;
+  if (HEALTH_CLAIM_REJECT_PATTERN.test(text)) return false;
   if (!BEVERAGE_REQUIRED_PATTERN.test(text)) return false;
 
+  const productType = getEatProductTypeFromText(text);
+  if (productType === "supplement" || productType === "drinkware" || productType === "foodOther") return false;
+
   return true;
+}
+
+function isAcceptableRakutenItem(item, plan) {
+  const text = rakutenItemText(item);
+  if (!text) return false;
+
+  if (plan?.category === "eat") {
+    if (HEALTH_CLAIM_REJECT_PATTERN.test(text)) return false;
+    if (plan?.qualityTeaSearch && BEVERAGE_REJECT_PATTERN.test(text)) return false;
+  }
+
+  return isAcceptableBeverageItem(item, plan);
 }
 
 const KANCHA_SERIES_NAMES = ["花通茶", "美麗茶", "潤快茶", "軽軽茶", "活元茶", "妃美茶", "暖宮茶", "利楽茶"];
@@ -1047,19 +1081,134 @@ function scoreKanchaPriority(item, plan) {
   return boost;
 }
 
+
+function hasText(text, pattern) {
+  return pattern.test(String(text || ""));
+}
+
+function materialTagFromText(text) {
+  const source = String(text || "");
+  if (/なつめ|棗/.test(source) && /クコ|枸杞/.test(source)) return "なつめ・クコ系";
+  if (/生姜|しょうが/.test(source) && /桂皮|シナモン/.test(source)) return "生姜・桂皮系";
+  if (/はとむぎ|ハトムギ/.test(source) && /小豆/.test(source)) return "はとむぎ・小豆系";
+  if (/ルイボス/.test(source) && /カモミール/.test(source)) return "ルイボス・カモミール";
+  if (/陳皮/.test(source) && /なつめ|棗/.test(source)) return "陳皮・なつめ系";
+  if (/プーアル|プーアール/.test(source)) return "プーアル系";
+  if (/ハッカ|菊花/.test(source)) return "ハッカ・菊花系";
+  if (/黒豆/.test(source)) return "黒豆系";
+  if (/よもぎ/.test(source)) return "よもぎ系";
+  if (/なつめ|棗/.test(source)) return "なつめ系";
+  if (/ルイボス/.test(source)) return "ルイボス";
+  return "和漢素材";
+}
+
+function buildEatDisplayTags(item, plan, productType) {
+  const text = rakutenItemText(item);
+  const policyLabel = POLICY_LABELS[plan?.policyKey];
+  const baseTags = [];
+
+  if (productType === "teaBlend") {
+    baseTags.push(hasText(text, /薬膳/) ? "薬膳茶" : hasText(text, /和漢|漢茶/) ? "和漢茶" : "ブレンド茶");
+    if (/ノンカフェイン|カフェインレス/.test(text)) baseTags.push("ノンカフェイン");
+    if (!baseTags.includes("和漢茶") && /薬日本堂|漢茶/.test(text)) baseTags.push("和漢茶");
+  } else if (productType === "tea") {
+    baseTags.push(/ハーブティー|カモミール|ルイボス/.test(text) ? "ハーブティー" : "お茶");
+    if (/ノンカフェイン|カフェインレス/.test(text)) baseTags.push("ノンカフェイン");
+  } else if (productType === "yakuzenIngredient") {
+    baseTags.push("薬膳素材", materialTagFromText(text));
+  } else if (productType === "soupMeal") {
+    baseTags.push(/スープ|GREEN SPOON|グリーンスプーン/.test(text) ? "スープ・軽食" : "軽い食事");
+  } else if (productType === "drinkware") {
+    baseTags.push("持ち歩き", "温かい一杯");
+  } else if (productType === "supplement") {
+    baseTags.push("栄養補助");
+  }
+
+  if (policyLabel) baseTags.push(policyLabel);
+  return uniqueStrings(baseTags).slice(0, 3);
+}
+
+function buildEatReason(item, plan, productType) {
+  const text = rakutenItemText(item);
+  const policyKey = plan?.policyKey || "sasaeru";
+
+  if (productType === "teaBlend") {
+    if (policyKey === "nagasu") return "湿気や重だるさが気になる日に、冷たい甘い飲み物へ寄せすぎず、温かい一杯に切り替えやすい候補です。";
+    if (policyKey === "nukumeru") return "冷たい飲み物が続いた時に、温かい一杯へ切り替えやすいブレンド茶候補です。";
+    if (policyKey === "shizumeru" || policyKey === "yurumeru") return "カフェインや甘いものに寄せすぎず、休む前の一杯として選びやすい候補です。";
+    if (policyKey === "uruosu") return "乾きや消耗が気になる日に、温かい飲み物として取り入れやすい候補です。";
+    if (policyKey === "meguraseru") return "冷たい飲み物に偏らず、香味のある一杯で切り替えやすい候補です。";
+    return "カフェインや冷たい飲み物に寄せすぎず、日々の一杯として整えやすい候補です。";
+  }
+
+  if (productType === "tea") {
+    if (/カモミール|ルイボス|ハーブティー/.test(text)) return "カフェインや甘いものへ寄せすぎず、温かい飲み物として取り入れやすい候補です。";
+    return "冷たい飲み物に偏りやすい日に、温かい一杯へ切り替えやすい候補です。";
+  }
+
+  if (productType === "yakuzenIngredient") {
+    return "お茶やスープに足して、食べるケアに取り入れやすい和漢素材の候補です。";
+  }
+
+  if (productType === "soupMeal") {
+    return "食事を考える余力が少ない時に、軽く整えやすい食事候補です。";
+  }
+
+  if (productType === "drinkware") {
+    return "温かい飲み物を持ち歩きたい日に使いやすい候補です。";
+  }
+
+  if (productType === "supplement") {
+    return "食事が乱れがちな日に、不足しやすい栄養を補いやすい候補です。";
+  }
+
+  return polishCareReason(plan.reason);
+}
+
+function productFamilyKey(item, productType) {
+  const title = String(item?.title || item?.itemName || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\[\]【】（）()〈〉<>「」『』]/g, " ")
+    .replace(/\d+(個|袋|包|本|粒|g|kg|ml|l|箱|セット|日分|枚|回|杯|pc|pcs|cm|mm)?/gi, " ")
+    .replace(/x\s*\d+/gi, " ")
+    .replace(/送料無料|送料込|メール便|ポイント|セール|限定|お試し|セット|まとめ買い|訳あり|新品|正規品|公式/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const shop = String(item?.shopName || "").normalize("NFKC").replace(/\s+/g, "").slice(0, 10);
+  const material = materialTagFromText(`${item?.title || item?.itemName || ""} ${item?.query || ""}`);
+
+  if (productType === "teaBlend" || productType === "tea" || productType === "yakuzenIngredient") {
+    return `${shop}:${productType}:${material}:${title.slice(0, 14)}`;
+  }
+
+  return `${shop}:${productType}:${title.slice(0, 18)}`;
+}
+
 function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
   const reviewCount = Number(item?.reviewCount || 0);
   const reviewAverage = Number(item?.reviewAverage || 0);
   const price = Number(item?.itemPrice || 0);
   const url = item?.affiliateUrl || item?.itemUrl || "";
+  const title = item?.itemName || item?.catchcopy || plan.keyword;
+  const category = plan.category || "live";
+  const productType = category === "eat" ? getEatProductTypeFromText(rakutenItemText(item)) : "general";
+  const tags = category === "eat" ? buildEatDisplayTags(item, plan, productType) : plan.tags;
+  const reason = category === "eat" ? buildEatReason(item, plan, productType) : polishCareReason(plan.reason);
+  const typeBoost = category === "eat"
+    ? ({ teaBlend: 12, yakuzenIngredient: 8, tea: 5, soupMeal: 3, drinkware: -2, supplement: -6, foodOther: -4 }[productType] || 0)
+    : 0;
 
   return {
-    title: item?.itemName || item?.catchcopy || plan.keyword,
-    reason: polishCareReason(plan.reason),
-    tags: plan.tags,
+    title,
+    reason: polishCareReason(reason),
+    tags,
     query: plan.keyword,
     policyKey: plan.policyKey,
-    category: plan.category || "live",
+    category,
+    productType,
+    familyKey: productFamilyKey({ title, shopName: item?.shopName || "", query: plan.keyword }, productType),
     imageUrl: firstImageUrl(item),
     itemUrl: url,
     price: Number.isFinite(price) && price > 0 ? price : null,
@@ -1072,7 +1221,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     sourceKey: plan.sourceKey || (plan.source === "symptom" ? "symptom" : plan.policyKey),
     planIndex,
     planRank: planIndex + 1,
-    score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5) + scoreKanchaPriority(item, plan),
+    score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5) + scoreKanchaPriority(item, plan) + typeBoost,
   };
 }
 
@@ -1121,7 +1270,7 @@ function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit =
   const displayItems = [];
 
   function itemUniqueKey(item) {
-    return item?.itemCode || item?.itemUrl || item?.title || "";
+    return item?.familyKey || item?.itemCode || item?.itemUrl || item?.title || "";
   }
 
   function addItem(item) {
@@ -1243,7 +1392,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   return rawItems
     .map((entry) => entry?.Item || entry)
     .filter(Boolean)
-    .filter((item) => isAcceptableBeverageItem(item, plan))
+    .filter((item) => isAcceptableRakutenItem(item, plan))
     .map((item, itemIndex) => normalizeRakutenItem(item, plan, planIndex, itemIndex));
 }
 
@@ -1298,9 +1447,11 @@ export async function POST(req) {
     const seen = new Set();
     const deduped = items
       .filter((item) => {
-        const key = item.itemCode || item.itemUrl || item.title;
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
+        const exactKey = item.itemCode || item.itemUrl || item.title;
+        const familyKey = item.familyKey || exactKey;
+        if (!exactKey || seen.has(exactKey) || seen.has(familyKey)) return false;
+        seen.add(exactKey);
+        seen.add(familyKey);
         return true;
       })
       .sort((a, b) => b.score - a.score);
