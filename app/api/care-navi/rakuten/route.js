@@ -1211,7 +1211,9 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
     "reviewAverage",
     "reviewCount",
   ].join(","));
-  url.searchParams.set("NGKeyword", "中古 レンタル 福袋 訳あり 医薬品 医薬部外品 ダイエット 痩せる 便秘 下剤 センナ キャンドルブッシュ デトックス 排出 のど飴 飴 キャンディ 菓子 グミ 着物 下ばき 肌着 インナー メンズ 紳士 ステテコ パンツ 衣類 EMS 美顔器 フットマッサージャー 低周波治療器");
+  // 楽天APIのNGKeywordは128文字未満制限があるため、長い除外語は送らない。
+  // 商品ジャンルの除外は、API取得後のローカルフィルターで行う。
+  url.searchParams.set("NGKeyword", "中古 レンタル 福袋 訳あり 医薬品 医薬部外品");
 
   if (credentials.affiliateId) {
     url.searchParams.set("affiliateId", credentials.affiliateId);
@@ -1258,12 +1260,15 @@ export async function POST(req) {
     const credentials = getRakutenCredentials();
     if (!credentials.applicationId || !credentials.accessKey) {
       return jsonUtf8({
-        ok: false,
+        ok: true,
         apiNotConfigured: true,
-        error: "楽天APIの環境変数が未設定です。",
-        requiredEnv: ["RAKUTEN_APPLICATION_ID", "RAKUTEN_ACCESS_KEY"],
-        optionalEnv: ["RAKUTEN_AFFILIATE_ID"],
-      }, 500);
+        category,
+        priceBand,
+        priceRange,
+        items: [],
+        queries: [],
+        errors: [],
+      });
     }
 
     const plans = buildQueryPlans({ category, policyKeys, symptomKey, priceBand });
@@ -1284,7 +1289,7 @@ export async function POST(req) {
       } else {
         errors.push({
           keyword: plans[index]?.keyword,
-          message: result.reason?.message || String(result.reason),
+          code: "RAKUTEN_SEARCH_FAILED",
           status: result.reason?.status || null,
         });
       }
@@ -1304,15 +1309,15 @@ export async function POST(req) {
 
     if (!balancedItems.length && errors.length === plans.length) {
       return jsonUtf8({
-        ok: false,
+        ok: true,
         category,
         priceBand,
         priceRange,
         items: [],
         queries: plans.map((plan) => plan.keyword),
         errors,
-        error: errors[0]?.message || "楽天APIから商品候補を取得できませんでした。",
-      }, errors[0]?.status && Number(errors[0].status) !== 404 ? Number(errors[0].status) : 502);
+        warning: "RAKUTEN_SEARCH_UNAVAILABLE",
+      });
     }
 
     return jsonUtf8({
@@ -1326,6 +1331,6 @@ export async function POST(req) {
     });
   } catch (error) {
     console.error("/api/care-navi/rakuten POST error:", error);
-    return jsonUtf8({ ok: false, error: error?.message || String(error) }, 500);
+    return jsonUtf8({ ok: true, items: [], queries: [], errors: [], warning: "RAKUTEN_SEARCH_UNAVAILABLE" });
   }
 }
