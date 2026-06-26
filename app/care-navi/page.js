@@ -49,21 +49,21 @@ const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
 const SET_MODE_OPTIONS = [
   {
     key: "starter",
-    label: "まず試すセット",
+    label: "軽く試せるセット",
     band: "light",
-    lead: "小さく始める2〜3点。今日から置き換えやすい組み合わせ。",
+    lead: "まずは2〜3点で、今の生活に足しやすい組み合わせです。",
   },
   {
     key: "steady",
     label: "しっかり整えるセット",
     band: "standard",
-    lead: "暮らす・食べる・ほぐすをそろえて、数日続ける前提の組み合わせ。",
+    lead: "暮らす・食べる・ほぐすを一緒にそろえて、数日続けやすい組み合わせです。",
   },
   {
     key: "environment",
     label: "環境から見直すセット",
     band: "deep",
-    lead: "寝具・空気・宅食・ケア機器など、土台ごと変える候補。サービス導線も含みます。",
+    lead: "寝具・空気・食事サービス・ケア機器まで含めて、生活環境から整える組み合わせです。",
   },
 ];
 
@@ -120,7 +120,7 @@ const POLICY_META = {
   shizumeru: { label: "しずめる", short: "刺激を減らす" },
   yurumeru: { label: "ゆるめる", short: "力みをほどく" },
   meguraseru: { label: "めぐらせる", short: "巡りを作る" },
-  nagasu: { label: "ながす", short: "重さをためない" },
+  nagasu: { label: "ながす", short: "湿気・だるさを残しにくくする" },
   uruosu: { label: "うるおす", short: "乾きを補う" },
   nukumeru: { label: "ぬくめる", short: "冷やさない" },
   sasaeru: { label: "ささえる", short: "余力を守る" },
@@ -159,7 +159,7 @@ const PRODUCT_ROLE_LABELS = {
   drinkware: "温かい一杯の道具",
   neck_shoulder_release: "首肩をほぐす",
   posture_release: "姿勢を切り替える",
-  foot_leg_release: "足元を軽くする",
+  foot_leg_release: "足・ふくらはぎをほぐす",
   gentle_stretch: "やさしく伸ばす",
   tsubo_support: "ツボケアを続ける",
   general: "ケア用品",
@@ -910,6 +910,12 @@ function hasAnyText(item, keywords = []) {
   return safeArray(keywords).some((keyword) => text.includes(String(keyword || "").toLowerCase()));
 }
 
+const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
+
+function isPointBeautyItem(item) {
+  return item?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(`${item?.title || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")}`);
+}
+
 function inferRoleLabelFromItem(item) {
   const roleLabel = getProductRoleLabel(item);
   if (roleLabel && roleLabel !== "ケア候補") return roleLabel;
@@ -923,12 +929,30 @@ function inferRoleLabelFromItem(item) {
 
 function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   if (!item) return -999;
+  if (isPointBeautyItem(item)) return -999;
+
+  const slotRoles = safeArray(slot.roles);
+  const roleMatched = slotRoles.includes(item.productRole) || slotRoles.includes(item.intentType);
+  const keywordMatched = hasAnyText(item, slot.keywords);
+
   let score = 0;
   if (item.category === slot.category) score += 20;
-  if (safeArray(slot.roles).includes(item.productRole) || safeArray(slot.roles).includes(item.intentType)) score += 8;
-  if (safeArray(slot.productTypes).includes(item.productType)) score += 4;
-  if (hasAnyText(item, slot.keywords)) score += 5;
-  if (hasAnyText(item, slot.avoidKeywords)) score -= 8;
+  if (roleMatched) score += 12;
+  if (safeArray(slot.productTypes).includes(item.productType)) score += 5;
+  if (keywordMatched) score += 4;
+  if (hasAnyText(item, slot.avoidKeywords)) score -= 18;
+
+  // 役割指定のある枠では、商品名の偶然一致だけで別役割の商品が入らないようにする。
+  if (slotRoles.length && !roleMatched) score -= 6;
+
+  if (slot.category === "point" && slotRoles.includes("foot_leg_release") && !/(足|脚|ふくらはぎ|足裏|足首|足元|レッグ|フット)/.test(itemText(item))) {
+    score -= 20;
+  }
+
+  if (slot.category === "point" && slotRoles.includes("neck_shoulder_release") && !/(首|肩|肩甲骨|背中|ネック)/.test(itemText(item))) {
+    score -= 10;
+  }
+
   if (safeArray(policyKeys).includes(item.policyKey)) score += 3;
   if (item.source === "a8" || item.sourceType === "partner") score += mode === "environment" ? 5 : 1.2;
   if (mode === "starter" && item.price && Number(item.price) <= 2500) score += 2;
@@ -962,37 +986,37 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
   if (mode === "environment") {
     return [
       {
-        key: "sleep-environment",
-        title: "環境から見直す：休む土台セット",
-        lead: "寝具・睡眠環境・夜の切り替えをまとめて見直す組み合わせです。",
+        key: "sleep-room-body",
+        title: "環境から見直す：寝具・飲み物・首肩ケアセット",
+        lead: "寝具や寝室まわりに、温かい飲み物と首肩ケアを組み合わせます。",
         slots: [
           makeSlot("live", ["sleep_environment", "reduce_light", "warm_body"], ["睡眠", "枕", "マットレス", "寝具", "アイマスク"]),
-          makeSlot("point", ["neck_shoulder_release", "posture_release", "tsubo_support"], ["首", "肩", "腰", "温熱", "リカバリー"]),
-          makeSlot("eat", ["caffeine_shift", "warm_drink", "nutrition_support"], ["カフェインレス", "ハーブ", "温かい", "宅食", "スープ"]),
+          makeSlot("eat", ["caffeine_shift", "warm_drink", "drinkware"], ["カフェインレス", "ハーブ", "白湯", "ボトル", "温かい"]),
+          makeSlot("point", ["neck_shoulder_release", "posture_release", "tsubo_support"], ["首", "肩", "肩甲骨", "温熱", "ツボ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
         ],
-        tags: [primaryPolicy, symptomLabel, "睡眠環境", "高単価候補"],
+        tags: [primaryPolicy, symptomLabel, "睡眠環境"],
       },
       {
-        key: "meal-outsourcing",
-        title: "環境から見直す：食事を外に預けるセット",
-        lead: "食べる余力が少ない時に、食事準備そのものを軽くする発想です。",
+        key: "meal-bath-stretch",
+        title: "環境から見直す：食事サービス・入浴・ストレッチセット",
+        lead: "食事準備を軽くする候補に、入浴と体を伸ばすケアを組み合わせます。",
         slots: [
           makeSlot("eat", ["nutrition_support", "light_meal", "pantry_soup"], ["宅食", "ミール", "冷凍", "惣菜", "スープ", "食事"]),
-          makeSlot("live", ["sleep_environment", "bath_shift", "warm_body"], ["入浴", "睡眠", "腹巻", "温熱", "リカバリー"]),
-          makeSlot("point", ["gentle_stretch", "foot_leg_release", "neck_shoulder_release"], ["ストレッチ", "ローラー", "足", "首", "肩"]),
+          makeSlot("live", ["bath_shift", "warm_body", "sleep_environment"], ["入浴", "温浴", "足湯", "腹巻", "温熱"]),
+          makeSlot("point", ["gentle_stretch", "posture_release", "foot_leg_release"], ["ストレッチ", "ヨガマット", "ローラー", "足", "ふくらはぎ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
         ],
-        tags: [primaryPolicy, "食事負担", "サービス候補"],
+        tags: [primaryPolicy, "食事準備", "入浴"],
       },
       {
-        key: "air-room",
-        title: "環境から見直す：空気・湿度セット",
-        lead: "湿気・乾燥・寝室のこもりを、部屋側から変える組み合わせです。",
+        key: "air-drink-leg",
+        title: "環境から見直す：空気環境・水分補給・足ほぐしセット",
+        lead: "湿度や空気まわりを整えながら、飲み物と足まわりのケアを足します。",
         slots: [
           makeSlot("live", ["humidity_control", "moisture_air", "sleep_environment"], ["除湿", "加湿", "空気", "サーキュレーター", "寝室"]),
-          makeSlot("eat", ["warm_drink", "drinkware", "caffeine_shift"], ["ボトル", "白湯", "カフェインレス", "お茶"]),
-          makeSlot("point", ["neck_shoulder_release", "foot_leg_release", "posture_release"], ["首", "肩", "ふくらはぎ", "足", "ローラー"]),
+          makeSlot("eat", ["warm_drink", "drinkware", "caffeine_shift"], ["ボトル", "白湯", "カフェインレス", "お茶", "ルイボス"]),
+          makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
         ],
-        tags: [primaryPolicy, "空気環境", "湿度"],
+        tags: [primaryPolicy, "空気環境", "足まわり"],
       },
     ];
   }
@@ -1000,35 +1024,35 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
   if (mode === "steady") {
     return [
       {
-        key: "night-routine",
-        title: "しっかり整える：夜の切り替えセット",
-        lead: "入浴・飲み物・首肩ケアをつなげて、夜の力みを残しにくくします。",
+        key: "bath-drink-neck",
+        title: "しっかり整える：入浴・飲み物・首肩ケアセット",
+        lead: "入浴、カフェインを控えた飲み物、首肩ケアを同じ流れで使います。",
         slots: [
           makeSlot("live", ["bath_shift", "reduce_light", "sleep_environment"], ["入浴", "アイマスク", "睡眠", "温浴"]),
-          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ハーブ", "ルイボス", "しょうが"]),
-          makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "頭皮", "温熱", "ツボ"]),
+          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ノンカフェイン", "ハーブ", "ルイボス"]),
+          makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "肩甲骨", "温熱", "ツボ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
         ],
-        tags: [primaryPolicy, "夜ケア", symptomLabel],
+        tags: [primaryPolicy, "入浴", "首肩"],
       },
       {
-        key: "heavy-damp",
-        title: "しっかり整える：重だるさ対策セット",
-        lead: "湿気・食べすぎ・動かなさが重なる日に、ため込まない方向へ寄せます。",
+        key: "soup-room-leg",
+        title: "しっかり整える：汁物・室内環境・足ほぐしセット",
+        lead: "温かい汁物、湿度対策、足まわりのケアをまとめます。",
         slots: [
-          makeSlot("live", ["humidity_control", "bath_shift"], ["除湿", "入浴", "足湯", "サーキュレーター"]),
           makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink"], ["味噌汁", "スープ", "雑炊", "はとむぎ"]),
-          makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足", "ローラー", "ストレッチ"]),
+          makeSlot("live", ["humidity_control", "bath_shift", "warm_body"], ["除湿", "入浴", "足湯", "サーキュレーター", "腹巻"]),
+          makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー", "ストレッチ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
         ],
-        tags: [primaryPolicy, "重だるさ", "生活セット"],
+        tags: [primaryPolicy, "汁物", "足まわり"],
       },
       {
-        key: "screen-neck",
-        title: "しっかり整える：画面作業リセットセット",
-        lead: "目・首肩・カフェインの偏りをまとめて切り替える組み合わせです。",
+        key: "screen-eye-neck",
+        title: "しっかり整える：目元・首肩・飲み物セット",
+        lead: "画面作業が多い日に、目元、首肩、飲み物の選び方をまとめて変えます。",
         slots: [
           makeSlot("live", ["reduce_light", "sleep_environment"], ["ホットアイマスク", "アイマスク", "光", "目元"]),
-          makeSlot("point", ["neck_shoulder_release", "posture_release"], ["首", "肩", "頭皮", "マッサージ"]),
-          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ルイボス", "ハーブ", "温かい"]),
+          makeSlot("point", ["neck_shoulder_release", "posture_release"], ["首", "肩", "肩甲骨", "マッサージ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
+          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ノンカフェイン", "ルイボス", "ハーブ", "温かい"]),
         ],
         tags: [primaryPolicy, "画面作業", "首肩"],
       },
@@ -1037,39 +1061,38 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
 
   return [
     {
-      key: "warm-small",
-      title: "まず試す：温かく切り替えるセット",
-      lead: "冷たい飲み物・軽食・首肩のこわばりを、小さく切り替える組み合わせです。",
+      key: "warm-drink-neck",
+      title: "軽く試せる：温かい飲み物・首肩ケアセット",
+      lead: "冷たい飲み物に寄りやすい日や、首肩が固まりやすい日に試しやすい組み合わせです。",
       slots: [
-        makeSlot("eat", ["warm_drink", "light_meal", "pantry_soup"], ["しょうが", "味噌汁", "スープ", "カフェインレス"]),
-        makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "頭皮", "ツボ", "ボール"]),
+        makeSlot("eat", ["warm_drink", "caffeine_shift"], ["しょうが", "カフェインレス", "ノンカフェイン", "ハーブ", "ルイボス"]),
+        makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "肩甲骨", "ツボ", "ボール"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
       ],
-      tags: [primaryPolicy, "まず試す", symptomLabel],
+      tags: [primaryPolicy, "飲み物", "首肩"],
     },
     {
-      key: "mini-night",
-      title: "まず試す：夜の余白セット",
-      lead: "寝る前に刺激を減らして、温かい一杯へ置き換える軽めのセットです。",
+      key: "eye-drink-sleep",
+      title: "軽く試せる：目元・飲み物・睡眠準備セット",
+      lead: "寝る前の光刺激と飲み物を見直したい時の小さな組み合わせです。",
       slots: [
         makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "目元", "睡眠", "耳栓"]),
         makeSlot("eat", ["caffeine_shift", "warm_drink"], ["ノンカフェイン", "カフェインレス", "ハーブ", "ルイボス"]),
       ],
-      tags: [primaryPolicy, "夜ケア", "低負担"],
+      tags: [primaryPolicy, "目元", "睡眠準備"],
     },
     {
-      key: "mini-heavy",
-      title: "まず試す：重さをためないセット",
-      lead: "食べすぎ・湿気・足元の重さが気になる日に、軽く逃がす組み合わせです。",
+      key: "soup-leg-bath",
+      title: "軽く試せる：汁物・足ほぐし・入浴セット",
+      lead: "軽めの食事、足まわりのケア、入浴まわりを小さくそろえます。",
       slots: [
-        makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink"], ["味噌汁", "スープ", "雑炊", "はとむぎ"]),
-        makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "ローラー", "ストレッチ"]),
-        makeSlot("live", ["bath_shift", "humidity_control"], ["入浴", "足湯", "除湿", "湿気"]),
+        makeSlot("eat", ["light_meal", "pantry_soup"], ["味噌汁", "スープ", "雑炊", "レトルト", "フリーズドライ"]),
+        makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー", "ストレッチ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
+        makeSlot("live", ["bath_shift", "humidity_control", "warm_body"], ["入浴", "足湯", "除湿", "湿気", "腹巻"]),
       ],
-      tags: [primaryPolicy, "重だるさ", "小さく整える"],
+      tags: [primaryPolicy, "汁物", "足まわり"],
     },
   ];
 }
-
 function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomLabel, approachTags }) {
   const used = new Set();
   const byCategory = Object.fromEntries(
@@ -1103,10 +1126,7 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
 function SetModeFilter({ value, onChange }) {
   return (
     <div className="rounded-[22px] bg-[#EAF6F3] p-3 ring-1 ring-[#9CCFC4]">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">セットの深さ</div>
-        <div className="text-[10px] font-bold text-slate-400">単品ではなく組み合わせで提案</div>
-      </div>
+      <div className="mb-2 text-[10px] font-black tracking-[0.14em] text-slate-400">セットを選ぶ</div>
       <div className="grid gap-1.5 sm:grid-cols-3">
         {SET_MODE_OPTIONS.map((option) => {
           const active = value === option.key;
@@ -1116,14 +1136,13 @@ function SetModeFilter({ value, onChange }) {
               type="button"
               onClick={() => onChange(option.key)}
               className={[
-                "rounded-[18px] px-3 py-2.5 text-left transition-all ring-1",
+                "rounded-[18px] px-3 py-2.5 text-center transition-all ring-1",
                 active
                   ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
                   : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
               ].join(" ")}
             >
               <div className="text-[12px] font-black leading-4">{option.label}</div>
-              <div className={["mt-1 text-[9px] font-bold leading-4", active ? "text-white/80" : "text-slate-400"].join(" ")}>{option.lead}</div>
             </button>
           );
         })}
@@ -1131,7 +1150,6 @@ function SetModeFilter({ value, onChange }) {
     </div>
   );
 }
-
 function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
@@ -1168,8 +1186,11 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
           <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold text-slate-500">
             {priceText ? <span className="font-black text-[var(--accent-ink)]">{priceText}</span> : null}
             {item.shopName ? <span>{item.shopName}</span> : null}
-            {isPartner ? <span>提携/サービス候補</span> : null}
+            
           </div>
+          {isPartner && item.reason ? (
+            <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">{item.reason}</p>
+          ) : null}
         </div>
       </div>
       <a
@@ -1197,6 +1218,14 @@ function CareSetCard({ card, cardPosition, trackingContext }) {
         <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">CARE SET {cardPosition}</div>
         <h3 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
         <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] font-black text-slate-400">今回の方針</span>
+          {safeArray(trackingContext?.policyKeys).slice(0, 3).map((policyKey) => (
+            <span key={policyKey} className="rounded-full bg-white px-2 py-0.5 text-[10px] font-black text-[#28665F] ring-1 ring-[#B6D8CF]">
+              {POLICY_META[policyKey]?.label || policyKey}
+            </span>
+          ))}
+        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {safeArray(card.tags).map((tag) => (
@@ -1757,7 +1786,7 @@ export default function CareNaviPage() {
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
           <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
-            このページには広告リンクを含みます。ここでのセットは、医療的な効果を保証するものではなく、体質・天気・生活サインからセルフケアの買い方パターンを整理した候補です。
+            このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインに合わせて、今日から取り入れやすい組み合わせを選んでいます。治療や効果を約束するものではなく、セルフケアの選び方としてご覧ください。
           </div>
 
           {rakutenLoading ? (
@@ -1784,7 +1813,7 @@ export default function CareNaviPage() {
             </>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              表示できるケアセットが見つかりませんでした。生活サインを減らすか、セットの深さを変えてください。
+              表示できるケアセットが見つかりませんでした。生活サインを減らすか、セットの種類を変えてください。
             </div>
           )}
         </div>
@@ -1793,4 +1822,3 @@ export default function CareNaviPage() {
     </div>
   );
 }
-
