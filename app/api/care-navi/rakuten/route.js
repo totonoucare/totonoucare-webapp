@@ -992,6 +992,7 @@ function normalizeQueryRow(row) {
       strictBeverage: Boolean(options.strictBeverage),
       qualityTeaSearch: Boolean(options.qualityTeaSearch),
       intentType: options.intentType || null,
+      productRole: options.productRole || null,
       preferredProductTypes: asArray(options.preferredProductTypes),
       allowedProductTypes: asArray(options.allowedProductTypes),
       avoidProductTypes: asArray(options.avoidProductTypes),
@@ -1007,6 +1008,7 @@ function normalizeQueryRow(row) {
     strictBeverage: Boolean(row.strictBeverage),
     qualityTeaSearch: Boolean(row.qualityTeaSearch),
     intentType: row.intentType || null,
+    productRole: row.productRole || null,
     preferredProductTypes: asArray(row.preferredProductTypes),
     allowedProductTypes: asArray(row.allowedProductTypes),
     avoidProductTypes: asArray(row.avoidProductTypes),
@@ -1142,6 +1144,71 @@ function resolveLifePolicyKey(normalized, safePolicyKeys, fallbackPolicyKey) {
   return hints.find((key) => safePolicyKeys.includes(key)) || hints[0] || fallbackPolicyKey;
 }
 
+const PRODUCT_ROLE_META = {
+  reduce_light: { label: "光・刺激を減らす" },
+  sleep_environment: { label: "眠る環境づくり" },
+  warm_body: { label: "冷やさない暮らし" },
+  bath_shift: { label: "入浴で切り替える" },
+  humidity_control: { label: "湿気をためない" },
+  moisture_air: { label: "乾燥を守る" },
+  warm_drink: { label: "温かい飲み物" },
+  caffeine_shift: { label: "カフェインを減らす" },
+  light_meal: { label: "軽めの食事" },
+  pantry_soup: { label: "常備しやすい汁物" },
+  nutrition_support: { label: "栄養補助" },
+  ingredient: { label: "素材を足す" },
+  drinkware: { label: "温かい一杯の道具" },
+  neck_shoulder_release: { label: "首肩をほぐす" },
+  posture_release: { label: "姿勢を切り替える" },
+  foot_leg_release: { label: "足元を軽くする" },
+  gentle_stretch: { label: "やさしく伸ばす" },
+  tsubo_support: { label: "ツボケアを続ける" },
+  general: { label: "ケア用品" },
+};
+
+function inferProductRole({ category, normalized, policyKey }) {
+  const explicit = normalized?.productRole;
+  if (explicit && PRODUCT_ROLE_META[explicit]) return explicit;
+
+  const keyword = cleanKeyword(normalized?.keyword);
+  const text = `${keyword} ${uniqueStrings(normalized?.tags).join(" ")}`;
+  const intentType = normalized?.intentType || null;
+  const preferred = asArray(normalized?.preferredProductTypes);
+
+  if (category === "eat") {
+    if (intentType === "light_meal" || preferred.includes("soupMeal") || /(味噌汁|みそ汁|スープ|雑炊|おかゆ|リゾット|惣菜|宅食|ミール)/.test(text)) {
+      return /(常温|保存|備蓄|フリーズドライ|レトルト)/.test(text) ? "pantry_soup" : "light_meal";
+    }
+    if (intentType === "nutrition_support" || preferred.includes("supplement") || /(プロテイン|ビタミン|ミネラル|乳酸菌|酪酸菌|食物繊維|GABA|テアニン|グリシン|マグネシウム|鉄分)/.test(text)) return "nutrition_support";
+    if (intentType === "ingredient" || preferred.includes("yakuzenIngredient") || /(なつめ|棗|クコ|枸杞|陳皮|白きくらげ|生姜|しょうが|桂皮|シナモン|よもぎ|菊花|桑葉|山査子)/.test(text)) return "ingredient";
+    if (preferred.includes("drinkware") || /(水筒|ボトル|タンブラー|マグボトル|保温ボトル)/.test(text)) return "drinkware";
+    if (/(カフェインレス|ノンカフェイン|カモミール|ハーブティー|ルイボス|おやすみ|リラックス)/.test(text) && (policyKey === "shizumeru" || policyKey === "yurumeru")) return "caffeine_shift";
+    return "warm_drink";
+  }
+
+  if (category === "live") {
+    if (/(アイマスク|耳栓|遮光|遮音|ブルーライト)/.test(text)) return policyKey === "sleep" ? "sleep_environment" : "reduce_light";
+    if (/(睡眠|リカバリーウェア|寝室|寝具)/.test(text)) return "sleep_environment";
+    if (/(腹巻|湯たんぽ|レッグウォーマー|ネックウォーマー|温熱|カイロ|足湯)/.test(text)) return "warm_body";
+    if (/(入浴剤|バスソルト|炭酸|温浴|足湯)/.test(text)) return "bath_shift";
+    if (/(除湿|湿気|防湿|ドライ)/.test(text)) return "humidity_control";
+    if (/(加湿|保湿|マスク|乾燥)/.test(text)) return "moisture_air";
+    if (/(温湿度計|室内|環境)/.test(text)) return "sleep_environment";
+    return "general";
+  }
+
+  if (category === "point") {
+    if (/(首|肩|肩甲骨|マッサージボール|温熱パッド)/.test(text)) return "neck_shoulder_release";
+    if (/(フォームローラー|ストレッチポール|ヨガマット|姿勢|背中|腰)/.test(text)) return "posture_release";
+    if (/(ふくらはぎ|足裏|足首|足元|ローラー)/.test(text)) return "foot_leg_release";
+    if (/(ストレッチバンド|やわらかい|伸ばす)/.test(text)) return "gentle_stretch";
+    if (/(ツボ|お灸|せんねん灸|電子灸)/.test(text)) return "tsubo_support";
+    if (/(頭皮|目元|アイマスク)/.test(text)) return "reduce_light";
+  }
+
+  return "general";
+}
+
 function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, lifeKeys, limit }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
   const safePolicyKeys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
@@ -1162,10 +1229,12 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
     const resolvedPolicyKey = source === "life"
       ? resolveLifePolicyKey(normalized, safePolicyKeys, getPolicyKey(policyKey, primaryPolicyKey))
       : getPolicyKey(policyKey, primaryPolicyKey);
+    const productRole = inferProductRole({ category: safeCategory, normalized, policyKey: resolvedPolicyKey });
+    const productRoleLabel = PRODUCT_ROLE_META[productRole]?.label || "ケア候補";
     const tags =
       source === "symptom" || source === "life"
-        ? uniqueStrings(normalized.tags).slice(0, 3)
-        : uniqueStrings([POLICY_LABELS[resolvedPolicyKey], ...asArray(normalized.tags)]).slice(0, 3);
+        ? uniqueStrings([productRoleLabel, ...asArray(normalized.tags)]).slice(0, 3)
+        : uniqueStrings([productRoleLabel, ...asArray(normalized.tags)]).slice(0, 3);
 
     plans.push({
       keyword,
@@ -1178,6 +1247,8 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
       strictBeverage: Boolean(normalized.strictBeverage),
       qualityTeaSearch: Boolean(normalized.qualityTeaSearch),
       intentType: normalized.intentType || null,
+      productRole,
+      productRoleLabel,
       preferredProductTypes: asArray(normalized.preferredProductTypes),
       allowedProductTypes: asArray(normalized.allowedProductTypes),
       avoidProductTypes: asArray(normalized.avoidProductTypes),
@@ -1430,8 +1501,9 @@ function materialTagFromText(text) {
 
 function buildEatDisplayTags(item, plan, productType) {
   const text = rakutenItemText(item);
-  const policyLabel = POLICY_LABELS[plan?.policyKey];
   const baseTags = [];
+  const roleLabel = PRODUCT_ROLE_META[plan?.productRole]?.label || plan?.productRoleLabel;
+  if (roleLabel) baseTags.push(roleLabel);
 
   if (productType === "teaBlend") {
     baseTags.push(hasText(text, /薬膳/) ? "薬膳茶" : hasText(text, /和漢|漢茶/) ? "和漢茶" : "ブレンド茶");
@@ -1450,42 +1522,38 @@ function buildEatDisplayTags(item, plan, productType) {
     baseTags.push("栄養補助");
   }
 
-  if (policyLabel && plan?.category !== "eat") baseTags.push(policyLabel);
   return uniqueStrings(baseTags).slice(0, 3);
 }
 
 function buildEatReason(item, plan, productType) {
-  const text = rakutenItemText(item);
-  const policyKey = plan?.policyKey || "sasaeru";
+  const role = plan?.productRole || null;
 
-  if (productType === "teaBlend") {
-    if (policyKey === "nagasu") return "湿気や重だるさが気になる日に、冷たい甘い飲み物へ寄せすぎず、温かい一杯に切り替えやすい候補です。";
-    if (policyKey === "nukumeru") return "冷たい飲み物が続いた時に、温かい一杯へ切り替えやすいブレンド茶候補です。";
-    if (policyKey === "shizumeru" || policyKey === "yurumeru") return "カフェインや甘いものに寄せすぎず、休む前の一杯として選びやすい候補です。";
-    if (policyKey === "uruosu") return "乾きや消耗が気になる日に、温かい飲み物として取り入れやすい候補です。";
-    if (policyKey === "meguraseru") return "冷たい飲み物に偏らず、香味のある一杯で切り替えやすい候補です。";
-    return "カフェインや冷たい飲み物に寄せすぎず、日々の一杯として整えやすい候補です。";
+  if (role === "light_meal" || role === "pantry_soup") {
+    return "温かく軽めに済ませたい日の食事役として並べています。";
   }
 
-  if (productType === "tea") {
-    if (/カモミール|ルイボス|ハーブティー/.test(text)) return "カフェインや甘いものへ寄せすぎず、温かい飲み物として取り入れやすい候補です。";
-    return "冷たい飲み物に偏りやすい日に、温かい一杯へ切り替えやすい候補です。";
+  if (role === "warm_drink" || role === "caffeine_shift") {
+    return "冷たい飲み物やカフェインに寄せすぎない一杯として並べています。";
   }
 
-  if (productType === "yakuzenIngredient") {
-    return "お茶やスープに足して、食べるケアに取り入れやすい和漢素材の候補です。";
+  if (role === "nutrition_support") {
+    return "食事が乱れがちな日の補助役として並べています。";
+  }
+
+  if (role === "ingredient") {
+    return "お茶・汁物・日々の食事に少し足す素材役として並べています。";
+  }
+
+  if (role === "drinkware") {
+    return "温かい一杯を持ち歩きやすくする道具役として並べています。";
+  }
+
+  if (productType === "teaBlend" || productType === "tea") {
+    return "日々の飲み物を温かい一杯へ切り替える候補です。";
   }
 
   if (productType === "soupMeal") {
     return "食事を考える余力が少ない時に、軽く整えやすい食事候補です。";
-  }
-
-  if (productType === "drinkware") {
-    return "温かい飲み物を持ち歩きたい日に使いやすい候補です。";
-  }
-
-  if (productType === "supplement") {
-    return "食事が乱れがちな日に、不足しやすい栄養を補いやすい候補です。";
   }
 
   return polishCareReason(plan.reason);
@@ -1579,6 +1647,8 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     category,
     productType,
     intentType: plan.intentType || null,
+    productRole: plan.productRole || null,
+    productRoleLabel: plan.productRoleLabel || PRODUCT_ROLE_META[plan.productRole]?.label || null,
     familyKey: productFamilyKey({ title, shopName: item?.shopName || "", query: plan.keyword }, productType),
     imageUrl: firstImageUrl(item),
     itemUrl: url,
@@ -1601,6 +1671,7 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length >= 3) {
     return [
+      { key: "life", count: 2 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 2 },
       { key: keys[1], count: 2 },
@@ -1611,6 +1682,7 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length >= 2) {
     return [
+      { key: "life", count: 2 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 3 },
       { key: keys[1], count: 2 },
@@ -1620,6 +1692,7 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length === 1) {
     return [
+      { key: "life", count: 2 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 4 },
       { key: "__remaining__", count: 2 },
@@ -1627,6 +1700,7 @@ function buildDisplayQuotas(policyKeys) {
   }
 
   return [
+    { key: "life", count: 2 },
     { key: "symptom", count: 2 },
     { key: "__remaining__", count: 6 },
   ];
