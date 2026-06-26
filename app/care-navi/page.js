@@ -1183,6 +1183,11 @@ function shouldIncludeSupportPolicy(policyKey, context) {
   return strongLife || strongSymptom || context.mode === "environment";
 }
 
+function reorderPolicyKeysForCard(mainPolicyKey, policyKeys = []) {
+  const rest = safeArray(policyKeys).filter((key) => key && key !== mainPolicyKey && POLICY_META[key]);
+  return unique([mainPolicyKey, ...rest]).filter((key) => POLICY_META[key]);
+}
+
 function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors }) {
   const keys = safeArray(policyKeys).filter((key) => POLICY_META[key]);
   const primary = keys[0] || "yurumeru";
@@ -1221,6 +1226,7 @@ function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, tri
       title: definition.title,
       lead: buildSetLead(definition.policyKey, definition.titleSuffix, slots),
       policyKey: definition.policyKey,
+      policyKeys: reorderPolicyKeysForCard(definition.policyKey, keys),
       titleSuffix: definition.titleSuffix,
       slots,
       tags: unique([POLICY_META[definition.policyKey]?.label, definition.titleSuffix, getSymptomAnchor(symptomKey)?.label]).filter(Boolean).slice(0, 5),
@@ -1283,7 +1289,9 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
     score += scoreTeaMaterialFit(item, slot, policyKeys);
   }
 
-  if (safeArray(policyKeys).includes(item.policyKey)) score += 4;
+  const orderedPolicies = safeArray(policyKeys);
+  if (item.policyKey && orderedPolicies[0] === item.policyKey) score += 8;
+  else if (item.policyKey && orderedPolicies.includes(item.policyKey)) score += 3;
   if (item.source === "a8" || item.sourceType === "partner") score += mode === "environment" ? 6 : 1.5;
   if (mode === "starter" && item.price && Number(item.price) <= 2500) score += 2;
   if (mode === "environment" && item.price && Number(item.price) >= 5000) score += 1.5;
@@ -1454,9 +1462,10 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
       const localUsed = new Set(used);
       const items = definition.slots
         .map((slot) => {
-          const picked = pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys });
+          const cardPolicyKeys = definition.policyKeys?.length ? definition.policyKeys : reorderPolicyKeysForCard(definition.policyKey, policyKeys);
+          const picked = pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys: cardPolicyKeys });
           if (!picked) return null;
-          return { ...picked, useGuide: buildItemUseGuide(picked, slot, definition), slotCategory: slot.category };
+          return { ...picked, useGuide: buildItemUseGuide(picked, slot, { ...definition, policyKeys: cardPolicyKeys }), slotCategory: slot.category };
         })
         .filter(Boolean);
 
@@ -1562,23 +1571,13 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
 function CareSetCard({ card, cardPosition, trackingContext }) {
   return (
     <div className="relative overflow-hidden rounded-[28px] bg-[#F8FCFA] p-4 ring-1 ring-[#B6D8CF] shadow-[0_18px_44px_-28px_rgba(15,35,35,0.32)]">
-      <div className="absolute right-4 top-4 flex -space-x-1 opacity-90">
-        {safeArray(trackingContext?.policyKeys).slice(0, 3).map((policyKey) => (
-          <img key={policyKey} src={getPolicyIconPath(policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#B6D8CF]" loading="lazy" />
-        ))}
+      <div className="absolute right-4 top-4 flex opacity-90">
+        <img src={getPolicyIconPath(card.policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#B6D8CF]" loading="lazy" />
       </div>
       <div className="pr-20">
         <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">ケアセット {cardPosition}</div>
         <h3 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
         <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-black text-slate-400">今回の方針</span>
-          {safeArray(trackingContext?.policyKeys).slice(0, 3).map((policyKey) => (
-            <span key={policyKey} className="rounded-full bg-white px-2 py-0.5 text-[10px] font-black text-[#28665F] ring-1 ring-[#B6D8CF]">
-              {POLICY_META[policyKey]?.label || policyKey}
-            </span>
-          ))}
-        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {safeArray(card.tags).map((tag) => (
@@ -1594,7 +1593,7 @@ function CareSetCard({ card, cardPosition, trackingContext }) {
             item={item}
             itemPosition={(cardPosition - 1) * 10 + index + 1}
             setKey={card.key}
-            trackingContext={trackingContext}
+            trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
           />
         ))}
       </div>
