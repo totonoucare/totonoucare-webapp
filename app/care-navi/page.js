@@ -1793,3 +1793,4 @@ export default function CareNaviPage() {
     </div>
   );
 }
+
