@@ -79,8 +79,8 @@ const PRICE_BAND_OPTIONS = [
 const CARE_NAVI_INITIAL_LIMIT = 12;
 const CARE_NAVI_EXPANDED_LIMIT = 24;
 const CARE_NAVI_TOTAL_LIMIT = 48;
-const CARE_SET_INITIAL_LIMIT = 3;
-const CARE_SET_EXPANDED_LIMIT = 6;
+const CARE_SET_INITIAL_LIMIT = 4;
+const CARE_SET_EXPANDED_LIMIT = 5;
 
 const PRICE_BAND_RANGES = {
   live: {
@@ -151,7 +151,7 @@ const PRODUCT_ROLE_LABELS = {
   humidity_control: "湿気をためない",
   moisture_air: "乾燥を守る",
   warm_drink: "温かい飲み物",
-  caffeine_shift: "カフェインを減らす",
+  caffeine_shift: "香りの一杯",
   light_meal: "軽めの食事",
   pantry_soup: "常備しやすい汁物",
   nutrition_support: "栄養補助",
@@ -893,6 +893,7 @@ function RakutenStatusCard({ error, queries }) {
 }
 
 
+
 function getSetModeMeta(mode) {
   return SET_MODE_OPTIONS.find((item) => item.key === mode) || SET_MODE_OPTIONS[0];
 }
@@ -902,7 +903,7 @@ function getSetItemKey(item) {
 }
 
 function itemText(item) {
-  return `${item?.title || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")} ${item?.shopName || ""}`.toLowerCase();
+  return `${item?.title || ""} ${item?.itemName || ""} ${item?.itemCaption || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")} ${item?.shopName || ""}`.toLowerCase();
 }
 
 function hasAnyText(item, keywords = []) {
@@ -913,7 +914,22 @@ function hasAnyText(item, keywords = []) {
 const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
 
 function isPointBeautyItem(item) {
-  return item?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(`${item?.title || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")}`);
+  return item?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(`${item?.title || ""} ${item?.itemCaption || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")}`);
+}
+
+const POINT_AREA_RULES = [
+  { key: "face", pattern: /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/ },
+  { key: "neck_shoulder", pattern: /(首|肩|肩甲骨|ネック|ショルダー|僧帽筋|肩こり)/ },
+  { key: "low_back", pattern: /(腰|背中|骨盤|仙骨|臀部|お尻|股関節|太もも|ハムストリング|フォームローラー|ストレッチポール)/ },
+  { key: "foot_leg", pattern: /(足|脚|ふくらはぎ|足裏|足首|足元|レッグ|フット|土踏まず)/ },
+  { key: "eye_head", pattern: /(目元|アイマスク|こめかみ|頭皮|ヘッド|頭)/ },
+  { key: "hand_arm", pattern: /(手|指|腕|前腕|ハンド)/ },
+];
+
+function inferPointAreas(item) {
+  if (item?.category !== "point") return [];
+  const text = itemText(item);
+  return POINT_AREA_RULES.filter((rule) => rule.pattern.test(text)).map((rule) => rule.key);
 }
 
 function inferRoleLabelFromItem(item) {
@@ -927,9 +943,303 @@ function inferRoleLabelFromItem(item) {
   return "ケア候補";
 }
 
+function makeSlot(category, roles = [], keywords = [], extra = {}) {
+  return { category, roles, keywords, ...extra };
+}
+
+function eatSlot(policyKey, subtypeKey = "default") {
+  if (policyKey === "nukumeru") return makeSlot("eat", ["warm_drink", "ingredient"], ["生姜", "しょうが", "ジンジャー", "陳皮", "シナモン", "黒豆", "温かい"], { teaDirections: ["warming"] });
+  if (policyKey === "meguraseru") return makeSlot("eat", ["warm_drink", "ingredient"], ["生姜", "黒豆", "陳皮", "シナモン", "穀物", "温かい"], { teaDirections: ["warming", "support"] });
+  if (policyKey === "nagasu") return makeSlot("eat", ["warm_drink", "light_meal", "pantry_soup"], ["はとむぎ", "ハトムギ", "とうもろこし", "黒豆", "味噌汁", "スープ"], { teaDirections: ["light"] });
+  if (policyKey === "uruosu") return makeSlot("eat", ["warm_drink", "caffeine_shift"], ["ルイボス", "黒豆", "なつめ", "麦茶", "ノンカフェイン"], { teaDirections: ["moist"] });
+  if (policyKey === "sasaeru") return makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink", "nutrition_support"], ["味噌汁", "スープ", "なつめ", "黒豆", "玄米", "穀物", "宅食"], { teaDirections: ["support"] });
+  if (policyKey === "shizumeru") return makeSlot("eat", ["warm_drink", "caffeine_shift"], ["カモミール", "ルイボス", "レモンバーム", "ラベンダー", "ノンカフェイン"], { teaDirections: ["calming"] });
+  return makeSlot("eat", ["warm_drink", "caffeine_shift"], ["カモミール", "レモンバーム", "ルイボス", "黒豆", "なつめ", "ハーブ"], { teaDirections: ["calming", "support"] });
+}
+
+const SYMPTOM_SET_ANCHORS = {
+  low_back_pain: {
+    label: "腰",
+    pointSlot: () => makeSlot("point", ["posture_release", "gentle_stretch", "tsubo_support"], ["腰", "背中", "骨盤", "お尻", "股関節", "太もも", "フォームローラー", "ストレッチポール"], { requiredAreas: ["low_back"], avoidKeywords: ["顔", "小顔", "美容", "フェイス", "首専用", "肩専用"] }),
+    liveSlot: () => makeSlot("live", ["bath_shift", "warm_body", "sleep_environment"], ["入浴", "温熱", "湯たんぽ", "腹巻", "寝具", "腰", "骨盤"]),
+    titles: {
+      yurumeru: ["腰まわりのこわばり対策", "腰と背中の力み対策"],
+      meguraseru: ["腰と背中のこり対策", "座りっぱなしの腰対策"],
+      nukumeru: ["腰まわりの冷え対策"],
+      sasaeru: ["腰に負担をかけにくい日常ケア"],
+      shizumeru: ["寝る前の腰まわりケア"],
+      nagasu: ["腰まわりの重だるさ対策"],
+      uruosu: ["休む時間の腰まわりケア"],
+    },
+  },
+  neck_shoulder: {
+    label: "首肩",
+    pointSlot: () => makeSlot("point", ["neck_shoulder_release", "tsubo_support", "posture_release"], ["首", "肩", "肩甲骨", "ネック", "ショルダー", "マッサージボール"], { requiredAreas: ["neck_shoulder"], avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
+    liveSlot: () => makeSlot("live", ["bath_shift", "reduce_light", "sleep_environment"], ["入浴", "温熱", "アイマスク", "寝具", "首", "肩"]),
+    titles: {
+      yurumeru: ["首肩の力み対策", "目元と首肩の緊張対策"],
+      meguraseru: ["肩首のこり対策", "画面作業後のこり対策"],
+      nukumeru: ["首肩の冷えこわばり対策"],
+      shizumeru: ["目と頭の刺激対策"],
+      sasaeru: ["首肩に負担をかけにくい休息ケア"],
+      nagasu: ["肩まわりの重だるさ対策"],
+      uruosu: ["乾く日の目元・首肩ケア"],
+    },
+  },
+  sleep: {
+    label: "睡眠",
+    pointSlot: () => makeSlot("point", ["neck_shoulder_release", "gentle_stretch", "tsubo_support"], ["首", "肩", "ストレッチ", "ツボ", "温熱"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
+    liveSlot: () => makeSlot("live", ["sleep_environment", "reduce_light", "bath_shift"], ["アイマスク", "耳栓", "寝具", "睡眠", "入浴"]),
+    titles: {
+      shizumeru: ["寝る前の刺激対策", "夜の切り替え対策"],
+      yurumeru: ["寝る前のこわばり対策"],
+      sasaeru: ["睡眠不足の立て直し対策"],
+      nukumeru: ["寝る前の冷え対策"],
+      uruosu: ["乾く日の睡眠環境対策"],
+      meguraseru: ["寝る前のこり対策"],
+      nagasu: ["湿気がこもる日の寝室対策"],
+    },
+  },
+  digestion: {
+    label: "胃腸",
+    pointSlot: () => makeSlot("point", ["gentle_stretch", "foot_leg_release"], ["足裏", "ふくらはぎ", "ストレッチ", "ローラー"], { requiredAreas: ["foot_leg"], avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
+    liveSlot: () => makeSlot("live", ["bath_shift", "warm_body"], ["入浴", "腹巻", "温熱", "足湯"]),
+    titles: {
+      sasaeru: ["食事が乱れた日の補助セット"],
+      nagasu: ["食べすぎ後の負担対策"],
+      nukumeru: ["お腹まわりの冷え対策"],
+      meguraseru: ["胃腸と足元のだるさ対策"],
+      yurumeru: ["お腹まわりのこわばり対策"],
+      shizumeru: ["食後の刺激を増やさない対策"],
+      uruosu: ["乾く日の食事・水分補給対策"],
+    },
+  },
+  swelling: {
+    label: "むくみ感",
+    pointSlot: () => makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー"], { requiredAreas: ["foot_leg"], avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
+    liveSlot: () => makeSlot("live", ["humidity_control", "bath_shift"], ["除湿", "入浴", "足湯", "サーキュレーター"]),
+    titles: {
+      nagasu: ["むくみ感対策", "湿気だるさ対策"],
+      meguraseru: ["足元のだるさ対策"],
+      nukumeru: ["足元の冷え対策"],
+      sasaeru: ["足元が重い日のケア継続セット"],
+      yurumeru: ["足元のこわばり対策"],
+      uruosu: ["汗をかく日の水分補給対策"],
+      shizumeru: ["暑さと重だるさ対策"],
+    },
+  },
+  headache: {
+    label: "頭・目元",
+    pointSlot: () => makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "こめかみ", "目元", "頭", "ツボ"], { requiredAreas: ["neck_shoulder", "eye_head"], avoidKeywords: ["小顔", "美顔", "リフトアップ", "フェイシャル"] }),
+    liveSlot: () => makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "遮光", "目元", "耳栓"]),
+    titles: {
+      shizumeru: ["目と頭の刺激対策"],
+      yurumeru: ["目元とこめかみの緊張対策"],
+      meguraseru: ["首肩からくる頭の重さ対策"],
+      sasaeru: ["頭が重い日の休息ケア"],
+      uruosu: ["目の乾き対策"],
+      nukumeru: ["首元の冷え対策"],
+      nagasu: ["湿気で頭が重い日の対策"],
+    },
+  },
+  mood: {
+    label: "気分",
+    pointSlot: () => makeSlot("point", ["neck_shoulder_release", "gentle_stretch", "tsubo_support"], ["首", "肩", "ストレッチ", "ツボ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
+    liveSlot: () => makeSlot("live", ["bath_shift", "reduce_light", "sleep_environment"], ["入浴", "アイマスク", "照明", "睡眠"]),
+    titles: {
+      shizumeru: ["気持ちの高ぶり対策"],
+      yurumeru: ["緊張が続いた日の切り替え対策"],
+      meguraseru: ["気分が詰まりやすい日のこり対策"],
+      sasaeru: ["忙しい日のケア継続セット"],
+      nukumeru: ["冷えと緊張の切り替え対策"],
+      nagasu: ["食べすぎ・気分の重さ対策"],
+      uruosu: ["乾く日の気分切り替え対策"],
+    },
+  },
+};
+
+const DEFAULT_POLICY_TITLES = {
+  shizumeru: ["刺激を減らす対策", "寝る前の刺激対策", "暑さと火照り対策", "気持ちの高ぶり対策", "目と頭の刺激対策"],
+  yurumeru: ["こわばり対策", "首肩の力み対策", "目元とこめかみの緊張対策", "気圧変化の緊張対策", "入浴前後のこわばり対策"],
+  meguraseru: ["こりと冷え対策", "肩首のこり対策", "座りっぱなし対策", "冷えこわばり対策", "気圧低下のだるさ対策"],
+  nagasu: ["湿気とむくみ感対策", "湿気だるさ対策", "食べすぎ後の負担対策", "むくみ感対策", "水分バランス対策"],
+  uruosu: ["乾燥対策", "のどと肌の乾燥対策", "目の乾き対策", "汗をかく日の水分補給対策", "室内の乾燥対策"],
+  nukumeru: ["冷え対策", "冷たい飲み物対策", "足元の冷え対策", "お腹まわりの冷え対策", "寒暖差の冷え対策"],
+  sasaeru: ["疲れやすさ対策", "睡眠不足の立て直し対策", "食事が乱れた日の補助セット", "忙しい日のケア継続セット", "季節の変わり目対策"],
+};
+
+const LIFE_TITLE_HINTS = {
+  screen: { yurumeru: "首肩と目の緊張対策", meguraseru: "画面作業後のこり対策", shizumeru: "目と頭の刺激対策" },
+  sleep_short: { shizumeru: "寝る前の刺激対策", sasaeru: "睡眠不足の立て直し対策", yurumeru: "寝る前のこわばり対策" },
+  cold_drinks: { nukumeru: "冷たい飲み物対策", meguraseru: "冷えこわばり対策", sasaeru: "食事が乱れた日の補助セット" },
+  overeating: { nagasu: "食べすぎ後の負担対策", sasaeru: "食事が乱れた日の補助セット" },
+  no_bath: { meguraseru: "入浴前後のこり対策", yurumeru: "入浴前後のこわばり対策", nukumeru: "冷えこわばり対策" },
+  low_activity: { meguraseru: "座りっぱなし対策", nagasu: "足元のだるさ対策" },
+  tense: { yurumeru: "緊張が続いた日の切り替え対策", shizumeru: "気持ちの高ぶり対策" },
+  outdoor: { uruosu: "汗をかく日の水分補給対策", sasaeru: "忙しい日のケア継続セット" },
+};
+
+function getSymptomAnchor(symptomKey) {
+  return SYMPTOM_SET_ANCHORS[symptomKey] || null;
+}
+
+function titleOptionsForPolicy(policyKey, { symptomKey, lifeKeys = [] } = {}) {
+  const anchor = getSymptomAnchor(symptomKey);
+  const options = [];
+  if (anchor?.titles?.[policyKey]) options.push(...anchor.titles[policyKey]);
+  safeArray(lifeKeys).forEach((lifeKey) => {
+    const title = LIFE_TITLE_HINTS[lifeKey]?.[policyKey];
+    if (title) options.push(title);
+  });
+  options.push(...safeArray(DEFAULT_POLICY_TITLES[policyKey]));
+  return unique(options);
+}
+
+function pointSlotFor(policyKey, context) {
+  const anchor = getSymptomAnchor(context.symptomKey);
+  if (anchor?.pointSlot) return anchor.pointSlot(policyKey, context);
+  if (context.lifeKeys?.includes("screen") || policyKey === "yurumeru" || policyKey === "shizumeru") {
+    return SYMPTOM_SET_ANCHORS.neck_shoulder.pointSlot(policyKey, context);
+  }
+  if (context.lifeKeys?.includes("low_activity") || policyKey === "nagasu") {
+    return SYMPTOM_SET_ANCHORS.swelling.pointSlot(policyKey, context);
+  }
+  return makeSlot("point", ["gentle_stretch", "posture_release", "tsubo_support"], ["ストレッチ", "ローラー", "ツボ", "背中", "足", "肩"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] });
+}
+
+function liveSlotFor(policyKey, context) {
+  const anchor = getSymptomAnchor(context.symptomKey);
+  if (anchor?.liveSlot) return anchor.liveSlot(policyKey, context);
+  if (policyKey === "nagasu") return makeSlot("live", ["humidity_control", "bath_shift"], ["除湿", "湿気", "サーキュレーター", "入浴"]);
+  if (policyKey === "uruosu") return makeSlot("live", ["moisture_air", "sleep_environment"], ["加湿", "乾燥", "マスク", "寝室"]);
+  if (policyKey === "nukumeru") return makeSlot("live", ["warm_body", "bath_shift"], ["腹巻", "湯たんぽ", "足湯", "入浴", "温熱"]);
+  if (policyKey === "shizumeru") return makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "遮光", "耳栓", "寝室"]);
+  if (policyKey === "sasaeru") return makeSlot("live", ["sleep_environment", "bath_shift"], ["寝具", "枕", "入浴", "休息"]);
+  return makeSlot("live", ["bath_shift", "sleep_environment", "reduce_light"], ["入浴", "アイマスク", "睡眠", "温熱"]);
+}
+
+function slotsForPolicySet(policyKey, titleSuffix, context, variantIndex) {
+  const slots = [];
+  const mode = context.mode;
+  const isEnvironment = mode === "environment";
+  const isStarter = mode === "starter";
+  const suffix = String(titleSuffix || "");
+
+  const live = liveSlotFor(policyKey, context);
+  const eat = eatSlot(policyKey, titleSuffix);
+  const point = pointSlotFor(policyKey, context);
+
+  if (/食事|食べすぎ|胃腸|忙しい/.test(suffix)) {
+    slots.push(eat, live, point);
+  } else if (/室内|乾燥|湿気|寝室|環境/.test(suffix)) {
+    slots.push(live, eat, point);
+  } else if (/首|肩|腰|背中|足|こり|こわばり|力み|緊張/.test(suffix)) {
+    slots.push(point, live, eat);
+  } else if (/冷え|冷たい|寒暖差/.test(suffix)) {
+    slots.push(live, eat, point);
+  } else {
+    slots.push(live, point, eat);
+  }
+
+  if (isStarter) return slots.slice(0, 2);
+  if (isEnvironment) return uniqueSlots(slots).slice(0, 3);
+  return uniqueSlots(slots).slice(0, 3);
+}
+
+function uniqueSlots(slots) {
+  const seen = new Set();
+  return safeArray(slots).filter((slot) => {
+    const key = `${slot.category}:${safeArray(slot.roles).join("|")}:${safeArray(slot.requiredAreas).join("|")}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function shouldIncludeSupportPolicy(policyKey, context) {
+  if (!policyKey) return false;
+  if (policyKey !== "sasaeru") return true;
+  const strongLife = ["sleep_short", "overeating", "outdoor", "cold_drinks"].some((key) => context.lifeKeys?.includes(key));
+  const strongSymptom = ["fatigue", "sleep", "digestion", "dizziness", "low_back_pain"].includes(context.symptomKey);
+  return strongLife || strongSymptom || context.mode === "environment";
+}
+
+function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors }) {
+  const keys = safeArray(policyKeys).filter((key) => POLICY_META[key]);
+  const primary = keys[0] || "yurumeru";
+  const secondary = keys.find((key) => key !== primary) || "meguraseru";
+  const tertiary = keys.find((key) => key !== primary && key !== secondary) || null;
+  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors) };
+  const plan = [];
+
+  function push(policyKey, variantIndex, weight = "main") {
+    if (!POLICY_META[policyKey]) return;
+    const options = titleOptionsForPolicy(policyKey, context);
+    const suffix = options[variantIndex % Math.max(options.length, 1)] || DEFAULT_POLICY_TITLES[policyKey]?.[0] || "今日のケア";
+    const duplicate = plan.some((item) => item.policyKey === policyKey && item.titleSuffix === suffix);
+    if (duplicate) return;
+    const title = `${POLICY_META[policyKey].label}セット｜${suffix}`;
+    plan.push({ policyKey, titleSuffix: suffix, title, weight });
+  }
+
+  push(primary, 0, "main");
+  push(primary, 1, "main");
+  push(secondary, 0, "sub");
+  push(secondary, 1, "sub");
+  if (tertiary && shouldIncludeSupportPolicy(tertiary, context)) push(tertiary, 0, "support");
+
+  if (plan.length < 4) {
+    ["nukumeru", "nagasu", "sasaeru", "shizumeru", "uruosu"].forEach((key) => {
+      if (plan.length >= 4) return;
+      if (!plan.some((item) => item.policyKey === key) && shouldIncludeSupportPolicy(key, context)) push(key, 0, "support");
+    });
+  }
+
+  return plan.slice(0, 5).map((definition, index) => {
+    const slots = slotsForPolicySet(definition.policyKey, definition.titleSuffix, context, index);
+    return {
+      key: `${mode}-${definition.policyKey}-${slugifyJa(definition.titleSuffix)}-${index}`,
+      title: definition.title,
+      lead: buildSetLead(definition.policyKey, definition.titleSuffix, slots),
+      policyKey: definition.policyKey,
+      titleSuffix: definition.titleSuffix,
+      slots,
+      tags: unique([POLICY_META[definition.policyKey]?.label, definition.titleSuffix, getSymptomAnchor(symptomKey)?.label]).filter(Boolean).slice(0, 5),
+    };
+  });
+}
+
+function slugifyJa(value) {
+  return String(value || "set").normalize("NFKC").replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "").slice(0, 28) || "set";
+}
+
+function buildSetLead(policyKey, titleSuffix, slots) {
+  const labels = safeArray(slots).map((slot) => getCategoryMeta(slot.category).label).join("・");
+  const policyLabel = POLICY_META[policyKey]?.label || "ケア";
+  return `${policyLabel}方針に合わせて、${labels}を組み合わせます。`;
+}
+
+function slotRequiresAreaMatch(slot) {
+  return slot.category === "point" && safeArray(slot.requiredAreas).length > 0;
+}
+
+function itemMatchesSlot(item, slot) {
+  if (!item || item.category !== slot.category) return false;
+  if (isPointBeautyItem(item)) return false;
+  if (hasAnyText(item, slot.avoidKeywords)) return false;
+
+  if (slotRequiresAreaMatch(slot)) {
+    const areas = inferPointAreas(item);
+    if (!areas.length) return false;
+    if (!areas.some((area) => safeArray(slot.requiredAreas).includes(area))) return false;
+    if (areas.includes("face") && !safeArray(slot.requiredAreas).includes("face")) return false;
+  }
+
+  return true;
+}
+
 function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
-  if (!item) return -999;
-  if (isPointBeautyItem(item)) return -999;
+  if (!itemMatchesSlot(item, slot)) return -999;
 
   const slotRoles = safeArray(slot.roles);
   const roleMatched = slotRoles.includes(item.productRole) || slotRoles.includes(item.intentType);
@@ -937,39 +1247,72 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
 
   let score = 0;
   if (item.category === slot.category) score += 20;
-  if (roleMatched) score += 12;
-  if (safeArray(slot.productTypes).includes(item.productType)) score += 5;
-  if (keywordMatched) score += 4;
-  if (hasAnyText(item, slot.avoidKeywords)) score -= 18;
+  if (roleMatched) score += 14;
+  if (safeArray(slot.productTypes).includes(item.productType)) score += 6;
+  if (keywordMatched) score += 7;
+  if (hasAnyText(item, slot.avoidKeywords)) score -= 30;
 
-  // 役割指定のある枠では、商品名の偶然一致だけで別役割の商品が入らないようにする。
   if (slotRoles.length && !roleMatched) score -= 6;
 
-  if (slot.category === "point" && slotRoles.includes("foot_leg_release") && !/(足|脚|ふくらはぎ|足裏|足首|足元|レッグ|フット)/.test(itemText(item))) {
-    score -= 20;
+  if (slot.category === "point") {
+    const areas = inferPointAreas(item);
+    if (safeArray(slot.requiredAreas).some((area) => areas.includes(area))) score += 14;
   }
 
-  if (slot.category === "point" && slotRoles.includes("neck_shoulder_release") && !/(首|肩|肩甲骨|背中|ネック)/.test(itemText(item))) {
-    score -= 10;
+  if (item.category === "eat") {
+    score += scoreTeaMaterialFit(item, slot, policyKeys);
   }
 
-  if (safeArray(policyKeys).includes(item.policyKey)) score += 3;
-  if (item.source === "a8" || item.sourceType === "partner") score += mode === "environment" ? 5 : 1.2;
+  if (safeArray(policyKeys).includes(item.policyKey)) score += 4;
+  if (item.source === "a8" || item.sourceType === "partner") score += mode === "environment" ? 6 : 1.5;
   if (mode === "starter" && item.price && Number(item.price) <= 2500) score += 2;
   if (mode === "environment" && item.price && Number(item.price) >= 5000) score += 1.5;
   score += Math.min(Number(item.score || 0), 20) * 0.04;
   return score;
 }
 
+const TEA_MATERIAL_GROUPS = [
+  { key: "warming", label: "生姜・陳皮系", pattern: /(生姜|しょうが|ジンジャー|陳皮|シナモン|桂皮|黒豆)/ },
+  { key: "calming", label: "カモミール・レモンバーム系", pattern: /(カモミール|レモンバーム|ラベンダー|ルイボス|おやすみ)/ },
+  { key: "light", label: "はとむぎ・とうもろこし系", pattern: /(はとむぎ|ハトムギ|とうもろこし|コーン|小豆|黒豆|どくだみ)/ },
+  { key: "moist", label: "ルイボス・黒豆・なつめ系", pattern: /(ルイボス|黒豆|なつめ|棗|麦茶|クコ|枸杞)/ },
+  { key: "support", label: "なつめ・黒豆・穀物系", pattern: /(なつめ|棗|黒豆|玄米|穀物|ルイボス|麦茶)/ },
+];
+
+function detectTeaMaterialGroups(item) {
+  const text = itemText(item);
+  return TEA_MATERIAL_GROUPS.filter((group) => group.pattern.test(text));
+}
+
+function scoreTeaMaterialFit(item, slot, policyKeys = []) {
+  if (item.category !== "eat") return 0;
+  const groups = detectTeaMaterialGroups(item).map((group) => group.key);
+  if (!groups.length) return 0;
+  const desired = safeArray(slot.teaDirections);
+  let score = groups.some((key) => desired.includes(key)) ? 10 : 0;
+  const primaryPolicy = safeArray(policyKeys)[0];
+  const policyDesired = {
+    shizumeru: ["calming", "moist"],
+    yurumeru: ["calming", "support"],
+    meguraseru: ["warming", "support"],
+    nagasu: ["light"],
+    uruosu: ["moist"],
+    nukumeru: ["warming"],
+    sasaeru: ["support"],
+  }[primaryPolicy] || [];
+  if (groups.some((key) => policyDesired.includes(key))) score += 4;
+  return score;
+}
+
 function pickKitItem(candidates, slot, used, context) {
   const ranked = safeArray(candidates)
-    .filter((item) => item?.category === slot.category)
+    .filter((item) => itemMatchesSlot(item, slot))
     .filter((item) => {
       const key = getSetItemKey(item);
       return key && !used.has(key);
     })
     .map((item) => ({ item, score: scoreKitCandidate(item, slot, context) }))
-    .filter((entry) => entry.score > -20)
+    .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
 
   const picked = ranked[0]?.item || null;
@@ -977,123 +1320,75 @@ function pickKitItem(candidates, slot, used, context) {
   return picked;
 }
 
-function makeSlot(category, roles = [], keywords = [], extra = {}) {
-  return { category, roles, keywords, ...extra };
+function buildItemUseGuide(item, slot, card) {
+  if (!item || item.source === "a8" || item.sourceType === "partner") return "";
+
+  if (item.category === "eat") return buildEatUseGuide(item, card);
+  if (item.category === "point") return buildPointUseGuide(item, slot);
+  if (item.category === "live") return buildLiveUseGuide(item);
+  return "";
 }
 
-function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
-  const primaryPolicy = POLICY_META[policyKeys?.[0]]?.label || "今の方針";
-  if (mode === "environment") {
-    return [
-      {
-        key: "sleep-room-body",
-        title: "寝る前のこり・冷え対策セット",
-        lead: "寝室環境、温かい一杯、首肩ケアを合わせて、寝る前にこりや冷えを残しにくくします。",
-        slots: [
-          makeSlot("live", ["sleep_environment", "reduce_light", "warm_body"], ["睡眠", "枕", "マットレス", "寝具", "アイマスク"]),
-          makeSlot("eat", ["caffeine_shift", "warm_drink", "drinkware"], ["カフェインレス", "ハーブ", "白湯", "ボトル", "温かい"]),
-          makeSlot("point", ["neck_shoulder_release", "posture_release", "tsubo_support"], ["首", "肩", "肩甲骨", "温熱", "ツボ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
-        ],
-        tags: [primaryPolicy, symptomLabel, "睡眠環境"],
-      },
-      {
-        key: "meal-bath-stretch",
-        title: "忙しい日の立て直しセット",
-        lead: "食事準備を軽くし、入浴とストレッチを合わせて、一日の負担を持ち越しにくくします。",
-        slots: [
-          makeSlot("eat", ["nutrition_support", "light_meal", "pantry_soup"], ["宅食", "ミール", "冷凍", "惣菜", "スープ", "食事"]),
-          makeSlot("live", ["bath_shift", "warm_body", "sleep_environment"], ["入浴", "温浴", "足湯", "腹巻", "温熱"]),
-          makeSlot("point", ["gentle_stretch", "posture_release", "foot_leg_release"], ["ストレッチ", "ヨガマット", "ローラー", "足", "ふくらはぎ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
-        ],
-        tags: [primaryPolicy, "食事準備", "入浴"],
-      },
-      {
-        key: "air-drink-leg",
-        title: "室内の乾燥・湿気対策セット",
-        lead: "空気環境、水分補給、足まわりのケアを合わせて、天気に左右されにくい部屋づくりを狙います。",
-        slots: [
-          makeSlot("live", ["humidity_control", "moisture_air", "sleep_environment"], ["除湿", "加湿", "空気", "サーキュレーター", "寝室"]),
-          makeSlot("eat", ["warm_drink", "drinkware", "caffeine_shift"], ["ボトル", "白湯", "カフェインレス", "お茶", "ルイボス"]),
-          makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
-        ],
-        tags: [primaryPolicy, "空気環境", "足まわり"],
-      },
-    ];
+function buildEatUseGuide(item, card) {
+  const text = itemText(item);
+  const group = detectTeaMaterialGroups(item)[0];
+  const policyKey = card?.policyKey;
+
+  if (/味噌汁|みそ汁|スープ|雑炊|おかゆ|リゾット/.test(text)) {
+    if (policyKey === "nagasu") return "温かく軽めの一品。食べすぎ後や湿気で重い日に。";
+    if (policyKey === "sasaeru") return "食事が乱れた日の戻しやすい一品に。";
+    return "温かく軽めの一品。食事を考える余力が少ない日に。";
   }
 
-  if (mode === "steady") {
-    return [
-      {
-        key: "bath-drink-neck",
-        title: "寝る前の緊張対策セット",
-        lead: "入浴、ノンカフェインの一杯、首肩ケアを合わせて、寝る前の力みを減らします。",
-        slots: [
-          makeSlot("live", ["bath_shift", "reduce_light", "sleep_environment"], ["入浴", "アイマスク", "睡眠", "温浴"]),
-          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ノンカフェイン", "ハーブ", "ルイボス"]),
-          makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "肩甲骨", "温熱", "ツボ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
-        ],
-        tags: [primaryPolicy, "入浴", "首肩"],
-      },
-      {
-        key: "soup-room-leg",
-        title: "湿気だるさ対策セット",
-        lead: "軽めの汁物、室内環境、足まわりのケアを合わせて、だるさやむくみ感を残しにくくします。",
-        slots: [
-          makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink"], ["味噌汁", "スープ", "雑炊", "はとむぎ"]),
-          makeSlot("live", ["humidity_control", "bath_shift", "warm_body"], ["除湿", "入浴", "足湯", "サーキュレーター", "腹巻"]),
-          makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー", "ストレッチ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
-        ],
-        tags: [primaryPolicy, "汁物", "足まわり"],
-      },
-      {
-        key: "screen-eye-neck",
-        title: "画面作業後のこり対策セット",
-        lead: "目元、首肩、飲み物を同時に見直して、画面作業後の疲れをためにくくします。",
-        slots: [
-          makeSlot("live", ["reduce_light", "sleep_environment"], ["ホットアイマスク", "アイマスク", "光", "目元"]),
-          makeSlot("point", ["neck_shoulder_release", "posture_release"], ["首", "肩", "肩甲骨", "マッサージ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
-          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ノンカフェイン", "ルイボス", "ハーブ", "温かい"]),
-        ],
-        tags: [primaryPolicy, "画面作業", "首肩"],
-      },
-    ];
+  if (/ボトル|水筒|タンブラー|マグボトル|保温ボトル/.test(text)) {
+    return "温かい一杯を持ち歩く道具。冷たい飲み物に寄りやすい日に。";
   }
 
-  return [
-    {
-      key: "warm-drink-neck",
-      title: "冷えと首肩こり対策セット",
-      lead: "温かい飲み物と首肩ケアを合わせて、冷えやこわばりを小さく切り替えます。",
-      slots: [
-        makeSlot("eat", ["warm_drink", "caffeine_shift"], ["しょうが", "カフェインレス", "ノンカフェイン", "ハーブ", "ルイボス"]),
-        makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "肩甲骨", "ツボ", "ボール"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
-      ],
-      tags: [primaryPolicy, "飲み物", "首肩"],
-    },
-    {
-      key: "eye-drink-sleep",
-      title: "寝る前の刺激を減らすセット",
-      lead: "光刺激とカフェインを控えめにして、寝る前の過ごし方を整えます。",
-      slots: [
-        makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "目元", "睡眠", "耳栓"]),
-        makeSlot("eat", ["caffeine_shift", "warm_drink"], ["ノンカフェイン", "カフェインレス", "ハーブ", "ルイボス"]),
-      ],
-      tags: [primaryPolicy, "目元", "睡眠準備"],
-    },
-    {
-      key: "soup-leg-bath",
-      title: "胃腸と足元のだるさ対策セット",
-      lead: "軽めの食事、足ほぐし、入浴を合わせて、胃腸の負担と足元のだるさを見直します。",
-      slots: [
-        makeSlot("eat", ["light_meal", "pantry_soup"], ["味噌汁", "スープ", "雑炊", "レトルト", "フリーズドライ"]),
-        makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー", "ストレッチ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
-        makeSlot("live", ["bath_shift", "humidity_control", "warm_body"], ["入浴", "足湯", "除湿", "湿気", "腹巻"]),
-      ],
-      tags: [primaryPolicy, "汁物", "足まわり"],
-    },
-  ];
+  if (group) {
+    if (group.key === "warming") return `${group.label}。冷たい飲み物が続いた日の切り替えに。`;
+    if (group.key === "calming") return `${group.label}。作業後や寝る前の切り替えに。`;
+    if (group.key === "light") return `${group.label}。湿気や食べすぎで重い日に。`;
+    if (group.key === "moist") return `${group.label}。乾きやすい日の水分補給に。`;
+    if (group.key === "support") return `${group.label}。食事や休憩が乱れた日の一杯に。`;
+  }
+
+  if (/茶|ティー|ルイボス|ハーブ|ノンカフェイン|カフェインレス/.test(text)) {
+    if (policyKey === "shizumeru") return "刺激を足したくない日の温かい一杯に。";
+    if (policyKey === "yurumeru") return "作業後や寝る前の切り替えの一杯に。";
+    if (policyKey === "nukumeru") return "冷たい飲み物が続いた日の切り替えに。";
+    return "今日の方針に合わせた温かい一杯に。";
+  }
+
+  if (/なつめ|棗|クコ|枸杞|陳皮|生姜|しょうが|黒豆|はとむぎ|ハトムギ/.test(text)) {
+    return "お茶や汁物に少し足す素材枠として。";
+  }
+
+  return "このセットの食べる枠として。";
 }
-function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomLabel, approachTags }) {
+
+function buildPointUseGuide(item, slot) {
+  const areas = inferPointAreas(item);
+  if (areas.includes("face")) return "";
+  if (areas.includes("low_back")) return "腰・背中まわりに使う枠。強く押し込まず短時間で。";
+  if (areas.includes("neck_shoulder")) return "首・肩まわりに使う枠。作業後や寝る前に短時間で。";
+  if (areas.includes("foot_leg")) return "足裏やふくらはぎを動かす枠。座りっぱなしの日に。";
+  if (areas.includes("eye_head")) return "目元・こめかみ周辺の切り替え枠。押しすぎず軽めに。";
+  if (safeArray(slot?.requiredAreas).length) return "";
+  return "手の届く範囲を軽く動かす道具として。";
+}
+
+function buildLiveUseGuide(item) {
+  const text = itemText(item);
+  if (/入浴剤|バスソルト|炭酸|温浴|足湯/.test(text)) return "湯船に切り替えるきっかけに。冷えやこわばりが気になる日に。";
+  if (/アイマスク|耳栓|遮光|遮音|ブルーライト/.test(text)) return "光や音の刺激を減らす枠。寝る前や画面作業後に。";
+  if (/腹巻|湯たんぽ|ウォーマー|カイロ|温熱/.test(text)) return "冷やしたくない部位を守る枠。外出前や寝る前に。";
+  if (/除湿|湿気|サーキュレーター|防湿/.test(text)) return "湿気がこもる日の室内環境づくりに。";
+  if (/加湿|乾燥|保湿/.test(text)) return "乾きやすい日の室内環境づくりに。";
+  if (/枕|マットレス|寝具|睡眠/.test(text)) return "休む環境を見直す枠。首肩・腰まわりが気になる日に。";
+  return "暮らし側から整える枠として。";
+}
+
+function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags }) {
   const used = new Set();
   const byCategory = Object.fromEntries(
     CATEGORY_ORDER.map((category) => {
@@ -1103,11 +1398,17 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
     })
   );
 
-  return getKitDefinitions(mode, { symptomLabel, policyKeys })
+  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors });
+
+  return definitions
     .map((definition) => {
       const localUsed = new Set(used);
       const items = definition.slots
-        .map((slot) => pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys }))
+        .map((slot) => {
+          const picked = pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys });
+          if (!picked) return null;
+          return { ...picked, useGuide: buildItemUseGuide(picked, slot, definition), slotCategory: slot.category };
+        })
         .filter(Boolean);
 
       if (items.length >= 2) {
@@ -1120,7 +1421,8 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
         tags: unique([...safeArray(definition.tags), ...safeArray(approachTags).slice(0, 2)]).filter(Boolean).slice(0, 6),
       };
     })
-    .filter((card) => card.items.length >= 2);
+    .filter((card) => card.items.length >= 2)
+    .slice(0, CARE_SET_EXPANDED_LIMIT);
 }
 
 function SetModeFilter({ value, onChange }) {
@@ -1190,6 +1492,8 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
           </div>
           {isPartner && item.reason ? (
             <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">{item.reason}</p>
+          ) : item.useGuide ? (
+            <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">{item.useGuide}</p>
           ) : null}
         </div>
       </div>
@@ -1567,10 +1871,13 @@ export default function CareNaviPage() {
         itemsByCategory: rakutenItemsByCategory,
         partnerItemsByCategory,
         policyKeys,
+        symptomKey,
+        lifeKeys,
+        triggerFactors: tomorrowTriggerFactors,
         symptomLabel,
         approachTags,
       }),
-    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomLabel, approachTags]
+    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags]
   );
 
   const displaySets = careSetCards.slice(0, visibleLimit);
@@ -1779,7 +2086,7 @@ export default function CareNaviPage() {
           </div>
           <div className="min-w-0">
             <div className="text-[16px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
-            <div className="mt-0.5 text-[11px] font-bold leading-5 text-slate-500">{kitModeMeta.lead}</div>
+            <div className="mt-0.5 text-[11px] font-bold leading-5 text-slate-500">今回の方針から、暮らす・食べる・ほぐすを組み合わせます。</div>
           </div>
         </div>
 
