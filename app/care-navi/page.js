@@ -987,8 +987,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
     return [
       {
         key: "sleep-room-body",
-        title: "環境から見直す：寝具・飲み物・首肩ケアセット",
-        lead: "寝具や寝室まわりに、温かい飲み物と首肩ケアを組み合わせます。",
+        title: "寝る前のこり・冷え対策セット",
+        lead: "寝室環境、温かい一杯、首肩ケアを合わせて、寝る前にこりや冷えを残しにくくします。",
         slots: [
           makeSlot("live", ["sleep_environment", "reduce_light", "warm_body"], ["睡眠", "枕", "マットレス", "寝具", "アイマスク"]),
           makeSlot("eat", ["caffeine_shift", "warm_drink", "drinkware"], ["カフェインレス", "ハーブ", "白湯", "ボトル", "温かい"]),
@@ -998,8 +998,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
       },
       {
         key: "meal-bath-stretch",
-        title: "環境から見直す：食事サービス・入浴・ストレッチセット",
-        lead: "食事準備を軽くする候補に、入浴と体を伸ばすケアを組み合わせます。",
+        title: "忙しい日の立て直しセット",
+        lead: "食事準備を軽くし、入浴とストレッチを合わせて、一日の負担を持ち越しにくくします。",
         slots: [
           makeSlot("eat", ["nutrition_support", "light_meal", "pantry_soup"], ["宅食", "ミール", "冷凍", "惣菜", "スープ", "食事"]),
           makeSlot("live", ["bath_shift", "warm_body", "sleep_environment"], ["入浴", "温浴", "足湯", "腹巻", "温熱"]),
@@ -1009,8 +1009,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
       },
       {
         key: "air-drink-leg",
-        title: "環境から見直す：空気環境・水分補給・足ほぐしセット",
-        lead: "湿度や空気まわりを整えながら、飲み物と足まわりのケアを足します。",
+        title: "室内の乾燥・湿気対策セット",
+        lead: "空気環境、水分補給、足まわりのケアを合わせて、天気に左右されにくい部屋づくりを狙います。",
         slots: [
           makeSlot("live", ["humidity_control", "moisture_air", "sleep_environment"], ["除湿", "加湿", "空気", "サーキュレーター", "寝室"]),
           makeSlot("eat", ["warm_drink", "drinkware", "caffeine_shift"], ["ボトル", "白湯", "カフェインレス", "お茶", "ルイボス"]),
@@ -1025,8 +1025,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
     return [
       {
         key: "bath-drink-neck",
-        title: "しっかり整える：入浴・飲み物・首肩ケアセット",
-        lead: "入浴、カフェインを控えた飲み物、首肩ケアを同じ流れで使います。",
+        title: "寝る前の緊張対策セット",
+        lead: "入浴、ノンカフェインの一杯、首肩ケアを合わせて、寝る前の力みを減らします。",
         slots: [
           makeSlot("live", ["bath_shift", "reduce_light", "sleep_environment"], ["入浴", "アイマスク", "睡眠", "温浴"]),
           makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ノンカフェイン", "ハーブ", "ルイボス"]),
@@ -1036,8 +1036,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
       },
       {
         key: "soup-room-leg",
-        title: "しっかり整える：汁物・室内環境・足ほぐしセット",
-        lead: "温かい汁物、湿度対策、足まわりのケアをまとめます。",
+        title: "湿気だるさ対策セット",
+        lead: "軽めの汁物、室内環境、足まわりのケアを合わせて、だるさやむくみ感を残しにくくします。",
         slots: [
           makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink"], ["味噌汁", "スープ", "雑炊", "はとむぎ"]),
           makeSlot("live", ["humidity_control", "bath_shift", "warm_body"], ["除湿", "入浴", "足湯", "サーキュレーター", "腹巻"]),
@@ -1047,8 +1047,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
       },
       {
         key: "screen-eye-neck",
-        title: "しっかり整える：目元・首肩・飲み物セット",
-        lead: "画面作業が多い日に、目元、首肩、飲み物の選び方をまとめて変えます。",
+        title: "画面作業後のこり対策セット",
+        lead: "目元、首肩、飲み物を同時に見直して、画面作業後の疲れをためにくくします。",
         slots: [
           makeSlot("live", ["reduce_light", "sleep_environment"], ["ホットアイマスク", "アイマスク", "光", "目元"]),
           makeSlot("point", ["neck_shoulder_release", "posture_release"], ["首", "肩", "肩甲骨", "マッサージ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
@@ -1062,8 +1062,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
   return [
     {
       key: "warm-drink-neck",
-      title: "軽く試せる：温かい飲み物・首肩ケアセット",
-      lead: "冷たい飲み物に寄りやすい日や、首肩が固まりやすい日に試しやすい組み合わせです。",
+      title: "冷えと首肩こり対策セット",
+      lead: "温かい飲み物と首肩ケアを合わせて、冷えやこわばりを小さく切り替えます。",
       slots: [
         makeSlot("eat", ["warm_drink", "caffeine_shift"], ["しょうが", "カフェインレス", "ノンカフェイン", "ハーブ", "ルイボス"]),
         makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "肩甲骨", "ツボ", "ボール"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス"] }),
@@ -1072,8 +1072,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
     },
     {
       key: "eye-drink-sleep",
-      title: "軽く試せる：目元・飲み物・睡眠準備セット",
-      lead: "寝る前の光刺激と飲み物を見直したい時の小さな組み合わせです。",
+      title: "寝る前の刺激を減らすセット",
+      lead: "光刺激とカフェインを控えめにして、寝る前の過ごし方を整えます。",
       slots: [
         makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "目元", "睡眠", "耳栓"]),
         makeSlot("eat", ["caffeine_shift", "warm_drink"], ["ノンカフェイン", "カフェインレス", "ハーブ", "ルイボス"]),
@@ -1082,8 +1082,8 @@ function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
     },
     {
       key: "soup-leg-bath",
-      title: "軽く試せる：汁物・足ほぐし・入浴セット",
-      lead: "軽めの食事、足まわりのケア、入浴まわりを小さくそろえます。",
+      title: "胃腸と足元のだるさ対策セット",
+      lead: "軽めの食事、足ほぐし、入浴を合わせて、胃腸の負担と足元のだるさを見直します。",
       slots: [
         makeSlot("eat", ["light_meal", "pantry_soup"], ["味噌汁", "スープ", "雑炊", "レトルト", "フリーズドライ"]),
         makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー", "ストレッチ"], { avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
@@ -1126,7 +1126,7 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
 function SetModeFilter({ value, onChange }) {
   return (
     <div className="rounded-[22px] bg-[#EAF6F3] p-3 ring-1 ring-[#9CCFC4]">
-      <div className="mb-2 text-[10px] font-black tracking-[0.14em] text-slate-400">セットを選ぶ</div>
+      <div className="mb-2 text-[10px] font-black tracking-[0.14em] text-slate-400">セットタイプ</div>
       <div className="grid gap-1.5 sm:grid-cols-3">
         {SET_MODE_OPTIONS.map((option) => {
           const active = value === option.key;
@@ -1215,7 +1215,7 @@ function CareSetCard({ card, cardPosition, trackingContext }) {
         ))}
       </div>
       <div className="pr-20">
-        <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">CARE SET {cardPosition}</div>
+        <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">ケアセット {cardPosition}</div>
         <h3 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
         <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -1786,7 +1786,7 @@ export default function CareNaviPage() {
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
           <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
-            このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインに合わせて、今日から取り入れやすい組み合わせを選んでいます。治療や効果を約束するものではなく、セルフケアの選び方としてご覧ください。
+            このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインをもとに、今日から使いやすいケアセットを選んでいます。医療的な治療ではなく、毎日のセルフケア選びとして活用してください。
           </div>
 
           {rakutenLoading ? (
