@@ -44,6 +44,31 @@ const CATEGORY_OPTIONS = [
   { key: "point", label: "ほぐす", icon: IconTsubo, lead: "首肩・腰・手足など、体に直接使うケア" },
 ];
 
+const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
+
+const SET_MODE_OPTIONS = [
+  {
+    key: "starter",
+    label: "まず試すセット",
+    band: "light",
+    lead: "小さく始める2〜3点。今日から置き換えやすい組み合わせ。",
+  },
+  {
+    key: "steady",
+    label: "しっかり整えるセット",
+    band: "standard",
+    lead: "暮らす・食べる・ほぐすをそろえて、数日続ける前提の組み合わせ。",
+  },
+  {
+    key: "environment",
+    label: "環境から見直すセット",
+    band: "deep",
+    lead: "寝具・空気・宅食・ケア機器など、土台ごと変える候補。サービス導線も含みます。",
+  },
+];
+
+const SET_MODE_PRICE_BAND = Object.fromEntries(SET_MODE_OPTIONS.map((item) => [item.key, item.band]));
+
 const PRICE_BAND_OPTIONS = [
   { key: "all", label: "すべて" },
   { key: "light", label: "お手軽" },
@@ -54,6 +79,8 @@ const PRICE_BAND_OPTIONS = [
 const CARE_NAVI_INITIAL_LIMIT = 12;
 const CARE_NAVI_EXPANDED_LIMIT = 24;
 const CARE_NAVI_TOTAL_LIMIT = 48;
+const CARE_SET_INITIAL_LIMIT = 3;
+const CARE_SET_EXPANDED_LIMIT = 6;
 
 const PRICE_BAND_RANGES = {
   live: {
@@ -865,6 +892,334 @@ function RakutenStatusCard({ error, queries }) {
   );
 }
 
+
+function getSetModeMeta(mode) {
+  return SET_MODE_OPTIONS.find((item) => item.key === mode) || SET_MODE_OPTIONS[0];
+}
+
+function getSetItemKey(item) {
+  return item?.itemUrl || item?.clickUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
+}
+
+function itemText(item) {
+  return `${item?.title || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")} ${item?.shopName || ""}`.toLowerCase();
+}
+
+function hasAnyText(item, keywords = []) {
+  const text = itemText(item);
+  return safeArray(keywords).some((keyword) => text.includes(String(keyword || "").toLowerCase()));
+}
+
+function inferRoleLabelFromItem(item) {
+  const roleLabel = getProductRoleLabel(item);
+  if (roleLabel && roleLabel !== "ケア候補") return roleLabel;
+
+  const category = item?.category;
+  if (category === "live") return "暮らしを整える";
+  if (category === "eat") return "食べ方を整える";
+  if (category === "point") return "体をほぐす";
+  return "ケア候補";
+}
+
+function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
+  if (!item) return -999;
+  let score = 0;
+  if (item.category === slot.category) score += 20;
+  if (safeArray(slot.roles).includes(item.productRole) || safeArray(slot.roles).includes(item.intentType)) score += 8;
+  if (safeArray(slot.productTypes).includes(item.productType)) score += 4;
+  if (hasAnyText(item, slot.keywords)) score += 5;
+  if (hasAnyText(item, slot.avoidKeywords)) score -= 8;
+  if (safeArray(policyKeys).includes(item.policyKey)) score += 3;
+  if (item.source === "a8" || item.sourceType === "partner") score += mode === "environment" ? 5 : 1.2;
+  if (mode === "starter" && item.price && Number(item.price) <= 2500) score += 2;
+  if (mode === "environment" && item.price && Number(item.price) >= 5000) score += 1.5;
+  score += Math.min(Number(item.score || 0), 20) * 0.04;
+  return score;
+}
+
+function pickKitItem(candidates, slot, used, context) {
+  const ranked = safeArray(candidates)
+    .filter((item) => item?.category === slot.category)
+    .filter((item) => {
+      const key = getSetItemKey(item);
+      return key && !used.has(key);
+    })
+    .map((item) => ({ item, score: scoreKitCandidate(item, slot, context) }))
+    .filter((entry) => entry.score > -20)
+    .sort((a, b) => b.score - a.score);
+
+  const picked = ranked[0]?.item || null;
+  if (picked) used.add(getSetItemKey(picked));
+  return picked;
+}
+
+function makeSlot(category, roles = [], keywords = [], extra = {}) {
+  return { category, roles, keywords, ...extra };
+}
+
+function getKitDefinitions(mode, { symptomLabel = "", policyKeys = [] } = {}) {
+  const primaryPolicy = POLICY_META[policyKeys?.[0]]?.label || "今の方針";
+  if (mode === "environment") {
+    return [
+      {
+        key: "sleep-environment",
+        title: "環境から見直す：休む土台セット",
+        lead: "寝具・睡眠環境・夜の切り替えをまとめて見直す組み合わせです。",
+        slots: [
+          makeSlot("live", ["sleep_environment", "reduce_light", "warm_body"], ["睡眠", "枕", "マットレス", "寝具", "アイマスク"]),
+          makeSlot("point", ["neck_shoulder_release", "posture_release", "tsubo_support"], ["首", "肩", "腰", "温熱", "リカバリー"]),
+          makeSlot("eat", ["caffeine_shift", "warm_drink", "nutrition_support"], ["カフェインレス", "ハーブ", "温かい", "宅食", "スープ"]),
+        ],
+        tags: [primaryPolicy, symptomLabel, "睡眠環境", "高単価候補"],
+      },
+      {
+        key: "meal-outsourcing",
+        title: "環境から見直す：食事を外に預けるセット",
+        lead: "食べる余力が少ない時に、食事準備そのものを軽くする発想です。",
+        slots: [
+          makeSlot("eat", ["nutrition_support", "light_meal", "pantry_soup"], ["宅食", "ミール", "冷凍", "惣菜", "スープ", "食事"]),
+          makeSlot("live", ["sleep_environment", "bath_shift", "warm_body"], ["入浴", "睡眠", "腹巻", "温熱", "リカバリー"]),
+          makeSlot("point", ["gentle_stretch", "foot_leg_release", "neck_shoulder_release"], ["ストレッチ", "ローラー", "足", "首", "肩"]),
+        ],
+        tags: [primaryPolicy, "食事負担", "サービス候補"],
+      },
+      {
+        key: "air-room",
+        title: "環境から見直す：空気・湿度セット",
+        lead: "湿気・乾燥・寝室のこもりを、部屋側から変える組み合わせです。",
+        slots: [
+          makeSlot("live", ["humidity_control", "moisture_air", "sleep_environment"], ["除湿", "加湿", "空気", "サーキュレーター", "寝室"]),
+          makeSlot("eat", ["warm_drink", "drinkware", "caffeine_shift"], ["ボトル", "白湯", "カフェインレス", "お茶"]),
+          makeSlot("point", ["neck_shoulder_release", "foot_leg_release", "posture_release"], ["首", "肩", "ふくらはぎ", "足", "ローラー"]),
+        ],
+        tags: [primaryPolicy, "空気環境", "湿度"],
+      },
+    ];
+  }
+
+  if (mode === "steady") {
+    return [
+      {
+        key: "night-routine",
+        title: "しっかり整える：夜の切り替えセット",
+        lead: "入浴・飲み物・首肩ケアをつなげて、夜の力みを残しにくくします。",
+        slots: [
+          makeSlot("live", ["bath_shift", "reduce_light", "sleep_environment"], ["入浴", "アイマスク", "睡眠", "温浴"]),
+          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ハーブ", "ルイボス", "しょうが"]),
+          makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "頭皮", "温熱", "ツボ"]),
+        ],
+        tags: [primaryPolicy, "夜ケア", symptomLabel],
+      },
+      {
+        key: "heavy-damp",
+        title: "しっかり整える：重だるさ対策セット",
+        lead: "湿気・食べすぎ・動かなさが重なる日に、ため込まない方向へ寄せます。",
+        slots: [
+          makeSlot("live", ["humidity_control", "bath_shift"], ["除湿", "入浴", "足湯", "サーキュレーター"]),
+          makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink"], ["味噌汁", "スープ", "雑炊", "はとむぎ"]),
+          makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足", "ローラー", "ストレッチ"]),
+        ],
+        tags: [primaryPolicy, "重だるさ", "生活セット"],
+      },
+      {
+        key: "screen-neck",
+        title: "しっかり整える：画面作業リセットセット",
+        lead: "目・首肩・カフェインの偏りをまとめて切り替える組み合わせです。",
+        slots: [
+          makeSlot("live", ["reduce_light", "sleep_environment"], ["ホットアイマスク", "アイマスク", "光", "目元"]),
+          makeSlot("point", ["neck_shoulder_release", "posture_release"], ["首", "肩", "頭皮", "マッサージ"]),
+          makeSlot("eat", ["caffeine_shift", "warm_drink"], ["カフェインレス", "ルイボス", "ハーブ", "温かい"]),
+        ],
+        tags: [primaryPolicy, "画面作業", "首肩"],
+      },
+    ];
+  }
+
+  return [
+    {
+      key: "warm-small",
+      title: "まず試す：温かく切り替えるセット",
+      lead: "冷たい飲み物・軽食・首肩のこわばりを、小さく切り替える組み合わせです。",
+      slots: [
+        makeSlot("eat", ["warm_drink", "light_meal", "pantry_soup"], ["しょうが", "味噌汁", "スープ", "カフェインレス"]),
+        makeSlot("point", ["neck_shoulder_release", "tsubo_support"], ["首", "肩", "頭皮", "ツボ", "ボール"]),
+      ],
+      tags: [primaryPolicy, "まず試す", symptomLabel],
+    },
+    {
+      key: "mini-night",
+      title: "まず試す：夜の余白セット",
+      lead: "寝る前に刺激を減らして、温かい一杯へ置き換える軽めのセットです。",
+      slots: [
+        makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "目元", "睡眠", "耳栓"]),
+        makeSlot("eat", ["caffeine_shift", "warm_drink"], ["ノンカフェイン", "カフェインレス", "ハーブ", "ルイボス"]),
+      ],
+      tags: [primaryPolicy, "夜ケア", "低負担"],
+    },
+    {
+      key: "mini-heavy",
+      title: "まず試す：重さをためないセット",
+      lead: "食べすぎ・湿気・足元の重さが気になる日に、軽く逃がす組み合わせです。",
+      slots: [
+        makeSlot("eat", ["light_meal", "pantry_soup", "warm_drink"], ["味噌汁", "スープ", "雑炊", "はとむぎ"]),
+        makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "ローラー", "ストレッチ"]),
+        makeSlot("live", ["bath_shift", "humidity_control"], ["入浴", "足湯", "除湿", "湿気"]),
+      ],
+      tags: [primaryPolicy, "重だるさ", "小さく整える"],
+    },
+  ];
+}
+
+function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomLabel, approachTags }) {
+  const used = new Set();
+  const byCategory = Object.fromEntries(
+    CATEGORY_ORDER.map((category) => {
+      const partner = safeArray(partnerItemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "a8", sourceType: item.sourceType || "partner" }));
+      const rakuten = safeArray(itemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "rakuten", sourceType: item.sourceType || "rakuten", buttonText: item.buttonText || "楽天で見る" }));
+      return [category, [...partner, ...rakuten]];
+    })
+  );
+
+  return getKitDefinitions(mode, { symptomLabel, policyKeys })
+    .map((definition) => {
+      const localUsed = new Set(used);
+      const items = definition.slots
+        .map((slot) => pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys }))
+        .filter(Boolean);
+
+      if (items.length >= 2) {
+        items.forEach((item) => used.add(getSetItemKey(item)));
+      }
+
+      return {
+        ...definition,
+        items,
+        tags: unique([...safeArray(definition.tags), ...safeArray(approachTags).slice(0, 2)]).filter(Boolean).slice(0, 6),
+      };
+    })
+    .filter((card) => card.items.length >= 2);
+}
+
+function SetModeFilter({ value, onChange }) {
+  return (
+    <div className="rounded-[22px] bg-[#EAF6F3] p-3 ring-1 ring-[#9CCFC4]">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">セットの深さ</div>
+        <div className="text-[10px] font-bold text-slate-400">単品ではなく組み合わせで提案</div>
+      </div>
+      <div className="grid gap-1.5 sm:grid-cols-3">
+        {SET_MODE_OPTIONS.map((option) => {
+          const active = value === option.key;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => onChange(option.key)}
+              className={[
+                "rounded-[18px] px-3 py-2.5 text-left transition-all ring-1",
+                active
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
+                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
+              ].join(" ")}
+            >
+              <div className="text-[12px] font-black leading-4">{option.label}</div>
+              <div className={["mt-1 text-[9px] font-bold leading-4", active ? "text-white/80" : "text-slate-400"].join(" ")}>{option.lead}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
+  const meta = getCategoryMeta(item.category);
+  const Icon = meta.icon;
+  const isPartner = item.source === "a8" || item.sourceType === "partner";
+  const itemUrl = item.itemUrl || item.clickUrl || makeRakutenSearchUrl(item.query);
+  const priceText = item.price ? `${Number(item.price).toLocaleString("ja-JP")}円` : "";
+  const roleLabel = inferRoleLabelFromItem(item);
+  const buttonText = item.buttonText || (isPartner ? "公式で見る" : "楽天で見る");
+
+  function handleClick() {
+    postCareItemClick({
+      item: { ...item, itemUrl, kitSetKey: setKey },
+      itemPosition,
+      context: trackingContext,
+    });
+  }
+
+  return (
+    <div className="rounded-[20px] bg-white p-3 ring-1 ring-[#D9EAE5]">
+      <div className="flex gap-3">
+        <div className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[18px] bg-[linear-gradient(135deg,#F5FBF8_0%,#FFF2CF_100%)] text-[var(--accent-ink)] ring-1 ring-[#B6D8CF]">
+          {item.imageUrl ? (
+            <img src={item.imageUrl} alt="" className={isPartner ? "h-full w-full object-contain" : "h-full w-full object-cover"} loading="lazy" />
+          ) : (
+            <Icon className="h-7 w-7 opacity-85" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-[#EAF6F3] px-2 py-0.5 text-[9px] font-black text-[#28665F] ring-1 ring-[#B6D8CF]">{meta.label}</span>
+            <span className="rounded-full bg-[#FFF2CC] px-2 py-0.5 text-[9px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">{roleLabel}</span>
+          </div>
+          <div className="mt-1 line-clamp-2 text-[13px] font-black leading-5 text-slate-900">{item.title}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold text-slate-500">
+            {priceText ? <span className="font-black text-[var(--accent-ink)]">{priceText}</span> : null}
+            {item.shopName ? <span>{item.shopName}</span> : null}
+            {isPartner ? <span>提携/サービス候補</span> : null}
+          </div>
+        </div>
+      </div>
+      <a
+        href={itemUrl}
+        target="_blank"
+        rel="sponsored nofollow noopener noreferrer"
+        onClick={handleClick}
+        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--accent)] px-3 py-2 text-[11px] font-black text-white hover:bg-[var(--accent-ink)]"
+      >
+        {buttonText}
+      </a>
+    </div>
+  );
+}
+
+function CareSetCard({ card, cardPosition, trackingContext }) {
+  return (
+    <div className="relative overflow-hidden rounded-[28px] bg-[#F8FCFA] p-4 ring-1 ring-[#B6D8CF] shadow-[0_18px_44px_-28px_rgba(15,35,35,0.32)]">
+      <div className="absolute right-4 top-4 flex -space-x-1 opacity-90">
+        {safeArray(trackingContext?.policyKeys).slice(0, 3).map((policyKey) => (
+          <img key={policyKey} src={getPolicyIconPath(policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#B6D8CF]" loading="lazy" />
+        ))}
+      </div>
+      <div className="pr-20">
+        <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">CARE SET {cardPosition}</div>
+        <h3 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
+        <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {safeArray(card.tags).map((tag) => (
+          <span key={tag} className="rounded-full border border-[#B6D8CF] bg-white px-2.5 py-1 text-[10px] font-black text-[#4B6B67] ring-1 ring-[#C6E1DA]">
+            {POLICY_META[tag]?.label || tag}
+          </span>
+        ))}
+      </div>
+      <div className="mt-3 grid gap-2">
+        {card.items.map((item, index) => (
+          <KitItemRow
+            key={`${card.key}-${getSetItemKey(item)}-${index}`}
+            item={item}
+            itemPosition={(cardPosition - 1) * 10 + index + 1}
+            setKey={card.key}
+            trackingContext={trackingContext}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CareNaviPage() {
   const router = useRouter();
 
@@ -874,16 +1229,15 @@ export default function CareNaviPage() {
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
   const [basis, setBasis] = useState("base");
-  const [category, setCategory] = useState("live");
-  const [priceBand, setPriceBand] = useState("all");
+  const [kitMode, setKitMode] = useState("starter");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
 
-  const [rakutenItems, setRakutenItems] = useState([]);
+  const [rakutenItemsByCategory, setRakutenItemsByCategory] = useState({ live: [], eat: [], point: [] });
   const [rakutenQueries, setRakutenQueries] = useState([]);
   const [rakutenLoading, setRakutenLoading] = useState(false);
   const [rakutenError, setRakutenError] = useState("");
-  const [visibleLimit, setVisibleLimit] = useState(CARE_NAVI_INITIAL_LIMIT);
+  const [visibleLimit, setVisibleLimit] = useState(CARE_SET_INITIAL_LIMIT);
 
   useEffect(() => {
     let cancelled = false;
@@ -957,8 +1311,7 @@ export default function CareNaviPage() {
     if (typeof window === "undefined") return;
 
     const params = new URLSearchParams(window.location.search);
-    const nextCategoryRaw = params.get("category");
-    const nextCategory = nextCategoryRaw === "loosen" ? "point" : nextCategoryRaw;
+    const nextMode = params.get("mode") || params.get("set") || params.get("depth");
     const weather = params.get("weather") || params.get("basis");
     const nextSymptom = params.get("symptom");
     const nextLifeKeys = String(params.get("life") || "")
@@ -966,8 +1319,8 @@ export default function CareNaviPage() {
       .map((item) => item.trim())
       .filter(Boolean);
 
-    if (CATEGORY_OPTIONS.some((option) => option.key === nextCategory)) {
-      setCategory(nextCategory);
+    if (SET_MODE_OPTIONS.some((option) => option.key === nextMode)) {
+      setKitMode(nextMode);
     }
 
     if (weather === "tomorrow" || weather === "season") {
@@ -984,10 +1337,6 @@ export default function CareNaviPage() {
       setLifeKeys(nextLifeKeys.filter((key) => LIFE_OPTIONS.some((item) => item.key === key)).slice(0, 3));
     }
   }, []);
-
-  useEffect(() => {
-    setPriceBand("all");
-  }, [category]);
 
   const symptomKey = selectedSymptom || profile?.active_symptom_focus || "fatigue";
   const symptomLabel = SYMPTOM_LABELS[symptomKey] || "今気になること";
@@ -1045,8 +1394,8 @@ export default function CareNaviPage() {
   const policyKeySignature = policyKeys.join("|");
   const lifeKeySignature = lifeKeys.join("|");
   useEffect(() => {
-    setVisibleLimit(CARE_NAVI_INITIAL_LIMIT);
-  }, [category, priceBand, basis, lifeKeySignature, symptomKey, policyKeySignature]);
+    setVisibleLimit(CARE_SET_INITIAL_LIMIT);
+  }, [kitMode, basis, lifeKeySignature, symptomKey, policyKeySignature]);
 
   const seasonKey = getSeasonKey();
   const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
@@ -1069,9 +1418,12 @@ export default function CareNaviPage() {
     [basis, tomorrowTriggerFactors, seasonLabel, lifeKeys, symptomChanged, symptomLabel]
   );
 
+  const kitPriceBand = SET_MODE_PRICE_BAND[kitMode] || "light";
+  const kitModeMeta = getSetModeMeta(kitMode);
+
   useEffect(() => {
     if (!policyKeys.length) {
-      setRakutenItems([]);
+      setRakutenItemsByCategory({ live: [], eat: [], point: [] });
       setRakutenQueries([]);
       setRakutenError("");
       setRakutenLoading(false);
@@ -1085,35 +1437,54 @@ export default function CareNaviPage() {
       setRakutenError("");
 
       try {
-        const res = await fetch("/api/care-navi/rakuten", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-          signal: controller.signal,
-          body: JSON.stringify({
-            category,
-            policyKeys,
-            symptomKey,
-            basis,
-            lifeKeys,
-            priceBand,
-            limit: CARE_NAVI_EXPANDED_LIMIT,
-            totalLimit: CARE_NAVI_TOTAL_LIMIT,
-          }),
+        const results = await Promise.all(
+          CATEGORY_ORDER.map(async (categoryKey) => {
+            const res = await fetch("/api/care-navi/rakuten", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              cache: "no-store",
+              signal: controller.signal,
+              body: JSON.stringify({
+                category: categoryKey,
+                policyKeys,
+                symptomKey,
+                basis,
+                lifeKeys,
+                priceBand: kitPriceBand,
+                limit: 18,
+                totalLimit: CARE_NAVI_TOTAL_LIMIT,
+              }),
+            });
+
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok || !json?.ok) {
+              return { categoryKey, items: [], queries: [], errors: [{ status: res.status, message: json?.error || "取得できませんでした。" }] };
+            }
+
+            return {
+              categoryKey,
+              items: Array.isArray(json.items) ? json.items : [],
+              queries: Array.isArray(json.queries) ? json.queries : [],
+              errors: Array.isArray(json.errors) ? json.errors.filter(Boolean) : [],
+            };
+          })
+        );
+
+        const nextByCategory = { live: [], eat: [], point: [] };
+        const nextQueries = [];
+        const apiErrors = [];
+
+        results.forEach((result) => {
+          nextByCategory[result.categoryKey] = safeArray(result.items).map((item) => ({ ...item, category: result.categoryKey }));
+          nextQueries.push(...safeArray(result.queries));
+          apiErrors.push(...safeArray(result.errors));
         });
 
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || !json?.ok) {
-          throw new Error(json?.error || "楽天の商品候補を取得できませんでした。");
-        }
+        setRakutenItemsByCategory(nextByCategory);
+        setRakutenQueries(unique(nextQueries).slice(0, 8));
 
-        const nextItems = Array.isArray(json.items) ? json.items : [];
-        const apiErrors = Array.isArray(json.errors) ? json.errors.filter(Boolean) : [];
-
-        setRakutenItems(nextItems);
-        setRakutenQueries(Array.isArray(json.queries) ? json.queries : []);
-
-        if (!nextItems.length && apiErrors.length) {
+        const hasAnyItems = Object.values(nextByCategory).some((items) => items.length);
+        if (!hasAnyItems && apiErrors.length) {
           const first = apiErrors[0] || {};
           setRakutenError(
             `楽天APIから商品候補を取得できませんでした。${first.status ? ` status: ${first.status}` : ""}${first.message ? ` / ${first.message}` : ""}`
@@ -1121,7 +1492,7 @@ export default function CareNaviPage() {
         }
       } catch (error) {
         if (error?.name === "AbortError") return;
-        setRakutenItems([]);
+        setRakutenItemsByCategory({ live: [], eat: [], point: [] });
         setRakutenQueries([]);
         setRakutenError(error?.message || "楽天の商品候補を取得できませんでした。");
       } finally {
@@ -1134,86 +1505,56 @@ export default function CareNaviPage() {
     return () => {
       controller.abort();
     };
-  }, [category, priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature]);
+  }, [kitMode, kitPriceBand, policyKeySignature, symptomKey, basis, lifeKeySignature]);
 
-  const partnerItems = useMemo(
+  const partnerItemsByCategory = useMemo(
     () =>
-      scorePartnerOffers({
-        category,
-        policyKeys,
-        symptomKey,
-        symptomLabel,
-        profile: profileLike,
-        environmentMode: basis,
-        triggerFactors: tomorrowTriggerFactors,
-        seasonKey,
-        seasonLabel,
-        lifeKeys,
-        priceBand,
-        limit: 4,
-      }),
-    [category, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys, priceBand]
+      Object.fromEntries(
+        CATEGORY_ORDER.map((categoryKey) => [
+          categoryKey,
+          scorePartnerOffers({
+            category: categoryKey,
+            policyKeys,
+            symptomKey,
+            symptomLabel,
+            profile: profileLike,
+            environmentMode: basis,
+            triggerFactors: tomorrowTriggerFactors,
+            seasonKey,
+            seasonLabel,
+            lifeKeys,
+            priceBand: kitPriceBand,
+            limit: kitMode === "environment" ? 6 : 4,
+          }),
+        ])
+      ),
+    [kitMode, kitPriceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
   );
 
-  const visibleItems = useMemo(() => {
-    const rakutenVisible = rakutenItems
-      .filter((item) => itemMatchesPriceBand(item, category, priceBand))
-      .map((item) => ({ ...item, source: item.source || "rakuten", sourceType: item.sourceType || "rakuten", buttonText: "楽天で見る" }));
+  const careSetCards = useMemo(
+    () =>
+      buildCareSetCards({
+        mode: kitMode,
+        itemsByCategory: rakutenItemsByCategory,
+        partnerItemsByCategory,
+        policyKeys,
+        symptomLabel,
+        approachTags,
+      }),
+    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomLabel, approachTags]
+  );
 
-    const mixed = [];
-    const used = new Set();
-    const maxPartnerSlots = 4;
-
-    function getItemKey(item) {
-      return item?.itemUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
-    }
-
-    function addItem(item) {
-      if (!item || mixed.length >= CARE_NAVI_EXPANDED_LIMIT) return false;
-      const key = getItemKey(item);
-      if (!key || used.has(key)) return false;
-      used.add(key);
-      mixed.push(item);
-      return true;
-    }
-
-    // 楽天検索の「今の自分用に探している感」を主役にしつつ、A8/提携候補を要所で混ぜる。
-    addItem(rakutenVisible[0]);
-    addItem(rakutenVisible[1]);
-    addItem(partnerItems[0]);
-    addItem(rakutenVisible[2]);
-    addItem(rakutenVisible[3]);
-    addItem(partnerItems[1]);
-
-    let rakutenIndex = 4;
-    while (rakutenIndex < rakutenVisible.length && mixed.filter((item) => item?.source === "rakuten").length < 18 && mixed.length < CARE_NAVI_EXPANDED_LIMIT) {
-      addItem(rakutenVisible[rakutenIndex]);
-      rakutenIndex += 1;
-    }
-
-    for (let partnerIndex = 2; partnerIndex < partnerItems.length && mixed.filter((item) => item?.source !== "rakuten").length < maxPartnerSlots; partnerIndex += 1) {
-      addItem(partnerItems[partnerIndex]);
-    }
-
-    while (rakutenIndex < rakutenVisible.length && mixed.length < CARE_NAVI_EXPANDED_LIMIT) {
-      addItem(rakutenVisible[rakutenIndex]);
-      rakutenIndex += 1;
-    }
-
-    return mixed.slice(0, CARE_NAVI_EXPANDED_LIMIT);
-  }, [partnerItems, rakutenItems, category, priceBand]);
-  const priceBandLabel = getPriceBandLabel(category, priceBand);
-
-  const displayItems = visibleItems.slice(0, visibleLimit);
-  const canShowMore = visibleItems.length > visibleLimit;
+  const displaySets = careSetCards.slice(0, visibleLimit);
+  const canShowMore = careSetCards.length > visibleLimit;
 
   const trackingContext = useMemo(() => {
     const weatherSummary = compactForecastSummary(tomorrowBundle);
 
     return {
       basis,
-      category,
-      priceBand,
+      category: "set",
+      kitMode,
+      priceBand: kitPriceBand,
       symptomKey,
       coreCode: profileLike.core_code || null,
       subCodes: safeArray(profileLike.sub_labels),
@@ -1223,15 +1564,13 @@ export default function CareNaviPage() {
       weatherRiskLevel: weatherSummary.riskLevel,
       weatherSummary,
     };
-  }, [basis, category, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
+  }, [basis, kitMode, kitPriceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
   const coreIconPath = getCoreIconPath(profileLike.core_code);
   const subLabels = getSubLabels(profileLike.sub_labels).slice(0, 2);
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
-  const categoryMeta = getCategoryMeta(category);
-  const CategoryIcon = categoryMeta.icon;
 
   function toggleLifeKey(key) {
     setLifeKeys((prev) =>
@@ -1243,7 +1582,7 @@ export default function CareNaviPage() {
     <div style={CARE_NAVI_THEME}>
       <AppShell
       title="ケアナビ"
-      subtitle="ケアアイテムナビ"
+      subtitle="ケアセットナビ"
       headerRight={
         <Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>
           設定
@@ -1256,8 +1595,8 @@ export default function CareNaviPage() {
         <div className="relative z-10">
           <ModuleHeader
             icon={<IconCare className="h-6 w-6" />}
-            title="ケアアイテムナビ"
-            sub="体質・条件・コンディションに合わせたケアアイテムを探す"
+            title="ケアセットナビ"
+            sub="体質・天気・生活サインに合わせて、暮らす・食べる・ほぐすを組み合わせる"
           />
 
           <div className="px-1 pb-1 pt-4">
@@ -1398,59 +1737,54 @@ export default function CareNaviPage() {
               </div>
             </div>
 
-            <CategoryTabs value={category} onChange={setCategory} />
+            <SetModeFilter value={kitMode} onChange={setKitMode} />
           </div>
         </div>
       </div>
       </Module>
 
       <Module className="!bg-white p-4 sm:p-5">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-            <CategoryIcon className="h-5 w-5" />
+            <IconCare className="h-5 w-5" />
           </div>
-          <div>
-            <div className="text-[16px] font-black tracking-tight text-slate-900">{categoryMeta.label}の候補</div>
-            <div className="mt-0.5 text-[11px] font-bold text-slate-500">{categoryMeta.lead}</div>
+          <div className="min-w-0">
+            <div className="text-[16px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
+            <div className="mt-0.5 text-[11px] font-bold leading-5 text-slate-500">{kitModeMeta.lead}</div>
           </div>
         </div>
 
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
-          <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={category} />
           <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
-            このページには広告リンクを含みます。体質・天気・気になるサインをもとに、方針と商品役割を分けてケア候補を並べています。
+            このページには広告リンクを含みます。ここでのセットは、医療的な効果を保証するものではなく、体質・天気・生活サインからセルフケアの買い方パターンを整理した候補です。
           </div>
 
           {rakutenLoading ? (
             <RakutenLoadingCards />
-          ) : displayItems.length ? (
+          ) : displaySets.length ? (
             <>
-              {displayItems.map((item, index) => (
-              <ResultCard
-                key={`${category}-${item.source || "item"}-${item.itemCode || item.sourceKey || item.policyKey}-${item.title}-${index}`}
-                item={item}
-                itemPosition={index + 1}
-                trackingContext={trackingContext}
-              />
+              {displaySets.map((card, index) => (
+                <CareSetCard
+                  key={`${kitMode}-${card.key}-${index}`}
+                  card={card}
+                  cardPosition={index + 1}
+                  trackingContext={trackingContext}
+                />
               ))}
               {canShowMore ? (
                 <button
                   type="button"
-                  onClick={() => setVisibleLimit((prev) => Math.min(CARE_NAVI_EXPANDED_LIMIT, prev + 12))}
+                  onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))}
                   className="w-full rounded-[18px] bg-[#EAF6F3] px-4 py-3 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] hover:bg-[#DDF1EC]"
                 >
-                  もっと見る（{Math.min(CARE_NAVI_EXPANDED_LIMIT, visibleItems.length) - visibleLimit}件）
+                  セットをもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）
                 </button>
               ) : null}
             </>
-          ) : rakutenItems.length && priceBand !== "all" ? (
-            <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              {priceBandLabel}で表示できる候補は見つかりませんでした。「すべて」に戻すか、別の価格帯を選んでください。
-            </div>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              表示できるケア候補が見つかりませんでした。条件を変えるか、価格帯を「すべて」に戻してください。
+              表示できるケアセットが見つかりませんでした。生活サインを減らすか、セットの深さを変えてください。
             </div>
           )}
         </div>
