@@ -914,6 +914,7 @@ function hasAnyText(item, keywords = []) {
 }
 
 const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
+const FIRST_AID_REJECT_PATTERN = /(絆創膏|ばんそうこう|バンドエイド|キズテープ|傷テープ|キズパワーパッド|ムヒのキズ|救急絆|創傷|傷口|切り傷|擦り傷|すり傷|靴ずれ|あかぎれ|ひび割れ|ガーゼ|包帯|消毒|殺菌|サージカルテープ|防水フィルム|防水タイプ)/i;
 const BEDDING_ITEM_PATTERN = /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り|西川|ニトリ)/i;
 const WARMING_PAD_PATTERN = /(温熱|温め|あったか|ホット|発熱|遠赤外線|カイロ|パッド|パット|貼る|貼って|湿熱|温活)/i;
 const TRUE_DRINKWARE_PATTERN = /(水筒|タンブラー|マグボトル|保温ボトル|真空断熱|ステンレスボトル|保冷ボトル)/i;
@@ -921,6 +922,10 @@ const READY_TO_DRINK_PATTERN = /(ペットボトル|500ml|350ml|280ml|飲料|清
 
 function isPointBeautyItem(item) {
   return item?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(itemEvidenceText(item));
+}
+
+function isFirstAidItem(item) {
+  return FIRST_AID_REJECT_PATTERN.test(itemEvidenceText(item));
 }
 
 const POINT_AREA_RULES = [
@@ -1250,6 +1255,9 @@ function slotRequiresAreaMatch(slot) {
 
 function itemMatchesSlot(item, slot) {
   if (!item || item.category !== slot.category) return false;
+  // 傷・救急処置系は、未病レーダーのケアセット文脈から外れるため全カテゴリで除外。
+  // ここを通すと「暮らし側から整える枠」として絆創膏などが出る。
+  if (isFirstAidItem(item)) return false;
   if (item.category === "point" && BEDDING_ITEM_PATTERN.test(itemEvidenceText(item))) return false;
   if (isPointBeautyItem(item)) return false;
   if (hasAnyText(item, slot.avoidKeywords)) return false;
@@ -1436,6 +1444,7 @@ function buildPointUseGuide(item, slot) {
 
 function buildLiveUseGuide(item) {
   const text = itemEvidenceText(item);
+  if (FIRST_AID_REJECT_PATTERN.test(text)) return "";
   if (/枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|睡眠|寝返り/.test(text)) return "休む環境を見直す枠。首肩・腰まわりが気になる日に。";
   if (/入浴剤|バスソルト|炭酸|温浴|足湯/.test(text)) return "湯船に切り替えるきっかけに。冷えやこわばりが気になる日に。";
   if (/アイマスク|耳栓|遮光|遮音|ブルーライト/.test(text)) return "光や音の刺激を減らす枠。寝る前や画面作業後に。";
@@ -1445,24 +1454,36 @@ function buildLiveUseGuide(item) {
   return "暮らし側から整える枠として。";
 }
 
-function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags }) {
+function buildFallbackSlotsForDefinition(definition, context) {
+  const originalSlots = safeArray(definition?.slots);
+  const live = originalSlots.find((slot) => slot.category === "live") || liveSlotFor(definition.policyKey, context);
+  const eat = originalSlots.find((slot) => slot.category === "eat") || eatSlot(definition.policyKey, definition.titleSuffix);
+  const point = originalSlots.find((slot) => slot.category === "point");
+
+  // 0件回避用の予備セット。用途ズレを起こしやすい「ほぐす」は、
+  // 部位条件を満たせる時だけ残し、基本は暮らす＋食べるの2点セットで成立させる。
+  const slots = [live, eat];
+  if (point && !slotRequiresAreaMatch(point)) slots.push(point);
+  return uniqueSlots(slots).slice(0, 3);
+}
+
+function buildGenericFallbackSlots(policyKey, context) {
+  // 最後の予備。商品用途の上書きはせず、比較的安全な暮らす・食べる枠だけで組む。
+  return uniqueSlots([
+    liveSlotFor(policyKey, context),
+    eatSlot(policyKey, "default"),
+  ]).slice(0, 2);
+}
+
+function assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel = 0 }) {
   const used = new Set();
-  const byCategory = Object.fromEntries(
-    CATEGORY_ORDER.map((category) => {
-      const partner = safeArray(partnerItemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "a8", sourceType: item.sourceType || "partner" }));
-      const rakuten = safeArray(itemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "rakuten", sourceType: item.sourceType || "rakuten", buttonText: item.buttonText || "楽天で見る" }));
-      return [category, [...partner, ...rakuten]];
-    })
-  );
 
-  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors });
-
-  return definitions
+  return safeArray(definitions)
     .map((definition) => {
       const localUsed = new Set(used);
-      const items = definition.slots
+      const cardPolicyKeys = definition.policyKeys?.length ? definition.policyKeys : reorderPolicyKeysForCard(definition.policyKey, policyKeys);
+      const items = safeArray(definition.slots)
         .map((slot) => {
-          const cardPolicyKeys = definition.policyKeys?.length ? definition.policyKeys : reorderPolicyKeysForCard(definition.policyKey, policyKeys);
           const picked = pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys: cardPolicyKeys });
           if (!picked) return null;
           return { ...picked, useGuide: buildItemUseGuide(picked, slot, { ...definition, policyKeys: cardPolicyKeys }), slotCategory: slot.category };
@@ -1475,12 +1496,48 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
 
       return {
         ...definition,
+        fallbackLevel,
         items,
         tags: unique([...safeArray(definition.tags), ...safeArray(approachTags).slice(0, 2)]).filter(Boolean).slice(0, 6),
       };
     })
     .filter((card) => card.items.length >= 2)
     .slice(0, CARE_SET_EXPANDED_LIMIT);
+}
+
+function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags }) {
+  const byCategory = Object.fromEntries(
+    CATEGORY_ORDER.map((category) => {
+      const partner = safeArray(partnerItemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "a8", sourceType: item.sourceType || "partner" }));
+      const rakuten = safeArray(itemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "rakuten", sourceType: item.sourceType || "rakuten", buttonText: item.buttonText || "楽天で見る" }));
+      return [category, [...partner, ...rakuten]];
+    })
+  );
+
+  const context = { mode, policyKeys: safeArray(policyKeys), symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), symptomLabel };
+  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors });
+
+  const strictCards = assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 0 });
+  if (strictCards.length) return strictCards;
+
+  const fallbackDefinitions = definitions.map((definition, index) => ({
+    ...definition,
+    key: `${definition.key}-fallback-${index}`,
+    slots: buildFallbackSlotsForDefinition(definition, context),
+    lead: `${POLICY_META[definition.policyKey]?.label || "ケア"}方針に合わせて、まず取り入れやすい2点で組みます。`,
+    tags: unique([...safeArray(definition.tags), "2点セット"]).filter(Boolean).slice(0, 5),
+  }));
+  const fallbackCards = assembleCareSetCards({ definitions: fallbackDefinitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 1 });
+  if (fallbackCards.length) return fallbackCards;
+
+  const genericDefinitions = definitions.slice(0, 4).map((definition, index) => ({
+    ...definition,
+    key: `${definition.key}-generic-${index}`,
+    slots: buildGenericFallbackSlots(definition.policyKey, context),
+    lead: `${POLICY_META[definition.policyKey]?.label || "ケア"}方針に合わせて、暮らす・食べるから始める2点です。`,
+    tags: unique([POLICY_META[definition.policyKey]?.label, definition.titleSuffix, getSymptomAnchor(symptomKey)?.label, "2点セット"]).filter(Boolean).slice(0, 5),
+  }));
+  return assembleCareSetCards({ definitions: genericDefinitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 2 });
 }
 
 function SetModeFilter({ value, onChange }) {
@@ -2168,7 +2225,7 @@ export default function CareNaviPage() {
             </>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              表示できるケアセットが見つかりませんでした。生活サインを減らすか、セットの種類を変えてください。
+              条件に合うケアセットを十分に組めませんでした。セットタイプや気になる不調、生活サインを少し変えてお試しください。
             </div>
           )}
         </div>
