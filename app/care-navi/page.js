@@ -158,6 +158,7 @@ const PRODUCT_ROLE_LABELS = {
   ingredient: "素材を足す",
   drinkware: "温かい一杯の道具",
   neck_shoulder_release: "首肩をほぐす",
+  heat_release: "温めてゆるめる",
   posture_release: "姿勢を切り替える",
   foot_leg_release: "足・ふくらはぎをほぐす",
   gentle_stretch: "やさしく伸ばす",
@@ -883,13 +884,8 @@ function RakutenStatusCard({ error, queries }) {
     );
   }
 
-  if (!queries?.length) return null;
-
-  return (
-    <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
-      検索軸：{queries.slice(0, 3).join(" / ")}
-    </div>
-  );
+  // 検索語は内部ログ用。ユーザー画面では紛らわしいため表示しない。
+  return null;
 }
 
 
@@ -906,15 +902,25 @@ function itemText(item) {
   return `${item?.title || ""} ${item?.itemName || ""} ${item?.itemCaption || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")} ${item?.shopName || ""}`.toLowerCase();
 }
 
+function itemEvidenceText(item) {
+  // 商品そのものの用途判定では、検索語・プラン由来タグを混ぜない。
+  // ここを混ぜると、麦茶が生姜系扱いになる等の事故が起きる。
+  return `${item?.title || ""} ${item?.itemName || ""} ${item?.itemCaption || ""} ${item?.reason || ""} ${item?.shopName || ""}`.toLowerCase();
+}
+
 function hasAnyText(item, keywords = []) {
-  const text = itemText(item);
+  const text = itemEvidenceText(item);
   return safeArray(keywords).some((keyword) => text.includes(String(keyword || "").toLowerCase()));
 }
 
 const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
+const BEDDING_ITEM_PATTERN = /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り|西川|ニトリ)/i;
+const WARMING_PAD_PATTERN = /(温熱|温め|あったか|ホット|発熱|遠赤外線|カイロ|パッド|パット|貼る|貼って|湿熱|温活)/i;
+const TRUE_DRINKWARE_PATTERN = /(水筒|タンブラー|マグボトル|保温ボトル|真空断熱|ステンレスボトル|保冷ボトル)/i;
+const READY_TO_DRINK_PATTERN = /(ペットボトル|500ml|350ml|280ml|飲料|清涼飲料|ボトル缶)/i;
 
 function isPointBeautyItem(item) {
-  return item?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(`${item?.title || ""} ${item?.itemCaption || ""} ${item?.query || ""} ${safeArray(item?.tags).join(" ")}`);
+  return item?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(itemEvidenceText(item));
 }
 
 const POINT_AREA_RULES = [
@@ -928,11 +934,24 @@ const POINT_AREA_RULES = [
 
 function inferPointAreas(item) {
   if (item?.category !== "point") return [];
-  const text = itemText(item);
+  const text = itemEvidenceText(item);
   return POINT_AREA_RULES.filter((rule) => rule.pattern.test(text)).map((rule) => rule.key);
 }
 
 function inferRoleLabelFromItem(item) {
+  const text = itemEvidenceText(item);
+
+  if (item?.category === "eat") {
+    if (TRUE_DRINKWARE_PATTERN.test(text) && !READY_TO_DRINK_PATTERN.test(text)) return "温かい一杯の道具";
+    if (/味噌汁|みそ汁|スープ|雑炊|おかゆ|リゾット/.test(text)) return "軽めの食事";
+    if (/茶|ティー|ルイボス|ハーブ|麦茶|はとむぎ|ハトムギ|しょうが湯|生姜湯/.test(text)) return "素材の一杯";
+  }
+
+  if (item?.category === "point") {
+    if (WARMING_PAD_PATTERN.test(text)) return "温めてゆるめる";
+    if (/ストレッチ|伸ばす|フォームローラー|ストレッチポール|ヨガマット/.test(text)) return "姿勢を切り替える";
+  }
+
   const roleLabel = getProductRoleLabel(item);
   if (roleLabel && roleLabel !== "ケア候補") return roleLabel;
 
@@ -1225,6 +1244,7 @@ function slotRequiresAreaMatch(slot) {
 
 function itemMatchesSlot(item, slot) {
   if (!item || item.category !== slot.category) return false;
+  if (item.category === "point" && BEDDING_ITEM_PATTERN.test(itemEvidenceText(item))) return false;
   if (isPointBeautyItem(item)) return false;
   if (hasAnyText(item, slot.avoidKeywords)) return false;
 
@@ -1272,33 +1292,43 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
 }
 
 const TEA_MATERIAL_GROUPS = [
-  { key: "warming", label: "生姜・陳皮系", pattern: /(生姜|しょうが|ジンジャー|陳皮|シナモン|桂皮|黒豆)/ },
-  { key: "calming", label: "カモミール・レモンバーム系", pattern: /(カモミール|レモンバーム|ラベンダー|ルイボス|おやすみ)/ },
-  { key: "light", label: "はとむぎ・とうもろこし系", pattern: /(はとむぎ|ハトムギ|とうもろこし|コーン|小豆|黒豆|どくだみ)/ },
-  { key: "moist", label: "ルイボス・黒豆・なつめ系", pattern: /(ルイボス|黒豆|なつめ|棗|麦茶|クコ|枸杞)/ },
-  { key: "support", label: "なつめ・黒豆・穀物系", pattern: /(なつめ|棗|黒豆|玄米|穀物|ルイボス|麦茶)/ },
+  { key: "warming", label: "生姜・陳皮系", pattern: /(生姜|しょうが|ジンジャー|陳皮|シナモン|桂皮)/ },
+  { key: "calming", label: "カモミール・レモンバーム系", pattern: /(カモミール|レモンバーム|ラベンダー|おやすみ)/ },
+  { key: "light", label: "はとむぎ・とうもろこし系", pattern: /(はとむぎ|ハトムギ|とうもろこし|コーン|小豆|どくだみ)/ },
+  { key: "barley", label: "麦茶系", pattern: /(麦茶|むぎ茶|ムギ茶)/ },
+  { key: "moist", label: "ルイボス・黒豆・なつめ系", pattern: /(ルイボス|黒豆|なつめ|棗|クコ|枸杞)/ },
+  { key: "support", label: "なつめ・黒豆・穀物系", pattern: /(なつめ|棗|黒豆|玄米|穀物|ルイボス)/ },
 ];
 
 function detectTeaMaterialGroups(item) {
-  const text = itemText(item);
+  const text = itemEvidenceText(item);
   return TEA_MATERIAL_GROUPS.filter((group) => group.pattern.test(text));
 }
 
 function scoreTeaMaterialFit(item, slot, policyKeys = []) {
   if (item.category !== "eat") return 0;
+  const text = itemEvidenceText(item);
   const groups = detectTeaMaterialGroups(item).map((group) => group.key);
-  if (!groups.length) return 0;
   const desired = safeArray(slot.teaDirections);
   let score = groups.some((key) => desired.includes(key)) ? 10 : 0;
+
+  // ぬくめる・めぐらせる等で「温かい素材」を探している時に、
+  // 麦茶ペットボトル等が検索意図だけで上がるのを抑える。
+  if (desired.includes("warming") && !groups.includes("warming")) {
+    if (READY_TO_DRINK_PATTERN.test(text) || groups.includes("barley")) score -= 12;
+    else if (/茶|ティー|飲料/.test(text)) score -= 5;
+  }
+
+  if (!groups.length) return score;
   const primaryPolicy = safeArray(policyKeys)[0];
   const policyDesired = {
     shizumeru: ["calming", "moist"],
     yurumeru: ["calming", "support"],
     meguraseru: ["warming", "support"],
     nagasu: ["light"],
-    uruosu: ["moist"],
+    uruosu: ["moist", "barley"],
     nukumeru: ["warming"],
-    sasaeru: ["support"],
+    sasaeru: ["support", "barley"],
   }[primaryPolicy] || [];
   if (groups.some((key) => policyDesired.includes(key))) score += 4;
   return score;
@@ -1330,7 +1360,7 @@ function buildItemUseGuide(item, slot, card) {
 }
 
 function buildEatUseGuide(item, card) {
-  const text = itemText(item);
+  const text = itemEvidenceText(item);
   const group = detectTeaMaterialGroups(item)[0];
   const policyKey = card?.policyKey;
 
@@ -1340,7 +1370,7 @@ function buildEatUseGuide(item, card) {
     return "温かく軽めの一品。食事を考える余力が少ない日に。";
   }
 
-  if (/ボトル|水筒|タンブラー|マグボトル|保温ボトル/.test(text)) {
+  if (TRUE_DRINKWARE_PATTERN.test(text) && !READY_TO_DRINK_PATTERN.test(text)) {
     return "温かい一杯を持ち歩く道具。冷たい飲み物に寄りやすい日に。";
   }
 
@@ -1348,6 +1378,7 @@ function buildEatUseGuide(item, card) {
     if (group.key === "warming") return `${group.label}。冷たい飲み物が続いた日の切り替えに。`;
     if (group.key === "calming") return `${group.label}。作業後や寝る前の切り替えに。`;
     if (group.key === "light") return `${group.label}。湿気や食べすぎで重い日に。`;
+    if (group.key === "barley") return `${group.label}。暑さや乾きやすい日の水分補給に。`;
     if (group.key === "moist") return `${group.label}。乾きやすい日の水分補給に。`;
     if (group.key === "support") return `${group.label}。食事や休憩が乱れた日の一杯に。`;
   }
@@ -1367,24 +1398,42 @@ function buildEatUseGuide(item, card) {
 }
 
 function buildPointUseGuide(item, slot) {
+  const text = itemEvidenceText(item);
   const areas = inferPointAreas(item);
-  if (areas.includes("face")) return "";
-  if (areas.includes("low_back")) return "腰・背中まわりに使う枠。強く押し込まず短時間で。";
-  if (areas.includes("neck_shoulder")) return "首・肩まわりに使う枠。作業後や寝る前に短時間で。";
-  if (areas.includes("foot_leg")) return "足裏やふくらはぎを動かす枠。座りっぱなしの日に。";
-  if (areas.includes("eye_head")) return "目元・こめかみ周辺の切り替え枠。押しすぎず軽めに。";
+  if (areas.includes("face") || BEDDING_ITEM_PATTERN.test(text)) return "";
+
+  if (WARMING_PAD_PATTERN.test(text)) {
+    if (areas.includes("low_back")) return "腰・背中まわりを温める枠。休む前や冷えが気になる日に。";
+    if (areas.includes("neck_shoulder")) return "首肩まわりを温める枠。作業後や休む前に。";
+    if (areas.includes("foot_leg")) return "足元を温める枠。冷えやすい日に。";
+    return "気になる部位を温める枠として。";
+  }
+
+  if (/ローラー|ボール|指圧|ツボ|マッサージ|押圧|押し|突起|天然石/.test(text)) {
+    if (areas.includes("low_back")) return "腰・背中まわりを動かす枠。短時間で軽く。";
+    if (areas.includes("neck_shoulder")) return "首肩まわりを動かす枠。作業後や休む前に。";
+    if (areas.includes("foot_leg")) return "足裏やふくらはぎを動かす枠。座りっぱなしの日に。";
+    if (areas.includes("eye_head")) return "目元・こめかみ周辺の切り替え枠。軽めに。";
+  }
+
+  if (/ストレッチ|伸ばす|フォームローラー|ストレッチポール|ヨガマット/.test(text)) {
+    if (areas.includes("low_back")) return "腰・背中まわりをゆっくり伸ばす枠。休む前の切り替えに。";
+    if (areas.includes("neck_shoulder")) return "首肩まわりをゆっくり伸ばす枠。作業後の切り替えに。";
+    if (areas.includes("foot_leg")) return "足まわりをゆっくり伸ばす枠。座りっぱなしの日に。";
+  }
+
   if (safeArray(slot?.requiredAreas).length) return "";
-  return "手の届く範囲を軽く動かす道具として。";
+  return "体を軽く動かす道具として。";
 }
 
 function buildLiveUseGuide(item) {
-  const text = itemText(item);
+  const text = itemEvidenceText(item);
+  if (/枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|睡眠|寝返り/.test(text)) return "休む環境を見直す枠。首肩・腰まわりが気になる日に。";
   if (/入浴剤|バスソルト|炭酸|温浴|足湯/.test(text)) return "湯船に切り替えるきっかけに。冷えやこわばりが気になる日に。";
   if (/アイマスク|耳栓|遮光|遮音|ブルーライト/.test(text)) return "光や音の刺激を減らす枠。寝る前や画面作業後に。";
-  if (/腹巻|湯たんぽ|ウォーマー|カイロ|温熱/.test(text)) return "冷やしたくない部位を守る枠。外出前や寝る前に。";
+  if (/腹巻|湯たんぽ|ウォーマー|カイロ|温熱|発熱|毛布/.test(text)) return "冷やしたくない部位を守る枠。外出前や休む前に。";
   if (/除湿|湿気|サーキュレーター|防湿/.test(text)) return "湿気がこもる日の室内環境づくりに。";
   if (/加湿|乾燥|保湿/.test(text)) return "乾きやすい日の室内環境づくりに。";
-  if (/枕|マットレス|寝具|睡眠/.test(text)) return "休む環境を見直す枠。首肩・腰まわりが気になる日に。";
   return "暮らし側から整える枠として。";
 }
 
