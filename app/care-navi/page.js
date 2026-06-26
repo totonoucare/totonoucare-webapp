@@ -116,6 +116,28 @@ const INTENT_LABELS = {
   ingredient: "素材を足す",
 };
 
+const PRODUCT_ROLE_LABELS = {
+  reduce_light: "光・刺激を減らす",
+  sleep_environment: "眠る環境づくり",
+  warm_body: "冷やさない暮らし",
+  bath_shift: "入浴で切り替える",
+  humidity_control: "湿気をためない",
+  moisture_air: "乾燥を守る",
+  warm_drink: "温かい飲み物",
+  caffeine_shift: "カフェインを減らす",
+  light_meal: "軽めの食事",
+  pantry_soup: "常備しやすい汁物",
+  nutrition_support: "栄養補助",
+  ingredient: "素材を足す",
+  drinkware: "温かい一杯の道具",
+  neck_shoulder_release: "首肩をほぐす",
+  posture_release: "姿勢を切り替える",
+  foot_leg_release: "足元を軽くする",
+  gentle_stretch: "やさしく伸ばす",
+  tsubo_support: "ツボケアを続ける",
+  general: "ケア用品",
+};
+
 const SOURCE_TYPE_LABELS = {
   life: "生活サインから",
   symptom: "不調フォーカスから",
@@ -627,10 +649,15 @@ function CategoryTabs({ value, onChange }) {
   );
 }
 
+function getProductRoleLabel(item) {
+  return item?.productRoleLabel || PRODUCT_ROLE_LABELS[item?.productRole] || INTENT_LABELS[item?.intentType] || PRODUCT_TYPE_LABELS[item?.productType] || "ケア候補";
+}
+
 function getItemContextLabel(item) {
+  const roleLabel = getProductRoleLabel(item);
+  if (roleLabel) return `役割：${roleLabel}`;
   const sourceLabel = SOURCE_TYPE_LABELS[item?.sourceType] || SOURCE_TYPE_LABELS[item?.sourceKey];
   if (sourceLabel) return sourceLabel;
-  if (item?.category === "eat" && item?.intentType) return INTENT_LABELS[item.intentType] || "食べるケア";
   const policy = POLICY_META[item?.policyKey];
   return policy?.label ? `方針：${policy.label}` : "ケア候補";
 }
@@ -638,17 +665,17 @@ function getItemContextLabel(item) {
 function getReasonPills(item) {
   const pills = [];
   const sourceLabel = SOURCE_TYPE_LABELS[item?.sourceType] || SOURCE_TYPE_LABELS[item?.sourceKey];
-  const intentLabel = INTENT_LABELS[item?.intentType];
+  const roleLabel = getProductRoleLabel(item);
   const productLabel = PRODUCT_TYPE_LABELS[item?.productType];
   const policyLabel = POLICY_META[item?.policyKey]?.label;
 
   if (sourceLabel) pills.push(sourceLabel);
-  if (intentLabel) pills.push(intentLabel);
-  if (productLabel) pills.push(productLabel);
+  if (roleLabel) pills.push(roleLabel);
+  if (productLabel && productLabel !== roleLabel) pills.push(productLabel);
+  if (policyLabel) pills.push(`方針：${policyLabel}`);
   safeArray(item?.tags).forEach((tag) => pills.push(POLICY_META[tag]?.label || tag));
-  if (policyLabel && item?.sourceType === "policy") pills.push(`方針：${policyLabel}`);
 
-  return unique(pills).slice(0, 5);
+  return unique(pills).slice(0, 6);
 }
 
 function ResultCard({ item, itemPosition, trackingContext }) {
@@ -1392,7 +1419,7 @@ export default function CareNaviPage() {
           <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
           <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={category} />
           <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
-            このページには広告リンクを含みます。体質・天気・気になるサインとの関連性をもとに、ケア候補を並べています。
+            このページには広告リンクを含みます。体質・天気・気になるサインをもとに、方針と商品役割を分けてケア候補を並べています。
           </div>
 
           {rakutenLoading ? (
