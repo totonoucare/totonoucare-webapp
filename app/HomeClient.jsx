@@ -533,6 +533,79 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
   );
 }
 
+function GuestMyCareSelectPreview({ onCheck }) {
+  return (
+    <div className="mt-5 rounded-[26px] bg-white p-5 text-left ring-1 ring-inset ring-[#CFE0D3] shadow-[0_14px_30px_-24px_rgba(37,95,79,0.24)]">
+      <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5]">
+        MY CARE SELECT
+      </div>
+      <div className="mt-3 text-[16px] font-black tracking-tight text-slate-950">
+        体質チェック後は、MYケアセレクトへ
+      </div>
+      <p className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
+        あなたの体質・不調・天気に合わせて、ケア用品・食品・サービス候補を見られます。
+        暮らす・食べる・ほぐすを組み合わせて、取り入れやすい候補を選べます。
+      </p>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {[
+          ["暮らす", "温める・休む"],
+          ["食べる", "飲み物・汁物"],
+          ["ほぐす", "ツボ・部位ケア"],
+        ].map(([title, sub]) => (
+          <div key={title} className="rounded-[16px] bg-[#F8FBF9] px-2.5 py-2 ring-1 ring-[#E0EBE5]">
+            <div className="text-[11px] font-black text-slate-900">{title}</div>
+            <div className="mt-0.5 text-[9px] font-bold leading-4 text-slate-500">{sub}</div>
+          </div>
+        ))}
+      </div>
+      <Button onClick={onCheck} variant="secondary" className="mt-4 w-full bg-white py-3 text-[13px] shadow-sm">
+        体質チェックしてMYケアを見る
+      </Button>
+    </div>
+  );
+}
+
+function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow }) {
+  const title = hasResult ? "MYケアセレクト" : "体質チェック後に、MYケアセレクト";
+  const body = hasResult
+    ? "体質トリセツと気になる不調をもとに、ケア用品・食品・サービス候補をあなた向けに選べます。明日の天気を重ねた候補も見られます。"
+    : "体質チェックをすると、あなたの体質・不調・天気に合わせたケア用品・食品・サービス候補を見られます。";
+  const primaryLabel = hasResult ? "MYケアセレクトを見る" : "体質チェックしてMYケアを見る";
+  const secondaryLabel = hasResult && hasLocation ? "明日に備える候補を見る" : hasResult ? "地域設定して予報とつなぐ" : "まずは体質チェックへ";
+
+  return (
+    <Module className="mt-5 bg-white p-5 ring-1 ring-[#D3E1D5] shadow-[0_16px_36px_-28px_rgba(37,95,79,0.28)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5]">
+            MY CARE SELECT
+          </div>
+          <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
+            {title}
+          </h2>
+          <p className="mt-2 text-[12px] font-extrabold leading-6 text-slate-600">
+            {body}
+          </p>
+        </div>
+        <div className="hidden shrink-0 rounded-[18px] bg-[#F8FBF9] px-3 py-2 text-center ring-1 ring-[#D3E1D5] sm:block">
+          <div className="text-[10px] font-black text-[#2F8F79]">暮らす</div>
+          <div className="text-[10px] font-black text-[#8B640C]">食べる</div>
+          <div className="text-[10px] font-black text-slate-600">ほぐす</div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
+          {primaryLabel}
+        </Button>
+        <Button variant="secondary" onClick={onTomorrow} className="w-full bg-white py-4 shadow-sm sm:flex-1">
+          {secondaryLabel}
+        </Button>
+      </div>
+    </Module>
+  );
+}
+
 function ActionTile({ icon, title, sub, onClick }) {
   return (
     <button
@@ -1186,6 +1259,8 @@ export default function HomePage() {
             </div>
           ) : null}
 
+          <GuestMyCareSelectPreview onCheck={() => router.push("/check")} />
+
           {/* 体質チェックへの誘導 */}
           <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
              <div className="text-[15px] font-black tracking-tight text-[#24564C]">
@@ -1268,6 +1343,20 @@ export default function HomePage() {
         todayLoading={Boolean(session) && (todayLoading || !todayBundle)}
         tomorrowLoading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
         onOpenRadar={() => router.push("/radar")}
+      />
+
+      <MyCareSelectHomeCard
+        hasResult={Boolean(latestResult && core)}
+        hasLocation={Boolean(radarLocation)}
+        onPrimary={() => {
+          if (!latestResult || !core) return router.push("/check");
+          return router.push("/care-navi?mode=starter&basis=base");
+        }}
+        onTomorrow={() => {
+          if (!latestResult || !core) return router.push("/check");
+          if (!radarLocation) return router.push("/radar");
+          return router.push("/care-navi?mode=starter&basis=tomorrow");
+        }}
       />
 
       <HomeStateCta
