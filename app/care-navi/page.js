@@ -51,7 +51,7 @@ const SET_MODE_OPTIONS = [
     key: "starter",
     label: "軽く試せるセット",
     band: "light",
-    lead: "まずは2〜3点で、今の生活に足しやすい組み合わせです。",
+    lead: "まずは3つの候補から、今の生活に足しやすいものを選べます。",
   },
   {
     key: "steady",
@@ -1602,7 +1602,7 @@ function slotRequiresAreaMatch(slot) {
 
 function itemMatchesSlot(item, slot) {
   if (!item || item.category !== slot.category) return false;
-  // 傷・救急処置系は、未病レーダーのケアセット文脈から外れるため全カテゴリで除外。
+  // 傷・救急処置系は、未病レーダーのMYケアセレクト文脈から外れるため全カテゴリで除外。
   // ここを通すと「暮らし側から整える枠」として絆創膏などが出る。
   if (isFirstAidItem(item) || isMedicalSupportItem(item)) return false;
   if (item.category === "point" && BEDDING_ITEM_PATTERN.test(itemEvidenceText(item))) return false;
@@ -2076,7 +2076,7 @@ function CareSetCard({ card, cardPosition, trackingContext }) {
         <img src={getPolicyIconPath(card.policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#B6D8CF]" loading="lazy" />
       </div>
       <div className="pr-20">
-        <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">ケアセット {cardPosition}</div>
+        <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">MYセレクト {cardPosition}</div>
         <h3 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
         <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
       </div>
@@ -2470,8 +2470,8 @@ export default function CareNaviPage() {
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
-      title="ケアナビ"
-      subtitle="ケアセットナビ"
+      title="MYケアセレクト"
+      subtitle="ケア用品・食品・サービス候補"
       headerRight={
         <Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>
           設定
@@ -2484,8 +2484,8 @@ export default function CareNaviPage() {
         <div className="relative z-10">
           <ModuleHeader
             icon={<IconCare className="h-6 w-6" />}
-            title="ケアセットナビ"
-            sub="体質・天気・生活サインに合わせて、暮らす・食べる・ほぐすを組み合わせる"
+            title="MYケアセレクト"
+            sub="体質・天気・生活サインに合わせて、ケア用品・食品・サービス候補を選ぶ"
           />
 
           <div className="px-1 pb-1 pt-4">
@@ -2646,7 +2646,7 @@ export default function CareNaviPage() {
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
           <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
-            このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインをもとに、今日から使いやすいケアセットを選んでいます。医療的な治療ではなく、毎日のセルフケア選びとして活用してください。
+            このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインをもとに、ケア用品・食品・サービス候補をあなた向けに選んでいます。医療的な治療ではなく、毎日のセルフケア選びとして活用してください。
           </div>
 
           {rakutenLoading ? (
@@ -2673,7 +2673,7 @@ export default function CareNaviPage() {
             </>
           ) : (
             <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              条件に合うケアセットを十分に組めませんでした。セットタイプや気になる不調、生活サインを少し変えてお試しください。
+              条件に合うMYケア候補を十分に組めませんでした。セットタイプや気になる不調、生活サインを少し変えてお試しください。
             </div>
           )}
         </div>
