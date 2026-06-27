@@ -1509,7 +1509,10 @@ function slotsForPolicySet(policyKey, titleSuffix, context, variantIndex) {
     slots.push(live, point, eat);
   }
 
-  if (isStarter) return slots.slice(0, 2);
+  // 「軽く試せるセット」でも、暮らす・食べる・ほぐすの3枠を基本表示する。
+  // 以前は2枠固定だったが、セット内の一部だけ買いたいユーザーの選択肢を減らすため廃止。
+  // ただし重複スロットは統合するので、条件によっては安全上2枠になる場合がある。
+  if (isStarter) return uniqueSlots(slots).slice(0, 3);
   if (isEnvironment) return uniqueSlots(slots).slice(0, 3);
   return uniqueSlots(slots).slice(0, 3);
 }
