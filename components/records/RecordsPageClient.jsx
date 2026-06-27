@@ -126,7 +126,7 @@ export default function RecordsPageClient({ initialTab = "calendar" }) {
             {tab === "report" ? "週次レポートは鋭意開発中です" : "記録カレンダーは鋭意開発中です"}
           </div>
           <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
-            まずは体質トリセツ・体調予報・ケアナビを安定して使えるように整えています。
+            まずは体質トリセツ・体調予報・MYケアセレクトを安定して使えるように整えています。
           </div>
 
           <div className="mt-6">
