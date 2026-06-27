@@ -639,7 +639,7 @@ export default function KarteClient() {
                   このページは現在非表示です
                 </h2>
                 <p className="mt-2 text-[14px] font-bold leading-7 text-[#475569]">
-                  現在は、体質トリセツ・体調予報・ケアナビを優先して提供しています。
+                  現在は、体質トリセツ・体調予報・MYケアセレクトを優先して提供しています。
                 </p>
               </div>
               <div className="shrink-0 rounded-full border border-[#d7e6df] bg-white px-6 py-4 text-[14px] font-black text-[#2f7567] shadow-sm">
