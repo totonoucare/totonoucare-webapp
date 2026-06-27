@@ -655,8 +655,8 @@ function teaRow(keyword, reason, tags = []) {
 
 const EAT_YAKUZEN_BLEND_ROWS = {
   // メーカー名を検索語の主役にすると、楽天側で飴・衣類・サプリまで拾いやすい。
-  // 漢茶シリーズは「設計サンプル」として扱い、検索は茶素材・ブレンド方向で行う。
-  // 薬日本堂/漢茶は検索結果に出た時だけ、後段のスコアで軽く優遇する。
+  // ブランド固定ではなく、茶素材・和漢/薬膳ブレンドの方向で検索する。
+  // スコア側でもブランド名ではなく、商品名/説明から読める素材方向を評価する。
   default: [
     teaRow("薬膳茶 ブレンド ノンカフェイン", "単素材のお茶より、今の方針に寄せて選びやすいブレンド候補です。", ["薬膳茶", "ブレンド"]),
     teaRow("和漢茶 ブレンド ノンカフェイン", "体質寄りの飲み物として、毎日の一杯に足しやすい候補です。", ["和漢茶", "ブレンド"]),
@@ -1462,29 +1462,18 @@ function isAcceptableRakutenItem(item, plan) {
   return isAcceptableBeverageItem(item, plan) && isAcceptableForPlanProductType(item, plan);
 }
 
-const KANCHA_SERIES_NAMES = ["花通茶", "美麗茶", "潤快茶", "軽軽茶", "活元茶", "妃美茶", "暖宮茶", "利楽茶"];
-
 function scoreKanchaPriority(item, plan) {
   const itemText = rakutenItemText(item);
   const planText = [plan?.keyword, ...asArray(plan?.tags)].filter(Boolean).join(" ");
 
   let boost = 0;
 
-  // 検索語ではなく、実際に返ってきた商品側にブランド/シリーズ名がある時だけ強く加点する。
-  if (/薬日本堂/.test(itemText)) boost += 18;
-  if (/漢茶/.test(itemText)) boost += 16;
-
-  // 一般の良質な薬膳茶・和漢茶も拾いたいので、メーカー固定ではなくブレンド茶の文脈を軽く評価する。
+  // v7.12: ブランド名・シリーズ名では押し上げない。
+  // 商品名/説明から読める「素材の方向」と「ブレンド茶としての文脈」だけを軽く評価する。
   if (/和漢|薬膳|養生/.test(itemText)) boost += 8;
+  if (/なつめ|棗|黒豆|陳皮|生姜|しょうが|ジンジャー|シナモン|はとむぎ|ハトムギ|とうもろこし|ルイボス|カモミール|レモンバーム|ラベンダー|麦茶|玄米|穀物/.test(itemText)) boost += 6;
   if (/ブレンド/.test(itemText) && BEVERAGE_REQUIRED_PATTERN.test(itemText)) boost += 4;
-  if (/和漢|薬膳|養生|なつめ|陳皮|はとむぎ|ルイボス/.test(planText)) boost += 3;
-
-  for (const name of KANCHA_SERIES_NAMES) {
-    if (itemText.includes(name)) {
-      boost += 14;
-      break;
-    }
-  }
+  if (/和漢|薬膳|養生|なつめ|陳皮|はとむぎ|ハトムギ|黒豆|ルイボス|カモミール|レモンバーム/.test(planText)) boost += 3;
 
   return boost;
 }
