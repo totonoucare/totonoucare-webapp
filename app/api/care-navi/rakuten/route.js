@@ -313,7 +313,7 @@ const CATEGORY_ANCHOR_QUERY_RULES = {
         ["電子灸 温熱 ツボ", "火を使わず温めるセルフケア候補です。", ["電子灸", "温熱"]],
       ],
       digestion: [
-        ["せんねん灸 太陽 お腹 足三里", "胃腸まわりが気になる日に、火を使わず温める候補です。", ["お灸", "胃腸"]],
+        ["火を使わないお灸 お腹 足三里", "胃腸まわりが気になる日に、火を使わず温める候補です。", ["お灸", "胃腸"]],
         ["ツボ押し棒 足三里", "足三里まわりのセルフケアを続けやすくする候補です。", ["ツボ押し", "足三里"]],
       ],
       neck_shoulder: [
@@ -337,22 +337,22 @@ const CATEGORY_ANCHOR_QUERY_RULES = {
         ["火を使わないお灸 足元", "足元を冷やさず温めるセルフケア候補です。", ["お灸", "足元"]],
       ],
       mood: [
-        ["火を使わないお灸 せんねん灸 太陽", "気分が張りやすい日に、温めながら一度落ち着く候補です。", ["お灸", "温熱"]],
+        ["火を使わないお灸 温熱", "気分が張りやすい日に、温めながら一度落ち着く候補です。", ["お灸", "温熱"]],
         ["頭皮ブラシ マッサージ シリコン", "頭まわりの張りを軽くほぐす候補です。", ["頭まわり", "ほぐす"]],
       ],
     },
     byPolicy: {
       shizumeru: [
-        ["火を使わないお灸 せんねん灸 太陽", "火を使わず、ツボまわりを温める候補です。", ["お灸", "温熱"]],
+        ["火を使わないお灸 温熱", "火を使わず、ツボまわりを温める候補です。", ["お灸", "温熱"]],
         ["電子灸 温熱 ツボ", "繰り返し使える温熱ツボケア候補です。", ["電子灸", "しっかりケア"]],
       ],
       yurumeru: [
-        ["せんねん灸 火を使わない", "ツボケアを温めながら続ける候補です。", ["お灸", "温熱"]],
+        ["火を使わないお灸", "ツボケアを温めながら続ける候補です。", ["お灸", "温熱"]],
         ["マッサージガン 軽量", "こわばりを短時間でゆるめたい時の候補です。", ["しっかりケア", "振動"]],
         ["ツボ押し棒 足裏", "手で押すケアを続けやすくする候補です。", ["ツボ押し", "足元"]],
       ],
       meguraseru: [
-        ["せんねん灸 レギュラー 台座灸", "ツボまわりを温め、巡りのきっかけを作る候補です。", ["お灸", "リピート"]],
+        ["台座灸 レギュラー", "ツボまわりを温め、巡りのきっかけを作る候補です。", ["お灸", "リピート"]],
         ["マッサージガン 筋膜リリース 軽量", "同じ姿勢で固まった体を短時間で切り替える候補です。", ["しっかりケア", "振動"]],
         ["フォームローラー", "体を大きく動かして切り替える候補です。", ["伸ばす", "巡り"]],
       ],
@@ -363,10 +363,10 @@ const CATEGORY_ANCHOR_QUERY_RULES = {
       ],
       uruosu: [
         ["ストレッチポール ハーフ", "強く攻めず、やさしく伸ばす候補です。", ["ストレッチ", "やさしく"]],
-        ["低刺激 せんねん灸", "温めを弱めに試したい日の候補です。", ["お灸", "低刺激"]],
+        ["低刺激 お灸 台座灸", "温めを弱めに試したい日の候補です。", ["お灸", "低刺激"]],
       ],
       nukumeru: [
-        ["火を使わないお灸 せんねん灸 太陽", "冷えが気になるツボまわりを火を使わず温める候補です。", ["お灸", "温熱"]],
+        ["火を使わないお灸 温熱", "冷えが気になるツボまわりを火を使わず温める候補です。", ["お灸", "温熱"]],
         ["電子灸 温熱 ツボ", "繰り返し使える温熱ツボケア候補です。", ["電子灸", "しっかりケア"]],
         ["温熱パッド 腰 肩", "腰肩まわりを冷やしにくくする候補です。", ["温熱", "腰肩"]],
       ],
@@ -1637,10 +1637,33 @@ function scoreEatProductType(productType, plan) {
   return score;
 }
 
+function normalizeAffiliateRate(item) {
+  const candidates = [item?.affiliateRate, item?.affiliateRatePercent, item?.affiliateRateNumber];
+  for (const value of candidates) {
+    const num = Number(value);
+    if (Number.isFinite(num) && num > 0) return num;
+  }
+  return 0;
+}
+
+function scoreAffiliateRatePriority(item) {
+  const rate = normalizeAffiliateRate(item);
+  if (!rate) return 0;
+  // 料率は検索品質を壊さない範囲の小さな加点に留める。
+  return Math.min(rate, 12) * 0.55;
+}
+
+function scoreTrustedCareBrand(item) {
+  // v7.10: ブランド名だけで順位を押し上げない。
+  // 楽天検索後は、用途一致・商品タイプ・レビュー・料率で評価する。
+  return 0;
+}
+
 function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
   const reviewCount = Number(item?.reviewCount || 0);
   const reviewAverage = Number(item?.reviewAverage || 0);
   const price = Number(item?.itemPrice || 0);
+  const affiliateRate = normalizeAffiliateRate(item);
   const url = item?.affiliateUrl || item?.itemUrl || "";
   const title = item?.itemName || item?.catchcopy || plan.keyword;
   const category = plan.category || "live";
@@ -1668,13 +1691,20 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     shopName: item?.shopName || "",
     reviewAverage: Number.isFinite(reviewAverage) && reviewAverage > 0 ? reviewAverage : null,
     reviewCount: Number.isFinite(reviewCount) && reviewCount > 0 ? reviewCount : 0,
+    affiliateRate: affiliateRate || null,
     itemCode: item?.itemCode || url || `${plan.keyword}-${planIndex}-${itemIndex}`,
     source: "rakuten",
     sourceType: plan.source || "policy",
     sourceKey: plan.sourceKey || (plan.source === "symptom" ? "symptom" : plan.policyKey),
     planIndex,
     planRank: planIndex + 1,
-    score: (100 - planIndex * 12 - itemIndex) + Math.min(reviewCount / 25, 18) + Math.min(reviewAverage, 5) + scoreKanchaPriority(item, plan) + typeBoost,
+    score: (100 - planIndex * 12 - itemIndex)
+      + Math.min(reviewCount / 25, 18)
+      + Math.min(reviewAverage, 5)
+      + scoreKanchaPriority(item, plan)
+      + typeBoost
+      + scoreAffiliateRatePriority(item)
+      + scoreTrustedCareBrand(item),
   };
 }
 
@@ -1816,6 +1846,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
     "shopName",
     "reviewAverage",
     "reviewCount",
+    "affiliateRate",
   ].join(","));
   // 楽天APIのNGKeywordは128文字未満制限があるため、長い除外語は送らない。
   // 商品ジャンルの除外は、API取得後のローカルフィルターで行う。
