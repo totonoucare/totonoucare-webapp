@@ -166,7 +166,7 @@ export default function GuidePage() {
       { key: "start", label: "全体像" },
       { key: "check", label: "①トリセツ" },
       { key: "radar", label: "②体調予報" },
-      { key: "care", label: "③ケアナビ" },
+      { key: "care", label: "③MYケア" },
     ],
     []
   );
@@ -204,7 +204,7 @@ export default function GuidePage() {
             </div>
 
             <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
-              トリセツで自分の崩れ方のクセを知り、予報で今日・明日の作戦を確認します。ケアナビでは、そのケアを続けやすくする道具や食品の候補を探せます。
+              トリセツで自分の崩れ方のクセを知り、予報で今日・明日の作戦を確認します。MYケアセレクトでは、そのケアを続けやすくするケア用品・食品・サービス候補を見られます。
             </div>
 
             <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
@@ -226,8 +226,8 @@ export default function GuidePage() {
                 <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
                   <IconChecklist className="h-4 w-4" />
                 </div>
-                <div className="mt-2 text-[11px] font-black text-slate-900">ケアナビ</div>
-                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">道具を探す</div>
+                <div className="mt-2 text-[11px] font-black text-slate-900">MYケア</div>
+                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">候補を見る</div>
               </div>
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function GuidePage() {
             基本の流れ
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            まずトリセツを作り、予報で今日・明日の作戦を見て、必要ならケアナビで続けやすい道具を探します。
+            まずトリセツを作り、予報で今日・明日の作戦を見て、必要ならMYケアセレクトでケア用品・食品・サービス候補を見ます。
           </div>
 
           <div className="space-y-4">
@@ -256,12 +256,12 @@ export default function GuidePage() {
             <FlowItem num="2" title="体調予報を見る">
               今日・明日の天気が、今の体質や不調にどう響きそうかを確認します。予報ページのケアは、道具なしでも今できる工夫が中心です。
             </FlowItem>
-            <FlowItem num="3" title="ケアナビで候補を見る">
-              予報で出た方針や、体質トリセツ・季節・最近の生活条件をもとに、暮らす・食べる・ほぐすのアイテム候補を探します。
+            <FlowItem num="3" title="MYケアセレクトで候補を見る">
+              予報で出た方針や、体質トリセツ・季節・最近の生活条件をもとに、暮らす・食べる・ほぐすのケア用品・食品・サービス候補を見ます。
             </FlowItem>
 
             <MiniNote>
-              予報ページは「今日どう過ごすか」を決める作戦表、ケアナビは「そのケアを続けやすくする道具棚」です。詳しい見方は、①トリセツ・②予報・③ケアナビのタブで確認できます。
+              予報ページは「今日どう過ごすか」を決める作戦表、MYケアセレクトは「そのケアを続けやすくする候補を見る場所」です。詳しい見方は、①トリセツ・②予報・③MYケアのタブで確認できます。
             </MiniNote>
 
             <div className="grid gap-3 pt-4">
@@ -272,7 +272,7 @@ export default function GuidePage() {
                 体調予報を見る
               </Button>
               <Button variant="secondary" onClick={() => router.push("/care-navi")} className="w-full">
-                ケアナビを見る
+                MYケアセレクトを見る
               </Button>
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              トリセツは一度作ると、体調予報やケアナビの土台になります。体質・天気との相性・負担が出やすい場所を、あとから見返せます。
+              トリセツは一度作ると、体調予報やMYケアセレクトの土台になります。体質・天気との相性・負担が出やすい場所を、あとから見返せます。
             </MiniNote>
 
             <div className="pt-2">
@@ -372,7 +372,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote>
-              ゲージとこの日の方針で大まかな方向を見て、実際にやることは暮らす・食べる・ほぐすから選びます。まずは道具なしでできるケアを確認し、続けやすくしたい時はケアナビで関連アイテムを探せます。
+              ゲージとこの日の方針で大まかな方向を見て、実際にやることは暮らす・食べる・ほぐすから選びます。まずは道具なしでできるケアを確認し、続けやすくしたい時はMYケアセレクトで関連アイテムを見られます。
             </MiniNote>
 
             <div className="pt-2">
@@ -380,36 +380,36 @@ export default function GuidePage() {
                 体調予報へ
               </Button>
               <Button variant="secondary" onClick={() => router.push("/care-navi")} className="w-full">
-                ケアナビで候補を見る
+                MYケアセレクトで候補を見る
               </Button>
             </div>
           </div>
         </Module>
       ) : null}
 
-      {/* 4. ケアナビ詳細タブ */}
+      {/* 4. MYケアセレクト詳細タブ */}
       {tab === "care" ? (
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
-            ケアナビの見方
+            MYケアセレクトの見方
           </div>
           <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
-            ケアナビは、予報ページのケアを「続けやすくする道具・食品候補」を探すページです。予報の上位互換ではなく、役割が違います。
+            MYケアセレクトは、予報ページのケアを「続けやすくするケア用品・食品・サービス候補」を見るページです。予報の上位互換ではなく、役割が違います。
           </div>
 
           <div className="space-y-4">
             <GuideCard tone="mint" title="予報ページとの違い" icon={<IconRadar />}>
-              予報ページでは、今日・明日に道具なしでもできるケアを確認します。ケアナビでは、そのケアを支えるアイテム候補を、体質や条件に合わせて探します。
+              予報ページでは、今日・明日に道具なしでもできるケアを確認します。MYケアセレクトでは、そのケアを支えるアイテム候補を、体質や条件に合わせて見られます。
               <CheckList
                 items={[
                   "予報：今日どう過ごすか、何を足す・控えるかを見る。",
-                  "ケアナビ：そのケアを続けやすくする道具や食品候補を見る。",
+                  "MYケアセレクト：そのケアを続けやすくするケア用品・食品・サービス候補を見る。",
                 ]}
               />
             </GuideCard>
 
             <GuideCard tone="teal" title="暮らす・食べる・ほぐすで探す" icon={<IconChecklist />}>
-              予報ページと同じく、暮らす・食べる・ほぐすの切り口で見られます。ただし、ケアナビでは「方法」だけでなく、使いやすいアイテム候補まで見る場所です。
+              予報ページと同じく、暮らす・食べる・ほぐすの切り口で見られます。ただし、MYケアセレクトでは「方法」だけでなく、使いやすいアイテム候補まで見る場所です。
               <CheckList
                 items={[
                   "暮らす：冷え・睡眠・湿気・入浴・衣類などの生活用品。",
@@ -431,23 +431,23 @@ export default function GuidePage() {
             </GuideCard>
 
             <GuideCard tone="violet" title="買う前に、まず目的を確認する" icon={<IconBowl />}>
-              ケアナビは買い物を急がせるページではありません。予報ページで出たケアを、無理なく続けるために「あると便利なもの」を探す場所です。
+              MYケアセレクトは買い物を急がせるページではありません。予報ページで出たケアを、無理なく続けるために「あると便利なもの」を見る場所です。
               <CheckList
                 items={[
                   "今日すぐできることは、まず予報ページのケアで十分です。",
-                  "続けたい・楽にしたい・家に置いておきたい時に、ケアナビを使います。",
+                  "続けたい・楽にしたい・家に置いておきたい時に、MYケアセレクトを使います。",
                   "医薬品ではなく、セルフケア用品や食品候補が中心です。",
                 ]}
               />
             </GuideCard>
 
             <MiniNote>
-              まず予報ページで今日の作戦を見て、必要になった時だけケアナビを見る。この順番にすると、情報が散らからず使いやすくなります。
+              まず予報ページで今日の作戦を見て、必要になった時だけMYケアセレクトを見る。この順番にすると、情報が散らからず使いやすくなります。
             </MiniNote>
 
             <div className="pt-2">
               <Button onClick={() => router.push("/care-navi")} className="w-full shadow-md">
-                ケアナビへ
+                MYケアセレクトへ
               </Button>
             </div>
           </div>
