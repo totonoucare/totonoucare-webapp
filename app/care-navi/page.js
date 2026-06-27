@@ -1212,149 +1212,6 @@ const LIFE_TITLE_HINTS = {
   outdoor: { uruosu: "汗をかく日の水分補給対策", sasaeru: "忙しい日のケア継続セット" },
 };
 
-
-// v7.8: 不調フォーカスを主アンカーにしたまま、生活サイン・天気・体質は「補正」として効かせる。
-// ここでは通過条件を広げすぎず、商品選定スコアと茶素材の方向性を軽く補正する。
-const LIFE_KIT_PROFILES = {
-  screen: {
-    live: { boostRoles: ["reduce_light", "sleep_environment"], boostKeywords: ["アイマスク", "遮光", "目元", "耳栓", "ブルーライト"] },
-    eat: { teaDirections: ["calming", "moist"], boostKeywords: ["カモミール", "レモンバーム", "ルイボス", "黒豆", "ノンカフェイン"] },
-    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮", "目元", "ヘッド"] },
-  },
-  sleep_short: {
-    live: { boostRoles: ["sleep_environment", "reduce_light", "bath_shift"], boostKeywords: ["枕", "寝具", "アイマスク", "耳栓", "入浴"] },
-    eat: { teaDirections: ["calming", "support"], boostKeywords: ["カモミール", "レモンバーム", "なつめ", "黒豆", "ルイボス"] },
-    point: { boostRoles: ["neck_shoulder_release", "foot_leg_release", "gentle_stretch"], boostKeywords: ["首", "肩", "足裏", "ふくらはぎ", "ストレッチ"] },
-  },
-  cold_drinks: {
-    live: { boostRoles: ["warm_body", "bath_shift"], boostKeywords: ["腹巻", "湯たんぽ", "温熱", "入浴", "足湯", "ウォーマー"] },
-    eat: { teaDirections: ["warming", "support"], boostKeywords: ["生姜", "しょうが", "ジンジャー", "陳皮", "シナモン", "味噌汁", "スープ"] },
-    point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "足元", "ストレッチ"] },
-  },
-  overeating: {
-    live: { boostRoles: ["bath_shift", "warm_body"], boostKeywords: ["入浴", "足湯", "腹巻", "湯たんぽ"] },
-    eat: { teaDirections: ["light", "support"], boostKeywords: ["味噌汁", "スープ", "雑炊", "はとむぎ", "とうもろこし", "黒豆"] },
-    point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "ストレッチ"] },
-  },
-  no_bath: {
-    live: { boostRoles: ["bath_shift", "warm_body"], boostKeywords: ["入浴", "炭酸", "バスソルト", "足湯", "温浴", "温熱"] },
-    eat: { teaDirections: ["warming", "calming"], boostKeywords: ["生姜", "カモミール", "ルイボス", "温かい"] },
-    point: { boostRoles: ["gentle_stretch", "neck_shoulder_release", "posture_release"], boostKeywords: ["ストレッチ", "首", "肩", "腰", "背中"] },
-  },
-  low_activity: {
-    live: { boostRoles: ["bath_shift", "humidity_control"], boostKeywords: ["入浴", "足湯", "サーキュレーター"] },
-    eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜", "スープ"] },
-    point: { boostRoles: ["foot_leg_release", "gentle_stretch", "posture_release"], boostKeywords: ["足裏", "ふくらはぎ", "ストレッチ", "フォームローラー"] },
-  },
-  tense: {
-    live: { boostRoles: ["reduce_light", "bath_shift", "sleep_environment"], boostKeywords: ["アイマスク", "入浴", "耳栓", "寝具"] },
-    eat: { teaDirections: ["calming", "support"], boostKeywords: ["カモミール", "レモンバーム", "ラベンダー", "なつめ", "ルイボス"] },
-    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮", "ヘッド"] },
-  },
-  outdoor: {
-    live: { boostRoles: ["moisture_air", "warm_body", "reduce_light"], boostKeywords: ["マスク", "保湿", "乾燥", "腹巻", "アイマスク"] },
-    eat: { teaDirections: ["moist", "barley", "support"], boostKeywords: ["麦茶", "ルイボス", "黒豆", "水筒", "タンブラー", "なつめ"] },
-    point: { boostRoles: ["foot_leg_release", "neck_shoulder_release"], boostKeywords: ["足裏", "ふくらはぎ", "首", "肩"] },
-  },
-};
-
-const WEATHER_KIT_PROFILES = {
-  pressure_down: {
-    live: { boostRoles: ["reduce_light", "sleep_environment"], boostKeywords: ["アイマスク", "耳栓", "遮光", "枕", "寝具"] },
-    eat: { teaDirections: ["calming", "light"], boostKeywords: ["カモミール", "ルイボス", "はとむぎ", "黒豆"] },
-    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮", "耳"] },
-  },
-  pressure_up: {
-    live: { boostRoles: ["reduce_light", "bath_shift"], boostKeywords: ["アイマスク", "耳栓", "入浴"] },
-    eat: { teaDirections: ["calming", "moist"], boostKeywords: ["カモミール", "レモンバーム", "ルイボス"] },
-    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮"] },
-  },
-  damp: {
-    live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "湿気", "防湿", "サーキュレーター", "入浴"] },
-    eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "黒豆", "味噌汁", "スープ"] },
-    point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "足元", "ストレッチ"] },
-  },
-  dry: {
-    live: { boostRoles: ["moisture_air", "reduce_light", "sleep_environment"], boostKeywords: ["加湿", "乾燥", "保湿", "マスク", "アイマスク"] },
-    eat: { teaDirections: ["moist", "barley", "support"], boostKeywords: ["ルイボス", "黒豆", "なつめ", "麦茶", "水筒"] },
-    point: { boostRoles: ["gentle_stretch", "neck_shoulder_release"], boostKeywords: ["ストレッチ", "首", "肩"] },
-  },
-  cold: {
-    live: { boostRoles: ["warm_body", "bath_shift", "sleep_environment"], boostKeywords: ["腹巻", "湯たんぽ", "温熱", "入浴", "足湯", "毛布"] },
-    eat: { teaDirections: ["warming", "support"], boostKeywords: ["生姜", "しょうが", "陳皮", "シナモン", "味噌汁", "スープ"] },
-    point: { boostRoles: ["foot_leg_release", "posture_release", "neck_shoulder_release"], boostKeywords: ["足裏", "ふくらはぎ", "腰", "背中", "首", "肩"] },
-  },
-  heat: {
-    live: { boostRoles: ["reduce_light", "moisture_air"], boostKeywords: ["アイマスク", "遮光", "加湿", "マスク"] },
-    eat: { teaDirections: ["moist", "barley"], boostKeywords: ["麦茶", "ルイボス", "黒豆", "水筒", "タンブラー"] },
-    point: { boostRoles: ["gentle_stretch", "tsubo_support"], boostKeywords: ["ストレッチ", "頭皮", "こめかみ"] },
-  },
-};
-
-const SUB_LABEL_KIT_PROFILES = {
-  qi_stagnation: { point: { boostRoles: ["neck_shoulder_release", "gentle_stretch"], boostKeywords: ["首", "肩", "ストレッチ"] }, eat: { teaDirections: ["calming", "warming"] } },
-  qi_deficiency: { live: { boostRoles: ["sleep_environment", "warm_body"], boostKeywords: ["寝具", "腹巻", "湯たんぽ"] }, eat: { teaDirections: ["support", "warming"], boostKeywords: ["なつめ", "黒豆", "玄米", "味噌汁"] } },
-  blood_deficiency: { live: { boostRoles: ["sleep_environment", "moisture_air"], boostKeywords: ["寝具", "加湿", "乾燥"] }, eat: { teaDirections: ["moist", "support"], boostKeywords: ["なつめ", "黒豆", "ルイボス"] } },
-  blood_stasis: { point: { boostRoles: ["posture_release", "foot_leg_release", "neck_shoulder_release"], boostKeywords: ["腰", "背中", "ふくらはぎ", "首", "肩"] }, eat: { teaDirections: ["warming", "support"] } },
-  fluid_damp: { live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "湿気", "入浴"] }, eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "黒豆"] } },
-  fluid_deficiency: { live: { boostRoles: ["moisture_air", "reduce_light"], boostKeywords: ["加湿", "乾燥", "アイマスク"] }, eat: { teaDirections: ["moist", "barley"], boostKeywords: ["ルイボス", "麦茶", "黒豆", "なつめ"] } },
-};
-
-const CORE_KIT_PROFILES = {
-  accel: { live: { boostRoles: ["reduce_light", "bath_shift"], boostKeywords: ["アイマスク", "耳栓", "入浴"] }, eat: { teaDirections: ["calming", "moist"] }, point: { boostRoles: ["neck_shoulder_release", "tsubo_support"] } },
-  brake: { live: { boostRoles: ["warm_body", "bath_shift", "humidity_control"], boostKeywords: ["温熱", "入浴", "除湿"] }, eat: { teaDirections: ["warming", "light", "support"] }, point: { boostRoles: ["foot_leg_release", "posture_release", "gentle_stretch"] } },
-  batt_small: { live: { boostRoles: ["sleep_environment", "warm_body"], boostKeywords: ["寝具", "腹巻", "湯たんぽ"] }, eat: { teaDirections: ["support", "moist"], boostKeywords: ["味噌汁", "スープ", "なつめ", "黒豆"] } },
-  batt_large: { live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "入浴"] }, eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜"] }, point: { boostRoles: ["foot_leg_release", "posture_release"] } },
-};
-
-function mergeSlotBoosts(slot, boost = {}) {
-  if (!slot || !boost) return slot;
-  return {
-    ...slot,
-    contextBoostRoles: unique([...safeArray(slot.contextBoostRoles), ...safeArray(boost.boostRoles)]),
-    contextBoostKeywords: unique([...safeArray(slot.contextBoostKeywords), ...safeArray(boost.boostKeywords)]),
-    contextTeaDirections: unique([...safeArray(slot.contextTeaDirections), ...safeArray(boost.teaDirections)]),
-  };
-}
-
-function triggerProfileKeys(triggerFactors = []) {
-  return unique(safeArray(triggerFactors).map((factor) => factor?.exact || factor?.key || factor?.main_trigger).filter(Boolean));
-}
-
-function coreProfileKeys(profileLike) {
-  const coreCode = String(profileLike?.core_code || "");
-  const keys = [];
-  if (coreCode.startsWith("accel")) keys.push("accel");
-  if (coreCode.startsWith("brake")) keys.push("brake");
-  if (coreCode.includes("batt_small")) keys.push("batt_small");
-  if (coreCode.includes("batt_large")) keys.push("batt_large");
-  return keys;
-}
-
-function applyContextSlotProfiles(slot, context = {}) {
-  if (!slot) return slot;
-  let next = slot;
-  const category = slot.category;
-
-  safeArray(context.lifeKeys).forEach((lifeKey) => {
-    next = mergeSlotBoosts(next, LIFE_KIT_PROFILES[lifeKey]?.[category]);
-  });
-
-  triggerProfileKeys(context.triggerFactors).forEach((triggerKey) => {
-    next = mergeSlotBoosts(next, WEATHER_KIT_PROFILES[triggerKey]?.[category]);
-  });
-
-  coreProfileKeys(context.profileLike).forEach((coreKey) => {
-    next = mergeSlotBoosts(next, CORE_KIT_PROFILES[coreKey]?.[category]);
-  });
-
-  safeArray(context.profileLike?.sub_labels || context.profileLike?.computed?.sub_labels).forEach((subKey) => {
-    next = mergeSlotBoosts(next, SUB_LABEL_KIT_PROFILES[subKey]?.[category]);
-  });
-
-  return next;
-}
-
 function getSymptomAnchor(symptomKey) {
   return SYMPTOM_SET_ANCHORS[symptomKey] || null;
 }
@@ -1407,9 +1264,9 @@ function slotsForPolicySet(policyKey, titleSuffix, context, variantIndex) {
   const isStarter = mode === "starter";
   const suffix = String(titleSuffix || "");
 
-  const live = applyContextSlotProfiles(liveSlotFor(policyKey, context), context);
-  const eat = applyContextSlotProfiles(eatSlotFor(policyKey, context, titleSuffix), context);
-  const point = applyContextSlotProfiles(pointSlotFor(policyKey, { ...context, titleSuffix }), context);
+  const live = liveSlotFor(policyKey, context);
+  const eat = eatSlotFor(policyKey, context, titleSuffix);
+  const point = pointSlotFor(policyKey, { ...context, titleSuffix });
 
   if (/食事|食べすぎ|胃腸|忙しい/.test(suffix)) {
     slots.push(eat, live, point);
@@ -1451,12 +1308,12 @@ function reorderPolicyKeysForCard(mainPolicyKey, policyKeys = []) {
   return unique([mainPolicyKey, ...rest]).filter((key) => POLICY_META[key]);
 }
 
-function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike }) {
+function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors }) {
   const keys = safeArray(policyKeys).filter((key) => POLICY_META[key]);
   const primary = keys[0] || "yurumeru";
   const secondary = keys.find((key) => key !== primary) || "meguraseru";
   const tertiary = keys.find((key) => key !== primary && key !== secondary) || null;
-  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), profileLike };
+  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors) };
   const plan = [];
 
   function push(policyKey, variantIndex, weight = "main") {
@@ -1547,16 +1404,12 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   const slotRoles = safeArray(slot.roles);
   const roleMatched = slotRoles.includes(item.productRole) || slotRoles.includes(item.intentType);
   const keywordMatched = hasAnyText(item, slot.keywords);
-  const contextRoleMatched = safeArray(slot.contextBoostRoles).includes(item.productRole) || safeArray(slot.contextBoostRoles).includes(item.intentType);
-  const contextKeywordMatched = hasAnyText(item, slot.contextBoostKeywords);
 
   let score = 0;
   if (item.category === slot.category) score += 20;
   if (roleMatched) score += 14;
   if (safeArray(slot.productTypes).includes(item.productType)) score += 6;
   if (keywordMatched) score += 7;
-  if (contextRoleMatched) score += 4;
-  if (contextKeywordMatched) score += 4;
   if (hasAnyText(item, slot.avoidKeywords)) score -= 30;
 
   if (slotRoles.length && !roleMatched) score -= 6;
@@ -1598,7 +1451,7 @@ function scoreTeaMaterialFit(item, slot, policyKeys = []) {
   if (item.category !== "eat") return 0;
   const text = itemEvidenceText(item);
   const groups = detectTeaMaterialGroups(item).map((group) => group.key);
-  const desired = unique([...safeArray(slot.teaDirections), ...safeArray(slot.contextTeaDirections)]);
+  const desired = safeArray(slot.teaDirections);
   let score = groups.some((key) => desired.includes(key)) ? 10 : 0;
 
   // ぬくめる・めぐらせる等で「温かい素材」を探している時に、
@@ -1735,8 +1588,8 @@ function buildLiveUseGuide(item) {
 
 function buildFallbackSlotsForDefinition(definition, context) {
   const originalSlots = safeArray(definition?.slots);
-  const live = originalSlots.find((slot) => slot.category === "live") || applyContextSlotProfiles(liveSlotFor(definition.policyKey, context), context);
-  const eat = originalSlots.find((slot) => slot.category === "eat") || applyContextSlotProfiles(eatSlotFor(definition.policyKey, context, definition.titleSuffix), context);
+  const live = originalSlots.find((slot) => slot.category === "live") || liveSlotFor(definition.policyKey, context);
+  const eat = originalSlots.find((slot) => slot.category === "eat") || eatSlotFor(definition.policyKey, context, definition.titleSuffix);
   const point = originalSlots.find((slot) => slot.category === "point");
 
   // 0件回避用の予備セット。用途ズレを起こしやすい「ほぐす」は、
@@ -1749,8 +1602,8 @@ function buildFallbackSlotsForDefinition(definition, context) {
 function buildGenericFallbackSlots(policyKey, context) {
   // 最後の予備。商品用途の上書きはせず、比較的安全な暮らす・食べる枠だけで組む。
   return uniqueSlots([
-    applyContextSlotProfiles(liveSlotFor(policyKey, context), context),
-    applyContextSlotProfiles(eatSlotFor(policyKey, context, "default"), context),
+    liveSlotFor(policyKey, context),
+    eatSlotFor(policyKey, context, "default"),
   ]).slice(0, 2);
 }
 
@@ -1784,7 +1637,7 @@ function assembleCareSetCards({ definitions, byCategory, mode, policyKeys, appro
     .slice(0, CARE_SET_EXPANDED_LIMIT);
 }
 
-function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags, profileLike }) {
+function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags }) {
   const byCategory = Object.fromEntries(
     CATEGORY_ORDER.map((category) => {
       const partner = safeArray(partnerItemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "a8", sourceType: item.sourceType || "partner" }));
@@ -1793,8 +1646,8 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
     })
   );
 
-  const context = { mode, policyKeys: safeArray(policyKeys), symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), symptomLabel, profileLike };
-  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike });
+  const context = { mode, policyKeys: safeArray(policyKeys), symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), symptomLabel };
+  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors });
 
   const strictCards = assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 0 });
   if (strictCards.length) return strictCards;
@@ -2260,9 +2113,8 @@ export default function CareNaviPage() {
         triggerFactors: tomorrowTriggerFactors,
         symptomLabel,
         approachTags,
-        profileLike,
       }),
-    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
+    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags]
   );
 
   const displaySets = careSetCards.slice(0, visibleLimit);
