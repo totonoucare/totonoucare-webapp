@@ -872,14 +872,27 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
   );
 }
 
-function RakutenStatusCard({ error, queries }) {
+function RakutenStatusCard({ error, onRetry, loading }) {
   if (error) {
     return (
       <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[12px] font-bold leading-6 text-[#77540B] ring-1 ring-[#E4C56B]/70">
-        {error}
-        <div className="mt-1 text-[11px] text-[#A36E14]">
-          APIキー未設定の場合は、Vercelの環境変数に RAKUTEN_APPLICATION_ID / RAKUTEN_ACCESS_KEY を入れてください。
+        <div>商品候補の読み込みがうまくいきませんでした。</div>
+        <div className="mt-1 text-[11px] leading-5 text-[#A36E14]">
+          通信が混み合っている可能性があります。少し時間をおいて、もう一度検索してください。
         </div>
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={loading}
+          className={[
+            "mt-3 rounded-full px-3 py-2 text-[11px] font-black ring-1 transition-all",
+            loading
+              ? "cursor-not-allowed bg-white/70 text-slate-400 ring-[#E4C56B]/60"
+              : "bg-white text-[#77540B] ring-[#E4C56B] hover:bg-[#FFF1CB]",
+          ].join(" ")}
+        >
+          {loading ? "再検索中..." : "もう一度検索する"}
+        </button>
       </div>
     );
   }
@@ -896,6 +909,79 @@ function getSetModeMeta(mode) {
 
 function getSetItemKey(item) {
   return item?.itemUrl || item?.clickUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
+}
+
+
+function normalizeDiversityText(value) {
+  return String(value || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/[\[\]【】（）()〈〉<>「」『』]/g, " ")
+    .replace(/\d+(個|袋|包|本|粒|g|kg|ml|l|箱|セット|日分|枚|回|杯|pc|pcs|cm|mm|円|%|％)?/gi, " ")
+    .replace(/送料無料|送料込|メール便|ポイント|セール|限定|お試し|おためし|セット|まとめ買い|訳あり|新品|正規品|公式|ランキング|最安|特価|クーポン|レビュー/g, " ")
+    .replace(/[|｜/／・,，.。:：;；!！?？~〜\-＿_+＋*＊#＃]/g, " ")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function getShopDiversityKey(item) {
+  const shop = normalizeDiversityText(item?.shopName || item?.shop || "");
+  // A8は provider が同じでも実際の提携先が異なるため、provider だけでは縛らない。
+  return shop ? `shop:${shop.slice(0, 24)}` : "";
+}
+
+function getFamilyDiversityKey(item) {
+  const family = normalizeDiversityText(item?.familyKey || "");
+  if (family) return `family:${family.slice(0, 42)}`;
+  const title = normalizeDiversityText(item?.title || item?.itemName || "");
+  return title ? `family:${item?.category || "item"}:${item?.productType || item?.productRole || "general"}:${title.slice(0, 24)}` : "";
+}
+
+function getTitleSignatureKey(item) {
+  const title = normalizeDiversityText(item?.title || item?.itemName || "");
+  if (!title) return "";
+  // 同一ショップではない近似商品も軽くばらすための署名。短すぎる語は誤判定しやすいので使わない。
+  const signature = title.slice(0, title.length >= 18 ? 18 : 14);
+  return signature.length >= 8 ? `sig:${item?.category || "item"}:${signature}` : "";
+}
+
+function createDiversityState() {
+  return { shopCounts: new Map(), familyCounts: new Map(), signatureCounts: new Map() };
+}
+
+function cloneDiversityState(state) {
+  return {
+    shopCounts: new Map(state?.shopCounts || []),
+    familyCounts: new Map(state?.familyCounts || []),
+    signatureCounts: new Map(state?.signatureCounts || []),
+  };
+}
+
+function incrementDiversityMap(map, key) {
+  if (!key) return;
+  map.set(key, Number(map.get(key) || 0) + 1);
+}
+
+function registerItemDiversity(item, diversity) {
+  if (!diversity) return;
+  incrementDiversityMap(diversity.shopCounts, getShopDiversityKey(item));
+  incrementDiversityMap(diversity.familyCounts, getFamilyDiversityKey(item));
+  incrementDiversityMap(diversity.signatureCounts, getTitleSignatureKey(item));
+}
+
+function scoreDiversityPenalty(item, diversity) {
+  if (!diversity) return 0;
+  const shopCount = Number(diversity.shopCounts?.get(getShopDiversityKey(item)) || 0);
+  const familyCount = Number(diversity.familyCounts?.get(getFamilyDiversityKey(item)) || 0);
+  const signatureCount = Number(diversity.signatureCounts?.get(getTitleSignatureKey(item)) || 0);
+
+  let penalty = 0;
+  // ブランドを加点するのではなく、同じ棚・同じような商品が続きすぎる時だけ抑える。
+  if (familyCount >= 1) penalty -= familyCount >= 2 ? 44 : 30;
+  if (signatureCount >= 1) penalty -= signatureCount >= 2 ? 34 : 16;
+  if (shopCount >= 1) penalty -= shopCount >= 2 ? 28 : 7;
+  return penalty;
 }
 
 function itemText(item) {
@@ -916,7 +1002,7 @@ function hasAnyText(item, keywords = []) {
 const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
 const FIRST_AID_REJECT_PATTERN = /(絆創膏|ばんそうこう|バンドエイド|キズテープ|傷テープ|キズパワーパッド|ムヒのキズ|救急絆|創傷|傷口|切り傷|擦り傷|すり傷|靴ずれ|あかぎれ|ひび割れ|ガーゼ|包帯|消毒|殺菌|サージカルテープ|防水フィルム|防水タイプ)/i;
 const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
-const BEDDING_ITEM_PATTERN = /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り|西川|ニトリ)/i;
+const BEDDING_ITEM_PATTERN = /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り)/i;
 const WARMING_PAD_PATTERN = /(温熱|温め|あったか|ホット|発熱|遠赤外線|カイロ|貼るカイロ|貼って温|湿熱|温活)/i;
 const TRUE_DRINKWARE_PATTERN = /(水筒|タンブラー|マグボトル|保温ボトル|真空断熱|ステンレスボトル|保冷ボトル)/i;
 const READY_TO_DRINK_PATTERN = /(ペットボトル|500ml|350ml|280ml|飲料|清涼飲料|ボトル缶)/i;
@@ -975,7 +1061,7 @@ function inferRoleLabelFromItem(item) {
 
 const LIVE_KIND_RULES = [
   { key: "reduce_light", pattern: /(アイマスク|耳栓|遮光|遮音|ブルーライト|目元|ホットアイ)/i },
-  { key: "sleep_environment", pattern: /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り|西川|ニトリ)/i },
+  { key: "sleep_environment", pattern: /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り)/i },
   { key: "warm_body", pattern: /(腹巻|湯たんぽ|レッグウォーマー|ネックウォーマー|ウォーマー|カイロ|温熱|発熱|遠赤外線|毛布)/i },
   { key: "bath_shift", pattern: /(入浴剤|バスソルト|炭酸|温浴|足湯|浴用|バス)/i },
   { key: "humidity_control", pattern: /(除湿|湿気|防湿|ドライ|炭八|湿気取り|除湿剤|サーキュレーター)/i },
@@ -1212,6 +1298,149 @@ const LIFE_TITLE_HINTS = {
   outdoor: { uruosu: "汗をかく日の水分補給対策", sasaeru: "忙しい日のケア継続セット" },
 };
 
+
+// v7.8: 不調フォーカスを主アンカーにしたまま、生活サイン・天気・体質は「補正」として効かせる。
+// ここでは通過条件を広げすぎず、商品選定スコアと茶素材の方向性を軽く補正する。
+const LIFE_KIT_PROFILES = {
+  screen: {
+    live: { boostRoles: ["reduce_light", "sleep_environment"], boostKeywords: ["アイマスク", "遮光", "目元", "耳栓", "ブルーライト"] },
+    eat: { teaDirections: ["calming", "moist"], boostKeywords: ["カモミール", "レモンバーム", "ルイボス", "黒豆", "ノンカフェイン"] },
+    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮", "目元", "ヘッド"] },
+  },
+  sleep_short: {
+    live: { boostRoles: ["sleep_environment", "reduce_light", "bath_shift"], boostKeywords: ["枕", "寝具", "アイマスク", "耳栓", "入浴"] },
+    eat: { teaDirections: ["calming", "support"], boostKeywords: ["カモミール", "レモンバーム", "なつめ", "黒豆", "ルイボス"] },
+    point: { boostRoles: ["neck_shoulder_release", "foot_leg_release", "gentle_stretch"], boostKeywords: ["首", "肩", "足裏", "ふくらはぎ", "ストレッチ"] },
+  },
+  cold_drinks: {
+    live: { boostRoles: ["warm_body", "bath_shift"], boostKeywords: ["腹巻", "湯たんぽ", "温熱", "入浴", "足湯", "ウォーマー"] },
+    eat: { teaDirections: ["warming", "support"], boostKeywords: ["生姜", "しょうが", "ジンジャー", "陳皮", "シナモン", "味噌汁", "スープ"] },
+    point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "足元", "ストレッチ"] },
+  },
+  overeating: {
+    live: { boostRoles: ["bath_shift", "warm_body"], boostKeywords: ["入浴", "足湯", "腹巻", "湯たんぽ"] },
+    eat: { teaDirections: ["light", "support"], boostKeywords: ["味噌汁", "スープ", "雑炊", "はとむぎ", "とうもろこし", "黒豆"] },
+    point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "ストレッチ"] },
+  },
+  no_bath: {
+    live: { boostRoles: ["bath_shift", "warm_body"], boostKeywords: ["入浴", "炭酸", "バスソルト", "足湯", "温浴", "温熱"] },
+    eat: { teaDirections: ["warming", "calming"], boostKeywords: ["生姜", "カモミール", "ルイボス", "温かい"] },
+    point: { boostRoles: ["gentle_stretch", "neck_shoulder_release", "posture_release"], boostKeywords: ["ストレッチ", "首", "肩", "腰", "背中"] },
+  },
+  low_activity: {
+    live: { boostRoles: ["bath_shift", "humidity_control"], boostKeywords: ["入浴", "足湯", "サーキュレーター"] },
+    eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜", "スープ"] },
+    point: { boostRoles: ["foot_leg_release", "gentle_stretch", "posture_release"], boostKeywords: ["足裏", "ふくらはぎ", "ストレッチ", "フォームローラー"] },
+  },
+  tense: {
+    live: { boostRoles: ["reduce_light", "bath_shift", "sleep_environment"], boostKeywords: ["アイマスク", "入浴", "耳栓", "寝具"] },
+    eat: { teaDirections: ["calming", "support"], boostKeywords: ["カモミール", "レモンバーム", "ラベンダー", "なつめ", "ルイボス"] },
+    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮", "ヘッド"] },
+  },
+  outdoor: {
+    live: { boostRoles: ["moisture_air", "warm_body", "reduce_light"], boostKeywords: ["マスク", "保湿", "乾燥", "腹巻", "アイマスク"] },
+    eat: { teaDirections: ["moist", "barley", "support"], boostKeywords: ["麦茶", "ルイボス", "黒豆", "水筒", "タンブラー", "なつめ"] },
+    point: { boostRoles: ["foot_leg_release", "neck_shoulder_release"], boostKeywords: ["足裏", "ふくらはぎ", "首", "肩"] },
+  },
+};
+
+const WEATHER_KIT_PROFILES = {
+  pressure_down: {
+    live: { boostRoles: ["reduce_light", "sleep_environment"], boostKeywords: ["アイマスク", "耳栓", "遮光", "枕", "寝具"] },
+    eat: { teaDirections: ["calming", "light"], boostKeywords: ["カモミール", "ルイボス", "はとむぎ", "黒豆"] },
+    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮", "耳"] },
+  },
+  pressure_up: {
+    live: { boostRoles: ["reduce_light", "bath_shift"], boostKeywords: ["アイマスク", "耳栓", "入浴"] },
+    eat: { teaDirections: ["calming", "moist"], boostKeywords: ["カモミール", "レモンバーム", "ルイボス"] },
+    point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮"] },
+  },
+  damp: {
+    live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "湿気", "防湿", "サーキュレーター", "入浴"] },
+    eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "黒豆", "味噌汁", "スープ"] },
+    point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "足元", "ストレッチ"] },
+  },
+  dry: {
+    live: { boostRoles: ["moisture_air", "reduce_light", "sleep_environment"], boostKeywords: ["加湿", "乾燥", "保湿", "マスク", "アイマスク"] },
+    eat: { teaDirections: ["moist", "barley", "support"], boostKeywords: ["ルイボス", "黒豆", "なつめ", "麦茶", "水筒"] },
+    point: { boostRoles: ["gentle_stretch", "neck_shoulder_release"], boostKeywords: ["ストレッチ", "首", "肩"] },
+  },
+  cold: {
+    live: { boostRoles: ["warm_body", "bath_shift", "sleep_environment"], boostKeywords: ["腹巻", "湯たんぽ", "温熱", "入浴", "足湯", "毛布"] },
+    eat: { teaDirections: ["warming", "support"], boostKeywords: ["生姜", "しょうが", "陳皮", "シナモン", "味噌汁", "スープ"] },
+    point: { boostRoles: ["foot_leg_release", "posture_release", "neck_shoulder_release"], boostKeywords: ["足裏", "ふくらはぎ", "腰", "背中", "首", "肩"] },
+  },
+  heat: {
+    live: { boostRoles: ["reduce_light", "moisture_air"], boostKeywords: ["アイマスク", "遮光", "加湿", "マスク"] },
+    eat: { teaDirections: ["moist", "barley"], boostKeywords: ["麦茶", "ルイボス", "黒豆", "水筒", "タンブラー"] },
+    point: { boostRoles: ["gentle_stretch", "tsubo_support"], boostKeywords: ["ストレッチ", "頭皮", "こめかみ"] },
+  },
+};
+
+const SUB_LABEL_KIT_PROFILES = {
+  qi_stagnation: { point: { boostRoles: ["neck_shoulder_release", "gentle_stretch"], boostKeywords: ["首", "肩", "ストレッチ"] }, eat: { teaDirections: ["calming", "warming"] } },
+  qi_deficiency: { live: { boostRoles: ["sleep_environment", "warm_body"], boostKeywords: ["寝具", "腹巻", "湯たんぽ"] }, eat: { teaDirections: ["support", "warming"], boostKeywords: ["なつめ", "黒豆", "玄米", "味噌汁"] } },
+  blood_deficiency: { live: { boostRoles: ["sleep_environment", "moisture_air"], boostKeywords: ["寝具", "加湿", "乾燥"] }, eat: { teaDirections: ["moist", "support"], boostKeywords: ["なつめ", "黒豆", "ルイボス"] } },
+  blood_stasis: { point: { boostRoles: ["posture_release", "foot_leg_release", "neck_shoulder_release"], boostKeywords: ["腰", "背中", "ふくらはぎ", "首", "肩"] }, eat: { teaDirections: ["warming", "support"] } },
+  fluid_damp: { live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "湿気", "入浴"] }, eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "黒豆"] } },
+  fluid_deficiency: { live: { boostRoles: ["moisture_air", "reduce_light"], boostKeywords: ["加湿", "乾燥", "アイマスク"] }, eat: { teaDirections: ["moist", "barley"], boostKeywords: ["ルイボス", "麦茶", "黒豆", "なつめ"] } },
+};
+
+const CORE_KIT_PROFILES = {
+  accel: { live: { boostRoles: ["reduce_light", "bath_shift"], boostKeywords: ["アイマスク", "耳栓", "入浴"] }, eat: { teaDirections: ["calming", "moist"] }, point: { boostRoles: ["neck_shoulder_release", "tsubo_support"] } },
+  brake: { live: { boostRoles: ["warm_body", "bath_shift", "humidity_control"], boostKeywords: ["温熱", "入浴", "除湿"] }, eat: { teaDirections: ["warming", "light", "support"] }, point: { boostRoles: ["foot_leg_release", "posture_release", "gentle_stretch"] } },
+  batt_small: { live: { boostRoles: ["sleep_environment", "warm_body"], boostKeywords: ["寝具", "腹巻", "湯たんぽ"] }, eat: { teaDirections: ["support", "moist"], boostKeywords: ["味噌汁", "スープ", "なつめ", "黒豆"] } },
+  batt_large: { live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "入浴"] }, eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜"] }, point: { boostRoles: ["foot_leg_release", "posture_release"] } },
+};
+
+function mergeSlotBoosts(slot, boost = {}) {
+  if (!slot || !boost) return slot;
+  return {
+    ...slot,
+    contextBoostRoles: unique([...safeArray(slot.contextBoostRoles), ...safeArray(boost.boostRoles)]),
+    contextBoostKeywords: unique([...safeArray(slot.contextBoostKeywords), ...safeArray(boost.boostKeywords)]),
+    contextTeaDirections: unique([...safeArray(slot.contextTeaDirections), ...safeArray(boost.teaDirections)]),
+  };
+}
+
+function triggerProfileKeys(triggerFactors = []) {
+  return unique(safeArray(triggerFactors).map((factor) => factor?.exact || factor?.key || factor?.main_trigger).filter(Boolean));
+}
+
+function coreProfileKeys(profileLike) {
+  const coreCode = String(profileLike?.core_code || "");
+  const keys = [];
+  if (coreCode.startsWith("accel")) keys.push("accel");
+  if (coreCode.startsWith("brake")) keys.push("brake");
+  if (coreCode.includes("batt_small")) keys.push("batt_small");
+  if (coreCode.includes("batt_large")) keys.push("batt_large");
+  return keys;
+}
+
+function applyContextSlotProfiles(slot, context = {}) {
+  if (!slot) return slot;
+  let next = slot;
+  const category = slot.category;
+
+  safeArray(context.lifeKeys).forEach((lifeKey) => {
+    next = mergeSlotBoosts(next, LIFE_KIT_PROFILES[lifeKey]?.[category]);
+  });
+
+  triggerProfileKeys(context.triggerFactors).forEach((triggerKey) => {
+    next = mergeSlotBoosts(next, WEATHER_KIT_PROFILES[triggerKey]?.[category]);
+  });
+
+  coreProfileKeys(context.profileLike).forEach((coreKey) => {
+    next = mergeSlotBoosts(next, CORE_KIT_PROFILES[coreKey]?.[category]);
+  });
+
+  safeArray(context.profileLike?.sub_labels || context.profileLike?.computed?.sub_labels).forEach((subKey) => {
+    next = mergeSlotBoosts(next, SUB_LABEL_KIT_PROFILES[subKey]?.[category]);
+  });
+
+  return next;
+}
+
 function getSymptomAnchor(symptomKey) {
   return SYMPTOM_SET_ANCHORS[symptomKey] || null;
 }
@@ -1264,9 +1493,9 @@ function slotsForPolicySet(policyKey, titleSuffix, context, variantIndex) {
   const isStarter = mode === "starter";
   const suffix = String(titleSuffix || "");
 
-  const live = liveSlotFor(policyKey, context);
-  const eat = eatSlotFor(policyKey, context, titleSuffix);
-  const point = pointSlotFor(policyKey, { ...context, titleSuffix });
+  const live = applyContextSlotProfiles(liveSlotFor(policyKey, context), context);
+  const eat = applyContextSlotProfiles(eatSlotFor(policyKey, context, titleSuffix), context);
+  const point = applyContextSlotProfiles(pointSlotFor(policyKey, { ...context, titleSuffix }), context);
 
   if (/食事|食べすぎ|胃腸|忙しい/.test(suffix)) {
     slots.push(eat, live, point);
@@ -1308,12 +1537,12 @@ function reorderPolicyKeysForCard(mainPolicyKey, policyKeys = []) {
   return unique([mainPolicyKey, ...rest]).filter((key) => POLICY_META[key]);
 }
 
-function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors }) {
+function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike }) {
   const keys = safeArray(policyKeys).filter((key) => POLICY_META[key]);
   const primary = keys[0] || "yurumeru";
   const secondary = keys.find((key) => key !== primary) || "meguraseru";
   const tertiary = keys.find((key) => key !== primary && key !== secondary) || null;
-  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors) };
+  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), profileLike };
   const plan = [];
 
   function push(policyKey, variantIndex, weight = "main") {
@@ -1398,18 +1627,35 @@ function itemMatchesSlot(item, slot) {
   return true;
 }
 
+function scoreAffiliatePriority(item) {
+  const rate = Number(item?.affiliateRate || item?.affiliateRatePercent || 0);
+  if (!Number.isFinite(rate) || rate <= 0) return 0;
+  // 料率は「最後のひと押し」に限定。用途一致や方針一致を上書きしない。
+  return Math.min(rate, 12) * 0.32;
+}
+
+function scoreTrustedCareBrand(item) {
+  // v7.10: ブランド名だけで順位を押し上げない。
+  // 用途一致・部位一致・レビュー・料率を優先し、定番/ニッチを同じ土俵で扱う。
+  return 0;
+}
+
 function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   if (!itemMatchesSlot(item, slot)) return -999;
 
   const slotRoles = safeArray(slot.roles);
   const roleMatched = slotRoles.includes(item.productRole) || slotRoles.includes(item.intentType);
   const keywordMatched = hasAnyText(item, slot.keywords);
+  const contextRoleMatched = safeArray(slot.contextBoostRoles).includes(item.productRole) || safeArray(slot.contextBoostRoles).includes(item.intentType);
+  const contextKeywordMatched = hasAnyText(item, slot.contextBoostKeywords);
 
   let score = 0;
   if (item.category === slot.category) score += 20;
   if (roleMatched) score += 14;
   if (safeArray(slot.productTypes).includes(item.productType)) score += 6;
   if (keywordMatched) score += 7;
+  if (contextRoleMatched) score += 4;
+  if (contextKeywordMatched) score += 4;
   if (hasAnyText(item, slot.avoidKeywords)) score -= 30;
 
   if (slotRoles.length && !roleMatched) score -= 6;
@@ -1422,6 +1668,9 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   if (item.category === "eat") {
     score += scoreTeaMaterialFit(item, slot, policyKeys);
   }
+
+  score += scoreAffiliatePriority(item);
+  score += scoreTrustedCareBrand(item);
 
   const orderedPolicies = safeArray(policyKeys);
   if (item.policyKey && orderedPolicies[0] === item.policyKey) score += 8;
@@ -1451,7 +1700,7 @@ function scoreTeaMaterialFit(item, slot, policyKeys = []) {
   if (item.category !== "eat") return 0;
   const text = itemEvidenceText(item);
   const groups = detectTeaMaterialGroups(item).map((group) => group.key);
-  const desired = safeArray(slot.teaDirections);
+  const desired = unique([...safeArray(slot.teaDirections), ...safeArray(slot.contextTeaDirections)]);
   let score = groups.some((key) => desired.includes(key)) ? 10 : 0;
 
   // ぬくめる・めぐらせる等で「温かい素材」を探している時に、
@@ -1483,12 +1732,18 @@ function pickKitItem(candidates, slot, used, context) {
       const key = getSetItemKey(item);
       return key && !used.has(key);
     })
-    .map((item) => ({ item, score: scoreKitCandidate(item, slot, context) }))
+    .map((item) => ({
+      item,
+      score: scoreKitCandidate(item, slot, context) + scoreDiversityPenalty(item, context?.diversity),
+    }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score);
 
   const picked = ranked[0]?.item || null;
-  if (picked) used.add(getSetItemKey(picked));
+  if (picked) {
+    used.add(getSetItemKey(picked));
+    registerItemDiversity(picked, context?.diversity);
+  }
   return picked;
 }
 
@@ -1588,8 +1843,8 @@ function buildLiveUseGuide(item) {
 
 function buildFallbackSlotsForDefinition(definition, context) {
   const originalSlots = safeArray(definition?.slots);
-  const live = originalSlots.find((slot) => slot.category === "live") || liveSlotFor(definition.policyKey, context);
-  const eat = originalSlots.find((slot) => slot.category === "eat") || eatSlotFor(definition.policyKey, context, definition.titleSuffix);
+  const live = originalSlots.find((slot) => slot.category === "live") || applyContextSlotProfiles(liveSlotFor(definition.policyKey, context), context);
+  const eat = originalSlots.find((slot) => slot.category === "eat") || applyContextSlotProfiles(eatSlotFor(definition.policyKey, context, definition.titleSuffix), context);
   const point = originalSlots.find((slot) => slot.category === "point");
 
   // 0件回避用の予備セット。用途ズレを起こしやすい「ほぐす」は、
@@ -1602,42 +1857,46 @@ function buildFallbackSlotsForDefinition(definition, context) {
 function buildGenericFallbackSlots(policyKey, context) {
   // 最後の予備。商品用途の上書きはせず、比較的安全な暮らす・食べる枠だけで組む。
   return uniqueSlots([
-    liveSlotFor(policyKey, context),
-    eatSlotFor(policyKey, context, "default"),
+    applyContextSlotProfiles(liveSlotFor(policyKey, context), context),
+    applyContextSlotProfiles(eatSlotFor(policyKey, context, "default"), context),
   ]).slice(0, 2);
 }
 
 function assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel = 0 }) {
   const used = new Set();
+  let diversity = createDiversityState();
+  const cards = [];
 
-  return safeArray(definitions)
-    .map((definition) => {
-      const localUsed = new Set(used);
-      const cardPolicyKeys = definition.policyKeys?.length ? definition.policyKeys : reorderPolicyKeysForCard(definition.policyKey, policyKeys);
-      const items = safeArray(definition.slots)
-        .map((slot) => {
-          const picked = pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys: cardPolicyKeys });
-          if (!picked) return null;
-          return { ...picked, useGuide: buildItemUseGuide(picked, slot, { ...definition, policyKeys: cardPolicyKeys }), slotCategory: slot.category };
-        })
-        .filter(Boolean);
+  for (const definition of safeArray(definitions)) {
+    const localUsed = new Set(used);
+    const localDiversity = cloneDiversityState(diversity);
+    const cardPolicyKeys = definition.policyKeys?.length ? definition.policyKeys : reorderPolicyKeysForCard(definition.policyKey, policyKeys);
+    const items = safeArray(definition.slots)
+      .map((slot) => {
+        const picked = pickKitItem(byCategory[slot.category], slot, localUsed, { mode, policyKeys: cardPolicyKeys, diversity: localDiversity });
+        if (!picked) return null;
+        return { ...picked, useGuide: buildItemUseGuide(picked, slot, { ...definition, policyKeys: cardPolicyKeys }), slotCategory: slot.category };
+      })
+      .filter(Boolean);
 
-      if (items.length >= 2) {
-        items.forEach((item) => used.add(getSetItemKey(item)));
-      }
+    if (items.length < 2) continue;
 
-      return {
-        ...definition,
-        fallbackLevel,
-        items,
-        tags: unique([...safeArray(definition.tags), ...safeArray(approachTags).slice(0, 2)]).filter(Boolean).slice(0, 6),
-      };
-    })
-    .filter((card) => card.items.length >= 2)
-    .slice(0, CARE_SET_EXPANDED_LIMIT);
+    items.forEach((item) => used.add(getSetItemKey(item)));
+    diversity = localDiversity;
+    cards.push({
+      ...definition,
+      fallbackLevel,
+      items,
+      tags: unique([...safeArray(definition.tags), ...safeArray(approachTags).slice(0, 2)]).filter(Boolean).slice(0, 6),
+    });
+
+    if (cards.length >= CARE_SET_EXPANDED_LIMIT) break;
+  }
+
+  return cards;
 }
 
-function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags }) {
+function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags, profileLike }) {
   const byCategory = Object.fromEntries(
     CATEGORY_ORDER.map((category) => {
       const partner = safeArray(partnerItemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "a8", sourceType: item.sourceType || "partner" }));
@@ -1646,8 +1905,8 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
     })
   );
 
-  const context = { mode, policyKeys: safeArray(policyKeys), symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), symptomLabel };
-  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors });
+  const context = { mode, policyKeys: safeArray(policyKeys), symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), symptomLabel, profileLike };
+  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike });
 
   const strictCards = assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 0 });
   if (strictCards.length) return strictCards;
@@ -1807,6 +2066,7 @@ export default function CareNaviPage() {
   const [rakutenQueries, setRakutenQueries] = useState([]);
   const [rakutenLoading, setRakutenLoading] = useState(false);
   const [rakutenError, setRakutenError] = useState("");
+  const [rakutenRetryNonce, setRakutenRetryNonce] = useState(0);
   const [visibleLimit, setVisibleLimit] = useState(CARE_SET_INITIAL_LIMIT);
 
   useEffect(() => {
@@ -1991,6 +2251,10 @@ export default function CareNaviPage() {
   const kitPriceBand = SET_MODE_PRICE_BAND[kitMode] || "light";
   const kitModeMeta = getSetModeMeta(kitMode);
 
+  function retryRakutenSearch() {
+    setRakutenRetryNonce((value) => value + 1);
+  }
+
   useEffect(() => {
     if (!policyKeys.length) {
       setRakutenItemsByCategory({ live: [], eat: [], point: [] });
@@ -2001,10 +2265,10 @@ export default function CareNaviPage() {
     }
 
     const controller = new AbortController();
+    setRakutenLoading(true);
+    setRakutenError("");
 
     async function searchRakutenItems() {
-      setRakutenLoading(true);
-      setRakutenError("");
 
       try {
         const results = await Promise.all(
@@ -2055,27 +2319,25 @@ export default function CareNaviPage() {
 
         const hasAnyItems = Object.values(nextByCategory).some((items) => items.length);
         if (!hasAnyItems && apiErrors.length) {
-          const first = apiErrors[0] || {};
-          setRakutenError(
-            `楽天APIから商品候補を取得できませんでした。${first.status ? ` status: ${first.status}` : ""}${first.message ? ` / ${first.message}` : ""}`
-          );
+          setRakutenError("RAKUTEN_RETRYABLE_ERROR");
         }
       } catch (error) {
         if (error?.name === "AbortError") return;
         setRakutenItemsByCategory({ live: [], eat: [], point: [] });
         setRakutenQueries([]);
-        setRakutenError(error?.message || "楽天の商品候補を取得できませんでした。");
+        setRakutenError("RAKUTEN_RETRYABLE_ERROR");
       } finally {
         if (!controller.signal.aborted) setRakutenLoading(false);
       }
     }
 
-    searchRakutenItems();
+    const searchTimer = setTimeout(searchRakutenItems, 360);
 
     return () => {
+      clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [kitMode, kitPriceBand, policyKeySignature, symptomKey, basis, lifeKeySignature]);
+  }, [kitMode, kitPriceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -2113,8 +2375,9 @@ export default function CareNaviPage() {
         triggerFactors: tomorrowTriggerFactors,
         symptomLabel,
         approachTags,
+        profileLike,
       }),
-    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags]
+    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
   );
 
   const displaySets = careSetCards.slice(0, visibleLimit);
@@ -2328,7 +2591,7 @@ export default function CareNaviPage() {
         </div>
 
         <div className="mt-3 grid gap-3">
-          <RakutenStatusCard error={rakutenError} queries={rakutenQueries} />
+          <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
           <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
             このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインをもとに、今日から使いやすいケアセットを選んでいます。医療的な治療ではなく、毎日のセルフケア選びとして活用してください。
           </div>
