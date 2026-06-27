@@ -1751,7 +1751,7 @@ function buildItemUseGuide(item, slot, card) {
   if (!item || item.source === "a8" || item.sourceType === "partner") return "";
 
   if (item.category === "eat") return buildEatUseGuide(item, card);
-  if (item.category === "point") return buildPointUseGuide(item, slot);
+  if (item.category === "point") return buildPointUseGuide(item, slot, card);
   if (item.category === "live") return buildLiveUseGuide(item);
   return "";
 }
@@ -1794,15 +1794,63 @@ function buildEatUseGuide(item, card) {
   return "このセットの食べる枠として。";
 }
 
-function buildPointUseGuide(item, slot) {
+const POINT_ROLE_AREA_MAP = {
+  neck_shoulder_release: "neck_shoulder",
+  posture_release: "low_back",
+  foot_leg_release: "foot_leg",
+  eye_head_release: "eye_head",
+};
+
+const POINT_AREA_LABELS = {
+  eye_head: "目元・こめかみ・頭皮",
+  neck_shoulder: "首肩",
+  low_back: "腰・背中",
+  foot_leg: "足裏・ふくらはぎ",
+};
+
+function preferredPointArea(item, slot, areas = []) {
+  const roleArea = POINT_ROLE_AREA_MAP[item?.productRole] || POINT_ROLE_AREA_MAP[item?.intentType];
+  const required = safeArray(slot?.requiredAreas);
+  if (roleArea && (!areas.length || areas.includes(roleArea) || /ツボ|つぼ|指圧|押し棒|ポイントきゅう|お灸|温灸|灸|マッサージガン|筋膜ガン|ハンディガン/i.test(itemEvidenceText(item)))) {
+    return roleArea;
+  }
+  const requiredHit = required.find((area) => areas.includes(area));
+  if (requiredHit) return requiredHit;
+  return areas.find((area) => area !== "face" && POINT_AREA_LABELS[area]) || "";
+}
+
+function pointAreaLabel(area) {
+  return POINT_AREA_LABELS[area] || "気になる部位";
+}
+
+function buildTsuboToolUseGuide(item, preferredArea) {
+  const text = itemEvidenceText(item);
+  const label = pointAreaLabel(preferredArea);
+  const isOkyu = /お灸|温灸|台座灸|せんねん灸|灸/.test(text);
+  const isTsuboStick = /ツボ|つぼ|指圧|押し棒|ポイントきゅう|突起/.test(text);
+  const isMassageGun = /マッサージガン|筋膜ガン|ハンディガン|リカバリーガン/.test(text);
+
+  if (isOkyu) return `体調予報ページのツボカードに合わせる枠。${label}まわりのツボケアに。`;
+  if (isTsuboStick) return `体調予報ページのツボカードや、${label}まわりのポイントケアに。`;
+  if (isMassageGun) return `体調予報ページのツボカードや、${label}まわりのケアに。`;
+  return "";
+}
+
+function buildPointUseGuide(item, slot, card) {
   const text = itemEvidenceText(item);
   const areas = inferPointAreas(item);
   const required = safeArray(slot?.requiredAreas);
   if (areas.includes("face") || BEDDING_ITEM_PATTERN.test(text) || isMedicalSupportItem(item)) return "";
 
+  const preferredArea = preferredPointArea(item, slot, areas);
+  const hasPreferredEvidence = preferredArea && areas.includes(preferredArea);
+
   function has(area) {
-    return areas.includes(area) && (!required.length || required.includes(area));
+    return area === preferredArea && areas.includes(area) && (!required.length || required.includes(area) || POINT_ROLE_AREA_MAP[item?.productRole] === area || POINT_ROLE_AREA_MAP[item?.intentType] === area);
   }
+
+  const tsuboToolGuide = buildTsuboToolUseGuide(item, preferredArea);
+  if (tsuboToolGuide) return tsuboToolGuide;
 
   if (WARMING_PAD_PATTERN.test(text)) {
     if (has("eye_head")) return "目元・こめかみ周辺を温める枠。休む前や画面作業後に。";
@@ -1812,7 +1860,7 @@ function buildPointUseGuide(item, slot) {
     return required.length ? "" : "気になる部位を温める枠として。";
   }
 
-  if (/ローラー|ボール|指圧|ツボ|マッサージ|押圧|押し|突起|天然石|ブラシ/.test(text)) {
+  if (/ローラー|ボール|マッサージ|ブラシ/.test(text)) {
     if (has("eye_head")) return "目元・こめかみ・頭皮まわりの切り替え枠。軽めに。";
     if (has("neck_shoulder")) return "首肩まわりを動かす枠。作業後や休む前に。";
     if (has("low_back")) return "腰・背中まわりを動かす枠。短時間で軽く。";
@@ -1825,7 +1873,9 @@ function buildPointUseGuide(item, slot) {
     if (has("foot_leg")) return "足まわりをゆっくり伸ばす枠。座りっぱなしの日に。";
   }
 
-  if (required.length) return "";
+  // 商品から部位が読めず、ツボ・お灸・マッサージガンでもないものは、
+  // スロット側の意図で用途文を上書きしない。
+  if (required.length || !hasPreferredEvidence) return "";
   return "体を軽く動かす道具として。";
 }
 
