@@ -75,6 +75,63 @@ function getPolicyIconPath(policyKey) {
  * Main Page
  * ---------------------------- */
 
+
+function CareSetNaviBridge({
+  icon,
+  eyebrow = "ケアセットナビ",
+  title,
+  lead,
+  chips = [],
+  buttonLabel = "ケアセットを見る",
+  onClick,
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-[26px] bg-[linear-gradient(135deg,#F4FBF7_0%,#FFF8E8_100%)] p-4 ring-1 ring-[#CFE3DA] shadow-[0_18px_44px_-28px_rgba(15,23,42,0.34)]">
+      <div className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-[#F6C36A]/28 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-16 -left-10 h-36 w-36 rounded-full bg-[#64B5A2]/22 blur-2xl" />
+
+      <div className="relative flex items-start gap-3">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-white text-[#24564C] ring-1 ring-[#CFE0D3] shadow-[0_12px_24px_-18px_rgba(37,95,79,0.40)]">
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#47786C]/75">
+            {eyebrow}
+          </div>
+          <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">
+            {title}
+          </div>
+          <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">
+            {lead}
+          </div>
+        </div>
+      </div>
+
+      {chips.length ? (
+        <div className="relative mt-3 flex flex-wrap gap-1.5">
+          {chips.map((chip) => (
+            <span key={chip} className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-black text-[#24564C]/80 ring-1 ring-[#D3E1D5]">
+              {chip}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onClick}
+        className="relative mt-4 flex w-full items-center justify-between gap-3 rounded-[18px] bg-[#24564C] px-4 py-3 text-left text-[13px] font-black text-white shadow-[0_16px_30px_-20px_rgba(37,86,76,0.65)] transition-all active:translate-y-[1px]"
+      >
+        <span>{buttonLabel}</span>
+        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14" />
+          <path d="M13 6l6 6-6 6" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function normalizeRadarTargetDate(date) {
   const { today, tomorrow } = getJstTodayTomorrow();
   return date === today ? today : tomorrow;
@@ -1443,21 +1500,14 @@ export default function RadarPage() {
                   </div>
                 ) : null}
 
-                <div className="rounded-[20px] bg-white px-4 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    ケアナビ
-                  </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    ここでは、その日のツボを提案しています。ケアナビでは、ツボ押し棒・お灸・電子灸に加えて、首肩や足元をほぐす道具も見られます。
-                  </div>
-                  <Button
-                    variant="secondary"
-                    onClick={() => router.push(buildCareNaviUrl("point"))}
-                    className="mt-3 w-full bg-white"
-                  >
-                    ほぐすケア用品を見る
-                  </Button>
-                </div>
+                <CareSetNaviBridge
+                  icon={<IconRipple className="h-7 w-7" />}
+                  title="このほぐすケアを、セットで続ける"
+                  lead="今日のツボや部位ケアに、食べる・暮らすも合わせた組み合わせを見られます。"
+                  chips={["ツボケア", "お灸・ツボ押し棒", "食べる・暮らすも一緒に"]}
+                  buttonLabel="ほぐすケアのセットを見る"
+                  onClick={() => router.push(buildCareNaviUrl("point"))}
+                />
               </div>
             ) : null}
 
@@ -1653,21 +1703,14 @@ export default function RadarPage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-[20px] bg-white px-4 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    ケアナビ
-                  </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    日々の食べ方を支える飲み物・ストック品・補うものを、体質や季節の視点で探せます。
-                  </div>
-                  <Button
-                    variant="secondary"
-                    onClick={() => router.push(buildCareNaviUrl("eat"))}
-                    className="mt-3 w-full bg-white"
-                  >
-                    日常に置いておきたい食養生アイテムを見る
-                  </Button>
-                </div>
+                <CareSetNaviBridge
+                  icon={<IconBowl className="h-7 w-7" />}
+                  title="今日の食養生を、セットで続ける"
+                  lead="飲み物・汁物・ストック品に、暮らしやほぐすケアも合わせて提案します。"
+                  chips={["素材の一杯", "軽めの食事", "暮らす・ほぐすも一緒に"]}
+                  buttonLabel="食養生のセットを見る"
+                  onClick={() => router.push(buildCareNaviUrl("eat"))}
+                />
               </div>
             ) : null}
 
@@ -1723,21 +1766,14 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[20px] bg-white px-4 py-4 ring-1 ring-[#D3E1D5] shadow-sm">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    ケアナビ
-                  </div>
-                  <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
-                    温める・休む・眠るなどのケアを、日常で続けやすくする道具も見られます。
-                  </div>
-                  <Button
-                    variant="secondary"
-                    onClick={() => router.push(buildCareNaviUrl("live"))}
-                    className="mt-3 w-full bg-white"
-                  >
-                    暮らしのケア用品を見る
-                  </Button>
-                </div>
+                <CareSetNaviBridge
+                  icon={<IconLifestyle className="h-7 w-7" />}
+                  title="この暮らしケアを、セットで続ける"
+                  lead="温める・休む・眠るなどの工夫に、食べる・ほぐすも合わせたセットを見られます。"
+                  chips={["生活ケア", "休む環境", "食べる・ほぐすも一緒に"]}
+                  buttonLabel="暮らしから整えるセットを見る"
+                  onClick={() => router.push(buildCareNaviUrl("live"))}
+                />
               </div>
             ) : null}
           </Module>
