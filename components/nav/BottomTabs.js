@@ -53,7 +53,7 @@ export default function BottomTabs() {
           {item("home", "ホーム", IconHome, "/")}
           {item("check", "トリセツ", IconKarte, "/check")}
           {item("radar", "体調予報", IconRadar, "/radar")}
-          {item("care", "ケアナビ", IconCare, "/care-navi")}
+          {item("care", "MYケア", IconCare, "/care-navi")}
         </div>
       </div>
     </div>
