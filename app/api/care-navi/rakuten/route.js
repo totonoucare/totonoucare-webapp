@@ -1449,7 +1449,7 @@ function isAcceptableRakutenItem(item, plan) {
   if (!text) return false;
 
   if (GIFT_REJECT_PATTERN.test(text)) return false;
-  // 救急処置・傷ケア系はケアセットの目的から外れるため、楽天取得段階でも除外。
+  // 救急処置・傷ケア系はMYケアセレクトの目的から外れるため、楽天取得段階でも除外。
   if (FIRST_AID_REJECT_PATTERN.test(text)) return false;
   if (MEDICAL_SUPPORT_REJECT_PATTERN.test(text)) return false;
   if (plan?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(text)) return false;
