@@ -1,4 +1,4 @@
--- ケアナビ：楽天商品クリック計測
+-- MYケアセレクト：楽天商品クリック計測
 -- Supabase SQL Editor でこのSQLを実行してください。
 -- アプリ側は /api/care-navi/click から service role 経由で insert します。
 
@@ -16,7 +16,7 @@ create table if not exists public.care_item_click_events (
 
   page text not null default 'care_navi',
 
-  -- その時のケアナビ条件
+  -- その時のMYケアセレクト条件
   basis text null, -- karte / tomorrow / season / life
   category text null, -- live / eat / point
   price_band text null, -- all / light / standard / deep
@@ -88,4 +88,4 @@ create index if not exists care_item_click_events_item_code_idx
   on public.care_item_click_events (item_code);
 
 comment on table public.care_item_click_events is
-  'ケアナビの商品リンククリックログ。不調・方針・カテゴリ・価格帯・商品情報を保存する。';
+  'MYケアセレクトの商品リンククリックログ。不調・方針・カテゴリ・価格帯・商品情報を保存する。';
