@@ -77,10 +77,10 @@ function getPolicyIconPath(policyKey) {
 
 
 function CareSetNaviBridge({
-  eyebrow = "ケアセットナビ",
+  eyebrow = "MYケアセレクト",
   title,
   lead,
-  buttonLabel = "ケアセットを見る",
+  buttonLabel = "候補を見る",
   onClick,
 }) {
   return (
@@ -1475,9 +1475,9 @@ export default function RadarPage() {
                 ) : null}
 
                 <CareSetNaviBridge
-                  title="このツボケアを、道具込みで見る"
-                  lead="表示中のツボや部位ケアを続けるための、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
-                  buttonLabel="ツボケアのセットを見る"
+                  title="このツボケアに合う道具を見る"
+                  lead="表示中のツボや部位ケアに合わせて、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
+                  buttonLabel="ツボケアに合う候補を見る"
                   onClick={() => router.push(buildCareNaviUrl("point"))}
                 />
               </div>
@@ -1676,9 +1676,9 @@ export default function RadarPage() {
                 </div>
 
                 <CareSetNaviBridge
-                  title="この食べ方を、ケアセットで見る"
+                  title="この食べ方に合う候補を見る"
                   lead="表示中の食べ方に合わせて、飲み物・汁物・素材系アイテムの候補を見られます。"
-                  buttonLabel="食べ方に合うセットを見る"
+                  buttonLabel="食べ方に合う候補を見る"
                   onClick={() => router.push(buildCareNaviUrl("eat"))}
                 />
               </div>
@@ -1737,9 +1737,9 @@ export default function RadarPage() {
                 </div>
 
                 <CareSetNaviBridge
-                  title="この暮らしケアを、道具込みで見る"
+                  title="この暮らしケアに合う道具を見る"
                   lead="表示中の生活ケアに合わせて、温める・休む・眠る・湿度を整える道具の候補を見られます。"
-                  buttonLabel="暮らしケアのセットを見る"
+                  buttonLabel="暮らしケアに合う候補を見る"
                   onClick={() => router.push(buildCareNaviUrl("live"))}
                 />
               </div>
