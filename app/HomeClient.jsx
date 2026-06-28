@@ -604,6 +604,35 @@ function GuestStartCta({ onCheck, onLogin }) {
   );
 }
 
+function MyCareScopeBadge({ variant = "stack", className = "" }) {
+  const items = [
+    { label: "暮らす", sub: "温める", color: "text-[#2F8F79]" },
+    { label: "食べる", sub: "食品", color: "text-[#8B640C]" },
+    { label: "ほぐす", sub: "道具", color: "text-slate-600" },
+  ];
+
+  if (variant === "row") {
+    return (
+      <div className={["grid grid-cols-3 gap-2", className].join(" ")}>
+        {items.map((item) => (
+          <div key={item.label} className="rounded-[15px] bg-[#F8FBF9] px-2.5 py-2 text-center ring-1 ring-[#D3E1D5]">
+            <div className={["text-[10px] font-black", item.color].join(" ")}>{item.label}</div>
+            <div className="mt-0.5 text-[9px] font-extrabold text-slate-400">{item.sub}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className={["shrink-0 rounded-[18px] bg-[#F8FBF9] px-3 py-2 text-center ring-1 ring-[#D3E1D5]", className].join(" ")}>
+      {items.map((item) => (
+        <div key={item.label} className={["text-[10px] font-black", item.color].join(" ")}>{item.label}</div>
+      ))}
+    </div>
+  );
+}
+
 function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow }) {
   const title = hasResult ? "MYケアセレクト" : "体質チェック後に、MYケアセレクト";
   const body = hasResult
@@ -632,12 +661,10 @@ function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow })
             </p>
           </div>
         </div>
-        <div className="hidden shrink-0 rounded-[18px] bg-[#F8FBF9] px-3 py-2 text-center ring-1 ring-[#D3E1D5] sm:block">
-          <div className="text-[10px] font-black text-[#2F8F79]">暮らす</div>
-          <div className="text-[10px] font-black text-[#8B640C]">食べる</div>
-          <div className="text-[10px] font-black text-slate-600">ほぐす</div>
-        </div>
+        <MyCareScopeBadge className="hidden sm:block" />
       </div>
+
+      <MyCareScopeBadge variant="row" className="relative z-10 mt-4 sm:hidden" />
 
       <div className="relative z-10 mt-4 flex flex-col gap-3 sm:flex-row">
         <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
