@@ -606,7 +606,7 @@ function GuestStartCta({ onCheck, onLogin }) {
 
 function MyCareScopeBadge({ variant = "stack", className = "" }) {
   const items = [
-    { label: "暮らす", sub: "温める", color: "text-[#2F8F79]" },
+    { label: "暮らす", sub: "環境", color: "text-[#2F8F79]" },
     { label: "食べる", sub: "食品", color: "text-[#8B640C]" },
     { label: "ほぐす", sub: "道具", color: "text-slate-600" },
   ];
