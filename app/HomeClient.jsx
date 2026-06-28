@@ -533,34 +533,73 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
   );
 }
 
-function GuestMyCareSelectPreview({ onCheck }) {
+function GuestStartCta({ onCheck, onLogin }) {
+  const steps = [
+    {
+      key: "type",
+      title: "体質トリセツ",
+      sub: "崩れ方のクセ",
+      icon: <IconCheckCard />,
+      tone: "text-[#24564C] bg-white ring-[#CFE0D3]",
+    },
+    {
+      key: "forecast",
+      title: "体調予報",
+      sub: "今日・明日のゆらぎ",
+      icon: <IconRadar className="h-[22px] w-[22px]" />,
+      tone: "text-[#8B640C] bg-white ring-[#E9D8A9]",
+    },
+    {
+      key: "care",
+      title: "MYケア",
+      sub: "用品・食品・サービス",
+      icon: <AppIcon name="care" className="h-[22px] w-[22px]" />,
+      tone: "text-[#2F8F79] bg-white ring-[#CFE0D3]",
+    },
+  ];
+
   return (
-    <div className="mt-5 rounded-[26px] bg-white p-5 text-left ring-1 ring-inset ring-[#CFE0D3] shadow-[0_14px_30px_-24px_rgba(37,95,79,0.24)]">
-      <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5]">
-        MY CARE SELECT
+    <div className="mt-6 rounded-[30px] border-2 border-dashed border-[#5C9F88]/35 bg-[#F4F9F6] p-5 text-left relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
+      <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-[#F4D68A]/28 blur-2xl" />
+      <div className="pointer-events-none absolute -left-12 bottom-0 h-32 w-32 rounded-full bg-[#CFEFE6]/32 blur-2xl" />
+
+      <div className="relative z-10 flex items-start gap-3">
+        <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[18px] bg-white text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm">
+          <IconCheckCard />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5] shadow-sm">
+            START GUIDE
+          </div>
+          <h2 className="mt-2 text-[17px] font-black tracking-tight text-[#24564C] leading-[1.35]">
+            体質トリセツを作って、体調予報とMYケアセレクトへ
+          </h2>
+          <p className="mt-2 text-[12px] font-bold leading-6 text-[#5b6674]">
+            1〜2分の体質チェックで、あなたの「崩れ方のクセ」をまとめます。作成後は、今日・明日の体調予報や、ケア用品・食品・サービス候補も自分向けに見られます。
+          </p>
+        </div>
       </div>
-      <div className="mt-3 text-[16px] font-black tracking-tight text-slate-950">
-        体質チェック後は、MYケアセレクトへ
-      </div>
-      <p className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
-        あなたの体質・不調・天気に合わせて、ケア用品・食品・サービス候補を見られます。
-        暮らす・食べる・ほぐすを組み合わせて、取り入れやすい候補を選べます。
-      </p>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        {[
-          ["暮らす", "温める・休む"],
-          ["食べる", "飲み物・汁物"],
-          ["ほぐす", "ツボ・部位ケア"],
-        ].map(([title, sub]) => (
-          <div key={title} className="rounded-[16px] bg-[#F8FBF9] px-2.5 py-2 ring-1 ring-[#E0EBE5]">
-            <div className="text-[11px] font-black text-slate-900">{title}</div>
-            <div className="mt-0.5 text-[9px] font-bold leading-4 text-slate-500">{sub}</div>
+
+      <div className="relative z-10 mt-4 grid grid-cols-3 gap-2">
+        {steps.map((step) => (
+          <div key={step.key} className="rounded-[18px] bg-white/85 p-3 text-center ring-1 ring-[#D3E1D5] shadow-sm">
+            <div className={["mx-auto grid h-10 w-10 place-items-center rounded-[14px] ring-1", step.tone].join(" ")}>
+              {step.icon}
+            </div>
+            <div className="mt-2 text-[11px] font-black text-slate-900 leading-4">{step.title}</div>
+            <div className="mt-0.5 text-[9.5px] font-bold leading-4 text-slate-500">{step.sub}</div>
           </div>
         ))}
       </div>
-      <Button onClick={onCheck} variant="secondary" className="mt-4 w-full bg-white py-3 text-[13px] shadow-sm">
-        体質チェックしてMYケアを見る
-      </Button>
+
+      <div className="relative z-10 mt-5 grid gap-3">
+        <Button onClick={onCheck} className="py-4 shadow-md text-[14px] w-full">
+          無料で体質チェックを始める
+        </Button>
+        <Button variant="secondary" onClick={onLogin} className="py-4 shadow-sm text-[14px] w-full bg-white">
+          ログインする
+        </Button>
+      </div>
     </div>
   );
 }
@@ -574,18 +613,24 @@ function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow })
   const secondaryLabel = hasResult && hasLocation ? "明日に備える候補を見る" : hasResult ? "地域設定して予報とつなぐ" : "まずは体質チェックへ";
 
   return (
-    <Module className="mt-5 bg-white p-5 ring-1 ring-[#D3E1D5] shadow-[0_16px_36px_-28px_rgba(37,95,79,0.28)]">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5]">
-            MY CARE SELECT
+    <Module className="mt-5 relative overflow-hidden bg-white p-5 ring-1 ring-[#D3E1D5] shadow-[0_16px_36px_-28px_rgba(37,95,79,0.28)]">
+      <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-[#CFEFE6]/34 blur-2xl" />
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex items-start gap-3">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#DCEFEA] text-[#173F3A] ring-1 ring-[#B6D8CF] shadow-[0_12px_28px_-18px_rgba(19,138,115,0.42)]">
+            <AppIcon name="care" className="h-6 w-6" />
           </div>
-          <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
-            {title}
-          </h2>
-          <p className="mt-2 text-[12px] font-extrabold leading-6 text-slate-600">
-            {body}
-          </p>
+          <div className="min-w-0">
+            <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5]">
+              MY CARE SELECT
+            </div>
+            <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
+              {title}
+            </h2>
+            <p className="mt-2 text-[12px] font-extrabold leading-6 text-slate-600">
+              {body}
+            </p>
+          </div>
         </div>
         <div className="hidden shrink-0 rounded-[18px] bg-[#F8FBF9] px-3 py-2 text-center ring-1 ring-[#D3E1D5] sm:block">
           <div className="text-[10px] font-black text-[#2F8F79]">暮らす</div>
@@ -594,7 +639,7 @@ function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow })
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      <div className="relative z-10 mt-4 flex flex-col gap-3 sm:flex-row">
         <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
           {primaryLabel}
         </Button>
@@ -1259,25 +1304,10 @@ export default function HomePage() {
             </div>
           ) : null}
 
-          <GuestMyCareSelectPreview onCheck={() => router.push("/check")} />
-
-          {/* 体質チェックへの誘導 */}
-          <div className="mt-6 rounded-[28px] border-2 border-dashed border-[#5C9F88]/40 bg-[#F4F9F6] p-6 text-center relative overflow-hidden transition-all hover:bg-[#EEF6F0]">
-             <div className="text-[15px] font-black tracking-tight text-[#24564C]">
-               体質トリセツを作って、自分向けの体調予報へ
-             </div>
-             <p className="mt-3 text-[12px] font-bold text-[#5b6674] leading-relaxed">
-               1〜2分の体質チェックで、あなたの「崩れ方のクセ」を体質トリセツにまとめます。作成後は、今日・明日の崩れやすさと先回りケアも自分向けに見られます。
-             </p>
-             <div className="mt-5 grid gap-3">
-               <Button onClick={() => router.push("/check")} className="py-4 shadow-md text-[14px] w-full">
-                  無料で体質チェックを始める
-               </Button>
-               <Button variant="secondary" onClick={() => router.push("/signup")} className="py-4 shadow-sm text-[14px] w-full bg-white">
-                  ログインする
-               </Button>
-             </div>
-          </div>
+          <GuestStartCta
+            onCheck={() => router.push("/check")}
+            onLogin={() => router.push("/signup")}
+          />
 
           <ul className="mt-6 space-y-2.5">
             <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
