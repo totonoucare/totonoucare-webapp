@@ -102,11 +102,11 @@ const POLICY_QUERY_RULES = {
     ],
     nukumeru: [
       ["しょうが湯 ノンカフェイン", "冷たいものが続いた時に、内側を冷やしっぱなしにしない候補です。", ["温かい", "胃腸"]],
-      ["味噌汁 フリーズドライ", "温かく軽く足しやすく、胃腸の負担を増やしにくい候補です。", ["汁物", "軽め"]],
+      ["しょうが湯 ノンカフェイン", "冷たいものが続いた時に、内側を冷やしっぱなしにしない候補です。", ["温かい", "胃腸"]],
     ],
     sasaeru: [
-      ["味噌汁 フリーズドライ", "食べすぎず、温かく軽く足しやすい候補です。", ["胃腸", "軽め"]],
-      ["スープ 常温 保存", "忙しい日でも回復を削りすぎない軽い食事候補です。", ["スープ", "備蓄"]],
+      ["なつめ 黒豆 茶", "無理を重ねた日の飲み物を、軽く整える候補です。", ["お茶", "支える"]],
+      ["乳酸菌 酪酸菌 食物繊維 サプリ", "食事が乱れがちな日に、胃腸まわりを日常的に支えたい時の候補です。", ["腸活", "補う"]],
     ],
   },
   point: {
@@ -144,7 +144,7 @@ const POLICY_QUERY_RULES = {
 const SYMPTOM_QUERY_BOOSTS = {
   fatigue: {
     live: [["アイマスク 耳栓 睡眠", "疲れが残りやすい日の休む環境づくりに向いた候補です。", ["休息", "睡眠"]]],
-    eat: [["味噌汁 フリーズドライ", "だるい日でも温かく軽く足しやすい候補です。", ["軽め", "温かい"]]],
+    eat: [["ビタミンB群 サプリ", "食事が乱れがちな日に、不足しやすい栄養を補う候補です。", ["補う", "活動量"]]],
     point: [["ストレッチポール ハーフ", "疲れで丸まりやすい姿勢を一度切る候補です。", ["姿勢", "回復"]]],
   },
   sleep: {
@@ -154,7 +154,7 @@ const SYMPTOM_QUERY_BOOSTS = {
   },
   digestion: {
     live: [["腹巻き お腹 冷え", "お腹まわりを冷やさず、胃腸の重さを残しにくくする候補です。", ["胃腸", "お腹"]]],
-    eat: [["味噌汁 フリーズドライ", "胃腸が重い日でも温かく軽く足しやすい候補です。", ["胃腸", "軽め"]]],
+    eat: [["酪酸菌 乳酸菌 食物繊維 サプリ", "胃腸まわりを日常的に支えたい時の候補です。", ["腸活", "補う"]]],
     point: [["足裏 マッサージ ローラー", "胃腸まわりの重さを直接商品名にせず、足元から整える候補です。", ["足裏", "重だるさ"]]],
   },
   neck_shoulder: {
@@ -164,7 +164,7 @@ const SYMPTOM_QUERY_BOOSTS = {
   },
   low_back_pain: {
     live: [["腹巻き 腰 お腹 温活", "腰腹まわりを冷やしにくくする候補です。", ["腰腹", "温活"]]],
-    eat: [["味噌汁 フリーズドライ", "冷えや重さを残しにくい軽い温かい候補です。", ["温かい", "軽め"]]],
+    eat: [["しょうが湯 ノンカフェイン", "冷えや重さを残しにくい温かい飲み物候補です。", ["温かい", "香味"]]],
     point: [["フォームローラー 腰 背中", "腰背部まわりを大きくゆるめたい時の候補です。", ["腰", "背中"]]],
   },
   swelling: {
@@ -179,7 +179,7 @@ const SYMPTOM_QUERY_BOOSTS = {
   },
   dizziness: {
     live: [["アイマスク 睡眠 遮光", "刺激量を減らし、休む時間を先に確保したい時の候補です。", ["刺激を減らす", "睡眠"]]],
-    eat: [["味噌汁 フリーズドライ", "無理に食べず、温かく軽く足しやすい候補です。", ["軽め", "温かい"]]],
+    eat: [["鉄分 サプリ ヘム鉄", "食事量が落ちやすい日に、不足しやすい栄養を補う候補です。", ["補う", "栄養"]]],
     point: [["足裏 マッサージ ローラー", "足元から軽く整えたい時の候補です。", ["足元", "セルフケア"]]],
   },
   mood: {
@@ -881,25 +881,25 @@ const LIFE_QUERY_RULES = {
 
 const EAT_POLICY_DIVERSITY_ROWS = {
   shizumeru: [
-    careQueryRow("味噌汁 フリーズドライ", "頭が冴えやすい日でも、食事を軽く温かく戻しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("カモミール ルイボス ティー", "頭が冴えやすい日に、カフェインを避けながら温かく切り替えやすい候補です。", ["お茶", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
   yurumeru: [
-    careQueryRow("スープ フリーズドライ", "力みが続く日に、甘いものだけで粘らず軽く足しやすい候補です。", ["スープ", "軽め"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("レモンバーム カモミール ティー", "力みが続く日に、甘いものだけで粘らず温かく切り替えやすい候補です。", ["お茶", "リラックス"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
   meguraseru: [
-    careQueryRow("しょうが スープ フリーズドライ", "冷えや停滞が気になる日に、温かい汁物へ切り替えやすい候補です。", ["汁物", "香味"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("陳皮 なつめ 茶", "冷えや停滞が気になる日に、香味のある一杯へ切り替えやすい候補です。", ["陳皮", "なつめ"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend", "yakuzenIngredient"] }),
   ],
   nagasu: [
-    careQueryRow("雑炊 レトルト 常温", "重だるさがある日に、食べすぎず軽く済ませやすい候補です。", ["軽食", "常備"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("はとむぎ 小豆 茶", "重だるさがある日に、冷たい甘い飲み物へ寄せすぎない候補です。", ["はとむぎ", "小豆"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
   uruosu: [
-    careQueryRow("スープ 常温 保存", "乾いた菓子やコーヒーだけに偏らず、温かく軽く足しやすい候補です。", ["スープ", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("なつめ クコ ルイボスティー", "乾いた菓子やコーヒーだけに偏らず、温かい一杯へ戻しやすい候補です。", ["なつめ", "クコ"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
   nukumeru: [
-    careQueryRow("味噌汁 フリーズドライ 生姜", "冷えが気になる日に、飲み物だけでなく温かい汁物へ戻しやすい候補です。", ["汁物", "温める"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("しょうが湯 ノンカフェイン", "冷えが気になる日に、飲み物から温かく切り替えやすい候補です。", ["生姜", "温める"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
   sasaeru: [
-    careQueryRow("スープ 常温 保存", "忙しい日でも食事を抜きっぱなしにせず、軽く支えやすい候補です。", ["スープ", "常備"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] }),
+    careQueryRow("なつめ 黒豆 茶", "無理を重ねた日の飲み物を、軽く整える候補です。", ["なつめ", "黒豆"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
 };
 
@@ -917,6 +917,16 @@ function asArray(value) {
 
 function cleanKeyword(keyword) {
   return String(keyword || "").replace(/\s+/g, " ").trim().slice(0, 120);
+}
+
+const LOW_VALUE_SUPERMARKET_FOOD_QUERY_PATTERN = /(味噌汁|みそ汁|インスタントスープ|フリーズドライ|雑炊|おかゆ|リゾット|レトルト|常温保存|常温 保存|備蓄用?スープ)/i;
+const HIGH_CONTEXT_MEAL_QUERY_PATTERN = /(プロテイン|たんぱく|タンパク|完全栄養|栄養補助|GREEN\s*SPOON|グリーンスプーン|宅食|ミール|メディミール|nosh|ナッシュ)/i;
+
+function isLowValueSupermarketFoodPlan(normalized) {
+  const text = [normalized?.keyword, normalized?.reason, ...asArray(normalized?.tags)].filter(Boolean).join(" ");
+  if (!text) return false;
+  if (HIGH_CONTEXT_MEAL_QUERY_PATTERN.test(text)) return false;
+  return LOW_VALUE_SUPERMARKET_FOOD_QUERY_PATTERN.test(text);
 }
 
 function uniqueStrings(items) {
@@ -1079,7 +1089,9 @@ function countPlansByIntent(plans, intentType) {
 function canAddEatPlan(plans, normalized) {
   const intentType = normalized?.intentType || null;
   if (intentType === "warm_drink" && countPlansByIntent(plans, "warm_drink") >= 3) return false;
-  if (intentType === "light_meal" && countPlansByIntent(plans, "light_meal") >= 4) return false;
+  // 味噌汁・フリーズドライスープ等はECで買う必然性が弱いので、軽食枠は高文脈の商品だけに絞る。
+  if (intentType === "light_meal" && isLowValueSupermarketFoodPlan(normalized)) return false;
+  if (intentType === "light_meal" && countPlansByIntent(plans, "light_meal") >= 1) return false;
   return true;
 }
 
@@ -1177,10 +1189,10 @@ function inferProductRole({ category, normalized, policyKey }) {
   const preferred = asArray(normalized?.preferredProductTypes);
 
   if (category === "eat") {
+    if (intentType === "nutrition_support" || preferred.includes("supplement") || /(プロテイン|たんぱく|タンパク|完全栄養|ビタミン|ミネラル|乳酸菌|酪酸菌|食物繊維|GABA|テアニン|グリシン|マグネシウム|鉄分)/.test(text)) return "nutrition_support";
     if (intentType === "light_meal" || preferred.includes("soupMeal") || /(味噌汁|みそ汁|スープ|雑炊|おかゆ|リゾット|惣菜|宅食|ミール)/.test(text)) {
       return /(常温|保存|備蓄|フリーズドライ|レトルト)/.test(text) ? "pantry_soup" : "light_meal";
     }
-    if (intentType === "nutrition_support" || preferred.includes("supplement") || /(プロテイン|ビタミン|ミネラル|乳酸菌|酪酸菌|食物繊維|GABA|テアニン|グリシン|マグネシウム|鉄分)/.test(text)) return "nutrition_support";
     if (intentType === "ingredient" || preferred.includes("yakuzenIngredient") || /(なつめ|棗|クコ|枸杞|陳皮|白きくらげ|生姜|しょうが|桂皮|シナモン|よもぎ|菊花|桑葉|山査子)/.test(text)) return "ingredient";
     if (preferred.includes("drinkware") || /(水筒|ボトル|タンブラー|マグボトル|保温ボトル)/.test(text)) return "drinkware";
     if (/(カフェインレス|ノンカフェイン|カモミール|ハーブティー|ルイボス|おやすみ|リラックス)/.test(text) && (policyKey === "shizumeru" || policyKey === "yurumeru")) return "caffeine_shift";
@@ -1228,6 +1240,7 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
     const keyword = cleanKeyword(normalized?.keyword);
     if (!keyword || seenKeywords.has(keyword)) return false;
 
+    if (safeCategory === "eat" && isLowValueSupermarketFoodPlan(normalized)) return false;
     if (safeCategory === "eat" && !canAddEatPlan(plans, normalized)) return false;
 
     const resolvedPolicyKey = source === "life"
@@ -1310,11 +1323,15 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
     }
   });
 
-  // 食べるタブは、飲み物だけに寄らないよう最低限の軽食検索を1本足す。
-  if (safeCategory === "eat" && countPlansByIntent(plans, "light_meal") === 0) {
-    const fallbackLightMeal = eatPolicyDiversityRowsFor(primaryPolicyKey)[0] ||
-      careQueryRow("味噌汁 フリーズドライ", "食事を考える余力が少ない時に、温かく軽く足しやすい候補です。", ["軽食", "温かい"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"], avoidProductTypes: ["teaBlend"] });
-    addPlanFromRow(fallbackLightMeal, { policyKey: primaryPolicyKey, source: "policy", sourceKey: primaryPolicyKey });
+  // 食べるタブは「スーパーで買える常備食」を無理に足さない。
+  // 飲み物だけに寄りすぎる場合は、サプリ/和漢素材などオンラインで買う理由が立つ候補を1本だけ足す。
+  if (safeCategory === "eat" && countPlansByIntent(plans, "nutrition_support") === 0 && countPlansByIntent(plans, "ingredient") === 0) {
+    const fallbackSupport = categoryAnchorRowsFor("eat", primaryPolicyKey, symptomKey).find((row) => {
+      const normalized = normalizeQueryRow(row);
+      return !isLowValueSupermarketFoodPlan(normalized) && ["nutrition_support", "ingredient"].includes(normalized?.intentType);
+    }) || yakuzenBlendRowsFor(primaryPolicyKey, symptomKey, priceBand)[0] ||
+      careQueryRow("なつめ 黒豆 茶", "無理を重ねた日の飲み物を、軽く整える候補です。", ["お茶", "支える"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] });
+    addPlanFromRow(fallbackSupport, { policyKey: primaryPolicyKey, source: "policy", sourceKey: primaryPolicyKey });
   }
 
   // 生活サインが複数ある時は、最初のサインだけで棚が固まらないよう追加で拾う。
@@ -1583,7 +1600,7 @@ function productFamilyKey(item, productType) {
 
 function scoreEatProductType(productType, plan) {
   const base = {
-    soupMeal: 7,
+    soupMeal: -6,
     teaBlend: 4,
     tea: 3,
     yakuzenIngredient: 4,
@@ -1601,7 +1618,7 @@ function scoreEatProductType(productType, plan) {
   if (avoided.includes(productType)) score -= 14;
 
   if (intentType === "light_meal") {
-    if (productType === "soupMeal") score += 13;
+    if (productType === "soupMeal") score += 7;
     if (productType === "tea" || productType === "teaBlend") score -= 18;
     if (productType === "supplement") score -= 8;
   }
@@ -1619,7 +1636,7 @@ function scoreEatProductType(productType, plan) {
 
   if (intentType === "nutrition_support") {
     if (productType === "supplement") score += 10;
-    if (productType === "soupMeal") score += 6;
+    if (productType === "soupMeal") score += 2;
     if (productType === "teaBlend" || productType === "tea") score -= 10;
   }
 
@@ -1638,8 +1655,9 @@ function normalizeAffiliateRate(item) {
 function scoreAffiliateRatePriority(item) {
   const rate = normalizeAffiliateRate(item);
   if (!rate) return 0;
-  // 料率は検索品質を壊さない範囲の小さな加点に留める。
-  return Math.min(rate, 12) * 0.55;
+  // 料率は「同じくらい合っている候補の最後のひと押し」に限定する。
+  // 以前の 0.55 係数だと最大 +6.6 点になり、用途一致よりも料率が棚を動かしすぎる。
+  return Math.min(rate, 12) * 0.18;
 }
 
 function scoreTrustedCareBrand(item) {
