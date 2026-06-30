@@ -294,7 +294,7 @@ const CARE_ITEM_LIBRARY = {
     ],
     eat: [
       { title: "なつめ・黒豆・穀物茶系", query: "なつめ 黒豆 穀物茶 ノンカフェイン", reason: "無理に食べ物を増やさず、日々の一杯から余力を支えます。", tags: ["お茶", "支える"] },
-      { title: "栄養補助・食生活サポート", query: "ビタミンB群 サプリ 食物繊維", reason: "食事が乱れがちな日に、不足しやすい栄養を見直します。", tags: ["補う", "食生活"] },
+      { title: "栄養補助・食生活サポート", query: "ビタミンB群 サプリ", reason: "食事が乱れがちな日に、不足しやすい栄養を見直します。", tags: ["補う", "食生活"] },
     ],
     point: [
       { title: "足三里・胃腸まわりのセルフケア", query: "足三里 ツボ押し グッズ", reason: "だるさ・胃腸の重さ・下半身の重さをまとめて見たい時に。", tags: ["胃腸", "足三里"] },
@@ -1001,7 +1001,10 @@ function hasAnyText(item, keywords = []) {
 
 const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
 const FIRST_AID_REJECT_PATTERN = /(絆創膏|ばんそうこう|バンドエイド|キズテープ|傷テープ|キズパワーパッド|ムヒのキズ|救急絆|創傷|傷口|切り傷|擦り傷|すり傷|靴ずれ|あかぎれ|ひび割れ|ガーゼ|包帯|消毒|殺菌|サージカルテープ|防水フィルム|防水タイプ)/i;
-const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
+const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
+// 楽天検索結果に紛れやすいが、MYケアセレクトの人向け導線からは外す。
+const PET_PRODUCT_REJECT_PATTERN = /(ペット用品|ペットフード|犬用|猫用|犬猫|犬・猫|猫犬|犬\s*猫|ドッグフード|キャットフード|ドッグ|キャット|わんこ|ワンちゃん|にゃんこ|うさぎ用|ウサギ用|小動物用|鳥用|爬虫類用|愛犬|愛猫)/i;
+const LOW_CONTEXT_OLIGO_REJECT_PATTERN = /(オリゴ糖|イヌリン|フラクトオリゴ糖|ガラクトオリゴ糖|難消化性デキストリン)/i;
 const BEDDING_ITEM_PATTERN = /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り)/i;
 const WARMING_PAD_PATTERN = /(温熱|温め|あったか|ホット|発熱|遠赤外線|カイロ|貼るカイロ|貼って温|湿熱|温活)/i;
 const TRUE_DRINKWARE_PATTERN = /(水筒|タンブラー|マグボトル|保温ボトル|真空断熱|ステンレスボトル|保冷ボトル)/i;
@@ -1028,6 +1031,14 @@ function isFirstAidItem(item) {
 
 function isMedicalSupportItem(item) {
   return MEDICAL_SUPPORT_REJECT_PATTERN.test(itemEvidenceText(item));
+}
+
+function isPetProductItem(item) {
+  return PET_PRODUCT_REJECT_PATTERN.test(itemEvidenceText(item));
+}
+
+function isLowContextOligoItem(item) {
+  return item?.category === "eat" && LOW_CONTEXT_OLIGO_REJECT_PATTERN.test(itemEvidenceText(item));
 }
 
 const POINT_AREA_RULES = [
@@ -1107,7 +1118,7 @@ function eatSlot(policyKey, subtypeKey = "default") {
   if (policyKey === "meguraseru") return makeSlot("eat", ["warm_drink", "ingredient"], ["生姜", "黒豆", "陳皮", "シナモン", "穀物", "温かい"], { teaDirections: ["warming", "support"] });
   if (policyKey === "nagasu") return makeSlot("eat", ["warm_drink", "ingredient"], ["はとむぎ", "ハトムギ", "とうもろこし", "小豆", "黒豆", "どくだみ"], { teaDirections: ["light"] });
   if (policyKey === "uruosu") return makeSlot("eat", ["warm_drink", "caffeine_shift"], ["ルイボス", "黒豆", "なつめ", "麦茶", "ノンカフェイン"], { teaDirections: ["moist"] });
-  if (policyKey === "sasaeru") return makeSlot("eat", ["nutrition_support", "warm_drink", "ingredient"], ["なつめ", "黒豆", "玄米", "穀物", "ルイボス", "ビタミン", "食物繊維"], { teaDirections: ["support"] });
+  if (policyKey === "sasaeru") return makeSlot("eat", ["nutrition_support", "warm_drink", "ingredient"], ["なつめ", "黒豆", "玄米", "穀物", "ルイボス", "ビタミン", "乳酸菌", "酪酸菌"], { teaDirections: ["support"] });
   if (policyKey === "shizumeru") return makeSlot("eat", ["warm_drink", "caffeine_shift"], ["カモミール", "ルイボス", "レモンバーム", "ラベンダー", "ノンカフェイン"], { teaDirections: ["calming"] });
   return makeSlot("eat", ["warm_drink", "caffeine_shift"], ["カモミール", "レモンバーム", "ルイボス", "黒豆", "なつめ", "ハーブ"], { teaDirections: ["calming", "support"] });
 }
@@ -1120,7 +1131,7 @@ const SYMPTOM_SET_ANCHORS = {
       avoidKeywords: ["顔", "小顔", "美容", "フェイス", "強力", "電気", "EMS", "低周波"],
     }),
     liveSlot: () => makeSlot("live", ["sleep_environment", "bath_shift", "warm_body", "reduce_light"], ["寝具", "枕", "入浴", "アイマスク", "湯たんぽ", "腹巻", "温熱"]),
-    eatSlot: (policyKey) => makeSlot("eat", ["nutrition_support", "warm_drink", "ingredient"], ["なつめ", "黒豆", "玄米", "穀物", "ルイボス", "ビタミン", "食物繊維"], { teaDirections: policyKey === "nagasu" ? ["light", "support"] : ["support", "moist"] }),
+    eatSlot: (policyKey) => makeSlot("eat", ["nutrition_support", "warm_drink", "ingredient"], ["なつめ", "黒豆", "玄米", "穀物", "ルイボス", "ビタミン", "乳酸菌", "酪酸菌"], { teaDirections: policyKey === "nagasu" ? ["light", "support"] : ["support", "moist"] }),
     titles: {
       sasaeru: ["疲れやすさ対策", "忙しい日のケア継続セット"],
       shizumeru: ["休む前の刺激対策"],
@@ -1159,7 +1170,7 @@ const SYMPTOM_SET_ANCHORS = {
     eatSlot: (policyKey) => {
       if (policyKey === "nagasu") return makeSlot("eat", ["warm_drink", "ingredient"], ["はとむぎ", "とうもろこし", "小豆", "黒豆"], { teaDirections: ["light"] });
       if (policyKey === "nukumeru") return makeSlot("eat", ["warm_drink", "ingredient"], ["生姜", "しょうが", "陳皮", "シナモン", "黒豆"], { teaDirections: ["warming"] });
-      return makeSlot("eat", ["warm_drink", "ingredient", "nutrition_support"], ["なつめ", "黒豆", "生姜", "しょうが", "ルイボス", "食物繊維"], { teaDirections: ["support", "warming"] });
+      return makeSlot("eat", ["warm_drink", "ingredient", "nutrition_support"], ["なつめ", "黒豆", "生姜", "しょうが", "ルイボス", "乳酸菌", "酪酸菌"], { teaDirections: ["support", "warming"] });
     },
     titles: {
       sasaeru: ["食事が乱れた日の補助セット"],
@@ -1644,7 +1655,7 @@ function itemMatchesSlot(item, slot) {
   if (!item || item.category !== slot.category) return false;
   // 傷・救急処置系は、未病レーダーのMYケアセレクト文脈から外れるため全カテゴリで除外。
   // ここを通すと「暮らし側から整える枠」として絆創膏などが出る。
-  if (isFirstAidItem(item) || isMedicalSupportItem(item)) return false;
+  if (isFirstAidItem(item) || isMedicalSupportItem(item) || isPetProductItem(item) || isLowContextOligoItem(item)) return false;
   if (item.category === "point" && BEDDING_ITEM_PATTERN.test(itemEvidenceText(item))) return false;
   if (isPointBeautyItem(item)) return false;
   if (hasAnyText(item, slot.avoidKeywords)) return false;
