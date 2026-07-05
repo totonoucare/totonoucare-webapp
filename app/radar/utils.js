@@ -1279,7 +1279,210 @@ function strengthenPeakPrepItem(text) {
   return `注意時間の前に${raw}`;
 }
 
+
+// v7.30: 未病レーダー文体。正論の健康アドバイスではなく、
+// 「体のクセを少し面白く読めるトリセツ」として出す。
+const RADAR_NARRATIVE_LEADS = {
+  fatigue: {
+    default: ["体の起動バーがいつもよりゆっくり進みやすい日", "だるさは気合い不足というより、体が省エネ運転に入りやすいサインかもしれません", "まずは動く量を増やすより、重さを増やさない一手から始めましょう"],
+    damp: ["体が湿気を吸った布団みたいに重くなりやすい日", "胃腸まわりがもたつくと、だるさまで長引きやすくなります", "まずは空気・食べ方・足もとを軽くして、体の起動を助けましょう"],
+    pressure_down: ["頭と体の立ち上がりが、少しスローモーションになりやすい日", "気圧低下でこもり感が出ると、休んでも抜けにくいだるさに感じやすくなります", "目・首・呼吸を短く切り替えて、ぼんやりをため込まないようにしましょう"],
+    pressure_up: ["体が知らないうちに前のめりになりやすい日", "張りつめたまま進むと、あとからどっと疲れとして出やすくなります", "急いで片付けるより、肩の力を一度抜いてから動きましょう"],
+    cold: ["体のエンジンが冷えたまま始まりやすい日", "足元やお腹が冷えると、だるさが“動き出せなさ”として出やすくなります", "まずは一か所だけ温めて、体の起動条件を整えましょう"],
+    heat: ["体力のバッテリーが暑さで減りやすい日", "熱がこもると、動く前から消耗しているように感じやすくなります", "がんばる前に涼しさと水分を入れて、残量を守りましょう"],
+    dry: ["体のうるおいが少し削られやすい日", "目やのどの乾きが続くと、疲れがカサついた感じで残りやすくなります", "水分・目の休憩・深い息を先に入れて、消耗を増やさないようにしましょう"],
+  },
+  sleep: {
+    default: ["夜の休み方まで、日中の過ごし方が残りやすい日", "体は疲れているのに、頭だけ閉店準備に入れないことがあります", "夕方以降は光・胃腸の重さ・考えごとを少しずつ減らしましょう"],
+    damp: ["体が湿気を抱えて、眠気とだるさが混ざりやすい日", "重いまま夜に入ると、寝ても抜けにくい感じにつながりやすくなります", "寝る前に空気と胃腸を軽くして、休む準備を早めに始めましょう"],
+    pressure_down: ["昼のぼんやりが、夜の休まりにくさまで残りやすい日", "頭・首・耳まわりの重さが残ると、眠気はあるのに休みに入りにくくなります", "画面と首のこわばりを早めに切って、夜の入口を軽くしましょう"],
+    pressure_up: ["体のスイッチが切れにくくなりやすい日", "張りつめが残ると、布団に入っても頭の中だけ営業中になりがちです", "寝る前に通知と予定確認を終わらせ、体を閉店モードへ寄せましょう"],
+    cold: ["冷えが残ると、体が休みに入りにくい日", "足元やお腹が冷えたままだと、眠りの入口で体が身構えやすくなります", "寝る前は足首・お腹・首元のどこか一つを守りましょう"],
+    heat: ["熱がこもると、眠りの入口が遠くなりやすい日", "体は疲れているのに、頭や胸まわりだけ少し熱っぽく残ることがあります", "寝る前に部屋と体の熱を逃がして、クールダウンしてから休みましょう"],
+    dry: ["乾きが夜の小さな不快感になりやすい日", "目やのどが乾いたままだと、眠りの浅さとして気づきやすくなります", "枕元の水分と風の向きを整えて、乾きを増やさない夜にしましょう"],
+  },
+  digestion: {
+    default: ["胃腸が今日の交通整理役になりやすい日", "食べ方が重なると、体全体の動きまで少し渋滞しやすくなります", "量を減らすより、冷たい・甘い・脂っこいの重なりをほどきましょう"],
+    damp: ["胃腸が水を含んだスポンジみたいに重く感じやすい日", "湿気の日は、冷たいものや甘いものが続くとお腹まわりがもたつきやすくなります", "今日は“軽く流れる食べ方”に寄せて、胃腸を止めっぱなしにしないようにしましょう"],
+    pressure_down: ["胃腸の動きまで少しスローになりやすい日", "気圧低下で体が重い時は、食後のもたれも長引いて感じやすくなります", "食べる量より、食後に動き出せる軽さを目安にしましょう"],
+    pressure_up: ["急ぎモードが胃腸にも入りやすい日", "張りつめたまま食べると、量は普通でも重く感じやすくなります", "食べ始める前に一呼吸置いて、胃腸を置き去りにしないようにしましょう"],
+    cold: ["お腹まわりが冷えると、胃腸が省エネ運転になりやすい日", "冷たいものが続くと、食後の重さや張りとして出やすくなります", "温かい汁物や飲み物を一つ挟んで、内側を固めすぎないようにしましょう"],
+    heat: ["暑さで冷たいものに寄りたくなる日", "一気に冷やすと、その場は楽でも胃腸があとから重く感じやすくなります", "冷たさだけで押し切らず、常温や温かい一口も混ぜましょう"],
+    dry: ["乾きで胃腸のリズムも少しカサつきやすい日", "水分の入り方が偏ると、のど・お腹・便通の小さな違和感につながりやすくなります", "汁物や水分のある食べものを足して、流れを止めないようにしましょう"],
+  },
+  neck_shoulder: {
+    default: ["首肩まわりが、いつもより荷物を背負いやすい日", "首本人を直接がんばらせるより、胸・肩甲骨・目の使い方が影響しやすくなります", "首を回す前に、まず肩甲骨と胸からほどきましょう"],
+    damp: ["首肩まわりに、湿った上着を一枚かぶったような重さが出やすい日", "湿気で体がもたつくと、肩だけでなく頭まわりまで重く感じやすくなります", "首をがんばって回すより、肩甲骨と胸からほどきましょう"],
+    pressure_down: ["頭から首肩に、重さが降りてきやすい日", "気圧低下で耳・首・後頭部がこもると、肩まで黙って残業しがちです", "耳まわりと肩甲骨を軽く動かして、首だけに仕事を背負わせないようにしましょう"],
+    pressure_up: ["肩に力が入りっぱなしになりやすい日", "張りつめが上にのぼると、首肩が“待機中”のまま固まりやすくなります", "急いで伸ばすより、息を吐いて肩をストンと落としましょう"],
+    cold: ["首元が冷えると、肩が防御モードに入りやすい日", "冷えで首肩が縮むと、頭まわりまで重く感じやすくなります", "首元を守りつつ、肩甲骨を小さく動かして固まる前にほどきましょう"],
+    heat: ["暑さで首の後ろに熱と力みが残りやすい日", "汗冷えや画面姿勢が重なると、肩の力が抜けにくくなります", "首の後ろを短く整え、肩をすくめて落とすくらいから始めましょう"],
+    dry: ["目とのどの乾きが、首肩の緊張にまわりやすい日", "画面を見続けると、目の疲れが首の後ろに回収されがちです", "目を閉じる時間を作って、首肩の仕事量を減らしましょう"],
+  },
+  low_back_pain: {
+    default: ["腰まわりが、体の土台として余分に働きやすい日", "腰だけを責めるより、足元・お腹・座り方の影響が出やすくなります", "腰をいきなり伸ばすより、骨盤と足首から小さく動かしましょう"],
+    damp: ["腰から下半身に、湿った重さが残りやすい日", "座りっぱなしが続くと、腰まわりに水袋を乗せたような重さとして出やすくなります", "立ち上がる前に骨盤を小さく動かして、下半身の渋滞を切りましょう"],
+    pressure_down: ["体の重さが腰まわりに沈みやすい日", "気圧低下で姿勢が崩れると、腰が支え役を引き受けすぎることがあります", "深く座り込む前に、骨盤の位置を一度だけリセットしましょう"],
+    pressure_up: ["急ぎモードが腰の力みに出やすい日", "立つ・座る・かがむ動きが雑になると、腰に負担が集まりやすくなります", "急に動くより、一呼吸置いてから腰を使いましょう"],
+    cold: ["腰腹まわりが冷えて、動き出しが重くなりやすい日", "足首やお腹の冷えが残ると、腰が守りに入りやすくなります", "腰だけでなく足元かお腹を一つ温めて、土台から守りましょう"],
+    heat: ["暑さで体力が削られ、腰の支えが抜けやすい日", "汗や消耗が重なると、いつもの姿勢でも腰が疲れやすくなります", "水分を小分けに入れて、重い動きは短く区切りましょう"],
+    dry: ["体のしなやかさが少し乾きやすい日", "水分不足や同じ姿勢が続くと、腰まわりがきしむように感じやすくなります", "水分と体勢変更を小さく入れて、固まる前にほどきましょう"],
+  },
+  swelling: {
+    default: ["体の水はけが、いつもよりのんびりしやすい日", "同じ姿勢や冷たさが続くと、顔や脚に重さとして残りやすくなります", "足首を小さく動かして、ため込む前に流れを作りましょう"],
+    damp: ["体が湿気を抱えて、顔や脚に重さが出やすい日", "湿気の日は、甘いもの・塩気・冷たい飲み物が重なると、水はけがさらにのんびりしがちです", "足首を動かし、冷たさと塩気の重ね着を少し減らしましょう"],
+    pressure_down: ["下半身に重さが沈みやすい日", "気圧低下で体が重い時は、脚の巡りもゆっくりになりやすくなります", "ふくらはぎと足首を小さく動かして、重さを足元で止めないようにしましょう"],
+    pressure_up: ["体が力み、水の巡りまで固まりやすい日", "同じ姿勢でいると、足元に重さが残りやすくなります", "肩の力を抜きつつ、足首だけでも小さく動かしましょう"],
+    cold: ["足元が冷えると、水はけまで冬眠しやすい日", "冷えと同じ姿勢が重なると、脚の重さとして気づきやすくなります", "足首を冷やさず、つま先を数回動かして流れを止めないようにしましょう"],
+    heat: ["暑さで水分の入れ方が乱れやすい日", "一気飲みや塩気が重なると、脚のだるさとして残りやすくなります", "水分はこまめに、足首は小さく動かして、ため込まない方向へ寄せましょう"],
+    dry: ["乾きと水分の偏りが、むくみ感にもつながりやすい日", "足りないのに偏る、という少しややこしい水分バランスになりがちです", "水分を少しずつ入れ、塩気と冷たさを重ねすぎないようにしましょう"],
+  },
+  headache: {
+    default: ["頭まわりが、首・目・耳の影響を拾いやすい日", "頭だけを見るより、首肩と画面刺激の負担が出やすくなります", "首・耳・目を先にゆるめて、頭に仕事を集めすぎないようにしましょう"],
+    damp: ["頭に湿気がまとわりつくような重さが出やすい日", "体の重だるさが上に残ると、頭まわりもすっきりしにくくなります", "空気を入れ替え、首肩をゆるめて、こもりを逃がしましょう"],
+    pressure_down: ["頭・耳・首肩がセットで重くなりやすい日", "気圧低下の日は、頭だけでなく耳まわりと首のこわばりも一緒に見たいところです", "耳まわりを軽く動かし、画面姿勢を一度リセットしましょう"],
+    pressure_up: ["頭の上の方に、張りつめが集まりやすい日", "焦りや力みが続くと、頭まわりに圧がかかるように感じやすくなります", "刺激を増やすより、肩を落として呼吸を長めに吐きましょう"],
+    cold: ["首元の冷えが、頭まわりに響きやすい日", "首肩が縮むと、後頭部から頭の重さにつながりやすくなります", "首元を守って、肩をすくめて落とすくらいから始めましょう"],
+    heat: ["熱が上にこもって、頭まわりが重く感じやすい日", "暑さ・刺激・水分不足が重なると、頭の中が混み合いやすくなります", "涼しさと水分を先に入れて、熱を上にためないようにしましょう"],
+    dry: ["目とのどの乾きが、頭まわりの疲れに変わりやすい日", "画面や乾いた空気が続くと、頭の奥が疲れたように感じやすくなります", "目を閉じる時間と水分を先に入れて、乾いた疲れを増やさないようにしましょう"],
+  },
+  dizziness: {
+    default: ["体の向きが変わる瞬間に、揺れを感じやすい日", "急いで動くほど、頭と体のタイミングがずれやすくなります", "立つ・振り向く・歩き出す前に、一呼吸だけ挟みましょう"],
+    damp: ["体が重く、動き出しでふわっとしやすい日", "湿気で足取りが重い時は、頭だけ先に動かすと揺れを感じやすくなります", "急に立たず、足元からゆっくり起動しましょう"],
+    pressure_down: ["頭と耳まわりが重く、ふわつきに気づきやすい日", "気圧低下の日は、動き出しの一拍目を急がない方が合います", "耳まわりを軽くゆるめて、立ち上がる前に一呼吸置きましょう"],
+    pressure_up: ["上にのぼる力みで、ふわつきやすい日", "急いで動くと、頭だけ前に出て体が追いつきにくくなることがあります", "肩の力を抜いて、動き出しを一段ゆっくりにしましょう"],
+    cold: ["足元や首元が冷えると、動き出しが不安定になりやすい日", "冷えで体が固まると、立つ瞬間の揺れに気づきやすくなります", "足指を数回動かしてから、ゆっくり立ち上がりましょう"],
+    heat: ["暑さで消耗し、ふわつきに気づきやすい日", "我慢して動き続けると、体の残量が急に減ったように感じることがあります", "涼しさと水分を先に入れて、粘りすぎないようにしましょう"],
+    dry: ["乾きと水分不足で、ふわつきに気づきやすい日", "のどや目の乾きが出る前に、体はすでに少し水分を欲しがっているかもしれません", "少しずつ潤して、動き出しをゆっくりにしましょう"],
+  },
+  mood: {
+    default: ["気分だけでなく、体の状態に気持ちが引っぱられやすい日", "やる気の問題に見えても、胃腸・呼吸・首肩の重さが背景にあるかもしれません", "気分を直接上げるより、体の重いタブを一つ閉じるところから始めましょう"],
+    damp: ["気分だけが落ちているというより、体の重さに気分が引っぱられやすい日", "湿気で胃腸まわりがもたつくと、考えることまで少し重く感じやすくなります", "無理にテンションを上げるより、空気・食べ方・体の動きを軽くしていきましょう"],
+    pressure_down: ["頭の重さに、気分まで引っぱられやすい日", "ぼんやり感が続くと、気持ちまで少し沈んだように感じやすくなります", "やる気を責めるより、首・目・呼吸を短く切り替えていきましょう"],
+    pressure_up: ["頭だけ前のめりになり、気分が急かされやすい日", "張りつめが続くと、焦りや落ち着かなさとして出やすくなります", "急いで整えようとせず、肩を落として息を長めに吐きましょう"],
+    cold: ["体が縮こまると、気分も内向きになりやすい日", "手足や首元の冷えが続くと、気持ちまで小さく固まりやすくなります", "まずは一か所温めて、体から少し外向きに戻しましょう"],
+    heat: ["熱がこもると、気分も少しそわそわしやすい日", "暑さや刺激が重なると、焦りやイライラが前に出やすくなります", "甘いものやカフェインで上げる前に、涼しさと水分を入れましょう"],
+    dry: ["小さな乾きが、気分のざらつきに変わりやすい日", "目やのどの不快感が続くと、集中が切れて気持ちも揺れやすくなります", "画面を区切り、温かい飲み物で内側を少し落ち着かせましょう"],
+  },
+  default: {
+    default: ["体の小さなサインに気づきやすい日", "天気の変化が、いつもの弱いところに少し出るかもしれません", "強い対策より、今できる一手で軽く整えましょう"],
+  },
+};
+
+const RADAR_NARRATIVE_SIGN_BY_SYMPTOM = {
+  fatigue: ["体は起きているのに、起動バーがなかなか進まない", "少し動いただけで、バッテリー残量が気になりやすい", "休みたいのに休み方も少し重く感じやすい"],
+  sleep: ["眠いのに、頭だけ閉店作業に入れない", "夕方以降の光や画面が、夜まで残りやすい", "胃腸の重さが、休まりにくさに変わりやすい"],
+  digestion: ["胃腸が重いと、体全体の交通整理が遅れやすい", "食後に“もう少し座っていたい”が出やすい", "冷たい・甘い・脂っこいが重なると、もたつきが残りやすい"],
+  neck_shoulder: ["首肩が“重い服”を着たみたいに感じやすい", "頭を支えるだけで、首すじが疲れやすい", "肩を回しても、すぐ戻る感じが出やすい"],
+  low_back_pain: ["腰まわりが、体の土台として余分に働きやすい", "座りっぱなしの後、立ち上がりが重くなりやすい", "腰だけでなく、足元やお腹の冷えも響きやすい"],
+  swelling: ["顔や脚に、余分な水分の重さを感じやすい", "足首まわりが、夕方にぼんやり重くなりやすい", "冷たさ・甘さ・塩気の重ね着で、重さが残りやすい"],
+  headache: ["頭だけでなく、首・耳・目まわりもセットで重くなりやすい", "画面刺激のあと、頭の中が混み合いやすい", "首肩のこわばりが、頭まわりに回収されやすい"],
+  dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れやすい", "頭だけ先に動いて、体があとから追いつく感じが出やすい", "空腹・急な動き・首のこわばりが重なると揺れを感じやすい"],
+  mood: ["胃腸が重い日は、気分にも湿気がたまりやすい", "体はまだスリープモードなのに、頭だけ先に焦りやすい", "やる気がないというより、起動に時間がかかりやすい"],
+  default: ["いつもより体の小さな違和感に気づきやすい", "注意時間に向けて、重さやこわばりが少し出やすい", "無理に押すより、軽く整える方が合いやすい"],
+};
+
+const RADAR_NARRATIVE_WEATHER_SIGN = {
+  damp: "体に湿気の重い膜がかかったように感じやすい",
+  pressure_down: "頭・耳・首まわりに、こもる重さが出やすい",
+  pressure_up: "体が知らないうちに前のめりになりやすい",
+  cold: "体の入口がきゅっと縮んで、動き出しが重くなりやすい",
+  heat: "熱が上にこもって、消耗やそわつきが出やすい",
+  dry: "目・のど・肌の乾きが、疲れやこわばりに変わりやすい",
+};
+
+const RADAR_NARRATIVE_WEATHER_ACTIONS = {
+  damp: "部屋の空気を5分だけ入れ替えて、体にまとわりつく重さを外へ逃がす",
+  pressure_down: "耳まわりと首の後ろを10秒だけゆるめて、頭のこもりを逃がす",
+  pressure_up: "肩をすくめてストンと落とし、前のめりの力みを一度ほどく",
+  cold: "足首・お腹・首元のどこか一つを守って、冷えの入口を閉じる",
+  heat: "暑さを我慢で突破せず、涼しさと水分を先に入れる",
+  dry: "喉が渇く前に一口入れて、目を10秒だけ閉じる",
+};
+
+const RADAR_NARRATIVE_WEATHER_AVOIDS = {
+  damp: "甘いものとキンキンの飲み物だけで、気分や体を無理やり起こそうとしない",
+  pressure_down: "ぼんやりをカフェインだけで押し切らず、首と耳の重さも一緒に逃がす",
+  pressure_up: "急いで片付けるほど、肩と頭に力が集まりやすいので一呼吸置く",
+  cold: "冷たい飲み物で内側まで冷やして、こわばりに追い打ちをかけない",
+  heat: "辛いもの・濃い味・カフェインで、熱とそわつきを上乗せしない",
+  dry: "乾いたお菓子とコーヒーだけで、内側のカサつきを増やさない",
+};
+
+const RADAR_NARRATIVE_SYMPTOM_ACTIONS = {
+  fatigue: "やる気を待つより、足踏み30秒で体のスイッチを先に入れる",
+  sleep: "夜のために、夕方の画面と光を一度だけ区切る",
+  digestion: "胃腸を止めっぱなしにしないよう、食後に2〜3分だけ歩く",
+  neck_shoulder: "首本人をいきなり回さず、肩甲骨をゆっくり寄せて離す",
+  low_back_pain: "立ち上がる前に骨盤を小さく揺らして、腰の起動準備をする",
+  swelling: "足首をゆっくり回して、水はけのスイッチを入れる",
+  headache: "首・耳・目まわりを先にゆるめて、頭だけに仕事を集めない",
+  dizziness: "立つ・振り向く・歩き出す前に、一呼吸だけ入れる",
+  mood: "気分を直接上げようとせず、肩か足首を30秒だけ動かす",
+  default: "考える前に、体のどこか一つを30秒だけ動かす",
+};
+
+function getNarrativePrimaryKey(triggerFactors) {
+  const first = safeArray(triggerFactors)[0];
+  return normalizeWeatherContextKey(first?.key || first?.exact || "pressure_down");
+}
+
+function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const target = mode === "today" ? "今日は" : "明日は";
+  const record = RADAR_NARRATIVE_LEADS[symptomFocus] || RADAR_NARRATIVE_LEADS.default;
+  const parts = record?.[key] || record?.default || RADAR_NARRATIVE_LEADS.default.default;
+  const action = String(parts[2] || "");
+  const modeAction = mode === "today" ? action : action.replace(/^まずは/, "今夜は").replace(/^今日は/, "今夜は");
+  const level = Number(signal ?? 0);
+  const prefix = level >= 2 ? `${target}かなり、` : target;
+  return `${prefix}${parts[0]}。${parts[1]}。${modeAction}。`;
+}
+
+function getNarrativeBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const symptomSigns = RADAR_NARRATIVE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_SIGN_BY_SYMPTOM.default;
+  const weatherSign = RADAR_NARRATIVE_WEATHER_SIGN[key];
+  const level = Number(signal ?? 0);
+  const items = uniqueTake([weatherSign, ...symptomSigns], 3);
+  if (level >= 2) {
+    return items.map((item, index) => index === 0 && !item.includes("強く") ? `${item}日` : item).slice(0, 3);
+  }
+  if (level === 0) {
+    return items.map((item) => item.replace(/やすい/g, "やすさを少し見ておきたい")).slice(0, 3);
+  }
+  return items;
+}
+
+function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const weatherAction = RADAR_NARRATIVE_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_WEATHER_ACTIONS.pressure_down;
+  const symptomAction = RADAR_NARRATIVE_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_SYMPTOM_ACTIONS.default;
+  const avoid = RADAR_NARRATIVE_WEATHER_AVOIDS[key] || "無理に押し切るより、体の重いサインを一つ減らす";
+  const level = Number(signal ?? 0);
+  const first = level >= 2 && !weatherAction.startsWith("注意時間") ? `注意時間の前に、${weatherAction}` : weatherAction;
+  return uniqueTake([first, symptomAction, avoid], 3);
+}
+
+function getNarrativeCareLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const labels = safeArray(triggerFactors).map((f) => f?.label).filter(Boolean);
+  const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
+  const target = mode === "today" ? "今日は" : "明日は";
+  const symptom = getSymptomFocusLabel(symptomFocus);
+  const action = RADAR_NARRATIVE_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_SYMPTOM_ACTIONS.default;
+  const weatherAction = RADAR_NARRATIVE_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_WEATHER_ACTIONS.pressure_down;
+
+  if (mode === "today") {
+    return `${target}${joined}が${Number(signal) >= 2 ? "強めに" : "少し"}響きやすい日。${symptom}は、気合いで押すより体の環境を軽くする方が合いそうです。${weatherAction}。`;
+  }
+  return `${target}${joined}が響きやすい見込み。今夜は明日の${symptom}を重くしないように、${action}準備に寄せます。`;
+}
+
 export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
+  const narrative = getNarrativeBodySigns(triggerFactors, signal, symptomFocus);
+  if (narrative.length) return narrative;
+
   const level = Number(signal ?? 0);
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
   const focusedWeatherSigns = getSymptomWeatherItems(SYMPTOM_WEATHER_BODY_SIGN_LABELS, symptomFocus, keys);
@@ -1312,6 +1515,9 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
 }
 
 export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
+  const narrative = getNarrativePeakPrepItems(triggerFactors, signal, symptomFocus);
+  if (narrative.length) return narrative;
+
   const level = Number(signal ?? 0);
   const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
   const weatherItems = keys.flatMap((key) => PEAK_PREP_ITEMS[normalizeWeatherContextKey(key)] || []);
@@ -1365,6 +1571,9 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
 }
 
 export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
+  const narrative = getNarrativeLeadText(triggerFactors, signal, mode, symptomFocus);
+  if (narrative) return narrative;
+
   const level = Number(signal ?? 0);
   const factors = getForecastBackgroundFactors(triggerFactors);
   const primary = factors[0] || { key: "pressure_down", label: "天気変化" };
@@ -1510,7 +1719,10 @@ export function getCareStrategyTitle(triggerKey, signal, mode = "tomorrow") {
   return "明日に持ち越さない前夜づくり";
 }
 
-export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow") {
+export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", symptomFocus = null) {
+  const narrative = getNarrativeCareLead(triggerFactors, signal, mode, symptomFocus);
+  if (narrative) return narrative;
+
   const labels = safeArray(triggerFactors).map((f) => f?.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "気象変化";
 

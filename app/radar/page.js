@@ -683,8 +683,8 @@ export default function RadarPage() {
     [careTriggerKey, activeCareForecast?.signal, selectedIsToday]
   );
   const careStrategyLead = useMemo(
-    () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
-    [careTriggerFactors, activeCareForecast?.signal, selectedIsToday]
+    () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow", symptomFocus),
+    [careTriggerFactors, activeCareForecast?.signal, selectedIsToday, symptomFocus]
   );
   const carePolicies = useMemo(
     () =>
