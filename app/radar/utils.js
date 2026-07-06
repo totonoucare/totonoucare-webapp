@@ -1382,6 +1382,28 @@ const RADAR_NARRATIVE_SIGN_BY_SYMPTOM = {
   default: ["いつもより体の小さな違和感に気づきやすい", "注意時間に向けて、重さやこわばりが少し出やすい", "無理に押すより、軽く整える方が合いやすい"],
 };
 
+const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
+  fatigue: ["体の起動バーがゆっくり進む感じ", "少し動いた後のバッテリー残量", "休んだあとも少し残る重さ"],
+  sleep: ["頭だけ閉店準備に入りにくい感じ", "夕方以降の光や画面の残り方", "胃腸の重さが夜まで残る感じ"],
+  digestion: ["食後に“もう少し座っていたい”感じ", "胃腸の交通整理が少し遅れる感じ", "冷たい・甘い・脂っこいが重なった後のもたつき"],
+  neck_shoulder: ["首肩が“重い服”を着たような感じ", "頭を支えるだけで首すじが疲れる感じ", "肩を回してもすぐ戻る感じ"],
+  low_back_pain: ["腰まわりが土台として働きすぎる感じ", "座りっぱなし後の立ち上がりの重さ", "足元やお腹の冷えが腰に回る感じ"],
+  swelling: ["顔や脚に水分の重さが残る感じ", "足首まわりが夕方にぼんやり重い感じ", "冷たさ・甘さ・塩気が重なった後の残り方"],
+  headache: ["頭だけでなく首・耳・目も重い感じ", "画面を見た後の頭の混み合い", "首肩のこわばりが頭に回る感じ"],
+  dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れる感じ", "頭だけ先に動いて、体があとから追いつく感じ", "空腹・急な動き・首のこわばりが重なった時の揺れ"],
+  mood: ["胃腸の重さが気分に移る感じ", "体はスリープモードなのに、頭だけ先に焦る感じ", "やる気がないというより、起動に時間がかかる感じ"],
+  default: ["いつもより小さな違和感に気づく感じ", "注意時間に向けて少し残る重さ", "押すより軽く整えたい感じ"],
+};
+
+const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
+  damp: "体に湿気の重い膜がかかったような感じ",
+  pressure_down: "頭・耳・首まわりにこもる感じ",
+  pressure_up: "体が知らないうちに前のめりになる感じ",
+  cold: "体の入口がきゅっと縮む感じ",
+  heat: "熱が上にこもって、少しそわつく感じ",
+  dry: "目・のど・肌の乾きが、疲れに変わる感じ",
+};
+
 const RADAR_NARRATIVE_WEATHER_SIGN = {
   damp: "体に湿気の重い膜がかかったように感じやすい",
   pressure_down: "頭・耳・首まわりに、こもる重さが出やすい",
@@ -1409,6 +1431,46 @@ const RADAR_NARRATIVE_WEATHER_AVOIDS = {
   dry: "乾いたお菓子とコーヒーだけで、内側のカサつきを増やさない",
 };
 
+const RADAR_NARRATIVE_TOMORROW_WEATHER_ACTIONS = {
+  damp: "今夜のうちに部屋の空気を一度入れ替えて、明日の重さを持ち越しにくくする",
+  pressure_down: "寝る前に耳まわりと首の後ろを軽くゆるめて、明日のこもり感を増やさない",
+  pressure_up: "明日の前のめり感に備えて、今夜は肩を落として終わる時間を作る",
+  cold: "足首・お腹・首元のどこか一つを守って、明日のこわばりを増やさない",
+  heat: "涼しさと水分を先に入れて、明日の消耗を持ち越しにくくする",
+  dry: "寝る前の一口と目の休憩で、明日の乾いた疲れを増やさない",
+};
+
+const RADAR_NARRATIVE_TOMORROW_SYMPTOM_ACTIONS = {
+  fatigue: "明日の起動を軽くするため、寝る前に足首か肩を30秒だけ動かす",
+  sleep: "明日の夜まで引きずらないよう、今夜は画面と光を少し早めに区切る",
+  digestion: "明日の胃腸を重くしないよう、夜は冷たい・甘い・脂っこいの重なりを一つ外す",
+  neck_shoulder: "明日の首肩を固めないよう、寝る前に肩甲骨をゆっくり寄せて離す",
+  low_back_pain: "明日の立ち上がりを軽くするため、寝る前に骨盤を小さく揺らす",
+  swelling: "明日の水はけを助けるため、足首をゆっくり回してから休む",
+  headache: "明日の頭まわりを軽くするため、首・耳・目を短くゆるめておく",
+  dizziness: "明日の動き出しに備えて、足元からゆっくり起動する準備をしておく",
+  mood: "明日の気分を直接上げようとする前に、今夜は体の重いタブを一つ閉じる",
+  default: "明日の自分が動き出しやすいよう、体のどこか一つを30秒だけゆるめる",
+};
+
+const RADAR_NARRATIVE_TOMORROW_AVOIDS = {
+  damp: "冷たいものと甘いものを重ねすぎず、明日の胃腸に湿気を残しすぎない",
+  pressure_down: "夜の画面とカフェインで頭を起こしっぱなしにせず、首と耳を軽く休ませる",
+  pressure_up: "明日のことを考えすぎて、頭だけ前のめりのまま眠らない",
+  cold: "寝る前に内側まで冷やして、明日のこわばりを増やさない",
+  heat: "辛いもの・濃い味・カフェインで、熱とそわつきを夜に残しすぎない",
+  dry: "乾いたお菓子とコーヒーだけで終わらせず、一口だけ潤いを足す",
+};
+
+const RADAR_NARRATIVE_STABLE_AVOIDS = {
+  damp: "冷たいものと甘いものが重なりすぎないよう、どこか一つだけ外す",
+  pressure_down: "ぼんやりをカフェインだけで押し切らず、首か耳を一度だけゆるめる",
+  pressure_up: "急いで片付ける前に、肩を一度ストンと落とす",
+  cold: "冷たい飲み物で内側まで冷やしすぎない",
+  heat: "暑さを我慢で通さず、水分と涼しさを一度だけ先に入れる",
+  dry: "乾いたお菓子とコーヒーだけで、内側のカサつきを増やさない",
+};
+
 const RADAR_NARRATIVE_SYMPTOM_ACTIONS = {
   fatigue: "やる気を待つより、足踏み30秒で体のスイッチを先に入れる",
   sleep: "夜のために、夕方の画面と光を一度だけ区切る",
@@ -1422,6 +1484,48 @@ const RADAR_NARRATIVE_SYMPTOM_ACTIONS = {
   default: "考える前に、体のどこか一つを30秒だけ動かす",
 };
 
+const RADAR_STABLE_WEATHER_LEAD_PREFIX = {
+  damp: "湿気の重さが少し残る時間だけ",
+  pressure_down: "気圧の変化を感じる時間だけ",
+  pressure_up: "体が少し前のめりになりそうな時間だけ",
+  cold: "冷えを感じる場面だけ",
+  heat: "熱がこもりやすい時間だけ",
+  dry: "乾きが気になる場面だけ",
+};
+
+const RADAR_STABLE_SYMPTOM_LEAD_TAIL = {
+  fatigue: "体を急に起こさず、足踏み30秒くらいから始めると過ごしやすそうです",
+  sleep: "夕方以降の光と画面を少し区切ると、夜に持ち越しにくそうです",
+  digestion: "食後に2〜3分だけ歩くと、胃腸を止めっぱなしにせずに済みそうです",
+  neck_shoulder: "首を直接回すより、肩甲骨を軽く動かしておくとよさそうです",
+  low_back_pain: "立ち上がる前に骨盤を小さく揺らすと、腰まわりが動き出しやすそうです",
+  swelling: "足首をゆっくり回すと、水はけのスイッチを入れやすそうです",
+  headache: "首・耳・目まわりを短くゆるめると、頭に仕事を集めすぎずに済みそうです",
+  dizziness: "立ち上がりや振り向きをゆっくりにすると、体が追いつきやすそうです",
+  mood: "気分を上げようとする前に、空気と体の動きを軽くしておくとよさそうです",
+  default: "体のどこか一つを30秒だけ動かすと、小さく整えやすそうです",
+};
+
+function getStableNarrativeLead(triggerFactors, mode = "today", symptomFocus = null) {
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const target = mode === "today" ? "今日は" : "明日は";
+  const weatherPrefix = RADAR_STABLE_WEATHER_LEAD_PREFIX[key] || "天気の変化を感じる時間だけ";
+  const symptomTail = RADAR_STABLE_SYMPTOM_LEAD_TAIL[symptomFocus] || RADAR_STABLE_SYMPTOM_LEAD_TAIL.default;
+  const base = mode === "today" ? "大きく崩れにくい日" : "大きく崩れにくそうな日";
+  return `${target}${base}。${weatherPrefix}、${symptomTail}。`;
+}
+
+function adaptNarrativeActionForMode(action, mode = "today") {
+  const text = String(action || "").trim();
+  if (!text) return "";
+  if (mode === "today") return text;
+  return text
+    .replace(/^まずは/, "今夜は")
+    .replace(/^今日は/, "今夜は")
+    .replace(/^急に立たず、/, "明日に備えて、")
+    .replace(/^立つ・振り向く・歩き出す前に、/, "明日に備えて、動き出しの前に");
+}
+
 function getNarrativePrimaryKey(triggerFactors) {
   const first = safeArray(triggerFactors)[0];
   return normalizeWeatherContextKey(first?.key || first?.exact || "pressure_down");
@@ -1432,55 +1536,162 @@ function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", sympto
   const target = mode === "today" ? "今日は" : "明日は";
   const record = RADAR_NARRATIVE_LEADS[symptomFocus] || RADAR_NARRATIVE_LEADS.default;
   const parts = record?.[key] || record?.default || RADAR_NARRATIVE_LEADS.default.default;
-  const action = String(parts[2] || "");
-  const modeAction = mode === "today" ? action : action.replace(/^まずは/, "今夜は").replace(/^今日は/, "今夜は");
   const level = Number(signal ?? 0);
-  const prefix = level >= 2 ? `${target}かなり、` : target;
-  return `${prefix}${parts[0]}。${parts[1]}。${modeAction}。`;
+
+  if (level <= 0) {
+    return getStableNarrativeLead(triggerFactors, mode, symptomFocus);
+  }
+
+  const state = String(parts[0] || "体の小さなサインに気づきやすい日").trim();
+  const action = adaptNarrativeActionForMode(parts[2], mode);
+  const normalizedState = level >= 2
+    ? state.replace(/少し/g, "").replace(/小さな/g, "")
+    : state;
+
+  return action
+    ? `${target}${normalizedState}。${action}。`
+    : `${target}${normalizedState}。`;
 }
 
-function getNarrativeBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
+function getNarrativeBodySigns(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
   const key = getNarrativePrimaryKey(triggerFactors);
+  const level = Number(signal ?? 0);
+
+  if (level === 0) {
+    const symptomPoints = RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM.default;
+    const weatherPoint = RADAR_NARRATIVE_STABLE_WEATHER_POINT[key];
+    return uniqueTake([weatherPoint, ...symptomPoints], 3);
+  }
+
   const symptomSigns = RADAR_NARRATIVE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_SIGN_BY_SYMPTOM.default;
   const weatherSign = RADAR_NARRATIVE_WEATHER_SIGN[key];
-  const level = Number(signal ?? 0);
-  const items = uniqueTake([weatherSign, ...symptomSigns], 3);
-  if (level >= 2) {
-    return items.map((item, index) => index === 0 && !item.includes("強く") ? `${item}日` : item).slice(0, 3);
-  }
-  if (level === 0) {
-    return items.map((item) => item.replace(/やすい/g, "やすさを少し見ておきたい")).slice(0, 3);
-  }
-  return items;
+
+  // 見出し側で「今日/明日」を出すため、本文はサイン単体として読める形にする。
+  return uniqueTake([weatherSign, ...symptomSigns], 3);
 }
 
-function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
+function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
   const key = getNarrativePrimaryKey(triggerFactors);
+  const level = Number(signal ?? 0);
+
+  if (mode !== "today") {
+    const weatherAction = RADAR_NARRATIVE_TOMORROW_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_TOMORROW_WEATHER_ACTIONS.pressure_down;
+    const symptomAction = RADAR_NARRATIVE_TOMORROW_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_TOMORROW_SYMPTOM_ACTIONS.default;
+    const avoid = RADAR_NARRATIVE_TOMORROW_AVOIDS[key] || "夜のうちに一つだけ軽く整えて、明日に重さを持ち越しすぎない";
+    return uniqueTake([weatherAction, symptomAction, avoid], 3);
+  }
+
   const weatherAction = RADAR_NARRATIVE_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_WEATHER_ACTIONS.pressure_down;
   const symptomAction = RADAR_NARRATIVE_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_SYMPTOM_ACTIONS.default;
-  const avoid = RADAR_NARRATIVE_WEATHER_AVOIDS[key] || "無理に押し切るより、体の重いサインを一つ減らす";
-  const level = Number(signal ?? 0);
+  const strongAvoid = RADAR_NARRATIVE_WEATHER_AVOIDS[key] || "無理に押し切るより、体の重いサインを一つ減らす";
+  const stableAvoid = RADAR_NARRATIVE_STABLE_AVOIDS[key] || "いつもの調子を崩さないよう、重さを増やす要素を一つだけ外す";
+  const avoid = level === 0 ? stableAvoid : strongAvoid;
   const first = level >= 2 && !weatherAction.startsWith("注意時間") ? `注意時間の前に、${weatherAction}` : weatherAction;
   return uniqueTake([first, symptomAction, avoid], 3);
 }
+
+const CARE_STRATEGY_WEATHER_FEEL = {
+  damp: "体にまとわりつく重さ",
+  pressure_down: "頭・耳・首まわりのこもり",
+  pressure_up: "前のめりの力み",
+  cold: "冷えからくるこわばり",
+  heat: "上にこもる熱と消耗",
+  dry: "乾きからくる小さな不快感",
+  default: "天気で出やすい小さなゆらぎ",
+};
+
+const CARE_ITEM_HINTS = {
+  today: {
+    live: {
+      damp: "家にあるなら、除湿・換気・通気を助けるものを使う日。空気を軽くすると、体の重さも少し逃がしやすくなります。",
+      pressure_down: "首・耳・目まわりを休ませる日。温めるもの、アイピロー、首肩をゆるめる小物があると使いやすいです。",
+      pressure_up: "肩と胸の力を抜く日。香り・温かい飲み物・手首や足首をゆるめる道具があるなら、短く使うのが合います。",
+      cold: "冷えを入口で止める日。カイロ、腹巻き、レッグウォーマーなど“冷える前に守るもの”が使いやすいです。",
+      heat: "熱を逃がす日。冷感タオル、日よけ、麦茶など、がんばる前に熱を抜く候補があると便利です。",
+      dry: "乾きを増やさない日。加湿・保湿・のどを守るもの、目を休ませるものが候補になります。",
+      default: "家にある道具を一つだけ借りて、体の重いタブを閉じる日。足すより“軽くする”ものを選びます。",
+    },
+    eat: {
+      damp: "飲み物や汁物を選ぶなら、冷たく甘いものより、ほうじ茶・とうもろこし茶・温かい汁物が候補です。",
+      pressure_down: "ぼんやりをカフェインだけで押すより、軽い主食・味噌汁・ほうじ茶など、あとで重くなりにくいものが候補です。",
+      pressure_up: "刺激で押すより、麦茶・ルイボスティー・軽い汁物など、前のめりを足さないものが候補です。",
+      cold: "冷たいものを続けるより、白湯・ほうじ茶・温かい汁物など、内側を冷やしすぎない候補を選びます。",
+      heat: "辛さや濃い味で押すより、麦茶・豆腐・軽い汁物など、熱をこもらせにくい候補が使いやすいです。",
+      dry: "乾いた菓子とコーヒーだけでつなぐより、ルイボスティー・白湯・汁物・ごま系のちょい足しが候補です。",
+      default: "食材を完璧に選ぶより、飲み物・汁物・主食を一つだけ軽くする候補を見ます。",
+    },
+    loosen: {
+      damp: "強くほぐすより、足元やお腹まわりを軽く流す日。ツボ押し棒や温める道具があれば短時間で十分です。",
+      pressure_down: "耳・首・後頭部を休ませる日。首肩を温めるものや、目を休ませるものが候補になります。",
+      pressure_up: "肩と胸の力みを抜く日。押し込む道具より、手首・足首・香りなど“力を抜くきっかけ”を選びます。",
+      cold: "冷えて固まる前に守る日。温熱系や足元を冷やさないものを使うなら、短く早めが合います。",
+      heat: "熱を上にこもらせない日。冷やしすぎず、首の後ろを短く整えるものが候補になります。",
+      dry: "乾きで目・首肩がこわばる日。目を休めるもの、首肩をやさしくゆるめるものが使いやすいです。",
+      default: "ほぐす道具は“効かせる”より、力を抜くきっかけとして短く使うのが合います。",
+    },
+  },
+  tomorrow: {
+    live: {
+      damp: "明日の湿気に備えるなら、今夜は除湿・通気・寝具まわりの候補を先に見ておくと選びやすいです。",
+      pressure_down: "明日のこもり感に備えるなら、首肩を休ませるもの、耳・目まわりをゆるめるものを今夜の候補にします。",
+      pressure_up: "明日の力みに備えるなら、香り・温かい飲み物・通知を切る工夫など、前のめりをほどく候補を見ておきます。",
+      cold: "明日の冷えに備えるなら、足首・お腹・首元を守るアイテムを今夜のうちに出しておくと楽です。",
+      heat: "明日の暑さに備えるなら、冷感タオル・日よけ・水分補給まわりを今夜の候補に入れておきます。",
+      dry: "明日の乾燥に備えるなら、加湿・保湿・のど/目を守るものを寝る前に準備しておくと選びやすいです。",
+      default: "明日の自分が迷わないよう、使う道具を一つだけ先に決めておくとケアにつながりやすいです。",
+    },
+    eat: {
+      damp: "明日の朝に重さを残したくない日は、はとむぎ茶・とうもろこし茶・温かい汁物などを今夜の候補にします。",
+      pressure_down: "明日の低気圧に備えるなら、ほうじ茶・味噌汁・軽い主食など、朝に重くなりにくい候補を見ておきます。",
+      pressure_up: "明日の前のめり感に備えるなら、麦茶・ルイボスティー・豆腐や軽い汁物など、刺激を足さない候補を選びます。",
+      cold: "明日の冷えに備えるなら、白湯・ほうじ茶・温かい汁物など、朝の内側を冷やさない候補を先に見ます。",
+      heat: "明日の暑さに備えるなら、麦茶・豆腐・トマト・軽い汁物など、熱をこもらせにくい候補を見ておきます。",
+      dry: "明日の乾燥に備えるなら、白湯・ルイボスティー・汁物・ごま系など、うるおいを足す候補を用意します。",
+      default: "明日の予報に合わせて、飲み物・汁物・朝食候補を先に見ておくと、朝の選択が楽になります。",
+    },
+    loosen: {
+      damp: "明日は重さが残りやすい見込み。足元・お腹・胃腸まわりを短く整える道具を、今夜の候補にしておきます。",
+      pressure_down: "明日は頭・耳・首まわりがこもりやすい見込み。首肩を休めるものやアイピロー系を先に出しておくと使いやすいです。",
+      pressure_up: "明日は肩や胸が力みやすい見込み。強く押す道具より、手首・足首・香りなど力を抜く候補が合います。",
+      cold: "明日は冷えで固まりやすい見込み。温熱系や足元を守るものを、寝る前の候補にします。",
+      heat: "明日は熱が上に残りやすい見込み。首の後ろを短く整えるもの、熱を逃がすものを候補にします。",
+      dry: "明日は乾きで目・首肩がこわばりやすい見込み。目を休めるもの、首肩をやさしくゆるめるものが候補です。",
+      default: "明日の注意時間の前に使えるよう、ほぐす場所と道具を一つだけ先に決めておきます。",
+    },
+  },
+};
 
 function getNarrativeCareLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
   const key = getNarrativePrimaryKey(triggerFactors);
   const labels = safeArray(triggerFactors).map((f) => f?.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
-  const target = mode === "today" ? "今日は" : "明日は";
   const symptom = getSymptomFocusLabel(symptomFocus);
-  const action = RADAR_NARRATIVE_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_SYMPTOM_ACTIONS.default;
-  const weatherAction = RADAR_NARRATIVE_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_WEATHER_ACTIONS.pressure_down;
+  const feel = CARE_STRATEGY_WEATHER_FEEL[key] || CARE_STRATEGY_WEATHER_FEEL.default;
+  const level = Number(signal ?? 0);
 
   if (mode === "today") {
-    return `${target}${joined}が${Number(signal) >= 2 ? "強めに" : "少し"}響きやすい日。${symptom}は、気合いで押すより体の環境を軽くする方が合いそうです。${weatherAction}。`;
+    if (level <= 0) {
+      return `今日は${joined}の影響は小さめ。${feel}だけ軽く見ながら、暮らす・食べる・ほぐすを“足しすぎないケア”にします。`;
+    }
+    return `今日は${joined}で、${feel}が出やすい日。${symptom}を直接どうにかするより、暮らす・食べる・ほぐすで体の出口を作る方針です。`;
   }
-  return `${target}${joined}が響きやすい見込み。今夜は明日の${symptom}を重くしないように、${action}準備に寄せます。`;
+
+  if (level <= 0) {
+    return `明日は${joined}の影響は小さめ。今夜のうちに、睡眠・飲み物・ほぐす場所を少し整えて、安定を崩さない方針です。`;
+  }
+  return `明日は${joined}で、${feel}が出やすい見込み。今夜のうちに、空間・食べもの・ほぐす道具の候補まで軽く決めておく方針です。`;
 }
 
-export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null) {
-  const narrative = getNarrativeBodySigns(triggerFactors, signal, symptomFocus);
+export function getCareItemHint(category = "live", triggerFactors = [], mode = "today", symptomFocus = null) {
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const safeMode = mode === "tomorrow" ? "tomorrow" : "today";
+  const safeCategory = ["live", "eat", "loosen"].includes(category) ? category : "live";
+  const hints = CARE_ITEM_HINTS[safeMode]?.[safeCategory] || CARE_ITEM_HINTS.today.live;
+  return hints[key] || hints.default || "";
+}
+
+export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
+  const narrative = getNarrativeBodySigns(triggerFactors, signal, symptomFocus, mode);
   if (narrative.length) return narrative;
 
   const level = Number(signal ?? 0);
@@ -1490,7 +1701,7 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
   if (level === 0) {
     const stablePoints = SYMPTOM_STABLE_BODY_POINTS[symptomFocus] || [];
     const weatherPoints = keys.flatMap((key) => BODY_SIGN_LABELS[normalizeWeatherContextKey(key)] || [])
-      .map((item) => String(item || "").replace(/やすい/g, "やすさ").replace(/出る/g, "出方"));
+      .map((item) => String(item || "").replace(/感じやすい/g, "感じ").replace(/なりやすい/g, "なりそうな場面").replace(/出やすい/g, "出そうな場面"));
     return uniqueTake(
       [
         ...focusedWeatherSigns,
@@ -1514,8 +1725,8 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
   return uniqueTake(signs.length ? signs : ["重だるさが出やすい", "首肩がこわばりやすい", "疲れが残りやすい"], 3);
 }
 
-export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null) {
-  const narrative = getNarrativePeakPrepItems(triggerFactors, signal, symptomFocus);
+export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
+  const narrative = getNarrativePeakPrepItems(triggerFactors, signal, symptomFocus, mode);
   if (narrative.length) return narrative;
 
   const level = Number(signal ?? 0);
@@ -1700,23 +1911,23 @@ export function getPointRoleSummary(point) {
 
 export function getCareStrategyTitle(triggerKey, signal, mode = "tomorrow") {
   if (mode === "today") {
-    if (signal === 0) return "今日これから、崩さず過ごす一手";
+    if (signal === 0) return "今日の調子を崩さない軽いケア";
     if (triggerKey === "damp") return "重さをためない日中ケア";
-    if (triggerKey === "pressure_down") return "頭と首肩のこもりを逃がす";
+    if (triggerKey === "pressure_down") return "こもりを逃がす日中ケア";
     if (triggerKey === "cold") return "冷えをこわばりに変えない";
     if (triggerKey === "heat") return "熱をこもらせない過ごし方";
-    if (triggerKey === "dry") return "うるおいを削らない支度";
-    if (triggerKey === "pressure_up") return "張りつめをほどく日中ケア";
+    if (triggerKey === "dry") return "乾きを疲れに変えない";
+    if (triggerKey === "pressure_up") return "前のめりの力みをほどく";
     return "今日これから整える一手";
   }
-  if (signal === 0) return "明日は、整いやすさを崩さない日";
-  if (triggerKey === "damp") return "重さを逃がす前夜づくり";
-  if (triggerKey === "pressure_down") return "こもりを抜く前夜づくり";
-  if (triggerKey === "cold") return "朝のこわばりを残さない支度";
-  if (triggerKey === "heat") return "熱をためこまない夜の支度";
-  if (triggerKey === "dry") return "うるおいを削らない支度";
-  if (triggerKey === "pressure_up") return "張りつめをほどく前夜づくり";
-  return "明日に持ち越さない前夜づくり";
+  if (signal === 0) return "明日の安定を崩さない前夜ケア";
+  if (triggerKey === "damp") return "明日の重さを逃がす前夜ケア";
+  if (triggerKey === "pressure_down") return "明日のこもりを抜く前夜ケア";
+  if (triggerKey === "cold") return "明日の冷えを残さない支度";
+  if (triggerKey === "heat") return "明日の熱をためない支度";
+  if (triggerKey === "dry") return "明日の乾きを増やさない支度";
+  if (triggerKey === "pressure_up") return "明日の力みをほどく前夜ケア";
+  return "明日に持ち越さない前夜ケア";
 }
 
 export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", symptomFocus = null) {
@@ -2099,7 +2310,6 @@ function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus
   const labels = getForecastBackgroundFactors(triggerFactors).map((f) => f.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
   const target = mode === "today" ? "今日は" : "明日は";
-  const weatherTarget = mode === "today" ? "今日の天気では" : "明日の天気では";
   const level = Number(signal || 0);
   const keys = safeArray(policies).map((p) => p.key).filter(Boolean);
   const detail =
@@ -2107,21 +2317,20 @@ function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus
       ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}方針です。`
       : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
   const policyDirection = toCarePolicyDirection(detail);
-  const symptomContext = buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode });
+  const key = getNarrativePrimaryKey(triggerFactors);
+  const feel = CARE_STRATEGY_WEATHER_FEEL[key] || CARE_STRATEGY_WEATHER_FEEL.default;
 
-  const base = (() => {
+  if (mode === "today") {
     if (level <= 0) {
-      return `${weatherTarget}、${joined}の影響が少しだけあるため、強い対策より、${policyDirection}`;
+      return `${target}${joined}の影響は小さめ。${feel}だけ軽く見ながら、${policyDirection} 暮らす・食べる・ほぐすは、やることを増やすより“重さを増やさない”組み立てにします。`;
     }
-    if (level >= 2) {
-      return `${target}${joined}が響きやすいため、${policyDirection}`;
-    }
-    return `${target}${joined}が少し響きやすいため、${policyDirection}`;
-  })();
+    return `${target}${joined}で${feel}が出やすい日。${policyDirection} 空気・食べ方・ほぐす場所を一つずつ軽くして、体の逃げ道を作ります。`;
+  }
 
-  // この日の方針カードは短く読めるよう、本文は天気×体質の1文に絞る。
-  // 不調フォーカスごとの詳しい補足は、下の「暮らす・食べる・ほぐす」各カードに回す。
-  return base;
+  if (level <= 0) {
+    return `${target}${joined}の影響は小さめ。${policyDirection} 今夜は睡眠・飲み物・ほぐす場所を少し整えて、明日の安定を崩さない準備にします。`;
+  }
+  return `${target}${joined}で${feel}が出やすい見込み。${policyDirection} 今夜のうちに、寝室・飲み物・ほぐす道具の候補まで先に決めて、明日の自分が迷わない準備にします。`;
 }
 
 export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow", symptomFocus = null } = {}) {

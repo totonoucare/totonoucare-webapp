@@ -38,6 +38,7 @@ import {
   buildTodayCarePlan,
   formatTargetDate,
   deriveCarePolicies,
+  getCareItemHint,
   getCareStrategyLead,
   getCareStrategyTitle,
   getDateModeLabel,
@@ -664,12 +665,12 @@ export default function RadarPage() {
     [triggerFactors, forecast?.signal, displayDateMode, symptomFocus]
   );
   const bodySigns = useMemo(
-    () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0, symptomFocus),
-    [triggerFactors, forecast?.signal, symptomFocus]
+    () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0, symptomFocus, displayDateMode),
+    [triggerFactors, forecast?.signal, symptomFocus, displayDateMode]
   );
   const peakPrepItems = useMemo(
-    () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0, symptomFocus),
-    [triggerFactors, forecast?.signal, symptomFocus]
+    () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0, symptomFocus, displayDateMode),
+    [triggerFactors, forecast?.signal, symptomFocus, displayDateMode]
   );
   const backgroundFactors = useMemo(
     () => getForecastBackgroundFactors(triggerFactors),
@@ -713,6 +714,18 @@ export default function RadarPage() {
     [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday, symptomFocus]
   );
   const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
+  const liveItemHint = useMemo(
+    () => getCareItemHint("live", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
+    [careTriggerFactors, selectedIsToday, symptomFocus]
+  );
+  const eatItemHint = useMemo(
+    () => getCareItemHint("eat", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
+    [careTriggerFactors, selectedIsToday, symptomFocus]
+  );
+  const loosenItemHint = useMemo(
+    () => getCareItemHint("loosen", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
+    [careTriggerFactors, selectedIsToday, symptomFocus]
+  );
   const primaryTsubo = tsuboPoints[0] || null;
   const extraTsuboPoints = tsuboPoints.slice(1);
   const foodExamples = safeArray(food.examples);
@@ -1177,10 +1190,12 @@ export default function RadarPage() {
                     <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {forecast.signal === 0 ? "見ておくポイント" : "出やすいサイン"}
+                          {selectedIsToday
+                            ? forecast.signal === 0 ? "見ておくポイント" : "出やすいサイン"
+                            : forecast.signal === 0 ? "明日見ておくポイント" : "明日出やすいサイン"}
                         </div>
                         <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
-                          {forecast.signal === 0 ? "小さな影響" : "体感の目安"}
+                          {forecast.signal === 0 ? "小さな影響" : selectedIsToday ? "体感の目安" : "明日の目安"}
                         </span>
                       </div>
 
@@ -1231,14 +1246,14 @@ export default function RadarPage() {
                           <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
                             <IconBolt className="h-5 w-5" />
                           </span>
-                          {selectedIsToday ? "注意時間の前に" : "明日の注意時間の前に"}
+                          {selectedIsToday ? "注意時間の前に" : "今夜のうちに"}
                         </div>
                         <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5">
                           {forecast.peak_start && forecast.peak_end
-                            ? `注意時間：${String(forecast.peak_start).slice(0, 5)}–${String(
+                            ? `${selectedIsToday ? "注意時間" : "明日の注意時間"}：${String(forecast.peak_start).slice(0, 5)}–${String(
                                 forecast.peak_end
                               ).slice(0, 5)}`
-                            : "注意時間：—"}
+                            : `${selectedIsToday ? "注意時間" : "明日の注意時間"}：—`}
                         </div>
                       </div>
 
@@ -1473,11 +1488,12 @@ export default function RadarPage() {
                     ) : null}
                   </div>
                 ) : null}
-
                 <CareSetNaviBridge
-                  title="このツボケアに合う道具を見る"
-                  lead="表示中のツボや部位ケアに合わせて、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
-                  buttonLabel="ツボケアに合う候補を見る"
+                  title={selectedIsToday ? "このツボケアに合う道具を見る" : "明日に使うほぐし道具を見ておく"}
+                  lead={selectedIsToday
+                    ? loosenItemHint || "表示中のツボや部位ケアに合わせて、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
+                    : loosenItemHint || "明日の予報に合わせて、注意時間の前に使いやすい温熱・ほぐし系アイテムの候補を見ておけます。"}
+                  buttonLabel={selectedIsToday ? "ツボケアに合う候補を見る" : "明日のほぐし候補を見る"}
                   onClick={() => router.push(buildCareNaviUrl("point"))}
                 />
               </div>
@@ -1526,12 +1542,14 @@ export default function RadarPage() {
                   {hasFoodActionCards ? (
                     <div className="mt-4 space-y-2.5">
                       {foodActionCards.map((card, idx) => {
-                        const marker = card.key === "add" ? "＋" : card.key === "caution" ? "！" : "○";
+                        const marker = card.key === "add" ? "＋" : card.key === "drink" ? "茶" : card.key === "caution" ? "！" : "○";
                         const markerClass = card.key === "caution"
                           ? "bg-[#FFF8EE] text-[#9A5A14] ring-[#F0D7B6]"
-                          : card.key === "choice"
-                            ? "bg-white text-[#24564C] ring-[#CFE0D3]"
-                            : "bg-[#EAF5EE] text-[#24564C] ring-[#CFE0D3]";
+                          : card.key === "drink"
+                            ? "bg-[#F4FAF7] text-[#24564C] ring-[#CFE0D3]"
+                            : card.key === "choice"
+                              ? "bg-white text-[#24564C] ring-[#CFE0D3]"
+                              : "bg-[#EAF5EE] text-[#24564C] ring-[#CFE0D3]";
 
                         return (
                           <div
@@ -1674,11 +1692,12 @@ export default function RadarPage() {
                     </div>
                   ) : null}
                 </div>
-
                 <CareSetNaviBridge
-                  title="この食べ方に合う候補を見る"
-                  lead="表示中の食べ方に合わせて、飲み物・汁物・素材系アイテムの候補を見られます。"
-                  buttonLabel="食べ方に合う候補を見る"
+                  title={selectedIsToday ? "この食べ方に合う候補を見る" : "明日の食べ方候補を見ておく"}
+                  lead={selectedIsToday
+                    ? eatItemHint || "表示中の食べ方に合わせて、飲み物・汁物・素材系アイテムの候補を見られます。"
+                    : eatItemHint || "明日の予報と季節に合わせて、飲み物・汁物・素材系アイテムの候補を先に見ておけます。"}
+                  buttonLabel={selectedIsToday ? "食べ方に合う候補を見る" : "明日の食べ方候補を見る"}
                   onClick={() => router.push(buildCareNaviUrl("eat"))}
                 />
               </div>
@@ -1735,11 +1754,12 @@ export default function RadarPage() {
                     </div>
                   </div>
                 </div>
-
                 <CareSetNaviBridge
-                  title="この暮らしケアに合う道具を見る"
-                  lead="表示中の生活ケアに合わせて、温める・休む・眠る・湿度を整える道具の候補を見られます。"
-                  buttonLabel="暮らしケアに合う候補を見る"
+                  title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
+                  lead={selectedIsToday
+                    ? liveItemHint || "表示中の生活ケアに合わせて、温める・休む・眠る・湿度を整える道具の候補を見られます。"
+                    : liveItemHint || "明日の予報と季節に合わせて、温める・休む・眠る・湿度を整える道具の候補を先に見ておけます。"}
+                  buttonLabel={selectedIsToday ? "暮らしケアに合う候補を見る" : "明日の暮らし候補を見る"}
                   onClick={() => router.push(buildCareNaviUrl("live"))}
                 />
               </div>
