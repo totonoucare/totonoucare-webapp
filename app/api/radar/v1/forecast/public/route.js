@@ -61,14 +61,20 @@ function calcUniversalSignal(weatherStress) {
 
   if (channels.filter((channel) => channel.strength >= 0.72).length >= 3) normalizedLoad += 0.08;
 
-  const score = Math.round((clamp(normalizedLoad, 0, 1.45) / 1.45) * 10);
+  const scorePrecise = Math.round((clamp(normalizedLoad, 0, 1.45) / 1.45) * 100) / 10;
+  const score = Math.round(scorePrecise);
 
   let signal;
   if (score >= 7) signal = 2;      // 守り
   else if (score >= 4) signal = 1; // いたわり
   else signal = 0;                 // 安定
 
-  return { score_0_10: score, signal };
+  return {
+    score_0_10: score,
+    score_display_0_10: scorePrecise,
+    score_precise_0_10: scorePrecise,
+    signal,
+  };
 }
 
 // メイン/副因のトリガー（強い気象変化）を特定
@@ -164,7 +170,7 @@ export async function GET(req) {
         ? normalized.previousNightBridgePoints
         : null,
     });
-    const { score_0_10, signal } = calcUniversalSignal(weatherStress);
+    const { score_0_10, score_display_0_10, score_precise_0_10, signal } = calcUniversalSignal(weatherStress);
     const triggerFactors = resolveTriggerFactors(weatherStress);
     const primaryTrigger = triggerFactors[0] || buildTriggerFactor({ key: "pressure_down", strength: 0, weighted: 0.06 }, "primary");
     const secondaryTrigger = triggerFactors[1] || null;
@@ -174,6 +180,8 @@ export async function GET(req) {
       target_date: targetDate,
       forecast: {
         score_0_10,
+        score_display_0_10,
+        score_precise_0_10,
         signal,
         main_trigger: primaryTrigger.main_trigger,
         trigger_dir: primaryTrigger.trigger_dir,
