@@ -4,6 +4,20 @@
 import { useEffect, useRef, useState } from "react";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 
+const CORE_ANIMAL_IMAGE_SRC = {
+  accel_batt_small: "/illust/core/cheetah.webp",
+  accel_batt_standard: "/illust/core/wolf.webp",
+  accel_batt_large: "/illust/core/orca.webp",
+  brake_batt_small: "/illust/core/hedgehog.webp",
+  brake_batt_standard: "/illust/core/penguin.webp",
+  brake_batt_large: "/illust/core/elephant.webp",
+};
+
+function getCoreAnimalImageSrc(coreCode) {
+  const key = String(coreCode || "").trim();
+  return CORE_ANIMAL_IMAGE_SRC[key] || null;
+}
+
 function getGaugeTone(signal) {
   const level = Number(signal);
   if (level === 2) {
@@ -135,6 +149,8 @@ export function ForecastGauge({
   score = 0,
   signal = 0,
   animationKey = "",
+  coreCode = null,
+  coreLabel = "",
 }) {
   const safeScore = Math.max(0, Math.min(10, Number(score) || 0));
   const animatedScore = useResetAnimatedNumber(safeScore, 1150, animationKey);
@@ -142,6 +158,13 @@ export function ForecastGauge({
   const level = Number(signal);
   const tone = getGaugeTone(level);
   const mode = getModeMeta(level);
+  const coreAnimalSrc = getCoreAnimalImageSrc(coreCode);
+  const [avatarImageFailed, setAvatarImageFailed] = useState(false);
+  const showCoreAnimal = Boolean(coreAnimalSrc) && !avatarImageFailed;
+
+  useEffect(() => {
+    setAvatarImageFailed(false);
+  }, [coreAnimalSrc]);
 
   useEffect(() => {
     setSettled(false);
@@ -357,7 +380,18 @@ export function ForecastGauge({
             className="grid h-14 w-14 place-items-center rounded-full border bg-white/78 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.42)] ring-1 ring-white/80 backdrop-blur-sm"
             style={{ borderColor: tone.labelBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
           >
-            <GuideBotAvatar signal={level} className="h-11 w-11" />
+            {showCoreAnimal ? (
+              <img
+                src={coreAnimalSrc}
+                alt=""
+                className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.14)]"
+                loading="eager"
+                decoding="async"
+                onError={() => setAvatarImageFailed(true)}
+              />
+            ) : (
+              <GuideBotAvatar signal={level} className="h-11 w-11" />
+            )}
           </div>
         </div>
 

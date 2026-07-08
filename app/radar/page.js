@@ -1182,7 +1182,9 @@ export default function RadarPage() {
                     <ForecastGauge
                       score={forecast.score_display_0_10 ?? forecast.score_precise_0_10 ?? forecast.score_0_10}
                       signal={forecast.signal}
-                      animationKey={`${bundle?.target_date || ""}-${forecast.score_display_0_10 ?? forecast.score_precise_0_10 ?? forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
+                      animationKey={`${bundle?.target_date || ""}-${forecast.score_display_0_10 ?? forecast.score_precise_0_10 ?? forecast.score_0_10}-${forecast.signal}-${triggerKey}-${coreCode || "guide"}`}
+                      coreCode={coreCode}
+                      coreLabel={coreLabel?.title || ""}
                     />
 
                     {backgroundFactors.length > 0 ? (
