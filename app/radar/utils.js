@@ -1277,6 +1277,7 @@ export function getForecastBackgroundFactors(triggerFactors) {
       label: factor?.label || "気象変化",
       role: factor?.role || null,
       stressValue: clamp01Number(stressValue),
+      stressPercent: clamp01Number(stressValue) == null ? null : Math.round(clamp01Number(stressValue) * 100),
       levelLabel: getWeatherStressLevelLabel(stressValue, factor?.role),
       levelTone: getWeatherStressLevelTone(stressValue, factor?.role),
     };

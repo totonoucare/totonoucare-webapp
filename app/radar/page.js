@@ -1184,6 +1184,45 @@ export default function RadarPage() {
                       signal={forecast.signal}
                       animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                     />
+
+                    {backgroundFactors.length > 0 ? (
+                      <div className="mt-4 rounded-[24px] bg-white/86 p-4 ring-1 ring-[#E4ECE4] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.32)]">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div className="text-[11px] font-black tracking-[0.14em] text-slate-400">天気ストレス</div>
+                          <div className="rounded-full bg-[#F8FBF8] px-2.5 py-1 text-[10px] font-black text-slate-400 ring-1 ring-[#E4ECE4]">
+                            予報背景
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {backgroundFactors.map((factor, index) => (
+                            <div
+                              key={`${factor.key}-${index}`}
+                              className="flex min-w-[132px] flex-1 items-center justify-between gap-2 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]"
+                              title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${factor.stressPercent}%)` : `${factor.label} ${factor.levelLabel}`}
+                            >
+                              <div className="flex min-w-0 items-center gap-2">
+                                <WeatherIcon triggerKey={factor.key} className="h-[24px] w-[24px] shrink-0" />
+                                <span className="truncate text-[13px] font-black text-slate-700">{factor.label}</span>
+                              </div>
+                              {factor.levelLabel ? (
+                                <span
+                                  className={[
+                                    "shrink-0 rounded-full px-2 py-1 text-[11px] font-black leading-none ring-1",
+                                    factor.levelTone === "high"
+                                      ? "bg-[#FFF3E8] text-[#B86430] ring-[#F1D5BC]"
+                                      : factor.levelTone === "middle"
+                                        ? "bg-[#FFF8E7] text-[#9A6A16] ring-[#EBD9A8]"
+                                        : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
+                                  ].join(" ")}
+                                >
+                                  {factor.levelLabel}
+                                </span>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -1224,35 +1263,7 @@ export default function RadarPage() {
                         ))}
                       </div>
 
-                      {backgroundFactors.length > 0 ? (
-                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                          <span className="mr-1 text-[10px] font-black text-slate-400">天気ストレス</span>
-                          {backgroundFactors.map((factor, index) => (
-                            <span
-                              key={`${factor.key}-${index}`}
-                              className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-[#E4ECE4] shadow-[0_10px_20px_-16px_rgba(15,23,42,0.28)]"
-                              title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${Math.round(factor.stressValue * 100)}%)` : `${factor.label} ${factor.levelLabel}`}
-                            >
-                              <WeatherIcon triggerKey={factor.key} className="h-[18px] w-[18px]" />
-                              <span>{factor.label}</span>
-                              {factor.levelLabel ? (
-                                <span
-                                  className={[
-                                    "ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-black leading-none ring-1",
-                                    factor.levelTone === "high"
-                                      ? "bg-[#FFF3E8] text-[#B86430] ring-[#F1D5BC]"
-                                      : factor.levelTone === "middle"
-                                        ? "bg-[#FFF8E7] text-[#9A6A16] ring-[#EBD9A8]"
-                                        : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
-                                  ].join(" ")}
-                                >
-                                  {factor.levelLabel}
-                                </span>
-                              ) : null}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
+
                     </div>
 
                     <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
