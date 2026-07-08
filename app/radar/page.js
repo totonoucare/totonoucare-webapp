@@ -1196,20 +1196,6 @@ export default function RadarPage() {
                           </div>
                         </div>
 
-                        <div className="mb-3 flex items-center justify-between gap-3 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]">
-                          <div className="flex min-w-0 items-center gap-2 text-[11px] font-black tracking-[0.08em] text-slate-500">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                              <IconBolt className="h-4.5 w-4.5" />
-                            </span>
-                            <span className="truncate">{selectedIsToday ? "もっとも注意する時間" : "明日の注意時間"}</span>
-                          </div>
-                          <div className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-700 ring-1 ring-black/5">
-                            {forecast.peak_start && forecast.peak_end
-                              ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
-                              : "—"}
-                          </div>
-                        </div>
-
                         <div className="flex flex-wrap gap-2">
                           {backgroundFactors.map((factor, index) => (
                             <div
@@ -1237,6 +1223,20 @@ export default function RadarPage() {
                               ) : null}
                             </div>
                           ))}
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between gap-3 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]">
+                          <div className="flex min-w-0 items-center gap-2 text-[12px] font-black text-slate-600">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                              <IconBolt className="h-4.5 w-4.5" />
+                            </span>
+                            <span className="whitespace-nowrap">注意時間</span>
+                          </div>
+                          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-[12px] font-black text-slate-700 ring-1 ring-black/5">
+                            {forecast.peak_start && forecast.peak_end
+                              ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
+                              : "—"}
+                          </div>
                         </div>
                       </div>
                     ) : null}
