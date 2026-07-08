@@ -1231,12 +1231,54 @@ function toWeatherIconKey(key) {
   return key || "pressure_down";
 }
 
+function clamp01Number(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.min(1, n));
+}
+
+function getWeatherStressLevelLabel(value, role) {
+  const n = clamp01Number(value);
+  if (n == null) {
+    if (role === "primary") return "大";
+    if (role === "secondary") return "中";
+    return "";
+  }
+  if (n >= 0.67) return "大";
+  if (n >= 0.34) return "中";
+  return "小";
+}
+
+function getWeatherStressLevelTone(value, role) {
+  const n = clamp01Number(value);
+  if (n == null) {
+    return role === "primary" ? "high" : role === "secondary" ? "middle" : "low";
+  }
+  if (n >= 0.67) return "high";
+  if (n >= 0.34) return "middle";
+  return "low";
+}
+
 export function getForecastBackgroundFactors(triggerFactors) {
   return safeArray(triggerFactors).slice(0, 2).map((factor) => {
     const key = factor?.key || factor?.exact || "pressure_down";
+    // 表示は「天気ストレス」なので、純粋な weather_strength を優先。
+    // 旧データや一部経路で無い場合だけ、体質込みの effective_load を fallback にする。
+    const stressValue =
+      factor?.weather_strength ??
+      factor?.weatherStrength ??
+      factor?.weather_load ??
+      factor?.effective_load ??
+      factor?.effectiveLoad ??
+      null;
+
     return {
       key: toWeatherIconKey(key),
       label: factor?.label || "気象変化",
+      role: factor?.role || null,
+      stressValue: clamp01Number(stressValue),
+      levelLabel: getWeatherStressLevelLabel(stressValue, factor?.role),
+      levelTone: getWeatherStressLevelTone(stressValue, factor?.role),
     };
   });
 }

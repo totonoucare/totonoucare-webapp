@@ -1226,14 +1226,29 @@ export default function RadarPage() {
 
                       {backgroundFactors.length > 0 ? (
                         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                          <span className="mr-1 text-[10px] font-black text-slate-400">背景</span>
+                          <span className="mr-1 text-[10px] font-black text-slate-400">天気ストレス</span>
                           {backgroundFactors.map((factor, index) => (
                             <span
                               key={`${factor.key}-${index}`}
                               className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-600 ring-1 ring-[#E4ECE4] shadow-[0_10px_20px_-16px_rgba(15,23,42,0.28)]"
+                              title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${Math.round(factor.stressValue * 100)}%)` : `${factor.label} ${factor.levelLabel}`}
                             >
                               <WeatherIcon triggerKey={factor.key} className="h-[18px] w-[18px]" />
-                              {factor.label}
+                              <span>{factor.label}</span>
+                              {factor.levelLabel ? (
+                                <span
+                                  className={[
+                                    "ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-black leading-none ring-1",
+                                    factor.levelTone === "high"
+                                      ? "bg-[#FFF3E8] text-[#B86430] ring-[#F1D5BC]"
+                                      : factor.levelTone === "middle"
+                                        ? "bg-[#FFF8E7] text-[#9A6A16] ring-[#EBD9A8]"
+                                        : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
+                                  ].join(" ")}
+                                >
+                                  {factor.levelLabel}
+                                </span>
+                              ) : null}
                             </span>
                           ))}
                         </div>
