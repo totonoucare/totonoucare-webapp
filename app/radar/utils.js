@@ -115,9 +115,9 @@ export function getDateModeLabel(mode) {
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
-  if (mode === "today") return "今日の崩れやすさ";
-  if (mode === "future") return `${formatTargetDate(targetDate)}の崩れやすさ`;
-  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の崩れやすさ`;
+  if (mode === "today") return "今日の体調ゆらぎ予報";
+  if (mode === "future") return `${formatTargetDate(targetDate)}の体調ゆらぎ予報`;
+  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の体調ゆらぎ予報`;
 }
 
 export function getSectionLabels(mode) {

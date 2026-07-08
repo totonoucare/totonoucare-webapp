@@ -292,12 +292,12 @@ export function ForecastGauge({
             x={170}
             y={145}
             textAnchor="middle"
-            fontSize="12"
+            fontSize="11"
             fontWeight="900"
-            letterSpacing="0.10em"
+            letterSpacing="0.08em"
             fill="rgba(100,116,139,0.72)"
           >
-            ゆらぎ度
+            体調ゆらぎ度
           </text>
           <text
             x={170}

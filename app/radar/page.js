@@ -117,8 +117,8 @@ function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationL
   const title = isLocationRefresh
     ? "地域の予報を更新中"
     : mode === "today"
-      ? "今日の崩れやすさを確認中"
-      : "明日の崩れやすさを確認中";
+      ? "今日の体調ゆらぎ予報を確認中"
+      : "明日の体調ゆらぎ予報を確認中";
   const lead = isLocationRefresh
     ? `${locationLabel || "新しい地域"}の天気と、体質への響き方を確認しています。`
     : mode === "today"
@@ -828,7 +828,7 @@ export default function RadarPage() {
               明日の体調予報を表示します。
             </div>
             <div className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
-              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の崩れやすさと先回りケアを出します。
+              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の体調ゆらぎ予報と先回りケアを出します。
             </div>
           </div>
 
@@ -872,7 +872,7 @@ export default function RadarPage() {
                 {RADAR_LOADING_HINTS[loadingHintIndex] || RADAR_LOADING_HINTS[0]}
               </div>
               <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
-                体質と気象の重なりを見て、明日の崩れやすさと先回りケアを組み立てています。
+                体質と気象の重なりを見て、明日の体調ゆらぎ予報と先回りケアを組み立てています。
               </div>
               <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5">
                 <div className="h-full w-1/3 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-[var(--accent-ink)]/55" />
