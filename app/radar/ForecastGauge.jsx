@@ -253,7 +253,7 @@ export function ForecastGauge({
         }
 
         .radar-core-bubble-sway {
-          animation: radarCoreBubbleSway 2.15s ease-in-out infinite;
+          animation: radarCoreBubbleSway 2.75s ease-in-out infinite;
         }
 
         .radar-core-bubble-shiver {
