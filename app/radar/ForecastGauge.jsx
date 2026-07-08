@@ -161,6 +161,7 @@ export function ForecastGauge({
     gaugeStart + ((gaugeEnd - gaugeStart) * value) / 10;
 
   const valueAngle = scoreToAngle(animatedScore);
+  const animatedPercent = Math.max(0, Math.min(100, Math.round(animatedScore * 10)));
 
   const outerRadius = 112;
   const innerRadius = 80;
@@ -286,25 +287,36 @@ export function ForecastGauge({
 
           <text
             x={170}
-            y={151}
+            y={139}
             textAnchor="middle"
-            fontSize="12"
+            fontSize="11"
             fontWeight="900"
-            letterSpacing="0.08em"
+            letterSpacing="0.10em"
             fill="rgba(100,116,139,0.72)"
           >
-            モード
+            ゆらぎ度
           </text>
           <text
             x={170}
-            y={190}
+            y={178}
             textAnchor="middle"
-            fontSize={mode.shortLabel.length >= 4 ? "29" : "34"}
-            fontWeight="900"
+            fontSize="38"
+            fontWeight="950"
             fill={tone.main}
             stroke="rgba(255,255,255,0.95)"
             strokeWidth="5"
             paintOrder="stroke"
+          >
+            {animatedPercent}%
+          </text>
+          <text
+            x={170}
+            y={207}
+            textAnchor="middle"
+            fontSize={mode.shortLabel.length >= 4 ? "15" : "16"}
+            fontWeight="900"
+            letterSpacing="0.04em"
+            fill="rgba(100,116,139,0.78)"
           >
             {settled ? mode.shortLabel : "判定中"}
           </text>
