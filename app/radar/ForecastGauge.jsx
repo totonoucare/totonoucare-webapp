@@ -18,6 +18,14 @@ function getCoreAnimalImageSrc(coreCode) {
   return CORE_ANIMAL_IMAGE_SRC[key] || null;
 }
 
+function getBubbleMotionClass(signal, settled) {
+  if (!settled) return "";
+  const level = Number(signal);
+  if (level === 2) return "radar-core-bubble-shiver";
+  if (level === 1) return "radar-core-bubble-sway";
+  return "radar-core-bubble-float";
+}
+
 function getGaugeTone(signal) {
   const level = Number(signal);
   if (level === 2) {
@@ -161,6 +169,7 @@ export function ForecastGauge({
   const coreAnimalSrc = getCoreAnimalImageSrc(coreCode);
   const [avatarImageFailed, setAvatarImageFailed] = useState(false);
   const showCoreAnimal = Boolean(coreAnimalSrc) && !avatarImageFailed;
+  const bubbleMotionClass = getBubbleMotionClass(level, settled);
 
   useEffect(() => {
     setAvatarImageFailed(false);
@@ -214,6 +223,49 @@ export function ForecastGauge({
 
   return (
     <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
+      <style>{`
+        @keyframes radarCoreBubbleFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+
+        @keyframes radarCoreBubbleSway {
+          0%, 100% { transform: rotate(-14deg); }
+          50% { transform: rotate(14deg); }
+        }
+
+        @keyframes radarCoreBubbleShiver {
+          0%, 62%, 100% { transform: translate(0, 0) rotate(0deg); }
+          66% { transform: translate(-1.5px, 0.5px) rotate(-4deg); }
+          70% { transform: translate(1.5px, -0.5px) rotate(4deg); }
+          74% { transform: translate(-1px, -0.5px) rotate(-3deg); }
+          78% { transform: translate(1px, 0.5px) rotate(3deg); }
+          82% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .radar-core-bubble-motion {
+          transform-origin: 50% 68%;
+          will-change: transform;
+        }
+
+        .radar-core-bubble-float {
+          animation: radarCoreBubbleFloat 3.4s ease-in-out infinite;
+        }
+
+        .radar-core-bubble-sway {
+          animation: radarCoreBubbleSway 2.15s ease-in-out infinite;
+        }
+
+        .radar-core-bubble-shiver {
+          animation: radarCoreBubbleShiver 1s ease-in-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .radar-core-bubble-motion {
+            animation: none !important;
+          }
+        }
+      `}</style>
       <div className="relative aspect-[340/300]">
         <svg viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="h-full w-full overflow-visible" aria-hidden="true">
           <defs>
@@ -377,21 +429,28 @@ export function ForecastGauge({
           aria-hidden="true"
         >
           <div
-            className="grid h-14 w-14 place-items-center rounded-full border bg-white/78 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.42)] ring-1 ring-white/80 backdrop-blur-sm"
-            style={{ borderColor: tone.labelBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
+            className={[
+              "radar-core-bubble-motion",
+              bubbleMotionClass,
+            ].filter(Boolean).join(" ")}
           >
-            {showCoreAnimal ? (
-              <img
-                src={coreAnimalSrc}
-                alt=""
-                className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.14)]"
-                loading="eager"
-                decoding="async"
-                onError={() => setAvatarImageFailed(true)}
-              />
-            ) : (
-              <GuideBotAvatar signal={level} className="h-11 w-11" />
-            )}
+            <div
+              className="grid h-14 w-14 place-items-center rounded-full border bg-white/78 shadow-[0_14px_28px_-18px_rgba(15,23,42,0.42)] ring-1 ring-white/80 backdrop-blur-sm"
+              style={{ borderColor: tone.labelBorder, backgroundColor: "rgba(255,255,255,0.76)" }}
+            >
+              {showCoreAnimal ? (
+                <img
+                  src={coreAnimalSrc}
+                  alt=""
+                  className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.14)]"
+                  loading="eager"
+                  decoding="async"
+                  onError={() => setAvatarImageFailed(true)}
+                />
+              ) : (
+                <GuideBotAvatar signal={level} className="h-11 w-11" />
+              )}
+            </div>
           </div>
         </div>
 
