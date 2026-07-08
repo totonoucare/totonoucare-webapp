@@ -1196,16 +1196,16 @@ export default function RadarPage() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid gap-2">
                           {backgroundFactors.map((factor, index) => (
                             <div
                               key={`${factor.key}-${index}`}
-                              className="flex min-w-[132px] flex-1 items-center justify-between gap-2 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]"
+                              className="flex w-full items-center justify-between gap-3 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]"
                               title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${factor.stressPercent}%)` : `${factor.label} ${factor.levelLabel}`}
                             >
-                              <div className="flex min-w-0 items-center gap-2">
+                              <div className="flex min-w-0 flex-1 items-center gap-2">
                                 <WeatherIcon triggerKey={factor.key} className="h-[24px] w-[24px] shrink-0" />
-                                <span className="truncate text-[13px] font-black text-slate-700">{factor.label}</span>
+                                <span className="min-w-0 text-[13px] font-black text-slate-700">{factor.label}</span>
                               </div>
                               {factor.levelLabel ? (
                                 <span
@@ -1225,17 +1225,19 @@ export default function RadarPage() {
                           ))}
                         </div>
 
-                        <div className="mt-2 flex items-center justify-between gap-3 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]">
-                          <div className="flex min-w-0 items-center gap-2 text-[12px] font-black text-slate-600">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                              <IconBolt className="h-4.5 w-4.5" />
-                            </span>
-                            <span className="whitespace-nowrap">注意時間</span>
-                          </div>
-                          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-[12px] font-black text-slate-700 ring-1 ring-black/5">
-                            {forecast.peak_start && forecast.peak_end
-                              ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
-                              : "—"}
+                        <div className="mt-3 border-t border-[#E4ECE4] pt-3">
+                          <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white/74 px-3 py-2.5 ring-1 ring-[#E4ECE4]">
+                            <div className="flex min-w-0 items-center gap-2 text-[12px] font-black text-slate-600">
+                              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                                <IconBolt className="h-4.5 w-4.5" />
+                              </span>
+                              <span className="whitespace-nowrap">注意時間</span>
+                            </div>
+                            <div className="shrink-0 rounded-full bg-[#F8FBF8] px-3 py-1 text-[12px] font-black text-slate-700 ring-1 ring-[#E4ECE4]">
+                              {forecast.peak_start && forecast.peak_end
+                                ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
+                                : "—"}
+                            </div>
                           </div>
                         </div>
                       </div>
