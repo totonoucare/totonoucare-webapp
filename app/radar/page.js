@@ -1180,9 +1180,9 @@ export default function RadarPage() {
                 <div className="relative mt-5">
                   <div className="relative mx-auto max-w-[420px] px-1">
                     <ForecastGauge
-                      score={forecast.score_0_10}
+                      score={forecast.score_display_0_10 ?? forecast.score_precise_0_10 ?? forecast.score_0_10}
                       signal={forecast.signal}
-                      animationKey={`${bundle?.target_date || ""}-${forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
+                      animationKey={`${bundle?.target_date || ""}-${forecast.score_display_0_10 ?? forecast.score_precise_0_10 ?? forecast.score_0_10}-${forecast.signal}-${triggerKey}`}
                     />
 
                     {backgroundFactors.length > 0 ? (
