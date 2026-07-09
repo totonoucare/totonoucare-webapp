@@ -31,7 +31,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               className={[
                 "relative min-w-[76px] rounded-[20px] px-3.5 py-3 text-left transition-all duration-200 ring-1",
                 active
-                  ? "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE] shadow-[0_14px_30px_-22px_rgba(47,129,110,0.42)]"
+                  ? "bg-[#EAF7F1] text-[#1F7D67] ring-[#66B9A3] shadow-[0_14px_30px_-20px_rgba(47,129,110,0.46)]"
                   : "bg-white text-slate-600 ring-[#E1E6E1] shadow-sm hover:-translate-y-0.5 hover:bg-[#F4FAF7] hover:ring-[#CFE7DE]",
               ].join(" ")}
             >
@@ -43,7 +43,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               </div>
               <div className={[
                 "mt-1 text-[10px] font-black uppercase tracking-wide",
-                active ? "text-[#2F816E]/80" : item.locked ? "text-slate-400" : "text-slate-500",
+                active ? "text-[#1F7D67]" : item.locked ? "text-slate-400" : "text-slate-500",
               ].join(" ")}
               >
                 {item.subLabel}

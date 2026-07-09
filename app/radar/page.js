@@ -1233,14 +1233,14 @@ export default function RadarPage() {
                                   ) : null}
                                 </div>
 
-                                <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[#F8FBF8]/80 px-2.5 py-1.5 ring-1 ring-[#E8EFE8]">
-                                  <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-black tracking-[0.08em] text-slate-400">
-                                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                                <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[#F4FAF7] px-2.5 py-1.5 ring-1 ring-[#CFE7DE]">
+                                  <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-black tracking-[0.08em] text-[#2F816E]/75">
+                                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
                                       <IconBolt className="h-4 w-4" />
                                     </span>
                                     <span className="whitespace-nowrap">注意時間</span>
                                   </div>
-                                  <span className="shrink-0 rounded-full bg-[#F8FBF8] px-2.5 py-1 text-[11px] font-black text-slate-700 ring-1 ring-[#E4ECE4]">
+                                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[#1F7D67] ring-1 ring-[#CFE7DE]">
                                     {factorPeakLabel}
                                   </span>
                                 </div>
@@ -1296,7 +1296,7 @@ export default function RadarPage() {
                     <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
                             <IconBolt className="h-5 w-5" />
                           </span>
                           {selectedIsToday ? "注意時間の前に" : "今夜のうちに"}
