@@ -1349,7 +1349,7 @@ export default function RadarPage() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-[24px] bg-[#EFF8F4]/72 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className="mt-4 rounded-[24px] bg-[#EAF7F1] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[10px] font-black uppercase tracking-widest text-[#2F816E]/70">
                   この日の方針
@@ -1395,14 +1395,14 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     ほぐす
                   </div>
-                  <div className="rounded-full bg-[#EFF8F4]/72 px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                  <div className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
                     ツボケア
                   </div>
                 </div>
 
                 {primaryTsubo ? (
                   <div
-                    className="relative overflow-hidden rounded-[24px] bg-[#EFF8F4]/72 p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#F4FAF7]"
+                    className="relative overflow-hidden rounded-[24px] bg-[#EAF7F1] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#F4FAF7]"
                     onClick={() => setSelectedPoint(primaryTsubo)}
                   >
                     <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
@@ -1449,7 +1449,7 @@ export default function RadarPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-[22px] bg-[#EFF8F4]/72 px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#CFE7DE]">
+                  <div className="rounded-[22px] bg-[#EAF7F1] px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#CFE7DE]">
                     体質データに合わせたツボを準備しています。
                   </div>
                 )}
@@ -1466,7 +1466,7 @@ export default function RadarPage() {
                     <button
                       type="button"
                       onClick={() => setTsuboExtraOpen((v) => !v)}
-                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] text-left shadow-sm transition-all hover:bg-[#EFF8F4]/72"
+                      className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] text-left shadow-sm transition-all hover:bg-[#EAF7F1]"
                     >
                       <div>
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -1497,7 +1497,7 @@ export default function RadarPage() {
                         {extraTsuboPoints.map((p, i) => (
                           <div
                             key={`${p.code}-${i + 1}`}
-                            className="relative rounded-[20px] bg-[#EFF8F4]/72 p-4 ring-1 ring-inset ring-[#CFE7DE] transition-all hover:bg-white cursor-pointer"
+                            className="relative rounded-[20px] bg-[#EAF7F1] p-4 ring-1 ring-inset ring-[#CFE7DE] transition-all hover:bg-white cursor-pointer"
                             onClick={() => setSelectedPoint(p)}
                           >
                             <div className="flex items-center gap-3 pr-8">
@@ -1554,12 +1554,12 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     食べる
                   </div>
-                  <div className="rounded-full bg-[#EFF8F4]/72 px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                  <div className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
                     食養生
                   </div>
                 </div>
 
-                <div className="rounded-[24px] bg-[#EFF8F4]/72 px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                <div className="rounded-[24px] bg-[#EAF7F1] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                     {food.badge || "まずはこれ"}
                   </div>
@@ -1629,7 +1629,7 @@ export default function RadarPage() {
                                 {safeArray(card.items).map((item, itemIdx) => (
                                   <span
                                     key={`${card.key}-${item}-${itemIdx}`}
-                                    className="rounded-full bg-[#EFF8F4]/72 px-2.5 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#E1E6E1]"
+                                    className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#E1E6E1]"
                                   >
                                     {item}
                                   </span>
@@ -1758,12 +1758,12 @@ export default function RadarPage() {
                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                     暮らす
                   </div>
-                  <div className="rounded-full bg-[#EFF8F4]/72 px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                  <div className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
                     生活ケア
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[24px] bg-[#EFF8F4]/72 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                <div className="overflow-hidden rounded-[24px] bg-[#EAF7F1] ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div className="px-4 py-4">
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
                       まずはこれ
@@ -1776,7 +1776,7 @@ export default function RadarPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-white/70 bg-white/34 px-4 py-4">
+                  <div className="border-t border-white/70 bg-[#F4FAF7] px-4 py-4">
                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       {selectedIsToday ? "今日やること" : "今夜やること"}
                     </div>
