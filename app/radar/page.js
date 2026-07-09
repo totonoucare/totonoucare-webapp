@@ -1191,7 +1191,7 @@ export default function RadarPage() {
                       <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div className="text-[11px] font-black tracking-[0.14em] text-slate-400">天気ストレスと注意時間</div>
-                          <div className="rounded-full bg-[#F8FBF8] px-2.5 py-1 text-[10px] font-black text-slate-400 ring-1 ring-[#E4ECE4]">
+                          <div className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">
                             予報背景
                           </div>
                         </div>
