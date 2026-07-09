@@ -293,7 +293,7 @@ function PointVisualPanel({ point }) {
 
 export function SegmentedTabs({ tabs, value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-[#ECF5F1]/85 p-1 ring-1 ring-inset ring-[#D8E8DF]/90 shadow-inner">
+    <div className="rounded-[22px] bg-slate-200/60 p-1 ring-1 ring-inset ring-slate-200/75 shadow-inner">
       <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
         {tabs.map((t) => {
           const active = value === t.key;
@@ -306,7 +306,7 @@ export function SegmentedTabs({ tabs, value, onChange }) {
               className={[
                 "h-[40px] rounded-[18px] text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
                 active
-                  ? "bg-[linear-gradient(135deg,#84D6BE_0%,#37A987_100%)] text-white shadow-[0_12px_24px_-16px_rgba(55,169,135,0.48)]"
+                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
                   : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
               ].join(" ")}
             >
