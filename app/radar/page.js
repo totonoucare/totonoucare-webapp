@@ -1228,8 +1228,8 @@ export default function RadarPage() {
                         <div className="mt-3 border-t border-[#E4ECE4] pt-3">
                           <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white/74 px-3 py-2.5 ring-1 ring-[#E4ECE4]">
                             <div className="flex min-w-0 items-center gap-2 text-[12px] font-black text-slate-600">
-                              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                                <IconBolt className="h-4.5 w-4.5" />
+                              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                                <IconBolt className="h-5 w-5" />
                               </span>
                               <span className="whitespace-nowrap">注意時間</span>
                             </div>
