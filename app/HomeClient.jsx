@@ -493,7 +493,7 @@ function ForecastBar({ forecast, coreCode = null, coreTitle = "", animationKey =
           animation: homeForecastBubbleSway 2.75s ease-in-out infinite;
         }
         .home-forecast-bubble-shiver {
-          animation: homeForecastBubbleShiver 1s ease-in-out infinite;
+          animation: homeForecastBubbleShiver 1.25s ease-in-out infinite;
         }
         @media (prefers-reduced-motion: reduce) {
           .home-forecast-bubble-motion {
