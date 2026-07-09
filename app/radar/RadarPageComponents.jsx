@@ -31,8 +31,8 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               className={[
                 "relative min-w-[76px] rounded-[20px] px-3.5 py-3 text-left transition-all duration-200 ring-1",
                 active
-                  ? "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE] shadow-[0_14px_30px_-22px_rgba(47,129,110,0.42)]"
-                  : "bg-white text-slate-600 ring-[#E1E6E1] shadow-sm hover:-translate-y-0.5 hover:bg-[#F4FAF7] hover:ring-[#CFE7DE]",
+                  ? "bg-[#FFF5E8] text-[#3F3025] ring-[#D8B892] shadow-[0_14px_30px_-22px_rgba(161,116,62,0.55)]"
+                  : "bg-white text-[#4A4039] ring-[#E3D7CC] shadow-sm hover:-translate-y-0.5 hover:bg-[#FFF9F2] hover:ring-[#D8C6B4]",
               ].join(" ")}
             >
               <div className="flex items-center justify-between gap-2">
@@ -43,7 +43,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               </div>
               <div className={[
                 "mt-1 text-[10px] font-black uppercase tracking-wide",
-                active ? "text-[#2F816E]/80" : item.locked ? "text-slate-400" : "text-slate-500",
+                active ? "text-[#9B6A38]" : item.locked ? "text-slate-400" : "text-[var(--accent-ink)]/75",
               ].join(" ")}
               >
                 {item.subLabel}
@@ -293,7 +293,7 @@ function PointVisualPanel({ point }) {
 
 export function SegmentedTabs({ tabs, value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-slate-200/60 p-1 ring-1 ring-inset ring-slate-200/75 shadow-inner">
+    <div className="rounded-[22px] bg-[#ECF5F1]/85 p-1 ring-1 ring-inset ring-[#D8E8DF]/90 shadow-inner">
       <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
         {tabs.map((t) => {
           const active = value === t.key;
@@ -306,7 +306,7 @@ export function SegmentedTabs({ tabs, value, onChange }) {
               className={[
                 "h-[40px] rounded-[18px] text-[13px] font-black tracking-tight transition-all duration-200 inline-flex items-center justify-center gap-1.5",
                 active
-                  ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_-16px_rgba(53,95,82,0.55)]"
+                  ? "bg-[linear-gradient(135deg,#84D6BE_0%,#37A987_100%)] text-white shadow-[0_12px_24px_-16px_rgba(55,169,135,0.48)]"
                   : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
               ].join(" ")}
             >
