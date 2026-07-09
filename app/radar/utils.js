@@ -501,6 +501,19 @@ export function normalizeForecastTriggerFactor(item, index, forecast) {
     trigger_dir: item?.trigger_dir || forecast?.trigger_dir,
   };
   const key = exact || exactFromCompat(compat.main_trigger, compat.trigger_dir);
+  const snapshot = getForecastSnapshot(forecast);
+  const riskSummary = getRiskSummaryFromForecast(forecast);
+  const channelPeaks =
+    forecast?.channel_peaks ||
+    forecast?.channelPeaks ||
+    snapshot?.channel_peaks ||
+    snapshot?.channelPeaks ||
+    riskSummary?.channel_peaks ||
+    riskSummary?.channelPeaks ||
+    null;
+  const peak = channelPeaks?.[key] || null;
+  const peakStart = item?.peakStart ?? item?.peak_start ?? item?.peak?.start ?? peak?.start ?? null;
+  const peakEnd = item?.peakEnd ?? item?.peak_end ?? item?.peak?.end ?? peak?.end ?? null;
 
   return {
     key,
@@ -510,6 +523,15 @@ export function normalizeForecastTriggerFactor(item, index, forecast) {
     trigger_dir: item?.trigger_dir || compat.trigger_dir,
     label: getCompatTriggerLabel(item?.main_trigger || compat.main_trigger, item?.trigger_dir || compat.trigger_dir),
     effective_load: item?.effective_load,
+    effectiveLoad: item?.effectiveLoad ?? item?.effective_load,
+    weather_strength: item?.weather_strength,
+    weatherStrength: item?.weatherStrength ?? item?.weather_strength,
+    affinity_weight: item?.affinity_weight,
+    affinityWeight: item?.affinityWeight ?? item?.affinity_weight,
+    peak_start: peakStart,
+    peak_end: peakEnd,
+    peakStart,
+    peakEnd,
   };
 }
 
