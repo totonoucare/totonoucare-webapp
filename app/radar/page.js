@@ -1188,7 +1188,7 @@ export default function RadarPage() {
                     />
 
                     {backgroundFactors.length > 0 ? (
-                      <div className="mt-4 rounded-[24px] bg-white/86 p-4 ring-1 ring-[#E4ECE4] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.32)]">
+                      <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div className="text-[11px] font-black tracking-[0.14em] text-slate-400">天気ストレスと注意時間</div>
                           <div className="rounded-full bg-[#F8FBF8] px-2.5 py-1 text-[10px] font-black text-slate-400 ring-1 ring-[#E4ECE4]">
@@ -1209,7 +1209,7 @@ export default function RadarPage() {
                             return (
                               <div
                                 key={`${factor.key}-${index}`}
-                                className="grid w-full gap-2 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]"
+                                className="grid w-full gap-2 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
                                 title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${factor.stressPercent}%) / 注意時間 ${factorPeakLabel}` : `${factor.label} ${factor.levelLabel} / 注意時間 ${factorPeakLabel}`}
                               >
                                 <div className="flex items-center justify-between gap-3">
@@ -1233,7 +1233,7 @@ export default function RadarPage() {
                                   ) : null}
                                 </div>
 
-                                <div className="flex items-center justify-between gap-3 rounded-[14px] bg-white/76 px-2.5 py-1.5 ring-1 ring-[#E8EFE8]">
+                                <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[#F8FBF8]/80 px-2.5 py-1.5 ring-1 ring-[#E8EFE8]">
                                   <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-black tracking-[0.08em] text-slate-400">
                                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
                                       <IconBolt className="h-4 w-4" />
