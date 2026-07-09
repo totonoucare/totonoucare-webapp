@@ -401,9 +401,23 @@ function MiniGuideBotMarker({ signal = 0 }) {
   );
 }
 
-function ForecastBar({ forecast }) {
+function ForecastBarMarker({ signal = 0, coreCode = null, coreTitle = "" }) {
+  if (coreCode) {
+    return (
+      <CoreIllust
+        code={coreCode}
+        title={coreTitle || "体質タイプ"}
+        className="h-10 w-10"
+      />
+    );
+  }
+
+  return <MiniGuideBotMarker signal={signal} />;
+}
+
+function ForecastBar({ forecast, coreCode = null, coreTitle = "" }) {
   const signal = forecast?.signal ?? 0;
-  const score = forecast?.score_0_10 ?? 0;
+  const score = forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? 0;
   const percent = scoreToPercent(score);
   const style = modeStyle(signal);
 
@@ -416,7 +430,7 @@ function ForecastBar({ forecast }) {
         className={["absolute top-0 grid h-12 w-12 -translate-x-1/2 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/80", style.glow].join(" ")}
         style={{ left: `${Math.max(7, Math.min(93, percent))}%` }}
       >
-        <MiniGuideBotMarker signal={signal} />
+        <ForecastBarMarker signal={signal} coreCode={coreCode} coreTitle={coreTitle} />
       </div>
       <div className="mt-2 flex justify-between text-[9px] font-black tracking-widest text-slate-400">
         <span>安定</span>
@@ -427,7 +441,7 @@ function ForecastBar({ forecast }) {
   );
 }
 
-function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick }) {
+function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode = null, coreTitle = "" }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white/70 p-4 ring-1 ring-white/70 shadow-sm">
@@ -461,6 +475,8 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick }) {
 
   const forecast = bundle.forecast;
   const signal = forecast.signal ?? 0;
+  const score = forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? 0;
+  const percentLabel = `${Math.round(scoreToPercent(score))}%`;
   const style = modeStyle(signal);
   const factors = getForecastTriggerFactors(forecast);
 
@@ -475,10 +491,15 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick }) {
           <div className="text-[12px] font-black text-slate-900">{label}</div>
           <div className="mt-0.5 text-[10px] font-extrabold text-slate-500">{dateLabel}</div>
         </div>
-        <span className={["rounded-full px-2.5 py-1 text-[10px] font-black shadow-sm ring-1", style.chip].join(" ")}>{signalText(signal)}</span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className={["rounded-full px-2.5 py-1 text-[10px] font-black shadow-sm ring-1", style.chip].join(" ")}>{signalText(signal)}</span>
+          <span className="rounded-full bg-white/68 px-2 py-0.5 text-[10px] font-black text-slate-500 ring-1 ring-white/70">
+            体調ゆらぎ度 {percentLabel}
+          </span>
+        </div>
       </div>
 
-      <ForecastBar forecast={forecast} />
+      <ForecastBar forecast={forecast} coreCode={coreCode} coreTitle={coreTitle} />
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         {factors.map((factor, index) => (
@@ -492,7 +513,7 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick }) {
   );
 }
 
-function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomorrowLoading, onOpenRadar }) {
+function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomorrowLoading, onOpenRadar, coreCode = null, coreTitle = "" }) {
   const todayForecast = todayBundle?.forecast;
   const mainSignal = todayBundle?.ok ? (todayForecast?.signal ?? 0) : 0;
   const style = modeStyle(mainSignal);
@@ -507,7 +528,7 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
           </span>
           <div>
             <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日の体調予報</div>
-            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日の崩れやすさを確認</div>
+            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日のゆらぎを確認</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳細へ</Button>
@@ -520,6 +541,8 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
           bundle={todayBundle}
           loading={todayLoading}
           onClick={onOpenRadar}
+          coreCode={coreCode}
+          coreTitle={coreTitle}
         />
         <ForecastDayStrip
           label="明日"
@@ -527,6 +550,8 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
           bundle={tomorrowBundle}
           loading={tomorrowLoading}
           onClick={onOpenRadar}
+          coreCode={coreCode}
+          coreTitle={coreTitle}
         />
       </div>
     </Module>
@@ -1400,6 +1425,8 @@ export default function HomePage() {
         todayLoading={Boolean(session) && (todayLoading || !todayBundle)}
         tomorrowLoading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
         onOpenRadar={() => router.push("/radar")}
+        coreCode={latestResult?.core_code || null}
+        coreTitle={core?.title || ""}
       />
 
       <MyCareSelectHomeCard
