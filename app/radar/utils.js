@@ -1280,6 +1280,8 @@ export function getForecastBackgroundFactors(triggerFactors) {
       stressPercent: clamp01Number(stressValue) == null ? null : Math.round(clamp01Number(stressValue) * 100),
       levelLabel: getWeatherStressLevelLabel(stressValue, factor?.role),
       levelTone: getWeatherStressLevelTone(stressValue, factor?.role),
+      peakStart: factor?.peak_start ?? factor?.peakStart ?? factor?.peak?.start ?? null,
+      peakEnd: factor?.peak_end ?? factor?.peakEnd ?? factor?.peak?.end ?? null,
     };
   });
 }

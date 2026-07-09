@@ -1190,55 +1190,61 @@ export default function RadarPage() {
                     {backgroundFactors.length > 0 ? (
                       <div className="mt-4 rounded-[24px] bg-white/86 p-4 ring-1 ring-[#E4ECE4] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.32)]">
                         <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="text-[11px] font-black tracking-[0.14em] text-slate-400">天気ストレス</div>
+                          <div className="text-[11px] font-black tracking-[0.14em] text-slate-400">天気ストレスと注意時間</div>
                           <div className="rounded-full bg-[#F8FBF8] px-2.5 py-1 text-[10px] font-black text-slate-400 ring-1 ring-[#E4ECE4]">
                             予報背景
                           </div>
                         </div>
 
                         <div className="grid gap-2">
-                          {backgroundFactors.map((factor, index) => (
-                            <div
-                              key={`${factor.key}-${index}`}
-                              className="flex w-full items-center justify-between gap-3 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]"
-                              title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${factor.stressPercent}%)` : `${factor.label} ${factor.levelLabel}`}
-                            >
-                              <div className="flex min-w-0 flex-1 items-center gap-2">
-                                <WeatherIcon triggerKey={factor.key} className="h-[24px] w-[24px] shrink-0" />
-                                <span className="min-w-0 text-[13px] font-black text-slate-700">{factor.label}</span>
-                              </div>
-                              {factor.levelLabel ? (
-                                <span
-                                  className={[
-                                    "shrink-0 rounded-full px-2 py-1 text-[11px] font-black leading-none ring-1",
-                                    factor.levelTone === "high"
-                                      ? "bg-[#FFF3E8] text-[#B86430] ring-[#F1D5BC]"
-                                      : factor.levelTone === "middle"
-                                        ? "bg-[#FFF8E7] text-[#9A6A16] ring-[#EBD9A8]"
-                                        : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
-                                  ].join(" ")}
-                                >
-                                  {factor.levelLabel}
-                                </span>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
+                          {backgroundFactors.map((factor, index) => {
+                            const factorPeakStart = factor.peakStart || forecast.peak_start;
+                            const factorPeakEnd = factor.peakEnd || forecast.peak_end;
+                            const factorPeakLabel = factorPeakStart && factorPeakEnd
+                              ? `${String(factorPeakStart).slice(0, 5)}–${String(factorPeakEnd).slice(0, 5)}`
+                              : "—";
 
-                        <div className="mt-3 border-t border-[#E4ECE4] pt-3">
-                          <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white/74 px-3 py-2.5 ring-1 ring-[#E4ECE4]">
-                            <div className="flex min-w-0 items-center gap-2 text-[12px] font-black text-slate-600">
-                              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
-                                <IconBolt className="h-4 w-4" />
-                              </span>
-                              <span className="whitespace-nowrap">注意時間</span>
-                            </div>
-                            <div className="shrink-0 rounded-full bg-[#F8FBF8] px-3 py-1 text-[12px] font-black text-slate-700 ring-1 ring-[#E4ECE4]">
-                              {forecast.peak_start && forecast.peak_end
-                                ? `${String(forecast.peak_start).slice(0, 5)}–${String(forecast.peak_end).slice(0, 5)}`
-                                : "—"}
-                            </div>
-                          </div>
+                            return (
+                              <div
+                                key={`${factor.key}-${index}`}
+                                className="grid w-full gap-2 rounded-[18px] bg-[#FBFDFB] px-3 py-2.5 ring-1 ring-[#E4ECE4]"
+                                title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${factor.stressPercent}%) / 注意時間 ${factorPeakLabel}` : `${factor.label} ${factor.levelLabel} / 注意時間 ${factorPeakLabel}`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                                    <WeatherIcon triggerKey={factor.key} className="h-[24px] w-[24px] shrink-0" />
+                                    <span className="min-w-0 text-[13px] font-black text-slate-700">{factor.label}</span>
+                                  </div>
+                                  {factor.levelLabel ? (
+                                    <span
+                                      className={[
+                                        "shrink-0 rounded-full px-2 py-1 text-[11px] font-black leading-none ring-1",
+                                        factor.levelTone === "high"
+                                          ? "bg-[#FFF3E8] text-[#B86430] ring-[#F1D5BC]"
+                                          : factor.levelTone === "middle"
+                                            ? "bg-[#FFF8E7] text-[#9A6A16] ring-[#EBD9A8]"
+                                            : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
+                                      ].join(" ")}
+                                    >
+                                      {factor.levelLabel}
+                                    </span>
+                                  ) : null}
+                                </div>
+
+                                <div className="flex items-center justify-between gap-3 rounded-[14px] bg-white/76 px-2.5 py-1.5 ring-1 ring-[#E8EFE8]">
+                                  <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-black tracking-[0.08em] text-slate-400">
+                                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[var(--accent-ink)] ring-1 ring-black/5 shadow-sm">
+                                      <IconBolt className="h-4 w-4" />
+                                    </span>
+                                    <span className="whitespace-nowrap">注意時間</span>
+                                  </div>
+                                  <span className="shrink-0 rounded-full bg-[#F8FBF8] px-2.5 py-1 text-[11px] font-black text-slate-700 ring-1 ring-[#E4ECE4]">
+                                    {factorPeakLabel}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}

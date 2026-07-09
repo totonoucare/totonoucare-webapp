@@ -257,7 +257,7 @@ export function ForecastGauge({
         }
 
         .radar-core-bubble-shiver {
-          animation: radarCoreBubbleShiver 1s ease-in-out infinite;
+          animation: radarCoreBubbleShiver 1.25s ease-in-out infinite;
         }
 
         @media (prefers-reduced-motion: reduce) {
