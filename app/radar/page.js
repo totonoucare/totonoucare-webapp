@@ -1198,8 +1198,10 @@ export default function RadarPage() {
 
                         <div className="grid gap-2">
                           {backgroundFactors.map((factor, index) => {
-                            const factorPeakStart = factor.peakStart || forecast.peak_start;
-                            const factorPeakEnd = factor.peakEnd || forecast.peak_end;
+                            const factorPeakStart =
+                              factor.peakStart || factor.peak_start || (factor.role === "primary" ? forecast.peak_start : null);
+                            const factorPeakEnd =
+                              factor.peakEnd || factor.peak_end || (factor.role === "primary" ? forecast.peak_end : null);
                             const factorPeakLabel = factorPeakStart && factorPeakEnd
                               ? `${String(factorPeakStart).slice(0, 5)}–${String(factorPeakEnd).slice(0, 5)}`
                               : "—";
