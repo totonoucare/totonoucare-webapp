@@ -357,6 +357,38 @@ function scoreToPercent(score) {
   return Math.max(0, Math.min(100, value * 10));
 }
 
+function useResetAnimatedPercent(target, duration = 900, animationKey = "") {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    let rafId = 0;
+    const safeTarget = Math.max(0, Math.min(100, Number(target) || 0));
+    const start = performance.now();
+
+    setValue(0);
+
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(safeTarget * eased);
+      if (progress < 1) rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [target, duration, animationKey]);
+
+  return value;
+}
+
+function getForecastBarBubbleMotionClass(signal, settled) {
+  if (!settled) return "";
+  const level = Number(signal);
+  if (level === 2) return "home-forecast-bubble-shiver";
+  if (level === 1) return "home-forecast-bubble-sway";
+  return "home-forecast-bubble-float";
+}
+
 function MiniGuideBotMarker({ signal = 0 }) {
   const darkGreen = "#3a5c4b";
   let eyes = (
@@ -415,22 +447,70 @@ function ForecastBarMarker({ signal = 0, coreCode = null, coreTitle = "" }) {
   return <MiniGuideBotMarker signal={signal} />;
 }
 
-function ForecastBar({ forecast, coreCode = null, coreTitle = "" }) {
+function ForecastBar({ forecast, coreCode = null, coreTitle = "", animationKey = "" }) {
   const signal = forecast?.signal ?? 0;
   const score = forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? 0;
   const percent = scoreToPercent(score);
+  const animatedPercent = useResetAnimatedPercent(percent, 950, animationKey);
+  const markerLeft = Math.max(7, Math.min(93, animatedPercent));
   const style = modeStyle(signal);
+  const [settled, setSettled] = useState(false);
+  const motionClass = getForecastBarBubbleMotionClass(signal, settled);
+
+  useEffect(() => {
+    setSettled(false);
+    const timer = window.setTimeout(() => setSettled(true), 980);
+    return () => window.clearTimeout(timer);
+  }, [animationKey, percent, signal]);
 
   return (
     <div className="relative pt-8 pb-2">
+      <style>{`
+        @keyframes homeForecastBubbleFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        @keyframes homeForecastBubbleSway {
+          0%, 100% { transform: rotate(-12deg); }
+          50% { transform: rotate(12deg); }
+        }
+        @keyframes homeForecastBubbleShiver {
+          0%, 62%, 100% { transform: translate(0, 0) rotate(0deg); }
+          66% { transform: translate(-1.2px, 0.4px) rotate(-4deg); }
+          70% { transform: translate(1.2px, -0.4px) rotate(4deg); }
+          74% { transform: translate(-0.8px, -0.4px) rotate(-3deg); }
+          78% { transform: translate(0.8px, 0.4px) rotate(3deg); }
+          82% { transform: translate(0, 0) rotate(0deg); }
+        }
+        .home-forecast-bubble-motion {
+          transform-origin: 50% 68%;
+          will-change: transform;
+        }
+        .home-forecast-bubble-float {
+          animation: homeForecastBubbleFloat 3.4s ease-in-out infinite;
+        }
+        .home-forecast-bubble-sway {
+          animation: homeForecastBubbleSway 2.75s ease-in-out infinite;
+        }
+        .home-forecast-bubble-shiver {
+          animation: homeForecastBubbleShiver 1s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-forecast-bubble-motion {
+            animation: none !important;
+          }
+        }
+      `}</style>
       <div className={["h-3 overflow-hidden rounded-full", style.track].join(" ")}>
-        <div className={["h-full rounded-full transition-all duration-500", style.fill].join(" ")} style={{ width: `${percent}%` }} />
+        <div className={["h-full rounded-full", style.fill].join(" ")} style={{ width: `${animatedPercent}%` }} />
       </div>
       <div
         className={["absolute top-0 grid h-12 w-12 -translate-x-1/2 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/80", style.glow].join(" ")}
-        style={{ left: `${Math.max(7, Math.min(93, percent))}%` }}
+        style={{ left: `${markerLeft}%` }}
       >
-        <ForecastBarMarker signal={signal} coreCode={coreCode} coreTitle={coreTitle} />
+        <div className={["home-forecast-bubble-motion", motionClass].filter(Boolean).join(" ")}>
+          <ForecastBarMarker signal={signal} coreCode={coreCode} coreTitle={coreTitle} />
+        </div>
       </div>
       <div className="mt-2 flex justify-between text-[9px] font-black tracking-widest text-slate-400">
         <span>安定</span>
@@ -499,7 +579,12 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
         </div>
       </div>
 
-      <ForecastBar forecast={forecast} coreCode={coreCode} coreTitle={coreTitle} />
+      <ForecastBar
+        forecast={forecast}
+        coreCode={coreCode}
+        coreTitle={coreTitle}
+        animationKey={`${label}-${dateLabel}-${score}-${signal}-${coreCode || "guide"}`}
+      />
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         {factors.map((factor, index) => (
