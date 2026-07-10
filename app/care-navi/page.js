@@ -24,24 +24,50 @@ import {
 } from "@/components/illust/icons/app";
 
 const CARE_NAVI_THEME = {
-  "--bg": "#F7FAF6",
-  "--bg-soft": "#E3F3EE",
+  "--bg": "#F7FAF8",
+  "--bg-soft": "#EFF8F4",
   "--panel": "#FFFFFF",
-  "--mint": "#DCEFEA",
-  // Buttons and primary actions use the original app accent, not the darker care-navi teal.
+  "--mint": "#EAF7F1",
   "--accent": "#349B83",
-  "--accent-dark": "#2F8F79",
-  "--accent-ink": "#24564C",
-  "--gold": "#e2aa3b",
-  "--gold-soft": "#f6ebc7",
-  "--ring": "rgba(36, 86, 76, 0.13)",
-  "--ring-strong": "rgba(36, 86, 76, 0.22)",
+  "--accent-dark": "#2F816E",
+  "--accent-ink": "#2F816E",
+  "--gold": "#D9A33B",
+  "--gold-soft": "#FFF6DF",
+  "--ring": "rgba(47, 129, 110, 0.13)",
+  "--ring-strong": "rgba(47, 129, 110, 0.22)",
 };
 
 const CATEGORY_OPTIONS = [
-  { key: "live", label: "暮らす", icon: IconLifestyle, lead: "睡眠・入浴・空気・温度湿度まわり" },
-  { key: "eat", label: "食べる", icon: IconFood, lead: "食事・飲み物・栄養の整え方" },
-  { key: "point", label: "ほぐす", icon: IconTsubo, lead: "首肩・腰・手足など、体に直接使うケア" },
+  {
+    key: "live",
+    label: "暮らす",
+    icon: IconLifestyle,
+    lead: "睡眠・入浴・空気・温度湿度まわり",
+    surfaceClass: "bg-[#EFF8F4]",
+    inkClass: "text-[#2F816E]",
+    ringClass: "ring-[#CFE7DE]",
+    railClass: "bg-[#66B9A3]",
+  },
+  {
+    key: "eat",
+    label: "食べる",
+    icon: IconFood,
+    lead: "食事・飲み物・栄養の整え方",
+    surfaceClass: "bg-[#FFF8EC]",
+    inkClass: "text-[#A56C18]",
+    ringClass: "ring-[#EED8B4]",
+    railClass: "bg-[#E2AE45]",
+  },
+  {
+    key: "point",
+    label: "ほぐす",
+    icon: IconTsubo,
+    lead: "首肩・腰・手足など、体に直接使うケア",
+    surfaceClass: "bg-[#F8F4FA]",
+    inkClass: "text-[#7B6588]",
+    ringClass: "ring-[#E2D6E7]",
+    railClass: "bg-[#A78BB3]",
+  },
 ];
 
 const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
@@ -609,13 +635,12 @@ function polishCareReason(reason) {
 
 function CheckOrbitMark() {
   return (
-    <svg viewBox="0 0 160 160" className="absolute -right-5 -top-6 h-40 w-40 opacity-90" aria-hidden="true">
-      <circle cx="82" cy="78" r="46" fill="none" stroke="#B6D8CF" strokeWidth="1.8" />
-      <circle cx="82" cy="78" r="68" fill="none" stroke="#E3F3EE" strokeWidth="1.5" />
-      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#138A73" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
-      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#E0A22A" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
-      <circle cx="122" cy="32" r="5" fill="#E0A22A" opacity="0.48" />
-      <circle cx="45" cy="109" r="4" fill="#138A73" opacity="0.58" />
+    <svg viewBox="0 0 160 160" className="pointer-events-none absolute -right-5 -top-6 h-40 w-40 opacity-80" aria-hidden="true">
+      <circle cx="82" cy="78" r="46" fill="none" stroke="#CFE7DE" strokeWidth="1.8" />
+      <circle cx="82" cy="78" r="68" fill="none" stroke="#E8F2ED" strokeWidth="1.5" />
+      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#66B9A3" strokeWidth="3" strokeLinecap="round" opacity="0.72" />
+      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#A9D6C9" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
+      <circle cx="45" cy="109" r="4" fill="#66B9A3" opacity="0.72" />
     </svg>
   );
 }
@@ -627,10 +652,10 @@ function Chip({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "shrink-0 rounded-full border px-3.5 py-2 text-[12px] font-black transition-all ring-1",
+        "shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition-all ring-1",
         active
-          ? "border-[var(--accent-dark)] bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
-          : "border-[#9CCFC4] bg-white text-[#2E6863] ring-[#B6D8CF] shadow-[0_6px_16px_-14px_rgba(19,80,56,0.45)] hover:border-[var(--accent)] hover:bg-[#EAF6F3] hover:text-[var(--accent-dark)]",
+          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.34)]"
+          : "bg-white text-slate-600 ring-[#DCE8DD] shadow-[0_8px_18px_-16px_rgba(15,23,42,0.34)] hover:bg-[#F4FAF7] hover:text-[#2F816E] hover:ring-[#CFE7DE]",
       ].join(" ")}
     >
       {children}
@@ -641,7 +666,7 @@ function Chip({ active, children, onClick }) {
 function PolicyPill({ policyKey }) {
   const policy = POLICY_META[policyKey] || {};
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-[#9CCFC4] bg-[#EAF6F3] px-3.5 py-2 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] shadow-[0_12px_24px_-18px_rgba(52,155,131,0.24)]">
+    <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-[0_10px_22px_-18px_rgba(47,129,110,0.30)]">
       <img src={getPolicyIconPath(policyKey)} alt="" className="h-6 w-6 shrink-0" loading="lazy" />
       {policy.label || policyKey}
     </span>
@@ -650,7 +675,7 @@ function PolicyPill({ policyKey }) {
 
 function CategoryTabs({ value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-[#DDF1EC] p-1 ring-1 ring-inset ring-[#9CCFC4] shadow-inner">
+    <div className="rounded-[22px] bg-[#EAF7F1] p-1 ring-1 ring-inset ring-[#CFE7DE] shadow-inner">
       <div className="grid grid-cols-3 gap-1">
         {CATEGORY_OPTIONS.map((item) => {
           const Icon = item.icon;
@@ -729,7 +754,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
 
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-white p-4 ring-1 ring-[var(--ring-strong)] shadow-[0_16px_38px_-24px_rgba(15,35,35,0.28)]">
-      <div className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--accent)]/75" />
+      <div className={["absolute inset-y-4 left-0 w-1 rounded-r-full", meta.railClass].join(" ")} />
 
       {isPartner && item.impressionUrl ? (
         <img
@@ -745,7 +770,10 @@ function ResultCard({ item, itemPosition, trackingContext }) {
       <div className="flex gap-3 pl-1">
         <div
           className={[
-            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[linear-gradient(135deg,#F5FBF8_0%,#FFF2CF_100%)] text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] shadow-sm",
+            "grid shrink-0 place-items-center overflow-hidden rounded-[20px] shadow-sm ring-1",
+            meta.surfaceClass,
+            meta.inkClass,
+            meta.ringClass,
             isPartner ? "h-[92px] w-[112px]" : "h-[88px] w-[88px]",
           ].join(" ")}
         >
@@ -836,7 +864,7 @@ function RakutenLoadingCards() {
 
 function PriceBandFilter({ value, onChange, categoryKey }) {
   return (
-    <div className="rounded-[22px] bg-[#EAF6F3] p-3 ring-1 ring-[#9CCFC4]">
+    <div className="rounded-[22px] bg-[#EFF8F4] p-3 ring-1 ring-[#CFE7DE]">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">価格帯</div>
         <div className="text-[10px] font-bold text-slate-400">おすすめ順はそのまま</div>
@@ -855,7 +883,7 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
                 "rounded-[16px] px-2 py-2 text-center transition-all ring-1",
                 active
                   ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
-                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
+                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EFF8F4] hover:text-slate-900",
               ].join(" ")}
             >
               <div className="text-[11px] font-black leading-4">{option.label}</div>
@@ -2074,12 +2102,108 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
   return assembleCareSetCards({ definitions: genericDefinitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 2 });
 }
 
+function QuickExplore({ basis, kitMode, onSelect }) {
+  const options = [
+    {
+      key: "light",
+      eyebrow: "まずは気軽に",
+      title: "軽く試す",
+      lead: "今の体質から、足しやすい候補を3つ。",
+      basis: "base",
+      mode: "starter",
+      Icon: IconCare,
+      surface: "bg-[#EFF8F4]",
+      ink: "text-[#2F816E]",
+      ring: "ring-[#CFE7DE]",
+    },
+    {
+      key: "tomorrow",
+      eyebrow: "先回りしたい",
+      title: "明日に備える",
+      lead: "明日の予報を重ねて、今夜から選ぶ。",
+      basis: "tomorrow",
+      mode: "starter",
+      Icon: IconRadar,
+      surface: "bg-[#FFF8EC]",
+      ink: "text-[#A56C18]",
+      ring: "ring-[#EED8B4]",
+    },
+    {
+      key: "environment",
+      eyebrow: "じっくり見直す",
+      title: "暮らしから整える",
+      lead: "季節と生活環境まで広げて探す。",
+      basis: "season",
+      mode: "environment",
+      Icon: IconLifestyle,
+      surface: "bg-[#F8F4FA]",
+      ink: "text-[#7B6588]",
+      ring: "ring-[#E2D6E7]",
+    },
+  ];
+
+  return (
+    <div>
+      <div className="mb-2 flex items-end justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">どこから見てみる？</div>
+          <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">今の目的に近い入口を選ぶ</div>
+        </div>
+        <div className="shrink-0 text-[10px] font-bold text-slate-400">あとから変更できます</div>
+      </div>
+
+      <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {options.map((option) => {
+          const active = basis === option.basis && kitMode === option.mode;
+          const Icon = option.Icon;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => onSelect({ basis: option.basis, mode: option.mode })}
+              className={[
+                "relative min-w-[196px] overflow-hidden rounded-[22px] p-4 text-left transition-all ring-1",
+                option.surface,
+                option.ring,
+                active
+                  ? "translate-y-[-1px] shadow-[0_16px_32px_-24px_rgba(15,23,42,0.42)]"
+                  : "opacity-90 hover:translate-y-[-1px] hover:opacity-100",
+              ].join(" ")}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className={["grid h-10 w-10 place-items-center rounded-[14px] bg-white shadow-sm ring-1", option.ink, option.ring].join(" ")}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <span className={[
+                  "rounded-full px-2 py-1 text-[9px] font-black ring-1",
+                  active ? "bg-white text-[#2F816E] ring-[#CFE7DE]" : "bg-white/70 text-slate-400 ring-white",
+                ].join(" ")}>
+                  {active ? "選択中" : "見る"}
+                </span>
+              </div>
+              <div className={["mt-3 text-[10px] font-black tracking-widest", option.ink].join(" ")}>{option.eyebrow}</div>
+              <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">{option.title}</div>
+              <div className="mt-1.5 text-[11px] font-bold leading-5 text-slate-600">{option.lead}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SetModeFilter({ value, onChange }) {
   return (
-    <div className="rounded-[22px] bg-[#EAF6F3] p-3 ring-1 ring-[#9CCFC4]">
-      <div className="mb-2 text-[10px] font-black tracking-[0.14em] text-slate-400">セットタイプ</div>
-      <div className="grid gap-1.5 sm:grid-cols-3">
-        {SET_MODE_OPTIONS.map((option) => {
+    <div className="rounded-[24px] bg-[#F4FAF7] p-3.5 ring-1 ring-[#DCE8DD]">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <div>
+          <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">セットの深さ</div>
+          <div className="mt-1 text-[13px] font-black text-slate-900">どこまで広げて見る？</div>
+        </div>
+        <div className="text-[10px] font-bold text-slate-400">3段階</div>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        {SET_MODE_OPTIONS.map((option, index) => {
           const active = value === option.key;
           return (
             <button
@@ -2087,13 +2211,19 @@ function SetModeFilter({ value, onChange }) {
               type="button"
               onClick={() => onChange(option.key)}
               className={[
-                "rounded-[18px] px-3 py-2.5 text-center transition-all ring-1",
+                "rounded-[18px] px-3 py-3 text-left transition-all ring-1",
                 active
-                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
-                  : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_14px_26px_-18px_rgba(52,155,131,0.38)]"
+                  : "bg-white text-slate-700 ring-[#DCE8DD] hover:bg-[#EFF8F4] hover:ring-[#CFE7DE]",
               ].join(" ")}
             >
-              <div className="text-[12px] font-black leading-4">{option.label}</div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-[12px] font-black leading-4">{option.label}</div>
+                <span className={["text-[9px] font-black", active ? "text-white/75" : "text-slate-300"].join(" ")}>0{index + 1}</span>
+              </div>
+              <div className={["mt-1.5 text-[10px] font-bold leading-4", active ? "text-white/85" : "text-slate-500"].join(" ")}>
+                {option.lead}
+              </div>
             </button>
           );
         })}
@@ -2121,7 +2251,7 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
   return (
     <div className="rounded-[20px] bg-white p-3 ring-1 ring-[#D9EAE5]">
       <div className="flex gap-3">
-        <div className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[18px] bg-[linear-gradient(135deg,#F5FBF8_0%,#FFF2CF_100%)] text-[var(--accent-ink)] ring-1 ring-[#B6D8CF]">
+        <div className={["grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[18px] ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
           {item.imageUrl ? (
             <img src={item.imageUrl} alt="" className={isPartner ? "h-full w-full object-contain" : "h-full w-full object-cover"} loading="lazy" />
           ) : (
@@ -2130,7 +2260,7 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1.5">
-            <span className="rounded-full bg-[#EAF6F3] px-2 py-0.5 text-[9px] font-black text-[#28665F] ring-1 ring-[#B6D8CF]">{meta.label}</span>
+            <span className={["rounded-full px-2 py-0.5 text-[9px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>{meta.label}</span>
             <span className="rounded-full bg-[#FFF2CC] px-2 py-0.5 text-[9px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">{roleLabel}</span>
           </div>
           <div className="mt-1 line-clamp-2 text-[13px] font-black leading-5 text-slate-900">{item.title}</div>
@@ -2160,24 +2290,48 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
 }
 
 function CareSetCard({ card, cardPosition, trackingContext }) {
+  const includedCategories = unique(card.items.map((item) => item.category)).slice(0, 3);
+
   return (
-    <div className="relative overflow-hidden rounded-[28px] bg-[#F8FCFA] p-4 ring-1 ring-[#B6D8CF] shadow-[0_18px_44px_-28px_rgba(15,35,35,0.32)]">
-      <div className="absolute right-4 top-4 flex opacity-90">
-        <img src={getPolicyIconPath(card.policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#B6D8CF]" loading="lazy" />
+    <div className="relative overflow-hidden rounded-[28px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-30px_rgba(15,23,42,0.34)]">
+      <div className="absolute right-4 top-4 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-[#66B9A3] text-[11px] font-black text-white shadow-sm ring-1 ring-[#CFE7DE]">
+          {String(cardPosition).padStart(2, "0")}
+        </span>
+        <img src={getPolicyIconPath(card.policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#CFE7DE]" loading="lazy" />
       </div>
-      <div className="pr-20">
-        <div className="text-[11px] font-black tracking-[0.14em] text-[#2F8F79]/70">MYセレクト {cardPosition}</div>
-        <h3 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
-        <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
+
+      <div className="pr-24">
+        <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">MY SELECT</div>
+        <h3 className="mt-1 text-[17px] font-black leading-6 text-slate-900">{card.title}</h3>
+        <p className="mt-1.5 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
       </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
+
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {includedCategories.map((categoryKey) => {
+          const meta = getCategoryMeta(categoryKey);
+          const Icon = meta.icon;
+          return (
+            <span key={categoryKey} className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
+              <Icon className="h-3.5 w-3.5" />
+              {meta.label}
+            </span>
+          );
+        })}
+        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-400 ring-1 ring-[#DCE8DD]">
+          {card.items.length}候補
+        </span>
+      </div>
+
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
         {safeArray(card.tags).map((tag) => (
-          <span key={tag} className="rounded-full border border-[#B6D8CF] bg-white px-2.5 py-1 text-[10px] font-black text-[#4B6B67] ring-1 ring-[#C6E1DA]">
+          <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">
             {POLICY_META[tag]?.label || tag}
           </span>
         ))}
       </div>
-      <div className="mt-3 grid gap-2">
+
+      <div className="mt-3 grid gap-2.5">
         {card.items.map((item, index) => (
           <KitItemRow
             key={`${card.key}-${getSetItemKey(item)}-${index}`}
@@ -2559,29 +2713,34 @@ export default function CareNaviPage() {
     );
   }
 
+  function applyQuickExplore({ basis: nextBasis, mode: nextMode }) {
+    setBasis(nextBasis);
+    setKitMode(nextMode);
+  }
+
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
       title="MYケアセレクト"
-      subtitle="ケア用品・食品・サービス候補"
+      subtitle="今の自分に合うケア候補を見つける"
       headerRight={
         <Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>
           設定
         </Button>
       }
     >
-      <Module className="relative !bg-white p-4 sm:p-5">
+      <Module className="relative overflow-hidden !bg-[#F4FAF7] p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
         <CheckOrbitMark />
 
         <div className="relative z-10">
           <ModuleHeader
             icon={<IconCare className="h-6 w-6" />}
             title="MYケアセレクト"
-            sub="体質・天気・生活サインに合わせて、ケア用品・食品・サービス候補を選ぶ"
+            sub="暮らす・食べる・ほぐすから、今の自分に合いそうな候補を見つける"
           />
 
           <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[26px] bg-[#EAF6F3] p-4 ring-1 ring-[#B6D8CF] shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+          <div className="rounded-[26px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.06),inset_0_-18px_28px_rgba(255,255,255,0.34)]">
             <div className="flex items-start gap-3">
               <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#A7D4CB] shadow-sm">
                 {coreIconPath ? (
@@ -2605,8 +2764,23 @@ export default function CareNaviPage() {
             </div>
           </div>
 
-          <div className="mt-4 space-y-4">
-            <div className="rounded-[22px] bg-white p-3 ring-1 ring-[#B6D8CF]">
+          <div className="mt-5">
+            <QuickExplore basis={basis} kitMode={kitMode} onSelect={applyQuickExplore} />
+          </div>
+
+          <div className="mt-5 rounded-[28px] bg-white/80 p-4 ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">SELECT CONDITIONS</div>
+                <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">候補の出し方を調整する</div>
+              </div>
+              <div className="rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                任意
+              </div>
+            </div>
+
+          <div className="space-y-4">
+            <div className="rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#DCE8DD]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">基準</div>
@@ -2615,7 +2789,7 @@ export default function CareNaviPage() {
                     ここを土台に、必要なときだけ天候・生活・別の不調を重ねます。
                   </div>
                 </div>
-                <div className="shrink-0 rounded-full bg-[#EEF7F5] px-2.5 py-1 text-[10px] font-black text-[#173F3A] ring-1 ring-[#B6D8CF]">
+                <div className="shrink-0 rounded-full bg-[#EEF7F5] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
                   常時反映
                 </div>
               </div>
@@ -2645,7 +2819,7 @@ export default function CareNaviPage() {
                         "rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all",
                         active
                           ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
-                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EAF6F3] hover:text-slate-900",
+                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EFF8F4] hover:text-slate-900",
                       ].join(" ")}
                     >
                       {label}
@@ -2695,10 +2869,10 @@ export default function CareNaviPage() {
               </div>
             </div>
 
-            <div className="rounded-[26px] bg-[#EAF6F3] p-4 ring-1 ring-[#B6D8CF] shadow-[inset_0_2px_8px_rgba(15,35,35,0.05),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+            <div className="rounded-[26px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.06),inset_0_-18px_28px_rgba(255,255,255,0.34)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#173F3A]/65">今回の方針</div>
+                  <div className="text-[11px] font-black tracking-[0.14em] text-[#2F816E]/65">今回の方針</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {policyKeys.map((key) => (
                       <PolicyPill key={key} policyKey={key} />
@@ -2711,7 +2885,7 @@ export default function CareNaviPage() {
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {approachTags.map((tag) => (
-                  <span key={tag} className="rounded-full border border-[#9CCFC4] bg-white px-2.5 py-1 text-[10px] font-black text-[#28665F] ring-1 ring-[#B6D8CF]">
+                  <span key={tag} className="rounded-full border border-[#CFE7DE] bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
                     {tag}
                   </span>
                 ))}
@@ -2720,24 +2894,31 @@ export default function CareNaviPage() {
 
             <SetModeFilter value={kitMode} onChange={setKitMode} />
           </div>
+          </div>
         </div>
       </div>
       </Module>
 
-      <Module className="!bg-white p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_30%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-            <IconCare className="h-5 w-5" />
+      <Module className="!bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#EFF8F4] text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
+              <IconCare className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">YOUR CARE SHELF</div>
+              <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
+              <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">暮らす・食べる・ほぐすを、今の方針に合わせて組み合わせました。</div>
+            </div>
           </div>
-          <div className="min-w-0">
-            <div className="text-[16px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
-            <div className="mt-0.5 text-[11px] font-bold leading-5 text-slate-500">今回の方針から、暮らす・食べる・ほぐすを組み合わせます。</div>
+          <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+            {displaySets.length}セット
           </div>
         </div>
 
         <div className="mt-3 grid gap-3">
           <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
-          <div className="rounded-[18px] bg-[#F5FBF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#B6D8CF]">
+          <div className="rounded-[18px] bg-[#F7FAF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
             このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインをもとに、ケア用品・食品・サービス候補をあなた向けに選んでいます。医療的な治療ではなく、毎日のセルフケア選びとして活用してください。
           </div>
 
@@ -2757,7 +2938,7 @@ export default function CareNaviPage() {
                 <button
                   type="button"
                   onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))}
-                  className="w-full rounded-[18px] bg-[#EAF6F3] px-4 py-3 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[#B6D8CF] hover:bg-[#DDF1EC]"
+                  className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]"
                 >
                   セットをもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）
                 </button>
