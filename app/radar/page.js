@@ -1233,14 +1233,14 @@ export default function RadarPage() {
                                   ) : null}
                                 </div>
 
-                                <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[#F4FAF7] px-2.5 py-1.5 ring-1 ring-[#CFE7DE]">
-                                  <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-black tracking-[0.08em] text-[#2F816E]/75">
-                                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
-                                      <IconBolt className="h-4 w-4" />
+                                <div className="flex items-center justify-between gap-3 rounded-[13px] bg-[#F7FAF8]/55 px-2.5 py-1.5 ring-1 ring-[#EEF3EF]">
+                                  <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-black tracking-[0.08em] text-slate-400">
+                                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/70 text-slate-400 ring-1 ring-[#EEF3EF]">
+                                      <IconBolt className="h-3.5 w-3.5" />
                                     </span>
                                     <span className="whitespace-nowrap">注意時間</span>
                                   </div>
-                                  <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[#1F7D67] ring-1 ring-[#CFE7DE]">
+                                  <span className="shrink-0 rounded-full bg-white/62 px-2.5 py-0.5 text-[11px] font-black text-slate-600 ring-1 ring-[#EEF3EF]">
                                     {factorPeakLabel}
                                   </span>
                                 </div>
