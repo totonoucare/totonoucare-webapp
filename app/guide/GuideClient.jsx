@@ -22,7 +22,7 @@ import {
  * ---------------------------- */
 function SegmentedTabs({ items, active, onChange }) {
   return (
-    <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
+    <div className="flex rounded-[20px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
       {items.map((it) => {
         const isActive = it.key === active;
         return (
@@ -31,10 +31,10 @@ function SegmentedTabs({ items, active, onChange }) {
             type="button"
             onClick={() => onChange(it.key)}
             className={[
-              "flex-1 h-[34px] rounded-full text-[12px] font-black tracking-tight transition-all duration-200",
+              "flex-1 h-[38px] rounded-[16px] text-[12px] font-black tracking-tight transition-all duration-200",
               isActive
-                ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
-                : "text-slate-500 hover:text-slate-800",
+                ? "bg-[#EAF7F1] text-[#1F7D67] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.54)] ring-1 ring-[#66B9A3]"
+                : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
             ].join(" ")}
           >
             {it.label}
@@ -50,26 +50,49 @@ function SegmentedTabs({ items, active, onChange }) {
  * ---------------------------- */
 function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
   const tones = {
-    mint: "text-[var(--accent-ink)] bg-[#EAF5EF]",
-    amber: "text-[#AD7A18] bg-[#FFF9ED]",
-    indigo: "text-indigo-800 bg-indigo-100",
-    violet: "text-violet-800 bg-violet-100",
-    teal: "text-teal-800 bg-teal-100",
+    mint: {
+      shell: "bg-[#F4FAF7] ring-[#D6E9E0]",
+      icon: "bg-white text-[#2F816E] ring-[#CFE7DE]",
+      rail: "bg-[#66B9A3]",
+    },
+    amber: {
+      shell: "bg-[#FFF9EF] ring-[#F0DFC0]",
+      icon: "bg-white text-[#A56C18] ring-[#EED8B4]",
+      rail: "bg-[#E2AE45]",
+    },
+    indigo: {
+      shell: "bg-[#F5F7FB] ring-[#DEE4F0]",
+      icon: "bg-white text-[#5E6F98] ring-[#D7DDEA]",
+      rail: "bg-[#8A9BC3]",
+    },
+    violet: {
+      shell: "bg-[#F8F5FA] ring-[#E7DDEB]",
+      icon: "bg-white text-[#7B6588] ring-[#E2D6E7]",
+      rail: "bg-[#A78BB3]",
+    },
+    teal: {
+      shell: "bg-[#F1F8F6] ring-[#D4E8E2]",
+      icon: "bg-white text-[#347F72] ring-[#CCE4DD]",
+      rail: "bg-[#67AA9A]",
+    },
   };
+  const style = tones[tone] || tones.mint;
 
   return (
     <div
       className={[
-        "rounded-[24px] bg-white ring-1 ring-[var(--ring)] shadow-sm",
+        "relative overflow-hidden rounded-[24px] ring-1 shadow-[inset_0_2px_8px_rgba(15,23,42,0.035),0_14px_30px_-26px_rgba(15,23,42,0.34)]",
+        style.shell,
         compact ? "p-4" : "p-5",
       ].join(" ")}
     >
-      <div className={compact ? "flex items-center gap-2.5" : "flex items-center gap-3"}>
+      <span className={["absolute inset-y-5 left-0 w-1 rounded-r-full", style.rail].join(" ")} />
+      <div className={compact ? "flex items-center gap-2.5 pl-1" : "flex items-center gap-3 pl-1"}>
         <div
           className={[
-            "grid shrink-0 place-items-center ring-1 ring-[var(--ring)] shadow-sm",
+            "grid shrink-0 place-items-center ring-1 shadow-sm",
             compact ? "h-10 w-10 rounded-[13px]" : "h-11 w-11 rounded-[14px]",
-            tones[tone],
+            style.icon,
           ].join(" ")}
         >
           {icon}
@@ -85,7 +108,7 @@ function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
       </div>
       <div
         className={[
-          "font-bold text-slate-700",
+          "pl-1 font-bold text-slate-700",
           compact ? "mt-3 text-[12px] leading-5" : "mt-3.5 text-[13px] leading-6",
         ].join(" ")}
       >
@@ -97,8 +120,13 @@ function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
 
 function MiniNote({ children }) {
   return (
-    <div className="rounded-[20px] bg-[#EAF5EF]/55 p-4 text-[12px] font-extrabold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
-      {children}
+    <div className="rounded-[22px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.07),inset_0_-18px_26px_rgba(255,255,255,0.34)]">
+      <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-black tracking-widest text-[#2F816E] ring-1 ring-[#CFE7DE]">
+        使い方のコツ
+      </div>
+      <div className="text-[12px] font-extrabold leading-6 text-slate-700">
+        {children}
+      </div>
     </div>
   );
 }
@@ -108,7 +136,7 @@ function CheckList({ items }) {
     <div className="mt-3 space-y-2">
       {items.map((item) => (
         <div key={item} className="flex gap-2 text-[12px] font-bold leading-5 text-slate-600">
-          <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+          <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#66B9A3]" />
           <span>{item}</span>
         </div>
       ))}
@@ -130,9 +158,9 @@ function PolicyMeaningList() {
   return (
     <div className="mt-3 grid gap-2">
       {CARE_POLICY_GUIDE_ITEMS.map(([label, meaning]) => (
-        <div key={label} className="rounded-[14px] bg-[#EAF5EF]/55 px-3 py-2 ring-1 ring-[#CFE3DA]/60">
+        <div key={label} className="rounded-[14px] bg-white/80 px-3 py-2 ring-1 ring-[#DCE8DD] shadow-sm">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[12px] font-black text-[#24564C]">{label}</span>
+            <span className="text-[12px] font-black text-[#2F816E]">{label}</span>
             <span className="text-[11px] font-extrabold leading-5 text-slate-600">{meaning}</span>
           </div>
         </div>
@@ -143,8 +171,8 @@ function PolicyMeaningList() {
 
 function FlowItem({ num, title, children }) {
   return (
-    <div className="flex gap-3.5 rounded-[22px] bg-[#EAF5EF]/55 p-4 ring-1 ring-[#CFE3DA]/70">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[13px] font-black text-[#24564C] ring-1 ring-[#CFE3DA]">
+    <div className="flex gap-3.5 rounded-[22px] bg-[#F4FAF7] p-4 ring-1 ring-[#D6E9E0] shadow-[0_14px_28px_-24px_rgba(15,23,42,0.32)]">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[13px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">
         {num}
       </div>
       <div className="min-w-0">
@@ -185,67 +213,62 @@ export default function GuidePage() {
     <AppShell title="使い方ガイド" noTabs={true} headerLeft={headerLeft}>
       {/* ヒーローセクション */}
       <Module className="mb-4 overflow-hidden border-none bg-transparent shadow-none ring-0">
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#DDEFE6] via-[#F4FAF7] to-white px-6 py-7 shadow-[0_18px_45px_rgba(37,95,79,0.12)] ring-1 ring-[#CFE3DA]/70">
-          <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full bg-white/80 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-12 h-48 w-48 rounded-full bg-[#8DC7AD]/25 blur-3xl" />
-          <div className="pointer-events-none absolute bottom-5 right-5 h-20 w-20 rounded-full border border-white/70 bg-white/20" />
+        <div className="relative overflow-hidden rounded-[32px] bg-[#EFF8F4] px-5 py-6 ring-1 ring-[#CFE7DE] shadow-[0_18px_45px_-34px_rgba(47,129,110,0.38)] sm:px-6 sm:py-7">
+          <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full border border-white/75 bg-white/30" />
+          <div className="pointer-events-none absolute right-8 top-10 h-24 w-24 rounded-full border border-[#CFE7DE]/80" />
+          <div className="pointer-events-none absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-[#DDEFE7]/70" />
 
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3.5 py-1.5 shadow-sm ring-1 ring-[#CFE3DA]/70 backdrop-blur-md">
-              <IconSpark className="h-4 w-4 text-[var(--accent)]" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-ink)]">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 shadow-sm ring-1 ring-[#CFE7DE]">
+              <IconSpark className="h-4 w-4 text-[#2F816E]" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#2F816E]">
                 未病レーダーの使い方
               </span>
             </div>
 
             <div className="mt-5 text-[24px] font-black tracking-tight text-slate-900 leading-[1.32]">
               体質と天気から、<br />
-              今日・明日の<span className="text-[var(--accent-ink)]">崩れやすさ</span>を見る。
+              今日・明日の<span className="text-[#2F816E]">体調ゆらぎ</span>を見る。
             </div>
 
-            <div className="mt-3.5 text-[13px] font-bold leading-relaxed text-slate-700/90">
-              トリセツで自分の崩れ方のクセを知り、予報で今日・明日の作戦を確認します。MYケアセレクトでは、そのケアを続けやすくするケア用品・食品・サービス候補を見られます。
+            <div className="mt-3.5 text-[13px] font-bold leading-6 text-slate-700">
+              トリセツで自分の崩れ方のクセを知り、予報で今日・明日の作戦を確認。必要な時だけ、MYケアセレクトで続けやすい候補を見ます。
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
-                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
-                  <IconConstitution className="h-4 w-4" />
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {[
+                { label: "トリセツ", sub: "体質を知る", Icon: IconConstitution },
+                { label: "体調予報", sub: "ゆらぎを見る", Icon: IconRadar },
+                { label: "MYケア", sub: "候補を見る", Icon: IconChecklist },
+              ].map(({ label, sub, Icon }, index) => (
+                <div key={label} className="rounded-[18px] bg-white/80 p-3 ring-1 ring-white shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#F4FAF7] text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <span className="text-[10px] font-black text-[#66B9A3]">0{index + 1}</span>
+                  </div>
+                  <div className="mt-2 text-[11px] font-black text-slate-900">{label}</div>
+                  <div className="mt-0.5 text-[9px] font-bold leading-4 text-slate-500">{sub}</div>
                 </div>
-                <div className="mt-2 text-[11px] font-black text-slate-900">トリセツ</div>
-                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">体質を知る</div>
-              </div>
-              <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
-                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
-                  <IconRadar className="h-4 w-4" />
-                </div>
-                <div className="mt-2 text-[11px] font-black text-slate-900">体調予報</div>
-                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">影響を見る</div>
-              </div>
-              <div className="rounded-[18px] bg-white/80 p-3 shadow-sm ring-1 ring-white/80 backdrop-blur">
-                <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#EAF5EF] text-[#24564C] ring-1 ring-[#CFE3DA]">
-                  <IconChecklist className="h-4 w-4" />
-                </div>
-                <div className="mt-2 text-[11px] font-black text-slate-900">MYケア</div>
-                <div className="mt-0.5 text-[10px] font-bold leading-4 text-slate-500">候補を見る</div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </Module>
 
       {/* タブナビゲーション */}
-      <div className="sticky top-[60px] z-20 bg-app/90 backdrop-blur supports-[backdrop-filter]:bg-app/70 py-2 mb-2">
+      <div className="sticky top-[60px] z-20 -mx-1 mb-2 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
         <SegmentedTabs items={tabs} active={tab} onChange={setTab} />
       </div>
 
       {/* 1. 全体像タブ */}
       {tab === "start" ? (
-        <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
+        <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
             基本の流れ
           </div>
-          <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
+          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
             まずトリセツを作り、予報で今日・明日の作戦を見て、必要ならMYケアセレクトでケア用品・食品・サービス候補を見ます。
           </div>
 
@@ -281,11 +304,11 @@ export default function GuidePage() {
 
       {/* 2. 体質チェック詳細タブ */}
       {tab === "check" ? (
-        <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
+        <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
             体質トリセツで分かること
           </div>
-          <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
+          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
             病名を当てるのではなく、体調が崩れやすい方向を整理するためのトリセツです。
           </div>
 
@@ -318,11 +341,11 @@ export default function GuidePage() {
 
       {/* 3. 体調予報詳細タブ */}
       {tab === "radar" ? (
-        <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
+        <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
             体調予報の見方
           </div>
-          <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
+          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
             予報は「影響の強さ」だけでなく、道具なしでも今日できるケアまで見るページです。
           </div>
 
@@ -389,11 +412,11 @@ export default function GuidePage() {
 
       {/* 4. MYケアセレクト詳細タブ */}
       {tab === "care" ? (
-        <Module className="p-6">
-          <div className="text-[18px] font-black tracking-tight text-slate-900 mb-2">
+        <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
             MYケアセレクトの見方
           </div>
-          <div className="text-[13px] font-bold leading-6 text-slate-600 mb-5">
+          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
             MYケアセレクトは、予報ページのケアを「続けやすくするケア用品・食品・サービス候補」を見るページです。予報の上位互換ではなく、役割が違います。
           </div>
 
