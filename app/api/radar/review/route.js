@@ -6,38 +6,12 @@ import { jstDateString } from "@/lib/dateJST";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const PREMIUM_PRODUCT = "radar_subscription";
-
-function isPremiumActive(entitlement) {
-  if (!entitlement) return false;
-
-  const now = Date.now();
-  const startsAt = entitlement.starts_at ? Date.parse(entitlement.starts_at) : null;
-  const endsAt = entitlement.ends_at ? Date.parse(entitlement.ends_at) : null;
-
-  if (Number.isFinite(startsAt) && startsAt > now) return false;
-  if (Number.isFinite(endsAt) && endsAt < now) return false;
-
-  return entitlement.status === "active";
-}
-
-async function hasRadarPremium(userId) {
-  const { data, error } = await supabaseServer
-    .from("entitlements")
-    .select("status, starts_at, ends_at, created_at")
-    .eq("user_id", userId)
-    .eq("product", PREMIUM_PRODUCT)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-
-  return (data ?? []).some(isPremiumActive);
-}
 
 export const runtime = "nodejs";
 
 function normalizeDate(value) {
-  return value || jstDateString(new Date());
+  const date = value || jstDateString(new Date());
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(date)) ? String(date) : "";
 }
 
 async function findLatestReview(userId, targetDate) {
@@ -71,16 +45,11 @@ export async function GET(req) {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
 
-    const premium = await hasRadarPremium(user.id);
-    if (!premium) {
-      return NextResponse.json(
-        { error: "プレミアム登録が必要です", code: "premium_required" },
-        { status: 402 }
-      );
-    }
-
     const url = new URL(req.url);
     const targetDate = normalizeDate(url.searchParams.get("date"));
+    if (!targetDate) {
+      return NextResponse.json({ error: "date invalid" }, { status: 400 });
+    }
 
     const [review, forecast] = await Promise.all([
       findLatestReview(user.id, targetDate),
@@ -105,23 +74,21 @@ export async function POST(req) {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
 
-    const premium = await hasRadarPremium(user.id);
-    if (!premium) {
-      return NextResponse.json(
-        { error: "プレミアム登録が必要です", code: "premium_required" },
-        { status: 402 }
-      );
-    }
-
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.date);
     const conditionLevel = Number(body?.condition_level);
     const preventLevel = Number(body?.prevent_level);
     const actionTags = Array.isArray(body?.action_tags)
-      ? body.action_tags.filter((x) => typeof x === "string" && x.trim())
+      ? Array.from(new Set(body.action_tags
+          .filter((x) => typeof x === "string" && x.trim())
+          .map((x) => x.trim().slice(0, 64))))
+          .slice(0, 20)
       : [];
-    const note = typeof body?.note === "string" ? body.note.trim() : "";
+    const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : "";
 
+    if (!targetDate) {
+      return NextResponse.json({ error: "date invalid" }, { status: 400 });
+    }
     if (![0, 1, 2].includes(conditionLevel)) {
       return NextResponse.json({ error: "condition_level invalid" }, { status: 400 });
     }
