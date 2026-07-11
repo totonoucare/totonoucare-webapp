@@ -107,7 +107,7 @@ const CARE_DOMAIN_TONES = {
  * ---------------------------- */
 
 
-function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords }) {
+function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorded = false, isToday = false }) {
   return (
     <div className="flex items-stretch gap-2">
       <div className="min-w-0 flex-1">
@@ -119,9 +119,11 @@ function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords }) {
         className="my-1 flex w-[82px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-2 py-2 text-center text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#F4FAF7]"
       >
         <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EAF7F1] text-[12px] ring-1 ring-[#CFE7DE]">
-          ✓
+          {recorded ? "✓" : "✎"}
         </span>
-        <span className="mt-1 text-[10px] font-black leading-4">記録・分析</span>
+        <span className="mt-1 text-[10px] font-black leading-4">
+          {isToday ? (recorded ? "記録済み ✓" : "今日を記録") : "記録・分析"}
+        </span>
       </button>
     </div>
   );
@@ -271,6 +273,7 @@ export default function RadarPage() {
   const [selectedPoint, setSelectedPoint] = useState(null);
   const [tsuboExtraOpen, setTsuboExtraOpen] = useState(false);
   const [foodDetailOpen, setFoodDetailOpen] = useState(false);
+  const [activeDateReview, setActiveDateReview] = useState(null);
 
 
   const requestSeqRef = useRef(0);
@@ -657,6 +660,27 @@ export default function RadarPage() {
   const forecast = bundleMatchesActiveTarget ? bundle?.forecast || null : null;
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
+
+  useEffect(() => {
+    if (!session?.access_token || !activeTargetDate || !selectedIsToday) {
+      setActiveDateReview(null);
+      return undefined;
+    }
+
+    let cancelled = false;
+    authedFetch(`/api/radar/review?date=${encodeURIComponent(activeTargetDate)}`)
+      .then((json) => {
+        if (!cancelled) setActiveDateReview(json?.data?.review || null);
+      })
+      .catch(() => {
+        if (!cancelled) setActiveDateReview(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token, activeTargetDate, selectedIsToday]);
+
   const riskContext = getRiskContext(bundle);
   const savedSymptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomFocus = selectedSymptomKey || savedSymptomFocus || null;
@@ -1011,7 +1035,9 @@ export default function RadarPage() {
           tabs={dateTabs}
           activeDate={activeTargetDate}
           onSelect={selectTargetDate}
-          onOpenRecords={() => router.push("/records")}
+          recorded={Boolean(activeDateReview)}
+          isToday={selectedIsToday}
+          onOpenRecords={() => router.push(`/records?tab=${selectedIsToday ? "record" : "analysis"}`)}
         />
 
         <RadarContentLoadingCards
@@ -1082,7 +1108,9 @@ export default function RadarPage() {
         tabs={dateTabs}
         activeDate={activeTargetDate}
         onSelect={selectTargetDate}
-        onOpenRecords={() => router.push("/records")}
+        recorded={Boolean(activeDateReview)}
+        isToday={selectedIsToday}
+        onOpenRecords={() => router.push(`/records?tab=${selectedIsToday ? "record" : "analysis"}`)}
       />
 
       <div className="rounded-[20px] bg-white px-4 py-3.5 shadow-sm ring-1 ring-[#D3E1D5]">
@@ -1983,5 +2011,4 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
 
