@@ -1,0 +1,184 @@
+"use client";
+
+import { useMemo } from "react";
+import {
+  RECORD_DOMAIN_OPTIONS,
+  buildChartPoints,
+} from "@/lib/records/analysis";
+
+function formatShortDate(value) {
+  const parts = String(value || "").split("-");
+  if (parts.length !== 3) return value || "";
+  return `${Number(parts[1])}/${Number(parts[2])}`;
+}
+
+function buildPath(points, key, xFor, yFor) {
+  const segments = [];
+  let current = [];
+
+  points.forEach((point, index) => {
+    const value = point[key];
+    if (value == null) {
+      if (current.length) segments.push(current);
+      current = [];
+      return;
+    }
+    current.push([xFor(index), yFor(value)]);
+  });
+
+  if (current.length) segments.push(current);
+
+  return segments.map((segment) =>
+    segment
+      .map(([x, y], index) => `${index === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`)
+      .join(" ")
+  );
+}
+
+export default function RecordsTrendChart({
+  rows = [],
+  periodDays = 30,
+  onSelectDate,
+}) {
+  const points = useMemo(() => buildChartPoints(rows, periodDays), [rows, periodDays]);
+
+  const width = 720;
+  const height = 300;
+  const left = 66;
+  const right = 22;
+  const top = 22;
+  const chartBottom = 218;
+  const careY = 254;
+  const innerWidth = width - left - right;
+  const innerHeight = chartBottom - top;
+
+  const xFor = (index) => {
+    if (points.length <= 1) return left + innerWidth / 2;
+    return left + (index / (points.length - 1)) * innerWidth;
+  };
+  const yFor = (value) => top + ((100 - Math.max(0, Math.min(100, Number(value)))) / 100) * innerHeight;
+
+  const forecastPaths = buildPath(points, "forecast", xFor, yFor);
+  const actualPaths = buildPath(points, "actual", xFor, yFor);
+  const labelEvery = Math.max(1, Math.ceil(points.length / 6));
+
+  if (!points.length) {
+    return (
+      <div className="rounded-[24px] bg-[#F7FAF8] p-6 text-center text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
+        この期間の予報や記録はまだありません。
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[#EEF3EF] px-4 py-3 text-[10px] font-black text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-0.5 w-5 rounded-full bg-[#66B9A3]" />
+          予報ゆらぎ度
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-0.5 w-5 rounded-full bg-slate-600" />
+          実際の体調
+        </span>
+        <span className="text-slate-400">下の色点＝行ったケア</span>
+      </div>
+
+      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="min-w-[620px] w-full"
+          role="img"
+          aria-label="予報ゆらぎ度、実際の体調、行ったケアの推移"
+        >
+          {[0, 50, 100].map((value) => {
+            const y = yFor(value);
+            const label = value === 100 ? "つらい" : value === 50 ? "少し" : "よかった";
+            return (
+              <g key={value}>
+                <line x1={left} x2={width - right} y1={y} y2={y} stroke="#E8EFEB" strokeWidth="1" />
+                <text x={left - 10} y={y + 4} textAnchor="end" fontSize="11" fontWeight="800" fill="#94A3B8">
+                  {label}
+                </text>
+              </g>
+            );
+          })}
+
+          {forecastPaths.map((path, index) => (
+            <path
+              key={`forecast-${index}`}
+              d={path}
+              fill="none"
+              stroke="#66B9A3"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.9"
+            />
+          ))}
+
+          {actualPaths.map((path, index) => (
+            <path
+              key={`actual-${index}`}
+              d={path}
+              fill="none"
+              stroke="#475569"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.92"
+            />
+          ))}
+
+          {points.map((point, index) => {
+            const x = xFor(index);
+            const showLabel = index % labelEvery === 0 || index === points.length - 1;
+            return (
+              <g key={`${point.date}-${index}`}>
+                {point.forecast != null ? (
+                  <circle cx={x} cy={yFor(point.forecast)} r="5" fill="#ffffff" stroke="#66B9A3" strokeWidth="3" />
+                ) : null}
+                {point.actual != null ? (
+                  <circle
+                    cx={x}
+                    cy={yFor(point.actual)}
+                    r="6.5"
+                    fill="#ffffff"
+                    stroke="#475569"
+                    strokeWidth="3"
+                    className="cursor-pointer"
+                    onClick={() => onSelectDate?.(point.date)}
+                  />
+                ) : null}
+
+                {point.domains.map((domain, domainIndex) => {
+                  const meta = RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain);
+                  if (!meta) return null;
+                  return (
+                    <circle
+                      key={`${point.date}-${domain}`}
+                      cx={x + (domainIndex - (point.domains.length - 1) / 2) * 11}
+                      cy={careY}
+                      r="4.5"
+                      fill={meta.color}
+                    />
+                  );
+                })}
+
+                {showLabel ? (
+                  <text x={x} y={286} textAnchor="middle" fontSize="10" fontWeight="800" fill="#94A3B8">
+                    {formatShortDate(point.date)}
+                  </text>
+                ) : null}
+              </g>
+            );
+          })}
+
+          <text x={left - 10} y={careY + 4} textAnchor="end" fontSize="10" fontWeight="800" fill="#94A3B8">
+            ケア
+          </text>
+        </svg>
+      </div>
+    </div>
+  );
+}

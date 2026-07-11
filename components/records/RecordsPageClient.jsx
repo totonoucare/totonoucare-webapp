@@ -1,159 +1,343 @@
-// components/records/RecordsPageClient.jsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
+import { supabase } from "@/lib/supabaseClient";
+import { jstDateString } from "@/lib/dateJST";
+import DailyRecordCard from "@/components/records/DailyRecordCard";
+import RecordsCalendar from "@/components/records/RecordsCalendar";
+import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
+import ExpertConsultPreview from "@/components/records/ExpertConsultPreview";
 
-function SegmentedTabs({ tabs, value, onChange }) {
-  return (
-    <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
-      {tabs.map((t) => {
-        const active = value === t.key;
-        return (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => onChange(t.key)}
-            className={[
-              "flex-1 h-[34px] rounded-full text-[13px] font-black tracking-tight transition-all duration-200",
-              active
-                ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
-                : "text-slate-500 hover:text-slate-800",
-            ].join(" ")}
-          >
-            {t.label}
-          </button>
-        );
-      })}
-    </div>
-  );
+const TAB_OPTIONS = [
+  { key: "record", label: "記録カレンダー", short: "記録" },
+  { key: "analysis", label: "AI分析・相談", short: "AI分析" },
+  { key: "expert", label: "専門家相談", short: "専門家" },
+];
+
+function normalizeTab(value) {
+  return TAB_OPTIONS.some((item) => item.key === value) ? value : "record";
 }
 
-function PreviewCalendar() {
-  const cells = Array.from({ length: 28 }, (_, i) => i);
-  return (
-    <div className="rounded-[28px] bg-white p-4 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <div className="h-4 w-28 rounded-full bg-slate-200" />
-        <div className="h-4 w-16 rounded-full bg-slate-100" />
-      </div>
-      <div className="grid grid-cols-7 gap-1.5 blur-[2px]">
-        {cells.map((i) => (
-          <div
-            key={i}
-            className={[
-              "aspect-square rounded-[12px] ring-1 ring-inset ring-slate-200",
-              i % 9 === 0
-                ? "bg-rose-100"
-                : i % 5 === 0
-                  ? "bg-[#FFF9ED]"
-                  : i % 4 === 0
-                    ? "bg-emerald-100"
-                    : "bg-slate-50",
-            ].join(" ")}
-          />
-        ))}
-      </div>
-    </div>
-  );
+function monthRange(month) {
+  const [year, monthNumber] = String(month || "").split("-").map(Number);
+  const last = new Date(year, monthNumber, 0).getDate();
+  return {
+    start: `${year}-${String(monthNumber).padStart(2, "0")}-01`,
+    end: `${year}-${String(monthNumber).padStart(2, "0")}-${String(last).padStart(2, "0")}`,
+  };
 }
 
-function PreviewReport() {
+function RecordsTabs({ value, onChange }) {
   return (
-    <div className="rounded-[28px] bg-white p-5 ring-1 ring-inset ring-[var(--ring)] shadow-sm">
-      <div className="flex items-center gap-2">
-        <div className="grid h-10 w-10 place-items-center rounded-full bg-[#EAF5EF] text-[18px] ring-1 ring-[#CFE3DA]">
-          ✨
-        </div>
-        <div>
-          <div className="h-3 w-24 rounded-full bg-slate-200" />
-          <div className="mt-2 h-2.5 w-36 rounded-full bg-slate-100" />
-        </div>
-      </div>
-      <div className="mt-5 space-y-3 blur-[2px]">
-        <div className="h-16 rounded-[18px] bg-slate-50 ring-1 ring-inset ring-slate-100" />
-        <div className="h-16 rounded-[18px] bg-[#FFF9ED] ring-1 ring-inset ring-[#EAD8A6]" />
-        <div className="h-16 rounded-[18px] bg-[#EAF4F0] ring-1 ring-inset ring-emerald-100" />
+    <div className="sticky top-[66px] z-30 -mx-1 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
+      <div className="grid grid-cols-3 gap-1 rounded-[22px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
+        {TAB_OPTIONS.map((item) => {
+          const active = value === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onChange(item.key)}
+              className={[
+                "min-h-[42px] rounded-[18px] px-2 text-[11px] font-black leading-4 transition-all",
+                active
+                  ? "bg-[#EAF7F1] text-[#1F7D67] ring-1 ring-[#66B9A3] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.54)]"
+                  : "text-slate-500 hover:bg-white/70",
+              ].join(" ")}
+            >
+              <span className="sm:hidden">{item.short}</span>
+              <span className="hidden sm:inline">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export default function RecordsPageClient({ initialTab = "calendar" }) {
+export default function RecordsPageClient({ initialTab = "record" }) {
   const router = useRouter();
-  const [tab, setTab] = useState(initialTab === "report" ? "report" : "calendar");
+  const today = useMemo(() => jstDateString(new Date()), []);
+
+  const [tab, setTab] = useState(normalizeTab(initialTab));
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [month, setMonth] = useState(today.slice(0, 7));
+  const [monthRows, setMonthRows] = useState([]);
+  const [monthLoading, setMonthLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedRow, setSelectedRow] = useState({ date: today, review: null, forecast: null });
+  const [recordSaving, setRecordSaving] = useState(false);
+  const [recentlySavedDate, setRecentlySavedDate] = useState("");
+  const [recordError, setRecordError] = useState("");
+  const [analysisPrompt, setAnalysisPrompt] = useState("");
 
   useEffect(() => {
-    setTab(initialTab === "report" ? "report" : "calendar");
+    setTab(normalizeTab(initialTab));
   }, [initialTab]);
 
+  useEffect(() => {
+    let mounted = true;
+    let subscription = null;
+
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(data?.session || null);
+      setAuthLoading(false);
+    })();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return;
+      setSession(nextSession || null);
+      setAuthLoading(false);
+    });
+    subscription = data?.subscription;
+
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe?.();
+    };
+  }, []);
+
+  const authedFetch = useCallback(async (path, options = {}) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) throw new Error("ログインが必要です");
+
+    const response = await fetch(path, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+      },
+      cache: "no-store",
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(json?.error || "通信に失敗しました");
+    return json?.data ?? json;
+  }, []);
+
+  const loadSelectedDate = useCallback(async (date) => {
+    if (!session?.access_token || !date) return;
+    try {
+      const data = await authedFetch(`/api/radar/review?date=${encodeURIComponent(date)}`);
+      setSelectedRow(data || { date, review: null, forecast: null });
+    } catch (error) {
+      setRecordError(error?.message || "記録を読み込めませんでした");
+    }
+  }, [session?.access_token, authedFetch]);
+
+  useEffect(() => {
+    if (!session?.access_token) return;
+    let cancelled = false;
+    const range = monthRange(month);
+
+    async function load() {
+      setMonthLoading(true);
+      setRecordError("");
+      try {
+        const data = await authedFetch(
+          `/api/records/range?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`
+        );
+        if (cancelled) return;
+        const rows = data?.rows || [];
+        setMonthRows(rows);
+        const selected = rows.find((row) => row.date === selectedDate);
+        if (selected) {
+          setSelectedRow(selected);
+        } else if (selectedDate.startsWith(month)) {
+          setSelectedRow({ date: selectedDate, review: null, forecast: null });
+          loadSelectedDate(selectedDate);
+        }
+      } catch (error) {
+        if (!cancelled) setRecordError(error?.message || "カレンダーを読み込めませんでした");
+      } finally {
+        if (!cancelled) setMonthLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token, month, selectedDate, authedFetch, loadSelectedDate]);
+
   function changeTab(nextTab) {
-    setTab(nextTab);
-    router.replace(`/records?tab=${nextTab}`, { scroll: false });
+    const normalized = normalizeTab(nextTab);
+    setTab(normalized);
+    router.replace(`/records?tab=${normalized}`, { scroll: false });
+  }
+
+  function selectCalendarDate(date, row) {
+    setSelectedDate(date);
+    setSelectedRow(row || { date, review: null, forecast: null });
+    if (!row) loadSelectedDate(date);
+    window?.scrollTo?.({ top: 0, behavior: "smooth" });
+  }
+
+  async function saveRecord(payload) {
+    setRecordSaving(true);
+    setRecordError("");
+    try {
+      const data = await authedFetch("/api/radar/review", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const nextRow = data || {
+        date: payload.date,
+        review: payload,
+        forecast: selectedRow?.forecast || null,
+      };
+      setSelectedRow(nextRow);
+      setRecentlySavedDate(payload.date);
+      setMonthRows((current) => {
+        const without = current.filter((row) => row.date !== payload.date);
+        return [...without, nextRow].sort((a, b) => a.date.localeCompare(b.date));
+      });
+      return nextRow;
+    } catch (error) {
+      setRecordError(error?.message || "記録を保存できませんでした");
+      throw error;
+    } finally {
+      setRecordSaving(false);
+    }
+  }
+
+  function goToAnalysis({ date, classification } = {}) {
+    const prompt = classification?.mismatch
+      ? `${date || "今日"}は予報と実感に差がありました。思い当たる生活状況も含めて、一緒に整理してください。`
+      : `${date || "今日"}の予報・実感・ケアを見比べて、次に試すことを一緒に考えてください。`;
+    setAnalysisPrompt(prompt);
+    changeTab("analysis");
+    window?.scrollTo?.({ top: 0, behavior: "smooth" });
+  }
+
+  function openDateFromAnalysis(date) {
+    if (!date) return;
+    setMonth(date.slice(0, 7));
+    setSelectedDate(date);
+    changeTab("record");
+    loadSelectedDate(date);
+  }
+
+  if (authLoading) {
+    return (
+      <AppShell title="記録・分析" subtitle="読み込み中">
+        <Module className="p-6">
+          <div className="h-48 animate-pulse rounded-[24px] bg-[#F4FAF7]" />
+        </Module>
+      </AppShell>
+    );
+  }
+
+  if (!session) {
+    return (
+      <AppShell
+        title="記録・分析"
+        subtitle="ログインして利用"
+        headerRight={
+          <button
+            type="button"
+            onClick={() => router.push("/radar")}
+            className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD]"
+          >
+            体調予報へ
+          </button>
+        }
+      >
+        <Module className="p-6 text-center">
+          <div className="text-[18px] font-black text-slate-900">記録にはログインが必要です</div>
+          <div className="mt-2 text-[12px] font-bold leading-6 text-slate-500">
+            予報と実際の体調を同じアカウントに保存し、AIと一緒に振り返ります。
+          </div>
+          <Button onClick={() => router.push("/signup")} className="mt-5 w-full">
+            ログイン・無料登録へ
+          </Button>
+        </Module>
+      </AppShell>
+    );
   }
 
   return (
     <AppShell
-      title="記録と振り返り"
-      subtitle="ただいま開発中です"
+      title="記録・分析"
+      subtitle="予報・実感・ケアをつなぐ"
       headerRight={
         <button
+          type="button"
           onClick={() => router.push("/radar")}
-          className="rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] transition-all hover:bg-slate-50 active:scale-95"
+          className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD] shadow-sm"
         >
-          レーダーへ
+          体調予報へ
         </button>
       }
     >
-      <SegmentedTabs
-        tabs={[
-          { key: "calendar", label: "カレンダー" },
-          { key: "report", label: "週次レポート" },
-        ]}
-        value={tab}
-        onChange={changeTab}
-      />
+      <RecordsTabs value={tab} onChange={changeTab} />
 
-      <Module className="relative overflow-hidden p-6 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#EAF5EF] blur-3xl" />
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3D8] px-3 py-1.5 text-[10px] font-black tracking-widest text-[#8A6417] ring-1 ring-[#E9D8A9]">
-            準備中
-          </div>
-          <div className="mt-4 text-[22px] font-black tracking-tight text-slate-900">
-            {tab === "report" ? "週次レポートは鋭意開発中です" : "記録カレンダーは鋭意開発中です"}
-          </div>
-          <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
-            まずは体質トリセツ・体調予報・MYケアセレクトを安定して使えるように整えています。
-          </div>
+      {tab === "record" ? (
+        <div className="space-y-5">
+          <DailyRecordCard
+            date={selectedDate}
+            isToday={selectedDate === today}
+            row={selectedRow}
+            saving={recordSaving}
+            justSaved={recentlySavedDate === selectedDate}
+            onSave={saveRecord}
+            onGoAnalysis={goToAnalysis}
+          />
 
-          <div className="mt-6">
-            {tab === "report" ? <PreviewReport /> : <PreviewCalendar />}
-          </div>
+          {recordError ? (
+            <div className="rounded-[18px] bg-[#FFF0EC] px-4 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+              {recordError}
+            </div>
+          ) : null}
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
-              体調予報へ戻る
-            </Button>
-            <Button variant="secondary" onClick={() => router.push("/guide")} className="w-full bg-white">
-              使い方を見る
-            </Button>
-          </div>
+          <RecordsCalendar
+            month={month}
+            rows={monthRows}
+            today={today}
+            selectedDate={selectedDate}
+            loading={monthLoading}
+            onMonthChange={(nextMonth) => setMonth(nextMonth)}
+            onSelectDate={selectCalendarDate}
+          />
+
+          <button
+            type="button"
+            onClick={() => changeTab("analysis")}
+            className="w-full rounded-[24px] bg-[#349B83] px-5 py-4 text-left text-white shadow-[0_16px_30px_-22px_rgba(52,155,131,0.56)]"
+          >
+            <div className="text-[10px] font-black tracking-[0.14em] text-white/70">NEXT STEP</div>
+            <div className="mt-1 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[15px] font-black">あなたの傾向をグラフで見る</div>
+                <div className="mt-1 text-[11px] font-bold text-white/80">予報・実感・ケアをAIと振り返る</div>
+              </div>
+              <span className="text-[24px]">›</span>
+            </div>
+          </button>
         </div>
-      </Module>
+      ) : null}
 
-      <Module className="p-5 bg-[#FBFCF8] ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="text-[14px] font-black tracking-tight text-slate-900">今使える機能</div>
-        <div className="mt-3 grid gap-2 text-[12px] font-bold leading-6 text-slate-600">
-          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">今日・明日の体調予報</div>
-          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">天気に合わせたツボ・食養生</div>
-          <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-slate-100">体質トリセツ</div>
-        </div>
-      </Module>
+      {tab === "analysis" ? (
+        <AiAnalysisPanel
+          active
+          today={today}
+          userId={session.user?.id || ""}
+          authedFetch={authedFetch}
+          initialPrompt={analysisPrompt}
+          onConsumePrompt={() => setAnalysisPrompt("")}
+          onSelectDate={openDateFromAnalysis}
+        />
+      ) : null}
+
+      {tab === "expert" ? <ExpertConsultPreview /> : null}
     </AppShell>
   );
 }
-
-
