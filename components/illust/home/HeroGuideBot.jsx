@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 export function getGuideBotFace(signal = 0, mood = "") {
   const darkGreen = "#3a5c4b";
   const blushColor = "#d69e9e";
@@ -87,23 +89,28 @@ export function getGuideBotFace(signal = 0, mood = "") {
 
 export function GuideBotSvg({ signal = 0, mood = "", className = "h-full w-full" }) {
   const { eyes, mouth, accessory, blushColor } = getGuideBotFace(Number(signal), mood);
+  const uid = useId().replace(/:/g, "");
+  const headGrad = `guide-head-${uid}`;
+  const bodyGrad = `guide-body-${uid}`;
+  const radarGlow = `guide-radar-${uid}`;
+  const softShadow = `guide-shadow-${uid}`;
 
   return (
     <svg viewBox="0 0 120 120" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={headGrad} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#ffffff" />
           <stop offset="100%" stopColor="#eef7f2" />
         </linearGradient>
-        <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={bodyGrad} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#dcefe6" />
           <stop offset="100%" stopColor="#bfdacb" />
         </linearGradient>
-        <linearGradient id="radarGlow" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={radarGlow} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#e2aa3b" stopOpacity="0.92" />
           <stop offset="100%" stopColor="#efbf56" stopOpacity="0.28" />
         </linearGradient>
-        <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+        <filter id={softShadow} x="-10%" y="-10%" width="120%" height="120%">
           <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#24564C" floodOpacity="0.28" />
         </filter>
       </defs>
@@ -111,20 +118,20 @@ export function GuideBotSvg({ signal = 0, mood = "", className = "h-full w-full"
       <circle cx="60" cy="70" r="40" fill="#ffffff" fillOpacity="0.4" filter="blur(10px)" />
       <path
         d="M34 65 L86 65 C86 90, 80 115, 60 115 C40 115, 34 90, 34 65 Z"
-        fill="url(#bodyGrad)"
+        fill={`url(#${bodyGrad})`}
         stroke="#a1c4b2"
         strokeWidth="1"
-        filter="url(#softShadow)"
+        filter={`url(#${softShadow})`}
       />
 
       <circle cx="60" cy="85" r="12" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.98" />
       <circle cx="60" cy="85" r="6" fill="none" stroke="#ffffff" strokeWidth="1.5" opacity="0.76" />
-      <circle cx="60" cy="85" r="3" fill="url(#radarGlow)" />
+      <circle cx="60" cy="85" r="3" fill={`url(#${radarGlow})`} />
 
       <path d="M60 28 L60 18" stroke="#6eab90" strokeWidth="2.7" strokeLinecap="round" />
       <path d="M60 18 C52 10, 57 4, 65 4 C72 4, 70 14, 60 18 Z" fill="#8fc7aa" />
 
-      <rect x="24" y="28" width="72" height="52" rx="22" fill="url(#headGrad)" filter="url(#softShadow)" stroke="#d9e8df" strokeWidth="1" />
+      <rect x="24" y="28" width="72" height="52" rx="22" fill={`url(#${headGrad})`} filter={`url(#${softShadow})`} stroke="#d9e8df" strokeWidth="1" />
 
       <ellipse cx="36" cy="56" rx="5" ry="3" fill={blushColor} opacity="0.65" />
       <ellipse cx="84" cy="56" rx="5" ry="3" fill={blushColor} opacity="0.65" />
