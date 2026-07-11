@@ -598,7 +598,16 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
   );
 }
 
-function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomorrowLoading, onOpenRadar, coreCode = null, coreTitle = "" }) {
+function ForecastOverviewCard({
+  todayBundle,
+  tomorrowBundle,
+  todayLoading,
+  tomorrowLoading,
+  onOpenRadar,
+  onOpenRecords,
+  coreCode = null,
+  coreTitle = "",
+}) {
   const todayForecast = todayBundle?.forecast;
   const mainSignal = todayBundle?.ok ? (todayForecast?.signal ?? 0) : 0;
   const style = modeStyle(mainSignal);
@@ -639,6 +648,23 @@ function ForecastOverviewCard({ todayBundle, tomorrowBundle, todayLoading, tomor
           coreTitle={coreTitle}
         />
       </div>
+
+      <button
+        type="button"
+        onClick={onOpenRecords}
+        className="relative z-10 mt-4 flex w-full items-center justify-between gap-3 rounded-[20px] bg-[#F4FAF7] px-4 py-3.5 text-left ring-1 ring-[#CFE7DE] transition-all hover:-translate-y-0.5 hover:bg-[#EFF8F4]"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[14px] bg-white text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
+            ✓
+          </span>
+          <div className="min-w-0">
+            <div className="text-[13px] font-black text-slate-900">今日を振り返る</div>
+            <div className="mt-0.5 text-[10px] font-bold text-slate-500">記録・カレンダー・AI分析へ</div>
+          </div>
+        </div>
+        <span className="shrink-0 text-[22px] text-[#66B9A3]">›</span>
+      </button>
     </Module>
   );
 }
@@ -1510,6 +1536,7 @@ export default function HomePage() {
         todayLoading={Boolean(session) && (todayLoading || !todayBundle)}
         tomorrowLoading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
         onOpenRadar={() => router.push("/radar")}
+        onOpenRecords={() => router.push("/records")}
         coreCode={latestResult?.core_code || null}
         coreTitle={core?.title || ""}
       />
