@@ -25,11 +25,14 @@ export async function GET(req) {
       return NextResponse.json({ error: "range must be 1-370 days" }, { status: 400 });
     }
 
-    const bundle = await loadRecordsRange(user.id, start, end);
+    const [bundle, access] = await Promise.all([
+      loadRecordsRange(user.id, start, end),
+      getRecordsAccess(user.id),
+    ]);
     return NextResponse.json({
       data: {
         ...bundle,
-        access: getRecordsAccess(),
+        access,
       },
     });
   } catch (error) {
