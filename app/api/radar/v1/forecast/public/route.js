@@ -7,6 +7,8 @@ import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
 import { decideTargetDateJST, nowJstParts, toJstISODate } from "@/lib/radar_v1/timeJST";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // レート制限のため、東京をデフォルト座標として使う
 const DEFAULT_LAT = 35.68944;
