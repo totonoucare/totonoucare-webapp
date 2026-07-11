@@ -107,6 +107,26 @@ const CARE_DOMAIN_TONES = {
  * ---------------------------- */
 
 
+function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords }) {
+  return (
+    <div className="flex items-stretch gap-2">
+      <div className="min-w-0 flex-1">
+        <ForecastDateRail tabs={tabs} activeDate={activeDate} onSelect={onSelect} />
+      </div>
+      <button
+        type="button"
+        onClick={onOpenRecords}
+        className="my-1 flex w-[82px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-2 py-2 text-center text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#F4FAF7]"
+      >
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EAF7F1] text-[12px] ring-1 ring-[#CFE7DE]">
+          ✓
+        </span>
+        <span className="mt-1 text-[10px] font-black leading-4">記録・分析</span>
+      </button>
+    </div>
+  );
+}
+
 function CareSetNaviBridge({
   eyebrow = "MYケアセレクト",
   title,
@@ -987,10 +1007,11 @@ export default function RadarPage() {
           />
         ) : null}
 
-        <ForecastDateRail
+        <ForecastRecordRail
           tabs={dateTabs}
           activeDate={activeTargetDate}
           onSelect={selectTargetDate}
+          onOpenRecords={() => router.push("/records")}
         />
 
         <RadarContentLoadingCards
@@ -1057,10 +1078,11 @@ export default function RadarPage() {
         />
       ) : null}
 
-      <ForecastDateRail
+      <ForecastRecordRail
         tabs={dateTabs}
         activeDate={activeTargetDate}
         onSelect={selectTargetDate}
+        onOpenRecords={() => router.push("/records")}
       />
 
       <div className="rounded-[20px] bg-white px-4 py-3.5 shadow-sm ring-1 ring-[#D3E1D5]">
