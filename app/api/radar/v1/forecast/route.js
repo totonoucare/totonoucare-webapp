@@ -20,6 +20,8 @@ import {
 } from "@/lib/radar_v1/locationDisplay";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function jsonUtf8(payload, status = 200) {
   return new Response(JSON.stringify(payload, null, 2), {
