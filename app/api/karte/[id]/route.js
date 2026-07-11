@@ -12,7 +12,7 @@ import {
   hashKarteSource,
   isPersonalKarteAiEnabled,
 } from "@/lib/personalKarteAi";
-import { buildKarteMtestPointCards } from "@/lib/karte_plus/mtestPointCards";
+import { buildKartePlusMtestPointCards } from "@/lib/karte_plus/mtestPointCards";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -196,7 +196,7 @@ function attachBodyLineCards(baseKarte, cards = []) {
 async function enrichKarteTools(baseKarte, eventForKarte) {
   try {
     const ctx = buildPersonalKarteContext(eventForKarte);
-    const cards = await buildKarteMtestPointCards({ movement: ctx?.movement || {} });
+    const cards = await buildKartePlusMtestPointCards({ movement: ctx?.movement || {} });
     return attachBodyLineCards(baseKarte, cards);
   } catch (error) {
     console.warn("[api.karte.plusTools] skipped:", error?.message || error);
