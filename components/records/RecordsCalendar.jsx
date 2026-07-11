@@ -90,7 +90,7 @@ export default function RecordsCalendar({
           if (cell.blank) return <div key={cell.key} className="aspect-[0.78]" />;
 
           const row = cell.row;
-          const tone = signalTone(row?.forecast?.signal ?? 0);
+          const tone = signalTone(row?.forecast?.signal);
           const domains = inferCareDomains(row?.review?.action_tags);
           const isToday = cell.date === today;
           const selected = cell.date === selectedDate;
@@ -113,7 +113,9 @@ export default function RecordsCalendar({
                 future ? "cursor-default opacity-35" : "hover:-translate-y-0.5",
               ].join(" ")}
             >
-              <span className={["absolute inset-x-0 top-0 h-1", tone.surface].join(" ")} style={{ backgroundColor: tone.hex }} />
+              {row?.forecast ? (
+                <span className={["absolute inset-x-0 top-0 h-1", tone.surface].join(" ")} style={{ backgroundColor: tone.hex }} />
+              ) : null}
               <div className={["text-[10px] font-black", isToday ? "text-[#2F816E]" : "text-slate-600"].join(" ")}>
                 {cell.day}
               </div>

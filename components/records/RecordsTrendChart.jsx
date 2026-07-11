@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   RECORD_DOMAIN_OPTIONS,
   buildChartPoints,
@@ -41,6 +41,8 @@ export default function RecordsTrendChart({
   onSelectDate,
 }) {
   const points = useMemo(() => buildChartPoints(rows, periodDays), [rows, periodDays]);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const selectedPoint = selectedIndex == null ? null : points[selectedIndex] || null;
 
   const width = 720;
   const height = 300;
@@ -147,7 +149,7 @@ export default function RecordsTrendChart({
                     stroke="#475569"
                     strokeWidth="3"
                     className="cursor-pointer"
-                    onClick={() => onSelectDate?.(point.date)}
+                    onClick={() => setSelectedIndex(index)}
                   />
                 ) : null}
 
@@ -179,6 +181,33 @@ export default function RecordsTrendChart({
           </text>
         </svg>
       </div>
+      {selectedPoint ? (
+        <div className="m-3 mt-0 rounded-[18px] bg-[#F7FAF8] px-4 py-3 ring-1 ring-[#E8F0EB]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-black text-slate-900">
+                {selectedPoint.is_aggregate
+                  ? `${formatShortDate(selectedPoint.date)}〜${formatShortDate(selectedPoint.end_date)}`
+                  : formatShortDate(selectedPoint.date)}
+              </div>
+              <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">
+                {selectedPoint.is_aggregate
+                  ? `週平均・記録${selectedPoint.recorded_count}日（予報${selectedPoint.forecast_count}日）`
+                  : "この日の予報と実感"}
+              </div>
+            </div>
+            {!selectedPoint.is_aggregate ? (
+              <button
+                type="button"
+                onClick={() => onSelectDate?.(selectedPoint.date)}
+                className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]"
+              >
+                この日を見る
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

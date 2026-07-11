@@ -1,26 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import RecordsTrendChart from "@/components/records/RecordsTrendChart";
+import ForecastActualMap from "@/components/records/ForecastActualMap";
 import {
   PERIOD_OPTIONS,
   buildRecordsSummary,
   deterministicAnalysis,
+  domainLabel,
   getPeriodRange,
 } from "@/lib/records/analysis";
 
 function SummaryTile({ value, label, tone = "mint" }) {
-  const toneClass =
-    tone === "amber"
-      ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
-      : tone === "violet"
-        ? "bg-[#F8F4FA] text-[#7B6588] ring-[#E2D6E7]"
-        : tone === "rose"
-          ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]"
-          : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]";
-
+  const toneClass = tone === "amber"
+    ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
+    : tone === "violet"
+      ? "bg-[#F8F4FA] text-[#7B6588] ring-[#E2D6E7]"
+      : tone === "rose"
+        ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]"
+        : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]";
   return (
     <div className={["rounded-[20px] p-3.5 ring-1", toneClass].join(" ")}>
       <div className="text-[21px] font-black tracking-tight">{value}</div>
@@ -47,179 +47,24 @@ function formatRange(start, end) {
   return `${short(start)}〜${short(end)}`;
 }
 
-export default function AiAnalysisPanel({
-  active,
-  today,
-  userId,
-  authedFetch,
-  initialPrompt = "",
-  onConsumePrompt,
-  onSelectDate,
-}) {
-  const [periodKey, setPeriodKey] = useState("30d");
-  const [bundle, setBundle] = useState(null);
-  const [rangeLoading, setRangeLoading] = useState(false);
-  const [analysis, setAnalysis] = useState(null);
-  const [analysisMeta, setAnalysisMeta] = useState(null);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [chatMood, setChatMood] = useState("normal");
-  const [chatSuggestions, setChatSuggestions] = useState([]);
-  const [chatUsage, setChatUsage] = useState(null);
-  const [feedbackByRequest, setFeedbackByRequest] = useState({});
-  const [negativeReasonFor, setNegativeReasonFor] = useState("");
+function formatBetaEnd(value) {
+  if (!value) return "期間限定";
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T23:59:59+09:00` : value);
+  if (Number.isNaN(date.getTime())) return "期間限定";
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日まで`;
+}
 
-  const range = useMemo(() => getPeriodRange(today, periodKey), [today, periodKey]);
-  const summary = useMemo(
-    () => bundle?.summary || buildRecordsSummary(bundle?.rows || []),
-    [bundle]
-  );
-  const fallbackAnalysis = useMemo(() => deterministicAnalysis(summary), [summary]);
-  const displayedAnalysis = analysis || fallbackAnalysis;
+function FeedbackButtons({ requestId, surface, authedFetch, feedbackByRequest, setFeedbackByRequest, negativeReasonFor, setNegativeReasonFor }) {
+  if (!requestId) return null;
 
-  useEffect(() => {
-    if (!userId || typeof window === "undefined") return;
-    const key = `mibyo-records-chat:${userId}`;
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(key) || "[]");
-      if (Array.isArray(stored)) setMessages(stored.slice(-20));
-    } catch {}
-  }, [userId]);
-
-  useEffect(() => {
-    if (!userId || typeof window === "undefined") return;
-    const key = `mibyo-records-chat:${userId}`;
-    try {
-      window.localStorage.setItem(key, JSON.stringify(messages.slice(-20)));
-    } catch {}
-  }, [messages, userId]);
-
-  useEffect(() => {
-    if (!active || !authedFetch) return;
-    let cancelled = false;
-
-    async function load() {
-      setRangeLoading(true);
-      setError("");
-      setAnalysis(null);
-      setAnalysisMeta(null);
-      try {
-        const data = await authedFetch(
-          `/api/records/range?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`
-        );
-        if (!cancelled) setBundle(data);
-      } catch (loadError) {
-        if (!cancelled) setError(loadError?.message || "記録を読み込めませんでした");
-      } finally {
-        if (!cancelled) setRangeLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [active, authedFetch, range.start, range.end]);
-
-  useEffect(() => {
-    if (!active || !bundle || analysisLoading || analysis) return;
-    let cancelled = false;
-
-    async function run() {
-      setAnalysisLoading(true);
-      try {
-        const data = await authedFetch("/api/records/analysis", {
-          method: "POST",
-          body: JSON.stringify({
-            start: range.start,
-            end: range.end,
-            period_key: periodKey,
-          }),
-        });
-        if (!cancelled) {
-          setAnalysis(data.analysis || null);
-          setAnalysisMeta({
-            source: data.source,
-            model: data.model,
-            cached: data.cached,
-          });
-          setChatSuggestions(data.analysis?.suggested_questions || []);
-          setChatMood(data.analysis?.mood || "normal");
-        }
-      } catch (analysisError) {
-        if (!cancelled) setError(analysisError?.message || "AI分析を読み込めませんでした");
-      } finally {
-        if (!cancelled) setAnalysisLoading(false);
-      }
-    }
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [active, bundle, analysis, authedFetch, range.start, range.end, periodKey]);
-
-  useEffect(() => {
-    if (!active || !initialPrompt) return;
-    setInput(initialPrompt);
-    onConsumePrompt?.();
-  }, [active, initialPrompt, onConsumePrompt]);
-
-  async function sendMessage(value = input) {
-    const content = String(value || "").trim();
-    if (!content || sending) return;
-
-    const nextMessages = [...messages, { role: "user", content }];
-    setMessages(nextMessages);
-    setInput("");
-    setSending(true);
-    setError("");
-
-    try {
-      const data = await authedFetch("/api/records/chat", {
-        method: "POST",
-        body: JSON.stringify({
-          start: range.start,
-          end: range.end,
-          analysis: displayedAnalysis,
-          messages: nextMessages,
-        }),
-      });
-
-      setMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          content: data.message || "うまく言葉にできませんでした。",
-          request_id: data.request_id || "",
-        },
-      ]);
-      setChatMood(data.mood || "listening");
-      setChatSuggestions(data.suggested_questions || []);
-      setChatUsage(data.usage || null);
-    } catch (sendError) {
-      setError(sendError?.message || "AIへ送信できませんでした");
-    } finally {
-      setSending(false);
-    }
-  }
-
-
-  async function sendFeedback(requestId, feedback, reason = null) {
-    if (!requestId || feedbackByRequest[requestId]) return;
+  async function send(feedback, reason = null) {
+    if (feedbackByRequest[requestId]) return;
     setFeedbackByRequest((current) => ({ ...current, [requestId]: feedback }));
     setNegativeReasonFor("");
     try {
       await authedFetch("/api/records/feedback", {
         method: "POST",
-        body: JSON.stringify({
-          request_id: requestId,
-          feedback,
-          reason,
-        }),
+        body: JSON.stringify({ request_id: requestId, feedback, reason, surface }),
       });
     } catch {
       setFeedbackByRequest((current) => {
@@ -231,18 +76,356 @@ export default function AiAnalysisPanel({
   }
 
   return (
+    <div className="mt-2">
+      <div className="flex flex-wrap items-center gap-2 px-1 text-[9px] font-black text-slate-400">
+        <span>役に立ちましたか？</span>
+        <button type="button" onClick={() => send(1)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === 1 ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👍 役に立った</button>
+        <button type="button" onClick={() => setNegativeReasonFor(requestId)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === -1 ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👎 ちょっと違った</button>
+      </div>
+      {negativeReasonFor === requestId && !feedbackByRequest[requestId] ? (
+        <div className="mt-2 rounded-[16px] bg-[#FFF8EC] p-2.5 ring-1 ring-[#EED8B4]">
+          <div className="text-[9px] font-black text-[#A56C18]">どこが少し違いましたか？</div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[
+              ["too_general", "一般的すぎた"],
+              ["not_grounded", "記録を反映していない"],
+              ["hard_to_understand", "分かりにくい"],
+              ["felt_unsafe", "内容が不安"],
+              ["other", "その他"],
+            ].map(([reason, label]) => (
+              <button key={reason} type="button" onClick={() => send(-1, reason)} className="rounded-full bg-white px-2.5 py-1.5 text-[9px] font-black text-slate-600 ring-1 ring-[#EED8B4]">{label}</button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) {
+  if (loading) return <div className="h-32 animate-pulse rounded-[24px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" />;
+  if (!access?.ai_enabled) {
+    return (
+      <div className="rounded-[24px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD]">
+        <div className="text-[13px] font-black text-slate-900">AI分析は現在プレビュー表示です</div>
+        <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">グラフと基本集計は利用できます。AI伴走の利用期間または対象プランになると、個別分析と会話が開きます。</div>
+      </div>
+    );
+  }
+  if (consent?.active) {
+    return (
+      <div className="rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
+        AIには氏名・メール・住所を含めず、選択期間の体質要約・予報・記録・ケア・メモ・会話だけを送ります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
+        <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-[24px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
+      <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
+      <div className="mt-1 text-[14px] font-black text-slate-900">記録の一部をAIへ送って分析します</div>
+      <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
+        送信するのは、選択期間の体質要約・予報・体調・ケア・メモ・会話です。氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
+      </div>
+      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、AI分析を使う"}</Button>
+    </div>
+  );
+}
+
+function PatternCards({ summary }) {
+  const weather = (summary?.weather_patterns || []).find((item) => item.days >= 2);
+  const care = (summary?.care_patterns || []).find((item) => item.days >= 2);
+  if (!weather && !care) {
+    return (
+      <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[11px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
+        似た天気や同じケアの記録が2回以上集まると、ここに「繰り返し見えた組み合わせ」を表示します。
+      </div>
+    );
+  }
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {weather ? (
+        <div className="rounded-[22px] bg-[#F4FAF7] p-4 ring-1 ring-[#CFE7DE]">
+          <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/70">似た天気の記録</div>
+          <div className="mt-1 text-[13px] font-black text-slate-900">{weather.trigger_label} × {weather.signal_label}</div>
+          <div className="mt-2 text-[10px] font-bold leading-5 text-slate-500">{weather.days}日のうち、穏やか{weather.good_days}日・つらさあり{weather.difficult_days}日。予報より穏やかだった日は{weather.better_days}日です。</div>
+        </div>
+      ) : null}
+      {care ? (
+        <div className="rounded-[22px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
+          <div className="text-[9px] font-black tracking-[0.14em] text-[#A56C18]/75">同じ条件とケア</div>
+          <div className="mt-1 text-[13px] font-black text-slate-900">{care.trigger_label} × {domainLabel(care.domain)}</div>
+          <div className="mt-2 text-[10px] font-bold leading-5 text-slate-500">{care.days}日のうち、穏やか{care.good_days}日・つらさあり{care.difficult_days}日。効果とは断定せず、次も再現するかを見る材料です。</div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default function AiAnalysisPanel({
+  active,
+  today,
+  authedFetch,
+  initialPrompt = "",
+  onConsumePrompt,
+  onSelectDate,
+  onTrackEvent,
+}) {
+  const [periodKey, setPeriodKey] = useState("30d");
+  const [bundle, setBundle] = useState(null);
+  const [rangeLoading, setRangeLoading] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisMeta, setAnalysisMeta] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [access, setAccess] = useState(null);
+  const [consent, setConsent] = useState(null);
+  const [consentLoading, setConsentLoading] = useState(true);
+  const [consentSaving, setConsentSaving] = useState(false);
+  const [threadId, setThreadId] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [chatMood, setChatMood] = useState("normal");
+  const [chatSuggestions, setChatSuggestions] = useState([]);
+  const [followUp, setFollowUp] = useState(null);
+  const [chatUsage, setChatUsage] = useState(null);
+  const [feedbackByRequest, setFeedbackByRequest] = useState({});
+  const [negativeReasonFor, setNegativeReasonFor] = useState("");
+
+  const range = useMemo(() => getPeriodRange(today, periodKey), [today, periodKey]);
+  const summary = useMemo(() => bundle?.summary || buildRecordsSummary(bundle?.rows || []), [bundle]);
+  const fallbackAnalysis = useMemo(() => deterministicAnalysis(summary), [summary]);
+  const displayedAnalysis = analysis || fallbackAnalysis;
+
+  const loadConsent = useCallback(async () => {
+    setConsentLoading(true);
+    try {
+      const data = await authedFetch("/api/records/consent");
+      setConsent(data?.consent || { active: false });
+      setAccess(data?.access || null);
+    } catch (loadError) {
+      setConsent({ active: false, unavailable: true });
+      setError(loadError?.message || "AI利用の準備状況を確認できませんでした");
+    } finally {
+      setConsentLoading(false);
+    }
+  }, [authedFetch]);
+
+  useEffect(() => {
+    if (!active) return;
+    loadConsent();
+  }, [active, loadConsent]);
+
+  useEffect(() => {
+    if (!active || !authedFetch) return;
+    let cancelled = false;
+    (async () => {
+      setRangeLoading(true);
+      setError("");
+      setAnalysis(null);
+      setAnalysisMeta(null);
+      try {
+        const data = await authedFetch(`/api/records/range?start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`);
+        if (!cancelled) {
+          setBundle(data);
+          if (data?.access) setAccess(data.access);
+        }
+      } catch (loadError) {
+        if (!cancelled) setError(loadError?.message || "記録を読み込めませんでした");
+      } finally {
+        if (!cancelled) setRangeLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [active, authedFetch, range.start, range.end]);
+
+  useEffect(() => {
+    if (!active || !bundle || analysis) return;
+    let cancelled = false;
+    (async () => {
+      setAnalysisLoading(true);
+      try {
+        const data = await authedFetch("/api/records/analysis", {
+          method: "POST",
+          body: JSON.stringify({ start: range.start, end: range.end, period_key: periodKey }),
+        });
+        if (!cancelled) {
+          setAnalysis(data.analysis || null);
+          setAnalysisMeta({
+            source: data.source,
+            model: data.model,
+            cached: data.cached,
+            request_id: data.request_id,
+            consent_required: data.consent_required,
+            reason: data.algorithm_reason,
+          });
+          setChatSuggestions(data.analysis?.suggested_questions || []);
+          setChatMood(data.analysis?.mood || "normal");
+          if (data.usage) setChatUsage(data.usage);
+        }
+      } catch (analysisError) {
+        if (!cancelled) setError(analysisError?.message || "AI分析を読み込めませんでした");
+      } finally {
+        if (!cancelled) setAnalysisLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [active, bundle, analysis, authedFetch, range.start, range.end, periodKey]);
+
+  useEffect(() => {
+    if (!active || !consent?.active || !access?.ai_enabled) {
+      setThreadId("");
+      setMessages([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setThreadLoading(true);
+      try {
+        const data = await authedFetch(`/api/records/threads?period_key=${encodeURIComponent(periodKey)}&start=${encodeURIComponent(range.start)}&end=${encodeURIComponent(range.end)}`);
+        if (!cancelled) {
+          setThreadId(data?.thread?.id || "");
+          setMessages(data?.messages || []);
+          const lastAssistant = [...(data?.messages || [])].reverse().find((item) => item.role === "assistant");
+          setChatMood(lastAssistant?.mood || displayedAnalysis.mood || "normal");
+          setChatSuggestions(lastAssistant?.suggested_questions || displayedAnalysis.suggested_questions || []);
+          setFollowUp(lastAssistant?.follow_up || null);
+        }
+      } catch (threadError) {
+        if (!cancelled) setError(threadError?.message || "AI会話を読み込めませんでした");
+      } finally {
+        if (!cancelled) setThreadLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [active, consent?.active, access?.ai_enabled, authedFetch, periodKey, range.start, range.end]);
+
+  useEffect(() => {
+    if (!active || !initialPrompt) return;
+    setInput(initialPrompt);
+    onConsumePrompt?.();
+  }, [active, initialPrompt, onConsumePrompt]);
+
+  async function acceptConsent() {
+    setConsentSaving(true);
+    setError("");
+    try {
+      const data = await authedFetch("/api/records/consent", { method: "POST", body: JSON.stringify({ consent: true }) });
+      setConsent(data?.consent || { active: true });
+      setAnalysis(null);
+      setAnalysisMeta(null);
+    } catch (consentError) {
+      setError(consentError?.message || "同意を保存できませんでした");
+    } finally {
+      setConsentSaving(false);
+    }
+  }
+
+  async function revokeConsent() {
+    setConsentSaving(true);
+    try {
+      const data = await authedFetch("/api/records/consent", { method: "DELETE", body: JSON.stringify({}) });
+      setConsent(data?.consent || { active: false });
+      setThreadId("");
+      setMessages([]);
+      setAnalysis(null);
+      setAnalysisMeta(null);
+    } catch (consentError) {
+      setError(consentError?.message || "同意を取り消せませんでした");
+    } finally {
+      setConsentSaving(false);
+    }
+  }
+
+  async function sendMessage(value = input) {
+    const content = String(value || "").trim();
+    if (!content || sending || !consent?.active || !access?.ai_enabled) return;
+    const optimistic = { id: `local-${Date.now()}`, role: "user", content };
+    setMessages((current) => [...current, optimistic]);
+    setInput("");
+    setSending(true);
+    setError("");
+    setFollowUp(null);
+    try {
+      const data = await authedFetch("/api/records/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          start: range.start,
+          end: range.end,
+          period_key: periodKey,
+          thread_id: threadId || null,
+          message: content,
+        }),
+      });
+      setThreadId(data.thread_id || threadId);
+      setMessages((current) => [...current, {
+        id: data.message_id || `assistant-${Date.now()}`,
+        role: "assistant",
+        content: data.message || "うまく言葉にできませんでした。",
+        request_id: data.request_id || "",
+        mood: data.mood,
+        suggested_questions: data.suggested_questions || [],
+        follow_up: data.follow_up || null,
+        safety_level: data.safety_level || "routine",
+      }]);
+      setChatMood(data.mood || "listening");
+      setChatSuggestions(data.suggested_questions || []);
+      setFollowUp(data.follow_up || null);
+      setChatUsage(data.usage || null);
+    } catch (sendError) {
+      setError(sendError?.message || "AIへ送信できませんでした");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function clearConversation() {
+    if (!threadId) {
+      setMessages([]);
+      return;
+    }
+    if (!window.confirm("この期間のAI会話を削除しますか？削除後は元に戻せません。")) return;
+    try {
+      await authedFetch("/api/records/threads", { method: "DELETE", body: JSON.stringify({ thread_id: threadId }) });
+      setThreadId("");
+      setMessages([]);
+      setChatSuggestions(displayedAnalysis.suggested_questions || []);
+      setFollowUp(null);
+    } catch (clearError) {
+      setError(clearError?.message || "会話を削除できませんでした");
+    }
+  }
+
+  function choosePeriod(nextKey) {
+    setPeriodKey(nextKey);
+    setAnalysis(null);
+    setAnalysisMeta(null);
+    setThreadId("");
+    setMessages([]);
+    onTrackEvent?.("analysis_period_selected", { period_key: nextKey });
+  }
+
+  const feedbackProps = {
+    authedFetch,
+    feedbackByRequest,
+    setFeedbackByRequest,
+    negativeReasonFor,
+    setNegativeReasonFor,
+  };
+
+  return (
     <div className="space-y-5">
       <div className="rounded-[24px] bg-[#FFF8EC] px-4 py-3.5 ring-1 ring-[#EED8B4]">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI分析 先行体験版</div>
             <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
-              品質向上期間として無料公開中です。分析内容や機能は変更される場合があります。
+              {access?.beta_enabled ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。` : "グラフと基本集計は無料で確認できます。"}
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">
-            FREE BETA
-          </span>
+          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{access?.beta_enabled ? "FREE BETA" : "AI"}</span>
         </div>
       </div>
 
@@ -254,233 +437,104 @@ export default function AiAnalysisPanel({
           </div>
           <div className="text-[10px] font-black text-slate-400">{formatRange(range.start, range.end)}</div>
         </div>
-
         <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {PERIOD_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => setPeriodKey(option.key)}
-              className={[
-                "shrink-0 rounded-full px-4 py-2 text-[11px] font-black ring-1 transition-all",
-                periodKey === option.key
-                  ? "bg-[#349B83] text-white ring-[#349B83]"
-                  : "bg-white text-slate-600 ring-[#DCE8DD] hover:bg-[#F4FAF7]",
-              ].join(" ")}
-            >
-              {option.label}
-            </button>
+            <button key={option.key} type="button" onClick={() => choosePeriod(option.key)} className={["shrink-0 rounded-full px-4 py-2 text-[11px] font-black ring-1 transition-all", periodKey === option.key ? "bg-[#349B83] text-white ring-[#349B83]" : "bg-white text-slate-600 ring-[#DCE8DD] hover:bg-[#F4FAF7]"].join(" ")}>{option.label}</button>
           ))}
         </div>
-
         <div className="mt-2 grid grid-cols-2 gap-2">
           <SummaryTile value={`${summary.recorded_days || 0}日`} label="記録できた日" />
           <SummaryTile value={`${summary.aligned_days || 0}日`} label="予報と実感が近かった" />
           <SummaryTile value={`${summary.better_than_forecast_days || 0}日`} label="予報より穏やかだった" tone="amber" />
           <SummaryTile value={`${summary.worse_than_forecast_days || 0}日`} label="予報よりゆらいだ" tone="rose" />
         </div>
-
         <div className="mt-4">
-          {rangeLoading ? (
-            <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" />
-          ) : (
-            <RecordsTrendChart
-              rows={bundle?.rows || []}
-              periodDays={range.days}
-              onSelectDate={onSelectDate}
-            />
-          )}
+          {rangeLoading ? <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
         </div>
+        <div className="mt-4"><PatternCards summary={summary} /></div>
+        <div className="mt-4"><ForecastActualMap rows={bundle?.rows || []} onSelectDate={onSelectDate} /></div>
+        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">ケアをした日は元々負担が強かった可能性もあります。表示は因果や効果率ではなく、次に比較する条件を見つけるためのものです。</div>
       </section>
 
+      <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
+
       <section className="overflow-hidden rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
-        <div className="flex items-end gap-3 px-4 pt-5">
-          <GuideBotAvatar
-            mood={analysisLoading ? "thinking" : displayedAnalysis.mood}
-            className="h-[86px] w-[86px] shrink-0"
-          />
-          <div className="relative mb-3 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
+        <div className="flex items-end gap-3 px-4 pt-4">
+          <GuideBotAvatar mood={analysisLoading ? "thinking" : displayedAnalysis.mood} className="h-[78px] w-[78px] shrink-0" />
+          <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">AI ANALYSIS</div>
-            <div className="mt-1 text-[14px] font-black leading-6 text-slate-900">
-              {analysisLoading ? "記録を見比べています…" : displayedAnalysis.headline}
-            </div>
+            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">{analysisMeta?.source === "ai" ? "AI ANALYSIS" : "RECORD ANALYSIS"}</div>
+            <div className="mt-1 text-[14px] font-black leading-6 text-slate-900">{analysisLoading ? "記録を見比べています…" : displayedAnalysis.headline}</div>
           </div>
         </div>
-
         <div className="space-y-2.5 px-4 pb-4">
-          <AnalysisBlock label="まず伝えたいこと">
-            {analysisLoading ? "少し待ってください。予報・実感・ケアを順番に確認しています。" : displayedAnalysis.empathy}
-          </AnalysisBlock>
+          <AnalysisBlock label="まず伝えたいこと">{analysisLoading ? "少し待ってください。予報・実感・ケアを順番に確認しています。" : displayedAnalysis.empathy}</AnalysisBlock>
           {!analysisLoading ? (
             <>
               <AnalysisBlock label="記録から確認できること">{displayedAnalysis.observed}</AnalysisBlock>
               <AnalysisBlock label="考えられること">{displayedAnalysis.hypotheses}</AnalysisBlock>
               <AnalysisBlock label="次に試すこと">{displayedAnalysis.next_step}</AnalysisBlock>
-              <div className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-6 text-[#2F816E] ring-1 ring-[#CFE7DE]">
-                {displayedAnalysis.question}
-              </div>
+              {displayedAnalysis.evidence?.length ? <AnalysisBlock label="根拠にした記録">{displayedAnalysis.evidence.map((item) => `・${item}`).join("\n")}</AnalysisBlock> : null}
+              <div className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-6 text-[#2F816E] ring-1 ring-[#CFE7DE]">{displayedAnalysis.question}</div>
             </>
           ) : null}
-
           {analysisMeta?.source ? (
-            <div className="px-1 text-[9px] font-bold text-slate-400">
-              {analysisMeta.source === "ai" ? "AIと集計ロジックによる分析" : "記録数に応じた基本分析"}
-              {analysisMeta.cached ? "・保存済み分析を表示" : ""}
-            </div>
+            <div className="px-1 text-[9px] font-bold text-slate-400">{analysisMeta.source === "ai" ? "AIと集計ロジックによる分析" : "記録数・利用状態に応じた基本分析"}{analysisMeta.cached ? "・保存済み分析を表示" : ""}</div>
           ) : null}
+          {analysisMeta?.source === "ai" && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
         </div>
       </section>
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]">
-            <GuideBotAvatar mood={chatMood} className="h-10 w-10" />
-          </div>
+          <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-10 w-10" /></div>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-black text-slate-900">この期間についてAIに聞く</div>
             <div className="mt-0.5 text-[10px] font-bold text-slate-400">記録と分析を引き継いで話します</div>
           </div>
-          {chatUsage?.available ? (
-            <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[9px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-              今月あと{Math.max(0, chatUsage.limit - chatUsage.used)}回
-            </div>
-          ) : null}
+          {chatUsage?.chat ? <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[9px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
         </div>
 
-        <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
-          {messages.length === 0 ? (
-            <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
-              気になった日や、ケアの種類・タイミングについて聞いてください。分からないことは断定せず、一緒に整理します。
+        {!consent?.active || !access?.ai_enabled ? (
+          <div className="mt-4 rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[11px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">上のAI利用確認を完了すると、選択期間の記録を引き継いだ会話を始められます。</div>
+        ) : (
+          <>
+            <div className="mt-4 max-h-[440px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
+              {threadLoading ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#E8F0EB]">会話を読み込んでいます…</div> : null}
+              {!threadLoading && messages.length === 0 ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">気になった日や、ケアの種類・タイミングについて聞いてください。分からないことは断定せず、一緒に整理します。</div> : null}
+              {messages.map((message, index) => (
+                <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
+                  <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[12px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>{message.content}</div>
+                  {message.role === "assistant" && message.request_id ? <FeedbackButtons requestId={message.request_id} surface="chat" {...feedbackProps} /> : null}
+                </div>
+              ))}
+              {sending ? <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">記録を確認しながら考えています…</div> : null}
             </div>
-          ) : null}
 
-          {messages.map((message, index) => (
-            <div key={`${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
-              <div
-                className={[
-                  "whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[12px] font-bold leading-6 ring-1",
-                  message.role === "user"
-                    ? "bg-[#349B83] text-white ring-[#349B83]"
-                    : "bg-white text-slate-600 ring-[#DCE8DD]",
-                ].join(" ")}
-              >
-                {message.content}
+            {followUp?.kind && followUp.kind !== "none" && followUp.question ? (
+              <div className="mt-3 rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
+                <div className="text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => sendMessage(`当てはまるのは「${option}」です。`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
+                </div>
               </div>
-              {message.role === "assistant" && message.request_id ? (
-                <div className="mt-1.5 flex items-center gap-2 px-1 text-[9px] font-black text-slate-400">
-                  <span>役に立ちましたか？</span>
-                  <button
-                    type="button"
-                    onClick={() => sendFeedback(message.request_id, 1)}
-                    className={[
-                      "rounded-full px-2 py-1 ring-1",
-                      feedbackByRequest[message.request_id] === 1
-                        ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]"
-                        : "bg-white ring-[#E8F0EB]",
-                    ].join(" ")}
-                  >
-                    👍 役に立った
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNegativeReasonFor(message.request_id)}
-                    className={[
-                      "rounded-full px-2 py-1 ring-1",
-                      feedbackByRequest[message.request_id] === -1
-                        ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]"
-                        : "bg-white ring-[#E8F0EB]",
-                    ].join(" ")}
-                  >
-                    👎 ちょっと違った
-                  </button>
-                </div>
-              ) : null}
-              {message.role === "assistant" && negativeReasonFor === message.request_id && !feedbackByRequest[message.request_id] ? (
-                <div className="mt-2 rounded-[16px] bg-[#FFF8EC] p-2.5 ring-1 ring-[#EED8B4]">
-                  <div className="text-[9px] font-black text-[#A56C18]">どこが少し違いましたか？</div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {[
-                      ["too_general", "一般的すぎた"],
-                      ["not_grounded", "記録を反映していない"],
-                      ["hard_to_understand", "分かりにくい"],
-                      ["felt_unsafe", "内容が不安"],
-                      ["other", "その他"],
-                    ].map(([reason, label]) => (
-                      <button
-                        key={reason}
-                        type="button"
-                        onClick={() => sendFeedback(message.request_id, -1, reason)}
-                        className="rounded-full bg-white px-2.5 py-1.5 text-[9px] font-black text-slate-600 ring-1 ring-[#EED8B4]"
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
+            ) : null}
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(chatSuggestions.length ? chatSuggestions : displayedAnalysis.suggested_questions || []).map((question) => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-full bg-[#F4FAF7] px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>)}
             </div>
-          ))}
-
-          {sending ? (
-            <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">
-              記録を確認しながら考えています…
+            <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
+              <textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）予報よりつらかった日を一緒に整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+              <div className="flex items-center justify-between gap-3 px-1 pb-1">
+                <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
+                <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "AIに聞く"}</Button>
+              </div>
             </div>
-          ) : null}
-        </div>
+          </>
+        )}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {(chatSuggestions.length ? chatSuggestions : displayedAnalysis.suggested_questions || []).map((question) => (
-            <button
-              key={question}
-              type="button"
-              onClick={() => setInput(question)}
-              className="rounded-full bg-[#F4FAF7] px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]"
-            >
-              {question}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-          <textarea
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            rows={3}
-            maxLength={1000}
-            placeholder="例）予報よりつらかった日を一緒に整理して"
-            className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none"
-          />
-          <div className="flex items-center justify-between gap-3 px-1 pb-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMessages([]);
-                setChatSuggestions([]);
-              }}
-              className="text-[10px] font-black text-slate-400"
-            >
-              会話をクリア
-            </button>
-            <Button
-              size="sm"
-              disabled={!input.trim() || sending}
-              onClick={() => sendMessage()}
-            >
-              {sending ? "送信中…" : "AIに聞く"}
-            </Button>
-          </div>
-        </div>
-
-        {error ? (
-          <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
-            {error}
-          </div>
-        ) : null}
-
-        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">
-          AIは診断や治療、薬・漢方・サプリの個別判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。
-        </div>
+        {error ? <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
+        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">AIは診断や治療、薬・漢方・サプリの個別判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
       </section>
     </div>
   );

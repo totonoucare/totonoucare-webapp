@@ -6,6 +6,7 @@ import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { jstDateString } from "@/lib/dateJST";
+import { addDaysYmd } from "@/lib/records/analysis";
 import DailyRecordCard from "@/components/records/DailyRecordCard";
 import RecordsCalendar from "@/components/records/RecordsCalendar";
 import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
@@ -61,6 +62,7 @@ function RecordsTabs({ value, onChange }) {
 export default function RecordsPageClient({ initialTab = "record" }) {
   const router = useRouter();
   const today = useMemo(() => jstDateString(new Date()), []);
+  const earliestEditableDate = useMemo(() => addDaysYmd(today, -6), [today]);
 
   const [tab, setTab] = useState(normalizeTab(initialTab));
   const [session, setSession] = useState(null);
@@ -119,9 +121,28 @@ export default function RecordsPageClient({ initialTab = "record" }) {
       cache: "no-store",
     });
     const json = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(json?.error || "通信に失敗しました");
+    if (!response.ok) {
+      const requestError = new Error(json?.error || "通信に失敗しました");
+      requestError.code = json?.code || "request_failed";
+      requestError.status = response.status;
+      throw requestError;
+    }
     return json?.data ?? json;
   }, []);
+
+  const sendEvent = useCallback(async (eventType, metadata = {}) => {
+    try {
+      await authedFetch("/api/records/events", {
+        method: "POST",
+        body: JSON.stringify({ event_type: eventType, metadata }),
+      });
+    } catch {}
+  }, [authedFetch]);
+
+  useEffect(() => {
+    if (!session?.access_token) return;
+    sendEvent("records_page_view", { initial_tab: normalizeTab(initialTab) });
+  }, [session?.access_token, initialTab, sendEvent]);
 
   const loadSelectedDate = useCallback(async (date) => {
     if (!session?.access_token || !date) return;
@@ -172,6 +193,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
     const normalized = normalizeTab(nextTab);
     setTab(normalized);
     router.replace(`/records?tab=${normalized}`, { scroll: false });
+    if (normalized === "analysis") sendEvent("analysis_opened");
   }
 
   function selectCalendarDate(date, row) {
@@ -288,6 +310,8 @@ export default function RecordsPageClient({ initialTab = "record" }) {
             row={selectedRow}
             saving={recordSaving}
             justSaved={recentlySavedDate === selectedDate}
+            editable={selectedDate >= earliestEditableDate && selectedDate <= today}
+            editWindowLabel="今日を含む直近7日"
             onSave={saveRecord}
             onGoAnalysis={goToAnalysis}
           />
@@ -329,15 +353,15 @@ export default function RecordsPageClient({ initialTab = "record" }) {
         <AiAnalysisPanel
           active
           today={today}
-          userId={session.user?.id || ""}
           authedFetch={authedFetch}
           initialPrompt={analysisPrompt}
           onConsumePrompt={() => setAnalysisPrompt("")}
           onSelectDate={openDateFromAnalysis}
+          onTrackEvent={sendEvent}
         />
       ) : null}
 
-      {tab === "expert" ? <ExpertConsultPreview /> : null}
+      {tab === "expert" ? <ExpertConsultPreview authedFetch={authedFetch} /> : null}
     </AppShell>
   );
 }
