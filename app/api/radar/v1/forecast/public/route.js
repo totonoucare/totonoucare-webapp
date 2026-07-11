@@ -209,4 +209,3 @@ function isTomorrowTargetDate(targetDate) {
   return targetDate === tomorrow;
 }
 
-
