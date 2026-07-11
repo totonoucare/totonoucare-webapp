@@ -605,6 +605,7 @@ function ForecastOverviewCard({
   tomorrowLoading,
   onOpenRadar,
   onOpenRecords,
+  todayRecorded = false,
   coreCode = null,
   coreTitle = "",
 }) {
@@ -659,8 +660,8 @@ function ForecastOverviewCard({
             ✓
           </span>
           <div className="min-w-0">
-            <div className="text-[13px] font-black text-slate-900">今日を振り返る</div>
-            <div className="mt-0.5 text-[10px] font-bold text-slate-500">記録・カレンダー・AI分析へ</div>
+            <div className="text-[13px] font-black text-slate-900">{todayRecorded ? "今日の記録と傾向を見る" : "今日を振り返る"}</div>
+            <div className="mt-0.5 text-[10px] font-bold text-slate-500">{todayRecorded ? "記録済み ✓・編集やAI分析へ" : "記録・カレンダー・AI分析へ"}</div>
           </div>
         </div>
         <span className="shrink-0 text-[22px] text-[#66B9A3]">›</span>
@@ -1152,6 +1153,7 @@ export default function HomePage() {
   const [tomorrowLoading, setTomorrowLoading] = useState(false);
   const [todayBundle, setTodayBundle] = useState(null);
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
+  const [todayReview, setTodayReview] = useState(null);
   const [latestResult, setLatestResult] = useState(null);
   const [radarLocation, setRadarLocation] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -1226,6 +1228,7 @@ export default function HomePage() {
       if (!session) {
         setTodayBundle(null);
         setTomorrowBundle(null);
+        setTodayReview(null);
         setLatestResult(null);
         setRadarLocation(null);
         setTodayLoading(false);
@@ -1272,6 +1275,13 @@ export default function HomePage() {
 
       loadFixedForecastCard(today, setTodayBundle, setTodayLoading, "今日");
       loadFixedForecastCard(tomorrow, setTomorrowBundle, setTomorrowLoading, "明日");
+      authedFetch(`/api/radar/review?date=${today}`)
+        .then((response) => {
+          if (!cancelled) setTodayReview(response?.data?.review || null);
+        })
+        .catch(() => {
+          if (!cancelled) setTodayReview(null);
+        });
       try {
         setDashboardLoading(true);
         const historyRes = await authedFetch(`/api/diagnosis/v2/events/list?limit=1`).catch(() => null);
@@ -1537,6 +1547,7 @@ export default function HomePage() {
         tomorrowLoading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
         onOpenRadar={() => router.push("/radar")}
         onOpenRecords={() => router.push("/records")}
+        todayRecorded={Boolean(todayReview)}
         coreCode={latestResult?.core_code || null}
         coreTitle={core?.title || ""}
       />
