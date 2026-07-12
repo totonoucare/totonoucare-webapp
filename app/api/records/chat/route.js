@@ -3,7 +3,12 @@ import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { generateStructured } from "@/lib/openai/server";
 import { getRecordsAccess } from "@/lib/records/access";
-import { buildRecordsSummary, trimRecordForAi } from "@/lib/records/analysis";
+import { buildRecordsSummary } from "@/lib/records/analysis";
+import {
+  RECORDS_AI_PRODUCT_CONTEXT,
+  buildAiRecordContext,
+  buildInterpretedProfileContext,
+} from "@/lib/records/aiContext";
 import {
   buildSafetyIdentifier,
   isValidYmd,
@@ -32,7 +37,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_chat_v3_roles_2026-07-12";
+const PROMPT_VERSION = "records_chat_v4_product_context_patterns_2026-07-12";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
@@ -153,9 +158,10 @@ function summaryForChat(summary) {
     good_days: summary.good_days,
     difficult_days: summary.difficult_days,
     care_days: summary.care_days,
-    aligned_days: summary.aligned_days,
-    better_than_forecast_days: summary.better_than_forecast_days,
-    worse_than_forecast_days: summary.worse_than_forecast_days,
+    stable_good_days: summary.stable_good_days,
+    stable_difficult_days: summary.stable_difficult_days,
+    attention_good_days: summary.attention_good_days,
+    attention_difficult_days: summary.attention_difficult_days,
     care_good_days: summary.care_good_days,
     care_difficult_days: summary.care_difficult_days,
     no_care_difficult_days: summary.no_care_difficult_days,
@@ -164,8 +170,8 @@ function summaryForChat(summary) {
     domain_counts: summary.domain_counts,
     factor_counts: summary.factor_counts,
     top_difficult_triggers: summary.top_difficult_triggers,
-    weather_patterns: summary.weather_patterns,
-    care_patterns: summary.care_patterns,
+    weather_patterns: (summary.weather_patterns || []).map(({ aligned_days, better_days, worse_days, ...pattern }) => pattern),
+    care_patterns: (summary.care_patterns || []).map(({ better_days, worse_days, ...pattern }) => pattern),
   };
 }
 
@@ -244,16 +250,20 @@ export async function POST(req) {
     }
 
     const [bundle, profile, conversation] = await Promise.all([
-      loadRecordsRange(user.id, start, end),
+      loadRecordsRange(user.id, start, end, { includeCarePlans: true }),
       loadRecordsProfile(user.id),
       loadConversation(thread.id, user.id),
     ]);
     const summary = buildRecordsSummary(bundle.rows);
     const context = {
+      product_context: RECORDS_AI_PRODUCT_CONTEXT,
       selected_period: { key: periodKey, start, end },
-      constitution: profile,
+      constitution: buildInterpretedProfileContext(profile),
       facts: summaryForChat(summary),
-      records: summary.rows.filter((row) => row.review).slice(-90).map(trimRecordForAi),
+      records: summary.rows
+        .filter((row) => row.review)
+        .slice(-90)
+        .map((row) => buildAiRecordContext(row, profile)),
       conversation,
       latest_user_request: message,
     };
