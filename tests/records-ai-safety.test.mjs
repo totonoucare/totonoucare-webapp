@@ -34,6 +34,61 @@ test("chat output is restricted to known moods, safety levels, and follow-up kin
   assert.equal(result.suggested_questions.length, 3);
 });
 
+test("chat output never mixes AI follow-up questions with user suggestion pills", () => {
+  const result = prompts.cleanChatOutput({
+    message: "少し確認させてください。",
+    mood: "listening",
+    suggested_questions: ["これはAIからユーザーへの質問ですか？"],
+    follow_up: {
+      kind: "care_timing",
+      question: "ケアをしたのはいつですか？",
+      options: ["注意時間の前", "つらくなってから"],
+      date: "2026-07-10",
+    },
+    safety_level: "routine",
+    safety_message: "",
+  });
+
+  assert.deepEqual(result.suggested_questions, []);
+  assert.equal(result.follow_up.kind, "care_timing");
+});
+
+test("period analysis is capped to the concise UI contract", () => {
+  const fallback = {
+    mood: "normal",
+    headline: "fallback",
+    empathy: "fallback",
+    observed: "fallback",
+    hypotheses: "fallback",
+    next_step: "fallback",
+    question: "fallback",
+    suggested_questions: ["fallback"],
+  };
+  const long = "あ".repeat(300);
+  const result = prompts.cleanAnalysis({
+    mood: "thinking",
+    headline: long,
+    empathy: long,
+    observed: long,
+    hypotheses: long,
+    next_step: long,
+    question: long,
+    suggested_questions: [long, long, long, long],
+    evidence: [long, long, long],
+  }, fallback);
+
+  assert.equal(result.headline.length, 34);
+  assert.equal(result.empathy.length, 60);
+  assert.equal(result.observed.length, 120);
+  assert.equal(result.hypotheses.length, 110);
+  assert.equal(result.next_step.length, 90);
+  assert.equal(result.question.length, 70);
+  assert.equal(result.suggested_questions.length, 3);
+  assert.ok(result.suggested_questions.every((item) => item.length <= 60));
+  assert.equal(result.evidence.length, 2);
+  assert.ok(result.evidence.every((item) => item.length <= 55));
+});
+
 test("structured schemas require medical-safety fields", () => {
   assert.ok(prompts.CHAT_SCHEMA.required.includes("safety_level"));
   assert.ok(prompts.CHAT_SCHEMA.required.includes("safety_message"));
@@ -46,4 +101,10 @@ test("AI instructions explicitly separate facts, hypotheses, and prohibited deci
   assert.match(prompts.ANALYSIS_INSTRUCTIONS, /仮説/);
   assert.match(prompts.CHAT_INSTRUCTIONS, /診断/);
   assert.match(prompts.CHAT_INSTRUCTIONS, /薬、漢方、サプリ/);
+});
+
+test("AI prompts keep AI questions separate from user-to-AI suggestion pills", () => {
+  assert.match(prompts.ANALYSIS_INSTRUCTIONS, /ユーザーがAIへ聞くための質問文/);
+  assert.match(prompts.CHAT_INSTRUCTIONS, /AIからユーザーへの質問は必ずfollow_up\.question/);
+  assert.match(prompts.CHAT_INSTRUCTIONS, /follow_upが必要な返答では空配列/);
 });
