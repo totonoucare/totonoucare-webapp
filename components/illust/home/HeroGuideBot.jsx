@@ -25,8 +25,6 @@ export function getGuideBotFace(signal = 0, mood = "") {
       <>
         <circle cx="44" cy="51" r="4.2" fill={darkGreen} />
         <circle cx="76" cy="51" r="4.2" fill={darkGreen} />
-        <path d="M39 43 Q44 40 49 43" fill="none" stroke={darkGreen} strokeWidth="1.7" strokeLinecap="round" opacity="0.72" />
-        <path d="M71 43 Q76 40 81 43" fill="none" stroke={darkGreen} strokeWidth="1.7" strokeLinecap="round" opacity="0.72" />
       </>
     );
     mouth = <path d="M55 59 Q60 61 65 59" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
