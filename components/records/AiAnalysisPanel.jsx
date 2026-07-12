@@ -29,12 +29,17 @@ function SummaryTile({ value, label, tone = "mint" }) {
   );
 }
 
-function AnalysisBlock({ label, children }) {
-  if (!children) return null;
+function CompactAnalysisSummary({ analysis }) {
   return (
-    <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#E8F0EB]">
-      <div className="text-[9px] font-black tracking-[0.14em] text-slate-400">{label}</div>
-      <div className="mt-1.5 whitespace-pre-wrap text-[12px] font-bold leading-6 text-slate-600">{children}</div>
+    <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
+      <div className="text-[9px] font-black tracking-[0.14em] text-slate-400">この期間の要点</div>
+      <div className="mt-1.5 text-[12px] font-bold leading-6 text-slate-700">{analysis.empathy}</div>
+      <div className="mt-1 text-[12px] font-bold leading-6 text-slate-600">{analysis.observed}</div>
+      {analysis.hypotheses ? (
+        <div className="mt-2 border-t border-[#EEF3EF] pt-2 text-[11px] font-bold leading-5 text-slate-500">
+          <span className="font-black text-[#7B6588]">考えられること：</span>{analysis.hypotheses}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -198,6 +203,9 @@ export default function AiAnalysisPanel({
   const summary = useMemo(() => bundle?.summary || buildRecordsSummary(bundle?.rows || []), [bundle]);
   const fallbackAnalysis = useMemo(() => deterministicAnalysis(summary), [summary]);
   const displayedAnalysis = analysis || fallbackAnalysis;
+  const hasPendingFollowUp = Boolean(
+    followUp?.kind && followUp.kind !== "none" && followUp.question
+  );
 
   const loadConsent = useCallback(async () => {
     setConsentLoading(true);
@@ -290,8 +298,13 @@ export default function AiAnalysisPanel({
           setMessages(data?.messages || []);
           const lastAssistant = [...(data?.messages || [])].reverse().find((item) => item.role === "assistant");
           setChatMood(lastAssistant?.mood || displayedAnalysis.mood || "normal");
-          setChatSuggestions(lastAssistant?.suggested_questions || displayedAnalysis.suggested_questions || []);
-          setFollowUp(lastAssistant?.follow_up || null);
+          const nextFollowUp = lastAssistant?.follow_up || null;
+          setFollowUp(nextFollowUp);
+          setChatSuggestions(
+            nextFollowUp?.kind && nextFollowUp.kind !== "none"
+              ? []
+              : displayedAnalysis.suggested_questions || []
+          );
         }
       } catch (threadError) {
         if (!cancelled) setError(threadError?.message || "AI会話を読み込めませんでした");
@@ -370,9 +383,14 @@ export default function AiAnalysisPanel({
         follow_up: data.follow_up || null,
         safety_level: data.safety_level || "routine",
       }]);
+      const nextFollowUp = data.follow_up || null;
       setChatMood(data.mood || "listening");
-      setChatSuggestions(data.suggested_questions || []);
-      setFollowUp(data.follow_up || null);
+      setFollowUp(nextFollowUp);
+      setChatSuggestions(
+        nextFollowUp?.kind && nextFollowUp.kind !== "none"
+          ? []
+          : data.suggested_questions || []
+      );
       setChatUsage(data.usage || null);
     } catch (sendError) {
       setError(sendError?.message || "AIへ送信できませんでした");
@@ -468,16 +486,28 @@ export default function AiAnalysisPanel({
           </div>
         </div>
         <div className="space-y-2.5 px-4 pb-4">
-          <AnalysisBlock label="まず伝えたいこと">{analysisLoading ? "少し待ってください。予報・実感・ケアを順番に確認しています。" : displayedAnalysis.empathy}</AnalysisBlock>
-          {!analysisLoading ? (
+          {analysisLoading ? (
+            <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
+              少し待ってください。予報・実感・ケアを順番に確認しています。
+            </div>
+          ) : (
             <>
-              <AnalysisBlock label="記録から確認できること">{displayedAnalysis.observed}</AnalysisBlock>
-              <AnalysisBlock label="考えられること">{displayedAnalysis.hypotheses}</AnalysisBlock>
-              <AnalysisBlock label="次に試すこと">{displayedAnalysis.next_step}</AnalysisBlock>
-              {displayedAnalysis.evidence?.length ? <AnalysisBlock label="根拠にした記録">{displayedAnalysis.evidence.map((item) => `・${item}`).join("\n")}</AnalysisBlock> : null}
+              <CompactAnalysisSummary analysis={displayedAnalysis} />
+              <div className="rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
+                <div className="text-[9px] font-black tracking-[0.14em] text-[#A56C18]/75">次に一つだけ</div>
+                <div className="mt-1 text-[12px] font-black leading-6 text-slate-700">{displayedAnalysis.next_step}</div>
+              </div>
               <div className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-6 text-[#2F816E] ring-1 ring-[#CFE7DE]">{displayedAnalysis.question}</div>
+              {displayedAnalysis.evidence?.length ? (
+                <details className="rounded-[16px] bg-white/65 px-3.5 py-2.5 text-[10px] font-bold text-slate-500 ring-1 ring-[#E8F0EB]">
+                  <summary className="cursor-pointer font-black text-slate-500">根拠を確認</summary>
+                  <div className="mt-2 space-y-1 leading-5">
+                    {displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}
+                  </div>
+                </details>
+              ) : null}
             </>
-          ) : null}
+          )}
           {analysisMeta?.source ? (
             <div className="px-1 text-[9px] font-bold text-slate-400">{analysisMeta.source === "ai" ? "AIと集計ロジックによる分析" : "記録数・利用状態に応じた基本分析"}{analysisMeta.cached ? "・保存済み分析を表示" : ""}</div>
           ) : null}
@@ -511,18 +541,28 @@ export default function AiAnalysisPanel({
               {sending ? <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">記録を確認しながら考えています…</div> : null}
             </div>
 
-            {followUp?.kind && followUp.kind !== "none" && followUp.question ? (
+            {hasPendingFollowUp ? (
               <div className="mt-3 rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                <div className="text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
+                <div className="text-[9px] font-black tracking-[0.12em] text-[#A56C18]/75">AIからの確認</div>
+                <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
+                <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">選ぶと、この確認への回答として送信されます。</div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => sendMessage(`当てはまるのは「${option}」です。`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
+                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => sendMessage(`AIからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
                 </div>
               </div>
             ) : null}
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {(chatSuggestions.length ? chatSuggestions : displayedAnalysis.suggested_questions || []).map((question) => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-full bg-[#F4FAF7] px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>)}
-            </div>
+            {!hasPendingFollowUp && !sending ? (
+              <div className="mt-3">
+                <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
+                  <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">AIに聞く候補</span>
+                  <span className="text-[9px] font-bold text-slate-400">タップすると入力欄に入ります。送信前に編集できます。</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(chatSuggestions.length ? chatSuggestions : displayedAnalysis.suggested_questions || []).map((question) => <button key={question} type="button" onClick={() => setInput(question)} className="rounded-full bg-[#F4FAF7] px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>)}
+                </div>
+              </div>
+            ) : null}
             <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
               <textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）予報よりつらかった日を一緒に整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
               <div className="flex items-center justify-between gap-3 px-1 pb-1">

@@ -44,9 +44,10 @@ export default function RecordsTrendChart({
   const [selectedIndex, setSelectedIndex] = useState(null);
   const selectedPoint = selectedIndex == null ? null : points[selectedIndex] || null;
 
-  const width = 720;
+  const axisWidth = 66;
+  const width = 654;
   const height = 300;
-  const left = 66;
+  const left = 22;
   const right = 22;
   const top = 22;
   const chartBottom = 218;
@@ -86,25 +87,41 @@ export default function RecordsTrendChart({
         <span className="text-slate-400">下の色点＝行ったケア</span>
       </div>
 
-      <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <svg
-          viewBox={`0 0 ${width} ${height}`}
-          className="min-w-[620px] w-full"
-          role="img"
-          aria-label="予報ゆらぎ度、実際の体調、行ったケアの推移"
+      <div className="flex items-start">
+        <div
+          className="relative z-10 h-[300px] shrink-0 border-r border-[#EEF3EF] bg-white shadow-[8px_0_12px_-12px_rgba(15,23,42,0.35)]"
+          style={{ width: axisWidth }}
+          aria-hidden="true"
         >
           {[0, 50, 100].map((value) => {
             const y = yFor(value);
             const label = value === 100 ? "つらい" : value === 50 ? "少し" : "よかった";
             return (
-              <g key={value}>
-                <line x1={left} x2={width - right} y1={y} y2={y} stroke="#E8EFEB" strokeWidth="1" />
-                <text x={left - 10} y={y + 4} textAnchor="end" fontSize="11" fontWeight="800" fill="#94A3B8">
-                  {label}
-                </text>
-              </g>
+              <span
+                key={value}
+                className="absolute right-2 text-[10px] font-extrabold text-slate-400"
+                style={{ top: y - 7 }}
+              >
+                {label}
+              </span>
             );
           })}
+          <span className="absolute right-2 text-[9px] font-extrabold text-slate-400" style={{ top: careY - 6 }}>
+            ケア
+          </span>
+        </div>
+
+        <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <svg
+            viewBox={`0 0 ${width} ${height}`}
+            className="h-[300px] w-[654px] min-w-[654px]"
+            role="img"
+            aria-label="予報ゆらぎ度、実際の体調、行ったケアの推移"
+          >
+            {[0, 50, 100].map((value) => {
+              const y = yFor(value);
+              return <line key={value} x1={left} x2={width - right} y1={y} y2={y} stroke="#E8EFEB" strokeWidth="1" />;
+            })}
 
           {forecastPaths.map((path, index) => (
             <path
@@ -176,10 +193,8 @@ export default function RecordsTrendChart({
             );
           })}
 
-          <text x={left - 10} y={careY + 4} textAnchor="end" fontSize="10" fontWeight="800" fill="#94A3B8">
-            ケア
-          </text>
-        </svg>
+          </svg>
+        </div>
       </div>
       {selectedPoint ? (
         <div className="m-3 mt-0 rounded-[18px] bg-[#F7FAF8] px-4 py-3 ring-1 ring-[#E8F0EB]">
