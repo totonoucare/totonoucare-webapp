@@ -32,7 +32,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_chat_v2_2026-07-11";
+const PROMPT_VERSION = "records_chat_v3_roles_2026-07-12";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
