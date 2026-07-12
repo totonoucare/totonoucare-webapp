@@ -6,8 +6,12 @@ import { getRecordsAccess } from "@/lib/records/access";
 import {
   buildRecordsSummary,
   deterministicAnalysis,
-  trimRecordForAi,
 } from "@/lib/records/analysis";
+import {
+  RECORDS_AI_PRODUCT_CONTEXT,
+  buildAiRecordContext,
+  buildInterpretedProfileContext,
+} from "@/lib/records/aiContext";
 import {
   buildSafetyIdentifier,
   isValidYmd,
@@ -33,7 +37,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_ANALYSIS_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_analysis_v4_concise_roles_2026-07-12";
+const PROMPT_VERSION = "records_analysis_v5_product_context_patterns_2026-07-12";
 
 function periodKey(value) {
   return String(value || "custom").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "custom";
@@ -48,9 +52,10 @@ function summaryForAi(summary) {
     difficult_days: summary.difficult_days,
     hard_days: summary.hard_days,
     care_days: summary.care_days,
-    aligned_days: summary.aligned_days,
-    better_than_forecast_days: summary.better_than_forecast_days,
-    worse_than_forecast_days: summary.worse_than_forecast_days,
+    stable_good_days: summary.stable_good_days,
+    stable_difficult_days: summary.stable_difficult_days,
+    attention_good_days: summary.attention_good_days,
+    attention_difficult_days: summary.attention_difficult_days,
     care_good_days: summary.care_good_days,
     care_difficult_days: summary.care_difficult_days,
     no_care_difficult_days: summary.no_care_difficult_days,
@@ -59,8 +64,8 @@ function summaryForAi(summary) {
     domain_counts: summary.domain_counts,
     factor_counts: summary.factor_counts,
     top_difficult_triggers: summary.top_difficult_triggers,
-    weather_patterns: summary.weather_patterns,
-    care_patterns: summary.care_patterns,
+    weather_patterns: (summary.weather_patterns || []).map(({ aligned_days, better_days, worse_days, ...pattern }) => pattern),
+    care_patterns: (summary.care_patterns || []).map(({ better_days, worse_days, ...pattern }) => pattern),
   };
 }
 
@@ -109,7 +114,7 @@ export async function POST(req) {
     }
 
     const [bundle, profile, access] = await Promise.all([
-      loadRecordsRange(user.id, start, end),
+      loadRecordsRange(user.id, start, end, { includeCarePlans: true }),
       loadRecordsProfile(user.id),
       getRecordsAccess(user.id),
     ]);
@@ -138,10 +143,14 @@ export async function POST(req) {
     }
 
     const input = {
+      product_context: RECORDS_AI_PRODUCT_CONTEXT,
       period: { key, start, end },
-      constitution: profile,
+      constitution: buildInterpretedProfileContext(profile),
       facts: summaryForAi(summary),
-      records: summary.rows.filter((row) => row.review).slice(-120).map(trimRecordForAi),
+      records: summary.rows
+        .filter((row) => row.review)
+        .slice(-120)
+        .map((row) => buildAiRecordContext(row, profile)),
     };
     const hash = sourceHash({ prompt_version: PROMPT_VERSION, input });
     const cache = await findCache(user.id, key, start, end, hash);
