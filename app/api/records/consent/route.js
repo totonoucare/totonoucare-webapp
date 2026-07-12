@@ -63,7 +63,7 @@ export async function POST(req) {
         consent_version: RECORDS_AI_CONSENT_VERSION,
         consent_scope: {
           destination: "OpenAI API",
-          fields: ["constitution_summary", "selected_period_forecasts", "daily_records", "care_records", "notes", "chat_messages"],
+          fields: ["interpreted_constitution_summary", "selected_period_forecasts", "forecast_reasoning", "displayed_care", "daily_records", "care_records", "notes", "chat_messages"],
           excludes: ["name", "email", "address"],
           responses_store: false,
           provider_monitoring_logs: "subject_to_provider_policy",
