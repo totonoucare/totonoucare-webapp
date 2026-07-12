@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import RecordsTrendChart from "@/components/records/RecordsTrendChart";
-import ForecastActualMap from "@/components/records/ForecastActualMap";
+import ForecastPatternCards from "@/components/records/ForecastPatternCards";
 import {
   PERIOD_OPTIONS,
   buildRecordsSummary,
@@ -120,7 +120,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
   if (consent?.active) {
     return (
       <div className="rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        AIには氏名・メール・住所を含めず、選択期間の体質要約・予報・記録・ケア・メモ・会話だけを送ります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
+        AIには氏名・メール・住所を含めず、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・記録・メモ・会話だけを送ります。体質チェックの生回答は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
@@ -130,7 +130,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
       <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">記録の一部をAIへ送って分析します</div>
       <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
-        送信するのは、選択期間の体質要約・予報・体調・ケア・メモ・会話です。氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
+        送信するのは、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・体調記録・メモ・会話です。体質チェックの生回答、氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
       </div>
       <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、AI分析を使う"}</Button>
     </div>
@@ -462,16 +462,16 @@ export default function AiAnalysisPanel({
         </div>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <SummaryTile value={`${summary.recorded_days || 0}日`} label="記録できた日" />
-          <SummaryTile value={`${summary.aligned_days || 0}日`} label="予報と実感が近かった" />
-          <SummaryTile value={`${summary.better_than_forecast_days || 0}日`} label="予報より穏やかだった" tone="amber" />
-          <SummaryTile value={`${summary.worse_than_forecast_days || 0}日`} label="予報よりゆらいだ" tone="rose" />
+          <SummaryTile value={`${summary.good_days || 0}日`} label="穏やかだった日" />
+          <SummaryTile value={`${summary.difficult_days || 0}日`} label="つらさがあった日" tone="rose" />
+          <SummaryTile value={`${summary.care_days || 0}日`} label="先回りケアをした日" tone="amber" />
         </div>
         <div className="mt-4">
           {rangeLoading ? <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
         </div>
         <div className="mt-4"><PatternCards summary={summary} /></div>
-        <div className="mt-4"><ForecastActualMap rows={bundle?.rows || []} onSelectDate={onSelectDate} /></div>
-        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">ケアをした日は元々負担が強かった可能性もあります。表示は因果や効果率ではなく、次に比較する条件を見つけるためのものです。</div>
+        <div className="mt-4"><ForecastPatternCards rows={bundle?.rows || []} onSelectDate={onSelectDate} /></div>
+        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">ケアをした日は元々負担が強かった可能性もあります。4パターンは当たり外れや効果率ではなく、次に比較する条件を見つけるためのものです。</div>
       </section>
 
       <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
