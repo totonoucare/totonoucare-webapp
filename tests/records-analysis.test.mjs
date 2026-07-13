@@ -15,6 +15,7 @@ const {
   reviewCareTiming,
   reviewFactors,
   snapshotFromForecast,
+  trimRecordForAi,
 } = analysisModule;
 
 function row({ date = "2026-07-01", signal, score = null, condition = 2, prevent = 0, domains = [], timing = "", factors = [], careActions = [] } = {}) {
@@ -242,4 +243,75 @@ test("forecast snapshot carries the exact trigger and the forecast date", () => 
   assert.equal(snapshot.score_precise_0_10, 8.25);
   assert.equal(snapshot.snapshot_source, "record_save");
   assert.equal(snapshot.version, 2);
+});
+
+test("the same concrete care keeps both previous-night and same-day timing outcomes", () => {
+  const careActions = [
+    {
+      source_mode: "tomorrow",
+      domain: "loosen",
+      item_key: "legacy-a",
+      canonical_key: "v2:loosen:point:pc6",
+      kind: "tsubo_point",
+      label: "内関のツボケア",
+      timing_relation: "previous_night",
+    },
+    {
+      source_mode: "today",
+      domain: "loosen",
+      item_key: "legacy-b",
+      canonical_key: "v2:loosen:point:pc6",
+      kind: "tsubo_point",
+      label: "内関のツボケア",
+      timing_relation: "same_day_after",
+    },
+  ];
+  const summary = buildRecordsSummary([
+    row({ date: "2026-07-05", signal: 1, score: 5.8, condition: 1, careActions }),
+  ]);
+  const pattern = summary.specific_care_patterns[0];
+
+  assert.equal(pattern.days, 1);
+  assert.equal(pattern.previous_night_days, 1);
+  assert.equal(pattern.same_day_days, 1);
+  assert.equal(pattern.timing_outcomes.before_peak.days, 1);
+  assert.equal(pattern.timing_outcomes.after_symptom.days, 1);
+  assert.deepEqual(pattern.actual_counts, { good: 0, mild: 1, hard: 0 });
+});
+
+
+test("record-page care stays separate from Daily Care proposals in AI input", () => {
+  const input = row({
+    date: "2026-07-06",
+    signal: 1,
+    score: 5.6,
+    condition: 2,
+    careActions: [
+      {
+        source_mode: "today",
+        domain: "loosen",
+        item_key: "v3:loosen:point:pc6",
+        kind: "tsubo_point",
+        label: "内関のツボケア",
+        timing_relation: "same_day_before",
+        item_snapshot: { meta: { point_code: "PC6", entry_origin: "daily_care_card" } },
+      },
+      {
+        source_mode: "today",
+        domain: "live",
+        item_key: "v3:live:manual_care:custom",
+        kind: "manual_care",
+        label: "自分で首を温めた",
+        timing_relation: "same_day_before",
+        item_snapshot: { meta: { entry_origin: "record_page" } },
+      },
+    ],
+  });
+
+  const ai = trimRecordForAi(input);
+  assert.deepEqual(ai.performed_care_items.map((item) => item.label), ["内関のツボケア"]);
+  assert.deepEqual(ai.user_added_care_items.map((item) => item.label), ["自分で首を温めた"]);
+
+  const summary = buildRecordsSummary([input]);
+  assert.deepEqual(summary.specific_care_patterns.map((item) => item.label), ["内関のツボケア"]);
 });
