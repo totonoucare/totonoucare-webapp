@@ -118,3 +118,16 @@ docs/AUTH_AND_DEPLOY_URLS_20260508.md
 - 長い修正や複数ファイル変更は、原則ZIPで渡す。
 - Secret値はGitHubへ保存しない。
 
+
+---
+
+## v7.71 Daily Care実行記録
+
+予報ページの具体的なDaily Careへ「やってみた」を追加し、前夜・当日のケアを対象日へひも付けて記録する。記録ページでは実感と当日ケアの前後関係を確認し、AI分析では固定された予報条件と具体的ケアの関係を振り返る。
+
+DB migrationが必要。詳細:
+
+```text
+docs/DAILY_CARE_ACTIONS_V771.md
+supabase/migrations/20260713_create_radar_care_actions_v771.sql
+```
