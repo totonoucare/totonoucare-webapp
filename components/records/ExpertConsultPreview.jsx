@@ -59,13 +59,13 @@ export default function ExpertConsultPreview({ authedFetch }) {
           <GuideBotAvatar mood="listening" className="h-[88px] w-[88px] shrink-0" />
           <div className="relative mb-3 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">EXPERT CONSULT</div>
-            <div className="mt-1 text-[14px] font-black leading-6 text-slate-900">AIだけでは整理しきれない時は、専門家へつなぐ予定です。</div>
+            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">専門家相談</div>
+            <div className="mt-1 text-[14px] font-black leading-6 text-slate-900">記録を専門家と一緒に振り返れる相談サービスを準備しています。</div>
           </div>
         </div>
         <div className="px-4 pb-4">
           <div className="rounded-[22px] bg-white/80 p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-white">
-            体質トリセツ、毎日の記録、AI分析を一緒に見ながら、不調やセルフケアを専門家と整理するオンライン相談を準備しています。
+            体質トリセツ、毎日の予報・実感・ケア、AI分析を見ながら、ゆらぎやすい条件と続けやすい整え方を一緒に整理します。
           </div>
         </div>
       </section>
@@ -81,12 +81,12 @@ export default function ExpertConsultPreview({ authedFetch }) {
 
       <section className="rounded-[30px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
         <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">準備中</div>
-        <div className="mt-1 text-[16px] font-black text-slate-900">Google Meetによるオンライン相談</div>
+        <div className="mt-1 text-[16px] font-black text-slate-900">記録を専門家と一緒に振り返る</div>
         <div className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
-          単発利用と、AI伴走＋月1回相談のセットを検討しています。予約時の体質・記録データを安全にまとめるカルテ設計後に公開します。
+          気になる時に相談できる形と、記録を継続して振り返る形を準備しています。安心して相談できるよう、現在準備を進めています。
         </div>
         <div className="mt-3 rounded-[18px] bg-white/75 px-3.5 py-3 text-[11px] font-bold leading-5 text-slate-500 ring-1 ring-white">
-          相談内容は診断・処方ではなく、不調の整理、セルフケアの選択肢、必要に応じた受診・施術相談の論点整理を中心にする予定です。
+          診断や処方を行う場ではありません。不調を整理し、セルフケアの選択肢や、必要に応じて医療機関・施術者へ相談するポイントを一緒に確認します。
         </div>
 
         <Button
@@ -95,10 +95,10 @@ export default function ExpertConsultPreview({ authedFetch }) {
           onClick={toggleInterest}
           className="mt-4 w-full py-4"
         >
-          {saving ? "保存中…" : interested ? "利用希望を送信済み ✓" : "利用してみたい"}
+          {saving ? "保存中…" : interested ? "お知らせ希望を登録済み ✓" : "開始したら知らせてほしい"}
         </Button>
         <div className="mt-2 text-center text-[9px] font-bold leading-4 text-slate-400">
-          これは需要確認です。予約や決済はまだ発生しません。もう一度押すと取り消せます。
+          押しても予約や料金は発生しません。もう一度押すと取り消せます。
         </div>
         {error ? <div className="mt-3 text-center text-[10px] font-bold text-[#B75C3E]">{error}</div> : null}
       </section>
