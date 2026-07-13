@@ -38,7 +38,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_ANALYSIS_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_analysis_v7_concrete_care_actions_2026-07-13";
+const PROMPT_VERSION = "records_analysis_v8_care_origin_2026-07-13";
 
 function periodKey(value) {
   return String(value || "custom").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "custom";
