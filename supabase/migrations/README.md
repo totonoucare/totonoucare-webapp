@@ -15,3 +15,21 @@ Supabase SQL Editorで実際に実行するDB変更SQLを置く場所。
 - 実行済みのSQLだけをここに残す。
 - 失敗した実験SQLは入れない。
 - 秘密情報は絶対に入れない。
+
+## v7.71 Daily Care実行記録
+
+```text
+20260713_create_radar_care_actions_v771.sql
+20260713_rollback_radar_care_actions_v771.sql
+```
+
+適用前後の仕様は `docs/DAILY_CARE_ACTIONS_V771.md`、確認SQLは `supabase/checks/20260713_check_radar_care_actions_v771.sql` を参照する。
+
+## v7.71.2 ケア記録データ整合性
+
+```text
+20260713_add_care_data_integrity_v7712.sql
+20260713_rollback_care_data_integrity_v7712.sql
+```
+
+v7.71 migration適用後に実行する。確認SQLは `supabase/checks/20260713_check_care_data_integrity_v7712.sql`、仕様は `docs/CARE_ACTION_DATA_INTEGRITY_V7712.md` を参照する。
