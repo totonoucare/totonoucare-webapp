@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { generateStructured } from "@/lib/openai/server";
 import { getRecordsAccess } from "@/lib/records/access";
-import { buildRecordsSummary } from "@/lib/records/analysis";
+import { buildRecordsSummary, selectAiDetailRows } from "@/lib/records/analysis";
 import {
   RECORDS_AI_PRODUCT_CONTEXT,
   buildAiRecordContext,
@@ -37,7 +37,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_chat_v4_product_context_patterns_2026-07-12";
+const PROMPT_VERSION = "records_chat_v6_concrete_care_actions_2026-07-13";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
@@ -167,11 +167,21 @@ function summaryForChat(summary) {
     no_care_difficult_days: summary.no_care_difficult_days,
     before_peak_care_days: summary.before_peak_care_days,
     after_symptom_care_days: summary.after_symptom_care_days,
+    mixed_timing_care_days: summary.mixed_timing_care_days,
+    unknown_timing_care_days: summary.unknown_timing_care_days,
+    previous_night_care_days: summary.previous_night_care_days,
+    same_day_care_days: summary.same_day_care_days,
+    concrete_care_days: summary.concrete_care_days,
+    concrete_care_action_count: summary.concrete_care_action_count,
+    care_timing_outcomes: summary.care_timing_outcomes,
+    care_timing_outcomes_non_exclusive: summary.care_timing_outcomes_non_exclusive,
     domain_counts: summary.domain_counts,
     factor_counts: summary.factor_counts,
     top_difficult_triggers: summary.top_difficult_triggers,
     weather_patterns: (summary.weather_patterns || []).map(({ aligned_days, better_days, worse_days, ...pattern }) => pattern),
     care_patterns: (summary.care_patterns || []).map(({ better_days, worse_days, ...pattern }) => pattern),
+    matched_forecast_comparisons: summary.matched_forecast_comparisons || [],
+    specific_care_patterns: summary.specific_care_patterns || [],
   };
 }
 
@@ -260,9 +270,7 @@ export async function POST(req) {
       selected_period: { key: periodKey, start, end },
       constitution: buildInterpretedProfileContext(profile),
       facts: summaryForChat(summary),
-      records: summary.rows
-        .filter((row) => row.review)
-        .slice(-90)
+      records: selectAiDetailRows(summary, 30)
         .map((row) => buildAiRecordContext(row, profile)),
       conversation,
       latest_user_request: message,
