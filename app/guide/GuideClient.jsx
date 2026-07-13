@@ -6,14 +6,14 @@ import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import {
   IconSpark,
-  IconChecklist,
+  IconPencil,
+  IconAnalysis,
   IconWeather,
   IconRadar,
   IconCare,
   IconCalendar,
   IconConstitution,
   IconBodyLine,
-  IconTsubo,
   IconBowl,
 } from "@/components/illust/icons/guide";
 
@@ -227,10 +227,10 @@ export default function GuidePage() {
 
             <div className="mt-5 grid grid-cols-2 gap-2.5">
               {[
-                { label: "トリセツ", sub: "初回に体質を知る", Icon: IconConstitution, num: "01" },
-                { label: "体調予報", sub: "今日・明日に備える", Icon: IconRadar, num: "02" },
-                { label: "Daily Care", sub: "やったケアを記録", Icon: IconCare, num: "03" },
-                { label: "記録・分析", sub: "実感と傾向を振り返る", Icon: IconChecklist, num: "04" },
+                { label: "トリセツ", sub: "自分の体質を知る", Icon: IconConstitution, num: "01" },
+                { label: "体調予報", sub: "今日・明日のゆらぎを見る", Icon: IconRadar, num: "02" },
+                { label: "対策ケア", sub: "先回りして整える", Icon: IconCare, num: "03" },
+                { label: "記録・分析", sub: "ケアと実感から傾向を見る", Icon: IconPencil, num: "04" },
               ].map(({ label, sub, Icon, num }) => (
                 <div key={label} className="rounded-[18px] bg-white/80 p-3 ring-1 ring-white shadow-sm">
                   <div className="flex items-center justify-between gap-2">
@@ -256,7 +256,7 @@ export default function GuidePage() {
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">まず、この流れだけで大丈夫</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            毎日すべての機能を使う必要はありません。初回にトリセツを作り、普段は予報・ケア・実感記録をつなげて使います。
+            毎日すべての機能を使う必要はありません。初回にトリセツを作り、普段は予報を見て対策ケアを試し、記録・分析につなげます。
           </div>
 
           <div className="space-y-4">
@@ -274,11 +274,11 @@ export default function GuidePage() {
             <FlowItem num="1" title="今日・明日の体調ゆらぎを見る">
               体調ゆらぎ度と、安定・いたわり・守りのモードから、その日にどのくらい備えるかを確認します。
             </FlowItem>
-            <FlowItem num="2" title="できそうなケアを試して記録する" tone="amber">
-              暮らす・食べる・ほぐすの中から一つでも試したら、Daily Careカードの「やってみた」を押します。見るだけでは記録されません。
+            <FlowItem num="2" title="対策ケアで先回りする" tone="amber">
+              暮らす・食べる・ほぐすの中から、無理なくできそうなものを一つ選びます。実際に試したら、その場で「やってみた」を押して記録します。
             </FlowItem>
             <FlowItem num="3" title="夜に実感を残す" tone="violet">
-              記録ページで、その日の実感を○・△・×から選びます。Daily Careで記録済みなら、ケア内容は自動で入り、当日ケアのタイミングだけ確認します。
+              記録ページで、その日の実感を○・△・×から選びます。予報ページでケアを記録済みなら、内容は自動で入り、当日ケアのタイミングだけ確認します。
             </FlowItem>
             <FlowItem num="4" title="記録がたまったら傾向を見る">
               グラフやAI分析で、似た天気ストレス・近い体調ゆらぎ度の日を比べます。予報を当たり外れで評価するのではなく、どんな備え方が自分に合いそうかを探します。
@@ -288,8 +288,8 @@ export default function GuidePage() {
               前日の「明日に向けた今夜のケア」と、当日の「今日のケア」は、どちらも同じ対象日のケアとしてまとまります。全部やる必要はなく、無理なく試せたものだけで十分です。
             </MiniNote>
 
-            <GuideCard tone="teal" title="必要な時だけ使う機能" icon={<IconChecklist />} compact>
-              MYケアセレクトは、ケアを続けやすくする用品・食品候補を見る場所です。専門家相談は、記録やAI分析を人と一緒に整理したい時のために準備しています。
+            <GuideCard tone="teal" title="必要な時のサポート" icon={<IconCare />} compact>
+              MYケアセレクトでは、ケアを続けやすくする用品・食品候補を探せます。専門家相談は、記録やAI分析を人と一緒に整理したい時のために準備しています。
             </GuideCard>
 
             <div className="grid gap-3 pt-2">
@@ -303,7 +303,7 @@ export default function GuidePage() {
 
       {tab === "radar" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
-          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">体調予報とDaily Care</div>
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">体調予報と対策ケア</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
             体調ゆらぎ度で細かな変化を見て、3つのモードで今日の行動を決めます。そのままケア記録までつなげられます。
           </div>
@@ -324,18 +324,18 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="teal" title="ケアをしたら「やってみた」" icon={<IconCare />}>
-              Daily Careカードは、ケア方法を見るだけでなく、そのまま実行記録にもなります。実際に行った項目だけ「やってみた」または「意識した」を押してください。
+            <GuideCard tone="teal" title="試したケアはその場で記録" icon={<IconCare />}>
+              対策ケアのカードは、ケア方法を確認する場所であり、そのまま実行記録にもなります。実際に行った項目だけ「やってみた」または「意識した」を押してください。
               <CheckList
                 items={[
-                  "前日の明日カードで押したケアは、翌日の先回りケアとして記録されます。",
-                  "当日の今日カードで押したケアは、夜の記録で「つらさの前・後」をまとめて確認します。",
+                  "前日に表示された「明日に向けた今夜のケア」は、翌日に向けた先回りケアとして記録されます。",
+                  "当日の「今日のケア」は、夜の記録で「つらさの前・後」をまとめて確認します。",
                   "押し間違えた時は、もう一度押すか記録ページから解除できます。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="mint" title="暮らす・食べる・ほぐす" icon={<IconChecklist />}>
+            <GuideCard tone="mint" title="暮らす・食べる・ほぐす" icon={<IconCare />}>
               その日の方針を、実際に取り入れやすい3方向へ分けています。
               <CheckList
                 items={[
@@ -366,22 +366,22 @@ export default function GuidePage() {
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">記録して、自分の傾向を振り返る</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            記録ページでは、ケア内容をもう一度入力するのではなく、Daily Careの記録を引き継いで、その日の実感を仕上げます。
+            記録ページでは、予報ページで残した対策ケアを引き継ぎ、その日の実感と合わせて1日の記録を完成させます。
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="mint" title="夜の記録はシンプル" icon={<IconChecklist />}>
-              その日の実感を○・△・×から選びます。Daily Careで具体的ケアを記録していれば、自動で一覧に入るため、当日ケアの大まかなタイミングを選ぶだけです。
+            <GuideCard tone="mint" title="夜の記録はシンプル" icon={<IconPencil />}>
+              その日の実感を○・△・×から選びます。予報ページで具体的な対策ケアを記録していれば、自動で一覧に入るため、当日ケアの大まかなタイミングを選ぶだけです。
               <CheckList
                 items={[
-                  "昨晩の明日ケアは、前夜からの先回りケアとして自動表示。",
-                  "当日のケアは、つらさの前・後・前後どちらも・覚えていないから選択。",
-                  "Daily Care以外のケアは、した・少ししたと暮らす・食べる・ほぐすでまとめて残せます。",
+                  "前夜の「明日に向けたケア」は、先回りケアとして自動で表示されます。",
+                  "当日のケアは、「つらさの前」「つらくなってから」「前後どちらも」「覚えていない」から選びます。",
+                  "提案以外のケアをした日は、「した／少しした」と分野（暮らす・食べる・ほぐす）をまとめて残せます。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="indigo" title="グラフは3段で見る" icon={<IconRadar />}>
+            <GuideCard tone="indigo" title="グラフは3段で見る" icon={<IconAnalysis />}>
               上段に体調ゆらぎ度、中段に実感○・△・×、下段にケアとタイミングを表示します。体調ゆらぎ度と実感は別の尺度なので、同じ縦軸には重ねません。
               <CheckList
                 items={[
@@ -391,7 +391,7 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="amber" title="AIは似た予報条件を比べる" icon={<IconSpark />}>
+            <GuideCard tone="amber" title="AIは似た予報条件を比べる" icon={<IconAnalysis />}>
               固定された予報を物差しにして、主な天気ストレス、予報モード、近い体調ゆらぎ度の日を比較します。その中で、ケアの有無・具体的な内容・前夜か当日か・実感を整理します。
               <CheckList
                 items={[
@@ -402,7 +402,7 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="AIに追加で聞く" icon={<IconCare />}>
+            <GuideCard tone="violet" title="AIに追加で聞く" icon={<IconAnalysis />}>
               分析した期間の記録を引き継いで、気になった日、天気ストレス、ケアの種類やタイミングを追加で質問できます。分からないことは断定せず、一緒に整理します。
             </GuideCard>
 
@@ -439,8 +439,8 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="teal" title="暮らす・食べる・ほぐすで探す" icon={<IconChecklist />}>
-              Daily Careと同じ3方向で候補を探せます。
+            <GuideCard tone="teal" title="暮らす・食べる・ほぐすで探す" icon={<IconCare />}>
+              対策ケアと同じ3方向で候補を探せます。
               <CheckList
                 items={[
                   "暮らす：冷え、睡眠、湿気、入浴、衣類などの生活用品。",
@@ -462,7 +462,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <GuideCard tone="violet" title="買う前に、まず目的を確認" icon={<IconBowl />}>
-              MYケアセレクトは買い物を急がせる機能ではありません。今日すぐできることはDaily Careだけでも十分です。続けやすくしたい時や、家に用意しておきたい時に使います。
+              MYケアセレクトは買い物を急がせる機能ではありません。今日すぐできる対策ケアだけでも十分です。続けやすくしたい時や、家に用意しておきたい時に使います。
             </GuideCard>
 
             <MiniNote>
