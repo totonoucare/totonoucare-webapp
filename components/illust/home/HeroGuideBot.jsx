@@ -72,22 +72,28 @@ export function getGuideBotFace(signal = 0, mood = "") {
   } else if (Number(signal) === 1) {
     eyes = (
       <>
-        <ellipse cx="44" cy="51" rx="4.3" ry="3.5" fill={darkGreen} />
-        <ellipse cx="76" cy="51" rx="4.3" ry="3.5" fill={darkGreen} />
-        <path d="M39 44 Q44 41.5 49 44.5" fill="none" stroke={darkGreen} strokeWidth="1.9" strokeLinecap="round" opacity="0.78" />
-        <path d="M71 44.5 Q76 41.5 81 44" fill="none" stroke={darkGreen} strokeWidth="1.9" strokeLinecap="round" opacity="0.78" />
+        <ellipse cx="44" cy="52" rx="4.1" ry="3.2" fill={darkGreen} />
+        <ellipse cx="76" cy="52" rx="4.1" ry="3.2" fill={darkGreen} />
+        <circle cx="45.2" cy="50.9" r="1" fill="#ffffff" opacity="0.78" />
+        <circle cx="77.2" cy="50.9" r="1" fill="#ffffff" opacity="0.78" />
       </>
     );
-    mouth = <path d="M54 60 Q60 57.5 66 60" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
+    mouth = <path d="M54 61 Q60 57.8 66 61" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
+    accessory = <path d="M86 39 Q90 44.5 86 49 Q82 44.5 86 39 Z" fill="#90b1e0" opacity="0.78" />;
   } else if (Number(signal) === 2) {
     eyes = (
       <>
-        <path d="M40 51 Q 44 48 48 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
-        <path d="M72 51 Q 76 48 80 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M39 48 L48 54" fill="none" stroke={darkGreen} strokeWidth="2.8" strokeLinecap="round" />
+        <path d="M81 48 L72 54" fill="none" stroke={darkGreen} strokeWidth="2.8" strokeLinecap="round" />
       </>
     );
-    mouth = <path d="M54 60 C 58 57, 62 57, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
-    accessory = <path d="M 85 40 Q 88 45 85 48 Q 82 45 85 40 Z" fill="#90b1e0" opacity="0.8" />;
+    mouth = <path d="M53 61 Q56 57.5 60 60 Q64 57.5 67 61" fill="none" stroke={darkGreen} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
+    accessory = (
+      <>
+        <path d="M86 38 Q90 44 86 49 Q82 44 86 38 Z" fill="#90b1e0" opacity="0.86" />
+        <path d="M91 52 Q94 56 91 59 Q88 56 91 52 Z" fill="#90b1e0" opacity="0.6" />
+      </>
+    );
   }
 
   return { eyes, mouth, accessory, blushColor };
