@@ -232,9 +232,14 @@ export default function RecordsPageClient({ initialTab = "record" }) {
   }
 
   function goToAnalysis({ date, classification } = {}) {
-    const prompt = classification?.mismatch
-      ? `${date || "今日"}は予報と実感に差がありました。思い当たる生活状況も含めて、一緒に整理してください。`
-      : `${date || "今日"}の予報・実感・ケアを見比べて、次に試すことを一緒に考えてください。`;
+    const prompts = {
+      attention_good: `${date || "今日"}は注意予報でも穏やかに過ごせました。体調ゆらぎ度、天気ストレス、先回りケアから、次に再現したい条件を整理してください。`,
+      attention_difficult: `${date || "今日"}は注意予報でつらさがありました。体調ゆらぎ度、天気ストレス、ケアの内容と時刻を見比べてください。`,
+      stable_good: `${date || "今日"}は安定予報どおり穏やかでした。似た日の土台として残したい条件を整理してください。`,
+      stable_difficult: `${date || "今日"}は安定予報でもつらさがありました。予報に含めない生活条件も含めて整理してください。`,
+    };
+    const prompt = prompts[classification?.reflection_pattern]
+      || `${date || "今日"}の体調ゆらぎ度・実感・ケアを見比べて、次に試すことを一緒に考えてください。`;
     setAnalysisPrompt(prompt);
     changeTab("analysis");
     window?.scrollTo?.({ top: 0, behavior: "smooth" });
@@ -314,6 +319,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
             editWindowLabel="今日を含む直近7日"
             onSave={saveRecord}
             onGoAnalysis={goToAnalysis}
+            onOpenRadar={selectedDate === today ? () => router.push(`/radar?date=${encodeURIComponent(selectedDate)}`) : null}
           />
 
           {recordError ? (

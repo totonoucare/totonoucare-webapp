@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
+import { actionTimingLabel, summarizeCareActions } from "@/lib/radar_v1/careActionItems";
 import {
   RECORD_CARE_OPTIONS,
   RECORD_CONDITION_OPTIONS,
@@ -15,6 +16,7 @@ import {
   classifyRecord,
   conditionLabel,
   factorLabel,
+  forecastPatternKey,
   reviewCareDomains,
   reviewCareTiming,
   reviewFactors,
@@ -67,6 +69,49 @@ function TogglePill({ active, children, onClick }) {
   );
 }
 
+function CareActionsSummary({ actions, onOpenRadar, editable = false }) {
+  const groups = [
+    { key: "tomorrow", label: "昨晩からのケア", items: actions.filter((item) => item.source_mode === "tomorrow") },
+    { key: "today", label: "今日のケア", items: actions.filter((item) => item.source_mode === "today") },
+  ].filter((group) => group.items.length);
+  if (!groups.length) return null;
+  const tone = {
+    live: "border-[#66B9A3] bg-[#F4FAF7]",
+    eat: "border-[#E2AE45] bg-[#FFFBF4]",
+    loosen: "border-[#A78BB3] bg-[#FBF8FC]",
+  };
+  return (
+    <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">今日に向けて行ったケア</div>
+          <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">予報ページで「やってみた」を押した内容です。</div>
+        </div>
+        {editable && onOpenRadar ? (
+          <button type="button" onClick={onOpenRadar} className="shrink-0 rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+            修正する
+          </button>
+        ) : null}
+      </div>
+      <div className="mt-3 space-y-3">
+        {groups.map((group) => (
+          <div key={group.key}>
+            <div className="text-[10px] font-black text-slate-500">{group.label}</div>
+            <div className="mt-1.5 space-y-1.5">
+              {group.items.map((item) => (
+                <div key={`${item.source_mode}-${item.item_key}`} className={["rounded-[15px] border-l-4 px-3 py-2.5 ring-1 ring-[#E6ECE8]", tone[item.domain] || "border-slate-300 bg-white"].join(" ")}>
+                  <div className="text-[11px] font-black leading-5 text-slate-700">{item.label}</div>
+                  <div className="mt-0.5 text-[9px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DailyRecordCard({
   date,
   isToday = true,
@@ -77,30 +122,75 @@ export default function DailyRecordCard({
   editWindowLabel = "直近7日",
   onSave,
   onGoAnalysis,
+  onOpenRadar,
 }) {
   const review = row?.review || null;
   const forecast = row?.forecast || null;
+  const careActionSummary = useMemo(() => summarizeCareActions(row?.care_actions), [row?.care_actions]);
+  const recordedCareActions = careActionSummary.actions;
+  const displayedCareLevel = review
+    ? (careActionSummary.count > 0 ? Math.max(1, Number(review.prevent_level || 0)) : Number(review.prevent_level || 0))
+    : 0;
+  const displayedCareDomains = Array.from(new Set([
+    ...reviewCareDomains(review),
+    ...careActionSummary.domains,
+  ]));
   const [condition, setCondition] = useState(null);
   const [care, setCare] = useState(null);
   const [domains, setDomains] = useState([]);
   const [timing, setTiming] = useState("");
+  const [sameDayTiming, setSameDayTiming] = useState("same_day_unknown");
   const [factors, setFactors] = useState([]);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(editable && !review);
 
   useEffect(() => {
+    const actionDomains = careActionSummary.domains;
+    const sameDayRelations = new Set(
+      recordedCareActions
+        .filter((item) => item.source_mode === "today")
+        .map((item) => item.timing_relation)
+    );
+    const initialSameDayTiming = sameDayRelations.has("same_day_mixed")
+      ? "same_day_mixed"
+      : sameDayRelations.has("same_day_after") && sameDayRelations.has("same_day_before")
+        ? "same_day_mixed"
+        : sameDayRelations.has("same_day_after")
+          ? "same_day_after"
+          : sameDayRelations.has("same_day_before")
+            ? "same_day_before"
+            : "same_day_unknown";
+    const derivedTiming = careActionSummary.has_same_day
+      ? initialSameDayTiming === "same_day_before" && careActionSummary.has_previous_night
+        ? "before_peak"
+        : initialSameDayTiming === "same_day_after" && careActionSummary.has_previous_night
+          ? "mixed"
+          : initialSameDayTiming === "same_day_before"
+            ? "before_peak"
+            : initialSameDayTiming === "same_day_after"
+              ? "after_symptom"
+              : initialSameDayTiming === "same_day_mixed"
+                ? "mixed"
+                : "unknown"
+      : careActionSummary.has_previous_night
+        ? "before_peak"
+        : "";
     setCondition(review?.condition_level == null ? null : Number(review.condition_level));
-    setCare(review?.prevent_level == null ? null : Number(review.prevent_level));
-    setDomains(reviewCareDomains(review));
-    setTiming(reviewCareTiming(review));
+    setCare(review?.prevent_level == null
+      ? (careActionSummary.count > 0 ? 1 : null)
+      : (careActionSummary.count > 0 ? Math.max(1, Number(review.prevent_level || 0)) : Number(review.prevent_level)));
+    setDomains(reviewCareDomains(review).length ? reviewCareDomains(review) : actionDomains);
+    setTiming(reviewCareTiming(review) || derivedTiming);
+    setSameDayTiming(initialSameDayTiming);
     setFactors(reviewFactors(review));
     setNote(review?.note || "");
     setEditing(editable && !review);
-  }, [date, review?.id, review?.updated_at, review?.created_at, editable]);
+  }, [date, review?.id, review?.updated_at, review?.created_at, editable, careActionSummary.count, careActionSummary.has_previous_night, careActionSummary.has_same_day, careActionSummary.domains.join("|"), recordedCareActions.map((item) => `${item.item_key}:${item.timing_relation}`).join("|")]);
 
   const previewRow = useMemo(() => ({
     date,
     forecast,
+    care_actions: recordedCareActions,
     review: condition == null || care == null
       ? review
       : {
@@ -113,9 +203,29 @@ export default function DailyRecordCard({
           action_tags: buildActionTags({ domains, timing, factors, existing: review?.action_tags }),
           note,
         },
-  }), [date, forecast, review, condition, care, domains, timing, factors, note]);
+  }), [date, forecast, review, recordedCareActions, condition, care, domains, timing, factors, note]);
 
   const classification = classifyRecord(previewRow);
+  const reflectionPattern = forecastPatternKey(previewRow);
+  const shouldAskFactors = reflectionPattern === "stable_difficult";
+  const reflectionMeta = {
+    attention_good: {
+      title: "注意予報でも穏やかに過ごせた",
+      body: "先回りケアや生活の土台が、次に再現したい手がかりになります。",
+    },
+    attention_difficult: {
+      title: "注意予報でつらさがあった",
+      body: "体調ゆらぎ度、天気ストレス、ケアの内容と時刻を一緒に振り返ります。",
+    },
+    stable_good: {
+      title: "安定予報どおり穏やかに過ごせた",
+      body: "無理なく過ごせた日の土台として、似た日と見比べられます。",
+    },
+    stable_difficult: {
+      title: "安定予報でもつらさがあった",
+      body: "睡眠や忙しさなど、予報に含めない生活条件も振り返りの材料になります。",
+    },
+  }[reflectionPattern] || null;
   const forecastTone = signalTone(forecast?.signal);
 
   function toggleDomain(value) {
@@ -134,15 +244,24 @@ export default function DailyRecordCard({
     });
   }
 
+  function chooseSameDayTiming(value) {
+    setSameDayTiming(value);
+    if (value === "same_day_before") setTiming("before_peak");
+    else if (value === "same_day_after") setTiming(careActionSummary.has_previous_night ? "mixed" : "after_symptom");
+    else if (value === "same_day_mixed") setTiming("mixed");
+    else setTiming("unknown");
+  }
+
   async function submit() {
     if (condition == null || care == null) return;
-    const savedFactors = classification.mismatch ? factors : [];
+    const savedFactors = shouldAskFactors ? factors : [];
     await onSave?.({
       date,
       condition_level: condition,
       prevent_level: care,
       care_domains: care > 0 ? domains : [],
       care_timing: care > 0 ? timing : "",
+      same_day_timing: careActionSummary.has_same_day ? sameDayTiming : "",
       context_factors: savedFactors,
       action_tags: buildActionTags({
         domains: care > 0 ? domains : [],
@@ -165,7 +284,9 @@ export default function DailyRecordCard({
     : review && !editing
       ? `${isToday ? "今日" : "この日"}の記録はできています。${editable ? "必要なら、あとから直せます。" : ""}`
       : editable
-        ? `${isToday ? "今日一日の" : "この日の"}体調はどうでしたか？無理のない範囲で教えてください。`
+        ? careActionSummary.count > 0
+          ? `${isToday ? "今日" : "この日"}に向けて行ったケアが${careActionSummary.count}件残っています。あとは体調を教えてください。`
+          : `${isToday ? "今日一日の" : "この日の"}体調はどうでしたか？無理のない範囲で教えてください。`
         : `${editWindowLabel}を過ぎた日は、保存済みの記録だけ見返せます。`;
 
   return (
@@ -203,14 +324,14 @@ export default function DailyRecordCard({
               <div className="mt-1 text-[14px] font-black text-slate-900">{conditionLabel(review.condition_level)}</div>
             </div>
             <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-              <div className="text-[10px] font-black text-slate-400">先回りケア</div>
-              <div className="mt-1 text-[14px] font-black text-slate-900">{careLabel(review.prevent_level)}</div>
+              <div className="text-[10px] font-black text-slate-400">ケアはした？</div>
+              <div className="mt-1 text-[14px] font-black text-slate-900">{careLabel(displayedCareLevel)}</div>
             </div>
           </div>
 
-          {reviewCareDomains(review).length ? (
+          {displayedCareDomains.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
-              {reviewCareDomains(review).map((domain) => {
+              {displayedCareDomains.map((domain) => {
                 const meta = RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain);
                 return (
                   <span key={domain} className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD]" style={{ borderLeft: `4px solid ${meta?.color || "#DCE8DD"}` }}>
@@ -226,9 +347,15 @@ export default function DailyRecordCard({
             </div>
           ) : null}
 
+          {recordedCareActions.length ? (
+            <div className="mt-3">
+              <CareActionsSummary actions={recordedCareActions} editable={editable} onOpenRadar={onOpenRadar} />
+            </div>
+          ) : null}
+
           {reviewFactors(review).length ? (
             <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
-              <div className="text-[9px] font-black text-[#A56C18]">予報との差で思い当たること</div>
+              <div className="text-[9px] font-black text-[#A56C18]">天気以外で思い当たること</div>
               <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
                 {reviewFactors(review).map(factorLabel).join("・")}
               </div>
@@ -241,13 +368,9 @@ export default function DailyRecordCard({
 
           <div className="mt-4 rounded-[20px] bg-[#EFF8F4] p-4 ring-1 ring-[#CFE7DE]">
             <div className="text-[10px] font-black tracking-widest text-[#2F816E]/70">この日の見比べ</div>
-            <div className="mt-1 text-[14px] font-black text-slate-900">{classification.label}</div>
+            <div className="mt-1 text-[14px] font-black text-slate-900">{reflectionMeta?.title || classification.label}</div>
             <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
-              {!classification.comparable
-                ? "予報が残っていないため、体調記録として見返します。"
-                : classification.mismatch
-                  ? "予報との違いも、あなたの調子を知る大切な手がかりです。"
-                  : "似た条件の日が増えると、より自分らしい傾向が見えてきます。"}
+              {reflectionMeta?.body || "予報が残っていないため、体調記録として見返します。"}
             </div>
           </div>
 
@@ -255,7 +378,7 @@ export default function DailyRecordCard({
             {editable ? (
               <Button variant="secondary" onClick={() => setEditing(true)} className="w-full bg-white">記録を編集</Button>
             ) : null}
-            <Button onClick={() => onGoAnalysis?.({ date, classification })} className="w-full">AIと振り返る</Button>
+            <Button onClick={() => onGoAnalysis?.({ date, classification: { ...classification, reflection_pattern: reflectionPattern } })} className="w-full">AIと振り返る</Button>
           </div>
         </div>
       ) : !editable ? (
@@ -275,51 +398,81 @@ export default function DailyRecordCard({
             </div>
           </div>
 
-          <div className="mt-5">
-            <div className="mb-2 text-[11px] font-black tracking-[0.1em] text-slate-400">先回りケア</div>
-            <div className="grid grid-cols-3 gap-2">
-              {RECORD_CARE_OPTIONS.map((item) => (
-                <ChoiceButton
-                  key={item.value}
-                  active={care === item.value}
-                  label={item.label}
-                  onClick={() => {
-                    setCare(item.value);
-                    if (item.value === 0) {
-                      setDomains([]);
-                      setTiming("");
-                    }
-                  }}
-                />
-              ))}
+          {careActionSummary.count > 0 ? (
+            <div className="mt-5 space-y-3">
+              <CareActionsSummary actions={recordedCareActions} editable onOpenRadar={onOpenRadar} />
+              {careActionSummary.has_same_day ? (
+                <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
+                  <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">今日当日のケアは、つらさを感じる前にできた？</div>
+                  {careActionSummary.has_previous_night ? (
+                    <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">昨晩のケアは先回りとして記録済みです。ここでは今日行った分だけ教えてください。</div>
+                  ) : null}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {[
+                      { value: "same_day_before", label: "だいたい前にできた" },
+                      { value: "same_day_after", label: "つらくなってから" },
+                      { value: "same_day_mixed", label: "前後どちらも" },
+                      { value: "same_day_unknown", label: "覚えていない" },
+                    ].map((item) => (
+                      <TogglePill key={item.value} active={sameDayTiming === item.value} onClick={() => chooseSameDayTiming(item.value)}>{item.label}</TogglePill>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-[18px] bg-[#EFF8F4] px-4 py-3 text-[11px] font-bold leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                  昨晩の「明日に向けたケア」なので、先回りケアとして記録します。
+                </div>
+              )}
             </div>
-          </div>
-
-          {care > 0 ? (
+          ) : (
             <>
-              <div className="mt-5 rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-                <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">やったこと</div>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  {RECORD_DOMAIN_OPTIONS.map((item) => (
-                    <ChoiceButton key={item.value} active={domains.includes(item.value)} label={item.label} onClick={() => toggleDomain(item.value)} tone={item.value === "eat" ? "amber" : item.value === "loosen" ? "violet" : "mint"} />
+              <div className="mt-5">
+                <div className="mb-2 text-[11px] font-black tracking-[0.1em] text-slate-400">今日に向けたケアはした？</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {RECORD_CARE_OPTIONS.map((item) => (
+                    <ChoiceButton
+                      key={item.value}
+                      active={care === item.value}
+                      label={item.label}
+                      onClick={() => {
+                        setCare(item.value);
+                        if (item.value === 0) {
+                          setDomains([]);
+                          setTiming("");
+                        }
+                      }}
+                    />
                   ))}
                 </div>
               </div>
-              <div className="mt-3 rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-                <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">いつケアした？</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {RECORD_TIMING_OPTIONS.map((item) => (
-                    <TogglePill key={item.value} active={timing === item.value} onClick={() => setTiming(item.value)}>{item.label}</TogglePill>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : null}
 
-          {condition != null && care != null && classification.mismatch ? (
+              {care > 0 ? (
+                <>
+                  <div className="mt-5 rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
+                    <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">やったこと</div>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {RECORD_DOMAIN_OPTIONS.map((item) => (
+                        <ChoiceButton key={item.value} active={domains.includes(item.value)} label={item.label} onClick={() => toggleDomain(item.value)} tone={item.value === "eat" ? "amber" : item.value === "loosen" ? "violet" : "mint"} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
+                    <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">いつケアした？</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {RECORD_TIMING_OPTIONS.map((item) => (
+                        <TogglePill key={item.value} active={timing === item.value} onClick={() => setTiming(item.value)}>{item.label}</TogglePill>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </>
+          )}
+
+          {condition != null && care != null && shouldAskFactors ? (
             <div className="mt-3 rounded-[22px] bg-[#FFF8EC] p-3.5 ring-1 ring-[#EED8B4]">
-              <div className="text-[11px] font-black text-[#A56C18]">今日は予報と少し違ったようです</div>
-              <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">思い当たることがあれば教えてください。予報ロジックには混ぜず、振り返りの材料にします。</div>
+              <div className="text-[11px] font-black text-[#A56C18]">天気以外で重なったことはある？</div>
+              <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">安定予報でもつらさがあった日の生活条件として残します。予報ロジックには混ぜません。</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RECORD_FACTOR_OPTIONS.map((item) => (
                   <TogglePill key={item.value} active={factors.includes(item.value)} onClick={() => toggleFactor(item.value)}>{item.label}</TogglePill>
@@ -347,7 +500,7 @@ export default function DailyRecordCard({
           >
             {saving ? "記録しています…" : review ? "変更を保存する" : isToday ? "今日を記録する" : "この日を記録する"}
           </Button>
-          {care > 0 && !timing ? <div className="mt-2 text-center text-[10px] font-bold text-slate-400">ケアした時間も選ぶと保存できます</div> : null}
+          {careActionSummary.count === 0 && care > 0 && !timing ? <div className="mt-2 text-center text-[10px] font-bold text-slate-400">ケアした時間も選ぶと保存できます</div> : null}
           {review ? (
             <button type="button" onClick={() => setEditing(false)} className="mt-3 w-full text-center text-[11px] font-black text-slate-400">編集をやめる</button>
           ) : null}

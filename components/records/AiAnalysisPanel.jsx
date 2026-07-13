@@ -4,12 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import RecordsTrendChart from "@/components/records/RecordsTrendChart";
-import ForecastPatternCards from "@/components/records/ForecastPatternCards";
 import {
   PERIOD_OPTIONS,
   buildRecordsSummary,
   deterministicAnalysis,
-  domainLabel,
   getPeriodRange,
 } from "@/lib/records/analysis";
 
@@ -120,7 +118,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
   if (consent?.active) {
     return (
       <div className="rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        AIには氏名・メール・住所を含めず、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・記録・メモ・会話だけを送ります。体質チェックの生回答は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
+        AIには氏名・メール・住所を含めず、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・実際に記録した具体的ケアとタイミング・体調記録・メモ・会話だけを送ります。体質チェックの生回答は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
@@ -130,42 +128,13 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
       <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">記録の一部をAIへ送って分析します</div>
       <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
-        送信するのは、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・体調記録・メモ・会話です。体質チェックの生回答、氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
+        送信するのは、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・実際に記録した具体的ケアとタイミング・体調記録・メモ・会話です。体質チェックの生回答、氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
       </div>
       <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、AI分析を使う"}</Button>
     </div>
   );
 }
 
-function PatternCards({ summary }) {
-  const weather = (summary?.weather_patterns || []).find((item) => item.days >= 2);
-  const care = (summary?.care_patterns || []).find((item) => item.days >= 2);
-  if (!weather && !care) {
-    return (
-      <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[11px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
-        似た天気や同じケアの記録が2回以上集まると、ここに「繰り返し見えた組み合わせ」を表示します。
-      </div>
-    );
-  }
-  return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {weather ? (
-        <div className="rounded-[22px] bg-[#F4FAF7] p-4 ring-1 ring-[#CFE7DE]">
-          <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/70">似た天気の記録</div>
-          <div className="mt-1 text-[13px] font-black text-slate-900">{weather.trigger_label} × {weather.signal_label}</div>
-          <div className="mt-2 text-[10px] font-bold leading-5 text-slate-500">{weather.days}日のうち、穏やか{weather.good_days}日・つらさあり{weather.difficult_days}日。予報より穏やかだった日は{weather.better_days}日です。</div>
-        </div>
-      ) : null}
-      {care ? (
-        <div className="rounded-[22px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
-          <div className="text-[9px] font-black tracking-[0.14em] text-[#A56C18]/75">同じ条件とケア</div>
-          <div className="mt-1 text-[13px] font-black text-slate-900">{care.trigger_label} × {domainLabel(care.domain)}</div>
-          <div className="mt-2 text-[10px] font-bold leading-5 text-slate-500">{care.days}日のうち、穏やか{care.good_days}日・つらさあり{care.difficult_days}日。効果とは断定せず、次も再現するかを見る材料です。</div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 export default function AiAnalysisPanel({
   active,
@@ -464,14 +433,14 @@ export default function AiAnalysisPanel({
           <SummaryTile value={`${summary.recorded_days || 0}日`} label="記録できた日" />
           <SummaryTile value={`${summary.good_days || 0}日`} label="穏やかだった日" />
           <SummaryTile value={`${summary.difficult_days || 0}日`} label="つらさがあった日" tone="rose" />
-          <SummaryTile value={`${summary.care_days || 0}日`} label="先回りケアをした日" tone="amber" />
+          <SummaryTile value={`${summary.care_days || 0}日`} label="ケアをした日" tone="amber" />
         </div>
         <div className="mt-4">
           {rangeLoading ? <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
         </div>
-        <div className="mt-4"><PatternCards summary={summary} /></div>
-        <div className="mt-4"><ForecastPatternCards rows={bundle?.rows || []} onSelectDate={onSelectDate} /></div>
-        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">ケアをした日は元々負担が強かった可能性もあります。4パターンは当たり外れや効果率ではなく、次に比較する条件を見つけるためのものです。</div>
+        <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-4 text-slate-400 ring-1 ring-[#E8F0EB]">
+          体調ゆらぎ度は固定された予報です。記録で予報を変えず、似た予報条件の日をそろえて、ケアと実感の関係を振り返ります。
+        </div>
       </section>
 
       <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
@@ -564,7 +533,7 @@ export default function AiAnalysisPanel({
               </div>
             ) : null}
             <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-              <textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）予報よりつらかった日を一緒に整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+              <textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
               <div className="flex items-center justify-between gap-3 px-1 pb-1">
                 <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
                 <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "AIに聞く"}</Button>
