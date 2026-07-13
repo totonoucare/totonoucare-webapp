@@ -4,6 +4,8 @@
 export {
   IconSpark,
   IconChecklist,
+  IconPencil,
+  IconAnalysis,
   IconWeather,
   IconRadar,
   IconCare,

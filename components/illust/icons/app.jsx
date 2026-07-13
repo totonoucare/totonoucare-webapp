@@ -141,6 +141,17 @@ export function IconMemo({ className = "h-6 w-6", ...props }) {
   );
 }
 
+export function IconPencil({ className = "h-6 w-6", ...props }) {
+  return (
+    <IconShell className={className} {...props}>
+      <path d="M4.5 19.5 5.7 15l9.8-9.8a2.2 2.2 0 0 1 3.1 0l.2.2a2.2 2.2 0 0 1 0 3.1L9 18.3l-4.5 1.2Z" fill="currentColor" fillOpacity="0.1" />
+      <path d="m13.9 6.8 3.3 3.3" />
+      <path d="M5.7 15 9 18.3" />
+      <path d="M4.5 19.5 9 18.3l9.8-9.8a2.2 2.2 0 0 0 0-3.1l-.2-.2a2.2 2.2 0 0 0-3.1 0L5.7 15l-1.2 4.5Z" />
+    </IconShell>
+  );
+}
+
 export function IconAnalysis({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
@@ -245,6 +256,8 @@ export function AppIcon({ name, className = "h-6 w-6", ...props }) {
     point: IconTsubo,
     body: IconBody,
     memo: IconMemo,
+    pencil: IconPencil,
+    edit: IconPencil,
     analysis: IconAnalysis,
     location: IconLocation,
     history: IconHistory,
