@@ -70,30 +70,19 @@ export function getGuideBotFace(signal = 0, mood = "") {
       <path d="M86 42 L90 46 L98 36" fill="none" stroke="#66B9A3" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
     );
   } else if (Number(signal) === 1) {
-    eyes = (
-      <>
-        <ellipse cx="44" cy="52" rx="4.1" ry="3.2" fill={darkGreen} />
-        <ellipse cx="76" cy="52" rx="4.1" ry="3.2" fill={darkGreen} />
-        <circle cx="45.2" cy="50.9" r="1" fill="#ffffff" opacity="0.78" />
-        <circle cx="77.2" cy="50.9" r="1" fill="#ffffff" opacity="0.78" />
-      </>
-    );
-    mouth = <path d="M54 61 Q60 57.8 66 61" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
-    accessory = <path d="M86 39 Q90 44.5 86 49 Q82 44.5 86 39 Z" fill="#90b1e0" opacity="0.78" />;
+    // いたわり：通常と同じ大きさの目を保ち、汗と小さな困り口だけで軽いしんどさを表現する。
+    mouth = <path d="M54 60 C 58 57.5, 62 57.5, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+    accessory = <path d="M86 39 Q90 44.5 86 49 Q82 44.5 86 39 Z" fill="#90b1e0" opacity="0.8" />;
   } else if (Number(signal) === 2) {
+    // 守り：以前の自然な、目を細めたつらそうな表情へ戻す。
     eyes = (
       <>
-        <path d="M39 48 L48 54" fill="none" stroke={darkGreen} strokeWidth="2.8" strokeLinecap="round" />
-        <path d="M81 48 L72 54" fill="none" stroke={darkGreen} strokeWidth="2.8" strokeLinecap="round" />
+        <path d="M40 51 Q44 48 48 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M72 51 Q76 48 80 51" fill="none" stroke={darkGreen} strokeWidth="2.5" strokeLinecap="round" />
       </>
     );
-    mouth = <path d="M53 61 Q56 57.5 60 60 Q64 57.5 67 61" fill="none" stroke={darkGreen} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />;
-    accessory = (
-      <>
-        <path d="M86 38 Q90 44 86 49 Q82 44 86 38 Z" fill="#90b1e0" opacity="0.86" />
-        <path d="M91 52 Q94 56 91 59 Q88 56 91 52 Z" fill="#90b1e0" opacity="0.6" />
-      </>
-    );
+    mouth = <path d="M54 60 C 58 57, 62 57, 66 60" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+    accessory = <path d="M85 40 Q88 45 85 48 Q82 45 85 40 Z" fill="#90b1e0" opacity="0.8" />;
   }
 
   return { eyes, mouth, accessory, blushColor };
