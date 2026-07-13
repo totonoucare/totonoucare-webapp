@@ -893,7 +893,7 @@ export default function RadarPage() {
   const currentCareActionKeys = useMemo(() => new Set(
     safeArray(careActions)
       .filter((item) => item?.source_mode === careSourceMode)
-      .map((item) => item?.item_key)
+      .map((item) => item?.canonical_key || item?.item_key)
       .filter(Boolean)
   ), [careActions, careSourceMode]);
   const careItemsByKind = useMemo(() => {
@@ -911,10 +911,11 @@ export default function RadarPage() {
     : previousNightCareCount;
 
   async function toggleCareAction(item) {
-    if (!item?.item_key || careActionSavingKey) return;
-    const checked = currentCareActionKeys.has(item.item_key);
+    const actionKey = item?.canonical_key || item?.item_key;
+    if (!actionKey || careActionSavingKey) return;
+    const checked = currentCareActionKeys.has(actionKey);
     try {
-      setCareActionSavingKey(item.item_key);
+      setCareActionSavingKey(actionKey);
       setCareActionError("");
       const json = await authedFetch("/api/radar/care-actions", {
         method: "POST",
@@ -923,6 +924,7 @@ export default function RadarPage() {
           source_mode: careSourceMode,
           domain: item.domain,
           item_key: item.item_key,
+          canonical_key: actionKey,
           kind: item.kind,
           label: item.label,
           detail: item.detail,
@@ -944,8 +946,8 @@ export default function RadarPage() {
     if (!item) return null;
     return (
       <CareActionButton
-        checked={currentCareActionKeys.has(item.item_key)}
-        saving={careActionSavingKey === item.item_key}
+        checked={currentCareActionKeys.has(item.canonical_key || item.item_key)}
+        saving={careActionSavingKey === (item.canonical_key || item.item_key)}
         disabled={!careActionsSchemaReady}
         compact={compact}
         uncheckedLabel={item.kind === "food_caution" ? "意識した" : "やってみた"}
