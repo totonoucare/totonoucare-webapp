@@ -6,6 +6,7 @@ import { getRecordsAccess } from "@/lib/records/access";
 import {
   buildRecordsSummary,
   deterministicAnalysis,
+  selectAiDetailRows,
 } from "@/lib/records/analysis";
 import {
   RECORDS_AI_PRODUCT_CONTEXT,
@@ -37,7 +38,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_ANALYSIS_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_analysis_v5_product_context_patterns_2026-07-12";
+const PROMPT_VERSION = "records_analysis_v7_concrete_care_actions_2026-07-13";
 
 function periodKey(value) {
   return String(value || "custom").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "custom";
@@ -61,11 +62,21 @@ function summaryForAi(summary) {
     no_care_difficult_days: summary.no_care_difficult_days,
     before_peak_care_days: summary.before_peak_care_days,
     after_symptom_care_days: summary.after_symptom_care_days,
+    mixed_timing_care_days: summary.mixed_timing_care_days,
+    unknown_timing_care_days: summary.unknown_timing_care_days,
+    previous_night_care_days: summary.previous_night_care_days,
+    same_day_care_days: summary.same_day_care_days,
+    concrete_care_days: summary.concrete_care_days,
+    concrete_care_action_count: summary.concrete_care_action_count,
+    care_timing_outcomes: summary.care_timing_outcomes,
+    care_timing_outcomes_non_exclusive: summary.care_timing_outcomes_non_exclusive,
     domain_counts: summary.domain_counts,
     factor_counts: summary.factor_counts,
     top_difficult_triggers: summary.top_difficult_triggers,
     weather_patterns: (summary.weather_patterns || []).map(({ aligned_days, better_days, worse_days, ...pattern }) => pattern),
     care_patterns: (summary.care_patterns || []).map(({ better_days, worse_days, ...pattern }) => pattern),
+    matched_forecast_comparisons: summary.matched_forecast_comparisons || [],
+    specific_care_patterns: summary.specific_care_patterns || [],
   };
 }
 
@@ -147,9 +158,7 @@ export async function POST(req) {
       period: { key, start, end },
       constitution: buildInterpretedProfileContext(profile),
       facts: summaryForAi(summary),
-      records: summary.rows
-        .filter((row) => row.review)
-        .slice(-120)
+      records: selectAiDetailRows(summary, 40)
         .map((row) => buildAiRecordContext(row, profile)),
     };
     const hash = sourceHash({ prompt_version: PROMPT_VERSION, input });
