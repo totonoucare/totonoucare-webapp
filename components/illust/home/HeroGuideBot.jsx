@@ -70,7 +70,15 @@ export function getGuideBotFace(signal = 0, mood = "") {
       <path d="M86 42 L90 46 L98 36" fill="none" stroke="#66B9A3" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
     );
   } else if (Number(signal) === 1) {
-    mouth = <path d="M54 59 C 58 58, 62 58, 66 59" fill="none" stroke={darkGreen} strokeWidth="2.3" strokeLinecap="round" />;
+    eyes = (
+      <>
+        <ellipse cx="44" cy="51" rx="4.3" ry="3.5" fill={darkGreen} />
+        <ellipse cx="76" cy="51" rx="4.3" ry="3.5" fill={darkGreen} />
+        <path d="M39 44 Q44 41.5 49 44.5" fill="none" stroke={darkGreen} strokeWidth="1.9" strokeLinecap="round" opacity="0.78" />
+        <path d="M71 44.5 Q76 41.5 81 44" fill="none" stroke={darkGreen} strokeWidth="1.9" strokeLinecap="round" opacity="0.78" />
+      </>
+    );
+    mouth = <path d="M54 60 Q60 57.5 66 60" fill="none" stroke={darkGreen} strokeWidth="2.2" strokeLinecap="round" />;
   } else if (Number(signal) === 2) {
     eyes = (
       <>
