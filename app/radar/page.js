@@ -8,6 +8,7 @@ import AppShell, { Module } from "@/components/layout/AppShell";
 import { CoreIllust } from "@/components/illust/core";
 import Button from "@/components/ui/Button";
 import { WeatherIcon } from "@/components/illust/icons/weather";
+import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import {
   IconBolt,
   IconRadar,
@@ -23,6 +24,7 @@ import {
   SYMPTOM_LABELS,
 } from "@/lib/diagnosis/v2/labels";
 import { ForecastGauge } from "./ForecastGauge";
+import { buildDisplayedCareItems } from "@/lib/radar_v1/careActionItems";
 import {
   ForecastDateRail,
   LocationEditor,
@@ -162,6 +164,32 @@ function CareSetNaviBridge({
   );
 }
 
+function CareActionButton({ checked, saving, disabled, onClick, compact = false, uncheckedLabel = "やってみた" }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled || saving}
+      onClick={onClick}
+      className={[
+        "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full font-black ring-1 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60",
+        compact ? "px-3 py-2 text-[10px]" : "px-3.5 py-2.5 text-[11px]",
+        checked
+          ? "bg-[#349B83] text-white ring-[#349B83] shadow-sm"
+          : "bg-white text-[#2F816E] ring-[#BFDCCF] hover:bg-[#F4FAF7]",
+      ].join(" ")}
+    >
+      <span className={[
+        "grid place-items-center rounded-full",
+        compact ? "h-4 w-4 text-[9px]" : "h-5 w-5 text-[10px]",
+        checked ? "bg-white/20" : "bg-[#EAF7F1]",
+      ].join(" ")}>
+        {saving ? "…" : checked ? "✓" : "+"}
+      </span>
+      {checked ? "記録済み" : uncheckedLabel}
+    </button>
+  );
+}
+
 function normalizeRadarTargetDate(date) {
   const { today, tomorrow } = getJstTodayTomorrow();
   return date === today ? today : tomorrow;
@@ -274,7 +302,10 @@ export default function RadarPage() {
   const [tsuboExtraOpen, setTsuboExtraOpen] = useState(false);
   const [foodDetailOpen, setFoodDetailOpen] = useState(false);
   const [activeDateReview, setActiveDateReview] = useState(null);
-
+  const [careActions, setCareActions] = useState([]);
+  const [careActionSavingKey, setCareActionSavingKey] = useState("");
+  const [careActionError, setCareActionError] = useState("");
+  const [careActionsSchemaReady, setCareActionsSchemaReady] = useState(true);
 
   const requestSeqRef = useRef(0);
   const slowLoadingTimerRef = useRef(null);
@@ -681,6 +712,33 @@ export default function RadarPage() {
     };
   }, [session?.access_token, activeTargetDate, selectedIsToday]);
 
+  useEffect(() => {
+    if (!session?.access_token || !activeTargetDate) {
+      setCareActions([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    setCareActionError("");
+    authedFetch(`/api/radar/care-actions?date=${encodeURIComponent(activeTargetDate)}`)
+      .then((json) => {
+        if (cancelled) return;
+        setCareActions(Array.isArray(json?.data?.actions) ? json.data.actions : Array.isArray(json?.actions) ? json.actions : []);
+        const schemaReady = json?.data?.schema_ready !== false && json?.schema_ready !== false;
+        setCareActionsSchemaReady(schemaReady);
+        if (!schemaReady) setCareActionError("ケア記録は現在準備中です。予報とケア内容は通常どおり見られます。");
+      })
+      .catch((actionError) => {
+        if (cancelled) return;
+        setCareActions([]);
+        setCareActionError(actionError?.message || "ケア記録を読み込めませんでした。");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token, activeTargetDate]);
+
   const riskContext = getRiskContext(bundle);
   const savedSymptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomFocus = selectedSymptomKey || savedSymptomFocus || null;
@@ -814,6 +872,90 @@ export default function RadarPage() {
     : !!food.how_to || !!food.avoid || !!food.reason || !!food.lifestyle_tip;
   const pointReasonLoading = false;
   const careTone = CARE_DOMAIN_TONES[careTab] || CARE_DOMAIN_TONES.live;
+  const careSourceMode = selectedIsToday ? "today" : "tomorrow";
+  const displayedCareItems = useMemo(() => buildDisplayedCareItems({
+    lifestylePlan,
+    food,
+    tsuboPoints,
+    sourceMode: careSourceMode,
+  }).map((item) => ({
+    ...item,
+    meta: {
+      ...(item.meta || {}),
+      forecast_id: forecast?.id || null,
+      forecast_signal: forecast?.signal ?? null,
+      forecast_score: forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? null,
+      primary_trigger: careTriggerKey || null,
+      care_plan_id: carePlan?.id || null,
+      care_logic_version: selectedIsToday ? "today_care_rules_v771" : "stored_tomorrow_care_plan_v771",
+    },
+  })), [lifestylePlan, food, tsuboPoints, careSourceMode, forecast, careTriggerKey, carePlan?.id, selectedIsToday]);
+  const currentCareActionKeys = useMemo(() => new Set(
+    safeArray(careActions)
+      .filter((item) => item?.source_mode === careSourceMode)
+      .map((item) => item?.item_key)
+      .filter(Boolean)
+  ), [careActions, careSourceMode]);
+  const careItemsByKind = useMemo(() => {
+    const map = new Map();
+    displayedCareItems.forEach((item) => {
+      if (!map.has(item.kind)) map.set(item.kind, []);
+      map.get(item.kind).push(item);
+    });
+    return map;
+  }, [displayedCareItems]);
+  const previousNightCareCount = safeArray(careActions).filter((item) => item?.source_mode === "tomorrow").length;
+  const sameDayCareCount = safeArray(careActions).filter((item) => item?.source_mode === "today").length;
+  const checkedCareCount = selectedIsToday
+    ? previousNightCareCount + sameDayCareCount
+    : previousNightCareCount;
+
+  async function toggleCareAction(item) {
+    if (!item?.item_key || careActionSavingKey) return;
+    const checked = currentCareActionKeys.has(item.item_key);
+    try {
+      setCareActionSavingKey(item.item_key);
+      setCareActionError("");
+      const json = await authedFetch("/api/radar/care-actions", {
+        method: "POST",
+        body: JSON.stringify({
+          target_date: activeTargetDate,
+          source_mode: careSourceMode,
+          domain: item.domain,
+          item_key: item.item_key,
+          kind: item.kind,
+          label: item.label,
+          detail: item.detail,
+          item_snapshot: item,
+          checked: !checked,
+        }),
+      });
+      const nextActions = json?.data?.actions || json?.actions || [];
+      setCareActions(Array.isArray(nextActions) ? nextActions : []);
+      setCareActionsSchemaReady(json?.data?.schema_ready !== false && json?.schema_ready !== false);
+    } catch (actionError) {
+      setCareActionError(actionError?.message || "ケアを記録できませんでした。");
+    } finally {
+      setCareActionSavingKey("");
+    }
+  }
+
+  function actionButtonFor(item, { compact = false, stopPropagation = false } = {}) {
+    if (!item) return null;
+    return (
+      <CareActionButton
+        checked={currentCareActionKeys.has(item.item_key)}
+        saving={careActionSavingKey === item.item_key}
+        disabled={!careActionsSchemaReady}
+        compact={compact}
+        uncheckedLabel={item.kind === "food_caution" ? "意識した" : "やってみた"}
+        onClick={(event) => {
+          if (stopPropagation) event?.stopPropagation?.();
+          toggleCareAction(item);
+        }}
+      />
+    );
+  }
 
   useEffect(() => {
     if (!selectedPoint) return;
@@ -1445,6 +1587,35 @@ export default function RadarPage() {
               </div>
             </div>
 
+            <div className="mt-4 flex items-end gap-3 rounded-[24px] bg-[#F4FAF7] px-3.5 py-3 ring-1 ring-[#CFE7DE]">
+              <GuideBotAvatar
+                signal={forecast?.signal ?? 0}
+                mood={checkedCareCount > 0 ? "complete" : "normal"}
+                className="h-[72px] w-[72px] shrink-0"
+              />
+              <div className="relative mb-1 min-w-0 flex-1 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
+                <span className="absolute -left-1.5 bottom-5 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
+                <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビ</div>
+                <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
+                  {selectedIsToday
+                    ? sameDayCareCount > 0
+                      ? `${checkedCareCount}件を今日に向けたケアとして記録しています（昨晩${previousNightCareCount}件・今日${sameDayCareCount}件）。全部やらなくても大丈夫です。`
+                      : previousNightCareCount > 0
+                        ? `昨晩のケア${previousNightCareCount}件は、今日への先回りとして記録済みです。今日できたものも「やってみた」で追加できます。`
+                        : "実際に試したケアだけ「やってみた」を押すと、今夜の振り返りに残せます。"
+                    : checkedCareCount > 0
+                      ? `${checkedCareCount}件を明日に向けた先回りケアとして記録しました。全部やらなくても大丈夫です。`
+                      : "今夜できたケアを押すと、明日に向けた先回りケアとして記録できます。"}
+                </div>
+              </div>
+            </div>
+
+            {careActionError ? (
+              <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-4 py-3 text-[10px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+                {careActionError}
+              </div>
+            ) : null}
+
             <div
               className={[
                 "mt-4 rounded-[24px] px-4 py-4 ring-1",
@@ -1542,6 +1713,10 @@ export default function RadarPage() {
                       </svg>
                     </div>
 
+                    <div className="mt-3 flex justify-end">
+                      {actionButtonFor(careItemsByKind.get("tsubo_point")?.[0], { stopPropagation: true })}
+                    </div>
+
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span className="rounded-full bg-white/80 px-3 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#E8DFEB]">
                         {getTsuboRoleLabel(primaryTsubo, 0)}
@@ -1627,6 +1802,10 @@ export default function RadarPage() {
                                   {getTsuboRoleLabel(p, i + 1)}
                                 </div>
                               </div>
+                            </div>
+
+                            <div className="mt-3 flex justify-end pr-8">
+                              {actionButtonFor(careItemsByKind.get("tsubo_point")?.[i + 1], { compact: true, stopPropagation: true })}
                             </div>
 
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300">
@@ -1729,15 +1908,26 @@ export default function RadarPage() {
                             </div>
 
                             {safeArray(card.items).length > 0 ? (
-                              <div className="mt-3 flex flex-wrap gap-2 pl-11">
-                                {safeArray(card.items).map((item, itemIdx) => (
-                                  <span
-                                    key={`${card.key}-${item}-${itemIdx}`}
-                                    className="rounded-full bg-[#FFF5E6] px-2.5 py-1 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
-                                  >
-                                    {item}
-                                  </span>
-                                ))}
+                              <div className="mt-3 space-y-2 pl-11">
+                                {safeArray(card.items).map((item, itemIdx) => {
+                                  const itemAction = card.key === "caution"
+                                    ? null
+                                    : careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIdx];
+                                  return (
+                                    <div
+                                      key={`${card.key}-${item}-${itemIdx}`}
+                                      className="flex items-center justify-between gap-2 rounded-[15px] bg-[#FFF5E6] px-3 py-2 text-[11px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
+                                    >
+                                      <span className="min-w-0 flex-1 leading-5">{item}</span>
+                                      {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
+                            {card.key === "caution" || safeArray(card.items).length === 0 ? (
+                              <div className="mt-3 flex justify-end">
+                                {actionButtonFor(careItemsByKind.get(`food_${card.key || "card"}`)?.[0], { compact: true })}
                               </div>
                             ) : null}
                           </div>
@@ -1751,16 +1941,23 @@ export default function RadarPage() {
                       <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                         {food.examples_label || "例"}
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-2 space-y-2">
                         {foodExamples.map((x, idx) => (
-                          <span
+                          <div
                             key={`${x}-${idx}`}
-                            className="rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#F1E5D1]"
+                            className="flex items-center justify-between gap-2 rounded-[15px] bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#F1E5D1]"
                           >
-                            {x}
-                          </span>
+                            <span className="min-w-0 flex-1 leading-5">{x}</span>
+                            {actionButtonFor(careItemsByKind.get("food_example_item")?.[idx], { compact: true })}
+                          </div>
                         ))}
                       </div>
+                    </div>
+                  ) : null}
+
+                  {!hasFoodActionCards && foodExamples.length === 0 ? (
+                    <div className="mt-3 flex justify-end">
+                      {actionButtonFor(careItemsByKind.get("food_plan")?.[0], { compact: true })}
                     </div>
                   ) : null}
 
@@ -1887,12 +2084,17 @@ export default function RadarPage() {
                     </div>
                     <div className="mt-3 space-y-2">
                       {safeArray(lifestylePlan.steps).map((step, idx) => (
-                        <div key={`${idx}-${step}`} className="flex items-start gap-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
-                          <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">
-                            {idx + 1}
+                        <div key={`${idx}-${step}`} className="rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
+                          <div className="flex items-start gap-3">
+                            <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">
+                              {idx + 1}
+                            </div>
+                            <div className="min-w-0 flex-1 text-[13px] font-extrabold leading-6 text-slate-700">
+                              {step}
+                            </div>
                           </div>
-                          <div className="text-[13px] font-extrabold leading-6 text-slate-700">
-                            {step}
+                          <div className="mt-3 flex justify-end">
+                            {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[idx], { compact: true })}
                           </div>
                         </div>
                       ))}

@@ -2633,6 +2633,7 @@ export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explic
     secondaryKey,
     signal,
     symptomFocus,
+    subLabels: riskContext?.constitution_context?.sub_labels || [],
     fallbackTriggerKey,
   });
 }
