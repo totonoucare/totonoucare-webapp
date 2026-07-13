@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../lib/records/aiPrompts.js", import.meta.url), "utf8");
 const prompts = await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+const contextSource = await readFile(new URL("../lib/records/aiContext.js", import.meta.url), "utf8");
 
 test("urgent phrases are caught before an external AI call", () => {
   assert.equal(prompts.isUrgentText("急に強い胸の痛みが出て息ができない"), true);
@@ -107,4 +108,18 @@ test("AI prompts keep AI questions separate from user-to-AI suggestion pills", (
   assert.match(prompts.ANALYSIS_INSTRUCTIONS, /ユーザーがAIへ聞くための質問文/);
   assert.match(prompts.CHAT_INSTRUCTIONS, /AIからユーザーへの質問は必ずfollow_up\.question/);
   assert.match(prompts.CHAT_INSTRUCTIONS, /follow_upが必要な返答では空配列/);
+});
+
+test("AI instructions understand forecast modes as preparation rather than symptom predictions", () => {
+  assert.match(prompts.ANALYSIS_INSTRUCTIONS, /症状の予測値ではなく備えの目安/);
+  assert.match(prompts.CHAT_INSTRUCTIONS, /的中率として扱わない/);
+  assert.match(prompts.ANALYSIS_INSTRUCTIONS, /displayed_care/);
+});
+
+test("product context documents constitution, weather, forecast, and care without raw answers", () => {
+  assert.match(contextSource, /constitution_model/);
+  assert.match(contextSource, /weather_model/);
+  assert.match(contextSource, /forecast_modes/);
+  assert.match(contextSource, /care_model/);
+  assert.match(contextSource, /without_raw_answers/);
 });
