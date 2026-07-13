@@ -15,7 +15,26 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const runtime = "nodejs";
 
-const EXTENDED_SELECT = [
+const INTEGRITY_SELECT = [
+  "id",
+  "user_id",
+  "target_date",
+  "condition_level",
+  "prevent_level",
+  "manual_prevent_level",
+  "note",
+  "action_tags",
+  "care_domains",
+  "manual_care_domains",
+  "care_timing",
+  "manual_care_timing",
+  "context_factors",
+  "forecast_snapshot",
+  "record_version",
+  "created_at",
+  "updated_at",
+].join(",");
+const V3_SELECT = [
   "id",
   "user_id",
   "target_date",
@@ -54,12 +73,22 @@ function safeList(value, allowed, limit) {
 async function findLatestReview(userId, targetDate) {
   let result = await supabaseServer
     .from("radar_reviews")
-    .select(EXTENDED_SELECT)
+    .select(INTEGRITY_SELECT)
     .eq("user_id", userId)
     .eq("target_date", targetDate)
     .order("updated_at", { ascending: false })
     .limit(1);
-  if (!result.error) return { row: result.data?.[0] || null, schemaReady: true };
+  if (!result.error) return { row: result.data?.[0] || null, schemaReady: true, integrityReady: true };
+  if (!isMissingRecordsSchemaError(result.error)) throw result.error;
+
+  result = await supabaseServer
+    .from("radar_reviews")
+    .select(V3_SELECT)
+    .eq("user_id", userId)
+    .eq("target_date", targetDate)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+  if (!result.error) return { row: result.data?.[0] || null, schemaReady: true, integrityReady: false };
   if (!isMissingRecordsSchemaError(result.error)) throw result.error;
 
   result = await supabaseServer
@@ -70,7 +99,7 @@ async function findLatestReview(userId, targetDate) {
     .order("created_at", { ascending: false })
     .limit(1);
   if (result.error) throw result.error;
-  return { row: result.data?.[0] || null, schemaReady: false };
+  return { row: result.data?.[0] || null, schemaReady: false, integrityReady: false };
 }
 
 async function findForecast(userId, targetDate) {
@@ -85,12 +114,30 @@ async function findForecast(userId, targetDate) {
   return data?.[0] || null;
 }
 
-function responseReview(row) {
+function responseReview(row, actions = []) {
   if (!row) return null;
+  const hasIntegrityColumns = row.manual_prevent_level != null;
+  const v3AutoOnly = !hasIntegrityColumns
+    && Number(row.record_version || 1) === 3
+    && actions.length > 0
+    && Number(row.prevent_level || 0) === 1;
+  const manualLevel = hasIntegrityColumns
+    ? Number(row.manual_prevent_level || 0)
+    : v3AutoOnly
+      ? 0
+      : Number(row.prevent_level || 0);
   return {
     ...row,
+    prevent_level: Number(row.prevent_level || 0),
+    manual_prevent_level: manualLevel,
     care_domains: Array.isArray(row.care_domains) ? row.care_domains : [],
+    manual_care_domains: hasIntegrityColumns && Array.isArray(row.manual_care_domains)
+      ? row.manual_care_domains
+      : (manualLevel > 0 && !v3AutoOnly && Array.isArray(row.care_domains) ? row.care_domains : []),
     care_timing: row.care_timing || "",
+    manual_care_timing: hasIntegrityColumns
+      ? (row.manual_care_timing || "")
+      : (manualLevel > 0 && !v3AutoOnly ? row.care_timing || "" : ""),
     context_factors: Array.isArray(row.context_factors) ? row.context_factors : [],
     updated_at: row.updated_at || row.created_at || null,
   };
@@ -100,12 +147,12 @@ function actionDomains(actions) {
   return Array.from(new Set((actions || []).map((item) => item?.domain).filter((item) => DOMAIN_VALUES.has(item))));
 }
 
-function deriveCareTiming(actions, submittedTiming = "") {
+function deriveActionTiming(actions) {
   const items = Array.isArray(actions) ? actions : [];
-  if (!items.length) return TIMING_VALUES.has(submittedTiming) ? submittedTiming : "";
+  if (!items.length) return "";
   const hasPreviousNight = items.some((item) => item?.source_mode === "tomorrow");
   const sameDay = items.filter((item) => item?.source_mode === "today");
-  if (!sameDay.length) return hasPreviousNight ? "before_peak" : (TIMING_VALUES.has(submittedTiming) ? submittedTiming : "");
+  if (!sameDay.length) return hasPreviousNight ? "before_peak" : "";
   const relations = new Set(sameDay.map((item) => item?.timing_relation || "same_day_unknown"));
   if (relations.has("same_day_unknown")) return "unknown";
   if (relations.has("same_day_mixed")) return "mixed";
@@ -114,7 +161,17 @@ function deriveCareTiming(actions, submittedTiming = "") {
   if (hasBefore && hasAfter) return "mixed";
   if (hasAfter) return "after_symptom";
   if (hasBefore) return "before_peak";
-  return TIMING_VALUES.has(submittedTiming) ? submittedTiming : "unknown";
+  return "unknown";
+}
+
+function combineCareTiming(manualTiming, actionTiming, manualLevel) {
+  const manual = manualLevel > 0 && TIMING_VALUES.has(manualTiming) ? manualTiming : "";
+  if (!manual) return actionTiming || "";
+  if (!actionTiming) return manual;
+  if (manual === actionTiming) return manual;
+  if (manual === "unknown" || actionTiming === "unknown") return "unknown";
+  if (manual === "mixed" || actionTiming === "mixed") return "mixed";
+  return "mixed";
 }
 
 async function updateSameDayActionTiming(userId, targetDate, timingRelation) {
@@ -140,7 +197,7 @@ export async function GET(req) {
       findForecast(user.id, targetDate),
       loadCareActionsForDate(user.id, targetDate),
     ]);
-    const review = responseReview(reviewResult.row);
+    const review = responseReview(reviewResult.row, careActionResult.actions);
     const forecast = review?.forecast_snapshot || (currentForecast ? snapshotFromForecast(currentForecast, "current_forecast") : null);
     return NextResponse.json({
       data: {
@@ -149,6 +206,7 @@ export async function GET(req) {
         forecast,
         care_actions: careActionResult.actions,
         schema_ready: reviewResult.schemaReady,
+        care_integrity_schema_ready: reviewResult.integrityReady,
         care_actions_schema_ready: careActionResult.schemaReady,
       },
     });
@@ -166,7 +224,7 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.date);
     const conditionLevel = Number(body?.condition_level);
-    const preventLevel = Number(body?.prevent_level);
+    const manualPreventLevel = Number(body?.manual_prevent_level ?? body?.prevent_level);
     const today = jstDateString(new Date());
     const earliest = addDaysYmd(today, -(EDIT_LOOKBACK_DAYS - 1));
 
@@ -180,15 +238,26 @@ export async function POST(req) {
     if (![0, 1, 2].includes(conditionLevel)) {
       return NextResponse.json({ error: "condition_level invalid" }, { status: 400 });
     }
-    if (![0, 1, 2].includes(preventLevel)) {
-      return NextResponse.json({ error: "prevent_level invalid" }, { status: 400 });
+    if (![0, 1, 2].includes(manualPreventLevel)) {
+      return NextResponse.json({ error: "manual_prevent_level invalid" }, { status: 400 });
     }
 
-    const submittedDomains = preventLevel > 0 ? safeList(body?.care_domains, DOMAIN_VALUES, 3) : [];
-    const submittedTiming = preventLevel > 0 && TIMING_VALUES.has(body?.care_timing) ? body.care_timing : "";
+    const manualDomains = manualPreventLevel > 0
+      ? safeList(body?.manual_care_domains ?? body?.care_domains, DOMAIN_VALUES, 3)
+      : [];
+    const manualTiming = manualPreventLevel > 0 && TIMING_VALUES.has(body?.manual_care_timing ?? body?.care_timing)
+      ? (body.manual_care_timing ?? body.care_timing)
+      : "";
     const sameDayTiming = SAME_DAY_TIMING_VALUES.has(body?.same_day_timing) ? body.same_day_timing : "";
     let contextFactors = safeList(body?.context_factors, FACTOR_VALUES, 6);
     if (contextFactors.includes("none")) contextFactors = ["none"];
+
+    if (manualPreventLevel > 0 && !manualDomains.length) {
+      return NextResponse.json({ error: "Daily Care以外のケアをした場合は種類を選んでください" }, { status: 400 });
+    }
+    if (manualPreventLevel > 0 && !manualTiming) {
+      return NextResponse.json({ error: "Daily Care以外のケアをした時間を選んでください" }, { status: 400 });
+    }
 
     const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : "";
     if (sameDayTiming) await updateSameDayActionTiming(user.id, targetDate, sameDayTiming);
@@ -197,33 +266,36 @@ export async function POST(req) {
       findForecast(user.id, targetDate),
       loadCareActionsForDate(user.id, targetDate),
     ]);
+    if (!existingResult.integrityReady) {
+      return NextResponse.json(
+        { error: "v7.71.2のケア記録整合性migrationを先に適用してください", code: "care_integrity_schema_required" },
+        { status: 503 }
+      );
+    }
+
     const recordedActionDomains = actionDomains(careActionResult.actions);
-    const effectivePreventLevel = careActionResult.actions.length > 0
-      ? Math.max(1, preventLevel)
-      : preventLevel;
-    const careDomains = effectivePreventLevel > 0
-      ? Array.from(new Set([...recordedActionDomains, ...submittedDomains])).slice(0, 3)
+    const actionTiming = deriveActionTiming(careActionResult.actions);
+    const aggregatePreventLevel = careActionResult.actions.length > 0
+      ? Math.max(1, manualPreventLevel)
+      : manualPreventLevel;
+    const careDomains = aggregatePreventLevel > 0
+      ? Array.from(new Set([...recordedActionDomains, ...manualDomains])).slice(0, 3)
       : [];
-    const careTiming = effectivePreventLevel > 0
-      ? deriveCareTiming(careActionResult.actions, submittedTiming)
+    const careTiming = aggregatePreventLevel > 0
+      ? combineCareTiming(manualTiming, actionTiming, manualPreventLevel)
       : "";
-    if (effectivePreventLevel > 0 && !careDomains.length) {
-      return NextResponse.json({ error: "ケアをした場合は種類を選んでください" }, { status: 400 });
-    }
-    if (effectivePreventLevel > 0 && !careTiming) {
-      return NextResponse.json({ error: "ケアをした時間を選んでください" }, { status: 400 });
-    }
+
     const snapshot = existingResult.row?.forecast_snapshot
       || (currentForecast ? snapshotFromForecast(currentForecast, "record_save") : null);
     const preview = classifyRecord({
       date: targetDate,
       forecast: snapshot,
       care_actions: careActionResult.actions,
-      review: { condition_level: conditionLevel, prevent_level: effectivePreventLevel },
+      review: { condition_level: conditionLevel, prevent_level: aggregatePreventLevel },
     });
     if (forecastPatternKey({
       forecast: snapshot,
-      review: { condition_level: conditionLevel, prevent_level: effectivePreventLevel },
+      review: { condition_level: conditionLevel, prevent_level: aggregatePreventLevel },
     }) !== "stable_difficult") contextFactors = [];
 
     const actionTags = buildActionTags({
@@ -234,69 +306,55 @@ export async function POST(req) {
     });
     const extendedPayload = {
       condition_level: conditionLevel,
-      prevent_level: effectivePreventLevel,
+      prevent_level: aggregatePreventLevel,
+      manual_prevent_level: manualPreventLevel,
       action_tags: actionTags,
       care_domains: careDomains,
+      manual_care_domains: manualDomains,
       care_timing: careTiming || null,
+      manual_care_timing: manualTiming || null,
       context_factors: contextFactors,
       note: note || null,
-      record_version: 3,
+      record_version: 4,
       ...(existingResult.row?.forecast_snapshot || !snapshot ? {} : { forecast_snapshot: snapshot }),
     };
-    const legacyPayload = {
-      condition_level: conditionLevel,
-      prevent_level: effectivePreventLevel,
-      action_tags: actionTags,
-      note: note || null,
-    };
 
-    async function write(payload, select) {
+    async function write(payload) {
       if (existingResult.row?.id) {
         return supabaseServer
           .from("radar_reviews")
           .update(payload)
           .eq("id", existingResult.row.id)
           .eq("user_id", user.id)
-          .select(select)
+          .select(INTEGRITY_SELECT)
           .single();
       }
       return supabaseServer
         .from("radar_reviews")
-        .insert({ user_id: user.id, target_date: targetDate, ...payload })
-        .select(select)
+        .insert({ user_id: user.id, target_date: targetDate, ...payload, ...(snapshot ? { forecast_snapshot: snapshot } : {}) })
+        .select(INTEGRITY_SELECT)
         .single();
     }
 
-    let written = await write(
-      existingResult.schemaReady
-        ? { ...extendedPayload, ...(!existingResult.row?.id && snapshot ? { forecast_snapshot: snapshot } : {}) }
-        : legacyPayload,
-      existingResult.schemaReady ? EXTENDED_SELECT : LEGACY_SELECT
-    );
-    let schemaReady = existingResult.schemaReady;
-    if (written.error && isMissingRecordsSchemaError(written.error)) {
-      written = await write(legacyPayload, LEGACY_SELECT);
-      schemaReady = false;
-    }
+    const written = await write(extendedPayload);
     if (written.error) throw written.error;
 
-    if (schemaReady) {
-      const { error: eventError } = await supabaseServer.from("records_feature_events").insert({
-        user_id: user.id,
-        event_type: "record_saved",
-        metadata: { date: targetDate, comparison: preview.comparison, edited: Boolean(existingResult.row?.id) },
-      });
-      if (eventError) console.warn("record_saved metric skipped:", eventError.message);
-    }
+    const { error: eventError } = await supabaseServer.from("records_feature_events").insert({
+      user_id: user.id,
+      event_type: "record_saved",
+      metadata: { date: targetDate, comparison: preview.comparison, edited: Boolean(existingResult.row?.id) },
+    });
+    if (eventError) console.warn("record_saved metric skipped:", eventError.message);
 
-    const review = responseReview(written.data);
+    const review = responseReview(written.data, careActionResult.actions);
     return NextResponse.json({
       data: {
         date: targetDate,
         review,
         forecast: review?.forecast_snapshot || snapshot,
         care_actions: careActionResult.actions,
-        schema_ready: schemaReady,
+        schema_ready: true,
+        care_integrity_schema_ready: true,
         care_actions_schema_ready: careActionResult.schemaReady,
       },
     });
