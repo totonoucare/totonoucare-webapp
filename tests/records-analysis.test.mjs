@@ -8,7 +8,7 @@ const analysisModule = await import(`data:text/javascript;base64,${Buffer.from(a
 const {
   buildActionTags,
   buildChartPoints,
-  buildForecastActualMapPoints,
+  buildForecastPatternGroups,
   buildRecordsSummary,
   classifyRecord,
   reviewCareDomains,
@@ -17,7 +17,7 @@ const {
   snapshotFromForecast,
 } = analysisModule;
 
-function row({ date = "2026-07-01", signal, condition = 2, prevent = 0, domains = [], timing = "", factors = [] } = {}) {
+function row({ date = "2026-07-01", signal, score = null, condition = 2, prevent = 0, domains = [], timing = "", factors = [], careActions = [] } = {}) {
   return {
     date,
     forecast: signal == null
@@ -26,9 +26,10 @@ function row({ date = "2026-07-01", signal, condition = 2, prevent = 0, domains 
           id: `forecast-${date}`,
           target_date: date,
           signal,
-          score_precise_0_10: [1, 5, 9][signal],
+          score_precise_0_10: score == null ? [1, 5, 9][signal] : score,
           personal_main_trigger_exact: "damp",
         },
+    care_actions: careActions,
     review: {
       condition_level: condition,
       prevent_level: prevent,
@@ -105,6 +106,10 @@ test("summary counts comparison, care, timing, and missing forecast separately",
   assert.equal(summary.better_than_forecast_days, 1);
   assert.equal(summary.worse_than_forecast_days, 1);
   assert.equal(summary.aligned_days, 1);
+  assert.equal(summary.attention_good_days, 1);
+  assert.equal(summary.attention_difficult_days, 1);
+  assert.equal(summary.stable_difficult_days, 1);
+  assert.equal(summary.stable_good_days, 0);
   assert.equal(summary.care_days, 2);
   assert.equal(summary.before_peak_care_days, 1);
   assert.equal(summary.after_symptom_care_days, 1);
@@ -125,16 +130,99 @@ test("long periods aggregate by ISO week without pretending one day represents t
   assert.equal(points[0].end_date, "2026-07-08");
   assert.equal(points[0].is_aggregate, true);
   assert.equal(points[0].recorded_count, 2);
+  assert.deepEqual(points[0].actual_counts, { good: 1, mild: 1, hard: 0 });
+  assert.equal(points[0].forecast_severity, 2);
+  assert.equal(points[0].forecast_min, 50);
+  assert.equal(points[0].forecast_max, 90);
+  assert.equal(points[0].exact_trigger, "damp");
+  assert.equal(points[0].pattern_counts.attention_good, 1);
+  assert.equal(points[0].pattern_counts.attention_difficult, 1);
 });
 
-test("forecast/actual map excludes records without a forecast", () => {
-  const points = buildForecastActualMapPoints([
+test("four reflection patterns exclude records without a forecast", () => {
+  const groups = buildForecastPatternGroups([
     row({ date: "2026-07-01", signal: 2, condition: 2, prevent: 2, domains: ["live"] }),
     row({ date: "2026-07-02", signal: undefined, condition: 0 }),
   ]);
-  assert.equal(points.length, 1);
-  assert.equal(points[0].date, "2026-07-01");
-  assert.equal(points[0].care_done, true);
+  const attentionGood = groups.find((group) => group.key === "attention_good");
+  assert.equal(groups.reduce((sum, group) => sum + group.days, 0), 1);
+  assert.equal(attentionGood.days, 1);
+  assert.equal(attentionGood.care_days, 1);
+  assert.equal(attentionGood.points[0].date, "2026-07-01");
+});
+
+test("all nine forecast/actual combinations collapse into four useful reflection patterns", () => {
+  const conditions = [2, 1, 0];
+  const rows = [];
+  for (let forecastSeverity = 0; forecastSeverity <= 2; forecastSeverity += 1) {
+    for (let actualSeverity = 0; actualSeverity <= 2; actualSeverity += 1) {
+      rows.push(row({
+        date: `2026-07-${String(forecastSeverity * 3 + actualSeverity + 1).padStart(2, "0")}`,
+        signal: forecastSeverity,
+        condition: conditions[actualSeverity],
+      }));
+    }
+  }
+
+  const groups = buildForecastPatternGroups(rows);
+  assert.deepEqual(
+    Object.fromEntries(groups.map((group) => [group.key, group.days])),
+    {
+      attention_good: 2,
+      attention_difficult: 4,
+      stable_good: 1,
+      stable_difficult: 2,
+    }
+  );
+});
+
+
+test("matched forecast comparisons keep similar trigger and score conditions together", () => {
+  const summary = buildRecordsSummary([
+    row({ date: "2026-07-01", signal: 1, score: 5.1, condition: 2, prevent: 2, domains: ["eat"], timing: "before_peak" }),
+    row({ date: "2026-07-02", signal: 1, score: 5.4, condition: 1, prevent: 1, domains: ["eat"], timing: "after_symptom" }),
+    row({ date: "2026-07-03", signal: 1, score: 5.2, condition: 1, prevent: 0 }),
+    row({ date: "2026-07-04", signal: 1, score: 5.8, condition: 0, prevent: 0 }),
+  ]);
+
+  const comparison = summary.matched_forecast_comparisons.find((item) => item.exact_trigger === "damp");
+  assert.equal(comparison.score_band.label, "50〜59");
+  assert.equal(comparison.signal_label, "いたわり");
+  assert.equal(comparison.comparison_status, "early_comparison");
+  assert.equal(comparison.care_days, 2);
+  assert.equal(comparison.no_care_days, 2);
+  assert.deepEqual(comparison.care_actual_counts, { good: 1, mild: 1, hard: 0 });
+  assert.deepEqual(comparison.no_care_actual_counts, { good: 0, mild: 1, hard: 1 });
+  assert.equal(comparison.domain_outcomes[0].domain, "eat");
+  assert.equal(comparison.before_peak_care_days, 1);
+  assert.deepEqual(comparison.timing_outcomes.before_peak.actual_counts, { good: 1, mild: 0, hard: 0 });
+  assert.deepEqual(comparison.timing_outcomes.after_symptom.actual_counts, { good: 0, mild: 1, hard: 0 });
+  assert.equal(comparison.evidence_level, "small_clue");
+});
+
+test("concrete care actions are counted by target day and keep previous-night provenance", () => {
+  const action = {
+    source_mode: "tomorrow",
+    domain: "loosen",
+    item_key: "loosen:point:0:abc",
+    kind: "tsubo_point",
+    label: "内関のツボケア",
+    timing_relation: "previous_night",
+    checked_at: "2026-07-01T12:00:00.000Z",
+  };
+  const summary = buildRecordsSummary([
+    row({ date: "2026-07-02", signal: 1, score: 5.6, condition: 2, prevent: 0, careActions: [action] }),
+    row({ date: "2026-07-03", signal: 1, score: 5.8, condition: 1, prevent: 0 }),
+  ]);
+
+  assert.equal(summary.care_days, 1);
+  assert.equal(summary.concrete_care_days, 1);
+  assert.equal(summary.concrete_care_action_count, 1);
+  assert.equal(summary.previous_night_care_days, 1);
+  assert.equal(summary.before_peak_care_days, 1);
+  assert.equal(summary.specific_care_patterns[0].label, "内関のツボケア");
+  assert.equal(summary.specific_care_patterns[0].previous_night_days, 1);
+  assert.deepEqual(summary.specific_care_patterns[0].actual_counts, { good: 1, mild: 0, hard: 0 });
 });
 
 test("forecast snapshot carries the exact trigger and the forecast date", () => {
@@ -153,4 +241,5 @@ test("forecast snapshot carries the exact trigger and the forecast date", () => 
   assert.equal(snapshot.personal_main_trigger_exact, "damp");
   assert.equal(snapshot.score_precise_0_10, 8.25);
   assert.equal(snapshot.snapshot_source, "record_save");
+  assert.equal(snapshot.version, 2);
 });
