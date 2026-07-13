@@ -131,3 +131,11 @@ DB migrationが必要。詳細:
 docs/DAILY_CARE_ACTIONS_V771.md
 supabase/migrations/20260713_create_radar_care_actions_v771.sql
 ```
+
+## v7.71.1 表情・文言の調整
+
+- いたわり予報のケアナビ表情を、怒りではなく少し疲れた表情へ変更
+- 予報ページ右上の記録・分析アイコンを拡大
+- 記録分析グラフの絞り込み文言を明確化
+- 専門家相談ページの開発都合語をユーザー向け表現へ整理
+- DB migration 追加なし
