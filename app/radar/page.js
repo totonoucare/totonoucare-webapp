@@ -120,8 +120,15 @@ function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorde
         onClick={onOpenRecords}
         className="my-1 flex w-[82px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-2 py-2 text-center text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#F4FAF7]"
       >
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-[#EAF7F1] text-[16px] font-black leading-none ring-1 ring-[#CFE7DE]">
-          {recorded ? "✓" : "✎"}
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-[#EAF7F1] font-black leading-none ring-1 ring-[#CFE7DE]">
+          {recorded ? (
+            <span className="text-[18px] leading-none">✓</span>
+          ) : (
+            <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none" aria-hidden="true">
+              <path d="M5 19l3.7-.8L18.8 8.1a1.8 1.8 0 0 0 0-2.6l-.3-.3a1.8 1.8 0 0 0-2.6 0L5.8 15.3 5 19Z" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="m14.5 6.6 2.9 2.9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          )}
         </span>
         <span className="mt-1 text-[10px] font-black leading-4">
           {isToday ? (recorded ? "記録済み ✓" : "今日を記録") : "記録・分析"}
