@@ -22,7 +22,7 @@ export async function GET(req) {
     return NextResponse.json({ data: { interested: data?.status === "interested" } });
   } catch (error) {
     console.error("/api/records/expert-interest GET error:", error);
-    return NextResponse.json({ error: "需要確認を読み込めませんでした" }, { status: 503 });
+    return NextResponse.json({ error: "お知らせ希望を読み込めませんでした" }, { status: 503 });
   }
 }
 
