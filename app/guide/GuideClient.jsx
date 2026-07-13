@@ -1,4 +1,3 @@
-// app/guide/GuideClient.jsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -10,6 +9,7 @@ import {
   IconChecklist,
   IconWeather,
   IconRadar,
+  IconCare,
   IconCalendar,
   IconConstitution,
   IconBodyLine,
@@ -17,27 +17,24 @@ import {
   IconBowl,
 } from "@/components/illust/icons/guide";
 
-/* -----------------------------
- * ピル型タブ UI
- * ---------------------------- */
 function SegmentedTabs({ items, active, onChange }) {
   return (
     <div className="flex rounded-[20px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
-      {items.map((it) => {
-        const isActive = it.key === active;
+      {items.map((item) => {
+        const isActive = item.key === active;
         return (
           <button
-            key={it.key}
+            key={item.key}
             type="button"
-            onClick={() => onChange(it.key)}
+            onClick={() => onChange(item.key)}
             className={[
-              "flex-1 h-[38px] rounded-[16px] text-[12px] font-black tracking-tight transition-all duration-200",
+              "min-w-0 flex-1 rounded-[16px] px-1.5 py-2.5 text-[10px] font-black leading-4 tracking-tight transition-all duration-200 sm:text-[11px]",
               isActive
                 ? "bg-[#EAF7F1] text-[#1F7D67] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.54)] ring-1 ring-[#66B9A3]"
                 : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
             ].join(" ")}
           >
-            {it.label}
+            {item.label}
           </button>
         );
       })}
@@ -45,9 +42,6 @@ function SegmentedTabs({ items, active, onChange }) {
   );
 }
 
-/* -----------------------------
- * ガイドカード
- * ---------------------------- */
 function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
   const tones = {
     mint: {
@@ -118,25 +112,24 @@ function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
   );
 }
 
-function MiniNote({ children }) {
+function MiniNote({ label = "使い方のコツ", children }) {
   return (
     <div className="rounded-[22px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.07),inset_0_-18px_26px_rgba(255,255,255,0.34)]">
       <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-black tracking-widest text-[#2F816E] ring-1 ring-[#CFE7DE]">
-        使い方のコツ
+        {label}
       </div>
-      <div className="text-[12px] font-extrabold leading-6 text-slate-700">
-        {children}
-      </div>
+      <div className="text-[12px] font-extrabold leading-6 text-slate-700">{children}</div>
     </div>
   );
 }
 
-function CheckList({ items }) {
+function CheckList({ items, tone = "mint" }) {
+  const dot = tone === "amber" ? "bg-[#E2AE45]" : tone === "violet" ? "bg-[#A78BB3]" : "bg-[#66B9A3]";
   return (
     <div className="mt-3 space-y-2">
       {items.map((item) => (
         <div key={item} className="flex gap-2 text-[12px] font-bold leading-5 text-slate-600">
-          <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#66B9A3]" />
+          <span className={["mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full", dot].join(" ")} />
           <span>{item}</span>
         </div>
       ))}
@@ -144,57 +137,57 @@ function CheckList({ items }) {
   );
 }
 
-const CARE_POLICY_GUIDE_ITEMS = [
-  ["しずめる", "熱・冴え・高ぶりを落ち着ける"],
-  ["ゆるめる", "力み・こわばり・緊張をほどく"],
-  ["めぐらせる", "滞りやこもりに逃げ道を作る"],
-  ["ながす", "湿気・重だるさ・水っぽさをためない"],
-  ["うるおす", "乾き・消耗を残さない"],
-  ["ぬくめる", "冷えの入口を守る"],
-  ["ささえる", "胃腸・回復力・余力を削らない"],
-];
-
-function PolicyMeaningList() {
+function FlowItem({ num, title, children, tone = "mint" }) {
+  const toneClass = tone === "amber"
+    ? "bg-[#FFF9EF] ring-[#F0DFC0]"
+    : tone === "violet"
+      ? "bg-[#F8F5FA] ring-[#E7DDEB]"
+      : "bg-[#F4FAF7] ring-[#D6E9E0]";
+  const numberClass = tone === "amber"
+    ? "bg-[#E2AE45] ring-[#F0DFC0]"
+    : tone === "violet"
+      ? "bg-[#A78BB3] ring-[#E7DDEB]"
+      : "bg-[#66B9A3] ring-[#CFE7DE]";
   return (
-    <div className="mt-3 grid gap-2">
-      {CARE_POLICY_GUIDE_ITEMS.map(([label, meaning]) => (
-        <div key={label} className="rounded-[14px] bg-white/80 px-3 py-2 ring-1 ring-[#DCE8DD] shadow-sm">
-          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="text-[12px] font-black text-[#2F816E]">{label}</span>
-            <span className="text-[11px] font-extrabold leading-5 text-slate-600">{meaning}</span>
-          </div>
+    <div className={["flex gap-3.5 rounded-[22px] p-4 ring-1 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.32)]", toneClass].join(" ")}>
+      <div className={["grid h-9 w-9 shrink-0 place-items-center rounded-full text-[13px] font-black text-white ring-1 shadow-sm", numberClass].join(" ")}>
+        {num}
+      </div>
+      <div className="min-w-0">
+        <div className="text-[15px] font-black leading-6 text-slate-900">{title}</div>
+        <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function ModeGuide() {
+  return (
+    <div className="mt-3 grid grid-cols-3 gap-2">
+      {[
+        ["安定", "いつもどおりを保つ", "bg-[#F2FAF6] text-[#2F816E] ring-[#CFE7DE]"],
+        ["いたわり", "少し早めに整える", "bg-[#FFF9EF] text-[#A56C18] ring-[#EED8B4]"],
+        ["守り", "負担を減らして備える", "bg-[#FFF4F0] text-[#B2604C] ring-[#F1CFC5]"],
+      ].map(([label, text, className]) => (
+        <div key={label} className={["rounded-[16px] p-2.5 text-center ring-1", className].join(" ")}>
+          <div className="text-[11px] font-black">{label}</div>
+          <div className="mt-1 text-[9px] font-bold leading-4 opacity-80">{text}</div>
         </div>
       ))}
     </div>
   );
 }
 
-function FlowItem({ num, title, children }) {
-  return (
-    <div className="flex gap-3.5 rounded-[22px] bg-[#F4FAF7] p-4 ring-1 ring-[#D6E9E0] shadow-[0_14px_28px_-24px_rgba(15,23,42,0.32)]">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[13px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">
-        {num}
-      </div>
-      <div className="min-w-0">
-        <div className="text-[15px] font-black leading-6 text-slate-900">{title}</div>
-        <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function GuidePage() {
   const router = useRouter();
-  const [tab, setTab] = useState("start");
+  const [tab, setTab] = useState("flow");
 
   const tabs = useMemo(
     () => [
-      { key: "start", label: "全体像" },
-      { key: "check", label: "①トリセツ" },
-      { key: "radar", label: "②体調予報" },
-      { key: "care", label: "③MYケア" },
+      { key: "flow", label: "基本の流れ" },
+      { key: "radar", label: "予報・ケア" },
+      { key: "records", label: "記録・分析" },
+      { key: "care", label: "MYケア" },
     ],
     []
   );
@@ -211,7 +204,6 @@ export default function GuidePage() {
 
   return (
     <AppShell title="使い方ガイド" noTabs={true} headerLeft={headerLeft}>
-      {/* ヒーローセクション */}
       <Module className="mb-4 overflow-hidden border-none bg-transparent shadow-none ring-0">
         <div className="relative overflow-hidden rounded-[32px] bg-[#EFF8F4] px-5 py-6 ring-1 ring-[#CFE7DE] shadow-[0_18px_45px_-34px_rgba(47,129,110,0.38)] sm:px-6 sm:py-7">
           <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full border border-white/75 bg-white/30" />
@@ -221,32 +213,31 @@ export default function GuidePage() {
           <div className="relative z-10">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 shadow-sm ring-1 ring-[#CFE7DE]">
               <IconSpark className="h-4 w-4 text-[#2F816E]" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#2F816E]">
-                未病レーダーの使い方
-              </span>
+              <span className="text-[10px] font-black tracking-widest text-[#2F816E]">未病レーダーの使い方</span>
             </div>
 
-            <div className="mt-5 text-[24px] font-black tracking-tight text-slate-900 leading-[1.32]">
-              体質と天気から、<br />
-              今日・明日の<span className="text-[#2F816E]">体調ゆらぎ</span>を見る。
+            <div className="mt-5 text-[24px] font-black leading-[1.34] tracking-tight text-slate-900">
+              予報を見て、ケアを試し、<br />
+              <span className="text-[#2F816E]">自分の傾向</span>へつなげる。
             </div>
 
             <div className="mt-3.5 text-[13px] font-bold leading-6 text-slate-700">
-              トリセツで自分の崩れ方のクセを知り、予報で今日・明日の作戦を確認。必要な時だけ、MYケアセレクトで続けやすい候補を見ます。
+              体質と天気から今日・明日の体調ゆらぎを確認し、できそうなケアだけ試します。夜に実感を残すと、似た予報条件の日をあとから振り返れます。
             </div>
 
-            <div className="mt-5 grid grid-cols-3 gap-2">
+            <div className="mt-5 grid grid-cols-2 gap-2.5">
               {[
-                { label: "トリセツ", sub: "体質を知る", Icon: IconConstitution },
-                { label: "体調予報", sub: "ゆらぎを見る", Icon: IconRadar },
-                { label: "MYケア", sub: "候補を見る", Icon: IconChecklist },
-              ].map(({ label, sub, Icon }, index) => (
+                { label: "トリセツ", sub: "初回に体質を知る", Icon: IconConstitution, num: "01" },
+                { label: "体調予報", sub: "今日・明日に備える", Icon: IconRadar, num: "02" },
+                { label: "Daily Care", sub: "やったケアを記録", Icon: IconCare, num: "03" },
+                { label: "記録・分析", sub: "実感と傾向を振り返る", Icon: IconChecklist, num: "04" },
+              ].map(({ label, sub, Icon, num }) => (
                 <div key={label} className="rounded-[18px] bg-white/80 p-3 ring-1 ring-white shadow-sm">
                   <div className="flex items-center justify-between gap-2">
                     <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#F4FAF7] text-[#2F816E] ring-1 ring-[#CFE7DE]">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-[10px] font-black text-[#66B9A3]">0{index + 1}</span>
+                    <span className="text-[10px] font-black text-[#66B9A3]">{num}</span>
                   </div>
                   <div className="mt-2 text-[11px] font-black text-slate-900">{label}</div>
                   <div className="mt-0.5 text-[9px] font-bold leading-4 text-slate-500">{sub}</div>
@@ -257,227 +248,233 @@ export default function GuidePage() {
         </div>
       </Module>
 
-      {/* タブナビゲーション */}
       <div className="sticky top-[60px] z-20 -mx-1 mb-2 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
         <SegmentedTabs items={tabs} active={tab} onChange={setTab} />
       </div>
 
-      {/* 1. 全体像タブ */}
-      {tab === "start" ? (
+      {tab === "flow" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
-          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
-            基本の流れ
-          </div>
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">まず、この流れだけで大丈夫</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            まずトリセツを作り、予報で今日・明日の作戦を見て、必要ならMYケアセレクトでケア用品・食品・サービス候補を見ます。
+            毎日すべての機能を使う必要はありません。初回にトリセツを作り、普段は予報・ケア・実感記録をつなげて使います。
           </div>
 
           <div className="space-y-4">
-            <FlowItem num="1" title="体質トリセツを作る">
-              質問に答えて、体質・天気との相性・負担が出やすい場所を見える化します。
+            <GuideCard tone="indigo" title="初回：体質トリセツを作る" icon={<IconConstitution />}>
+              質問から、ベース体質、気・血・水の傾向、天気との相性、負担が出やすい体のラインを整理します。この結果が体調予報の土台になります。
+              <CheckList
+                items={[
+                  "予報に使う地域を設定します。",
+                  "予報で見たい不調は、頭・首肩・胃腸・腰などから切り替えられます。",
+                ]}
+              />
+            </GuideCard>
+
+            <div className="pt-1 text-[12px] font-black tracking-[0.12em] text-slate-400">毎日の基本</div>
+            <FlowItem num="1" title="今日・明日の体調ゆらぎを見る">
+              体調ゆらぎ度と、安定・いたわり・守りのモードから、その日にどのくらい備えるかを確認します。
             </FlowItem>
-            <FlowItem num="2" title="体調予報を見る">
-              今日・明日の天気が、今の体質や不調にどう響きそうかを確認します。予報ページのケアは、道具なしでも今できる工夫が中心です。
+            <FlowItem num="2" title="できそうなケアを試して記録する" tone="amber">
+              暮らす・食べる・ほぐすの中から一つでも試したら、Daily Careカードの「やってみた」を押します。見るだけでは記録されません。
             </FlowItem>
-            <FlowItem num="3" title="MYケアセレクトで候補を見る">
-              予報で出た方針や、体質トリセツ・季節・最近の生活条件をもとに、暮らす・食べる・ほぐすのケア用品・食品・サービス候補を見ます。
+            <FlowItem num="3" title="夜に実感を残す" tone="violet">
+              記録ページで、その日の実感を○・△・×から選びます。Daily Careで記録済みなら、ケア内容は自動で入り、当日ケアのタイミングだけ確認します。
+            </FlowItem>
+            <FlowItem num="4" title="記録がたまったら傾向を見る">
+              グラフやAI分析で、似た天気ストレス・近い体調ゆらぎ度の日を比べます。予報を当たり外れで評価するのではなく、どんな備え方が自分に合いそうかを探します。
             </FlowItem>
 
             <MiniNote>
-              予報ページは「今日どう過ごすか」を決める作戦表、MYケアセレクトは「そのケアを続けやすくする候補を見る場所」です。詳しい見方は、①トリセツ・②予報・③MYケアのタブで確認できます。
+              前日の「明日に向けた今夜のケア」と、当日の「今日のケア」は、どちらも同じ対象日のケアとしてまとまります。全部やる必要はなく、無理なく試せたものだけで十分です。
             </MiniNote>
 
-            <div className="grid gap-3 pt-4">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-md">
-                体質トリセツを作る
-              </Button>
-              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">
-                体調予報を見る
-              </Button>
-              <Button variant="secondary" onClick={() => router.push("/care-navi")} className="w-full">
-                MYケアセレクトを見る
-              </Button>
+            <GuideCard tone="teal" title="必要な時だけ使う機能" icon={<IconChecklist />} compact>
+              MYケアセレクトは、ケアを続けやすくする用品・食品候補を見る場所です。専門家相談は、記録やAI分析を人と一緒に整理したい時のために準備しています。
+            </GuideCard>
+
+            <div className="grid gap-3 pt-2">
+              <Button onClick={() => router.push("/check")} className="w-full shadow-md">体質トリセツを作る</Button>
+              <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">体調予報を見る</Button>
+              <Button variant="secondary" onClick={() => router.push("/records")} className="w-full">記録・分析を見る</Button>
             </div>
           </div>
         </Module>
       ) : null}
 
-      {/* 2. 体質チェック詳細タブ */}
-      {tab === "check" ? (
-        <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
-          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
-            体質トリセツで分かること
-          </div>
-          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            病名を当てるのではなく、体調が崩れやすい方向を整理するためのトリセツです。
-          </div>
-
-          <div className="space-y-4">
-            <GuideCard tone="mint" title="ベース体質" icon={<IconConstitution />}>
-              余力の大きさと、アクセル・ブレーキの入りやすさから、あなたの基本的な崩れ方のクセを整理します。
-            </GuideCard>
-            <GuideCard tone="teal" title="気・血・水の偏り" icon={<IconSpark />}>
-              疲れやすさ、巡りにくさ、重だるさ、乾きやすさなど、今の不調につながりやすい偏りを見ます。
-            </GuideCard>
-            <GuideCard tone="violet" title="負担が出やすい体のライン" icon={<IconBodyLine />}>
-              動作チェックの違和感から、首肩、腰、体側、脚など、こわばりやすいラインを見ます。
-            </GuideCard>
-            <GuideCard tone="amber" title="天気との相性" icon={<IconWeather />}>
-              気圧低下、冷え込み、湿気、暑さ、乾燥など、どの天気変化で不調が出やすいかを予報に使います。
-            </GuideCard>
-
-            <MiniNote>
-              トリセツは一度作ると、体調予報やMYケアセレクトの土台になります。体質・天気との相性・負担が出やすい場所を、あとから見返せます。
-            </MiniNote>
-
-            <div className="pt-2">
-              <Button onClick={() => router.push("/check")} className="w-full shadow-md">
-                体質トリセツへ
-              </Button>
-            </div>
-          </div>
-        </Module>
-      ) : null}
-
-      {/* 3. 体調予報詳細タブ */}
       {tab === "radar" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
-          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
-            体調予報の見方
-          </div>
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">体調予報とDaily Care</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            予報は「影響の強さ」だけでなく、道具なしでも今日できるケアまで見るページです。
+            体調ゆらぎ度で細かな変化を見て、3つのモードで今日の行動を決めます。そのままケア記録までつなげられます。
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="amber" title="まずゲージを見る" icon={<IconRadar />}>
-              今日・明日の天気影響がどのくらい出そうかを確認します。「影響は少なめ」「少し響きやすい」「守りたい日」のように、ケアの量や優先度を決める目安になります。
+            <GuideCard tone="amber" title="体調ゆらぎ度と3つのモード" icon={<IconRadar />}>
+              体調ゆらぎ度は、天気だけではなく、あなたのベース体質と6つの天気ストレスを組み合わせた0〜100の予報値です。症状が出る確率や、実際のつらさの点数ではありません。
+              <ModeGuide />
             </GuideCard>
 
-            <GuideCard tone="mint" title="この日の方針を見る" icon={<IconSpark />}>
-              「しずめる」「ながす」「ささえる」など、その日のケア全体の方向性をまとめたカードです。ここで大まかな見立てをつかみ、実際に何をするかは「暮らす」「食べる」「ほぐす」の各タブで、道具なしでもできる形に落とし込みます。
-              <PolicyMeaningList />
-            </GuideCard>
-
-            <GuideCard tone="teal" title="「暮らす」タブを見る" icon={<IconCalendar />}>
-              服装、予定量、休み方、動き出しなど、生活の中ですぐ試しやすい工夫をまとめています。アイテムがなくてもできるケアを優先して確認できます。
+            <GuideCard tone="mint" title="今日と明日の役割" icon={<IconCalendar />}>
+              「今日」は今日を整えるための予報、「明日」は今夜から先回りするための予報です。
               <CheckList
                 items={[
-                  "今日タブは、今日これ以上崩さないための工夫。",
-                  "明日タブは、今夜〜明朝に備えるための工夫。",
+                  "今日のケア：今日の負担を増やしにくくする工夫。",
+                  "明日に向けた今夜のケア：翌日に備えて、前夜からできる工夫。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="mint" title="「食べる」タブを見る" icon={<IconBowl />}>
-              食事を完璧に変える場所ではありません。今日・明日に合わせて、家にあるものでもできる「足すもの」「重ねすぎ注意」「迷ったらこれ」を見る場所です。
+            <GuideCard tone="teal" title="ケアをしたら「やってみた」" icon={<IconCare />}>
+              Daily Careカードは、ケア方法を見るだけでなく、そのまま実行記録にもなります。実際に行った項目だけ「やってみた」または「意識した」を押してください。
               <CheckList
                 items={[
-                  "足す：温かい汁物、軽めの主食、温かい飲み物など。",
-                  "重ねすぎ注意：お酒、甘いもの、冷たいもの、塩気、脂っこさなど。",
-                  "迷ったら：その日の条件に合う無理のない選択肢。",
+                  "前日の明日カードで押したケアは、翌日の先回りケアとして記録されます。",
+                  "当日の今日カードで押したケアは、夜の記録で「つらさの前・後」をまとめて確認します。",
+                  "押し間違えた時は、もう一度押すか記録ページから解除できます。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="「ほぐす」タブを見る" icon={<IconTsubo />}>
-              天気や今気になる不調に合わせて、軽くほぐしたいツボを表示します。基本は手で押すだけでもできる内容です。ツボ詳細では、選んだ理由、ほぐし方の目安、場所の確認ができます。
+            <GuideCard tone="mint" title="暮らす・食べる・ほぐす" icon={<IconChecklist />}>
+              その日の方針を、実際に取り入れやすい3方向へ分けています。
               <CheckList
                 items={[
-                  "場所が分かりにくい時は、ツボ詳細の画像検索から確認できます。",
-                  "強く押し込まず、気持ちよい範囲で短く行います。",
+                  "暮らす：服装、予定、休み方、湿気・冷え対策など。",
+                  "食べる：主食・主菜・飲み物、足したいもの、控えたい重なりなど。",
+                  "ほぐす：その日の天気と不調に合わせたツボケア。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="indigo" title="地域と不調も確認する" icon={<IconCalendar />}>
-              体調予報は、設定した地域の天気と、今見ている不調をもとに作られます。引っ越しや旅行の時は設定ページで地域を変更し、頭痛・首肩・腰・むくみなど見たい不調は予報ページで切り替えてください。
+            <GuideCard tone="violet" title="ケアナビの役割" icon={<IconSpark />}>
+              キャラクターは、未病レーダーが体質と天気から選んだケアを分かりやすく案内します。予報モードに合わせて表情が変わり、ケアを記録すると安心した表情になります。
             </GuideCard>
 
-            <MiniNote>
-              ゲージとこの日の方針で大まかな方向を見て、実際にやることは暮らす・食べる・ほぐすから選びます。まずは道具なしでできるケアを確認し、続けやすくしたい時はMYケアセレクトで関連アイテムを見られます。
+            <MiniNote label="予報の考え方">
+              実感記録によって予報値を都合よく書き換えるのではなく、ベース体質×天気ストレスの予報を共通の物差しとして残します。その上で、似た条件の日のケアと実感を比較します。
             </MiniNote>
 
-            <div className="pt-2">
-              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">
-                体調予報へ
-              </Button>
-              <Button variant="secondary" onClick={() => router.push("/care-navi")} className="w-full">
-                MYケアセレクトで候補を見る
-              </Button>
+            <div className="grid gap-3 pt-2">
+              <Button onClick={() => router.push("/radar")} className="w-full shadow-md">体調予報へ</Button>
+              <Button variant="secondary" onClick={() => router.push("/records")} className="w-full">今日を記録する</Button>
             </div>
           </div>
         </Module>
       ) : null}
 
-      {/* 4. MYケアセレクト詳細タブ */}
+      {tab === "records" ? (
+        <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">記録して、自分の傾向を振り返る</div>
+          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
+            記録ページでは、ケア内容をもう一度入力するのではなく、Daily Careの記録を引き継いで、その日の実感を仕上げます。
+          </div>
+
+          <div className="space-y-4">
+            <GuideCard tone="mint" title="夜の記録はシンプル" icon={<IconChecklist />}>
+              その日の実感を○・△・×から選びます。Daily Careで具体的ケアを記録していれば、自動で一覧に入るため、当日ケアの大まかなタイミングを選ぶだけです。
+              <CheckList
+                items={[
+                  "昨晩の明日ケアは、前夜からの先回りケアとして自動表示。",
+                  "当日のケアは、つらさの前・後・前後どちらも・覚えていないから選択。",
+                  "Daily Care以外のケアは、した・少ししたと暮らす・食べる・ほぐすでまとめて残せます。",
+                ]}
+              />
+            </GuideCard>
+
+            <GuideCard tone="indigo" title="グラフは3段で見る" icon={<IconRadar />}>
+              上段に体調ゆらぎ度、中段に実感○・△・×、下段にケアとタイミングを表示します。体調ゆらぎ度と実感は別の尺度なので、同じ縦軸には重ねません。
+              <CheckList
+                items={[
+                  "日をタップすると、天気ストレス・ケア・メモなどを確認できます。",
+                  "注意予報でも体調○などの絞り込みで、振り返りたい日を探せます。",
+                ]}
+              />
+            </GuideCard>
+
+            <GuideCard tone="amber" title="AIは似た予報条件を比べる" icon={<IconSpark />}>
+              固定された予報を物差しにして、主な天気ストレス、予報モード、近い体調ゆらぎ度の日を比較します。その中で、ケアの有無・具体的な内容・前夜か当日か・実感を整理します。
+              <CheckList
+                items={[
+                  "記録から確認できた事実と、考えられる仮説を分けます。",
+                  "記録が少ない時は、効果を断定せず「小さな手がかり」として扱います。",
+                  "予報の当たり外れや治療効果を判定する機能ではありません。",
+                ]}
+              />
+            </GuideCard>
+
+            <GuideCard tone="violet" title="AIに追加で聞く" icon={<IconCare />}>
+              分析した期間の記録を引き継いで、気になった日、天気ストレス、ケアの種類やタイミングを追加で質問できます。分からないことは断定せず、一緒に整理します。
+            </GuideCard>
+
+            <GuideCard tone="teal" title="専門家と振り返る" icon={<IconBodyLine />}>
+              AI分析だけで整理しにくい時に、予報・実感・ケアの記録を専門家と一緒に見直せる相談サービスを準備しています。
+            </GuideCard>
+
+            <MiniNote label="AIへ送る情報">
+              AI分析では、解釈済みの体質要約、計算済みの予報根拠、表示されたケア、実際に行ったケア、実感・メモ・会話を使います。体質チェックの生回答や氏名・住所は送りません。
+            </MiniNote>
+
+            <div className="pt-2">
+              <Button onClick={() => router.push("/records")} className="w-full shadow-md">記録・分析へ</Button>
+            </div>
+          </div>
+        </Module>
+      ) : null}
+
       {tab === "care" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
-          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">
-            MYケアセレクトの見方
-          </div>
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">MYケアセレクトは必要な時に</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            MYケアセレクトは、予報ページのケアを「続けやすくするケア用品・食品・サービス候補」を見るページです。予報の上位互換ではなく、役割が違います。
+            予報ページのケアを無理なく続けるために、用品・食品・サービス候補を探す場所です。毎日見る必要はありません。
           </div>
 
           <div className="space-y-4">
             <GuideCard tone="mint" title="予報ページとの違い" icon={<IconRadar />}>
-              予報ページでは、今日・明日に道具なしでもできるケアを確認します。MYケアセレクトでは、そのケアを支えるアイテム候補を、体質や条件に合わせて見られます。
+              予報ページは、今日・明日に道具なしでもできるケアを確認し、実行を記録する場所です。MYケアセレクトは、そのケアを続けやすくする候補を見る場所です。
               <CheckList
                 items={[
-                  "予報：今日どう過ごすか、何を足す・控えるかを見る。",
-                  "MYケアセレクト：そのケアを続けやすくするケア用品・食品・サービス候補を見る。",
+                  "予報：今日どう過ごすか、何を試すかを決める。",
+                  "MYケア：続けたいケアを助ける商品やサービス候補を見る。",
                 ]}
               />
             </GuideCard>
 
             <GuideCard tone="teal" title="暮らす・食べる・ほぐすで探す" icon={<IconChecklist />}>
-              予報ページと同じく、暮らす・食べる・ほぐすの切り口で見られます。ただし、MYケアセレクトでは「方法」だけでなく、使いやすいアイテム候補まで見る場所です。
+              Daily Careと同じ3方向で候補を探せます。
               <CheckList
                 items={[
-                  "暮らす：冷え・睡眠・湿気・入浴・衣類などの生活用品。",
-                  "食べる：温かい飲み物、汁物、茶類、軽めの食事まわり。",
-                  "ほぐす：ツボケア、首肩・足元・こわばりを助ける道具。",
+                  "暮らす：冷え、睡眠、湿気、入浴、衣類などの生活用品。",
+                  "食べる：温かい飲み物、茶類、汁物、軽めの食事まわり。",
+                  "ほぐす：ツボケアや、首肩・足元・こわばりを助ける道具。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="amber" title="見る条件を切り替える" icon={<IconSpark />}>
-              トリセツ、明日の予報、季節、最近の生活条件を切り替えると、候補の出方が変わります。今の目的に近いものを選ぶと、探しやすくなります。
+            <GuideCard tone="amber" title="目的に合わせて条件を切り替える" icon={<IconWeather />}>
+              体質トリセツ、明日の予報、季節、最近の生活条件から、今探したい条件を選びます。
               <CheckList
                 items={[
-                  "トリセツ：自分の崩れ方のクセから探す。",
+                  "トリセツ：自分の基本的な崩れ方から探す。",
                   "明日の予報：明日に備える前提で探す。",
-                  "季節・最近の生活：冷え、湿気、睡眠不足、食べすぎなどを追加して探す。",
+                  "季節・最近の生活：冷え、湿気、睡眠不足、食べすぎなどを加えて探す。",
                 ]}
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="買う前に、まず目的を確認する" icon={<IconBowl />}>
-              MYケアセレクトは買い物を急がせるページではありません。予報ページで出たケアを、無理なく続けるために「あると便利なもの」を見る場所です。
-              <CheckList
-                items={[
-                  "今日すぐできることは、まず予報ページのケアで十分です。",
-                  "続けたい・楽にしたい・家に置いておきたい時に、MYケアセレクトを使います。",
-                  "医薬品ではなく、セルフケア用品や食品候補が中心です。",
-                ]}
-              />
+            <GuideCard tone="violet" title="買う前に、まず目的を確認" icon={<IconBowl />}>
+              MYケアセレクトは買い物を急がせる機能ではありません。今日すぐできることはDaily Careだけでも十分です。続けやすくしたい時や、家に用意しておきたい時に使います。
             </GuideCard>
 
             <MiniNote>
-              まず予報ページで今日の作戦を見て、必要になった時だけMYケアセレクトを見る。この順番にすると、情報が散らからず使いやすくなります。
+              まず体調予報で今日の作戦を確認し、ケアを試す。続けたいケアが見えてからMYケアセレクトを見ると、情報が散らからず使いやすくなります。
             </MiniNote>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/care-navi")} className="w-full shadow-md">
-                MYケアセレクトへ
-              </Button>
+              <Button onClick={() => router.push("/care-navi")} className="w-full shadow-md">MYケアセレクトへ</Button>
             </div>
           </div>
         </Module>
       ) : null}
-
-          </AppShell>
+    </AppShell>
   );
 }
-
