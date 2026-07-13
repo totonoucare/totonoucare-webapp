@@ -120,7 +120,7 @@ function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorde
         onClick={onOpenRecords}
         className="my-1 flex w-[82px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-2 py-2 text-center text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#F4FAF7]"
       >
-        <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EAF7F1] text-[12px] ring-1 ring-[#CFE7DE]">
+        <span className="grid h-7 w-7 place-items-center rounded-full bg-[#EAF7F1] text-[16px] font-black leading-none ring-1 ring-[#CFE7DE]">
           {recorded ? "✓" : "✎"}
         </span>
         <span className="mt-1 text-[10px] font-black leading-4">
