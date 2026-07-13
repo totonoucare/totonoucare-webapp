@@ -109,7 +109,6 @@ function CareActionsSummary({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[11px] font-black leading-5 text-slate-700">{item.label}</div>
-                      {item.detail ? <div className="mt-0.5 text-[10px] font-bold leading-5 text-slate-500">{item.detail}</div> : null}
                       <div className="mt-0.5 text-[9px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
                     </div>
                     {editable && onRemoveAction && item.id ? (

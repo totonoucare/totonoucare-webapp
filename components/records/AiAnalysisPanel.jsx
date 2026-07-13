@@ -151,6 +151,7 @@ export default function AiAnalysisPanel({
   const [analysis, setAnalysis] = useState(null);
   const [analysisMeta, setAnalysisMeta] = useState(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisNotice, setAnalysisNotice] = useState("");
   const [error, setError] = useState("");
   const [access, setAccess] = useState(null);
   const [consent, setConsent] = useState(null);
@@ -223,6 +224,8 @@ export default function AiAnalysisPanel({
     let cancelled = false;
     (async () => {
       setAnalysisLoading(true);
+      setAnalysisNotice("");
+      setError("");
       try {
         const data = await authedFetch("/api/records/analysis", {
           method: "POST",
@@ -243,7 +246,13 @@ export default function AiAnalysisPanel({
           if (data.usage) setChatUsage(data.usage);
         }
       } catch (analysisError) {
-        if (!cancelled) setError(analysisError?.message || "AI分析を読み込めませんでした");
+        if (!cancelled) {
+          if (analysisError?.code === "daily_analysis_limit") {
+            setAnalysisNotice(analysisError?.message || "本日のAI分析更新上限に達しました。保存済みの分析は引き続き確認できます。");
+          } else {
+            setError(analysisError?.message || "AI分析を読み込めませんでした");
+          }
+        }
       } finally {
         if (!cancelled) setAnalysisLoading(false);
       }
@@ -389,6 +398,7 @@ export default function AiAnalysisPanel({
     setPeriodKey(nextKey);
     setAnalysis(null);
     setAnalysisMeta(null);
+    setAnalysisNotice("");
     setThreadId("");
     setMessages([]);
     onTrackEvent?.("analysis_period_selected", { period_key: nextKey });
@@ -481,6 +491,11 @@ export default function AiAnalysisPanel({
             <div className="px-1 text-[9px] font-bold text-slate-400">{analysisMeta.source === "ai" ? "AIと集計ロジックによる分析" : "記録数・利用状態に応じた基本分析"}{analysisMeta.cached ? "・保存済み分析を表示" : ""}</div>
           ) : null}
           {analysisMeta?.source === "ai" && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
+          {analysisNotice ? (
+            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+              {analysisNotice}
+            </div>
+          ) : null}
         </div>
       </section>
 
