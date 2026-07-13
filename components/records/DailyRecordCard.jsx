@@ -69,7 +69,13 @@ function TogglePill({ active, children, onClick }) {
   );
 }
 
-function CareActionsSummary({ actions, onOpenRadar, editable = false }) {
+function CareActionsSummary({
+  actions,
+  onOpenRadar,
+  editable = false,
+  onRemoveAction,
+  removingActionId = "",
+}) {
   const groups = [
     { key: "tomorrow", label: "昨晩からのケア", items: actions.filter((item) => item.source_mode === "tomorrow") },
     { key: "today", label: "今日のケア", items: actions.filter((item) => item.source_mode === "today") },
@@ -85,11 +91,11 @@ function CareActionsSummary({ actions, onOpenRadar, editable = false }) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">今日に向けて行ったケア</div>
-          <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">予報ページで「やってみた」を押した内容です。</div>
+          <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">Daily Careで「やってみた」と記録した内容です。</div>
         </div>
         {editable && onOpenRadar ? (
           <button type="button" onClick={onOpenRadar} className="shrink-0 rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-            修正する
+            予報ページ
           </button>
         ) : null}
       </div>
@@ -99,9 +105,24 @@ function CareActionsSummary({ actions, onOpenRadar, editable = false }) {
             <div className="text-[10px] font-black text-slate-500">{group.label}</div>
             <div className="mt-1.5 space-y-1.5">
               {group.items.map((item) => (
-                <div key={`${item.source_mode}-${item.item_key}`} className={["rounded-[15px] border-l-4 px-3 py-2.5 ring-1 ring-[#E6ECE8]", tone[item.domain] || "border-slate-300 bg-white"].join(" ")}>
-                  <div className="text-[11px] font-black leading-5 text-slate-700">{item.label}</div>
-                  <div className="mt-0.5 text-[9px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
+                <div key={`${item.source_mode}-${item.canonical_key || item.item_key}-${item.id || ""}`} className={["rounded-[15px] border-l-4 px-3 py-2.5 ring-1 ring-[#E6ECE8]", tone[item.domain] || "border-slate-300 bg-white"].join(" ")}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-black leading-5 text-slate-700">{item.label}</div>
+                      {item.detail ? <div className="mt-0.5 text-[10px] font-bold leading-5 text-slate-500">{item.detail}</div> : null}
+                      <div className="mt-0.5 text-[9px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
+                    </div>
+                    {editable && onRemoveAction && item.id ? (
+                      <button
+                        type="button"
+                        disabled={removingActionId === item.id}
+                        onClick={() => onRemoveAction(item)}
+                        className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[9px] font-black text-slate-400 ring-1 ring-slate-200 disabled:opacity-50"
+                      >
+                        {removingActionId === item.id ? "削除中" : "削除"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
@@ -123,14 +144,19 @@ export default function DailyRecordCard({
   onSave,
   onGoAnalysis,
   onOpenRadar,
+  onRemoveCareAction,
+  careActionSaving = "",
 }) {
   const review = row?.review || null;
   const forecast = row?.forecast || null;
   const careActionSummary = useMemo(() => summarizeCareActions(row?.care_actions), [row?.care_actions]);
   const recordedCareActions = careActionSummary.actions;
-  const displayedCareLevel = review
-    ? (careActionSummary.count > 0 ? Math.max(1, Number(review.prevent_level || 0)) : Number(review.prevent_level || 0))
+  const manualCareLevel = review
+    ? Number(review.manual_prevent_level ?? review.prevent_level ?? 0)
     : 0;
+  const manualCareDomains = Array.isArray(review?.manual_care_domains)
+    ? review.manual_care_domains
+    : (careActionSummary.count > 0 ? [] : reviewCareDomains(review));
   const displayedCareDomains = Array.from(new Set([
     ...reviewCareDomains(review),
     ...careActionSummary.domains,
@@ -145,7 +171,21 @@ export default function DailyRecordCard({
   const [editing, setEditing] = useState(editable && !review);
 
   useEffect(() => {
-    const actionDomains = careActionSummary.domains;
+    setCondition(review?.condition_level == null ? null : Number(review.condition_level));
+    const nextManualLevel = review?.manual_prevent_level == null
+      ? (careActionSummary.count > 0 ? 0 : (review?.prevent_level == null ? null : Number(review.prevent_level)))
+      : Number(review.manual_prevent_level || 0);
+    setCare(nextManualLevel);
+    setDomains(Array.isArray(review?.manual_care_domains)
+      ? review.manual_care_domains
+      : (careActionSummary.count > 0 ? [] : reviewCareDomains(review)));
+    setTiming(review?.manual_care_timing || (careActionSummary.count > 0 ? "" : reviewCareTiming(review)) || "");
+    setFactors(reviewFactors(review));
+    setNote(review?.note || "");
+    setEditing(editable && !review);
+  }, [date, review?.id, review?.updated_at, review?.created_at, editable]);
+
+  useEffect(() => {
     const sameDayRelations = new Set(
       recordedCareActions
         .filter((item) => item.source_mode === "today")
@@ -160,32 +200,9 @@ export default function DailyRecordCard({
           : sameDayRelations.has("same_day_before")
             ? "same_day_before"
             : "same_day_unknown";
-    const derivedTiming = careActionSummary.has_same_day
-      ? initialSameDayTiming === "same_day_before" && careActionSummary.has_previous_night
-        ? "before_peak"
-        : initialSameDayTiming === "same_day_after" && careActionSummary.has_previous_night
-          ? "mixed"
-          : initialSameDayTiming === "same_day_before"
-            ? "before_peak"
-            : initialSameDayTiming === "same_day_after"
-              ? "after_symptom"
-              : initialSameDayTiming === "same_day_mixed"
-                ? "mixed"
-                : "unknown"
-      : careActionSummary.has_previous_night
-        ? "before_peak"
-        : "";
-    setCondition(review?.condition_level == null ? null : Number(review.condition_level));
-    setCare(review?.prevent_level == null
-      ? (careActionSummary.count > 0 ? 1 : null)
-      : (careActionSummary.count > 0 ? Math.max(1, Number(review.prevent_level || 0)) : Number(review.prevent_level)));
-    setDomains(reviewCareDomains(review).length ? reviewCareDomains(review) : actionDomains);
-    setTiming(reviewCareTiming(review) || derivedTiming);
     setSameDayTiming(initialSameDayTiming);
-    setFactors(reviewFactors(review));
-    setNote(review?.note || "");
-    setEditing(editable && !review);
-  }, [date, review?.id, review?.updated_at, review?.created_at, editable, careActionSummary.count, careActionSummary.has_previous_night, careActionSummary.has_same_day, careActionSummary.domains.join("|"), recordedCareActions.map((item) => `${item.item_key}:${item.timing_relation}`).join("|")]);
+    if (careActionSummary.count > 0) setCare((current) => current == null ? 0 : current);
+  }, [careActionSummary.count, recordedCareActions.map((item) => `${item.canonical_key || item.item_key}:${item.timing_relation}`).join("|")]);
 
   const previewRow = useMemo(() => ({
     date,
@@ -196,9 +213,12 @@ export default function DailyRecordCard({
       : {
           ...(review || {}),
           condition_level: condition,
-          prevent_level: care,
-          care_domains: domains,
-          care_timing: timing,
+          prevent_level: recordedCareActions.length ? Math.max(1, Number(care || 0)) : Number(care || 0),
+          manual_prevent_level: Number(care || 0),
+          care_domains: Array.from(new Set([...careActionSummary.domains, ...domains])),
+          manual_care_domains: domains,
+          care_timing: reviewCareTiming(review),
+          manual_care_timing: timing,
           context_factors: factors,
           action_tags: buildActionTags({ domains, timing, factors, existing: review?.action_tags }),
           note,
@@ -259,8 +279,11 @@ export default function DailyRecordCard({
       date,
       condition_level: condition,
       prevent_level: care,
+      manual_prevent_level: care,
       care_domains: care > 0 ? domains : [],
+      manual_care_domains: care > 0 ? domains : [],
       care_timing: care > 0 ? timing : "",
+      manual_care_timing: care > 0 ? timing : "",
       same_day_timing: careActionSummary.has_same_day ? sameDayTiming : "",
       context_factors: savedFactors,
       action_tags: buildActionTags({
@@ -324,8 +347,8 @@ export default function DailyRecordCard({
               <div className="mt-1 text-[14px] font-black text-slate-900">{conditionLabel(review.condition_level)}</div>
             </div>
             <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-              <div className="text-[10px] font-black text-slate-400">ケアはした？</div>
-              <div className="mt-1 text-[14px] font-black text-slate-900">{careLabel(displayedCareLevel)}</div>
+              <div className="text-[10px] font-black text-slate-400">{careActionSummary.count > 0 ? "行った具体的ケア" : "ケアはした？"}</div>
+              <div className="mt-1 text-[14px] font-black text-slate-900">{careActionSummary.count > 0 ? `${careActionSummary.count}件` : careLabel(manualCareLevel)}</div>
             </div>
           </div>
 
@@ -349,7 +372,19 @@ export default function DailyRecordCard({
 
           {recordedCareActions.length ? (
             <div className="mt-3">
-              <CareActionsSummary actions={recordedCareActions} editable={editable} onOpenRadar={onOpenRadar} />
+              <CareActionsSummary
+                actions={recordedCareActions}
+                editable={editable}
+                onOpenRadar={isToday ? onOpenRadar : null}
+                onRemoveAction={onRemoveCareAction}
+                removingActionId={careActionSaving}
+              />
+            </div>
+          ) : null}
+          {careActionSummary.count > 0 && manualCareLevel > 0 ? (
+            <div className="mt-3 rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#DCE8DD]">
+              <div className="text-[9px] font-black text-slate-400">Daily Care以外にまとめて記録したケア</div>
+              <div className="mt-1 text-[11px] font-black text-slate-700">{careLabel(manualCareLevel)}{manualCareDomains.length ? `・${manualCareDomains.map((domain) => RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain)?.label || domain).join("・")}` : ""}</div>
             </div>
           ) : null}
 
@@ -400,7 +435,13 @@ export default function DailyRecordCard({
 
           {careActionSummary.count > 0 ? (
             <div className="mt-5 space-y-3">
-              <CareActionsSummary actions={recordedCareActions} editable onOpenRadar={onOpenRadar} />
+              <CareActionsSummary
+                actions={recordedCareActions}
+                editable
+                onOpenRadar={isToday ? onOpenRadar : null}
+                onRemoveAction={onRemoveCareAction}
+                removingActionId={careActionSaving}
+              />
               {careActionSummary.has_same_day ? (
                 <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
                   <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">今日当日のケアは、つらさを感じる前にできた？</div>

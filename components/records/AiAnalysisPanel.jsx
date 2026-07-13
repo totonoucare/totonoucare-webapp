@@ -111,7 +111,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
     return (
       <div className="rounded-[24px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD]">
         <div className="text-[13px] font-black text-slate-900">AI分析は現在プレビュー表示です</div>
-        <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">グラフと基本集計は利用できます。AI伴走の利用期間または対象プランになると、個別分析と会話が開きます。</div>
+        <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">グラフと記録の振り返りは利用できます。対象期間または対象プランになると、AIによる個別の振り返りと会話が開きます。</div>
       </div>
     );
   }
@@ -409,17 +409,17 @@ export default function AiAnalysisPanel({
           <div>
             <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI分析 先行体験版</div>
             <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
-              {access?.beta_enabled ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。` : "グラフと基本集計は無料で確認できます。"}
+              {access?.beta_enabled ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。` : "グラフと記録の振り返りは無料で確認できます。"}
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{access?.beta_enabled ? "FREE BETA" : "AI"}</span>
+          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{access?.beta_enabled ? "先行体験中" : "AI"}</span>
         </div>
       </div>
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">ANALYSIS PERIOD</div>
+            <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">振り返る期間</div>
             <div className="mt-1 text-[17px] font-black text-slate-900">どの期間を振り返る？</div>
           </div>
           <div className="text-[10px] font-black text-slate-400">{formatRange(range.start, range.end)}</div>
@@ -450,7 +450,7 @@ export default function AiAnalysisPanel({
           <GuideBotAvatar mood={analysisLoading ? "thinking" : displayedAnalysis.mood} className="h-[78px] w-[78px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">{analysisMeta?.source === "ai" ? "AI ANALYSIS" : "RECORD ANALYSIS"}</div>
+            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">{analysisMeta?.source === "ai" ? "AIからの振り返り" : "記録から分かったこと"}</div>
             <div className="mt-1 text-[14px] font-black leading-6 text-slate-900">{analysisLoading ? "記録を見比べています…" : displayedAnalysis.headline}</div>
           </div>
         </div>

@@ -76,6 +76,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
   const [recordSaving, setRecordSaving] = useState(false);
   const [recentlySavedDate, setRecentlySavedDate] = useState("");
   const [recordError, setRecordError] = useState("");
+  const [careActionSaving, setCareActionSaving] = useState("");
   const [analysisPrompt, setAnalysisPrompt] = useState("");
 
   useEffect(() => {
@@ -148,7 +149,13 @@ export default function RecordsPageClient({ initialTab = "record" }) {
     if (!session?.access_token || !date) return;
     try {
       const data = await authedFetch(`/api/radar/review?date=${encodeURIComponent(date)}`);
-      setSelectedRow(data || { date, review: null, forecast: null });
+      const nextRow = data || { date, review: null, forecast: null };
+      setSelectedRow(nextRow);
+      setMonthRows((current) => {
+        const without = current.filter((row) => row.date !== date);
+        return [...without, nextRow].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      });
+      return nextRow;
     } catch (error) {
       setRecordError(error?.message || "記録を読み込めませんでした");
     }
@@ -228,6 +235,23 @@ export default function RecordsPageClient({ initialTab = "record" }) {
       throw error;
     } finally {
       setRecordSaving(false);
+    }
+  }
+
+  async function removeCareAction(action) {
+    if (!action?.id || careActionSaving) return;
+    setCareActionSaving(action.id);
+    setRecordError("");
+    try {
+      await authedFetch("/api/radar/care-actions", {
+        method: "DELETE",
+        body: JSON.stringify({ id: action.id, target_date: selectedDate }),
+      });
+      await loadSelectedDate(selectedDate);
+    } catch (error) {
+      setRecordError(error?.message || "具体的ケアを削除できませんでした");
+    } finally {
+      setCareActionSaving("");
     }
   }
 
@@ -320,6 +344,8 @@ export default function RecordsPageClient({ initialTab = "record" }) {
             onSave={saveRecord}
             onGoAnalysis={goToAnalysis}
             onOpenRadar={selectedDate === today ? () => router.push(`/radar?date=${encodeURIComponent(selectedDate)}`) : null}
+            onRemoveCareAction={removeCareAction}
+            careActionSaving={careActionSaving}
           />
 
           {recordError ? (
