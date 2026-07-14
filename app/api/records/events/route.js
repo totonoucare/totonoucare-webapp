@@ -10,6 +10,7 @@ const EVENT_TYPES = new Set([
   "records_page_view",
   "analysis_opened",
   "analysis_period_selected",
+  "live_support_opened",
 ]);
 
 function safeMetadata(value) {
