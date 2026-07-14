@@ -68,6 +68,20 @@ CRON_SECRET
 
 このリポジトリに残すのは、変数名・用途・設計意図だけです。
 
+## v7.72.5で追加した確認質問・回答の対応保持
+
+- `follow_up.question`はチャット本文と独立したカードだが、回答後も質問と回答を一組として扱う
+- クライアントは`assistant_message_id`、質問文、選択候補を`reply_to_follow_up`として送る
+- サーバーは保存済みassistant messageの`follow_up`と照合し、検証済みの対応だけをmessage metadataへ保存する
+- 履歴UIではユーザー回答の上に元の質問を表示する
+- AI入力の`conversation`と`latest_user_request`にも対応関係を渡し、短い回答を推測させない
+- 対象はlive supportとperiod reviewの両チャット
+- live support prompt version: `records_live_support_v6_reply_context_2026-07-15`
+- period review prompt version: `records_chat_v8_reply_context_2026-07-15`
+- DB migrationなし
+
+詳細は `docs/EKIKEN_REPLY_CONTEXT_V7725.md`。
+
 ## v7.72.4で調整したリアルタイム相談の会話姿勢
 
 - 体調予報・予報モード・表示ケアはアプリの計算／提示事実として自然に使い、毎回免責文で矮小化しない
