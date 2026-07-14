@@ -55,7 +55,7 @@ test("live support preserves medical safety boundaries", async () => {
   assert.match(prompts, /診断、治療、症状の原因特定/);
   assert.match(prompts, /薬・漢方・サプリ/);
   assert.match(prompts, /urgent/);
-  assert.match(route, /isUrgentText\(message\)/);
+  assert.match(route, /classifySafetyText\(message\)/);
   assert.match(route, /output\.safety_level === "routine" && isProfessionalText\(message\)/);
   assert.match(prompts, /通常の体調相談を、毎回の受診判定や安全確認の問診から始めない/);
 });
