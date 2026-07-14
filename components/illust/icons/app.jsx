@@ -152,6 +152,15 @@ export function IconPencil({ className = "h-6 w-6", ...props }) {
   );
 }
 
+export function IconChat({ className = "h-6 w-6", ...props }) {
+  return (
+    <IconShell className={className} {...props}>
+      <path d="M4.5 5.2h15v10.2a3.4 3.4 0 0 1-3.4 3.4H10l-4.7 2.3 1.1-3.2a3.4 3.4 0 0 1-1.9-3.1V5.2Z" fill="currentColor" fillOpacity="0.1" />
+      <path d="M8.2 10h7.6M8.2 13.4h4.8" />
+    </IconShell>
+  );
+}
+
 export function IconAnalysis({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
@@ -259,6 +268,8 @@ export function AppIcon({ name, className = "h-6 w-6", ...props }) {
     pencil: IconPencil,
     edit: IconPencil,
     analysis: IconAnalysis,
+    chat: IconChat,
+    consultation: IconChat,
     location: IconLocation,
     history: IconHistory,
     settings: IconSettings,
@@ -287,3 +298,4 @@ export const IconBolt = IconSignal;
 export const IconRipple = IconTsubo;
 export const IconResult = IconKarte;
 export const IconRobot = IconAnalysis;
+export const IconConsultation = IconChat;
