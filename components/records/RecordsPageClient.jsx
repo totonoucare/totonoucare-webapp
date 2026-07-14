@@ -11,15 +11,17 @@ import DailyRecordCard from "@/components/records/DailyRecordCard";
 import RecordsCalendar from "@/components/records/RecordsCalendar";
 import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
 import ExpertConsultPreview from "@/components/records/ExpertConsultPreview";
+import LiveSupportPanel from "@/components/records/LiveSupportPanel";
 
 const TAB_OPTIONS = [
   { key: "record", label: "記録カレンダー", short: "記録" },
   { key: "analysis", label: "AI分析", short: "AI分析" },
-  { key: "expert", label: "オンライン相談", short: "相談" },
+  { key: "consult", label: "相談", short: "相談" },
 ];
 
 function normalizeTab(value) {
-  return TAB_OPTIONS.some((item) => item.key === value) ? value : "record";
+  const normalized = value === "expert" ? "consult" : value;
+  return TAB_OPTIONS.some((item) => item.key === normalized) ? normalized : "record";
 }
 
 function monthRange(month) {
@@ -59,7 +61,7 @@ function RecordsTabs({ value, onChange }) {
   );
 }
 
-export default function RecordsPageClient({ initialTab = "record" }) {
+export default function RecordsPageClient({ initialTab = "record", initialLivePrompt = "" }) {
   const router = useRouter();
   const today = useMemo(() => jstDateString(new Date()), []);
   const earliestEditableDate = useMemo(() => addDaysYmd(today, -6), [today]);
@@ -78,10 +80,15 @@ export default function RecordsPageClient({ initialTab = "record" }) {
   const [recordError, setRecordError] = useState("");
   const [careActionSaving, setCareActionSaving] = useState("");
   const [analysisPrompt, setAnalysisPrompt] = useState("");
+  const [livePrompt, setLivePrompt] = useState(initialLivePrompt || "");
 
   useEffect(() => {
     setTab(normalizeTab(initialTab));
   }, [initialTab]);
+
+  useEffect(() => {
+    if (initialLivePrompt) setLivePrompt(initialLivePrompt);
+  }, [initialLivePrompt]);
 
   useEffect(() => {
     let mounted = true;
@@ -201,6 +208,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
     setTab(normalized);
     router.replace(`/records?tab=${normalized}`, { scroll: false });
     if (normalized === "analysis") sendEvent("analysis_opened");
+    if (normalized === "consult") sendEvent("live_support_opened");
   }
 
   function selectCalendarDate(date, row) {
@@ -279,7 +287,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
 
   if (authLoading) {
     return (
-      <AppShell title="記録・分析" subtitle="読み込み中">
+      <AppShell title="記録・相談" subtitle="読み込み中">
         <Module className="p-6">
           <div className="h-48 animate-pulse rounded-[24px] bg-[#F4FAF7]" />
         </Module>
@@ -290,7 +298,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
   if (!session) {
     return (
       <AppShell
-        title="記録・分析"
+        title="記録・相談"
         subtitle="ログインして利用"
         headerRight={
           <button
@@ -305,7 +313,7 @@ export default function RecordsPageClient({ initialTab = "record" }) {
         <Module className="p-6 text-center">
           <div className="text-[18px] font-black text-slate-900">記録にはログインが必要です</div>
           <div className="mt-2 text-[12px] font-bold leading-6 text-slate-500">
-            予報と実際の体調を同じアカウントに保存し、AIと一緒に振り返ります。
+            予報と実際の体調を保存し、記録の振り返りや今の体調相談につなげます。
           </div>
           <Button onClick={() => router.push("/signup")} className="mt-5 w-full">
             ログイン・無料登録へ
@@ -317,8 +325,8 @@ export default function RecordsPageClient({ initialTab = "record" }) {
 
   return (
     <AppShell
-      title="記録・分析"
-      subtitle="予報・実感・ケアをつなぐ"
+      title="記録・相談"
+      subtitle="記録・振り返り・今の相談"
       headerRight={
         <button
           type="button"
@@ -393,7 +401,17 @@ export default function RecordsPageClient({ initialTab = "record" }) {
         />
       ) : null}
 
-      {tab === "expert" ? <ExpertConsultPreview authedFetch={authedFetch} /> : null}
+      {tab === "consult" ? (
+        <div className="space-y-5">
+          <LiveSupportPanel
+            active
+            authedFetch={authedFetch}
+            initialPrompt={livePrompt}
+            onConsumePrompt={() => setLivePrompt("")}
+          />
+          <ExpertConsultPreview authedFetch={authedFetch} />
+        </div>
+      ) : null}
     </AppShell>
   );
 }

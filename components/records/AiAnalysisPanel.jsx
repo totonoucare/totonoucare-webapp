@@ -118,7 +118,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
   if (consent?.active) {
     return (
       <div className="rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        AIには氏名・メール・住所を含めず、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・実際に記録した具体的ケアとタイミング・体調記録・メモ・会話だけを送ります。体質チェックの生回答は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
+        AIには氏名・メール・住所を含めず、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・会話だけを送ります。期間の振り返りと今の体調相談の会話は分けて扱い、体質チェックの生回答は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
@@ -128,7 +128,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
       <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">記録の一部をAIへ送って分析します</div>
       <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
-        送信するのは、選択期間の解釈済み体質要約・計算済み予報根拠・表示ケア・実際に記録した具体的ケアとタイミング・体調記録・メモ・会話です。体質チェックの生回答、氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
+        送信するのは、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・会話です。期間の振り返りと今の体調相談の会話は分けて扱います。体質チェックの生回答、氏名、メール、住所は送りません。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
       </div>
       <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、AI分析を使う"}</Button>
     </div>
@@ -503,8 +503,8 @@ export default function AiAnalysisPanel({
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-10 w-10" /></div>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-black text-slate-900">この期間についてAIに聞く</div>
-            <div className="mt-0.5 text-[10px] font-bold text-slate-400">記録と分析を引き継いで話します</div>
+            <div className="text-[15px] font-black text-slate-900">この振り返りについてEKIKENに聞く</div>
+            <div className="mt-0.5 text-[10px] font-bold text-slate-400">選択した期間の記録と分析だけを引き継ぎます</div>
           </div>
           {chatUsage?.chat ? <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[9px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
         </div>
@@ -539,7 +539,7 @@ export default function AiAnalysisPanel({
             {!hasPendingFollowUp && !sending ? (
               <div className="mt-3">
                 <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
-                  <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">AIに聞く候補</span>
+                  <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">EKIKENに聞く候補</span>
                   <span className="text-[9px] font-bold text-slate-400">タップすると入力欄に入ります。送信前に編集できます。</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -551,7 +551,7 @@ export default function AiAnalysisPanel({
               <textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
               <div className="flex items-center justify-between gap-3 px-1 pb-1">
                 <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
-                <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "AIに聞く"}</Button>
+                <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "EKIKENに聞く"}</Button>
               </div>
             </div>
           </>
