@@ -2,7 +2,7 @@ import GuideClient from "./GuideClient";
 
 const pageTitle = "使い方ガイド｜未病レーダー";
 const pageDescription =
-  "体質トリセツ、今日・明日の体調予報、対策ケア、実感記録、AI分析、MYケアセレクトまでを一つの流れでまとめたガイドです。";
+  "体質トリセツ、今日・明日の体調予報、対策ケア、実感記録、自分に合う整え方の振り返り、国家資格者によるオンライン相談までをまとめたガイドです。";
 
 export const metadata = {
   title: pageTitle,
@@ -67,8 +67,8 @@ const structuredData = {
     },
     {
       "@type": "HowToStep",
-      name: "記録とAI分析で振り返る",
-      text: "似た天気ストレスと近い体調ゆらぎ度の日を比べ、ケアと実感の関係から自分の傾向を探します。",
+      name: "記録から自分に合う整え方を探す",
+      text: "予報、試したケア、実際の体調を振り返り、どんな日に何をすると過ごしやすかったかと、次に試すことを整理します。",
     },
   ],
 };
