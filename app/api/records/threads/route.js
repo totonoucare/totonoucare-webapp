@@ -37,6 +37,7 @@ export async function GET(req) {
       .from("records_ai_threads")
       .select("id,period_key,range_start,range_end,title,status,created_at,updated_at")
       .eq("user_id", user.id)
+      .eq("thread_kind", "period_review")
       .eq("period_key", periodKey)
       .eq("range_start", start)
       .eq("range_end", end)
@@ -79,6 +80,7 @@ export async function DELETE(req) {
       .delete()
       .eq("id", threadId)
       .eq("user_id", user.id)
+      .eq("thread_kind", "period_review")
       .select("id")
       .maybeSingle();
     if (deleteError) throw deleteError;
