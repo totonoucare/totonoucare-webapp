@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { isValidYmd } from "@/lib/records/server";
+import { replyToFollowUpFromMetadata } from "@/lib/records/replyContext";
+import { chronologicalFromNewest } from "@/lib/records/messageWindow";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ function publicMessage(row) {
     mood: row.mood || "",
     suggested_questions: Array.isArray(row.suggested_questions) ? row.suggested_questions : [],
     follow_up: row.follow_up && typeof row.follow_up === "object" ? row.follow_up : null,
+    reply_to_follow_up: replyToFollowUpFromMetadata(row.metadata),
     safety_level: row.safety_level || "routine",
     created_at: row.created_at,
   };
@@ -50,14 +53,14 @@ export async function GET(req) {
 
     const { data: messages, error: messageError } = await supabaseServer
       .from("records_ai_messages")
-      .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,created_at")
+      .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,metadata,created_at")
       .eq("user_id", user.id)
       .eq("thread_id", thread.id)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(100);
     if (messageError) throw messageError;
     return NextResponse.json({
-      data: { thread, messages: (messages || []).map(publicMessage) },
+      data: { thread, messages: chronologicalFromNewest(messages || [], 100).map(publicMessage) },
     });
   } catch (error) {
     console.error("/api/records/threads GET error:", error);
