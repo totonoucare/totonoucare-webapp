@@ -9,7 +9,7 @@ async function source(path) {
 test("live support quick prompts and follow-up choices fill the input instead of sending immediately", async () => {
   const panel = await source("components/records/LiveSupportPanel.jsx");
   assert.match(panel, /onClick=\{\(\) => fillInput\(question\)\}/);
-  assert.match(panel, /fillInput\(option\)/);
+  assert.match(panel, /fillFollowUpOption\(option\)/);
   assert.match(panel, /送る前に編集できます/);
   assert.doesNotMatch(panel, /onClick=\{\(\) => sendMessage\(question\)\}/);
 });

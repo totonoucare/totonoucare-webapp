@@ -16,12 +16,12 @@ test("live support prompt uses app forecasts confidently without repetitive disc
 });
 
 test("live support prompt version is bumped for the warmer dialogue behavior", () => {
-  assert.match(liveRoute, /records_live_support_v5_warm_dialogue_2026-07-15/);
+  assert.match(liveRoute, /records_live_support_v6_reply_context_2026-07-15/);
 });
 
 test("follow-up option chips place only the natural answer in the input", () => {
-  assert.match(livePanel, /onClick=\{\(\) => fillInput\(option\)\}/);
-  assert.match(analysisPanel, /onClick=\{\(\) => fillInput\(option\)\}/);
+  assert.match(livePanel, /onClick=\{\(\) => fillFollowUpOption\(option\)\}/);
+  assert.match(analysisPanel, /onClick=\{\(\) => fillFollowUpOption\(option\)\}/);
   assert.doesNotMatch(livePanel, /Ekikenからの確認への回答：/);
   assert.doesNotMatch(analysisPanel, /AIからの確認への回答：/);
 });
