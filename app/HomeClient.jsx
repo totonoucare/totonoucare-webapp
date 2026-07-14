@@ -1547,7 +1547,7 @@ export default function HomePage() {
   return (
     <AppShell
       title="ホーム"
-      subtitle="今日の体調予報"
+      subtitle="体質・予報・ケアをつなぐ"
       headerRight={
         <HomeHeaderMenu
           onGuide={() => router.push("/guide")}
