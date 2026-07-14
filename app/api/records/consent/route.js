@@ -64,7 +64,8 @@ export async function POST(req) {
         consent_scope: {
           destination: "OpenAI API",
           fields: ["interpreted_constitution_summary", "selected_period_forecasts", "today_tomorrow_forecasts", "forecast_reasoning", "displayed_care", "performed_concrete_care_items", "care_timing_relation", "recent_daily_records", "notes", "period_review_chat_messages", "live_support_chat_messages", "consultation_status"],
-          excludes: ["name", "email", "address"],
+          excludes: ["account_profile_name", "account_email", "account_address", "raw_constitution_answers"],
+          free_text_notice: "record notes and chat messages are sent as entered and may contain personal information the user typed",
           responses_store: false,
           provider_monitoring_logs: "subject_to_provider_policy",
         },
