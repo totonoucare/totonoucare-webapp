@@ -580,7 +580,7 @@ export default function AiAnalysisPanel({
                 <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                 <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">タップすると入力欄に入ります。必要なら補足してから送れます。</div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillInput(`AIからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
+                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillInput(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
                 </div>
               </div>
             ) : null}

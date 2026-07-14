@@ -396,7 +396,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                   <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
-                      <button key={option} type="button" onClick={() => fillInput(`Ekikenからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
+                      <button key={option} type="button" onClick={() => fillInput(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
                     ))}
                   </div>
                 </div>
