@@ -2,7 +2,7 @@ import GuideClient from "./GuideClient";
 
 const pageTitle = "使い方ガイド｜未病レーダー";
 const pageDescription =
-  "体質トリセツ、今日・明日の体調予報、対策ケア、実感記録、ケアナビAI：EKIKENへの体調相談、自分に合う整え方の振り返り、国家資格者によるオンライン相談までをまとめたガイドです。";
+  "体質トリセツ、今日・明日の体調予報、対策ケア、実感記録、ケアナビAI：Ekikenへの体調相談、自分に合う整え方の振り返り、国家資格者によるオンライン相談までをまとめたガイドです。";
 
 export const metadata = {
   title: pageTitle,

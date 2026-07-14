@@ -346,8 +346,8 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="ケアナビAI：EKIKENの役割" icon={<IconSpark />}>
-              EKIKEN（エキケン）は、未病レーダーが体質と天気から選んだケアを分かりやすく案内します。予報モードに合わせて表情が変わり、ケアを記録すると安心した表情になります。
+            <GuideCard tone="violet" title="ケアナビAI：Ekikenの役割" icon={<IconSpark />}>
+              Ekiken（エキケン）は、未病レーダーが体質と天気から選んだケアを分かりやすく案内します。予報モードに合わせて表情が変わり、ケアを記録すると安心した表情になります。
             </GuideCard>
 
             <MiniNote label="予報の考え方">
@@ -405,12 +405,12 @@ export default function GuidePage() {
               </div>
             </GuideCard>
 
-            <GuideCard tone="violet" title="この振り返りについてEKIKENに聞く" icon={<IconAnalysis />}>
+            <GuideCard tone="violet" title="この振り返りについてEkikenに聞く" icon={<IconAnalysis />}>
               分析した期間の記録だけを引き継ぎ、気になった日、天気ストレス、ケアの種類やタイミングを追加で質問できます。
             </GuideCard>
 
-            <GuideCard tone="mint" title="今の調子をEKIKENに相談" icon={<IconSpark />}>
-              体調が気になった瞬間は、相談タブからケアナビAI：EKIKEN（エキケン）へ一言から話せます。今日・明日の予報、今日行ったケア、直近の記録を見ながら、今できることを一緒に整理します。
+            <GuideCard tone="mint" title="今の調子をEkikenに相談" icon={<IconSpark />}>
+              体調が気になった瞬間は、相談タブからケアナビAI：Ekiken（エキケン）へ一言から話せます。今日・明日の予報、今日行ったケア、直近の記録を見ながら、今できることを一緒に整理します。
               <CheckList
                 items={[
                   "期間の振り返りチャットとは別の会話として保存します。",
@@ -432,7 +432,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote label="AIへ送る情報">
-              AI分析とEKIKEN相談では、解釈済みの体質トリセツ、利用する画面に必要な予報・表示ケア・実行ケア・実感・メモ・会話を使います。期間の振り返りと今の相談は別の会話として扱い、体質チェックの生回答や氏名・住所は送りません。
+              AI分析とEkiken相談では、解釈済みの体質トリセツ、利用する画面に必要な予報・表示ケア・実行ケア・実感・メモ・会話を使います。期間の振り返りと今の相談は別の会話として扱い、体質チェックの生回答や氏名・住所は送りません。
             </MiniNote>
 
             <div className="pt-2">
