@@ -34,8 +34,9 @@ export async function POST(req) {
     const interested = body?.interested !== false;
     const now = new Date().toISOString();
     const metadata = {
-      preferred_format: ["google_meet", "single_purchase", "ai_bundle"],
-      source: "records_expert_preview",
+      preferred_format: ["online_video", "single_session", "follow_up"],
+      service_positioning: "licensed_professional_self_care_consultation",
+      source: "records_online_consultation_preview",
     };
     const { error: saveError } = await supabaseServer
       .from("records_feature_interests")
