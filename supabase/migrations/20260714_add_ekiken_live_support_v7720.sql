@@ -35,7 +35,7 @@ create unique index if not exists records_ai_threads_one_active_live_support_idx
   where status = 'active' and thread_kind = 'live_support';
 
 comment on column public.records_ai_threads.thread_kind is
-  'period_review: 選択期間の振り返り会話 / live_support: 今の体調を相談するEKIKEN会話';
+  'period_review: 選択期間の振り返り会話 / live_support: 今の体調を相談するEkiken会話';
 comment on column public.records_ai_threads.context_summary is
   '長い会話を将来要約するための構造化領域。AIの仮説とユーザー事実を混同しない。';
 comment on column public.records_ai_threads.last_context_date is
