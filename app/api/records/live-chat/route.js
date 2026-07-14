@@ -28,13 +28,14 @@ import {
   PROFESSIONAL_MESSAGE,
   URGENT_MESSAGE,
   cleanChatOutput,
-  isProfessionalText,
   isUrgentText,
 } from "@/lib/records/aiPrompts";
 import {
   LIVE_SUPPORT_PERIOD_KEY,
   LIVE_SUPPORT_QUICK_PROMPTS,
   LIVE_SUPPORT_THREAD_KIND,
+  consultationStatusLabel,
+  normalizeConsultationStatus,
   buildLiveRecentSummary,
   buildLiveSupportGreeting,
   selectLiveDetailRows,
@@ -45,7 +46,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_LIVE_CHAT_MODEL || process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_live_support_v1_ekiken_2026-07-14";
+const PROMPT_VERSION = "records_live_support_v2_context_first_2026-07-14";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -203,6 +204,18 @@ function schemaError(error) {
   return error?.code === "42703" || error?.code === "PGRST204" || message.includes("thread_kind") || message.includes("context_summary");
 }
 
+function consultationStatusFromThread(thread) {
+  const key = normalizeConsultationStatus(thread?.context_summary?.consultation_status);
+  return key ? { key, label: consultationStatusLabel(key) } : null;
+}
+
+function mergeThreadContext(thread, patch = {}) {
+  const current = thread?.context_summary && typeof thread.context_summary === "object"
+    ? thread.context_summary
+    : {};
+  return { ...current, ...patch };
+}
+
 export async function GET(req) {
   try {
     const { user, error } = await requireUser(req);
@@ -223,6 +236,7 @@ export async function GET(req) {
         starter,
         usage,
         thread,
+        consultation_status: consultationStatusFromThread(thread),
         messages: messages.map(publicMessage),
       },
     });
@@ -324,9 +338,10 @@ export async function POST(req) {
         last_3_days: recentDetails,
         last_14_days_summary: buildLiveRecentSummary(recentRows),
       },
+      consultation_status: consultationStatusFromThread(thread),
       conversation: {
         recent_messages: conversation,
-        session_summary: thread.context_summary || {},
+        session_summary: thread.context_summary?.session_summary || {},
       },
       latest_user_request: message,
       data_boundaries: {
@@ -355,12 +370,6 @@ export async function POST(req) {
       output.suggested_questions = [];
       output.follow_up = { kind: "professional", question: "", options: [], date: "" };
     } else {
-      if (isProfessionalText(message)) {
-        output.safety_level = "professional";
-        if (!output.follow_up?.kind || output.follow_up.kind === "none") {
-          output.follow_up = { kind: "professional", question: "", options: [], date: "" };
-        }
-      }
       if (output.safety_level === "professional" && !output.safety_message) {
         output.safety_message = PROFESSIONAL_MESSAGE;
       }
@@ -416,6 +425,42 @@ export async function POST(req) {
   }
 }
 
+export async function PATCH(req) {
+  try {
+    const { user, error } = await requireUser(req);
+    if (!user) return NextResponse.json({ error }, { status: 401 });
+    const body = await req.json().catch(() => ({}));
+    const statusKey = normalizeConsultationStatus(body?.consultation_status);
+    if (!statusKey) {
+      return NextResponse.json({ error: "invalid consultation_status" }, { status: 400 });
+    }
+    const today = jstDateString(new Date());
+    const thread = await resolveLiveThread(user.id, "今の調子をEKIKENに相談", today);
+    const contextSummary = mergeThreadContext(thread, {
+      consultation_status: statusKey,
+      consultation_status_updated_at: new Date().toISOString(),
+    });
+    const { data, error: updateError } = await supabaseServer
+      .from("records_ai_threads")
+      .update({ context_summary: contextSummary, updated_at: new Date().toISOString() })
+      .eq("id", thread.id)
+      .eq("user_id", user.id)
+      .eq("thread_kind", LIVE_SUPPORT_THREAD_KIND)
+      .select("id,context_summary")
+      .single();
+    if (updateError) throw updateError;
+    return NextResponse.json({
+      data: {
+        thread_id: data.id,
+        consultation_status: consultationStatusFromThread(data),
+      },
+    });
+  } catch (error) {
+    console.error("/api/records/live-chat PATCH error:", error);
+    return NextResponse.json({ error: "受診・相談状況を保存できませんでした" }, { status: 500 });
+  }
+}
+
 export async function DELETE(req) {
   try {
     const { user, error } = await requireUser(req);
@@ -423,17 +468,38 @@ export async function DELETE(req) {
     const body = await req.json().catch(() => ({}));
     const threadId = String(body?.thread_id || "").trim();
     if (!threadId) return NextResponse.json({ error: "thread_id is required" }, { status: 400 });
-    const { data, error: deleteError } = await supabaseServer
-      .from("records_ai_threads")
+    const thread = await findLiveThread(user.id);
+    if (!thread || thread.id !== threadId) {
+      return NextResponse.json({ error: "会話が見つかりません" }, { status: 404 });
+    }
+    const { error: messageDeleteError } = await supabaseServer
+      .from("records_ai_messages")
       .delete()
+      .eq("thread_id", threadId)
+      .eq("user_id", user.id);
+    if (messageDeleteError) throw messageDeleteError;
+    const preserved = mergeThreadContext(thread, {
+      session_summary: {},
+      conversation_cleared_at: new Date().toISOString(),
+    });
+    const { error: threadUpdateError } = await supabaseServer
+      .from("records_ai_threads")
+      .update({
+        title: "今の調子をEKIKENに相談",
+        context_summary: preserved,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", threadId)
       .eq("user_id", user.id)
-      .eq("thread_kind", LIVE_SUPPORT_THREAD_KIND)
-      .select("id")
-      .maybeSingle();
-    if (deleteError) throw deleteError;
-    if (!data) return NextResponse.json({ error: "会話が見つかりません" }, { status: 404 });
-    return NextResponse.json({ data: { deleted: true } });
+      .eq("thread_kind", LIVE_SUPPORT_THREAD_KIND);
+    if (threadUpdateError) throw threadUpdateError;
+    return NextResponse.json({
+      data: {
+        deleted: true,
+        thread_id: threadId,
+        consultation_status: consultationStatusFromThread({ context_summary: preserved }),
+      },
+    });
   } catch (error) {
     console.error("/api/records/live-chat DELETE error:", error);
     return NextResponse.json({ error: "会話を削除できませんでした" }, { status: 500 });
