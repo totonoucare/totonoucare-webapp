@@ -43,13 +43,19 @@ import {
   selectLiveDetailRows,
 } from "@/lib/records/liveSupport";
 import { chronologicalFromNewest } from "@/lib/records/messageWindow";
+import {
+  conversationMessageForAi,
+  normalizeReplyToFollowUp,
+  replyToFollowUpFromMetadata,
+  verifiedReplyToFollowUp,
+} from "@/lib/records/replyContext";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_LIVE_CHAT_MODEL || process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_live_support_v5_warm_dialogue_2026-07-15";
+const PROMPT_VERSION = "records_live_support_v6_reply_context_2026-07-15";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -80,6 +86,7 @@ function publicMessage(row) {
     mood: row.mood || "",
     suggested_questions: Array.isArray(row.suggested_questions) ? row.suggested_questions : [],
     follow_up: row.follow_up && typeof row.follow_up === "object" ? row.follow_up : null,
+    reply_to_follow_up: replyToFollowUpFromMetadata(row.metadata),
     safety_level: row.safety_level || "routine",
     created_at: row.created_at,
   };
@@ -150,7 +157,7 @@ async function saveMessage({ threadId, userId, role, content, requestId = null, 
       model,
       metadata: { ...metadata, thread_kind: LIVE_SUPPORT_THREAD_KIND },
     })
-    .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,created_at")
+    .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,metadata,created_at")
     .single();
   if (error) throw error;
   await supabaseServer
@@ -164,7 +171,7 @@ async function saveMessage({ threadId, userId, role, content, requestId = null, 
 async function loadLatestMessages(threadId, userId, { limit = 100 } = {}) {
   const { data, error } = await supabaseServer
     .from("records_ai_messages")
-    .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,created_at")
+    .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,metadata,created_at")
     .eq("thread_id", threadId)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -175,7 +182,22 @@ async function loadLatestMessages(threadId, userId, { limit = 100 } = {}) {
 
 async function loadConversation(threadId, userId) {
   const rows = await loadLatestMessages(threadId, userId, { limit: 16 });
-  return rows.map((row) => ({ role: row.role, content: row.content }));
+  return rows.map(conversationMessageForAi);
+}
+
+async function loadReplyTarget(threadId, userId, candidate) {
+  const normalized = normalizeReplyToFollowUp(candidate);
+  if (!normalized) return null;
+  const { data, error } = await supabaseServer
+    .from("records_ai_messages")
+    .select("id,role,follow_up")
+    .eq("id", normalized.assistant_message_id)
+    .eq("thread_id", threadId)
+    .eq("user_id", userId)
+    .eq("role", "assistant")
+    .maybeSingle();
+  if (error) throw error;
+  return verifiedReplyToFollowUp(normalized, data);
 }
 
 async function loadStarterContext(userId, today) {
@@ -258,6 +280,7 @@ export async function POST(req) {
     const body = await req.json().catch(() => ({}));
     const message = String(body?.message || "").trim().slice(0, 1200);
     const threadId = String(body?.thread_id || "").trim() || null;
+    const requestedReplyToFollowUp = body?.reply_to_follow_up || null;
     if (!message) return NextResponse.json({ error: "message is required" }, { status: 400 });
 
     const [access, consent, usageBefore] = await Promise.all([
@@ -293,7 +316,17 @@ export async function POST(req) {
       throw mismatch;
     }
     if (!thread) thread = await resolveLiveThread(user.id, message, today);
-    await saveMessage({ threadId: thread.id, userId: user.id, role: "user", content: message, metadata: { surface: "live_support" } });
+    const replyToFollowUp = await loadReplyTarget(thread.id, user.id, requestedReplyToFollowUp);
+    await saveMessage({
+      threadId: thread.id,
+      userId: user.id,
+      role: "user",
+      content: message,
+      metadata: {
+        surface: "live_support",
+        ...(replyToFollowUp ? { reply_to_follow_up: replyToFollowUp } : {}),
+      },
+    });
 
     if (urgentMessage) {
       const requestId = makeAiRequestId("live_safety");
@@ -369,7 +402,10 @@ export async function POST(req) {
         recent_messages: conversation,
         session_summary: thread.context_summary?.session_summary || {},
       },
-      latest_user_request: message,
+      latest_user_request: {
+        message,
+        reply_to_follow_up: replyToFollowUp,
+      },
       potential_safety_signal: safetySignal.kind && !safetySignal.should_route
         ? { kind: safetySignal.kind, context: safetySignal.context }
         : null,
