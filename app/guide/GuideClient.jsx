@@ -186,7 +186,7 @@ export default function GuidePage() {
     () => [
       { key: "flow", label: "基本の流れ" },
       { key: "radar", label: "予報・ケア" },
-      { key: "records", label: "記録・分析" },
+      { key: "records", label: "記録・相談" },
       { key: "care", label: "MYケア" },
     ],
     []
@@ -230,7 +230,7 @@ export default function GuidePage() {
                 { label: "トリセツ", sub: "自分の体質を知る", Icon: IconConstitution, num: "01" },
                 { label: "体調予報", sub: "今日・明日のゆらぎを見る", Icon: IconRadar, num: "02" },
                 { label: "対策ケア", sub: "先回りして整える", Icon: IconCare, num: "03" },
-                { label: "記録・分析", sub: "ケアと実感から傾向を見る", Icon: IconPencil, num: "04" },
+                { label: "記録・相談", sub: "実感を残し、AIや人に相談", Icon: IconPencil, num: "04" },
               ].map(({ label, sub, Icon, num }) => (
                 <div key={label} className="rounded-[18px] bg-white/80 p-3 ring-1 ring-white shadow-sm">
                   <div className="flex items-center justify-between gap-2">
@@ -256,7 +256,7 @@ export default function GuidePage() {
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">まず、この流れだけで大丈夫</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            毎日すべての機能を使う必要はありません。初回にトリセツを作り、普段は予報を見て対策ケアを試し、記録・分析につなげます。
+            毎日すべての機能を使う必要はありません。初回にトリセツを作り、普段は予報を見て対策ケアを試し、実感の記録や必要な相談につなげます。
           </div>
 
           <div className="space-y-4">
@@ -295,7 +295,7 @@ export default function GuidePage() {
             <div className="grid gap-3 pt-2">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">体質トリセツを作る</Button>
               <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">体調予報を見る</Button>
-              <Button variant="secondary" onClick={() => router.push("/records")} className="w-full">記録・分析を見る</Button>
+              <Button variant="secondary" onClick={() => router.push("/records?tab=consult")} className="w-full">記録・相談を見る</Button>
             </div>
           </div>
         </Module>
@@ -346,8 +346,8 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="violet" title="ケアナビの役割" icon={<IconSpark />}>
-              キャラクターは、未病レーダーが体質と天気から選んだケアを分かりやすく案内します。予報モードに合わせて表情が変わり、ケアを記録すると安心した表情になります。
+            <GuideCard tone="violet" title="ケアナビAI：EKIKENの役割" icon={<IconSpark />}>
+              EKIKEN（エキケン）は、未病レーダーが体質と天気から選んだケアを分かりやすく案内します。予報モードに合わせて表情が変わり、ケアを記録すると安心した表情になります。
             </GuideCard>
 
             <MiniNote label="予報の考え方">
@@ -405,8 +405,19 @@ export default function GuidePage() {
               </div>
             </GuideCard>
 
-            <GuideCard tone="violet" title="AIに追加で聞く" icon={<IconAnalysis />}>
-              分析した期間の記録を引き継いで、気になった日、天気ストレス、ケアの種類やタイミングを追加で質問できます。分からないことは断定せず、一緒に整理します。
+            <GuideCard tone="violet" title="この振り返りについてEKIKENに聞く" icon={<IconAnalysis />}>
+              分析した期間の記録だけを引き継ぎ、気になった日、天気ストレス、ケアの種類やタイミングを追加で質問できます。
+            </GuideCard>
+
+            <GuideCard tone="mint" title="今の調子をEKIKENに相談" icon={<IconSpark />}>
+              体調が気になった瞬間は、相談タブからケアナビAI：EKIKEN（エキケン）へ一言から話せます。今日・明日の予報、今日行ったケア、直近の記録を見ながら、今できることを一緒に整理します。
+              <CheckList
+                items={[
+                  "期間の振り返りチャットとは別の会話として保存します。",
+                  "診断するのではなく、まず話を聞き、安全を確認し、低リスクなケアを1〜2個に絞ります。",
+                  "強い症状や薬・治療の判断は、医療機関や国家資格者への相談を案内します。",
+                ]}
+              />
             </GuideCard>
 
             <GuideCard tone="teal" title="国家資格者によるオンライン相談" icon={<IconBodyLine />}>
@@ -421,11 +432,11 @@ export default function GuidePage() {
             </GuideCard>
 
             <MiniNote label="AIへ送る情報">
-              AI分析では、解釈済みの体質要約、計算済みの予報根拠、表示されたケア、実際に行ったケア、実感・メモ・会話を使います。体質チェックの生回答や氏名・住所は送りません。
+              AI分析とEKIKEN相談では、解釈済みの体質トリセツ、利用する画面に必要な予報・表示ケア・実行ケア・実感・メモ・会話を使います。期間の振り返りと今の相談は別の会話として扱い、体質チェックの生回答や氏名・住所は送りません。
             </MiniNote>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/records")} className="w-full shadow-md">記録・分析へ</Button>
+              <Button onClick={() => router.push("/records")} className="w-full shadow-md">記録・相談へ</Button>
             </div>
           </div>
         </Module>
