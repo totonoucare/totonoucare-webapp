@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
-import { EKIKEN_DISPLAY_NAME } from "@/lib/records/liveSupport";
+import {
+  EKIKEN_DISPLAY_NAME,
+  LIVE_SUPPORT_CONSULTATION_STATUS_OPTIONS,
+  consultationStatusLabel,
+} from "@/lib/records/liveSupport";
 
 function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.ai_enabled) {
@@ -16,7 +20,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (consent?.active) {
     return (
       <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        EKIKENには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、この相談の会話を送ります。氏名・メール・住所、体質チェックの生回答は送りません。
+        EKIKENには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、任意で登録した受診・相談状況、この相談の会話を送ります。氏名・メール・住所、体質チェックの生回答は送りません。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
@@ -26,9 +30,48 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
       <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">今の相談に必要なアプリ内データを使います</div>
       <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
-        送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、この相談の会話です。氏名・メール・住所、体質チェックの生回答は送りません。AIは診断や薬の個別判断を行いません。
+        送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。氏名・メール・住所、体質チェックの生回答は送りません。AIは診断や薬の個別判断を行いません。
       </div>
       <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、EKIKENに相談する"}</Button>
+    </div>
+  );
+}
+
+function ConsultationStatusCard({ status, saving, editing, onEdit, onSelect }) {
+  const label = consultationStatusLabel(status);
+  if (status && !editing) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#DCE8DD]">
+        <div className="min-w-0">
+          <div className="text-[9px] font-black tracking-[0.12em] text-slate-400">現在の受診・相談状況</div>
+          <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{label}</div>
+        </div>
+        <button type="button" disabled={saving} onClick={onEdit} className="shrink-0 rounded-full bg-[#F4FAF7] px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">変更</button>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
+      <div className="text-[10px] font-black text-slate-800">現在の受診・相談状況（任意）</div>
+      <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">一度選ぶと、同じ確認を繰り返しにくくなります。症状によって状況が違う場合は、会話で補足できます。</div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {LIVE_SUPPORT_CONSULTATION_STATUS_OPTIONS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            disabled={saving}
+            onClick={() => onSelect(item.key)}
+            className={[
+              "rounded-full px-3 py-2 text-left text-[10px] font-black leading-4 ring-1 transition",
+              status === item.key
+                ? "bg-[#EAF7F1] text-[#2F816E] ring-[#9FD6C6]"
+                : "bg-white text-slate-600 ring-[#DCE8DD]",
+            ].join(" ")}
+          >
+            {saving && status === item.key ? "保存中…" : item.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -65,6 +108,11 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   const [mood, setMood] = useState("listening");
   const [suggestions, setSuggestions] = useState([]);
   const [followUp, setFollowUp] = useState(null);
+  const [consultationStatus, setConsultationStatus] = useState("");
+  const [consultationStatusSaving, setConsultationStatusSaving] = useState(false);
+  const [consultationStatusEditing, setConsultationStatusEditing] = useState(false);
+  const chatScrollRef = useRef(null);
+  const inputRef = useRef(null);
 
   const pendingFollowUp = Boolean(followUp?.kind && followUp.kind !== "none" && followUp.question);
   const remaining = useMemo(() => usage?.chat ? Math.max(0, usage.chat.limit - usage.chat.used) : null, [usage]);
@@ -80,6 +128,8 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setThreadId(data.thread?.id || "");
       setMessages(data.messages || []);
       setUsage(data.usage || null);
+      setConsultationStatus(data.consultation_status?.key || "");
+      setConsultationStatusEditing(!data.consultation_status?.key);
       const lastAssistant = [...(data.messages || [])].reverse().find((item) => item.role === "assistant");
       setMood(lastAssistant?.mood || "listening");
       setFollowUp(lastAssistant?.follow_up || null);
@@ -99,8 +149,44 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   useEffect(() => {
     if (!active || !initialPrompt) return;
     setInput(initialPrompt);
+    requestAnimationFrame(() => inputRef.current?.focus());
     onConsumePrompt?.();
   }, [active, initialPrompt, onConsumePrompt]);
+
+  useEffect(() => {
+    if (!active || loading) return;
+    const element = chatScrollRef.current;
+    if (!element) return;
+    requestAnimationFrame(() => {
+      element.scrollTo({ top: element.scrollHeight, behavior: messages.length ? "smooth" : "auto" });
+    });
+  }, [active, loading, messages.length, sending]);
+
+  function fillInput(value) {
+    setInput(String(value || ""));
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  async function saveConsultationStatus(nextStatus) {
+    if (!nextStatus || consultationStatusSaving) return;
+    setConsultationStatus(nextStatus);
+    setConsultationStatusSaving(true);
+    setError("");
+    try {
+      const data = await authedFetch("/api/records/live-chat", {
+        method: "PATCH",
+        body: JSON.stringify({ consultation_status: nextStatus }),
+      });
+      setThreadId(data.thread_id || threadId);
+      setConsultationStatus(data.consultation_status?.key || nextStatus);
+      setConsultationStatusEditing(false);
+    } catch (statusError) {
+      setError(statusError?.message || "受診・相談状況を保存できませんでした");
+      setConsultationStatusEditing(true);
+    } finally {
+      setConsultationStatusSaving(false);
+    }
+  }
 
   async function acceptConsent() {
     setConsentSaving(true);
@@ -183,7 +269,6 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
         method: "DELETE",
         body: JSON.stringify({ thread_id: threadId }),
       });
-      setThreadId("");
       setMessages([]);
       setMood("listening");
       setFollowUp(null);
@@ -209,11 +294,21 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
         <div className="space-y-3 px-4 pb-4">
           <AiConsent access={access} consent={consent} saving={consentSaving} onAccept={acceptConsent} onRevoke={revokeConsent} />
 
+          {consent?.active && access?.ai_enabled ? (
+            <ConsultationStatusCard
+              status={consultationStatus}
+              saving={consultationStatusSaving}
+              editing={consultationStatusEditing}
+              onEdit={() => setConsultationStatusEditing(true)}
+              onSelect={saveConsultationStatus}
+            />
+          ) : null}
+
           {loading ? (
             <div className="h-44 animate-pulse rounded-[22px] bg-white/70 ring-1 ring-[#E8F0EB]" />
           ) : consent?.active && access?.ai_enabled ? (
             <>
-              <div className="max-h-[500px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
+              <div ref={chatScrollRef} className="max-h-[500px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
                 {messages.length === 0 && starter?.greeting ? (
                   <Bubble message={{ role: "assistant", content: starter.greeting, safety_level: "routine" }} />
                 ) : null}
@@ -227,7 +322,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                   <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
-                      <button key={option} type="button" onClick={() => sendMessage(`EKIKENからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
+                      <button key={option} type="button" onClick={() => fillInput(`EKIKENからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
                     ))}
                   </div>
                 </div>
@@ -237,18 +332,18 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 <div>
                   <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
                     <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">一言から相談</span>
-                    <span className="text-[9px] font-bold text-slate-400">タップするとそのまま送信します。</span>
+                    <span className="text-[9px] font-bold text-slate-400">タップすると入力欄に入ります。送る前に編集できます。</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(suggestions.length ? suggestions : starter?.quick_prompts || []).map((question) => (
-                      <button key={question} type="button" onClick={() => sendMessage(question)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>
+                      <button key={question} type="button" onClick={() => fillInput(question)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>
                     ))}
                   </div>
                 </div>
               ) : null}
 
               <div className="rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-                <textarea value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）急に頭が重くなって、少しイライラします" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+                <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）急に頭が重くなって、少しイライラします" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
                   <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "EKIKENに話す"}</Button>
