@@ -10,7 +10,6 @@
     "test:records": "node --test tests/*.test.mjs",
     "vapid:generate": "npx web-push generate-vapid-keys"
   },
-  
   "dependencies": {
     "@supabase/supabase-js": "2.110.2",
     "next": "14.2.35",
