@@ -28,7 +28,9 @@ import {
   PROFESSIONAL_MESSAGE,
   URGENT_MESSAGE,
   cleanChatOutput,
+  isProfessionalText,
   isUrgentText,
+  urgentMessageForText,
 } from "@/lib/records/aiPrompts";
 import {
   LIVE_SUPPORT_PERIOD_KEY,
@@ -40,13 +42,14 @@ import {
   buildLiveSupportGreeting,
   selectLiveDetailRows,
 } from "@/lib/records/liveSupport";
+import { chronologicalFromNewest } from "@/lib/records/messageWindow";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_LIVE_CHAT_MODEL || process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_live_support_v2_context_first_2026-07-14";
+const PROMPT_VERSION = "records_live_support_v3_warm_safety_2026-07-14";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -117,7 +120,7 @@ async function resolveLiveThread(userId, firstMessage, today) {
       range_end: today,
       last_context_date: today,
       context_summary: {},
-      title: String(firstMessage || "今の調子をEKIKENに相談").slice(0, 60),
+      title: String(firstMessage || "今の調子をEkikenに相談").slice(0, 60),
       status: "active",
     })
     .select("id,thread_kind,period_key,range_start,range_end,title,status,context_summary,last_context_date,created_at,updated_at")
@@ -158,22 +161,20 @@ async function saveMessage({ threadId, userId, role, content, requestId = null, 
   return data;
 }
 
-async function loadMessages(threadId, userId, { limit = 100, ascending = true } = {}) {
-  let query = supabaseServer
+async function loadLatestMessages(threadId, userId, { limit = 100 } = {}) {
+  const { data, error } = await supabaseServer
     .from("records_ai_messages")
     .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,created_at")
     .eq("thread_id", threadId)
     .eq("user_id", userId)
-    .order("created_at", { ascending: !ascending ? false : true })
+    .order("created_at", { ascending: false })
     .limit(limit);
-  const { data, error } = await query;
   if (error) throw error;
-  const rows = data || [];
-  return ascending ? rows : rows.reverse();
+  return chronologicalFromNewest(data || [], limit);
 }
 
 async function loadConversation(threadId, userId) {
-  const rows = await loadMessages(threadId, userId, { limit: 16, ascending: false });
+  const rows = await loadLatestMessages(threadId, userId, { limit: 16 });
   return rows.map((row) => ({ role: row.role, content: row.content }));
 }
 
@@ -228,7 +229,7 @@ export async function GET(req) {
       getAiUsage(user.id),
       findLiveThread(user.id),
     ]);
-    const messages = thread ? await loadMessages(thread.id, user.id, { limit: 100, ascending: true }) : [];
+    const messages = thread ? await loadLatestMessages(thread.id, user.id, { limit: 100 }) : [];
     return NextResponse.json({
       data: {
         access,
@@ -244,7 +245,7 @@ export async function GET(req) {
     console.error("/api/records/live-chat GET error:", error);
     const status = schemaError(error) ? 503 : 500;
     return NextResponse.json({
-      error: status === 503 ? "EKIKEN相談のデータ準備が完了していません" : "EKIKENとの会話を読み込めませんでした",
+      error: status === 503 ? "Ekiken相談のデータ準備が完了していません" : "Ekikenとの会話を読み込めませんでした",
       code: status === 503 ? "live_support_schema_required" : "live_support_load_failed",
     }, { status });
   }
@@ -259,46 +260,27 @@ export async function POST(req) {
     const threadId = String(body?.thread_id || "").trim() || null;
     if (!message) return NextResponse.json({ error: "message is required" }, { status: 400 });
 
-    if (isUrgentText(message)) {
-      const requestId = makeAiRequestId("live_safety");
-      const output = {
-        message: URGENT_MESSAGE,
-        mood: "listening",
-        suggested_questions: [],
-        follow_up: { kind: "professional", question: "", options: [], date: "" },
-        safety_level: "urgent",
-        safety_message: URGENT_MESSAGE,
-      };
-      try {
-        await logRecordsAiEvent({
-          userId: user.id,
-          eventType: "safety_response",
-          requestId,
-          periodKey: LIVE_SUPPORT_PERIOD_KEY,
-          source: "safety_rule",
-          metadata: { prompt_version: PROMPT_VERSION, surface: "live_support", persisted_message: false },
-        });
-      } catch {}
-      return NextResponse.json({ data: { ...output, request_id: requestId, thread_id: null, source: "safety", usage: null, access: null } });
-    }
-
     const [access, consent, usageBefore] = await Promise.all([
       getRecordsAccess(user.id),
       hasActiveAiConsent(user.id),
       getAiUsage(user.id),
     ]);
     if (!access.ai_enabled) {
-      return NextResponse.json({ error: "EKIKEN相談は現在利用できません", code: "ai_access_required" }, { status: 403 });
+      return NextResponse.json({ error: "Ekiken相談は現在利用できません", code: "ai_access_required" }, { status: 403 });
     }
     if (!consent) {
       return NextResponse.json({ error: "AI利用への同意が必要です", code: "ai_consent_required" }, { status: 403 });
     }
-    assertQuota(usageBefore, "chat");
-    if (!process.env.OPENAI_API_KEY) {
-      const configError = new Error("EKIKEN相談の接続設定が完了していません");
-      configError.status = 503;
-      configError.code = "openai_not_configured";
-      throw configError;
+
+    const urgentMessage = isUrgentText(message);
+    if (!urgentMessage) {
+      assertQuota(usageBefore, "chat");
+      if (!process.env.OPENAI_API_KEY) {
+        const configError = new Error("Ekiken相談の接続設定が完了していません");
+        configError.status = 503;
+        configError.code = "openai_not_configured";
+        throw configError;
+      }
     }
 
     const today = jstDateString(new Date());
@@ -311,6 +293,49 @@ export async function POST(req) {
     }
     if (!thread) thread = await resolveLiveThread(user.id, message, today);
     await saveMessage({ threadId: thread.id, userId: user.id, role: "user", content: message, metadata: { surface: "live_support" } });
+
+    if (urgentMessage) {
+      const requestId = makeAiRequestId("live_safety");
+      const urgentSafetyMessage = urgentMessageForText(message);
+      const output = {
+        message: urgentSafetyMessage,
+        mood: "listening",
+        suggested_questions: [],
+        follow_up: { kind: "professional", question: "", options: [], date: "" },
+        safety_level: "urgent",
+        safety_message: urgentSafetyMessage,
+      };
+      const assistant = await saveMessage({
+        threadId: thread.id,
+        userId: user.id,
+        role: "assistant",
+        content: output.message,
+        requestId,
+        output,
+        metadata: { source: "safety_rule", surface: "live_support", prompt_version: PROMPT_VERSION },
+      });
+      try {
+        await logRecordsAiEvent({
+          userId: user.id,
+          eventType: "safety_response",
+          requestId,
+          periodKey: LIVE_SUPPORT_PERIOD_KEY,
+          source: "safety_rule",
+          metadata: { prompt_version: PROMPT_VERSION, surface: "live_support", persisted_message: true, thread_id: thread.id },
+        });
+      } catch {}
+      return NextResponse.json({
+        data: {
+          ...output,
+          message_id: assistant.id,
+          request_id: requestId,
+          thread_id: thread.id,
+          source: "safety",
+          usage: usageBefore,
+          access,
+        },
+      });
+    }
 
     const start14 = addDaysYmd(today, -13);
     const tomorrow = addDaysYmd(today, 1);
@@ -326,7 +351,7 @@ export async function POST(req) {
 
     const context = {
       mode: "live_health_support",
-      assistant: { name: "EKIKEN", reading: "エキケン", role: "ケアナビAI" },
+      assistant: { name: "Ekiken", reading: "エキケン", role: "ケアナビAI" },
       product_context: RECORDS_AI_PRODUCT_CONTEXT,
       constitution: buildInterpretedProfileContext(profile),
       current_context: {
@@ -347,7 +372,7 @@ export async function POST(req) {
       data_boundaries: {
         app_facts: "アプリが計算・保存した体質、予報、表示ケア、実行ケア、記録",
         user_facts: "ユーザーが会話または記録で伝えた内容",
-        ai_hypotheses: "EKIKENが可能性として述べる解釈。事実や診断ではない",
+        ai_hypotheses: "Ekikenが可能性として述べる解釈。事実や診断ではない",
       },
     };
 
@@ -364,6 +389,10 @@ export async function POST(req) {
     });
 
     const output = cleanChatOutput(result.data);
+    if (output.safety_level === "routine" && isProfessionalText(message)) {
+      output.safety_level = "professional";
+      output.safety_message = PROFESSIONAL_MESSAGE;
+    }
     if (output.safety_level === "urgent") {
       output.message = URGENT_MESSAGE;
       output.safety_message = URGENT_MESSAGE;
@@ -419,7 +448,7 @@ export async function POST(req) {
     console.error("/api/records/live-chat POST error:", error);
     const status = Number(error?.status || (schemaError(error) ? 503 : 500));
     return NextResponse.json({
-      error: error?.message || "EKIKENへの相談に失敗しました",
+      error: error?.message || "Ekikenへの相談に失敗しました",
       code: error?.code || (status === 503 ? "live_support_schema_required" : "live_support_failed"),
     }, { status });
   }
@@ -435,7 +464,7 @@ export async function PATCH(req) {
       return NextResponse.json({ error: "invalid consultation_status" }, { status: 400 });
     }
     const today = jstDateString(new Date());
-    const thread = await resolveLiveThread(user.id, "今の調子をEKIKENに相談", today);
+    const thread = await resolveLiveThread(user.id, "今の調子をEkikenに相談", today);
     const contextSummary = mergeThreadContext(thread, {
       consultation_status: statusKey,
       consultation_status_updated_at: new Date().toISOString(),
@@ -485,7 +514,7 @@ export async function DELETE(req) {
     const { error: threadUpdateError } = await supabaseServer
       .from("records_ai_threads")
       .update({
-        title: "今の調子をEKIKENに相談",
+        title: "今の調子をEkikenに相談",
         context_summary: preserved,
         updated_at: new Date().toISOString(),
       })
