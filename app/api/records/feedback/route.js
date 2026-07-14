@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const REASONS = new Set(["too_general", "not_grounded", "hard_to_understand", "felt_unsafe", "other"]);
+const REASONS = new Set(["too_general", "not_grounded", "hard_to_understand", "felt_unsafe", "too_cold", "too_many_safety_questions", "other"]);
 
 export async function POST(req) {
   try {
@@ -45,7 +45,7 @@ export async function POST(req) {
         model: sourceEvent.model,
         feedback,
         feedbackReason: reason,
-        metadata: { surface: body?.surface === "analysis" ? "records_analysis" : "records_chat" },
+        metadata: { surface: body?.surface === "analysis" ? "records_analysis" : body?.surface === "live_support" ? "live_support" : "records_chat" },
       });
     } catch (saveError) {
       if (saveError?.code !== "23505" && !String(saveError?.message || "").includes("duplicate")) throw saveError;
