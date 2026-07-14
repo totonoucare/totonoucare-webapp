@@ -50,6 +50,7 @@ async function resolveThread({ userId, threadId, periodKey, start, end, firstMes
       .select("id,period_key,range_start,range_end,status")
       .eq("id", threadId)
       .eq("user_id", userId)
+      .eq("thread_kind", "period_review")
       .eq("status", "active")
       .maybeSingle();
     if (error) throw error;
@@ -72,6 +73,7 @@ async function resolveThread({ userId, threadId, periodKey, start, end, firstMes
     .from("records_ai_threads")
     .select("id,period_key,range_start,range_end,status")
     .eq("user_id", userId)
+    .eq("thread_kind", "period_review")
     .eq("period_key", periodKey)
     .eq("range_start", start)
     .eq("range_end", end)
@@ -85,6 +87,7 @@ async function resolveThread({ userId, threadId, periodKey, start, end, firstMes
     .from("records_ai_threads")
     .insert({
       user_id: userId,
+      thread_kind: "period_review",
       period_key: periodKey,
       range_start: start,
       range_end: end,
@@ -98,6 +101,7 @@ async function resolveThread({ userId, threadId, periodKey, start, end, firstMes
       .from("records_ai_threads")
       .select("id,period_key,range_start,range_end,status")
       .eq("user_id", userId)
+      .eq("thread_kind", "period_review")
       .eq("period_key", periodKey)
       .eq("range_start", start)
       .eq("range_end", end)
