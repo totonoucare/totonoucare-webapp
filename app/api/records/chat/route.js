@@ -31,13 +31,18 @@ import {
   isProfessionalText,
   isUrgentText,
 } from "@/lib/records/aiPrompts";
+import {
+  conversationMessageForAi,
+  normalizeReplyToFollowUp,
+  verifiedReplyToFollowUp,
+} from "@/lib/records/replyContext";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_chat_v7_care_origin_2026-07-13";
+const PROMPT_VERSION = "records_chat_v8_reply_context_2026-07-15";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
@@ -132,7 +137,7 @@ async function saveMessage({ threadId, userId, role, content, requestId = null, 
       model,
       metadata,
     })
-    .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,created_at")
+    .select("id,role,content,request_id,mood,suggested_questions,follow_up,safety_level,metadata,created_at")
     .single();
   if (error) throw error;
   await supabaseServer
@@ -146,13 +151,28 @@ async function saveMessage({ threadId, userId, role, content, requestId = null, 
 async function loadConversation(threadId, userId) {
   const { data, error } = await supabaseServer
     .from("records_ai_messages")
-    .select("role,content,created_at")
+    .select("role,content,metadata,created_at")
     .eq("thread_id", threadId)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(16);
   if (error) throw error;
-  return (data || []).reverse().map((row) => ({ role: row.role, content: row.content }));
+  return (data || []).reverse().map(conversationMessageForAi);
+}
+
+async function loadReplyTarget(threadId, userId, candidate) {
+  const normalized = normalizeReplyToFollowUp(candidate);
+  if (!normalized) return null;
+  const { data, error } = await supabaseServer
+    .from("records_ai_messages")
+    .select("id,role,follow_up")
+    .eq("id", normalized.assistant_message_id)
+    .eq("thread_id", threadId)
+    .eq("user_id", userId)
+    .eq("role", "assistant")
+    .maybeSingle();
+  if (error) throw error;
+  return verifiedReplyToFollowUp(normalized, data);
 }
 
 function summaryForChat(summary) {
@@ -205,6 +225,7 @@ export async function POST(req) {
     const periodKey = cleanPeriodKey(body?.period_key);
     const threadId = String(body?.thread_id || "").trim() || null;
     const message = String(body?.message || "").trim().slice(0, 1200);
+    const requestedReplyToFollowUp = body?.reply_to_follow_up || null;
 
     if (!isValidYmd(start) || !isValidYmd(end)) {
       return NextResponse.json({ error: "invalid start/end" }, { status: 400 });
@@ -252,7 +273,14 @@ export async function POST(req) {
     const usageBefore = await getAiUsage(user.id);
     const requestId = makeAiRequestId("records_chat");
     const thread = await resolveThread({ userId: user.id, threadId, periodKey, start, end, firstMessage: message });
-    await saveMessage({ threadId: thread.id, userId: user.id, role: "user", content: message });
+    const replyToFollowUp = await loadReplyTarget(thread.id, user.id, requestedReplyToFollowUp);
+    await saveMessage({
+      threadId: thread.id,
+      userId: user.id,
+      role: "user",
+      content: message,
+      metadata: replyToFollowUp ? { reply_to_follow_up: replyToFollowUp } : {},
+    });
 
     assertQuota(usageBefore, "chat");
 
@@ -277,7 +305,10 @@ export async function POST(req) {
       records: selectAiDetailRows(summary, 30)
         .map((row) => buildAiRecordContext(row, profile)),
       conversation,
-      latest_user_request: message,
+      latest_user_request: {
+        message,
+        reply_to_follow_up: replyToFollowUp,
+      },
     };
 
     const result = await generateStructured({
