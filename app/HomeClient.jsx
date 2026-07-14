@@ -12,11 +12,12 @@ import {
   HeroTitleMark,
   HomeHeaderMenu,
 } from "@/components/illust/home";
-import HeroGuideBot from "@/components/illust/home/HeroGuideBot";
+import HeroGuideBot, { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { IconRadar, IconBolt, IconCompass, AppIcon } from "@/components/illust/icons/app";
 import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { getDisplayableLocationName } from "@/lib/radar_v1/locationDisplay";
+import { EKIKEN_DISPLAY_NAME } from "@/lib/records/liveSupport";
 
 const SESSION_TIMEOUT_MS = 5000;
 
@@ -665,6 +666,44 @@ function ForecastOverviewCard({
           </div>
         </div>
         <span className="shrink-0 text-[22px] text-[#66B9A3]">›</span>
+      </button>
+    </Module>
+  );
+}
+
+function EkikenHomeCard({ signal = 0, onOpen }) {
+  const message = Number(signal) === 2
+    ? "今日は守りの予報です。今つらいことがあれば、一緒に整理しましょう。"
+    : Number(signal) === 1
+      ? "今日は少しゆらぎやすい日です。無理する前に話してみませんか？"
+      : "小さな違和感でも大丈夫。今の調子を一言から話せます。";
+  const prompts = [
+    "今、つらい症状がある",
+    "今日のケアを一緒に選びたい",
+    "なんとなく調子が悪い",
+  ];
+
+  return (
+    <Module className="overflow-hidden bg-[#F4FAF7] p-5 ring-1 ring-[#CFE7DE] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
+      <div className="flex items-end gap-3">
+        <GuideBotAvatar signal={signal} className="h-[82px] w-[82px] shrink-0" />
+        <div className="relative mb-1 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
+          <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
+          <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI</div>
+          <div className="mt-1 text-[16px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}に相談</div>
+          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{message}</div>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {prompts.map((prompt) => (
+          <button key={prompt} type="button" onClick={() => onOpen(prompt)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+            {prompt}
+          </button>
+        ))}
+      </div>
+      <button type="button" onClick={() => onOpen("")} className="mt-3 flex w-full items-center justify-between rounded-[18px] bg-[#349B83] px-4 py-3 text-left text-white shadow-[0_14px_28px_-20px_rgba(52,155,131,0.64)]">
+        <span className="text-[12px] font-black">今の調子を話してみる</span>
+        <span className="text-[21px]">›</span>
       </button>
     </Module>
   );
@@ -1550,6 +1589,11 @@ export default function HomePage() {
         todayRecorded={Boolean(todayReview)}
         coreCode={latestResult?.core_code || null}
         coreTitle={core?.title || ""}
+      />
+
+      <EkikenHomeCard
+        signal={targetSignal ?? 0}
+        onOpen={(prompt) => router.push(`/records?tab=consult${prompt ? `&prompt=${encodeURIComponent(prompt)}` : ""}`)}
       />
 
       <MyCareSelectHomeCard
