@@ -2,7 +2,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { IconHome, IconKarte, IconRadar, IconCare } from "@/components/illust/icons/app";
+import { IconHome, IconKarte, IconRadar, IconCare, IconChat } from "@/components/illust/icons/app";
 
 export default function BottomTabs() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function BottomTabs() {
     pathname.startsWith("/check") || pathname.startsWith("/result") || pathname.startsWith("/karte") ? "check" :
     pathname.startsWith("/radar") ? "radar" :
     pathname.startsWith("/care-navi") ? "care" :
+    pathname.startsWith("/records") ? "records" :
     "none";
 
   const item = (key, label, Icon, href) => {
@@ -36,7 +37,7 @@ export default function BottomTabs() {
         >
           <Icon className="h-6 w-6" />
         </span>
-        <span className={`text-[9.5px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
+        <span className={`text-[8.5px] tracking-wide sm:text-[9.5px] ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
         </span>
       </button>
@@ -54,6 +55,7 @@ export default function BottomTabs() {
           {item("check", "トリセツ", IconKarte, "/check")}
           {item("radar", "体調予報", IconRadar, "/radar")}
           {item("care", "MYケア", IconCare, "/care-navi")}
+          {item("records", "記録・相談", IconChat, "/records?tab=consult")}
         </div>
       </div>
     </div>
