@@ -24,7 +24,7 @@ test("オンライン相談はAI分析の延長ではなく国家資格者の別
   assert.match(guide, /AI分析の続きではありません/);
   assert.match(expert, /セルフケアだけでは足りない不調を、オンラインで相談/);
   assert.match(expert, /AI分析を使っていなくても相談できます/);
-  assert.match(records, /label: "オンライン相談", short: "相談"/);
+  assert.match(records, /key: "consult", label: "相談", short: "相談"/);
   assert.doesNotMatch(records, /AI分析・相談/);
   assert.doesNotMatch(records, /専門家相談/);
 });
