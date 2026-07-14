@@ -83,7 +83,7 @@ function summaryForAi(summary) {
 async function findCache(userId, key, start, end, hash) {
   const { data, error } = await supabaseServer
     .from("records_ai_analyses")
-    .select("id,analysis_json,model,request_id,response_id,input_tokens,output_tokens,total_tokens,generated_at")
+    .select("id,analysis_json,source_hash,model,request_id,response_id,input_tokens,output_tokens,total_tokens,generated_at")
     .eq("user_id", userId)
     .eq("period_key", key)
     .eq("range_start", start)
@@ -95,7 +95,29 @@ async function findCache(userId, key, start, end, hash) {
   return data?.[0] || null;
 }
 
-function algorithmResponse({ fallback, summary, access, consentRequired = false, reason = "insufficient_records" }) {
+async function findLatestAnalysis(userId, key, start, end) {
+  const { data, error } = await supabaseServer
+    .from("records_ai_analyses")
+    .select("id,analysis_json,source_hash,model,request_id,response_id,input_tokens,output_tokens,total_tokens,generated_at")
+    .eq("user_id", userId)
+    .eq("period_key", key)
+    .eq("range_start", start)
+    .eq("range_end", end)
+    .order("generated_at", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  return data?.[0] || null;
+}
+
+function algorithmResponse({
+  fallback,
+  summary,
+  access,
+  consentRequired = false,
+  reason = "insufficient_records",
+  canGenerate = false,
+  generationRequired = false,
+}) {
   return NextResponse.json({
     data: {
       analysis: fallback,
@@ -104,6 +126,9 @@ function algorithmResponse({ fallback, summary, access, consentRequired = false,
       model: null,
       request_id: null,
       cached: false,
+      stale: false,
+      can_generate: canGenerate,
+      generation_required: generationRequired,
       consent_required: consentRequired,
       algorithm_reason: reason,
       access,
@@ -120,6 +145,7 @@ export async function POST(req) {
     const start = String(body?.start || "");
     const end = String(body?.end || "");
     const key = periodKey(body?.period_key);
+    const generate = body?.generate === true;
     if (!isValidYmd(start) || !isValidYmd(end)) {
       return NextResponse.json({ error: "invalid start/end" }, { status: 400 });
     }
@@ -133,13 +159,13 @@ export async function POST(req) {
     const fallback = deterministicAnalysis(summary);
 
     if (summary.recorded_days < 3) {
-      return algorithmResponse({ fallback, summary, access, reason: "insufficient_records" });
+      return algorithmResponse({ fallback, summary, access, reason: "insufficient_records", canGenerate: false });
     }
     if (!access.ai_enabled) {
-      return algorithmResponse({ fallback, summary, access, reason: "ai_access_required" });
+      return algorithmResponse({ fallback, summary, access, reason: "ai_access_required", canGenerate: false });
     }
     if (!process.env.OPENAI_API_KEY) {
-      return algorithmResponse({ fallback, summary, access, reason: "openai_not_configured" });
+      return algorithmResponse({ fallback, summary, access, reason: "openai_not_configured", canGenerate: false });
     }
 
     const consent = await hasActiveAiConsent(user.id);
@@ -150,6 +176,7 @@ export async function POST(req) {
         access,
         consentRequired: true,
         reason: "ai_consent_required",
+        canGenerate: false,
       });
     }
 
@@ -172,9 +199,42 @@ export async function POST(req) {
           model: cache.model || MODEL,
           request_id: cache.request_id || null,
           cached: true,
+          stale: false,
+          can_generate: true,
+          generation_required: false,
           consent_required: false,
           access,
         },
+      });
+    }
+
+    if (!generate) {
+      const latest = await findLatestAnalysis(user.id, key, start, end);
+      if (latest?.analysis_json) {
+        return NextResponse.json({
+          data: {
+            analysis: cleanAnalysis(latest.analysis_json, fallback),
+            summary: summaryForAi(summary),
+            source: "ai",
+            model: latest.model || MODEL,
+            request_id: latest.request_id || null,
+            cached: true,
+            stale: true,
+            can_generate: true,
+            generation_required: true,
+            consent_required: false,
+            algorithm_reason: "records_changed_since_saved_analysis",
+            access,
+          },
+        });
+      }
+      return algorithmResponse({
+        fallback,
+        summary,
+        access,
+        reason: "manual_generation_required",
+        canGenerate: true,
+        generationRequired: true,
       });
     }
 
@@ -235,6 +295,9 @@ export async function POST(req) {
         model: result.model || MODEL,
         request_id: requestId,
         cached: false,
+        stale: false,
+        can_generate: true,
+        generation_required: false,
         consent_required: false,
         usage: {
           analysis: { ...usageBefore.analysis, used: usageBefore.analysis.used + 1 },
