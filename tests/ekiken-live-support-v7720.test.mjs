@@ -6,13 +6,13 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("EKIKEN is named consistently as the care navigation AI", async () => {
+test("Ekiken is named consistently as the care navigation AI", async () => {
   const live = await source("components/records/LiveSupportPanel.jsx");
   const radar = await source("app/radar/page.js");
   const guide = await source("app/guide/GuideClient.jsx");
   assert.match(live, /EKIKEN_DISPLAY_NAME/);
-  assert.match(radar, /ケアナビAI：EKIKEN/);
-  assert.match(guide, /EKIKEN（エキケン）/);
+  assert.match(radar, /ケアナビAI：Ekiken/);
+  assert.match(guide, /Ekiken（エキケン）/);
 });
 
 test("bottom navigation exposes records and consultation as a primary destination", async () => {
@@ -22,7 +22,7 @@ test("bottom navigation exposes records and consultation as a primary destinatio
   assert.match(nav, /\/records\?tab=consult/);
 });
 
-test("consultation tab keeps live EKIKEN support and professional consultation separate", async () => {
+test("consultation tab keeps live Ekiken support and professional consultation separate", async () => {
   const records = await source("components/records/RecordsPageClient.jsx");
   assert.match(records, /LiveSupportPanel/);
   assert.match(records, /ExpertConsultPreview/);
@@ -56,11 +56,11 @@ test("live support preserves medical safety boundaries", async () => {
   assert.match(prompts, /薬・漢方・サプリ/);
   assert.match(prompts, /urgent/);
   assert.match(route, /isUrgentText\(message\)/);
-  assert.doesNotMatch(route, /isProfessionalText\(message\)/);
+  assert.match(route, /output\.safety_level === "routine" && isProfessionalText\(message\)/);
   assert.match(prompts, /通常の体調相談を、毎回の受診判定や安全確認の問診から始めない/);
 });
 
-test("home provides direct contextual shortcuts to EKIKEN consultation", async () => {
+test("home provides direct contextual shortcuts to Ekiken consultation", async () => {
   const home = await source("app/HomeClient.jsx");
   assert.match(home, /function EkikenHomeCard/);
   assert.match(home, /今の調子を話してみる/);
