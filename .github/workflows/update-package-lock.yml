@@ -1,0 +1,45 @@
+name: Update package-lock
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+
+  # Actions画面から手動実行も可能
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-package-lock:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Netlifyやローカルで使用しているNode.jsと合わせる
+          node-version: "20"
+
+      - name: Update package-lock.json
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Commit package-lock.json
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.jsonに変更はありません"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add package-lock.json
+          git commit -m "chore: sync package-lock.json"
+          git push
