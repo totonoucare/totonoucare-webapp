@@ -417,7 +417,7 @@ export default function AiAnalysisPanel({
       <div className="rounded-[24px] bg-[#FFF8EC] px-4 py-3.5 ring-1 ring-[#EED8B4]">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI分析 先行体験版</div>
+            <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI分析 先行体験中</div>
             <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
               {access?.beta_enabled ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。` : "グラフと記録の振り返りは無料で確認できます。"}
             </div>
@@ -449,7 +449,7 @@ export default function AiAnalysisPanel({
           {rangeLoading ? <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
         </div>
         <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-4 text-slate-400 ring-1 ring-[#E8F0EB]">
-          体調ゆらぎ度は固定された予報です。記録で予報を変えず、似た予報条件の日をそろえて、ケアと実感の関係を振り返ります。
+          体調ゆらぎ度は、記録に合わせて後から書き換えない予報です。予報・試したケア・実際の体調から、どんな日に何をすると過ごしやすかったかと、次に試すことを整理します。
         </div>
       </section>
 

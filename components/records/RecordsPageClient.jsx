@@ -14,8 +14,8 @@ import ExpertConsultPreview from "@/components/records/ExpertConsultPreview";
 
 const TAB_OPTIONS = [
   { key: "record", label: "記録カレンダー", short: "記録" },
-  { key: "analysis", label: "AI分析・相談", short: "AI分析" },
-  { key: "expert", label: "専門家相談", short: "専門家" },
+  { key: "analysis", label: "AI分析", short: "AI分析" },
+  { key: "expert", label: "オンライン相談", short: "相談" },
 ];
 
 function normalizeTab(value) {
