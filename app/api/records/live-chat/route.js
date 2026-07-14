@@ -28,8 +28,8 @@ import {
   PROFESSIONAL_MESSAGE,
   URGENT_MESSAGE,
   cleanChatOutput,
+  classifySafetyText,
   isProfessionalText,
-  isUrgentText,
   urgentMessageForText,
 } from "@/lib/records/aiPrompts";
 import {
@@ -49,7 +49,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_LIVE_CHAT_MODEL || process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_live_support_v3_warm_safety_2026-07-14";
+const PROMPT_VERSION = "records_live_support_v4_context_safety_2026-07-15";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -272,7 +272,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "AI利用への同意が必要です", code: "ai_consent_required" }, { status: 403 });
     }
 
-    const urgentMessage = isUrgentText(message);
+    const safetySignal = classifySafetyText(message);
+    const urgentMessage = safetySignal.should_route;
     if (!urgentMessage) {
       assertQuota(usageBefore, "chat");
       if (!process.env.OPENAI_API_KEY) {
@@ -369,6 +370,9 @@ export async function POST(req) {
         session_summary: thread.context_summary?.session_summary || {},
       },
       latest_user_request: message,
+      potential_safety_signal: safetySignal.kind && !safetySignal.should_route
+        ? { kind: safetySignal.kind, context: safetySignal.context }
+        : null,
       data_boundaries: {
         app_facts: "アプリが計算・保存した体質、予報、表示ケア、実行ケア、記録",
         user_facts: "ユーザーが会話または記録で伝えた内容",
