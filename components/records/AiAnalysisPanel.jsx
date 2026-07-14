@@ -10,6 +10,7 @@ import {
   deterministicAnalysis,
   getPeriodRange,
 } from "@/lib/records/analysis";
+import { replyContextForAssistantMessage } from "@/lib/records/replyContext";
 
 function SummaryTile({ value, label, tone = "mint" }) {
   const toneClass = tone === "amber"
@@ -167,6 +168,7 @@ export default function AiAnalysisPanel({
   const [chatMood, setChatMood] = useState("normal");
   const [chatSuggestions, setChatSuggestions] = useState([]);
   const [followUp, setFollowUp] = useState(null);
+  const [replyToFollowUp, setReplyToFollowUp] = useState(null);
   const [chatUsage, setChatUsage] = useState(null);
   const [feedbackByRequest, setFeedbackByRequest] = useState({});
   const [negativeReasonFor, setNegativeReasonFor] = useState("");
@@ -275,6 +277,7 @@ export default function AiAnalysisPanel({
     if (!active || !consent?.active || !access?.ai_enabled) {
       setThreadId("");
       setMessages([]);
+      setReplyToFollowUp(null);
       return;
     }
     let cancelled = false;
@@ -287,8 +290,11 @@ export default function AiAnalysisPanel({
           setMessages(data?.messages || []);
           const lastAssistant = [...(data?.messages || [])].reverse().find((item) => item.role === "assistant");
           setChatMood(lastAssistant?.mood || displayedAnalysis.mood || "normal");
-          const nextFollowUp = lastAssistant?.follow_up || null;
+          const nextFollowUp = lastAssistant?.follow_up?.question
+            ? { ...lastAssistant.follow_up, assistant_message_id: lastAssistant.id }
+            : null;
           setFollowUp(nextFollowUp);
+          setReplyToFollowUp(null);
           setChatSuggestions(
             nextFollowUp?.kind && nextFollowUp.kind !== "none"
               ? []
@@ -307,6 +313,7 @@ export default function AiAnalysisPanel({
   useEffect(() => {
     if (!active || !initialPrompt) return;
     setInput(initialPrompt);
+    setReplyToFollowUp(null);
     requestAnimationFrame(() => inputRef.current?.focus());
     onConsumePrompt?.();
   }, [active, initialPrompt, onConsumePrompt]);
@@ -322,7 +329,28 @@ export default function AiAnalysisPanel({
 
   function fillInput(value) {
     setInput(String(value || ""));
+    setReplyToFollowUp(null);
     requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function fillFollowUpOption(option) {
+    const context = replyContextForAssistantMessage(followUp, followUp?.assistant_message_id, option);
+    setInput(String(option || ""));
+    setReplyToFollowUp(context);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function handleInputChange(event) {
+    const value = event.target.value;
+    setInput(value);
+    if (value && hasPendingFollowUp && !replyToFollowUp) {
+      setReplyToFollowUp(replyContextForAssistantMessage(followUp, followUp?.assistant_message_id));
+    }
+  }
+
+  function detachFollowUp() {
+    setReplyToFollowUp(null);
+    setFollowUp(null);
   }
 
   async function acceptConsent() {
@@ -349,6 +377,7 @@ export default function AiAnalysisPanel({
       setMessages([]);
       setAnalysis(null);
       setAnalysisMeta(null);
+      setReplyToFollowUp(null);
     } catch (consentError) {
       setError(consentError?.message || "同意を取り消せませんでした");
     } finally {
@@ -359,9 +388,17 @@ export default function AiAnalysisPanel({
   async function sendMessage(value = input) {
     const content = String(value || "").trim();
     if (!content || sending || !consent?.active || !access?.ai_enabled) return;
-    const optimistic = { id: `local-${Date.now()}`, role: "user", content };
+    const replyContext = replyToFollowUp;
+    const localId = `local-${Date.now()}`;
+    const optimistic = {
+      id: localId,
+      role: "user",
+      content,
+      reply_to_follow_up: replyContext,
+    };
     setMessages((current) => [...current, optimistic]);
     setInput("");
+    setReplyToFollowUp(null);
     setSending(true);
     setError("");
     setFollowUp(null);
@@ -374,6 +411,7 @@ export default function AiAnalysisPanel({
           period_key: periodKey,
           thread_id: threadId || null,
           message: content,
+          reply_to_follow_up: replyContext,
         }),
       });
       setThreadId(data.thread_id || threadId);
@@ -387,7 +425,9 @@ export default function AiAnalysisPanel({
         follow_up: data.follow_up || null,
         safety_level: data.safety_level || "routine",
       }]);
-      const nextFollowUp = data.follow_up || null;
+      const nextFollowUp = data.follow_up?.question
+        ? { ...data.follow_up, assistant_message_id: data.message_id }
+        : null;
       setChatMood(data.mood || "listening");
       setFollowUp(nextFollowUp);
       setChatSuggestions(
@@ -398,6 +438,9 @@ export default function AiAnalysisPanel({
       setChatUsage(data.usage || null);
     } catch (sendError) {
       setError(sendError?.message || "AIへ送信できませんでした");
+      setMessages((current) => current.filter((item) => item.id !== localId));
+      setInput(content);
+      setReplyToFollowUp(replyContext);
     } finally {
       setSending(false);
     }
@@ -406,6 +449,8 @@ export default function AiAnalysisPanel({
   async function clearConversation() {
     if (!threadId) {
       setMessages([]);
+      setFollowUp(null);
+      setReplyToFollowUp(null);
       return;
     }
     if (!window.confirm("この期間のAI会話を削除しますか？削除後は元に戻せません。")) return;
@@ -415,6 +460,7 @@ export default function AiAnalysisPanel({
       setMessages([]);
       setChatSuggestions(displayedAnalysis.suggested_questions || []);
       setFollowUp(null);
+      setReplyToFollowUp(null);
     } catch (clearError) {
       setError(clearError?.message || "会話を削除できませんでした");
     }
@@ -428,6 +474,7 @@ export default function AiAnalysisPanel({
     setAnalysisError("");
     setThreadId("");
     setMessages([]);
+    setReplyToFollowUp(null);
     onTrackEvent?.("analysis_period_selected", { period_key: nextKey });
   }
 
@@ -567,7 +614,15 @@ export default function AiAnalysisPanel({
               {!threadLoading && messages.length === 0 ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">気になった日や、ケアの種類・タイミングについて聞いてください。分からないことは断定せず、一緒に整理します。</div> : null}
               {messages.map((message, index) => (
                 <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
-                  <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[12px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>{message.content}</div>
+                  <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[12px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
+                    {message.role === "user" && message.reply_to_follow_up?.question ? (
+                      <div className="mb-2 border-b border-white/25 pb-2 text-[9px] font-bold leading-4 text-white/80">
+                        <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekikenからの確認</div>
+                        <div>{message.reply_to_follow_up.question}</div>
+                      </div>
+                    ) : null}
+                    {message.content}
+                  </div>
                   {message.role === "assistant" && message.request_id ? <FeedbackButtons requestId={message.request_id} surface="chat" {...feedbackProps} /> : null}
                 </div>
               ))}
@@ -580,8 +635,9 @@ export default function AiAnalysisPanel({
                 <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                 <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">タップすると入力欄に入ります。必要なら補足してから送れます。</div>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillInput(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
+                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
                 </div>
+                <button type="button" onClick={detachFollowUp} className="mt-2 text-[9px] font-black text-[#A56C18]/70 underline underline-offset-2">この質問には答えず、別のことを話す</button>
               </div>
             ) : null}
 
@@ -597,7 +653,18 @@ export default function AiAnalysisPanel({
               </div>
             ) : null}
             <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-              <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+              {replyToFollowUp?.question ? (
+                <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[9px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-black tracking-[0.08em] text-[#A56C18]/75">この確認への回答として送ります</div>
+                      <div className="mt-0.5">{replyToFollowUp.question}</div>
+                    </div>
+                    <button type="button" onClick={detachFollowUp} className="shrink-0 font-black text-[#A56C18] underline underline-offset-2">外す</button>
+                  </div>
+                </div>
+              ) : null}
+              <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
               <div className="flex items-center justify-between gap-3 px-1 pb-1">
                 <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
                 <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekikenに聞く"}</Button>

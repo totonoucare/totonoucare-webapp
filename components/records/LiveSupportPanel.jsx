@@ -9,6 +9,7 @@ import {
   consultationStatusLabel,
 } from "@/lib/records/liveSupport";
 import { activeUrgentMessage, showRoutinePrompts } from "@/lib/records/liveSupportUi";
+import { replyContextForAssistantMessage } from "@/lib/records/replyContext";
 
 function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.ai_enabled) {
@@ -80,6 +81,7 @@ function ConsultationStatusCard({ status, saving, editing, onEdit, onSelect }) {
 function Bubble({ message }) {
   const user = message.role === "user";
   const urgent = message.safety_level === "urgent";
+  const replyContext = user ? message.reply_to_follow_up : null;
   return (
     <div className={user ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
       <div className={[
@@ -89,7 +91,15 @@ function Bubble({ message }) {
           : urgent
             ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]"
             : "bg-white text-slate-600 ring-[#DCE8DD]",
-      ].join(" ")}>{message.content}</div>
+      ].join(" ")}>
+        {replyContext?.question ? (
+          <div className="mb-2 border-b border-white/25 pb-2 text-[9px] font-bold leading-4 text-white/80">
+            <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekikenからの確認</div>
+            <div>{replyContext.question}</div>
+          </div>
+        ) : null}
+        {message.content}
+      </div>
     </div>
   );
 }
@@ -157,6 +167,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   const [mood, setMood] = useState("listening");
   const [suggestions, setSuggestions] = useState([]);
   const [followUp, setFollowUp] = useState(null);
+  const [replyToFollowUp, setReplyToFollowUp] = useState(null);
   const [consultationStatus, setConsultationStatus] = useState("");
   const [consultationStatusSaving, setConsultationStatusSaving] = useState(false);
   const [consultationStatusEditing, setConsultationStatusEditing] = useState(false);
@@ -185,7 +196,10 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setConsultationStatusEditing(!data.consultation_status?.key);
       const lastAssistant = [...(data.messages || [])].reverse().find((item) => item.role === "assistant");
       setMood(lastAssistant?.mood || "listening");
-      setFollowUp(lastAssistant?.follow_up || null);
+      setFollowUp(lastAssistant?.follow_up?.question
+        ? { ...lastAssistant.follow_up, assistant_message_id: lastAssistant.id }
+        : null);
+      setReplyToFollowUp(null);
       setSuggestions(lastAssistant?.suggested_questions || data.starter?.quick_prompts || []);
     } catch (loadError) {
       setError(loadError?.message || "Ekikenとの会話を読み込めませんでした");
@@ -202,6 +216,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   useEffect(() => {
     if (!active || !initialPrompt) return;
     setInput(initialPrompt);
+    setReplyToFollowUp(null);
     requestAnimationFrame(() => inputRef.current?.focus());
     onConsumePrompt?.();
   }, [active, initialPrompt, onConsumePrompt]);
@@ -217,7 +232,28 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
   function fillInput(value) {
     setInput(String(value || ""));
+    setReplyToFollowUp(null);
     requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function fillFollowUpOption(option) {
+    const context = replyContextForAssistantMessage(followUp, followUp?.assistant_message_id, option);
+    setInput(String(option || ""));
+    setReplyToFollowUp(context);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function handleInputChange(event) {
+    const value = event.target.value;
+    setInput(value);
+    if (value && pendingFollowUp && !replyToFollowUp) {
+      setReplyToFollowUp(replyContextForAssistantMessage(followUp, followUp?.assistant_message_id));
+    }
+  }
+
+  function detachFollowUp() {
+    setReplyToFollowUp(null);
+    setFollowUp(null);
   }
 
   async function saveConsultationStatus(nextStatus) {
@@ -268,6 +304,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setConsent(data?.consent || { active: false });
       setMessages([]);
       setThreadId("");
+      setReplyToFollowUp(null);
     } catch (consentError) {
       setError(consentError?.message || "同意を取り消せませんでした");
     } finally {
@@ -278,8 +315,16 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   async function sendMessage(value = input) {
     const content = String(value || "").trim();
     if (!content || sending || !consent?.active || !access?.ai_enabled) return;
-    setMessages((current) => [...current, { id: `local-${Date.now()}`, role: "user", content }]);
+    const replyContext = replyToFollowUp;
+    const localId = `local-${Date.now()}`;
+    setMessages((current) => [...current, {
+      id: localId,
+      role: "user",
+      content,
+      reply_to_follow_up: replyContext,
+    }]);
     setInput("");
+    setReplyToFollowUp(null);
     setSending(true);
     setError("");
     setFollowUp(null);
@@ -287,7 +332,11 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
     try {
       const data = await authedFetch("/api/records/live-chat", {
         method: "POST",
-        body: JSON.stringify({ thread_id: threadId || null, message: content }),
+        body: JSON.stringify({
+          thread_id: threadId || null,
+          message: content,
+          reply_to_follow_up: replyContext,
+        }),
       });
       setThreadId(data.thread_id || threadId);
       setMessages((current) => [...current, {
@@ -301,11 +350,16 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
         safety_level: data.safety_level || "routine",
       }]);
       setMood(data.mood || "listening");
-      setFollowUp(data.follow_up || null);
+      setFollowUp(data.follow_up?.question
+        ? { ...data.follow_up, assistant_message_id: data.message_id }
+        : null);
       setSuggestions(data.suggested_questions || []);
       setUsage(data.usage || usage);
     } catch (sendError) {
       setError(sendError?.message || "Ekikenへ送信できませんでした");
+      setMessages((current) => current.filter((item) => item.id !== localId));
+      setInput(content);
+      setReplyToFollowUp(replyContext);
     } finally {
       setSending(false);
     }
@@ -314,6 +368,8 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   async function clearConversation() {
     if (!threadId) {
       setMessages([]);
+      setFollowUp(null);
+      setReplyToFollowUp(null);
       return;
     }
     if (!window.confirm("今の体調相談の会話を削除しますか？削除後は元に戻せません。")) return;
@@ -325,6 +381,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setMessages([]);
       setMood("listening");
       setFollowUp(null);
+      setReplyToFollowUp(null);
       setSuggestions(starter?.quick_prompts || []);
     } catch (clearError) {
       setError(clearError?.message || "会話を削除できませんでした");
@@ -396,9 +453,10 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                   <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
-                      <button key={option} type="button" onClick={() => fillInput(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
+                      <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
                     ))}
                   </div>
+                  <button type="button" onClick={detachFollowUp} className="mt-2 text-[9px] font-black text-[#A56C18]/70 underline underline-offset-2">この質問には答えず、別のことを話す</button>
                 </div>
               ) : null}
 
@@ -417,7 +475,18 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
               ) : null}
 
               <div className="rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-                <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder={urgentMessage ? "例）近くの人に連絡しました。今は一人ではありません" : "例）急に頭が重くなって、少しイライラします"} className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+                {replyToFollowUp?.question ? (
+                  <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[9px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-black tracking-[0.08em] text-[#A56C18]/75">この確認への回答として送ります</div>
+                        <div className="mt-0.5">{replyToFollowUp.question}</div>
+                      </div>
+                      <button type="button" onClick={detachFollowUp} className="shrink-0 font-black text-[#A56C18] underline underline-offset-2">外す</button>
+                    </div>
+                  </div>
+                ) : null}
+                <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder={urgentMessage ? "例）近くの人に連絡しました。今は一人ではありません" : "例）急に頭が重くなって、少しイライラします"} className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
                   <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekikenに話す"}</Button>
