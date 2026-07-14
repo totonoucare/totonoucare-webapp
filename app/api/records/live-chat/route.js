@@ -49,7 +49,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = process.env.OPENAI_RECORDS_LIVE_CHAT_MODEL || process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
-const PROMPT_VERSION = "records_live_support_v4_context_safety_2026-07-15";
+const PROMPT_VERSION = "records_live_support_v5_warm_dialogue_2026-07-15";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
