@@ -33,3 +33,12 @@ Supabase SQL Editorで実際に実行するDB変更SQLを置く場所。
 ```
 
 v7.71 migration適用後に実行する。確認SQLは `supabase/checks/20260713_check_care_data_integrity_v7712.sql`、仕様は `docs/CARE_ACTION_DATA_INTEGRITY_V7712.md` を参照する。
+
+## v7.72.0 EKIKEN・今の体調相談
+
+```text
+20260714_add_ekiken_live_support_v7720.sql
+20260714_rollback_ekiken_live_support_v7720.sql
+```
+
+期間振り返りチャットと今の体調相談の会話を `thread_kind` で分離する。確認SQLは `supabase/checks/20260714_check_ekiken_live_support_v7720.sql`、仕様は `docs/EKIKEN_LIVE_SUPPORT_V7720.md` を参照する。
