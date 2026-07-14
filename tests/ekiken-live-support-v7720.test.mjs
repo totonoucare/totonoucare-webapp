@@ -56,7 +56,8 @@ test("live support preserves medical safety boundaries", async () => {
   assert.match(prompts, /薬・漢方・サプリ/);
   assert.match(prompts, /urgent/);
   assert.match(route, /isUrgentText\(message\)/);
-  assert.match(route, /isProfessionalText\(message\)/);
+  assert.doesNotMatch(route, /isProfessionalText\(message\)/);
+  assert.match(prompts, /通常の体調相談を、毎回の受診判定や安全確認の問診から始めない/);
 });
 
 test("home provides direct contextual shortcuts to EKIKEN consultation", async () => {

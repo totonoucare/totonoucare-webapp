@@ -14,7 +14,7 @@ test("記録済みケア一覧は長いdetail本文を表示しない", async ()
 
 test("AI分析更新上限は分析カード内の専用noticeとして扱う", async () => {
   const text = await source("components/records/AiAnalysisPanel.jsx");
-  assert.match(text, /analysisError\?\.code === "daily_analysis_limit"/);
+  assert.match(text, /loadError\?\.code === "daily_analysis_limit"/);
   assert.match(text, /\{analysisNotice\}/);
   assert.match(text, /setAnalysisNotice\(""\)/);
 });
