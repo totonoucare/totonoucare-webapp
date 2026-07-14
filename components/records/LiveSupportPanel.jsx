@@ -8,19 +8,20 @@ import {
   LIVE_SUPPORT_CONSULTATION_STATUS_OPTIONS,
   consultationStatusLabel,
 } from "@/lib/records/liveSupport";
+import { activeUrgentMessage, showRoutinePrompts } from "@/lib/records/liveSupportUi";
 
 function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.ai_enabled) {
     return (
       <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[11px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
-        EKIKEN相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
+        Ekiken相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
       </div>
     );
   }
   if (consent?.active) {
     return (
       <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        EKIKENには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、任意で登録した受診・相談状況、この相談の会話を送ります。氏名・メール・住所、体質チェックの生回答は送りません。
+        Ekikenには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、任意で登録した受診・相談状況、この相談の会話を送ります。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
@@ -30,9 +31,9 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
       <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">今の相談に必要なアプリ内データを使います</div>
       <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
-        送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。氏名・メール・住所、体質チェックの生回答は送りません。AIは診断や薬の個別判断を行いません。
+        送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。AIは診断や薬の個別判断を行いません。
       </div>
-      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、EKIKENに相談する"}</Button>
+      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、Ekikenに相談する"}</Button>
     </div>
   );
 }
@@ -93,6 +94,54 @@ function Bubble({ message }) {
   );
 }
 
+function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFeedbackByRequest, negativeReasonFor, setNegativeReasonFor }) {
+  if (!requestId) return null;
+
+  async function send(feedback, reason = null) {
+    if (feedbackByRequest[requestId]) return;
+    setFeedbackByRequest((current) => ({ ...current, [requestId]: feedback }));
+    setNegativeReasonFor("");
+    try {
+      await authedFetch("/api/records/feedback", {
+        method: "POST",
+        body: JSON.stringify({ request_id: requestId, feedback, reason, surface: "live_support" }),
+      });
+    } catch {
+      setFeedbackByRequest((current) => {
+        const next = { ...current };
+        delete next[requestId];
+        return next;
+      });
+    }
+  }
+
+  return (
+    <div className="mt-1.5 max-w-[90%] px-1">
+      <div className="flex flex-wrap items-center gap-2 text-[9px] font-black text-slate-400">
+        <span>この返事はどうでしたか？</span>
+        <button type="button" onClick={() => send(1)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === 1 ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👍 役に立った</button>
+        <button type="button" onClick={() => setNegativeReasonFor(requestId)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === -1 ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👎 ちょっと違った</button>
+      </div>
+      {negativeReasonFor === requestId && !feedbackByRequest[requestId] ? (
+        <div className="mt-2 rounded-[16px] bg-[#FFF8EC] p-2.5 ring-1 ring-[#EED8B4]">
+          <div className="text-[9px] font-black text-[#A56C18]">どこが合いませんでしたか？</div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {[
+              ["too_cold", "少し冷たく感じた"],
+              ["too_many_safety_questions", "安全確認が多すぎた"],
+              ["hard_to_understand", "分かりにくかった"],
+              ["felt_unsafe", "内容が不安だった"],
+              ["other", "その他"],
+            ].map(([reason, label]) => (
+              <button key={reason} type="button" onClick={() => send(-1, reason)} className="rounded-full bg-white px-2.5 py-1.5 text-[9px] font-black text-slate-600 ring-1 ring-[#EED8B4]">{label}</button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function LiveSupportPanel({ active, authedFetch, initialPrompt = "", onConsumePrompt }) {
   const [loading, setLoading] = useState(true);
   const [access, setAccess] = useState(null);
@@ -111,10 +160,14 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   const [consultationStatus, setConsultationStatus] = useState("");
   const [consultationStatusSaving, setConsultationStatusSaving] = useState(false);
   const [consultationStatusEditing, setConsultationStatusEditing] = useState(false);
+  const [feedbackByRequest, setFeedbackByRequest] = useState({});
+  const [negativeReasonFor, setNegativeReasonFor] = useState("");
   const chatScrollRef = useRef(null);
   const inputRef = useRef(null);
 
-  const pendingFollowUp = Boolean(followUp?.kind && followUp.kind !== "none" && followUp.question);
+  const urgentMessage = useMemo(() => activeUrgentMessage(messages), [messages]);
+  const pendingFollowUp = !urgentMessage && Boolean(followUp?.kind && followUp.kind !== "none" && followUp.question);
+  const routinePromptsVisible = showRoutinePrompts(messages, sending) && !pendingFollowUp;
   const remaining = useMemo(() => usage?.chat ? Math.max(0, usage.chat.limit - usage.chat.used) : null, [usage]);
 
   const load = useCallback(async () => {
@@ -135,7 +188,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setFollowUp(lastAssistant?.follow_up || null);
       setSuggestions(lastAssistant?.suggested_questions || data.starter?.quick_prompts || []);
     } catch (loadError) {
-      setError(loadError?.message || "EKIKENとの会話を読み込めませんでした");
+      setError(loadError?.message || "Ekikenとの会話を読み込めませんでした");
     } finally {
       setLoading(false);
     }
@@ -252,7 +305,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setSuggestions(data.suggested_questions || []);
       setUsage(data.usage || usage);
     } catch (sendError) {
-      setError(sendError?.message || "EKIKENへ送信できませんでした");
+      setError(sendError?.message || "Ekikenへ送信できませんでした");
     } finally {
       setSending(false);
     }
@@ -312,23 +365,44 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 {messages.length === 0 && starter?.greeting ? (
                   <Bubble message={{ role: "assistant", content: starter.greeting, safety_level: "routine" }} />
                 ) : null}
-                {messages.map((message, index) => <Bubble key={message.id || `${message.role}-${index}`} message={message} />)}
-                {sending ? <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">今日の予報と記録を確認しながら考えています…</div> : null}
+                {messages.map((message, index) => (
+                  <div key={message.id || `${message.role}-${index}`}>
+                    <Bubble message={message} />
+                    {message.role === "assistant" && message.request_id ? (
+                      <LiveFeedbackButtons
+                        requestId={message.request_id}
+                        authedFetch={authedFetch}
+                        feedbackByRequest={feedbackByRequest}
+                        setFeedbackByRequest={setFeedbackByRequest}
+                        negativeReasonFor={negativeReasonFor}
+                        setNegativeReasonFor={setNegativeReasonFor}
+                      />
+                    ) : null}
+                  </div>
+                ))}
+                {sending ? <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">今の言葉と、今日の予報・記録をゆっくり整理しています…</div> : null}
               </div>
+
+              {urgentMessage ? (
+                <div className="rounded-[20px] bg-[#FFF0EC] p-3.5 ring-1 ring-[#F1C8BA]">
+                  <div className="text-[10px] font-black text-[#8F3E2A]">今は安全の確認を優先してください</div>
+                  <div className="mt-1 text-[10px] font-bold leading-5 text-[#9A5845]">通常のケア候補は一時的に隠しています。近くの人や緊急窓口へ連絡できたこと、今いる場所の安全などは、下の入力欄から続けて伝えられます。</div>
+                </div>
+              ) : null}
 
               {pendingFollowUp ? (
                 <div className="rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                  <div className="text-[9px] font-black tracking-[0.12em] text-[#A56C18]/75">EKIKENから一つ確認</div>
+                  <div className="text-[9px] font-black tracking-[0.12em] text-[#A56C18]/75">Ekikenから一つ確認</div>
                   <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
-                      <button key={option} type="button" onClick={() => fillInput(`EKIKENからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
+                      <button key={option} type="button" onClick={() => fillInput(`Ekikenからの確認への回答：${option}`)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
                     ))}
                   </div>
                 </div>
               ) : null}
 
-              {!pendingFollowUp && !sending ? (
+              {routinePromptsVisible ? (
                 <div>
                   <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
                     <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">一言から相談</span>
@@ -343,10 +417,10 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
               ) : null}
 
               <div className="rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-                <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder="例）急に頭が重くなって、少しイライラします" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+                <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} rows={3} maxLength={1200} placeholder={urgentMessage ? "例）近くの人に連絡しました。今は一人ではありません" : "例）急に頭が重くなって、少しイライラします"} className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
-                  <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "EKIKENに話す"}</Button>
+                  <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekikenに話す"}</Button>
                 </div>
               </div>
 
@@ -355,7 +429,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           ) : null}
 
           {error ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-          <div className="text-[9px] font-bold leading-4 text-slate-400">EKIKENは診断や治療、薬・漢方・サプリの個別判断を行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
+          <div className="text-[9px] font-bold leading-4 text-slate-400">Ekikenは診断や治療、薬・漢方・サプリの個別判断を行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
         </div>
       </section>
     </div>
