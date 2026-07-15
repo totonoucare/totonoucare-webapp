@@ -568,9 +568,9 @@ export default function AiAnalysisPanel({
                   ? "記録が更新されています。今は以前の保存済み分析を表示しています。"
                   : "この期間のAI分析は、まだ作成していません。"}
               </div>
-              <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">タブを開くだけでは回数を使いません。必要なときに、現在の記録でEkikenへ依頼できます。</div>
+              <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">タブを開くだけでは回数を使いません。必要なときに、現在の記録でEkkenへ依頼できます。</div>
               <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>
-                {analysisMeta.stale ? "現在の記録で分析を更新" : "Ekikenに聞く"}
+                {analysisMeta.stale ? "現在の記録で分析を更新" : "Ekkenに聞く"}
               </Button>
             </div>
           ) : null}
@@ -599,7 +599,7 @@ export default function AiAnalysisPanel({
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-10 w-10" /></div>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-black text-slate-900">この振り返りについてEkikenに聞く</div>
+            <div className="text-[15px] font-black text-slate-900">この振り返りについてEkkenに聞く</div>
             <div className="mt-0.5 text-[10px] font-bold text-slate-400">選択した期間の記録と分析だけを引き継ぎます</div>
           </div>
           {chatUsage?.chat ? <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[9px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
@@ -617,7 +617,7 @@ export default function AiAnalysisPanel({
                   <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[12px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
                     {message.role === "user" && message.reply_to_follow_up?.question ? (
                       <div className="mb-2 border-b border-white/25 pb-2 text-[9px] font-bold leading-4 text-white/80">
-                        <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekikenからの確認</div>
+                        <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div>
                         <div>{message.reply_to_follow_up.question}</div>
                       </div>
                     ) : null}
@@ -644,7 +644,7 @@ export default function AiAnalysisPanel({
             {!hasPendingFollowUp && !sending ? (
               <div className="mt-3">
                 <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
-                  <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">Ekikenに聞く候補</span>
+                  <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">Ekkenに聞く候補</span>
                   <span className="text-[9px] font-bold text-slate-400">タップすると入力欄に入ります。送信前に編集できます。</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -667,7 +667,7 @@ export default function AiAnalysisPanel({
               <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
               <div className="flex items-center justify-between gap-3 px-1 pb-1">
                 <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
-                <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekikenに聞く"}</Button>
+                <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに聞く"}</Button>
               </div>
             </div>
           </>

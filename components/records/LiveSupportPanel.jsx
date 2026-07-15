@@ -15,14 +15,14 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.ai_enabled) {
     return (
       <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[11px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
-        Ekiken相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
+        Ekken相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
       </div>
     );
   }
   if (consent?.active) {
     return (
       <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        Ekikenには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、任意で登録した受診・相談状況、この相談の会話を送ります。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。
+        Ekkenには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、任意で登録した受診・相談状況、この相談の会話を送ります。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
@@ -34,7 +34,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
       <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
         送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。AIは診断や薬の個別判断を行いません。
       </div>
-      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、Ekikenに相談する"}</Button>
+      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、Ekkenに相談する"}</Button>
     </div>
   );
 }
@@ -94,7 +94,7 @@ function Bubble({ message }) {
       ].join(" ")}>
         {replyContext?.question ? (
           <div className="mb-2 border-b border-white/25 pb-2 text-[9px] font-bold leading-4 text-white/80">
-            <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekikenからの確認</div>
+            <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div>
             <div>{replyContext.question}</div>
           </div>
         ) : null}
@@ -202,7 +202,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setReplyToFollowUp(null);
       setSuggestions(lastAssistant?.suggested_questions || data.starter?.quick_prompts || []);
     } catch (loadError) {
-      setError(loadError?.message || "Ekikenとの会話を読み込めませんでした");
+      setError(loadError?.message || "Ekkenとの会話を読み込めませんでした");
     } finally {
       setLoading(false);
     }
@@ -356,7 +356,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setSuggestions(data.suggested_questions || []);
       setUsage(data.usage || usage);
     } catch (sendError) {
-      setError(sendError?.message || "Ekikenへ送信できませんでした");
+      setError(sendError?.message || "Ekkenへ送信できませんでした");
       setMessages((current) => current.filter((item) => item.id !== localId));
       setInput(content);
       setReplyToFollowUp(replyContext);
@@ -449,7 +449,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
               {pendingFollowUp ? (
                 <div className="rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                  <div className="text-[9px] font-black tracking-[0.12em] text-[#A56C18]/75">Ekikenから一つ確認</div>
+                  <div className="text-[9px] font-black tracking-[0.12em] text-[#A56C18]/75">Ekkenから一つ確認</div>
                   <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
@@ -489,7 +489,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder={urgentMessage ? "例）近くの人に連絡しました。今は一人ではありません" : "例）急に頭が重くなって、少しイライラします"} className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
-                  <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekikenに話す"}</Button>
+                  <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに話す"}</Button>
                 </div>
               </div>
 
@@ -498,7 +498,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           ) : null}
 
           {error ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-          <div className="text-[9px] font-bold leading-4 text-slate-400">Ekikenは診断や治療、薬・漢方・サプリの個別判断を行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
+          <div className="text-[9px] font-bold leading-4 text-slate-400">Ekkenは診断や治療、薬・漢方・サプリの個別判断を行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
         </div>
       </section>
     </div>
