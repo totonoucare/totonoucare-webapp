@@ -671,7 +671,7 @@ function ForecastOverviewCard({
   );
 }
 
-function EkikenHomeCard({ signal = 0, onOpen }) {
+function EkkenHomeCard({ signal = 0, onOpen }) {
   const message = Number(signal) === 2
     ? "今日は守りの予報です。今つらいことがあれば、一緒に整理しましょう。"
     : Number(signal) === 1
@@ -1591,7 +1591,7 @@ export default function HomePage() {
         coreTitle={core?.title || ""}
       />
 
-      <EkikenHomeCard
+      <EkkenHomeCard
         signal={targetSignal ?? 0}
         onOpen={(prompt) => router.push(`/records?tab=consult${prompt ? `&prompt=${encodeURIComponent(prompt)}` : ""}`)}
       />
