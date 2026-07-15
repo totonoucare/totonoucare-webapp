@@ -1604,7 +1604,7 @@ export default function RadarPage() {
               />
               <div className="relative mb-1 min-w-0 flex-1 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
                 <span className="absolute -left-1.5 bottom-5 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-                <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI：Ekiken</div>
+                <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI Ekken</div>
                 <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
                   {selectedIsToday
                     ? sameDayCareCount > 0
