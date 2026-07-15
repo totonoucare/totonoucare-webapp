@@ -100,7 +100,7 @@ CRON_SECRET
 - 本人の現在の直接的な緊急表現だけを、アプリ側の固定安全ルートへ入れる
 - 否定、明確な過去、引用、第三者相談は固定停止せず、`potential_safety_signal` としてモデルへ渡す
 - この注意情報だけを根拠に、本人の現在の緊急状態と断定しない
-- Ekikenの通常回答は300〜500文字程度を目安にする
+- Ekkenの通常回答は300〜500文字程度を目安にする
 - AI利用前カードとガイドは、アカウント登録情報と自由入力内容を区別して説明する
 - DB migrationなし。v7.72.2までのmigration適用状況は変更しない
 
@@ -121,7 +121,7 @@ CRON_SECRET
 ## v7.72.0で追加されたAI導線
 
 - `app/api/records/chat/route.js`: 選択期間の振り返り専用
-- `app/api/records/live-chat/route.js`: 今の体調を相談するEkiken専用
+- `app/api/records/live-chat/route.js`: 今の体調を相談するEkken専用
 - 同じキャラクターだが、`records_ai_threads.thread_kind` とプロンプトを分離する
 - live supportの常時文脈は、トリセツ、今日明日の予報・対策ケア、直近3日詳細、14日要約、直近16メッセージ
 - 詳細は `docs/EKIKEN_LIVE_SUPPORT_V7720.md`
