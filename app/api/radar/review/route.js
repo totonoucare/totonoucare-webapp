@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { RECORDS_EDIT_LOOKBACK_DAYS } from "@/lib/records/policy";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireUser } from "@/lib/requireUser";
 import { jstDateString } from "@/lib/dateJST";
@@ -51,7 +52,7 @@ const V3_SELECT = [
   "updated_at",
 ].join(",");
 const LEGACY_SELECT = "id,user_id,target_date,condition_level,prevent_level,note,action_tags,created_at";
-const EDIT_LOOKBACK_DAYS = Math.max(1, Math.min(31, Number(process.env.RECORDS_EDIT_LOOKBACK_DAYS || 7)));
+const EDIT_LOOKBACK_DAYS = RECORDS_EDIT_LOOKBACK_DAYS;
 const DOMAIN_VALUES = new Set(["live", "eat", "loosen"]);
 const TIMING_VALUES = new Set(["before_peak", "after_symptom", "mixed", "unknown"]);
 const SAME_DAY_TIMING_VALUES = new Set(["same_day_before", "same_day_after", "same_day_mixed", "same_day_unknown"]);
