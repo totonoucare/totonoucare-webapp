@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OPENAI_RECORDS_ANALYSIS_MODEL } from "@/lib/records/policy";
 import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { generateStructured } from "@/lib/openai/server";
@@ -37,7 +38,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const MODEL = process.env.OPENAI_RECORDS_ANALYSIS_MODEL || "gpt-5.6-luna";
+const MODEL = OPENAI_RECORDS_ANALYSIS_MODEL;
 const PROMPT_VERSION = "records_analysis_v8_care_origin_2026-07-13";
 
 function periodKey(value) {
