@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { OPENAI_RECORDS_LIVE_CHAT_MODEL } from "@/lib/records/policy";
 import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { generateStructured } from "@/lib/openai/server";
@@ -54,7 +55,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const MODEL = process.env.OPENAI_RECORDS_LIVE_CHAT_MODEL || process.env.OPENAI_RECORDS_CHAT_MODEL || "gpt-5.6-luna";
+const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
 const PROMPT_VERSION = "records_live_support_v6_reply_context_2026-07-15";
 
 function jstHour(now = new Date()) {
