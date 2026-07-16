@@ -674,7 +674,7 @@ export default function AiAnalysisPanel({
         )}
 
         {error ? <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">AIは診断や治療、薬・漢方・サプリの個別判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
+        <div className="mt-3 text-[9px] font-bold leading-4 text-slate-400">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
       </section>
     </div>
   );
