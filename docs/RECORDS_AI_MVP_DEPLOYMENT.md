@@ -46,34 +46,26 @@ supabase/checks/20260711_records_ai_mvp_verify.sql
 - 不正なcare/factor値が0件
 - `radar_reviews_records_metadata_trigger` が存在する
 
-## 4. 環境変数
+## 4. 環境変数と運用設定
 
-既存のSupabase/OpenAI設定に加え、次を設定する。
+v7.72.7以降、公開期間・利用上限・利用モデル・概算単価などの非機密値は、次のコードで管理する。
 
-```dotenv
-RECORDS_ENABLED=true
-RECORDS_EDIT_LOOKBACK_DAYS=7
-
-RECORDS_AI_ENABLED=true
-RECORDS_AI_BETA_ENABLED=true
-RECORDS_AI_BETA_STARTS_AT=<公開日時またはYYYY-MM-DD>
-RECORDS_AI_BETA_ENDS_AT=<終了日時またはYYYY-MM-DD>
-RECORDS_AI_ENTITLEMENT_PRODUCTS=radar_ai,radar_subscription
-
-RECORDS_AI_MONTHLY_CHAT_LIMIT=100
-RECORDS_AI_DAILY_ANALYSIS_LIMIT=3
-RECORDS_AI_PER_MINUTE_LIMIT=6
-
-OPENAI_RECORDS_ANALYSIS_MODEL=gpt-5.6-luna
-OPENAI_RECORDS_CHAT_MODEL=gpt-5.6-luna
-OPENAI_SAFETY_IDENTIFIER_SECRET=<十分に長いランダム値>
-OPENAI_RECORDS_INPUT_USD_PER_MTOK=1
-OPENAI_RECORDS_OUTPUT_USD_PER_MTOK=6
+```text
+lib/records/policy.js
 ```
 
-`RECORDS_AI_BETA_ENABLED` の初期値はfalse。終了日の未設定で無期限開放しないよう、公開前に必ず期間を決める。
+Netlify / Vercelへ追加する必要があるのは、既存のSupabase/OpenAI接続情報などのSecretだけ。
 
-OpenAI APIキー、Supabase service role key、safety identifier secretはブラウザ公開変数にしない。
+```dotenv
+OPENAI_API_KEY=<Secret>
+NEXT_PUBLIC_SUPABASE_URL=<接続先>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<公開anon key>
+SUPABASE_SERVICE_ROLE_KEY=<Secret>
+```
+
+`OPENAI_SAFETY_IDENTIFIER_SECRET` は任意。未設定時は `SUPABASE_SERVICE_ROLE_KEY` を匿名識別子のハッシュ用secretとして利用する。
+
+現在の公開期間・回数制限等は `docs/RECORDS_POLICY_CODE_CONFIG_V7727.md` を参照する。
 
 ## 5. ステージング受け入れ確認
 
@@ -128,7 +120,7 @@ OpenAI APIキー、Supabase service role key、safety identifier secretはブラ
 - AI会話開始率
 - 専門家相談希望率
 
-安全上の懸念が出た場合は、まず `RECORDS_AI_ENABLED=false` でAIだけ停止する。記録・カレンダーは継続できる。
+安全上の懸念が出た場合は、`lib/records/policy.js` の `ai.enabled` を `false` にして緊急デプロイする。記録・カレンダーは継続できる。
 
 ## 7. ロールバック
 
