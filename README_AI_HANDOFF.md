@@ -68,6 +68,22 @@ CRON_SECRET
 
 このリポジトリに残すのは、変数名・用途・設計意図だけです。
 
+## v7.72.7でコード管理へ移した非機密運用設定
+
+- `lib/records/policy.js` が記録・Ekkenの運用設定の唯一の参照元
+- 先行公開期間: 2026-07-15〜2026-08-31（日本時間）
+- 記録編集: 今日を含む直近7日
+- Ekken相談: 月100回答
+- AI分析新規生成・更新: 1日1回
+- 短時間上限: 1分6回
+- 分析・期間チャット・ライブ相談モデル: `gpt-5.6-luna`
+- 概算原価: 入力1 USD / MTok、出力6 USD / MTok
+- `RECORDS_*` と `OPENAI_RECORDS_*` の同名環境変数は参照しない
+- `OPENAI_API_KEY`、Supabaseキー等のSecretは引き続き環境変数
+- DB migrationなし
+
+詳細は `docs/RECORDS_POLICY_CODE_CONFIG_V7727.md`。
+
 ## v7.72.5で追加した確認質問・回答の対応保持
 
 - `follow_up.question`はチャット本文と独立したカードだが、回答後も質問と回答を一組として扱う
