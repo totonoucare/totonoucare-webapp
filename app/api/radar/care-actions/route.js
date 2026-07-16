@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { RECORDS_EDIT_LOOKBACK_DAYS } from "@/lib/records/policy";
 import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { jstDateString } from "@/lib/dateJST";
@@ -23,7 +24,7 @@ const SAME_DAY_TIMING_VALUES = new Set([
   "same_day_unknown",
 ]);
 const RECORD_TIMING_VALUES = new Set(["before_peak", "after_symptom", "mixed", "unknown"]);
-const EDIT_LOOKBACK_DAYS = Math.max(1, Math.min(31, Number(process.env.RECORDS_EDIT_LOOKBACK_DAYS || 7)));
+const EDIT_LOOKBACK_DAYS = RECORDS_EDIT_LOOKBACK_DAYS;
 const SELECT = [
   "id",
   "user_id",
