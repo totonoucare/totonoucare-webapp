@@ -50,7 +50,7 @@ test("quoted first-person current self-harm wording remains urgent", () => {
 
 test("live support sends contextual safety signals to the model and requests concise replies", () => {
   assert.match(liveRoute, /potential_safety_signal/);
-  assert.match(liveRoute, /records_live_support_v6_reply_context/);
+  assert.match(liveRoute, /records_live_support_v7_tcm_care_reasoning/);
   assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /300〜500文字程度/);
   assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /本人の現在の緊急状態と断定せず/);
 });
