@@ -108,17 +108,16 @@ test("stored and current record contexts preserve the forecast explanation field
   assert.match(contextSource, /forecast_reasoning:/);
 });
 
-test("Ekken separates forecast calculation from symptoms, meridians and actual condition", () => {
-  assert.match(promptSource, /固定された体質 → 6方向の天気親和性 → 今日の6方向の気象強度/);
-  assert.match(promptSource, /主因は有効負担1位/);
-  assert.match(promptSource, /当日の体調実感、睡眠、仕事、食事、飲酒、気分、生理/);
-  assert.match(promptSource, /不調フォーカス、経絡.*予報点数.*原因/);
-  assert.match(promptSource, /副因がない日は、他の天気を無理に並べない/);
-  assert.match(promptSource, /AI独自の再計算をしない/);
+test("Ekken uses the computed forecast model without a rigid narration script", () => {
+  assert.match(promptSource, /forecastはアプリの計算済み事実/);
+  assert.match(promptSource, /気象強度、本人親和性、有効負担、主因・副因、余力補正/);
+  assert.match(promptSource, /現在の症状や記録を予報点数の原因へ後付けしない/);
+  assert.match(promptSource, /今回に関係する材料を自由に選び、統合して考える/);
+  assert.doesNotMatch(promptSource, /予報の推論順は/);
 });
 
 test("prompt versions invalidate older saved AI interpretations", () => {
-  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy_2026-07-16/);
+  assert.match(liveRoute, /records_live_support_v11_living_language_2026-07-17/);
   assert.match(periodRoute, /records_chat_v11_forecast_hierarchy_2026-07-16/);
   assert.match(analysisRoute, /records_analysis_v10_forecast_hierarchy_2026-07-16/);
 });

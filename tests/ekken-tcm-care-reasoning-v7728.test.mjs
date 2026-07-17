@@ -14,13 +14,12 @@ const liveRoute = await readFile(new URL("../app/api/records/live-chat/route.js"
 const periodRoute = await readFile(new URL("../app/api/records/chat/route.js", import.meta.url), "utf8");
 const livePanel = await readFile(new URL("../components/records/LiveSupportPanel.jsx", import.meta.url), "utf8");
 
-test("Ekken can expand displayed care using explicit TCM reasoning", () => {
-  assert.match(promptSource, /displayed_careは優先する土台だが、提案可能範囲の上限ではない/);
-  assert.match(promptSource, /寒涼平温熱の食性/);
-  assert.match(promptSource, /酸苦甘辛鹹の五味/);
-  assert.match(promptSource, /陰陽、寒熱、燥湿、昇降・出入/);
-  assert.match(promptSource, /経絡・体のライン・左右差・動作反応/);
-  assert.match(promptSource, /一般的な栄養学・睡眠衛生・運動一般論だけで終えず/);
+test("Ekken can expand displayed care with broad TCM freedom", () => {
+  assert.match(promptSource, /displayed_care以外の低リスクな応用案も提案してよい/);
+  assert.match(promptSource, /食性・五味・五臓・寒熱燥湿・調理法/);
+  assert.match(promptSource, /陰陽・季節・時刻・環境・休息と活動/);
+  assert.match(promptSource, /経絡・身体反応・刺激量/);
+  assert.match(promptSource, /今回に関係する材料を自由に選び、統合して考える/);
 });
 
 test("product context carries separate reasoning axes for eat live and loosen", () => {
@@ -57,7 +56,7 @@ test("final medication actions still receive deterministic professional confirma
 });
 
 test("live and period chat use the richer prompt versions and medium reasoning", () => {
-  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy_2026-07-16/);
+  assert.match(liveRoute, /records_live_support_v11_living_language_2026-07-17/);
   assert.match(periodRoute, /records_chat_v11_forecast_hierarchy_2026-07-16/);
   assert.match(liveRoute, /max_output_tokens: 1800/);
   assert.match(periodRoute, /max_output_tokens: 1700/);

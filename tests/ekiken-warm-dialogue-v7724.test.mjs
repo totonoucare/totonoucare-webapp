@@ -7,16 +7,15 @@ const liveRoute = await readFile(new URL("../app/api/records/live-chat/route.js"
 const livePanel = await readFile(new URL("../components/records/LiveSupportPanel.jsx", import.meta.url), "utf8");
 const analysisPanel = await readFile(new URL("../components/records/AiAnalysisPanel.jsx", import.meta.url), "utf8");
 
-test("live support prompt uses app forecasts confidently without repetitive disclaimers", () => {
-  assert.match(promptsSource, /毎回「あくまで目安」「原因ではない」「信じすぎないで」と弱めず/);
-  assert.match(promptsSource, /アプリの事実は落ち着いて言い切ってよい/);
-  assert.match(promptsSource, /直後に統計的な注意書きで打ち消さない/);
-  assert.match(promptsSource, /再現回数・比較条件・因果の慎重な検討は期間のAI分析が主に担う/);
-  assert.match(promptsSource, /今後の振り返りの手がかりになりますね/);
+test("live support prompt prioritizes natural conversation over repetitive disclaimers", () => {
+  assert.match(promptsSource, /まずユーザーの本題に答える/);
+  assert.match(promptsSource, /定型の共感、免責、受診確認を毎回挟まない/);
+  assert.match(promptsSource, /網羅性やルール遵守を見せるための回答ではなく/);
+  assert.match(promptsSource, /不要な危機対応文を差し込まない/);
 });
 
-test("live support prompt version is bumped for the warmer dialogue behavior", () => {
-  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy_2026-07-16/);
+test("live support prompt version is bumped for the prompt reset", () => {
+  assert.match(liveRoute, /records_live_support_v11_living_language_2026-07-17/);
 });
 
 test("follow-up option chips place only the natural answer in the input", () => {

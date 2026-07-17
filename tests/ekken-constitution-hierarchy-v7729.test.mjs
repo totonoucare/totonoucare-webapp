@@ -83,17 +83,16 @@ test("the AI context includes all six patterns and Japanese meridian names", () 
   assert.match(contextSource, /core_is_top_level: true/);
 });
 
-test("live support must use the constitution hierarchy for kampo food lifestyle and loosening", () => {
-  assert.match(promptSource, /コアタイプ → アクセル／ブレーキ軸と余力軸 → 全6パターンの順位/);
-  assert.match(promptSource, /気虚・気滞などの上位2ラベルは代表要素/);
-  assert.match(promptSource, /余力は単なる気虚ではない/);
-  assert.match(promptSource, /症状名だけから有名処方を並べない/);
-  assert.match(promptSource, /体質データで候補になる理由/);
-  assert.match(promptSource, /不要な英単語を混ぜず/);
+test("live support knows the constitution hierarchy without forcing a fixed reasoning script", () => {
+  assert.match(promptSource, /コアタイプは、アクセル／ブレーキ、余力、気血津液の量と巡り/);
+  assert.match(promptSource, /気虚・気滞などの全6要素、経絡、不調フォーカス/);
+  assert.match(promptSource, /全項目を順番に説明したり、チェックリストを埋めたりする必要はない/);
+  assert.match(promptSource, /日本語の会話へ不要な英単語を混ぜない/);
+  assert.doesNotMatch(promptSource, /漢方、食養生、暮らす、ほぐすの回答では、候補やケアを出す前に/);
 });
 
 test("prompt versions change so saved outputs do not reuse the old constitution interpretation", () => {
-  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy_2026-07-16/);
+  assert.match(liveRoute, /records_live_support_v11_living_language_2026-07-17/);
   assert.match(periodRoute, /records_chat_v11_forecast_hierarchy_2026-07-16/);
   assert.match(analysisRoute, /records_analysis_v10_forecast_hierarchy_2026-07-16/);
 });

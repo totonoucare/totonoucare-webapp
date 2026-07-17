@@ -48,11 +48,12 @@ test("quoted first-person current self-harm wording remains urgent", () => {
   assert.equal(result.kind, "self_harm");
 });
 
-test("live support sends contextual safety signals to the model and requests concise replies", () => {
+test("live support sends contextual safety signals without forcing a fixed reply length", () => {
   assert.match(liveRoute, /potential_safety_signal/);
-  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy/);
-  assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /300〜500文字程度/);
-  assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /本人の現在の緊急状態と断定せず/);
+  assert.match(liveRoute, /records_live_support_v11_living_language/);
+  assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /回答の順序、長さ、提案数、質問数を型にはめず/);
+  assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /それだけで本人の現在の緊急状態と断定しない/);
+  assert.doesNotMatch(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /300〜500文字程度/);
 });
 
 test("pre-consent and guide copy distinguish account fields from user-entered text", () => {
