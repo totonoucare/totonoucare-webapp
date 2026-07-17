@@ -56,7 +56,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v7_tcm_care_reasoning_2026-07-16";
+const PROMPT_VERSION = "records_live_support_v9_forecast_hierarchy_2026-07-16";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
