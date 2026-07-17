@@ -31,6 +31,7 @@ import {
   cleanChatOutput,
   classifySafetyText,
   isProfessionalText,
+  shouldAppendSafetyMessage,
   urgentMessageForText,
 } from "@/lib/records/aiPrompts";
 import {
@@ -56,7 +57,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v10_prompt_reset_2026-07-17";
+const PROMPT_VERSION = "records_live_support_v11_living_language_2026-07-17";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -183,7 +184,10 @@ async function loadLatestMessages(threadId, userId, { limit = 100 } = {}) {
 
 async function loadConversation(threadId, userId) {
   const rows = await loadLatestMessages(threadId, userId, { limit: 16 });
-  return rows.map(conversationMessageForAi);
+  return rows.map((row) => ({
+    ...conversationMessageForAi(row),
+    safety_level: row.safety_level || "routine",
+  }));
 }
 
 async function loadReplyTarget(threadId, userId, candidate) {
@@ -217,9 +221,10 @@ async function loadStarterContext(userId, today) {
   };
 }
 
-function professionalMessage(output) {
+function professionalMessage(output, conversation = []) {
   if (output.safety_level !== "professional" || !output.safety_message) return output.message;
   if (output.message.includes(output.safety_message)) return output.message;
+  if (!shouldAppendSafetyMessage({ safetyMessage: output.safety_message, conversation })) return output.message;
   return `${output.message}\n\n${output.safety_message}`.trim();
 }
 
@@ -443,7 +448,7 @@ export async function POST(req) {
       if (output.safety_level === "professional" && !output.safety_message) {
         output.safety_message = PROFESSIONAL_MESSAGE;
       }
-      output.message = professionalMessage(output);
+      output.message = professionalMessage(output, conversation);
     }
     if (!output.message) throw new Error("AI returned no message");
 
