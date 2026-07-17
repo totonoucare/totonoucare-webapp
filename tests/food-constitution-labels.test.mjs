@@ -2,11 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const source = await readFile(new URL("../lib/radar_v1/careRules/foodIngredientRules.js", import.meta.url), "utf8");
-const foodRules = await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
+const dailyUrl = `data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`;
+const foodSource = await readFile(new URL("../lib/radar_v1/careRules/foodIngredientRules.js", import.meta.url), "utf8");
+const preparedFoodSource = foodSource.replace(
+  /from "\.\/dailyCareV2";/,
+  `from "${dailyUrl}";`,
+);
+const foodRules = await import(`data:text/javascript;base64,${Buffer.from(preparedFoodSource).toString("base64")}`);
 
 function firstFoodItems(context) {
-  return context?.action_cards?.find((card) => card.key === "add")?.items || [];
+  return context?.ingredient_suggestions || [];
 }
 
 test("English fluid_damp sub label changes today's food candidates", () => {
