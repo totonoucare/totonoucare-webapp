@@ -68,6 +68,20 @@ CRON_SECRET
 
 このリポジトリに残すのは、変数名・用途・設計意図だけです。
 
+## v7.74.1で追加した食養生の引き算ロジック
+
+- `dailyCareV2.js` は、具体的な一食とは別に `subtraction_action` を生成する
+- 引き算候補は主因・副因、共通ケア方針、コアタイプの余力、sub labels、不調フォーカス、signalから採点する
+- 一般的な禁止リストを毎日固定表示せず、食性・味・温度・油・飲酒・カフェイン・食べる時間や速度の「負担の重なり」を選ぶ
+- 食べるタブの主表示は `choice` と `caution` の2カード。どちらも `prominent: true`
+- 詳細欄は `alternative`、`drink`、理由、必要な食後ケアだけを表示し、主表示のcautionを重複させない
+- 同じ対象日・同じ条件では安定し、日付が変わると上位適合候補内でローテーションする
+- care logic version: `daily_care_v2_1_2026-07-17`
+- 既存の `buildDisplayedCareItems` とcare action identityは変更せず、記録互換性を維持
+- DB migrationなし
+
+詳細: `docs/DAILY_CARE_FOOD_SUBTRACTION_V7741.md`
+
 ## v7.74.0で追加したDaily Care v2
 
 - `lib/radar_v1/careRules/dailyCareV2.js` が、暮らす・食べる・ほぐす共通のケアテーマと刺激量を決める
