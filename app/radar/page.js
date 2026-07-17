@@ -891,7 +891,9 @@ export default function RadarPage() {
   const foodExamples = safeArray(food.examples);
   const foodActionCards = safeArray(food.action_cards);
   const primaryFoodCard = foodActionCards.find((card) => card?.primary) || foodActionCards[0] || null;
-  const secondaryFoodCards = foodActionCards.filter((card) => card !== primaryFoodCard);
+  const primaryFoodCards = foodActionCards.filter((card) => card?.primary || card?.prominent);
+  const visiblePrimaryFoodCards = primaryFoodCards.length ? primaryFoodCards : [primaryFoodCard].filter(Boolean);
+  const secondaryFoodCards = foodActionCards.filter((card) => !visiblePrimaryFoodCards.includes(card));
   const foodContextChips = safeArray(food.context_chips);
   const hasFoodActionCards = foodActionCards.length > 0;
   const lifestylePrimaryAction = lifestylePlan?.primary_action || null;
@@ -918,7 +920,7 @@ export default function RadarPage() {
       forecast_score: forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? null,
       primary_trigger: careTriggerKey || null,
       care_plan_id: carePlan?.id || null,
-      care_logic_version: carePlan?.version || "daily_care_v2_2026-07-17",
+      care_logic_version: carePlan?.version || "daily_care_v2_1_2026-07-17",
     },
   })), [lifestylePlan, food, tsuboPoints, tsuboSet, careSourceMode, forecast, careTriggerKey, carePlan?.id, selectedIsToday]);
   const currentCareActionKeys = useMemo(() => new Set(
@@ -1930,8 +1932,8 @@ export default function RadarPage() {
 
                   {hasFoodActionCards ? (
                     <div className="mt-4 space-y-2.5">
-                      {[primaryFoodCard].filter(Boolean).map((card, idx) => {
-                        const marker = card.key === "add" ? "＋" : card.key === "drink" ? "茶" : card.key === "caution" ? "！" : "○";
+                      {visiblePrimaryFoodCards.map((card, idx) => {
+                        const marker = card.key === "add" ? "＋" : card.key === "drink" ? "茶" : card.key === "caution" ? "−" : "○";
                         const markerClass = card.key === "caution"
                           ? "bg-[#FFF0EA] text-[#B75C3E] ring-[#F1C8BA]"
                           : card.key === "drink"
@@ -2027,10 +2029,10 @@ export default function RadarPage() {
                       >
                         <div>
                           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            詳しく
+                            {food.detail_eyebrow || "ほかの選び方"}
                           </div>
                           <div className="mt-1 text-[13px] font-black tracking-tight text-slate-900">
-                            {food.detail_title || "取り入れ方・控えたいこと"}
+                            {food.detail_title || "別案・飲み物・選んだ理由"}
                           </div>
                         </div>
                         <svg
