@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
+import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
@@ -75,21 +75,21 @@ const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
 const SET_MODE_OPTIONS = [
   {
     key: "starter",
-    label: "軽く試せるセット",
+    label: "まず1つから",
     band: "light",
-    lead: "まずは3つの候補から、今の生活に足しやすいものを選べます。",
+    lead: "手軽な価格帯を中心に、取り入れやすい一手から見ます。",
   },
   {
     key: "steady",
-    label: "しっかり整えるセット",
+    label: "3方向をそろえる",
     band: "standard",
-    lead: "暮らす・食べる・ほぐすを一緒にそろえて、数日続けやすい組み合わせです。",
+    lead: "暮らす・食べる・ほぐすを組み合わせ、数日続けやすくします。",
   },
   {
     key: "environment",
-    label: "環境から見直すセット",
+    label: "環境から見直す",
     band: "deep",
-    lead: "寝具・空気・食事サービス・ケア機器まで含めて、生活環境から整える組み合わせです。",
+    lead: "寝具・空気・ケア機器まで含め、生活の土台から探します。",
   },
 ];
 
@@ -1601,7 +1601,7 @@ function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, tri
   function push(policyKey, variantIndex, weight = "main") {
     if (!POLICY_META[policyKey]) return;
     const options = titleOptionsForPolicy(policyKey, context);
-    const suffix = options[variantIndex % Math.max(options.length, 1)] || DEFAULT_POLICY_TITLES[policyKey]?.[0] || "今日のケア";
+    const suffix = options[variantIndex % Math.max(options.length, 1)] || DEFAULT_POLICY_TITLES[policyKey]?.[0] || "ケア候補";
     const duplicate = plan.some((item) => item.policyKey === policyKey && item.titleSuffix === suffix);
     if (duplicate) return;
     const title = `${POLICY_META[policyKey].label}セット｜${suffix}`;
@@ -1905,7 +1905,7 @@ function buildEatUseGuide(item, card) {
     if (policyKey === "shizumeru") return "刺激を足したくない日の温かい一杯に。";
     if (policyKey === "yurumeru") return "作業後や寝る前の切り替えの一杯に。";
     if (policyKey === "nukumeru") return "冷たい飲み物が続いた日の切り替えに。";
-    return "今日の方針に合わせた温かい一杯に。";
+    return "選んだ方針に合わせた温かい一杯に。";
   }
 
   if (/なつめ|棗|クコ|枸杞|陳皮|生姜|しょうが|黒豆|はとむぎ|ハトムギ/.test(text)) {
@@ -2102,57 +2102,107 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
   return assembleCareSetCards({ definitions: genericDefinitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 2 });
 }
 
+const CARE_SHELF_STORAGE_KEY = "mibyo-care-navi-shelf-v1";
+
+function compactShelfItem(item) {
+  const itemUrl = item?.itemUrl || item?.clickUrl || makeRakutenSearchUrl(item?.query);
+  return {
+    title: String(item?.title || "ケア候補"),
+    category: item?.category || "live",
+    imageUrl: item?.imageUrl || "",
+    itemUrl,
+    clickUrl: item?.clickUrl || "",
+    query: item?.query || "",
+    source: item?.source || "",
+    sourceType: item?.sourceType || "",
+    shopName: item?.shopName || "",
+    price: Number.isFinite(Number(item?.price)) ? Number(item.price) : null,
+    buttonText: item?.buttonText || "",
+    useGuide: item?.useGuide || "",
+    reason: item?.reason || "",
+    productRole: item?.productRole || item?.role || "",
+  };
+}
+
+function readStoredCareShelf() {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(CARE_SHELF_STORAGE_KEY) || "[]");
+    return safeArray(parsed)
+      .filter((entry) => entry?.key && entry?.item?.title)
+      .slice(0, 40);
+  } catch {
+    return [];
+  }
+}
+
+function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, basis, kitMode, policyKeys, symptomLabel, showConditions, onToggleConditions }) {
+  const basisLabel = basis === "tomorrow" ? "明日の予報も反映" : basis === "season" ? "季節の天候も反映" : "体質を中心に選定";
+  const modeLabel = getSetModeMeta(kitMode)?.label || "まず1つから";
+
+  return (
+    <div className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(145deg,#EAF7F1_0%,#F8FCFA_54%,#FFF8EC_100%)] p-4 ring-1 ring-[#CFE7DE] shadow-[0_22px_54px_-38px_rgba(15,23,42,0.40)] sm:p-5">
+      <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full border-[24px] border-white/45" />
+      <div className="pointer-events-none absolute -bottom-12 right-16 h-28 w-28 rounded-full bg-[#FFF4D9]/60 blur-sm" />
+
+      <div className="relative z-10 flex items-start gap-3.5">
+        <div className="relative grid h-16 w-16 shrink-0 place-items-center rounded-[22px] bg-white text-[#2F816E] ring-1 ring-[#A7D4CB] shadow-[0_14px_30px_-20px_rgba(47,129,110,0.55)]">
+          <div className="grid h-11 w-11 place-items-center rounded-[17px] bg-[#EAF7F1] ring-1 ring-[#CFE7DE]">
+            <IconCare className="h-6 w-6" />
+          </div>
+          <span className="absolute -bottom-1 -right-1 rounded-full bg-[#2F816E] px-2 py-0.5 text-[8px] font-black tracking-wider text-white ring-2 ring-white">AI</span>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-black tracking-[0.16em] text-[#2F816E]/70">EKKEN CARE GUIDE</div>
+          <h1 className="mt-1 text-[20px] font-black leading-7 tracking-tight text-slate-900 sm:text-[22px]">まず見るケアを、Ekkenが絞りました</h1>
+          <p className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">
+            {loading
+              ? "体質トリセツとケア条件を確認しています。"
+              : profile
+                ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}を手がかりに、買うなら何から見るかを案内します。`
+                : profileError || "体質トリセツがなくても、選んだ条件から候補を組めます。"}
+          </p>
+        </div>
+      </div>
+
+      <div className="relative z-10 mt-4 flex flex-wrap gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-[#DCE8DD]">
+          {coreIconPath ? <img src={coreIconPath} alt="" className="h-5 w-5 object-contain" loading="lazy" /> : <IconKarte className="h-4 w-4 text-[#2F816E]" />}
+          {profile ? coreTitle || "体質反映済み" : "条件から選定"}
+        </span>
+        <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-slate-600 ring-1 ring-[#DCE8DD]">{symptomLabel}</span>
+        <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{basisLabel}</span>
+        <span className="rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{modeLabel}</span>
+      </div>
+
+      <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2">
+        {safeArray(policyKeys).slice(0, 2).map((key) => <PolicyPill key={key} policyKey={key} />)}
+        <button
+          type="button"
+          onClick={onToggleConditions}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]"
+          aria-expanded={showConditions}
+        >
+          {showConditions ? "調整を閉じる" : "条件を細かく調整"}
+          <span aria-hidden="true" className={["text-[13px] transition-transform", showConditions ? "rotate-180" : ""].join(" ")}>⌄</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function QuickExplore({ basis, kitMode, onSelect }) {
   const options = [
-    {
-      key: "light",
-      eyebrow: "まずは気軽に",
-      title: "軽く試す",
-      lead: "今の体質から、足しやすい候補を3つ。",
-      basis: "base",
-      mode: "starter",
-      Icon: IconCare,
-      surface: "bg-[#EFF8F4]",
-      ink: "text-[#2F816E]",
-      ring: "ring-[#CFE7DE]",
-    },
-    {
-      key: "tomorrow",
-      eyebrow: "先回りしたい",
-      title: "明日に備える",
-      lead: "明日の予報を重ねて、今夜から選ぶ。",
-      basis: "tomorrow",
-      mode: "starter",
-      Icon: IconRadar,
-      surface: "bg-[#FFF8EC]",
-      ink: "text-[#A56C18]",
-      ring: "ring-[#EED8B4]",
-    },
-    {
-      key: "environment",
-      eyebrow: "じっくり見直す",
-      title: "暮らしから整える",
-      lead: "季節と生活環境まで広げて探す。",
-      basis: "season",
-      mode: "environment",
-      Icon: IconLifestyle,
-      surface: "bg-[#F8F4FA]",
-      ink: "text-[#7B6588]",
-      ring: "ring-[#E2D6E7]",
-    },
+    { key: "light", title: "軽く試す", lead: "体質を中心に", basis: "base", mode: "starter", Icon: IconCare },
+    { key: "tomorrow", title: "明日に備える", lead: "予報を重ねる", basis: "tomorrow", mode: "starter", Icon: IconRadar },
+    { key: "environment", title: "暮らしから", lead: "環境まで広げる", basis: "season", mode: "environment", Icon: IconLifestyle },
   ];
 
   return (
     <div>
-      <div className="mb-2 flex items-end justify-between gap-3">
-        <div>
-          <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">どこから見てみる？</div>
-          <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">今の目的に近い入口を選ぶ</div>
-        </div>
-        <div className="shrink-0 text-[10px] font-bold text-slate-400">あとから変更できます</div>
-      </div>
-
-      <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">今の目的</div>
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {options.map((option) => {
           const active = basis === option.basis && kitMode === option.mode;
           const Icon = option.Icon;
@@ -2162,28 +2212,17 @@ function QuickExplore({ basis, kitMode, onSelect }) {
               type="button"
               onClick={() => onSelect({ basis: option.basis, mode: option.mode })}
               className={[
-                "relative min-w-[196px] overflow-hidden rounded-[22px] p-4 text-left transition-all ring-1",
-                option.surface,
-                option.ring,
+                "min-w-[146px] rounded-[18px] px-3 py-3 text-left ring-1 transition-all",
                 active
-                  ? "translate-y-[-1px] shadow-[0_16px_32px_-24px_rgba(15,23,42,0.42)]"
-                  : "opacity-90 hover:translate-y-[-1px] hover:opacity-100",
+                  ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_26px_-18px_rgba(52,155,131,0.52)]"
+                  : "bg-white text-slate-700 ring-[#DCE8DD] hover:bg-[#F4FAF7]",
               ].join(" ")}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className={["grid h-10 w-10 place-items-center rounded-[14px] bg-white shadow-sm ring-1", option.ink, option.ring].join(" ")}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <span className={[
-                  "rounded-full px-2 py-1 text-[9px] font-black ring-1",
-                  active ? "bg-white text-[#2F816E] ring-[#CFE7DE]" : "bg-white/70 text-slate-400 ring-white",
-                ].join(" ")}>
-                  {active ? "選択中" : "見る"}
-                </span>
+              <div className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                <span className="text-[13px] font-black">{option.title}</span>
               </div>
-              <div className={["mt-3 text-[10px] font-black tracking-widest", option.ink].join(" ")}>{option.eyebrow}</div>
-              <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">{option.title}</div>
-              <div className="mt-1.5 text-[11px] font-bold leading-5 text-slate-600">{option.lead}</div>
+              <div className={["mt-1 text-[10px] font-bold", active ? "text-white/80" : "text-slate-400"].join(" ")}>{option.lead}</div>
             </button>
           );
         })}
@@ -2195,12 +2234,9 @@ function QuickExplore({ basis, kitMode, onSelect }) {
 function SetModeFilter({ value, onChange }) {
   return (
     <div className="rounded-[24px] bg-[#F4FAF7] p-3.5 ring-1 ring-[#DCE8DD]">
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div>
-          <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">セットの深さ</div>
-          <div className="mt-1 text-[13px] font-black text-slate-900">どこまで広げて見る？</div>
-        </div>
-        <div className="text-[10px] font-bold text-slate-400">3段階</div>
+      <div className="mb-2.5">
+        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">始め方</div>
+        <div className="mt-1 text-[13px] font-black text-slate-900">どの規模で探す？</div>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
         {SET_MODE_OPTIONS.map((option, index) => {
@@ -2221,9 +2257,7 @@ function SetModeFilter({ value, onChange }) {
                 <div className="text-[12px] font-black leading-4">{option.label}</div>
                 <span className={["text-[9px] font-black", active ? "text-white/75" : "text-slate-300"].join(" ")}>0{index + 1}</span>
               </div>
-              <div className={["mt-1.5 text-[10px] font-bold leading-4", active ? "text-white/85" : "text-slate-500"].join(" ")}>
-                {option.lead}
-              </div>
+              <div className={["mt-1.5 text-[10px] font-bold leading-4", active ? "text-white/85" : "text-slate-500"].join(" ")}>{option.lead}</div>
             </button>
           );
         })}
@@ -2231,7 +2265,37 @@ function SetModeFilter({ value, onChange }) {
     </div>
   );
 }
-function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
+
+function ShelfActionButtons({ item, shelfEntry, onToggleSaved, onToggleTried }) {
+  const saved = Boolean(shelfEntry?.saved);
+  const tried = Boolean(shelfEntry?.tried);
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      <button
+        type="button"
+        onClick={() => onToggleSaved?.(item)}
+        className={[
+          "rounded-full px-2.5 py-1.5 text-[10px] font-black ring-1 transition-colors",
+          saved ? "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]" : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#F4FAF7]",
+        ].join(" ")}
+      >
+        {saved ? "♥ 気になるに保存済み" : "♡ 気になる"}
+      </button>
+      <button
+        type="button"
+        onClick={() => onToggleTried?.(item)}
+        className={[
+          "rounded-full px-2.5 py-1.5 text-[10px] font-black ring-1 transition-colors",
+          tried ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]" : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#FFF9EA]",
+        ].join(" ")}
+      >
+        {tried ? "✓ 試した" : "試したら記録"}
+      </button>
+    </div>
+  );
+}
+
+function KitItemRow({ item, itemPosition, setKey, trackingContext, shelfEntry, onToggleSaved, onToggleTried, featured = false }) {
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
   const isPartner = item.source === "a8" || item.sourceType === "partner";
@@ -2241,47 +2305,42 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
   const buttonText = item.buttonText || (isPartner ? "公式で見る" : "楽天で見る");
 
   function handleClick() {
-    postCareItemClick({
-      item: { ...item, itemUrl, kitSetKey: setKey },
-      itemPosition,
-      context: trackingContext,
-    });
+    postCareItemClick({ item: { ...item, itemUrl, kitSetKey: setKey }, itemPosition, context: trackingContext });
   }
 
   return (
-    <div className="rounded-[20px] bg-white p-3 ring-1 ring-[#D9EAE5]">
+    <div className={[
+      "rounded-[20px] bg-white p-3 ring-1 ring-[#D9EAE5]",
+      featured ? "shadow-[0_16px_34px_-28px_rgba(15,23,42,0.38)]" : "",
+    ].join(" ")}>
       <div className="flex gap-3">
-        <div className={["grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[18px] ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" className={isPartner ? "h-full w-full object-contain" : "h-full w-full object-cover"} loading="lazy" />
-          ) : (
-            <Icon className="h-7 w-7 opacity-85" />
-          )}
+        <div className={[
+          "grid shrink-0 place-items-center overflow-hidden rounded-[18px] ring-1",
+          featured ? "h-[84px] w-[84px]" : "h-[72px] w-[72px]",
+          meta.surfaceClass, meta.inkClass, meta.ringClass,
+        ].join(" ")}>
+          {item.imageUrl ? <img src={item.imageUrl} alt="" className={isPartner ? "h-full w-full object-contain" : "h-full w-full object-cover"} loading="lazy" /> : <Icon className="h-7 w-7 opacity-85" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1.5">
             <span className={["rounded-full px-2 py-0.5 text-[9px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>{meta.label}</span>
             <span className="rounded-full bg-[#FFF2CC] px-2 py-0.5 text-[9px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">{roleLabel}</span>
           </div>
-          <div className="mt-1 line-clamp-2 text-[13px] font-black leading-5 text-slate-900">{item.title}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-bold text-slate-500">
+          <div className={["mt-1 line-clamp-2 font-black text-slate-900", featured ? "text-[14px] leading-5" : "text-[13px] leading-5"].join(" ")}>{item.title}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-slate-500">
             {priceText ? <span className="font-black text-[var(--accent-ink)]">{priceText}</span> : null}
             {item.shopName ? <span>{item.shopName}</span> : null}
-            
           </div>
-          {isPartner && item.reason ? (
-            <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">{item.reason}</p>
-          ) : item.useGuide ? (
-            <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">{item.useGuide}</p>
-          ) : null}
+          {isPartner && item.reason ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">{item.reason}</p> : item.useGuide ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">{item.useGuide}</p> : null}
         </div>
       </div>
+      <ShelfActionButtons item={item} shelfEntry={shelfEntry} onToggleSaved={onToggleSaved} onToggleTried={onToggleTried} />
       <a
         href={itemUrl}
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
-        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--accent)] px-3 py-2 text-[11px] font-black text-white hover:bg-[var(--accent-ink)]"
+        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--accent)] px-3 py-2.5 text-[11px] font-black text-white hover:bg-[var(--accent-ink)]"
       >
         {buttonText}
       </a>
@@ -2289,58 +2348,180 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext }) {
   );
 }
 
-function CareSetCard({ card, cardPosition, trackingContext }) {
-  const includedCategories = unique(card.items.map((item) => item.category)).slice(0, 3);
+function getFeaturedSetLabel(basis, seasonLabel) {
+  if (basis === "tomorrow") return "明日に備える本命セット";
+  if (basis === "season") return `${seasonLabel || "今の季節"}に合う本命セット`;
+  return "体質から選んだ本命セット";
+}
 
+function FeaturedCareSetCard({ card, basis, seasonLabel, trackingContext, shelfEntryMap, onToggleSaved, onToggleTried }) {
+  if (!card) return null;
+  const [primaryItem, ...supportItems] = safeArray(card.items);
+  const contextLabel = getFeaturedSetLabel(basis, seasonLabel);
   return (
-    <div className="relative overflow-hidden rounded-[28px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-30px_rgba(15,23,42,0.34)]">
-      <div className="absolute right-4 top-4 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-[#66B9A3] text-[11px] font-black text-white shadow-sm ring-1 ring-[#CFE7DE]">
-          {String(cardPosition).padStart(2, "0")}
-        </span>
-        <img src={getPolicyIconPath(card.policyKey)} alt="" className="h-8 w-8 rounded-full bg-white p-1 ring-1 ring-[#CFE7DE]" loading="lazy" />
-      </div>
-
+    <div className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(145deg,#F0FAF6_0%,#FFFFFF_62%,#FFF9EA_100%)] p-4 ring-1 ring-[#BFDCD2] shadow-[0_24px_58px_-38px_rgba(15,23,42,0.45)] sm:p-5">
+      <div className="absolute right-4 top-4 rounded-full bg-[#2F816E] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-white shadow-sm">EKKEN'S PICK</div>
       <div className="pr-24">
-        <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">MY SELECT</div>
-        <h3 className="mt-1 text-[17px] font-black leading-6 text-slate-900">{card.title}</h3>
-        <p className="mt-1.5 text-[11px] font-bold leading-5 text-slate-500">{card.lead}</p>
+        <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">{contextLabel}</div>
+        <h2 className="mt-1 text-[19px] font-black leading-7 tracking-tight text-slate-900">{card.title}</h2>
+        <p className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">{card.lead}</p>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {safeArray(card.tags).slice(0, 3).map((tag) => (
+          <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>
+        ))}
+      </div>
+
+      {primaryItem ? (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="rounded-full bg-[#FFF2CC] px-2.5 py-1 text-[10px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">まず1つなら</span>
+            <span className="text-[11px] font-bold text-slate-500">このセットの入口にしやすい候補</span>
+          </div>
+          <KitItemRow
+            item={primaryItem}
+            itemPosition={1}
+            setKey={card.key}
+            trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
+            shelfEntry={shelfEntryMap.get(getSetItemKey(primaryItem))}
+            onToggleSaved={onToggleSaved}
+            onToggleTried={onToggleTried}
+            featured
+          />
+        </div>
+      ) : null}
+
+      {supportItems.length ? (
+        <details className="group mt-3 rounded-[20px] bg-white/75 ring-1 ring-[#DCE8DD]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[12px] font-black text-slate-700 [&::-webkit-details-marker]:hidden">
+            <span>一緒にそろえるなら</span>
+            <span className="rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] text-[#2F816E] ring-1 ring-[#CFE7DE]">あと{supportItems.length}候補</span>
+          </summary>
+          <div className="grid gap-2.5 border-t border-[#E8F0EB] p-3">
+            {supportItems.map((item, index) => (
+              <KitItemRow
+                key={`${card.key}-${getSetItemKey(item)}-${index}`}
+                item={item}
+                itemPosition={index + 2}
+                setKey={card.key}
+                trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
+                shelfEntry={shelfEntryMap.get(getSetItemKey(item))}
+                onToggleSaved={onToggleSaved}
+                onToggleTried={onToggleTried}
+              />
+            ))}
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function CareSetCard({ card, cardPosition, trackingContext, shelfEntryMap, onToggleSaved, onToggleTried }) {
+  const includedCategories = unique(card.items.map((item) => item.category)).slice(0, 3);
+  return (
+    <div className="relative overflow-hidden rounded-[26px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD]">
+      <div className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{String(cardPosition).padStart(2, "0")}</div>
+      <div className="pr-12">
+        <h3 className="text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
+        <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{card.lead}</p>
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
         {includedCategories.map((categoryKey) => {
           const meta = getCategoryMeta(categoryKey);
           const Icon = meta.icon;
+          return <span key={categoryKey} className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}><Icon className="h-3.5 w-3.5" />{meta.label}</span>;
+        })}
+        {safeArray(card.tags).slice(0, 2).map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>)}
+      </div>
+      <details className="group mt-3 rounded-[18px] bg-white ring-1 ring-[#D9EAE5]">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-3 text-[11px] font-black text-[#2F816E] [&::-webkit-details-marker]:hidden">
+          <span>この組み方の商品を見る</span>
+          <span>{card.items.length}候補 ＋</span>
+        </summary>
+        <div className="grid gap-2.5 border-t border-[#E8F0EB] p-3">
+          {card.items.map((item, index) => (
+            <KitItemRow
+              key={`${card.key}-${getSetItemKey(item)}-${index}`}
+              item={item}
+              itemPosition={(cardPosition - 1) * 10 + index + 1}
+              setKey={card.key}
+              trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
+              shelfEntry={shelfEntryMap.get(getSetItemKey(item))}
+              onToggleSaved={onToggleSaved}
+              onToggleTried={onToggleTried}
+            />
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function SavedCareShelf({ entries }) {
+  const visible = safeArray(entries).filter((entry) => entry?.saved || entry?.tried);
+  if (!visible.length) return null;
+  return (
+    <details className="rounded-[22px] bg-[#FFF9EA] ring-1 ring-[#EED8B4]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <div>
+          <div className="text-[10px] font-black tracking-[0.12em] text-[#A56C18]/70">MY CARE SHELF</div>
+          <div className="mt-0.5 text-[13px] font-black text-slate-900">保存したケア</div>
+        </div>
+        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{visible.length}件・この端末</span>
+      </summary>
+      <div className="grid gap-2 border-t border-[#F0DFC0] p-3 sm:grid-cols-2">
+        {visible.slice(0, 8).map((entry) => {
+          const item = entry.item;
+          const meta = getCategoryMeta(item.category);
+          const Icon = meta.icon;
+          const url = item.itemUrl || item.clickUrl || makeRakutenSearchUrl(item.query);
           return (
-            <span key={categoryKey} className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
-              <Icon className="h-3.5 w-3.5" />
-              {meta.label}
-            </span>
+            <a key={entry.key} href={url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="flex items-center gap-3 rounded-[16px] bg-white p-2.5 ring-1 ring-[#E8E2D6] hover:ring-[#D8C8A6]">
+              <div className={["grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[13px] ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
+                {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" /> : <Icon className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="line-clamp-2 text-[11px] font-black leading-4 text-slate-800">{item.title}</div>
+                <div className="mt-1 flex gap-1.5 text-[9px] font-black">
+                  {entry.saved ? <span className="text-[#2F816E]">気になる</span> : null}
+                  {entry.tried ? <span className="text-[#A56C18]">試した</span> : null}
+                </div>
+              </div>
+            </a>
           );
         })}
-        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-400 ring-1 ring-[#DCE8DD]">
-          {card.items.length}候補
-        </span>
       </div>
+    </details>
+  );
+}
 
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
-        {safeArray(card.tags).map((tag) => (
-          <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">
-            {POLICY_META[tag]?.label || tag}
-          </span>
-        ))}
+function ViewModeSwitch({ value, onChange }) {
+  return (
+    <div className="inline-flex rounded-full bg-[#F4FAF7] p-1 ring-1 ring-[#DCE8DD]">
+      {[{ key: "sets", label: "セットで見る" }, { key: "single", label: "1つずつ見る" }].map((option) => (
+        <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[10px] font-black transition-colors", value === option.key ? "bg-white text-[#2F816E] shadow-sm ring-1 ring-[#CFE7DE]" : "text-slate-400"].join(" ")}>{option.label}</button>
+      ))}
+    </div>
+  );
+}
+
+function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shelfEntryMap, onToggleSaved, onToggleTried }) {
+  const categoryItems = safeArray(items).filter((item) => item.category === category).slice(0, 12);
+  return (
+    <div>
+      <div className="mb-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {CATEGORY_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          const active = category === option.key;
+          return <button key={option.key} type="button" onClick={() => onCategoryChange(option.key)} className={["inline-flex min-w-fit items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-black ring-1", active ? `${option.surfaceClass} ${option.inkClass} ${option.ringClass}` : "bg-white text-slate-400 ring-[#DCE8DD]"].join(" ")}><Icon className="h-4 w-4" />{option.label}</button>;
+        })}
       </div>
-
-      <div className="mt-3 grid gap-2.5">
-        {card.items.map((item, index) => (
-          <KitItemRow
-            key={`${card.key}-${getSetItemKey(item)}-${index}`}
-            item={item}
-            itemPosition={(cardPosition - 1) * 10 + index + 1}
-            setKey={card.key}
-            trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
-          />
-        ))}
+      <div className="grid gap-2.5">
+        {categoryItems.length ? categoryItems.map((item, index) => (
+          <KitItemRow key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shelfEntry={shelfEntryMap.get(getSetItemKey(item))} onToggleSaved={onToggleSaved} onToggleTried={onToggleTried} />
+        )) : <div className="rounded-[20px] bg-[#F7FAF8] p-4 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#DCE8DD]">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
       </div>
     </div>
   );
@@ -2365,6 +2546,25 @@ export default function CareNaviPage() {
   const [rakutenError, setRakutenError] = useState("");
   const [rakutenRetryNonce, setRakutenRetryNonce] = useState(0);
   const [visibleLimit, setVisibleLimit] = useState(CARE_SET_INITIAL_LIMIT);
+  const [showConditions, setShowConditions] = useState(false);
+  const [viewMode, setViewMode] = useState("sets");
+  const [singleCategory, setSingleCategory] = useState("live");
+  const [shelfEntries, setShelfEntries] = useState([]);
+  const [shelfReady, setShelfReady] = useState(false);
+
+  useEffect(() => {
+    setShelfEntries(readStoredCareShelf());
+    setShelfReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!shelfReady || typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CARE_SHELF_STORAGE_KEY, JSON.stringify(shelfEntries.slice(0, 40)));
+    } catch {
+      // 端末の保存領域が使えない場合も、商品閲覧そのものは続けられる。
+    }
+  }, [shelfEntries, shelfReady]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2680,7 +2880,19 @@ export default function CareNaviPage() {
   );
 
   const displaySets = careSetCards.slice(0, visibleLimit);
+  const featuredSet = displaySets[0] || null;
+  const alternativeSets = displaySets.slice(1);
   const canShowMore = careSetCards.length > visibleLimit;
+  const singleItems = useMemo(() => {
+    const seen = new Set();
+    return careSetCards.flatMap((card) => safeArray(card.items)).filter((item) => {
+      const key = getSetItemKey(item);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [careSetCards]);
+  const shelfEntryMap = useMemo(() => new Map(shelfEntries.map((entry) => [entry.key, entry])), [shelfEntries]);
 
   const trackingContext = useMemo(() => {
     const weatherSummary = compactForecastSummary(tomorrowBundle);
@@ -2718,239 +2930,184 @@ export default function CareNaviPage() {
     setKitMode(nextMode);
   }
 
+  function updateShelfItem(item, field) {
+    const key = getSetItemKey(item);
+    if (!key) return;
+    setShelfEntries((prev) => {
+      const current = prev.find((entry) => entry.key === key);
+      const nextEntry = {
+        key,
+        item: compactShelfItem(item),
+        saved: field === "saved" ? !current?.saved : Boolean(current?.saved) || field === "tried",
+        tried: field === "tried" ? !current?.tried : Boolean(current?.tried),
+        updatedAt: new Date().toISOString(),
+      };
+      const rest = prev.filter((entry) => entry.key !== key);
+      if (!nextEntry.saved && !nextEntry.tried) return rest;
+      return [nextEntry, ...rest].slice(0, 40);
+    });
+  }
+
+  function toggleSavedItem(item) {
+    updateShelfItem(item, "saved");
+  }
+
+  function toggleTriedItem(item) {
+    updateShelfItem(item, "tried");
+  }
+
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
-      title="MYケアセレクト"
-      subtitle="今の自分に合うケア候補を見つける"
-      headerRight={
-        <Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>
-          設定
-        </Button>
-      }
-    >
-      <Module className="relative overflow-hidden !bg-[#F4FAF7] p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
-        <CheckOrbitMark />
+        title="MYケアセレクト"
+        subtitle="Ekkenと、自分向けのケア棚を組む"
+        headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>設定</Button>}
+      >
+        <Module className="relative overflow-hidden !bg-[#F4FAF7] p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
+          <CheckOrbitMark />
+          <div className="relative z-10">
+            <EkkenGuideHero
+              loading={loading}
+              profile={profile}
+              profileError={profileError}
+              coreIconPath={coreIconPath}
+              coreTitle={coreTitle}
+              subText={subText}
+              basis={basis}
+              kitMode={kitMode}
+              policyKeys={policyKeys}
+              symptomLabel={symptomLabel}
+              showConditions={showConditions}
+              onToggleConditions={() => setShowConditions((value) => !value)}
+            />
 
-        <div className="relative z-10">
-          <ModuleHeader
-            icon={<IconCare className="h-6 w-6" />}
-            title="MYケアセレクト"
-            sub="暮らす・食べる・ほぐすから、今の自分に合いそうな候補を見つける"
-          />
+            <div className="mt-4">
+              <QuickExplore basis={basis} kitMode={kitMode} onSelect={applyQuickExplore} />
+            </div>
 
-          <div className="px-1 pb-1 pt-4">
-          <div className="rounded-[26px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.06),inset_0_-18px_28px_rgba(255,255,255,0.34)]">
-            <div className="flex items-start gap-3">
-              <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-[var(--accent-ink)] ring-1 ring-[#A7D4CB] shadow-sm">
-                {coreIconPath ? (
-                  <img src={coreIconPath} alt="" className="h-10 w-10 object-contain" loading="lazy" />
-                ) : (
-                  <IconKarte className="h-5 w-5" />
-                )}
+            {showConditions ? (
+              <div className="mt-4 rounded-[28px] bg-white/90 p-4 ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">SELECT CONDITIONS</div>
+                    <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">候補の出し方を調整する</div>
+                  </div>
+                  <div className="rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">任意</div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#DCE8DD]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">土台</div>
+                        <div className="mt-1 text-[13px] font-black text-slate-900">体質トリセツ ＋ 登録中の不調</div>
+                        <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">必要な時だけ、天候・生活・別の不調を重ねます。</div>
+                      </div>
+                      <div className="shrink-0 rounded-full bg-[#EEF7F5] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">常時反映</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">合わせる天候</div>
+                      <button type="button" onClick={() => setBasis("base")} className="text-[10px] font-black text-slate-400 underline decoration-slate-300 underline-offset-2">外す</button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {WEATHER_FILTER_OPTIONS.map((item) => {
+                        const active = basis === item.key;
+                        const label = item.key === "season" ? `季節（${seasonLabel}）の天候` : item.label;
+                        return <button key={item.key} type="button" onClick={() => setBasis(active ? "base" : item.key)} className={["rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all", active ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]" : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EFF8F4] hover:text-slate-900"].join(" ")}>{label}</button>;
+                      })}
+                    </div>
+                    <div className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
+                      {basis === "tomorrow" ? "予報ページの明日タブと同じ方針エンジンを使います。" : basis === "season" ? `${seasonLabel}に起きやすい天候の波を重ねます。` : "未選択時は、天候に寄せすぎない通年の候補を優先します。"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になる不調を変更</div>
+                      <div className="text-[10px] font-bold text-slate-400">このページだけ</div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(SYMPTOM_LABELS).map(([key, label]) => <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>{label}</Chip>)}
+                      {registeredSymptomKey && symptomChanged ? <Chip active={false} onClick={() => setSelectedSymptom(registeredSymptomKey)}>登録中に戻す</Chip> : null}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活を足す</div>
+                      <div className="text-[10px] font-bold text-slate-400">任意・最大3つ</div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">{LIFE_OPTIONS.map((item) => <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>{item.label}</Chip>)}</div>
+                  </div>
+
+                  <div className="rounded-[24px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE]">
+                    <div className="text-[11px] font-black tracking-[0.14em] text-[#2F816E]/65">今回の方針</div>
+                    <div className="mt-2 flex flex-wrap gap-2">{policyKeys.map((key) => <PolicyPill key={key} policyKey={key} />)}</div>
+                    <div className="mt-3 flex flex-wrap gap-1.5">{approachTags.slice(0, 4).map((tag) => <span key={tag} className="rounded-full border border-[#CFE7DE] bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{tag}</span>)}</div>
+                  </div>
+
+                  <SetModeFilter value={kitMode} onChange={setKitMode} />
+                </div>
               </div>
+            ) : null}
+          </div>
+        </Module>
+
+        <Module className="!bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#EFF8F4] text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
-                <div className="text-[13px] font-black text-slate-900">
-                  {profile ? "体質傾向を反映済み" : "体質トリセツ未適用"}
-                </div>
-                <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
-                  {loading
-                    ? "トリセツ情報を確認しています。"
-                    : profile
-                      ? `${coreTitle || "体質傾向"}${subText ? ` / ${subText}` : ""} を手がかりにしています。`
-                      : profileError || "条件だけでも候補を出せます。"}
-                </div>
+                <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">YOUR CARE SHELF</div>
+                <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">本命を先に。別案や細かな条件は、必要な時だけ開けます。</div>
               </div>
             </div>
+            <ViewModeSwitch value={viewMode} onChange={setViewMode} />
           </div>
 
-          <div className="mt-5">
-            <QuickExplore basis={basis} kitMode={kitMode} onSelect={applyQuickExplore} />
+          <div className="mt-3 grid gap-3">
+            <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
+            <SavedCareShelf entries={shelfEntries} />
+
+            <details className="rounded-[16px] bg-[#F7FAF8] ring-1 ring-[#E8F0EB]">
+              <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">紹介リンクを含みます・選定基準について</summary>
+              <p className="border-t border-[#E8F0EB] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質・天気・生活サインから、セルフケアを続けやすくする用品・食品・サービス候補を選んでいます。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。医療的な治療の代わりではありません。</p>
+            </details>
+
+            {rakutenLoading ? (
+              <RakutenLoadingCards />
+            ) : careSetCards.length ? (
+              viewMode === "sets" ? (
+                <>
+                  <FeaturedCareSetCard card={featuredSet} basis={basis} seasonLabel={seasonLabel} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />
+                  {alternativeSets.length || canShowMore ? (
+                    <details className="group rounded-[24px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                        <div>
+                          <div className="text-[10px] font-black tracking-[0.12em] text-slate-400">ALTERNATIVE SETS</div>
+                          <div className="mt-0.5 text-[13px] font-black text-slate-900">別の組み方を見る</div>
+                        </div>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
+                      </summary>
+                      <div className="grid gap-3 border-t border-[#E8F0EB] p-3">
+                        {alternativeSets.map((card, index) => <CareSetCard key={`${kitMode}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />)}
+                        {canShowMore ? <button type="button" onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))} className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]">別の組み方をもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）</button> : null}
+                      </div>
+                    </details>
+                  ) : null}
+                </>
+              ) : (
+                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />
+              )
+            ) : (
+              <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合うMYケア候補を十分に組めませんでした。目的や気になる不調を少し変えてお試しください。</div>
+            )}
           </div>
-
-          <div className="mt-5 rounded-[28px] bg-white/80 p-4 ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">SELECT CONDITIONS</div>
-                <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">候補の出し方を調整する</div>
-              </div>
-              <div className="rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-                任意
-              </div>
-            </div>
-
-          <div className="space-y-4">
-            <div className="rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#DCE8DD]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">基準</div>
-                  <div className="mt-1 text-[13px] font-black text-slate-900">体質トリセツ ＋ 登録中の不調</div>
-                  <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
-                    ここを土台に、必要なときだけ天候・生活・別の不調を重ねます。
-                  </div>
-                </div>
-                <div className="shrink-0 rounded-full bg-[#EEF7F5] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-                  常時反映
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">合わせる天候</div>
-                <button
-                  type="button"
-                  onClick={() => setBasis("base")}
-                  className="text-[10px] font-black text-slate-400 underline decoration-slate-300 underline-offset-2"
-                >
-                  外す
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {WEATHER_FILTER_OPTIONS.map((item) => {
-                  const active = basis === item.key;
-                  const label = item.key === "season" ? `季節（${seasonLabel}）の天候` : item.label;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setBasis(active ? "base" : item.key)}
-                      className={[
-                        "rounded-[16px] px-3 py-2 text-center text-[11px] font-black ring-1 transition-all",
-                        active
-                          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.30)]"
-                          : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EFF8F4] hover:text-slate-900",
-                      ].join(" ")}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
-                {basis === "tomorrow"
-                  ? "予報ページの明日タブと同じ方針エンジンを使います。"
-                  : basis === "season"
-                    ? `${seasonLabel}に起きやすい天候の波を重ねます。`
-                    : "未選択時は、天候に左右されすぎない通年の候補を優先します。"}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になる不調を変更</div>
-                <div className="text-[10px] font-bold text-slate-400">このページだけ</div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(SYMPTOM_LABELS).map(([key, label]) => (
-                  <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>
-                    {label}
-                  </Chip>
-                ))}
-                {registeredSymptomKey && symptomChanged ? (
-                  <Chip active={false} onClick={() => setSelectedSymptom(registeredSymptomKey)}>
-                    登録中に戻す
-                  </Chip>
-                ) : null}
-              </div>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活を足す</div>
-                <div className="text-[10px] font-bold text-slate-400">任意・最大3つ</div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {LIFE_OPTIONS.map((item) => (
-                  <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>
-                    {item.label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[26px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.06),inset_0_-18px_28px_rgba(255,255,255,0.34)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[11px] font-black tracking-[0.14em] text-[#2F816E]/65">今回の方針</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {policyKeys.map((key) => (
-                      <PolicyPill key={key} policyKey={key} />
-                    ))}
-                  </div>
-                </div>
-                <div className="max-w-[120px] text-right text-[10px] font-bold leading-4 text-slate-500">
-                  {symptomLabel}
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {approachTags.map((tag) => (
-                  <span key={tag} className="rounded-full border border-[#CFE7DE] bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <SetModeFilter value={kitMode} onChange={setKitMode} />
-          </div>
-          </div>
-        </div>
-      </div>
-      </Module>
-
-      <Module className="!bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#EFF8F4] text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
-              <IconCare className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">YOUR CARE SHELF</div>
-              <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
-              <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">暮らす・食べる・ほぐすを、今の方針に合わせて組み合わせました。</div>
-            </div>
-          </div>
-          <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-            {displaySets.length}セット
-          </div>
-        </div>
-
-        <div className="mt-3 grid gap-3">
-          <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
-          <div className="rounded-[18px] bg-[#F7FAF8] px-3 py-2 text-[10px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-            このページには紹介リンクを含みます。未病レーダーでは、体質・天気・生活サインをもとに、ケア用品・食品・サービス候補をあなた向けに選んでいます。医療的な治療ではなく、毎日のセルフケア選びとして活用してください。
-          </div>
-
-          {rakutenLoading ? (
-            <RakutenLoadingCards />
-          ) : displaySets.length ? (
-            <>
-              {displaySets.map((card, index) => (
-                <CareSetCard
-                  key={`${kitMode}-${card.key}-${index}`}
-                  card={card}
-                  cardPosition={index + 1}
-                  trackingContext={trackingContext}
-                />
-              ))}
-              {canShowMore ? (
-                <button
-                  type="button"
-                  onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))}
-                  className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]"
-                >
-                  セットをもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）
-                </button>
-              ) : null}
-            </>
-          ) : (
-            <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">
-              条件に合うMYケア候補を十分に組めませんでした。セットタイプや気になる不調、生活サインを少し変えてお試しください。
-            </div>
-          )}
-        </div>
-      </Module>
+        </Module>
       </AppShell>
     </div>
   );
