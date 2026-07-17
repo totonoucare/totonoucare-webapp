@@ -68,6 +68,20 @@ CRON_SECRET
 
 このリポジトリに残すのは、変数名・用途・設計意図だけです。
 
+## v7.74.0で追加したDaily Care v2
+
+- `lib/radar_v1/careRules/dailyCareV2.js` が、暮らす・食べる・ほぐす共通のケアテーマと刺激量を決める
+- 予報計算は変更せず、計算済みの主因・副因・signalと、体質・不調フォーカスをケア選定へ使う
+- 同じ対象日・同じ条件では候補が固定され、日付が変わると適合候補内でローテーションする。再読み込みごとのランダム表示は禁止
+- 食べるの主表示は具体的な一食1件。別案・飲み物・注意・理由は詳細表示へ置く
+- 暮らすの主表示は具体行動1件。候補は天気、共通方針、不調フォーカスから選ぶ
+- ほぐすは経絡ラインケアを第一級のDaily Care項目として扱い、ツボ選定にも主・副経絡、全身傾向、余力を反映する
+- `buildDisplayedCareItems` は `tsubo_line_care` を記録可能な項目として生成する
+- care logic version: `daily_care_v2_2026-07-17`
+- DB migrationなし
+
+詳細: `docs/DAILY_CARE_V2_V7740.md`
+
 ## v7.73.2で追加した生活者向け翻訳と安全案内の反復抑制
 
 - `RECORDS_AI_PRODUCT_CONTEXT.communication_translation` は、東洋医学語を生活者の身体感覚へ翻訳する原則と感度例を持つ
