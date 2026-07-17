@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  role="img"
+  aria-label="ゆるめる">
+  <title>ゆるめる</title>
+
+      <defs>
+        <radialGradient id="g-yurumeru" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#D88391" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#D88391" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="32" r="28" fill="#FBE5E8" opacity="0.75"/>
+      <circle cx="32" cy="32" r="18" fill="url(#g-yurumeru)"/>
+      <path d="M15 37
+               C20 44 28 45 33 39
+               C38 33 38 25 34 21
+               C30 17 24 19 23 24
+               C22 29 27 33 32 36
+               C38 40 45 41 49 35"
+        fill="none" stroke="#9B4F61" stroke-width="2.7"
+        stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M45 31 Q49 33 50 37"
+        fill="none" stroke="#D88391" stroke-width="2"
+        stroke-linecap="round" opacity="0.7"/>
+</svg>

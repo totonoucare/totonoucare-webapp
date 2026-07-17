@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  role="img"
+  aria-label="ながす">
+  <title>ながす</title>
+
+      <defs>
+        <linearGradient id="g-nagasu" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#87D0E1" stop-opacity="0.80"/>
+          <stop offset="100%" stop-color="#4B9DB6" stop-opacity="0.35"/>
+        </linearGradient>
+      </defs>
+      <circle cx="32" cy="32" r="28" fill="#E1F3F8" opacity="0.78"/>
+      <path d="M31 11 C23 21 20 27 20 33 C20 39 25 43 31 43 C37 43 42 39 42 33 C42 27 39 21 31 11 Z"
+        fill="url(#g-nagasu)" stroke="#2F7088" stroke-width="2.2" stroke-linejoin="round"/>
+      <path d="M10 44 Q17 39 24 44 T38 44 T52 44"
+        fill="none" stroke="#4B9DB6" stroke-width="2.5"
+        stroke-linecap="round" opacity="0.9"/>
+      <path d="M14 50 Q20 46 26 50 T38 50 T50 49"
+        fill="none" stroke="#7FC3D3" stroke-width="2"
+        stroke-linecap="round" opacity="0.7"/>
+      <circle cx="47" cy="32" r="1.8" fill="#66AEC4" opacity="0.8"/>
+</svg>
