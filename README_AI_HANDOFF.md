@@ -68,6 +68,55 @@ CRON_SECRET
 
 このリポジトリに残すのは、変数名・用途・設計意図だけです。
 
+## v7.73.0で強化した体調予報の階層理解
+
+- `forecast.forecast_reasoning` を、体質→天気親和性→気象強度→有効負担→主因・副因→点数・モード→表れ方・ケアの順で読む
+- 天気親和性の土台はコアタイプ55％、代表パターン第1位28％、第2位17％
+- 有効負担は気象強度×（全員共通分0.30＋体質親和分0.68×本人親和性）
+- 主因は有効負担1位。副因は0.20以上かつ主因の45％以上の時だけ存在
+- 当日の体調実感、生活条件、不調フォーカス、経絡、実行ケアは予報点数へ入れない
+- 新規予報の`reason_trace`へ`core_weather_weights`、`affinity_sub_codes`、`battery_scalar_applied`、`score_trace`を追加
+- AIは保存済み値を説明するだけで、予報点数を再計算しない
+- live support prompt version: `records_live_support_v9_forecast_hierarchy_2026-07-16`
+- period review prompt version: `records_chat_v11_forecast_hierarchy_2026-07-16`
+- analysis prompt version: `records_analysis_v10_forecast_hierarchy_2026-07-16`
+- DB migrationなし
+
+詳細は `docs/EKKEN_FORECAST_HIERARCHY_V7730.md`。
+
+## v7.72.9で強化した体質チェックの階層理解
+
+- `constitution.core` は体質チェック最上位の統合結果として最初に読む
+- アクセル／ブレーキ軸は不調時の反応方向、余力軸は気血津液の量・持ち越し・環境感受性をまとめた回復バッテリー
+- `sub_tendencies` は上位2つの代表要素であり、コアタイプと横並びの別診断ではない
+- `material_pattern_summary.all_ranked_patterns` には気滞・気虚・血虚・血瘀・痰湿・津液不足の全6件を順位付きで渡す
+- `axes.obstruction_auxiliary` は気滞・血瘀・痰湿をまとめる内部補助軸
+- `symptom_focus` と主・副経絡は、コアタイプ主計算ではなく現在の表れ方を読む材料
+- 漢方相談では症状名だけで処方を並べず、コアタイプ→余力→全6要素→身体所見の順で候補を分ける
+- live support prompt version: `records_live_support_v8_constitution_hierarchy_2026-07-16`
+- period review prompt version: `records_chat_v10_constitution_hierarchy_2026-07-16`
+- analysis prompt version: `records_analysis_v9_constitution_hierarchy_2026-07-16`
+- DB migrationなし
+
+詳細は `docs/EKKEN_CONSTITUTION_HIERARCHY_V7729.md`。
+
+## v7.72.8で拡張したEkkenの東洋医学ケア推論
+
+- `displayed_care` は優先する土台だが、提案可能範囲の上限ではない
+- アプリ表示ケアと、会話中に作る `Ekkenの応用案` を出所で区別する
+- 食べる: 食性、五味、五臓、気血水、寒熱燥湿、香り・色・食感・温度、調理法
+- 暮らす: 陰陽、寒熱、燥湿、昇降・出入、季節・時刻、休息と活動
+- ほぐす: 経絡、体のライン、左右差、動作反応、触れ方、動き、呼吸、温冷
+- 一般用医薬品・漢方薬・サプリは、一般情報、候補比較、購入時の判断材料、相談境界まで回答してよい
+- 最終的な開始・中止・用量・併用可否・処方薬の代替・治療方針変更は決めない
+- 最終確認が必要でも、先に役立つ情報を出し、最後の一点だけ専門家へつなぐ
+- live support prompt version: `records_live_support_v7_tcm_care_reasoning_2026-07-16`
+- period review prompt version: `records_chat_v9_tcm_care_reasoning_2026-07-16`
+- 両チャットのreasoning effortは `medium`
+- DB migrationなし
+
+詳細は `docs/EKKEN_TCM_CARE_REASONING_V7728.md`。
+
 ## v7.72.7でコード管理へ移した非機密運用設定
 
 - `lib/records/policy.js` が記録・Ekkenの運用設定の唯一の参照元
