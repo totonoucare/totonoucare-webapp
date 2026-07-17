@@ -68,6 +68,32 @@ CRON_SECRET
 
 このリポジトリに残すのは、変数名・用途・設計意図だけです。
 
+## v7.73.2で追加した生活者向け翻訳と安全案内の反復抑制
+
+- `RECORDS_AI_PRODUCT_CONTEXT.communication_translation` は、東洋医学語を生活者の身体感覚へ翻訳する原則と感度例を持つ
+- 感度例は定型句・一対一の置換辞書ではない。比喩は理解を助ける時だけ自然に使い、毎回答へ強制しない
+- 専門語を使う場合も、専門語を知らなくても意味が通る説明を先にする
+- live conversationへ過去assistant messageの `safety_level` を含める
+- 同一会話ですでに伝えた一般的な注意、専門家確認、受診目安は、新しい危険情報・悪化・判断条件の変更がなければ繰り返さない
+- サーバーの固定 `PROFESSIONAL_MESSAGE` は、同一会話ですでにprofessional案内がある場合は再付加しない。新しい個別注意は引き続き表示可能
+- live support prompt version: `records_live_support_v11_living_language_2026-07-17`
+- product context knowledge version: `records_product_context_v8_living_language_2026-07-17`
+- DB migrationなし
+
+詳細は `docs/EKKEN_LIVING_LANGUAGE_V7732.md`。
+
+## v7.73.1で再設計したライブ相談プロンプト
+
+- `LIVE_SUPPORT_INSTRUCTIONS` は、役割・情報の意味・推論の自由・狭い安全境界・JSON契約に限定
+- 文字数、提案数、質問数、固定推論順、使用軸数、過去の失敗例による逐語制御を削除
+- 体質と予報の詳細ロジックは `RECORDS_AI_PRODUCT_CONTEXT` と計算済み `constitution` / `forecast_reasoning` を正本とする
+- ライブ相談は、今回に必要な材料だけを自由に選び、食べる・暮らす・ほぐす・漢方等へ応用してよい
+- 期間振り返りチャットと期間AI分析は、事実・比較・仮説の構造が必要なため今回は維持
+- live support prompt version: `records_live_support_v10_prompt_reset_2026-07-17`
+- DB migrationなし
+
+詳細は `docs/EKKEN_PROMPT_RESET_V7731.md`。
+
 ## v7.73.0で強化した体調予報の階層理解
 
 - `forecast.forecast_reasoning` を、体質→天気親和性→気象強度→有効負担→主因・副因→点数・モード→表れ方・ケアの順で読む
@@ -77,7 +103,7 @@ CRON_SECRET
 - 当日の体調実感、生活条件、不調フォーカス、経絡、実行ケアは予報点数へ入れない
 - 新規予報の`reason_trace`へ`core_weather_weights`、`affinity_sub_codes`、`battery_scalar_applied`、`score_trace`を追加
 - AIは保存済み値を説明するだけで、予報点数を再計算しない
-- live support prompt version: `records_live_support_v9_forecast_hierarchy_2026-07-16`
+- v7.73.0時点のlive support prompt version: `records_live_support_v9_forecast_hierarchy_2026-07-16`
 - period review prompt version: `records_chat_v11_forecast_hierarchy_2026-07-16`
 - analysis prompt version: `records_analysis_v10_forecast_hierarchy_2026-07-16`
 - DB migrationなし
