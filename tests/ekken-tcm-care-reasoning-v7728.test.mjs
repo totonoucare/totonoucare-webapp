@@ -57,8 +57,8 @@ test("final medication actions still receive deterministic professional confirma
 });
 
 test("live and period chat use the richer prompt versions and medium reasoning", () => {
-  assert.match(liveRoute, /records_live_support_v7_tcm_care_reasoning_2026-07-16/);
-  assert.match(periodRoute, /records_chat_v9_tcm_care_reasoning_2026-07-16/);
+  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy_2026-07-16/);
+  assert.match(periodRoute, /records_chat_v11_forecast_hierarchy_2026-07-16/);
   assert.match(liveRoute, /max_output_tokens: 1800/);
   assert.match(periodRoute, /max_output_tokens: 1700/);
   assert.match(liveRoute, /reasoning: \{ effort: "medium" \}/);

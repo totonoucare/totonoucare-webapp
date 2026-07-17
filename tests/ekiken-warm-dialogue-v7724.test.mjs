@@ -16,7 +16,7 @@ test("live support prompt uses app forecasts confidently without repetitive disc
 });
 
 test("live support prompt version is bumped for the warmer dialogue behavior", () => {
-  assert.match(liveRoute, /records_live_support_v7_tcm_care_reasoning_2026-07-16/);
+  assert.match(liveRoute, /records_live_support_v9_forecast_hierarchy_2026-07-16/);
 });
 
 test("follow-up option chips place only the natural answer in the input", () => {
