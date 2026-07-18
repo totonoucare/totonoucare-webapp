@@ -15,6 +15,7 @@ import {
   getJstTodayTomorrow,
   getRiskContext,
 } from "@/app/radar/utils";
+import { buildCareActionKey } from "@/lib/radar_v1/careActionItems";
 import {
   IconCare,
   IconFood,
@@ -78,24 +79,19 @@ const SET_MODE_OPTIONS = [
   {
     key: "starter",
     label: "まず1つから",
-    band: "light",
-    lead: "手軽な価格帯を中心に、取り入れやすい一手から見ます。",
+    lead: "取り入れやすい一手を中心に見ます。",
   },
   {
     key: "steady",
     label: "3方向をそろえる",
-    band: "standard",
-    lead: "暮らす・食べる・ほぐすを組み合わせ、数日続けやすくします。",
+    lead: "暮らす・食べる・ほぐすを組み合わせ、続けやすい棚を作ります。",
   },
   {
     key: "environment",
     label: "環境から見直す",
-    band: "deep",
     lead: "寝具・空気・ケア機器まで含め、生活の土台から探します。",
   },
 ];
-
-const SET_MODE_PRICE_BAND = Object.fromEntries(SET_MODE_OPTIONS.map((item) => [item.key, item.band]));
 
 const PRICE_BAND_OPTIONS = [
   { key: "all", label: "すべて" },
@@ -196,8 +192,8 @@ const SOURCE_TYPE_LABELS = {
   life: "生活サインから",
   symptom: "不調フォーカスから",
   policy: "今回の方針から",
-  partner: "編集候補",
-  a8: "編集候補",
+  partner: "未病レーダーから",
+  a8: "未病レーダーから",
 };
 
 const SYMPTOM_POLICY_HINTS = {
@@ -548,23 +544,19 @@ function mergePolicyKeysWithLife(policyKeys, lifeKeys, baseScores) {
   return selectPolicyKeysFromScores(scores, policyKeys?.length ? policyKeys : ["sasaeru", "yurumeru"]);
 }
 
-function buildNowPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, lifeKeys } = {}) {
+function buildCareShelfPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, lifeKeys } = {}) {
   const scores = createPolicyScoreMap();
   const tomorrowKeys = safeArray(forecastCarePolicies?.policies).map((policy) => policy?.key).filter(Boolean);
   const seasonKeys = safeArray(SEASON_POLICY_HINTS[seasonKey]);
 
-  // 体質は常に土台。変化する環境要因は、これからの天気 70% / 季節の傾向 30% で重ねる。
+  // MYケアは「明日だけの商品棚」ではない。体質と繰り返しやすい傾向を主役に、
+  // 季節を中期の補助、明日の予報を直近の小さな注目点として重ねる。
   Object.entries(baseScores || {}).forEach(([key, value]) => {
-    addPolicyScore(scores, key, Number(value || 0) * 0.62);
+    addPolicyScore(scores, key, Number(value || 0) * 0.82);
   });
 
-  if (tomorrowKeys.length) {
-    addPolicyKeys(scores, tomorrowKeys, 1.4);
-    addPolicyKeys(scores, seasonKeys, 0.6);
-  } else {
-    // 予報を取得できない時もページを止めず、体質＋季節で自然に補完する。
-    addPolicyKeys(scores, seasonKeys, 1.0);
-  }
+  addPolicyKeys(scores, seasonKeys, 0.58);
+  addPolicyKeys(scores, tomorrowKeys, 0.34);
 
   softenSupportPolicy(scores, {
     hasDirectSupport: tomorrowKeys.includes("sasaeru") || seasonKeys.includes("sasaeru"),
@@ -918,16 +910,23 @@ function RakutenLoadingCards() {
 }
 
 function PriceBandFilter({ value, onChange, categoryKey }) {
+  const genericLabels = {
+    light: "手頃な価格帯",
+    standard: "中くらい",
+    deep: "道具・環境まで",
+  };
   return (
     <div className="rounded-[22px] bg-[#EFF8F4] p-3 ring-1 ring-[#CFE7DE]">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">価格帯</div>
-        <div className="text-[10px] font-bold text-slate-400">おすすめ順はそのまま</div>
+        <div className="text-[11px] font-black text-slate-500">予算の目安</div>
+        <div className="text-[10px] font-bold text-slate-400">カテゴリごとに調整</div>
       </div>
       <div className="grid grid-cols-4 gap-1.5">
         {PRICE_BAND_OPTIONS.map((option) => {
           const active = value === option.key;
-          const rangeLabel = getPriceBandLabel(categoryKey, option.key);
+          const rangeLabel = categoryKey
+            ? getPriceBandLabel(categoryKey, option.key)
+            : genericLabels[option.key] || "";
 
           return (
             <button
@@ -992,6 +991,27 @@ function getSetModeMeta(mode) {
 
 function getSetItemKey(item) {
   return item?.itemUrl || item?.clickUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
+}
+
+function getMyCareActionIdentity(item) {
+  return [
+    getSetItemKey(item),
+    item?.title,
+    item?.source,
+    item?.productRole || item?.role,
+  ].filter(Boolean).join("|");
+}
+
+function getMyCareActionDomain(item) {
+  return item?.category === "point" ? "loosen" : item?.category === "eat" ? "eat" : "live";
+}
+
+function getMyCareActionKey(item) {
+  return buildCareActionKey({
+    domain: getMyCareActionDomain(item),
+    kind: "my_care_item",
+    identity: getMyCareActionIdentity(item),
+  });
 }
 
 
@@ -1852,8 +1872,7 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
     contextKeywordMatched,
   });
 
-  if (mode === "starter" && item.price && Number(item.price) <= 2500) score += 2;
-  if (mode === "environment" && item.price && Number(item.price) >= 5000) score += 1.5;
+  // 見る範囲と予算は別の条件。価格だけで「1つから／環境まで」の順位を動かさない。
   score += Math.min(Number(item.score || 0), 20) * 0.04;
   return score;
 }
@@ -2191,9 +2210,7 @@ function readStoredCareShelf() {
   }
 }
 
-function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, kitMode, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions }) {
-  const modeLabel = getSetModeMeta(kitMode)?.label || "まず1つから";
-
+function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions, onConsult }) {
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
       <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
@@ -2204,20 +2221,20 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
         <div className="flex items-center gap-3">
           <EkkenFaceAccent />
           <div className="min-w-0">
-            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">ケアナビAI Ekken（エッケン）</div>
-            <div className="mt-0.5 text-[11px] font-bold text-slate-500">体質と天気から、ケア選びを案内します</div>
+            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">MYケア</div>
+            <div className="mt-0.5 text-[11px] font-bold text-slate-500">用意して、試して、自分に合うケアを見つける</div>
           </div>
         </div>
 
-        <h1 className="mt-4 max-w-[330px] text-[23px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[26px]">今の自分に合うケアを、楽しく選ぶ。</h1>
+        <h1 className="mt-4 max-w-[360px] text-[23px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[26px]">続けたいケアを、自分用の棚に。</h1>
         <p className="mt-2 max-w-[540px] text-[13px] font-bold leading-6 text-slate-600">
-          暮らす・食べる・ほぐすから、体質とこれからの天気になじむケアをセレクト。気になるものを見つけながら、自分のケア棚を育てていきましょう。
+          体質と気になる不調、天気でゆらぎやすい傾向を土台に、暮らす・食べる・ほぐすの備えを選びます。季節と明日の予報も、使いどきを考える手がかりにします。
         </p>
         <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
           {loading
             ? "あなた向けのケアを選んでいます。"
             : profile
-              ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}を手がかりにセレクト中。`
+              ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}と「${symptomLabel}」を手がかりに選んでいます。`
               : profileError || "選んだ条件からケアを探せます。"}
         </p>
       </div>
@@ -2228,9 +2245,8 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
           {profile ? coreTitle || "体質反映済み" : "条件からセレクト"}
         </span>
         <span className="rounded-full bg-[#FFF7E8] px-3 py-1.5 text-[11px] font-black text-[#946313] ring-1 ring-[#EED8B4]">{symptomLabel}</span>
-        <span className="rounded-full bg-[#EEF6FB] px-3 py-1.5 text-[11px] font-black text-[#52758B] ring-1 ring-[#D6E6EF]">{hasTomorrow ? "これからの天気を反映" : `${seasonLabel}の傾向を反映`}</span>
-        <span className="rounded-full bg-[#F5F0F7] px-3 py-1.5 text-[11px] font-black text-[#765E84] ring-1 ring-[#E2D6E7]">{seasonLabel}の季節感</span>
-        <span className="rounded-full bg-[var(--gold-soft)] px-3 py-1.5 text-[11px] font-black text-[#8A5C0B] ring-1 ring-[#E7C66C]">{modeLabel}</span>
+        <span className="rounded-full bg-[#F5F0F7] px-3 py-1.5 text-[11px] font-black text-[#765E84] ring-1 ring-[#E2D6E7]">{seasonLabel}</span>
+        {hasTomorrow ? <span className="rounded-full bg-[#EEF6FB] px-3 py-1.5 text-[11px] font-black text-[#52758B] ring-1 ring-[#D6E6EF]">明日の予報も確認</span> : null}
       </div>
 
       <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2">
@@ -2245,11 +2261,20 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
           <span aria-hidden="true" className={["text-[13px] transition-transform", showConditions ? "rotate-180" : ""].join(" ")}>⌄</span>
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onConsult}
+        className="relative z-10 mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] hover:bg-[#DFF2E9]"
+      >
+        <GuideBotAvatar mood="default" className="h-7 w-7" />
+        ケア選びをEkkenに相談する
+      </button>
     </div>
   );
 }
 
-function ShoppingStylePicker({ value, onChange }) {
+function CareScopePicker({ value, onChange }) {
   const styles = {
     starter: { surface: "bg-[#FFF7E8]", ink: "text-[#946313]", ring: "ring-[#EED8B4]", active: "bg-[#D39422] text-white ring-[#D39422]" },
     steady: { surface: "bg-[#EEF7F3]", ink: "text-[#2F816E]", ring: "ring-[#CFE7DE]", active: "bg-[#349B83] text-white ring-[#349B83]" },
@@ -2258,8 +2283,7 @@ function ShoppingStylePicker({ value, onChange }) {
   return (
     <div>
       <div className="mb-2">
-        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">HOW TO SHOP</div>
-        <div className="mt-1 text-[14px] font-black text-slate-900">どんなふうに見てみる？</div>
+        <div className="text-[11px] font-black text-slate-500">どこまで広げて見る？</div>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
         {SET_MODE_OPTIONS.map((option, index) => {
@@ -2279,7 +2303,8 @@ function ShoppingStylePicker({ value, onChange }) {
 
 function ShelfActionButtons({ item, shelfEntry, onToggleSaved, onToggleTried }) {
   const saved = Boolean(shelfEntry?.saved);
-  const tried = Boolean(shelfEntry?.tried);
+  const recorded = Boolean(shelfEntry?.recorded);
+  const recording = Boolean(shelfEntry?.recording);
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       <button
@@ -2295,12 +2320,17 @@ function ShelfActionButtons({ item, shelfEntry, onToggleSaved, onToggleTried }) 
       <button
         type="button"
         onClick={() => onToggleTried?.(item)}
+        disabled={recorded || recording}
         className={[
           "rounded-full px-2.5 py-1.5 text-[10px] font-black ring-1 transition-colors",
-          tried ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]" : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#FFF9EA]",
+          recorded
+            ? "cursor-default bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]"
+            : recording
+              ? "cursor-wait bg-slate-50 text-slate-400 ring-[#DCE8DD]"
+              : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#FFF9EA]",
         ].join(" ")}
       >
-        {tried ? "✓ 試した" : "試したら記録"}
+        {recorded ? "✓ 今日の記録済み" : recording ? "記録中…" : "今日使った"}
       </button>
     </div>
   );
@@ -2364,14 +2394,15 @@ function FeaturedCareSetCard({ card, trackingContext, shelfEntryMap, onToggleSav
   const [primaryItem, ...supportItems] = safeArray(card.items);
   return (
     <div className="relative overflow-hidden rounded-[30px] bg-white p-4 ring-1 ring-[#D6E5DC] shadow-[0_24px_58px_-38px_rgba(36,86,76,0.34)] sm:p-5">
-      <div className="absolute right-4 top-4 rounded-full bg-[var(--gold-soft)] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-[#80530B] ring-1 ring-[#E4C56B]">Ekkenセレクト</div>
+      <div className="absolute right-4 top-4 rounded-full bg-[var(--gold-soft)] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-[#80530B] ring-1 ring-[#E4C56B]">未病レーダーセレクト</div>
       <div className="pr-24">
-        <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">今の自分に合う本命セット</div>
+        <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">自分用の棚に置きたい本命セット</div>
         <h2 className="mt-1 text-[19px] font-black leading-7 tracking-tight text-slate-900">{card.title}</h2>
         <p className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">{card.lead}</p>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
+        <span className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">選んだ理由</span>
         {safeArray(card.tags).slice(0, 3).map((tag) => (
           <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>
         ))}
@@ -2464,13 +2495,13 @@ function CareSetCard({ card, cardPosition, trackingContext, shelfEntryMap, onTog
 }
 
 function SavedCareShelf({ entries }) {
-  const visible = safeArray(entries).filter((entry) => entry?.saved || entry?.tried);
+  const visible = safeArray(entries).filter((entry) => entry?.saved);
   if (!visible.length) return null;
   return (
     <details className="rounded-[22px] bg-[#FFF9EA] ring-1 ring-[#EED8B4]">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
         <div>
-          <div className="text-[10px] font-black tracking-[0.12em] text-[#A56C18]/70">MY CARE SHELF</div>
+          <div className="text-[10px] font-black text-[#A56C18]/70">この端末のケア棚</div>
           <div className="mt-0.5 text-[13px] font-black text-slate-900">保存したケア</div>
         </div>
         <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{visible.length}件・この端末</span>
@@ -2490,7 +2521,6 @@ function SavedCareShelf({ entries }) {
                 <div className="line-clamp-2 text-[11px] font-black leading-4 text-slate-800">{item.title}</div>
                 <div className="mt-1 flex gap-1.5 text-[9px] font-black">
                   {entry.saved ? <span className="text-[#2F816E]">気になる</span> : null}
-                  {entry.tried ? <span className="text-[#A56C18]">試した</span> : null}
                 </div>
               </div>
             </a>
@@ -2597,8 +2627,9 @@ export default function CareNaviPage() {
   const [profileError, setProfileError] = useState("");
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
-  const basis = "now";
-  const [kitMode, setKitMode] = useState("starter");
+  const basis = "shelf";
+  const [kitMode, setKitMode] = useState("steady");
+  const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
 
@@ -2613,6 +2644,10 @@ export default function CareNaviPage() {
   const [singleCategory, setSingleCategory] = useState("live");
   const [shelfEntries, setShelfEntries] = useState([]);
   const [shelfReady, setShelfReady] = useState(false);
+  const [recordedActionKeys, setRecordedActionKeys] = useState(() => new Set());
+  const [recordingActionKey, setRecordingActionKey] = useState("");
+  const [careRecordNotice, setCareRecordNotice] = useState("");
+  const [careRecordError, setCareRecordError] = useState("");
 
   useEffect(() => {
     setShelfEntries(readStoredCareShelf());
@@ -2649,6 +2684,24 @@ export default function CareNaviPage() {
           setProfile(null);
           setProfileError("ログインすると体質トリセツを反映できます。");
           return;
+        }
+
+        try {
+          const { today } = getJstTodayTomorrow();
+          const actionsRes = await fetch(`/api/radar/care-actions?date=${encodeURIComponent(today)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+          });
+          const actionsJson = await actionsRes.json().catch(() => ({}));
+          if (!cancelled && actionsRes.ok) {
+            setRecordedActionKeys(new Set(
+              safeArray(actionsJson?.data?.actions)
+                .map((item) => item?.canonical_key || item?.item_key)
+                .filter(Boolean)
+            ));
+          }
+        } catch {
+          // 記録一覧の取得に失敗しても、MYケアの商品閲覧は止めない。
         }
 
         const res = await fetch("/api/care-navi/context", {
@@ -2759,7 +2812,7 @@ export default function CareNaviPage() {
   const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
 
   const policyKeys = useMemo(
-    () => buildNowPolicyKeys({
+    () => buildCareShelfPolicyKeys({
       baseScores: karteCarePreferences?.scores || {},
       forecastCarePolicies,
       seasonKey,
@@ -2793,7 +2846,6 @@ export default function CareNaviPage() {
     [basis, tomorrowTriggerFactors, seasonLabel, lifeKeys, symptomChanged, symptomLabel]
   );
 
-  const kitPriceBand = SET_MODE_PRICE_BAND[kitMode] || "light";
   const kitModeMeta = getSetModeMeta(kitMode);
 
   function retryRakutenSearch() {
@@ -2829,7 +2881,7 @@ export default function CareNaviPage() {
                 symptomKey,
                 basis,
                 lifeKeys,
-                priceBand: kitPriceBand,
+                priceBand,
                 limit: 24,
                 totalLimit: CARE_NAVI_TOTAL_LIMIT,
               }),
@@ -2882,7 +2934,7 @@ export default function CareNaviPage() {
       clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [kitMode, kitPriceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
+  }, [kitMode, priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -2900,14 +2952,14 @@ export default function CareNaviPage() {
             seasonKey,
             seasonLabel,
             lifeKeys,
-            priceBand: kitPriceBand,
+            priceBand,
             // 表示件数ではなく内部候補プール。A8側を先に絞りすぎると、
             // スロット別には合う提携商品がセット組み立て前に落ちるため少し広めに渡す。
             limit: kitMode === "environment" ? 16 : 12,
           }),
         ])
       ),
-    [kitMode, kitPriceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
+    [kitMode, priceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
   );
 
   const careSetCards = useMemo(
@@ -2935,7 +2987,23 @@ export default function CareNaviPage() {
     () => buildSingleShelfItems({ rakutenItemsByCategory, partnerItemsByCategory, careSetCards, policyKeys }),
     [rakutenItemsByCategory, partnerItemsByCategory, careSetCards, policyKeys]
   );
-  const shelfEntryMap = useMemo(() => new Map(shelfEntries.map((entry) => [entry.key, entry])), [shelfEntries]);
+  const shelfEntryMap = useMemo(() => {
+    const map = new Map(shelfEntries.map((entry) => [entry.key, { ...entry }]));
+    const visibleItems = [
+      ...careSetCards.flatMap((card) => safeArray(card?.items)),
+      ...singleItems,
+    ];
+    visibleItems.forEach((item) => {
+      const shelfKey = getSetItemKey(item);
+      const actionKey = getMyCareActionKey(item);
+      map.set(shelfKey, {
+        ...(map.get(shelfKey) || {}),
+        recorded: recordedActionKeys.has(actionKey),
+        recording: recordingActionKey === actionKey,
+      });
+    });
+    return map;
+  }, [shelfEntries, careSetCards, singleItems, recordedActionKeys, recordingActionKey]);
 
   const trackingContext = useMemo(() => {
     const weatherSummary = compactForecastSummary(tomorrowBundle);
@@ -2944,7 +3012,7 @@ export default function CareNaviPage() {
       basis,
       category: "set",
       kitMode,
-      priceBand: kitPriceBand,
+      priceBand,
       symptomKey,
       coreCode: profileLike.core_code || null,
       subCodes: safeArray(profileLike.sub_labels),
@@ -2954,7 +3022,7 @@ export default function CareNaviPage() {
       weatherRiskLevel: weatherSummary.riskLevel,
       weatherSummary,
     };
-  }, [basis, kitMode, kitPriceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
+  }, [basis, kitMode, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
@@ -2970,7 +3038,7 @@ export default function CareNaviPage() {
 
 
 
-  function updateShelfItem(item, field) {
+  function toggleSavedItem(item) {
     const key = getSetItemKey(item);
     if (!key) return;
     setShelfEntries((prev) => {
@@ -2978,29 +3046,93 @@ export default function CareNaviPage() {
       const nextEntry = {
         key,
         item: compactShelfItem(item),
-        saved: field === "saved" ? !current?.saved : Boolean(current?.saved) || field === "tried",
-        tried: field === "tried" ? !current?.tried : Boolean(current?.tried),
+        saved: !current?.saved,
         updatedAt: new Date().toISOString(),
       };
       const rest = prev.filter((entry) => entry.key !== key);
-      if (!nextEntry.saved && !nextEntry.tried) return rest;
+      if (!nextEntry.saved) return rest;
       return [nextEntry, ...rest].slice(0, 40);
     });
   }
 
-  function toggleSavedItem(item) {
-    updateShelfItem(item, "saved");
+  async function recordCareItem(item) {
+    const actionKey = getMyCareActionKey(item);
+    if (!actionKey || recordedActionKeys.has(actionKey) || recordingActionKey) return;
+
+    setCareRecordNotice("");
+    setCareRecordError("");
+    setRecordingActionKey(actionKey);
+
+    try {
+      if (!supabase?.auth) throw new Error("ログインすると、今日使ったケアを記録できます。");
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) throw new Error("ログインすると、今日使ったケアを記録できます。");
+
+      const { today } = getJstTodayTomorrow();
+      const detail = String(item?.useGuide || item?.reason || inferRoleLabelFromItem(item) || "MYケアで選んだケア").slice(0, 240);
+      const domain = getMyCareActionDomain(item);
+      const response = await fetch("/api/radar/care-actions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          target_date: today,
+          source_mode: "today",
+          domain,
+          kind: "my_care_item",
+          label: String(item?.title || "MYケアで選んだケア").slice(0, 160),
+          detail,
+          item_key: actionKey,
+          canonical_key: actionKey,
+          checked: true,
+          entry_origin: "record_page",
+          timing_relation: "same_day_unknown",
+          item_snapshot: {
+            label: String(item?.title || "MYケアで選んだケア").slice(0, 160),
+            detail,
+            kind: "my_care_item",
+            domain,
+            canonical_key: actionKey,
+            meta: {
+              card_key: "my_care_select",
+              card_label: "MYケアセレクト",
+              entry_origin: "record_page",
+            },
+          },
+        }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.error || "記録できませんでした。時間をおいて、もう一度お試しください。");
+
+      setRecordedActionKeys((prev) => new Set([...prev, actionKey]));
+      setCareRecordNotice(`「${String(item?.title || "選んだケア").slice(0, 36)}」を今日の記録に追加しました。`);
+    } catch (error) {
+      setCareRecordError(error?.message || "記録できませんでした。時間をおいて、もう一度お試しください。");
+    } finally {
+      setRecordingActionKey("");
+    }
   }
 
-  function toggleTriedItem(item) {
-    updateShelfItem(item, "tried");
+  function openEkkenConsultation() {
+    const policies = policyKeys.slice(0, 3).map((key) => POLICY_META[key]?.label || key).join("・");
+    const prompt = [
+      "MYケア選びを相談したいです。",
+      coreTitle ? `体質は${coreTitle}${subText ? `（${subText}）` : ""}。` : "",
+      `気になるのは${symptomLabel}。`,
+      policies ? `今のケア方針は${policies}です。` : "",
+      "手元に用意して続けやすいケアを一緒に選んでください。",
+    ].filter(Boolean).join("");
+    router.push(`/records?tab=consult&prompt=${encodeURIComponent(prompt.slice(0, 240))}`);
   }
 
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
         title="MYケアセレクト"
-        subtitle="今の自分に合う、ケアの選択肢を見つける"
+        subtitle="備えて、試して、自分に合うケアへ"
         headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>設定</Button>}
       >
         <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
@@ -3012,20 +3144,19 @@ export default function CareNaviPage() {
               coreIconPath={coreIconPath}
               coreTitle={coreTitle}
               subText={subText}
-              kitMode={kitMode}
               policyKeys={policyKeys}
               symptomLabel={symptomLabel}
               seasonLabel={seasonLabel}
               hasTomorrow={Boolean(tomorrowBundle?.forecast)}
               showConditions={showConditions}
               onToggleConditions={() => setShowConditions((value) => !value)}
+              onConsult={openEkkenConsultation}
             />
 
             {showConditions ? (
               <div className="mt-3 rounded-[28px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_16px_34px_-30px_rgba(36,86,76,0.26)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">SELECT CONDITIONS</div>
                     <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">候補の出し方を調整する</div>
                   </div>
                   <div className="rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[#527064] ring-1 ring-[#D5E5DB]">任意</div>
@@ -3053,6 +3184,10 @@ export default function CareNaviPage() {
                     </div>
 
                   </div>
+
+                  <CareScopePicker value={kitMode} onChange={setKitMode} />
+
+                  <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={viewMode === "single" ? singleCategory : ""} />
 
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -3083,9 +3218,6 @@ export default function CareNaviPage() {
               </div>
             ) : null}
 
-            <div className="mt-4">
-              <ShoppingStylePicker value={kitMode} onChange={setKitMode} />
-            </div>
           </div>
         </Module>
 
@@ -3094,9 +3226,9 @@ export default function CareNaviPage() {
             <div className="flex min-w-0 items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[var(--gold-soft)] text-[#8A5C0B] ring-1 ring-[#E4C56B] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
-                <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">YOUR CARE SHELF</div>
-                <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
-                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">本命を先に。別案や細かな条件は、必要な時だけ開けます。</div>
+                <div className="text-[17px] font-black tracking-tight text-slate-900">あなた向けのケア棚</div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{kitModeMeta.label}。本命から見て、気になるものを手元の棚へ。</div>
+                <div className="mt-1 text-[10px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
               </div>
             </div>
             <ViewModeSwitch value={viewMode} onChange={setViewMode} />
@@ -3104,41 +3236,43 @@ export default function CareNaviPage() {
 
           <div className="mt-3 grid gap-3">
             <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
-            <SavedCareShelf entries={shelfEntries} />
-
-            <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
-              <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">紹介リンクを含みます・選定基準について</summary>
-              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質・天気・生活サインから、セルフケアを続けやすくする用品・食品・サービス候補を選んでいます。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。医療的な治療の代わりではありません。</p>
-            </details>
+            {careRecordNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[11px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{careRecordNotice}</div> : null}
+            {careRecordError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[11px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{careRecordError}</div> : null}
 
             {rakutenLoading ? (
               <RakutenLoadingCards />
             ) : careSetCards.length ? (
               viewMode === "sets" ? (
                 <>
-                  <FeaturedCareSetCard card={featuredSet} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />
+                  <FeaturedCareSetCard card={featuredSet} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />
                   {alternativeSets.length || canShowMore ? (
                     <details className="group rounded-[24px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                         <div>
-                          <div className="text-[10px] font-black tracking-[0.12em] text-slate-400">ALTERNATIVE SETS</div>
                           <div className="mt-0.5 text-[13px] font-black text-slate-900">別の組み方を見る</div>
                         </div>
                         <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
                       </summary>
                       <div className="grid gap-3 border-t border-[#D8E6DD] p-3">
-                        {alternativeSets.map((card, index) => <CareSetCard key={`${kitMode}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />)}
+                        {alternativeSets.map((card, index) => <CareSetCard key={`${kitMode}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />)}
                         {canShowMore ? <button type="button" onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))} className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]">別の組み方をもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）</button> : null}
                       </div>
                     </details>
                   ) : null}
                 </>
               ) : (
-                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />
+                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />
               )
             ) : (
               <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合うMYケア候補を十分に組めませんでした。目的や気になる不調を少し変えてお試しください。</div>
             )}
+
+            <SavedCareShelf entries={shelfEntries} />
+
+            <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
+              <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">選び方と紹介リンクについて</summary>
+              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質・気になる不調・天気でゆらぎやすい傾向を土台に、季節や明日の予報、選んだ生活サインを重ねて候補を並べています。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。</p>
+            </details>
           </div>
         </Module>
       </AppShell>
