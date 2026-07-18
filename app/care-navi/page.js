@@ -24,19 +24,19 @@ import {
 } from "@/components/illust/icons/app";
 
 const CARE_NAVI_THEME = {
-  "--bg": "#F7F3EC",
-  "--bg-soft": "#FBF8F2",
+  "--bg": "#F7FAF6",
+  "--bg-soft": "#F2F7F1",
   "--panel": "#FFFFFF",
-  "--mint": "#EAF7F1",
+  "--mint": "#EAF5EF",
   "--accent": "#349B83",
-  "--accent-dark": "#2F816E",
-  "--accent-ink": "#2F816E",
-  "--gold": "#D7A13A",
-  "--gold-soft": "#FFF4D8",
-  "--shop": "#E9785F",
-  "--shop-dark": "#C95F49",
-  "--ring": "rgba(66, 82, 75, 0.13)",
-  "--ring-strong": "rgba(66, 82, 75, 0.22)",
+  "--accent-dark": "#2F8F79",
+  "--accent-ink": "#24564C",
+  "--gold": "#E2AA3B",
+  "--gold-soft": "#F6EBC7",
+  "--shop": "#D39422",
+  "--shop-dark": "#B87812",
+  "--ring": "rgba(36, 86, 76, 0.13)",
+  "--ring-strong": "rgba(36, 86, 76, 0.22)",
 };
 
 const CATEGORY_OPTIONS = [
@@ -553,7 +553,7 @@ function buildNowPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, lifeK
   const tomorrowKeys = safeArray(forecastCarePolicies?.policies).map((policy) => policy?.key).filter(Boolean);
   const seasonKeys = safeArray(SEASON_POLICY_HINTS[seasonKey]);
 
-  // 体質は常に土台。変化する環境要因は、明日の予報 70% / 季節の傾向 30% で重ねる。
+  // 体質は常に土台。変化する環境要因は、これからの天気 70% / 季節の傾向 30% で重ねる。
   Object.entries(baseScores || {}).forEach(([key, value]) => {
     addPolicyScore(scores, key, Number(value || 0) * 0.62);
   });
@@ -661,14 +661,42 @@ function polishCareReason(reason) {
 
 function TwoToneOrbitMark() {
   return (
-    <svg viewBox="0 0 160 160" className="pointer-events-none absolute right-0 top-0 h-40 w-40 opacity-90" aria-hidden="true">
-      <circle cx="82" cy="78" r="46" fill="none" stroke="#D7E8DD" strokeWidth="1.8" />
-      <circle cx="82" cy="78" r="68" fill="none" stroke="#EEE9DE" strokeWidth="1.5" />
-      <path d="M38 110 A68 68 0 0 1 72 12" fill="none" stroke="#6BB69A" strokeWidth="3" strokeLinecap="round" opacity="0.62" />
-      <path d="M94 13 A68 68 0 0 1 145 80" fill="none" stroke="#DFA42D" strokeWidth="3" strokeLinecap="round" opacity="0.58" />
-      <circle cx="122" cy="32" r="5" fill="#DFA42D" opacity="0.48" />
-      <circle cx="45" cy="109" r="4" fill="#4EA789" opacity="0.58" />
+    <svg viewBox="0 0 220 220" className="h-full w-full overflow-visible" aria-hidden="true">
+      <path
+        d="M 42 160 A 88 88 0 1 1 180 44"
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="4.5"
+        strokeLinecap="round"
+        opacity="0.28"
+      />
+      <path
+        d="M 124 40 A 71 71 0 0 1 182 108"
+        fill="none"
+        stroke="var(--gold)"
+        strokeWidth="5.4"
+        strokeLinecap="round"
+        opacity="0.68"
+      />
+      <path
+        d="M 92 168 A 68 68 0 0 0 160 162"
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.14"
+      />
+      <circle cx="152" cy="128" r="6" fill="var(--accent)" opacity="0.40" />
+      <circle cx="165" cy="58" r="6.4" fill="var(--gold)" opacity="0.76" />
     </svg>
+  );
+}
+
+function EkkenFaceAccent() {
+  return (
+    <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_72%)] shadow-[0_12px_24px_-18px_rgba(36,86,76,0.38)]">
+      <GuideBotAvatar mood="listening" className="h-[78px] w-[78px] -translate-y-[7px]" />
+    </div>
   );
 }
 
@@ -2167,41 +2195,42 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
   const modeLabel = getSetModeMeta(kitMode)?.label || "まず1つから";
 
   return (
-    <div className="relative overflow-hidden rounded-[30px] bg-[#FFFDF9] p-4 ring-1 ring-[#E5DED2] shadow-[0_24px_58px_-40px_rgba(71,55,38,0.38)] sm:p-5">
-      <div className="absolute right-1 top-1 opacity-75"><TwoToneOrbitMark /></div>
-      <div className="relative z-10 grid gap-3 sm:grid-cols-[1fr_132px] sm:items-center">
-        <div className="min-w-0">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#F1F8F4] px-3 py-1.5 text-[10px] font-black tracking-[0.12em] text-[#2F816E] ring-1 ring-[#D4E8DF]">
-            <span className="grid h-5 w-5 place-items-center rounded-full bg-[#2F816E] text-[8px] text-white">AI</span>
-            ケアナビAI Ekken（エッケン）
+    <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
+      <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
+        <TwoToneOrbitMark />
+      </div>
+
+      <div className="relative z-10">
+        <div className="flex items-center gap-3">
+          <EkkenFaceAccent />
+          <div className="min-w-0">
+            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">ケアナビAI Ekken（エッケン）</div>
+            <div className="mt-0.5 text-[11px] font-bold text-slate-500">体質と天気から、ケア選びを案内します</div>
           </div>
-          <h1 className="mt-3 text-[22px] font-black leading-8 tracking-tight text-[#25332E] sm:text-[25px]">今の自分に合うケアを、見つけやすく。</h1>
-          <p className="mt-2 max-w-[540px] text-[13px] font-bold leading-6 text-[#65706B]">
-            体質を土台に、これから届いて使う頃を見据えて、明日の予報を中心に季節の傾向も重ねます。Ekkenは、商品を売り込むのではなく、まず見る棚を一緒に絞る案内役です。
-          </p>
-          <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
-            {loading
-              ? "体質トリセツとケア条件を確認しています。"
-              : profile
-                ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}を手がかりに選定中。`
-                : profileError || "体質トリセツがなくても、選んだ条件から候補を組めます。"}
-          </p>
         </div>
-        <div className="relative mx-auto h-[118px] w-[118px] shrink-0 sm:mx-0 sm:ml-auto">
-          <div className="absolute inset-2 rounded-full bg-[#F3F8F4] ring-1 ring-[#D8E7DF]" />
-          <GuideBotAvatar mood="listening" className="relative z-10 h-full w-full" />
-        </div>
+
+        <h1 className="mt-4 max-w-[330px] text-[23px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[26px]">今の自分に合うケアを、楽しく選ぶ。</h1>
+        <p className="mt-2 max-w-[540px] text-[13px] font-bold leading-6 text-slate-600">
+          暮らす・食べる・ほぐすから、体質とこれからの天気になじむケアをセレクト。気になるものを見つけながら、自分のケア棚を育てていきましょう。
+        </p>
+        <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
+          {loading
+            ? "あなた向けのケアを選んでいます。"
+            : profile
+              ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}を手がかりにセレクト中。`
+              : profileError || "選んだ条件からケアを探せます。"}
+        </p>
       </div>
 
       <div className="relative z-10 mt-4 flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-[#E4DDD1]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4F9F6] px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-[#D5E5DB]">
           {coreIconPath ? <img src={coreIconPath} alt="" className="h-5 w-5 object-contain" loading="lazy" /> : <IconKarte className="h-4 w-4 text-[#2F816E]" />}
-          {profile ? coreTitle || "体質反映済み" : "条件から選定"}
+          {profile ? coreTitle || "体質反映済み" : "条件からセレクト"}
         </span>
-        <span className="rounded-full bg-[#FFF7E8] px-3 py-1.5 text-[11px] font-black text-[#9B6818] ring-1 ring-[#EED8B4]">{symptomLabel}</span>
-        <span className="rounded-full bg-[#EEF6FB] px-3 py-1.5 text-[11px] font-black text-[#52758B] ring-1 ring-[#D6E6EF]">{hasTomorrow ? "明日の予報を中心に反映" : "季節の傾向を反映"}</span>
-        <span className="rounded-full bg-[#F5F0F7] px-3 py-1.5 text-[11px] font-black text-[#765E84] ring-1 ring-[#E2D6E7]">{seasonLabel}の傾向</span>
-        <span className="rounded-full bg-[#FFF0EC] px-3 py-1.5 text-[11px] font-black text-[#B55E4B] ring-1 ring-[#F0CEC4]">{modeLabel}</span>
+        <span className="rounded-full bg-[#FFF7E8] px-3 py-1.5 text-[11px] font-black text-[#946313] ring-1 ring-[#EED8B4]">{symptomLabel}</span>
+        <span className="rounded-full bg-[#EEF6FB] px-3 py-1.5 text-[11px] font-black text-[#52758B] ring-1 ring-[#D6E6EF]">{hasTomorrow ? "これからの天気を反映" : `${seasonLabel}の傾向を反映`}</span>
+        <span className="rounded-full bg-[#F5F0F7] px-3 py-1.5 text-[11px] font-black text-[#765E84] ring-1 ring-[#E2D6E7]">{seasonLabel}の季節感</span>
+        <span className="rounded-full bg-[var(--gold-soft)] px-3 py-1.5 text-[11px] font-black text-[#8A5C0B] ring-1 ring-[#E7C66C]">{modeLabel}</span>
       </div>
 
       <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2">
@@ -2209,7 +2238,7 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
         <button
           type="button"
           onClick={onToggleConditions}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[#273A33] px-3.5 py-2 text-[11px] font-black text-white shadow-sm hover:bg-[#17251F]"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] shadow-[0_10px_22px_-18px_rgba(36,86,76,0.42)] hover:bg-[#F4F9F6]"
           aria-expanded={showConditions}
         >
           {showConditions ? "調整を閉じる" : "条件を調整"}
@@ -2222,18 +2251,15 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
 
 function ShoppingStylePicker({ value, onChange }) {
   const styles = {
-    starter: { surface: "bg-[#FFF0EC]", ink: "text-[#B85E4A]", ring: "ring-[#F0CFC5]", active: "bg-[#E9785F] text-white ring-[#E9785F]" },
+    starter: { surface: "bg-[#FFF7E8]", ink: "text-[#946313]", ring: "ring-[#EED8B4]", active: "bg-[#D39422] text-white ring-[#D39422]" },
     steady: { surface: "bg-[#EEF7F3]", ink: "text-[#2F816E]", ring: "ring-[#CFE7DE]", active: "bg-[#349B83] text-white ring-[#349B83]" },
     environment: { surface: "bg-[#F5F0F7]", ink: "text-[#765E84]", ring: "ring-[#E2D6E7]", active: "bg-[#8A7097] text-white ring-[#8A7097]" },
   };
   return (
     <div>
-      <div className="mb-2 flex items-end justify-between gap-3">
-        <div>
-          <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">HOW TO SHOP</div>
-          <div className="mt-1 text-[14px] font-black text-slate-900">どんなふうに見てみる？</div>
-        </div>
-        <div className="text-[10px] font-bold text-slate-400">時制はEkkenが裏で調整</div>
+      <div className="mb-2">
+        <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">HOW TO SHOP</div>
+        <div className="mt-1 text-[14px] font-black text-slate-900">どんなふうに見てみる？</div>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">
         {SET_MODE_OPTIONS.map((option, index) => {
@@ -2325,7 +2351,7 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext, shelfEntry, o
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
-        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--shop)] px-3 py-2.5 text-[11px] font-black text-white shadow-[0_12px_24px_-18px_rgba(201,95,73,0.72)] hover:bg-[var(--shop-dark)]"
+        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--shop)] px-3 py-2.5 text-[11px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]"
       >
         {buttonText}
       </a>
@@ -2337,10 +2363,10 @@ function FeaturedCareSetCard({ card, trackingContext, shelfEntryMap, onToggleSav
   if (!card) return null;
   const [primaryItem, ...supportItems] = safeArray(card.items);
   return (
-    <div className="relative overflow-hidden rounded-[30px] bg-[#FFFDF9] p-4 ring-1 ring-[#E2D8C9] shadow-[0_24px_58px_-38px_rgba(15,23,42,0.45)] sm:p-5">
-      <div className="absolute right-4 top-4 rounded-full bg-[#273A33] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-white shadow-sm">EKKEN'S PICK</div>
+    <div className="relative overflow-hidden rounded-[30px] bg-white p-4 ring-1 ring-[#D6E5DC] shadow-[0_24px_58px_-38px_rgba(36,86,76,0.34)] sm:p-5">
+      <div className="absolute right-4 top-4 rounded-full bg-[var(--gold-soft)] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-[#80530B] ring-1 ring-[#E4C56B]">Ekkenセレクト</div>
       <div className="pr-24">
-        <div className="text-[10px] font-black tracking-[0.14em] text-[#B85E4A]">今の自分に合う本命セット</div>
+        <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">今の自分に合う本命セット</div>
         <h2 className="mt-1 text-[19px] font-black leading-7 tracking-tight text-slate-900">{card.title}</h2>
         <p className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">{card.lead}</p>
       </div>
@@ -2354,7 +2380,7 @@ function FeaturedCareSetCard({ card, trackingContext, shelfEntryMap, onToggleSav
       {primaryItem ? (
         <div className="mt-4">
           <div className="mb-2 flex items-center gap-2">
-            <span className="rounded-full bg-[#FFF0EC] px-2.5 py-1 text-[10px] font-black text-[#B85E4A] ring-1 ring-[#F0CFC5]">まず1つなら</span>
+            <span className="rounded-full bg-[var(--gold-soft)] px-2.5 py-1 text-[10px] font-black text-[#8A5C0B] ring-1 ring-[#E4C56B]">まず1つなら</span>
             <span className="text-[11px] font-bold text-slate-500">このセットの入口にしやすい候補</span>
           </div>
           <KitItemRow
@@ -2376,7 +2402,7 @@ function FeaturedCareSetCard({ card, trackingContext, shelfEntryMap, onToggleSav
             <span>一緒にそろえるなら</span>
             <span className="rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] text-[#2F816E] ring-1 ring-[#CFE7DE]">あと{supportItems.length}候補</span>
           </summary>
-          <div className="grid gap-2.5 border-t border-[#E5DDD1] p-3">
+          <div className="grid gap-2.5 border-t border-[#D8E6DD] p-3">
             {supportItems.map((item, index) => (
               <KitItemRow
                 key={`${card.key}-${getSetItemKey(item)}-${index}`}
@@ -2418,7 +2444,7 @@ function CareSetCard({ card, cardPosition, trackingContext, shelfEntryMap, onTog
           <span>この組み方の商品を見る</span>
           <span>{card.items.length}候補 ＋</span>
         </summary>
-        <div className="grid gap-2.5 border-t border-[#E5DDD1] p-3">
+        <div className="grid gap-2.5 border-t border-[#D8E6DD] p-3">
           {card.items.map((item, index) => (
             <KitItemRow
               key={`${card.key}-${getSetItemKey(item)}-${index}`}
@@ -2477,9 +2503,9 @@ function SavedCareShelf({ entries }) {
 
 function ViewModeSwitch({ value, onChange }) {
   return (
-    <div className="inline-flex rounded-full bg-[#F2EEE7] p-1 ring-1 ring-[#E2D9CC]">
+    <div className="inline-flex rounded-full bg-[#EDF5F0] p-1 ring-1 ring-[#D3E3D9]">
       {[{ key: "sets", label: "セットで見る" }, { key: "single", label: "1つずつ見る" }].map((option) => (
-        <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[10px] font-black transition-colors", value === option.key ? "bg-white text-[#273A33] shadow-sm ring-1 ring-[#DCD2C4]" : "text-slate-400"].join(" ")}>{option.label}</button>
+        <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[10px] font-black transition-colors", value === option.key ? "bg-white text-[var(--accent-ink)] shadow-sm ring-1 ring-[#C9DED2]" : "text-slate-400"].join(" ")}>{option.label}</button>
       ))}
     </div>
   );
@@ -2556,9 +2582,9 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
       <div className="grid gap-2.5 sm:grid-cols-2">
         {categoryItems.length ? categoryItems.map((item, index) => (
           <KitItemRow key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shelfEntry={shelfEntryMap.get(getSetItemKey(item))} onToggleSaved={onToggleSaved} onToggleTried={onToggleTried} />
-        )) : <div className="rounded-[20px] bg-[#FBF8F2] p-4 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E5DDD1] sm:col-span-2">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
+        )) : <div className="rounded-[20px] bg-[#F4F9F6] p-4 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#D5E5DB] sm:col-span-2">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
       </div>
-      {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[#273A33] px-4 py-3 text-[12px] font-black text-white shadow-sm hover:bg-[#17251F]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
+      {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[var(--shop)] px-4 py-3 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
     </div>
   );
 }
@@ -2977,7 +3003,7 @@ export default function CareNaviPage() {
         subtitle="今の自分に合う、ケアの選択肢を見つける"
         headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>設定</Button>}
       >
-        <Module className="relative overflow-hidden !bg-[#F7F3EC] p-4 ring-1 ring-[#E5DDD1] shadow-[0_18px_44px_-34px_rgba(71,55,38,0.30)] sm:p-5">
+        <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
           <div className="relative z-10">
             <EkkenGuideHero
               loading={loading}
@@ -2995,41 +3021,37 @@ export default function CareNaviPage() {
               onToggleConditions={() => setShowConditions((value) => !value)}
             />
 
-            <div className="mt-4">
-              <ShoppingStylePicker value={kitMode} onChange={setKitMode} />
-            </div>
-
             {showConditions ? (
-              <div className="mt-4 rounded-[28px] bg-[#FFFDF9] p-4 ring-1 ring-[#E5DDD1] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
+              <div className="mt-3 rounded-[28px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_16px_34px_-30px_rgba(36,86,76,0.26)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">SELECT CONDITIONS</div>
                     <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">候補の出し方を調整する</div>
                   </div>
-                  <div className="rounded-full bg-[#F2EEE7] px-2.5 py-1 text-[10px] font-black text-[#6F6258] ring-1 ring-[#E2D9CC]">任意</div>
+                  <div className="rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[#527064] ring-1 ring-[#D5E5DB]">任意</div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">Ekkenが自動で重ねる材料</div>
+                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">選ぶときの手がかり</div>
                     <div className="grid gap-2 sm:grid-cols-3">
                       <div className="rounded-[20px] bg-[#EEF7F3] p-3 ring-1 ring-[#CFE7DE]">
                         <div className="text-[10px] font-black text-[#2F816E]">体質トリセツ</div>
-                        <div className="mt-1 text-[12px] font-black text-slate-900">いつもの土台</div>
-                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">体質タイプと気血津液の傾向を、すべての候補の基準にします。</div>
+                        <div className="mt-1 text-[12px] font-black text-slate-900">いつもの体質</div>
+                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">体質タイプや崩れやすい傾向から、長く使いやすいものを選びます。</div>
                       </div>
                       <div className="rounded-[20px] bg-[#EEF6FB] p-3 ring-1 ring-[#D6E6EF]">
-                        <div className="text-[10px] font-black text-[#52758B]">明日の予報</div>
-                        <div className="mt-1 text-[12px] font-black text-slate-900">これからの中心</div>
-                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">届いて使う頃に近い天気として、環境要因の約7割を担います。</div>
+                        <div className="text-[10px] font-black text-[#52758B]">これからの天気</div>
+                        <div className="mt-1 text-[12px] font-black text-slate-900">近いうちの備え</div>
+                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">近いうちの気温・湿気・乾燥などに合わせて、用意しておきたいものを選びます。</div>
                       </div>
                       <div className="rounded-[20px] bg-[#FFF7E8] p-3 ring-1 ring-[#EED8B4]">
                         <div className="text-[10px] font-black text-[#9B6818]">{seasonLabel}の傾向</div>
-                        <div className="mt-1 text-[12px] font-black text-slate-900">しばらく続く補助線</div>
-                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">一日だけに寄せすぎないよう、季節の流れを約3割重ねます。</div>
+                        <div className="mt-1 text-[12px] font-black text-slate-900">今の時季</div>
+                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">季節に合った使い方や、しばらく続けやすいものを選びます。</div>
                       </div>
                     </div>
-                    <div className="mt-2 text-[11px] font-bold leading-5 text-slate-500">画面では「今の自分」に一本化し、今日タブ・明日タブ・体質トリセツのどこから来ても同じ棚へつながります。</div>
+
                   </div>
 
                   <div>
@@ -3060,15 +3082,19 @@ export default function CareNaviPage() {
                 </div>
               </div>
             ) : null}
+
+            <div className="mt-4">
+              <ShoppingStylePicker value={kitMode} onChange={setKitMode} />
+            </div>
           </div>
         </Module>
 
-        <Module className="!bg-[#FFFDF9] p-4 ring-1 ring-[#E5DDD1] shadow-[0_18px_44px_-34px_rgba(15,23,42,0.34)] sm:p-5">
+        <Module className="!bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_18px_44px_-34px_rgba(36,86,76,0.26)] sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#FFF0EC] text-[#B85E4A] ring-1 ring-[#F0CFC5] shadow-sm"><IconCare className="h-5 w-5" /></div>
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[var(--gold-soft)] text-[#8A5C0B] ring-1 ring-[#E4C56B] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
-                <div className="text-[10px] font-black tracking-[0.14em] text-[#B85E4A]">YOUR CARE SHELF</div>
+                <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">YOUR CARE SHELF</div>
                 <div className="mt-1 text-[17px] font-black tracking-tight text-slate-900">{kitModeMeta.label}</div>
                 <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">本命を先に。別案や細かな条件は、必要な時だけ開けます。</div>
               </div>
@@ -3080,9 +3106,9 @@ export default function CareNaviPage() {
             <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
             <SavedCareShelf entries={shelfEntries} />
 
-            <details className="rounded-[16px] bg-[#F6F2EB] ring-1 ring-[#E5DDD1]">
+            <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
               <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">紹介リンクを含みます・選定基準について</summary>
-              <p className="border-t border-[#E5DDD1] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質・天気・生活サインから、セルフケアを続けやすくする用品・食品・サービス候補を選んでいます。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。医療的な治療の代わりではありません。</p>
+              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質・天気・生活サインから、セルフケアを続けやすくする用品・食品・サービス候補を選んでいます。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。医療的な治療の代わりではありません。</p>
             </details>
 
             {rakutenLoading ? (
@@ -3092,7 +3118,7 @@ export default function CareNaviPage() {
                 <>
                   <FeaturedCareSetCard card={featuredSet} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />
                   {alternativeSets.length || canShowMore ? (
-                    <details className="group rounded-[24px] bg-[#F6F2EB] ring-1 ring-[#E5DDD1]">
+                    <details className="group rounded-[24px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                         <div>
                           <div className="text-[10px] font-black tracking-[0.12em] text-slate-400">ALTERNATIVE SETS</div>
@@ -3100,7 +3126,7 @@ export default function CareNaviPage() {
                         </div>
                         <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
                       </summary>
-                      <div className="grid gap-3 border-t border-[#E5DDD1] p-3">
+                      <div className="grid gap-3 border-t border-[#D8E6DD] p-3">
                         {alternativeSets.map((card, index) => <CareSetCard key={`${kitMode}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={toggleTriedItem} />)}
                         {canShowMore ? <button type="button" onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))} className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]">別の組み方をもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）</button> : null}
                       </div>
