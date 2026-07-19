@@ -72,7 +72,6 @@ const CATEGORY_OPTIONS = [
 ];
 
 const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
-const EMPTY_LIFE_KEYS = [];
 
 // セット表示は常に「暮らす・食べる・ほぐす」の3方向で組む。
 // ユーザー向けには「セットで見る／1つずつ見る」だけを表示し、
@@ -87,9 +86,9 @@ const PRICE_BAND_OPTIONS = [
 ];
 
 const SHOP_PURPOSE_OPTIONS = [
-  { key: "everyday", label: "日常の土台", lead: "体質と気になる不調を中心に選ぶ" },
-  { key: "season", label: "今の季節", lead: "しばらく使いやすい季節の備えを優先" },
-  { key: "weather", label: "近いうちの天気", lead: "明日の予報でも出番がありそうなものを優先" },
+  { key: "everyday", label: "ふだん使う", lead: "長く取り入れやすいもの" },
+  { key: "season", label: "今の季節に使う", lead: "この時季に出番が多いもの" },
+  { key: "weather", label: "明日に備える", lead: "明日の天気で使いやすいもの" },
 ];
 
 const CARE_NAVI_INITIAL_LIMIT = 12;
@@ -536,7 +535,7 @@ function mergePolicyKeysWithLife(policyKeys, lifeKeys, baseScores) {
   return selectPolicyKeysFromScores(scores, policyKeys?.length ? policyKeys : ["sasaeru", "yurumeru"]);
 }
 
-function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, purpose = "everyday" } = {}) {
+function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, purpose = "everyday", lifeKeys = [] } = {}) {
   const scores = createPolicyScoreMap();
   const tomorrowKeys = safeArray(forecastCarePolicies?.policies).map((policy) => policy?.key).filter(Boolean);
   const seasonKeys = safeArray(SEASON_POLICY_HINTS[seasonKey]);
@@ -562,7 +561,7 @@ function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, 
   });
 
   const keys = selectPolicyKeysFromScores(scores, ["yurumeru", "sasaeru"]);
-  return keys;
+  return mergePolicyKeysWithLife(keys, lifeKeys, baseScores);
 }
 
 function pickCandidates(policyKeys, categoryKey) {
@@ -700,16 +699,19 @@ function CoreTypeAvatar({ coreIconPath, coreTitle }) {
 }
 
 
-function Chip({ active, children, onClick }) {
+function Chip({ active, children, onClick, disabled = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className={[
         "shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition-all ring-1",
-        active
-          ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.34)]"
-          : "bg-white text-slate-600 ring-[#DCE8DD] shadow-[0_8px_18px_-16px_rgba(15,23,42,0.34)] hover:bg-[#F4FAF7] hover:text-[#2F816E] hover:ring-[#CFE7DE]",
+        disabled
+          ? "cursor-not-allowed bg-slate-50 text-slate-300 ring-slate-100"
+          : active
+            ? "bg-[var(--accent)] text-white ring-[var(--accent)] shadow-[0_12px_24px_-16px_rgba(52,155,131,0.34)]"
+            : "bg-white text-slate-600 ring-[#DCE8DD] shadow-[0_8px_18px_-16px_rgba(15,23,42,0.34)] hover:bg-[#F4FAF7] hover:text-[#2F816E] hover:ring-[#CFE7DE]",
       ].join(" ")}
     >
       {children}
@@ -917,11 +919,6 @@ function RakutenLoadingCards() {
 }
 
 function PriceBandFilter({ value, onChange, categoryKey }) {
-  const genericLabels = {
-    light: "手頃な価格帯",
-    standard: "中くらい",
-    deep: "道具・環境まで",
-  };
   return (
     <div className="rounded-[22px] bg-[#EFF8F4] p-3 ring-1 ring-[#CFE7DE]">
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -933,7 +930,7 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
           const active = value === option.key;
           const rangeLabel = categoryKey
             ? getPriceBandLabel(categoryKey, option.key)
-            : genericLabels[option.key] || "";
+            : "";
 
           return (
             <button
@@ -948,7 +945,7 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
               ].join(" ")}
             >
               <div className="text-[11px] font-black leading-4">{option.label}</div>
-              {option.key !== "all" ? (
+              {option.key !== "all" && rangeLabel ? (
                 <div className={["mt-0.5 text-[8px] font-black leading-3", active ? "text-white/80" : "text-slate-400"].join(" ")}>
                   {rangeLabel}
                 </div>
@@ -2223,10 +2220,19 @@ function legacyEntryToShopEntry(entry) {
   };
 }
 
-function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions }) {
+function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, lifeLabels, purposeLabel, showConditions, onToggleConditions }) {
+  const primaryKey = safeArray(policyKeys)[0] || "sasaeru";
+  const primaryPolicy = POLICY_META[primaryKey] || POLICY_META.sasaeru;
+  const supportingKeys = safeArray(policyKeys).slice(1, 3);
+  const conditionParts = [
+    profile ? [coreTitle, subText].filter(Boolean).join("・") || "体質トリセツ" : null,
+    symptomLabel ? `気になる不調：${symptomLabel}` : null,
+    ...safeArray(lifeLabels),
+  ].filter(Boolean);
+
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
-      <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
+      <div className="pointer-events-none absolute -right-10 -top-8 h-[180px] w-[180px] opacity-60" aria-hidden="true">
         <TwoToneOrbitMark />
       </div>
 
@@ -2234,45 +2240,59 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
         <div className="flex items-center gap-3">
           <CoreTypeAvatar coreIconPath={coreIconPath} coreTitle={coreTitle} />
           <div className="min-w-0">
-            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">パーソナルケアショップ</div>
-            <div className="mt-0.5 text-[11px] font-bold text-slate-500">体質・不調・使いどきから、買い物迷子をなくす</div>
+            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">あなたのセレクト</div>
+            <div className="mt-0.5 text-[11px] font-bold leading-5 text-slate-500">
+              {loading
+                ? "体質トリセツを読み込んでいます"
+                : profile
+                  ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}を反映`
+                  : profileError || "選んだ条件を反映"}
+            </div>
           </div>
         </div>
 
-        <h1 className="mt-4 max-w-[380px] text-[23px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[26px]">あなたに合うケアアイテムを、迷わず選ぶ。</h1>
-        <p className="mt-2 max-w-[540px] text-[13px] font-bold leading-6 text-slate-600">
-          体質と気になる不調を土台に、暮らす・食べる・ほぐすの商品を選びます。季節と近いうちの天気は、今使いやすい順に並べるために反映します。
-        </p>
-        <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
-          {loading
-            ? "あなた向けのケアを選んでいます。"
-            : profile
-              ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}と「${symptomLabel}」に合わせて選んでいます。`
-              : profileError || "選んだ買い物条件から商品を探せます。"}
-        </p>
-      </div>
+        <div className="mt-4 rounded-[26px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE]">
+          <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">今のケア方針</div>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-white ring-1 ring-[#CFE7DE] shadow-sm">
+              <img src={getPolicyIconPath(primaryKey)} alt="" className="h-10 w-10" loading="lazy" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-[21px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[24px]">
+                {loading ? "ケア方針を選んでいます" : `今は「${primaryPolicy.label}」を軸に。`}
+              </h1>
+              <div className="mt-1 text-[12px] font-bold text-[#47766A]">{primaryPolicy.short}</div>
+            </div>
+          </div>
+          {supportingKeys.length ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#CFE7DE] pt-3">
+              <span className="text-[10px] font-black text-[#5C7A72]">あわせて</span>
+              {supportingKeys.map((key) => <PolicyPill key={key} policyKey={key} />)}
+            </div>
+          ) : null}
+        </div>
 
-      <div className="relative z-10 mt-4 flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F4F9F6] px-3 py-1.5 text-[11px] font-black text-slate-700 ring-1 ring-[#D5E5DB]">
-          {coreIconPath ? <img src={coreIconPath} alt="" className="h-5 w-5 object-contain" loading="lazy" /> : <IconKarte className="h-4 w-4 text-[#2F816E]" />}
-          {profile ? coreTitle || "体質反映済み" : "条件からセレクト"}
-        </span>
-        <span className="rounded-full bg-[#FFF7E8] px-3 py-1.5 text-[11px] font-black text-[#946313] ring-1 ring-[#EED8B4]">{symptomLabel}</span>
-        <span className="rounded-full bg-[#F5F0F7] px-3 py-1.5 text-[11px] font-black text-[#765E84] ring-1 ring-[#E2D6E7]">{seasonLabel}</span>
-        {hasTomorrow ? <span className="rounded-full bg-[#EEF6FB] px-3 py-1.5 text-[11px] font-black text-[#52758B] ring-1 ring-[#D6E6EF]">明日の予報も確認</span> : null}
-      </div>
+        <p className="mt-3 max-w-[520px] text-[13px] font-bold leading-6 text-slate-600">
+          暮らす・食べる・ほぐすから、今の生活に取り入れやすいアイテムを選びました。
+        </p>
 
-      <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2">
-        {safeArray(policyKeys).slice(0, 2).map((key) => <PolicyPill key={key} policyKey={key} />)}
-        <button
-          type="button"
-          onClick={onToggleConditions}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] shadow-[0_10px_22px_-18px_rgba(36,86,76,0.42)] hover:bg-[#F4F9F6]"
-          aria-expanded={showConditions}
-        >
-          {showConditions ? "条件を閉じる" : "買い物条件を変える"}
-          <span aria-hidden="true" className={["text-[13px] transition-transform", showConditions ? "rotate-180" : ""].join(" ")}>⌄</span>
-        </button>
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#DCE8DD]">
+          <div className="min-w-0">
+            <div className="text-[9px] font-black tracking-[0.12em] text-slate-400">今回の条件</div>
+            <div className="mt-1 line-clamp-2 text-[10px] font-bold leading-4 text-slate-600">
+              {[...conditionParts, purposeLabel].filter(Boolean).join("・") || "条件を選んで商品を探せます"}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onToggleConditions}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] shadow-[0_10px_22px_-18px_rgba(36,86,76,0.42)] hover:bg-[#F4F9F6]"
+            aria-expanded={showConditions}
+          >
+            {showConditions ? "閉じる" : "条件を調整"}
+            <span aria-hidden="true" className={["text-[13px] transition-transform", showConditions ? "rotate-180" : ""].join(" ")}>⌄</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2595,7 +2615,7 @@ export default function CareNaviPage() {
   const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [shopPurpose, setShopPurpose] = useState("everyday");
-  const lifeKeys = EMPTY_LIFE_KEYS;
+  const [lifeKeys, setLifeKeys] = useState([]);
 
   const [rakutenItemsByCategory, setRakutenItemsByCategory] = useState({ live: [], eat: [], point: [] });
   const [rakutenQueries, setRakutenQueries] = useState([]);
@@ -2735,6 +2755,10 @@ export default function CareNaviPage() {
     const params = new URLSearchParams(window.location.search);
     const nextCategory = params.get("category");
     const nextSymptom = params.get("symptom");
+    const nextLifeKeys = String(params.get("life") || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
     if (nextSymptom && SYMPTOM_LABELS[nextSymptom]) {
       setSelectedSymptom(nextSymptom);
@@ -2743,6 +2767,10 @@ export default function CareNaviPage() {
     if (CATEGORY_ORDER.includes(nextCategory)) {
       setSingleCategory(nextCategory);
       setViewMode("single");
+    }
+
+    if (nextLifeKeys.length) {
+      setLifeKeys(nextLifeKeys.filter((key) => LIFE_OPTIONS.some((item) => item.key === key)).slice(0, 3));
     }
 
   }, []);
@@ -2785,14 +2813,16 @@ export default function CareNaviPage() {
       forecastCarePolicies,
       seasonKey,
       purpose: shopPurpose,
+      lifeKeys,
     }),
-    [karteCarePreferences, forecastCarePolicies, seasonKey, shopPurpose]
+    [karteCarePreferences, forecastCarePolicies, seasonKey, shopPurpose, lifeKeys]
   );
 
   const policyKeySignature = policyKeys.join("|");
+  const lifeKeySignature = lifeKeys.join("|");
   useEffect(() => {
     setVisibleLimit(CARE_SET_INITIAL_LIMIT);
-  }, [shopPurpose, symptomKey, policyKeySignature]);
+  }, [shopPurpose, symptomKey, policyKeySignature, lifeKeySignature]);
 
   const tomorrowTriggerFactors = useMemo(
     () => (tomorrowBundle?.forecast ? getForecastTriggerFactors(tomorrowBundle.forecast) : []),
@@ -2899,7 +2929,7 @@ export default function CareNaviPage() {
       clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [priceBand, policyKeySignature, symptomKey, basis, rakutenRetryNonce]);
+  }, [priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -2983,19 +3013,29 @@ export default function CareNaviPage() {
       coreCode: profileLike.core_code || null,
       subCodes: safeArray(profileLike.sub_labels),
       policyKeys,
-      lifeKeys: [],
+      lifeKeys,
       shopPurpose,
       weatherDate: weatherSummary.date,
       weatherRiskLevel: weatherSummary.riskLevel,
       weatherSummary,
     };
-  }, [basis, priceBand, symptomKey, profileLike, policyKeys, shopPurpose, tomorrowBundle]);
+  }, [basis, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, shopPurpose, tomorrowBundle]);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
   const coreIconPath = getCoreIconPath(profileLike.core_code);
   const subLabels = getSubLabels(profileLike.sub_labels).slice(0, 2);
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
+  const selectedLifeLabels = LIFE_OPTIONS.filter((item) => lifeKeys.includes(item.key)).map((item) => item.label);
+  const selectedPurposeLabel = SHOP_PURPOSE_OPTIONS.find((item) => item.key === shopPurpose)?.label || "ふだん使う";
+
+  function toggleLifeKey(key) {
+    setLifeKeys((prev) => {
+      if (prev.includes(key)) return prev.filter((item) => item !== key);
+      if (prev.length >= 3) return prev;
+      return [...prev, key];
+    });
+  }
 
   async function syncShopEntry(item, status = "interested") {
     const key = getSetItemKey(item);
@@ -3065,7 +3105,7 @@ export default function CareNaviPage() {
     <div style={CARE_NAVI_THEME}>
       <AppShell
         title="パーソナルケアショップ"
-        subtitle="体質・不調・使いどきから選ぶ"
+        subtitle="暮らす・食べる・ほぐすのケアアイテム"
         headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>設定</Button>}
       >
         <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
@@ -3079,8 +3119,8 @@ export default function CareNaviPage() {
               subText={subText}
               policyKeys={policyKeys}
               symptomLabel={symptomLabel}
-              seasonLabel={seasonLabel}
-              hasTomorrow={Boolean(tomorrowBundle?.forecast)}
+              lifeLabels={selectedLifeLabels}
+              purposeLabel={selectedPurposeLabel}
               showConditions={showConditions}
               onToggleConditions={() => setShowConditions((value) => !value)}
             />
@@ -3089,7 +3129,7 @@ export default function CareNaviPage() {
               <div className="mt-3 rounded-[28px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_16px_34px_-30px_rgba(36,86,76,0.26)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">買い物条件を変える</div>
+                    <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">おすすめ条件を調整</div>
                   </div>
                   <div className="rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[#527064] ring-1 ring-[#D5E5DB]">任意</div>
                 </div>
@@ -3097,8 +3137,8 @@ export default function CareNaviPage() {
                 <div className="space-y-4">
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になる不調を変更</div>
-                      <div className="text-[10px] font-bold text-slate-400">このページだけ</div>
+                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">今気になる不調</div>
+                      <div className="text-[10px] font-bold text-slate-400">ショップだけに反映</div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(SYMPTOM_LABELS).map(([key, label]) => <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>{label}</Chip>)}
@@ -3107,7 +3147,31 @@ export default function CareNaviPage() {
                   </div>
 
                   <div>
-                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">何に合わせて探す？</div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活</div>
+                      <div className="text-[10px] font-bold text-slate-400">任意・最大3つ</div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {LIFE_OPTIONS.map((item) => (
+                        <Chip
+                          key={item.key}
+                          active={lifeKeys.includes(item.key)}
+                          disabled={!lifeKeys.includes(item.key) && lifeKeys.length >= 3}
+                          onClick={() => toggleLifeKey(item.key)}
+                        >
+                          {item.label}
+                        </Chip>
+                      ))}
+                    </div>
+                    {lifeKeys.length ? (
+                      <button type="button" onClick={() => setLifeKeys([])} className="mt-2 text-[10px] font-black text-[#527064] underline decoration-[#A7CFC1] underline-offset-4">
+                        生活状況をクリア
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">いつ使うものを探す？</div>
                     <div className="grid gap-2 sm:grid-cols-3">
                       {SHOP_PURPOSE_OPTIONS.map((item) => (
                         <button key={item.key} type="button" onClick={() => setShopPurpose(item.key)} className={["rounded-[18px] p-3 text-left ring-1 transition-colors", shopPurpose === item.key ? "bg-[#EAF7F1] text-[#24564C] ring-[#9CCBB7]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
@@ -3115,14 +3179,6 @@ export default function CareNaviPage() {
                           <div className="mt-1 text-[9px] font-bold leading-4 opacity-70">{item.lead}</div>
                         </button>
                       ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">見たいカテゴリ</div>
-                    <div className="flex flex-wrap gap-2">
-                      <Chip active={viewMode === "sets"} onClick={() => setViewMode("sets")}>3カテゴリ</Chip>
-                      {CATEGORY_OPTIONS.map((item) => <Chip key={item.key} active={viewMode === "single" && singleCategory === item.key} onClick={() => { setSingleCategory(item.key); setViewMode("single"); }}>{item.label}</Chip>)}
                     </div>
                   </div>
 
@@ -3140,8 +3196,8 @@ export default function CareNaviPage() {
             <div className="flex min-w-0 items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[var(--gold-soft)] text-[#8A5C0B] ring-1 ring-[#E4C56B] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
-                <div className="text-[17px] font-black tracking-tight text-slate-900">あなたへのおすすめ商品</div>
-                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">暮らす・食べる・ほぐすの3方向で比べるか、カテゴリごとに探せます。</div>
+                <div className="text-[17px] font-black tracking-tight text-slate-900">今のケア方針から選んだ商品</div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">3カテゴリのセットで見るか、商品を1つずつ比べられます。</div>
                 <div className="mt-1 text-[10px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
               </div>
             </div>
