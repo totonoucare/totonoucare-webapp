@@ -14,7 +14,6 @@ import {
   getJstTodayTomorrow,
   getRiskContext,
 } from "@/app/radar/utils";
-import { buildCareActionKey } from "@/lib/radar_v1/careActionItems";
 import {
   IconCare,
   IconFood,
@@ -73,6 +72,7 @@ const CATEGORY_OPTIONS = [
 ];
 
 const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
+const EMPTY_LIFE_KEYS = [];
 
 // セット表示は常に「暮らす・食べる・ほぐす」の3方向で組む。
 // ユーザー向けには「セットで見る／1つずつ見る」だけを表示し、
@@ -84,6 +84,12 @@ const PRICE_BAND_OPTIONS = [
   { key: "light", label: "低め" },
   { key: "standard", label: "中くらい" },
   { key: "deep", label: "高め" },
+];
+
+const SHOP_PURPOSE_OPTIONS = [
+  { key: "everyday", label: "日常の土台", lead: "体質と気になる不調を中心に選ぶ" },
+  { key: "season", label: "今の季節", lead: "しばらく使いやすい季節の備えを優先" },
+  { key: "weather", label: "近いうちの天気", lead: "明日の予報でも出番がありそうなものを優先" },
 ];
 
 const CARE_NAVI_INITIAL_LIMIT = 12;
@@ -530,26 +536,33 @@ function mergePolicyKeysWithLife(policyKeys, lifeKeys, baseScores) {
   return selectPolicyKeysFromScores(scores, policyKeys?.length ? policyKeys : ["sasaeru", "yurumeru"]);
 }
 
-function buildCareShelfPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, lifeKeys } = {}) {
+function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, purpose = "everyday" } = {}) {
   const scores = createPolicyScoreMap();
   const tomorrowKeys = safeArray(forecastCarePolicies?.policies).map((policy) => policy?.key).filter(Boolean);
   const seasonKeys = safeArray(SEASON_POLICY_HINTS[seasonKey]);
 
-  // MYケアは「明日だけの商品棚」ではない。体質と繰り返しやすい傾向を主役に、
-  // 季節を中期の補助、明日の予報を直近の小さな注目点として重ねる。
+  const purposeWeights = {
+    everyday: { season: 0.46, tomorrow: 0.18 },
+    season: { season: 0.78, tomorrow: 0.24 },
+    weather: { season: 0.42, tomorrow: 0.68 },
+  }[purpose] || { season: 0.46, tomorrow: 0.18 };
+
+  // ショップの土台は体質と気になる不調。季節と明日の予報は、
+  // 商品の使いどきに合わせて順位を調整する。ユーザーが用途を選んでも
+  // 体質の土台を外さず、買い物の時間軸だけを少し強める。
   Object.entries(baseScores || {}).forEach(([key, value]) => {
     addPolicyScore(scores, key, Number(value || 0) * 0.82);
   });
 
-  addPolicyKeys(scores, seasonKeys, 0.58);
-  addPolicyKeys(scores, tomorrowKeys, 0.34);
+  addPolicyKeys(scores, seasonKeys, purposeWeights.season);
+  addPolicyKeys(scores, tomorrowKeys, purposeWeights.tomorrow);
 
   softenSupportPolicy(scores, {
     hasDirectSupport: tomorrowKeys.includes("sasaeru") || seasonKeys.includes("sasaeru"),
   });
 
   const keys = selectPolicyKeysFromScores(scores, ["yurumeru", "sasaeru"]);
-  return mergePolicyKeysWithLife(keys, lifeKeys, baseScores);
+  return keys;
 }
 
 function pickCandidates(policyKeys, categoryKey) {
@@ -980,28 +993,13 @@ function RakutenStatusCard({ error, onRetry, loading }) {
 
 
 function getSetItemKey(item) {
-  return item?.itemUrl || item?.clickUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
-}
-
-function getMyCareActionIdentity(item) {
   return [
-    getSetItemKey(item),
-    item?.title,
-    item?.source,
-    item?.productRole || item?.role,
-  ].filter(Boolean).join("|");
-}
-
-function getMyCareActionDomain(item) {
-  return item?.category === "point" ? "loosen" : item?.category === "eat" ? "eat" : "live";
-}
-
-function getMyCareActionKey(item) {
-  return buildCareActionKey({
-    domain: getMyCareActionDomain(item),
-    kind: "my_care_item",
-    identity: getMyCareActionIdentity(item),
-  });
+    item?.source || item?.sourceType || "item",
+    item?.itemCode || item?.sourceKey || "",
+    item?.title || item?.query || "",
+    item?.shopName || "",
+    item?.category || "live",
+  ].filter(Boolean).join(":").normalize("NFKC").replace(/\s+/g, " ").slice(0, 200);
 }
 
 
@@ -2200,7 +2198,32 @@ function readStoredCareShelf() {
   }
 }
 
-function MyCareSelectHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions }) {
+function shopEntryFromRow(row) {
+  if (!row?.item_key) return null;
+  const item = row.item_snapshot && typeof row.item_snapshot === "object"
+    ? row.item_snapshot
+    : {};
+  return {
+    key: row.item_key,
+    item: { ...item, category: row.category || item.category || "live" },
+    status: row.status === "purchased" ? "purchased" : "interested",
+    updatedAt: row.updated_at || row.created_at || new Date().toISOString(),
+  };
+}
+
+function legacyEntryToShopEntry(entry) {
+  if (!entry?.item) return null;
+  const key = getSetItemKey(entry.item);
+  if (!key) return null;
+  return {
+    key,
+    item: compactShelfItem(entry.item),
+    status: entry.status === "purchased" ? "purchased" : "interested",
+    updatedAt: entry.updatedAt || new Date().toISOString(),
+  };
+}
+
+function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions }) {
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
       <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
@@ -2211,21 +2234,21 @@ function MyCareSelectHero({ loading, profile, profileError, coreIconPath, coreTi
         <div className="flex items-center gap-3">
           <CoreTypeAvatar coreIconPath={coreIconPath} coreTitle={coreTitle} />
           <div className="min-w-0">
-            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">MYケアセレクト</div>
-            <div className="mt-0.5 text-[11px] font-bold text-slate-500">用意して、試して、自分に合うケアを見つける</div>
+            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">パーソナルケアショップ</div>
+            <div className="mt-0.5 text-[11px] font-bold text-slate-500">体質・不調・使いどきから、買い物迷子をなくす</div>
           </div>
         </div>
 
-        <h1 className="mt-4 max-w-[360px] text-[23px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[26px]">続けたいケアを、自分用の棚に。</h1>
+        <h1 className="mt-4 max-w-[380px] text-[23px] font-black leading-[1.35] tracking-tight text-slate-900 sm:text-[26px]">あなたに合うケアアイテムを、迷わず選ぶ。</h1>
         <p className="mt-2 max-w-[540px] text-[13px] font-bold leading-6 text-slate-600">
-          体質と気になる不調、天気でゆらぎやすい傾向を土台に、暮らす・食べる・ほぐすの備えを選びます。季節と明日の予報も、使いどきを考える手がかりにします。
+          体質と気になる不調を土台に、暮らす・食べる・ほぐすの商品を選びます。季節と近いうちの天気は、今使いやすい順に並べるために反映します。
         </p>
         <p className="mt-2 text-[11px] font-bold leading-5 text-slate-500">
           {loading
             ? "あなた向けのケアを選んでいます。"
             : profile
-              ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}と「${symptomLabel}」を手がかりに選んでいます。`
-              : profileError || "選んだ条件からケアを探せます。"}
+              ? `${coreTitle || "体質傾向"}${subText ? `・${subText}` : ""}と「${symptomLabel}」に合わせて選んでいます。`
+              : profileError || "選んだ買い物条件から商品を探せます。"}
         </p>
       </div>
 
@@ -2247,7 +2270,7 @@ function MyCareSelectHero({ loading, profile, profileError, coreIconPath, coreTi
           className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] shadow-[0_10px_22px_-18px_rgba(36,86,76,0.42)] hover:bg-[#F4F9F6]"
           aria-expanded={showConditions}
         >
-          {showConditions ? "調整を閉じる" : "条件を調整"}
+          {showConditions ? "条件を閉じる" : "買い物条件を変える"}
           <span aria-hidden="true" className={["text-[13px] transition-transform", showConditions ? "rotate-180" : ""].join(" ")}>⌄</span>
         </button>
       </div>
@@ -2255,42 +2278,31 @@ function MyCareSelectHero({ loading, profile, profileError, coreIconPath, coreTi
   );
 }
 
-function ShelfActionButtons({ item, shelfEntry, onToggleSaved, onToggleTried }) {
-  const saved = Boolean(shelfEntry?.saved);
-  const recorded = Boolean(shelfEntry?.recorded);
-  const recording = Boolean(shelfEntry?.recording);
+function ShopItemActions({ item, shopEntry, saving, onToggleInterested }) {
+  const saved = Boolean(shopEntry);
+  const purchased = shopEntry?.status === "purchased";
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       <button
         type="button"
-        onClick={() => onToggleSaved?.(item)}
+        onClick={() => onToggleInterested?.(item)}
+        disabled={saving}
         className={[
           "rounded-full px-2.5 py-1.5 text-[10px] font-black ring-1 transition-colors",
-          saved ? "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]" : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#F4FAF7]",
+          purchased
+            ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]"
+            : saved
+              ? "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]"
+              : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#F4FAF7]",
         ].join(" ")}
       >
-        {saved ? "♥ 気になるに保存済み" : "♡ 気になる"}
-      </button>
-      <button
-        type="button"
-        onClick={() => onToggleTried?.(item)}
-        disabled={recorded || recording}
-        className={[
-          "rounded-full px-2.5 py-1.5 text-[10px] font-black ring-1 transition-colors",
-          recorded
-            ? "cursor-default bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]"
-            : recording
-              ? "cursor-wait bg-slate-50 text-slate-400 ring-[#DCE8DD]"
-              : "bg-white text-slate-500 ring-[#DCE8DD] hover:bg-[#FFF9EA]",
-        ].join(" ")}
-      >
-        {recorded ? "✓ 今日の記録済み" : recording ? "記録中…" : "今日使った"}
+        {saving ? "保存中…" : purchased ? "✓ 購入済み" : saved ? "♥ 気になるに保存済み" : "♡ 気になる"}
       </button>
     </div>
   );
 }
 
-function KitItemRow({ item, itemPosition, setKey, trackingContext, shelfEntry, onToggleSaved, onToggleTried, featured = false }) {
+function ShopItemCard({ item, itemPosition, setKey, trackingContext, shopEntry, saving = false, onToggleInterested, featured = false }) {
   const meta = getCategoryMeta(item.category);
   const Icon = meta.icon;
   const isPartner = item.source === "a8" || item.sourceType === "partner";
@@ -2329,7 +2341,7 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext, shelfEntry, o
           {isPartner && item.reason ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">{item.reason}</p> : item.useGuide ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">{item.useGuide}</p> : null}
         </div>
       </div>
-      <ShelfActionButtons item={item} shelfEntry={shelfEntry} onToggleSaved={onToggleSaved} onToggleTried={onToggleTried} />
+      <ShopItemActions item={item} shopEntry={shopEntry} saving={saving} onToggleInterested={onToggleInterested} />
       <a
         href={itemUrl}
         target="_blank"
@@ -2343,14 +2355,14 @@ function KitItemRow({ item, itemPosition, setKey, trackingContext, shelfEntry, o
   );
 }
 
-function FeaturedCareSetCard({ card, trackingContext, shelfEntryMap, onToggleSaved, onToggleTried }) {
+function FeaturedCareSetCard({ card, trackingContext, shopEntryMap, savingKey, onToggleInterested }) {
   if (!card) return null;
-  const [primaryItem, ...supportItems] = safeArray(card.items);
+  const items = safeArray(card.items).slice(0, 3);
   return (
     <div className="relative overflow-hidden rounded-[30px] bg-white p-4 ring-1 ring-[#D6E5DC] shadow-[0_24px_58px_-38px_rgba(36,86,76,0.34)] sm:p-5">
       <div className="absolute right-4 top-4 rounded-full bg-[var(--gold-soft)] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-[#80530B] ring-1 ring-[#E4C56B]">未病レーダーセレクト</div>
       <div className="pr-24">
-        <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">自分用の棚に置きたい本命セット</div>
+        <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">あなたへのおすすめ3アイテム</div>
         <h2 className="mt-1 text-[19px] font-black leading-7 tracking-tight text-slate-900">{card.title}</h2>
         <p className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">{card.lead}</p>
       </div>
@@ -2362,52 +2374,25 @@ function FeaturedCareSetCard({ card, trackingContext, shelfEntryMap, onToggleSav
         ))}
       </div>
 
-      {primaryItem ? (
-        <div className="mt-4">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="rounded-full bg-[var(--gold-soft)] px-2.5 py-1 text-[10px] font-black text-[#8A5C0B] ring-1 ring-[#E4C56B]">まず1つなら</span>
-            <span className="text-[11px] font-bold text-slate-500">このセットの入口にしやすい候補</span>
-          </div>
-          <KitItemRow
-            item={primaryItem}
-            itemPosition={1}
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+        {items.map((item, index) => (
+          <ShopItemCard
+            key={`${card.key}-${getSetItemKey(item)}-${index}`}
+            item={item}
+            itemPosition={index + 1}
             setKey={card.key}
             trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
-            shelfEntry={shelfEntryMap.get(getSetItemKey(primaryItem))}
-            onToggleSaved={onToggleSaved}
-            onToggleTried={onToggleTried}
-            featured
+            shopEntry={shopEntryMap.get(getSetItemKey(item))}
+            saving={savingKey === getSetItemKey(item)}
+            onToggleInterested={onToggleInterested}
           />
-        </div>
-      ) : null}
-
-      {supportItems.length ? (
-        <details className="group mt-3 rounded-[20px] bg-white/75 ring-1 ring-[#DCE8DD]">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-[12px] font-black text-slate-700 [&::-webkit-details-marker]:hidden">
-            <span>一緒にそろえるなら</span>
-            <span className="rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] text-[#2F816E] ring-1 ring-[#CFE7DE]">あと{supportItems.length}候補</span>
-          </summary>
-          <div className="grid gap-2.5 border-t border-[#D8E6DD] p-3">
-            {supportItems.map((item, index) => (
-              <KitItemRow
-                key={`${card.key}-${getSetItemKey(item)}-${index}`}
-                item={item}
-                itemPosition={index + 2}
-                setKey={card.key}
-                trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
-                shelfEntry={shelfEntryMap.get(getSetItemKey(item))}
-                onToggleSaved={onToggleSaved}
-                onToggleTried={onToggleTried}
-              />
-            ))}
-          </div>
-        </details>
-      ) : null}
+        ))}
+      </div>
     </div>
   );
 }
 
-function CareSetCard({ card, cardPosition, trackingContext, shelfEntryMap, onToggleSaved, onToggleTried }) {
+function CareSetCard({ card, cardPosition, trackingContext, shopEntryMap, savingKey, onToggleInterested }) {
   const includedCategories = unique(card.items.map((item) => item.category)).slice(0, 3);
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-[#FBF8F2] p-4 ring-1 ring-[#E6DED2]">
@@ -2431,15 +2416,15 @@ function CareSetCard({ card, cardPosition, trackingContext, shelfEntryMap, onTog
         </summary>
         <div className="grid gap-2.5 border-t border-[#D8E6DD] p-3">
           {card.items.map((item, index) => (
-            <KitItemRow
+            <ShopItemCard
               key={`${card.key}-${getSetItemKey(item)}-${index}`}
               item={item}
               itemPosition={(cardPosition - 1) * 10 + index + 1}
               setKey={card.key}
               trackingContext={{ ...trackingContext, policyKeys: card.policyKeys || [card.policyKey], setPolicyKey: card.policyKey, setTitle: card.title }}
-              shelfEntry={shelfEntryMap.get(getSetItemKey(item))}
-              onToggleSaved={onToggleSaved}
-              onToggleTried={onToggleTried}
+              shopEntry={shopEntryMap.get(getSetItemKey(item))}
+              saving={savingKey === getSetItemKey(item)}
+              onToggleInterested={onToggleInterested}
             />
           ))}
         </div>
@@ -2448,47 +2433,58 @@ function CareSetCard({ card, cardPosition, trackingContext, shelfEntryMap, onTog
   );
 }
 
-function SavedCareShelf({ entries }) {
-  const visible = safeArray(entries).filter((entry) => entry?.saved);
-  if (!visible.length) return null;
+function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkInterested, onRemove }) {
+  const visible = safeArray(entries);
+  if (!visible.length) {
+    return (
+      <div className="rounded-[22px] bg-[#F4F9F6] p-5 text-center ring-1 ring-[#D5E5DB]">
+        <div className="text-[14px] font-black text-slate-800">気になる商品はまだありません</div>
+        <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">商品カードの「気になる」を押すと、ここでまとめて比べられます。</p>
+      </div>
+    );
+  }
   return (
-    <details className="rounded-[22px] bg-[#FFF9EA] ring-1 ring-[#EED8B4]">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
-        <div>
-          <div className="text-[10px] font-black text-[#A56C18]/70">この端末のケア棚</div>
-          <div className="mt-0.5 text-[13px] font-black text-slate-900">保存したケア</div>
-        </div>
-        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{visible.length}件・この端末</span>
-      </summary>
-      <div className="grid gap-2 border-t border-[#F0DFC0] p-3 sm:grid-cols-2">
-        {visible.slice(0, 8).map((entry) => {
+    <div className="grid gap-3">
+      <div className="rounded-[20px] bg-[#FFF9EA] px-4 py-3 ring-1 ring-[#EED8B4]">
+        <div className="text-[13px] font-black text-slate-900">気になる・購入済み</div>
+        <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">購入した商品は「購入済み」にすると、体調予報のデイリーケアから使用を記録できます。</p>
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {visible.slice(0, 40).map((entry) => {
           const item = entry.item;
           const meta = getCategoryMeta(item.category);
           const Icon = meta.icon;
           const url = item.itemUrl || item.clickUrl || makeRakutenSearchUrl(item.query);
+          const purchased = entry.status === "purchased";
+          const saving = savingKey === entry.key;
           return (
-            <a key={entry.key} href={url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="flex items-center gap-3 rounded-[16px] bg-white p-2.5 ring-1 ring-[#E8E2D6] hover:ring-[#D8C8A6]">
-              <div className={["grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[13px] ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
-                {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" /> : <Icon className="h-5 w-5" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="line-clamp-2 text-[11px] font-black leading-4 text-slate-800">{item.title}</div>
-                <div className="mt-1 flex gap-1.5 text-[9px] font-black">
-                  {entry.saved ? <span className="text-[#2F816E]">気になる</span> : null}
+            <div key={entry.key} className="rounded-[18px] bg-white p-3 ring-1 ring-[#E8E2D6]">
+              <div className="flex items-center gap-3">
+                <div className={["grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[13px] ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>
+                  {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" /> : <Icon className="h-5 w-5" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="line-clamp-2 text-[11px] font-black leading-4 text-slate-800">{item.title}</div>
+                  <span className={["mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black ring-1", purchased ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]" : "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]"].join(" ")}>{purchased ? "購入済み" : "気になる"}</span>
                 </div>
               </div>
-            </a>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <a href={url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="rounded-[13px] bg-[var(--shop)] px-2 py-2 text-center text-[10px] font-black text-white">商品を見る</a>
+                <button type="button" disabled={saving} onClick={() => purchased ? onMarkInterested?.(entry) : onMarkPurchased?.(entry)} className="rounded-[13px] bg-white px-2 py-2 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD]">{saving ? "更新中…" : purchased ? "購入済みを解除" : "購入済みにする"}</button>
+              </div>
+              {!purchased ? <button type="button" disabled={saving} onClick={() => onRemove?.(entry)} className="mt-2 w-full text-center text-[9px] font-black text-slate-400 underline underline-offset-2">気になるから削除</button> : null}
+            </div>
           );
         })}
       </div>
-    </details>
+    </div>
   );
 }
 
 function ViewModeSwitch({ value, onChange }) {
   return (
     <div className="inline-flex rounded-full bg-[#EDF5F0] p-1 ring-1 ring-[#D3E3D9]">
-      {[{ key: "sets", label: "セットで見る" }, { key: "single", label: "1つずつ見る" }].map((option) => (
+      {[{ key: "sets", label: "セットで見る" }, { key: "single", label: "1つずつ見る" }, { key: "interested", label: "気になる" }].map((option) => (
         <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[10px] font-black transition-colors", value === option.key ? "bg-white text-[var(--accent-ink)] shadow-sm ring-1 ring-[#C9DED2]" : "text-slate-400"].join(" ")}>{option.label}</button>
       ))}
     </div>
@@ -2547,7 +2543,21 @@ function buildSingleShelfItems({ rakutenItemsByCategory, partnerItemsByCategory,
   ]);
 }
 
-function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shelfEntryMap, onToggleSaved, onToggleTried }) {
+function completeThreeCategorySet(card, candidateItems) {
+  if (!card) return card;
+  const selected = [];
+  const usedKeys = new Set();
+  CATEGORY_ORDER.forEach((category) => {
+    const item = [...safeArray(card.items), ...safeArray(candidateItems)]
+      .find((candidate) => candidate?.category === category && !usedKeys.has(getSetItemKey(candidate)));
+    if (!item) return;
+    usedKeys.add(getSetItemKey(item));
+    selected.push(item);
+  });
+  return { ...card, items: selected };
+}
+
+function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested }) {
   const [visibleCount, setVisibleCount] = useState(SINGLE_ITEM_INITIAL_LIMIT);
   useEffect(() => setVisibleCount(SINGLE_ITEM_INITIAL_LIMIT), [category, items]);
   const categoryCounts = Object.fromEntries(CATEGORY_ORDER.map((key) => [key, safeArray(items).filter((item) => item.category === key).length]));
@@ -2565,7 +2575,7 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {categoryItems.length ? categoryItems.map((item, index) => (
-          <KitItemRow key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shelfEntry={shelfEntryMap.get(getSetItemKey(item))} onToggleSaved={onToggleSaved} onToggleTried={onToggleTried} />
+          <ShopItemCard key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shopEntry={shopEntryMap.get(getSetItemKey(item))} saving={savingKey === getSetItemKey(item)} onToggleInterested={onToggleInterested} />
         )) : <div className="rounded-[20px] bg-[#F4F9F6] p-4 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#D5E5DB] sm:col-span-2">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
       </div>
       {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[var(--shop)] px-4 py-3 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
@@ -2584,7 +2594,8 @@ export default function CareNaviPage() {
   const basis = "shelf";
   const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
-  const [lifeKeys, setLifeKeys] = useState([]);
+  const [shopPurpose, setShopPurpose] = useState("everyday");
+  const lifeKeys = EMPTY_LIFE_KEYS;
 
   const [rakutenItemsByCategory, setRakutenItemsByCategory] = useState({ live: [], eat: [], point: [] });
   const [rakutenQueries, setRakutenQueries] = useState([]);
@@ -2595,26 +2606,32 @@ export default function CareNaviPage() {
   const [showConditions, setShowConditions] = useState(false);
   const [viewMode, setViewMode] = useState("sets");
   const [singleCategory, setSingleCategory] = useState("live");
-  const [shelfEntries, setShelfEntries] = useState([]);
-  const [shelfReady, setShelfReady] = useState(false);
-  const [recordedActionKeys, setRecordedActionKeys] = useState(() => new Set());
-  const [recordingActionKey, setRecordingActionKey] = useState("");
-  const [careRecordNotice, setCareRecordNotice] = useState("");
-  const [careRecordError, setCareRecordError] = useState("");
+  const [shopEntries, setShopEntries] = useState([]);
+  const [shopReady, setShopReady] = useState(false);
+  const [shopSchemaReady, setShopSchemaReady] = useState(false);
+  const [shopSavingKey, setShopSavingKey] = useState("");
+  const [shopNotice, setShopNotice] = useState("");
+  const [shopError, setShopError] = useState("");
 
   useEffect(() => {
-    setShelfEntries(readStoredCareShelf());
-    setShelfReady(true);
+    setShopEntries(readStoredCareShelf().map(legacyEntryToShopEntry).filter(Boolean));
+    setShopReady(true);
   }, []);
 
   useEffect(() => {
-    if (!shelfReady || typeof window === "undefined") return;
+    if (!shopReady || typeof window === "undefined") return;
     try {
-      window.localStorage.setItem(CARE_SHELF_STORAGE_KEY, JSON.stringify(shelfEntries.slice(0, 40)));
+      window.localStorage.setItem(CARE_SHELF_STORAGE_KEY, JSON.stringify(shopEntries.slice(0, 40).map((entry) => ({
+        key: entry.key,
+        item: entry.item,
+        saved: true,
+        status: entry.status,
+        updatedAt: entry.updatedAt,
+      }))));
     } catch {
       // 端末の保存領域が使えない場合も、商品閲覧そのものは続けられる。
     }
-  }, [shelfEntries, shelfReady]);
+  }, [shopEntries, shopReady]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2640,21 +2657,31 @@ export default function CareNaviPage() {
         }
 
         try {
-          const { today } = getJstTodayTomorrow();
-          const actionsRes = await fetch(`/api/radar/care-actions?date=${encodeURIComponent(today)}`, {
+          const itemsRes = await fetch("/api/care-shop/items", {
             headers: { Authorization: `Bearer ${token}` },
             cache: "no-store",
           });
-          const actionsJson = await actionsRes.json().catch(() => ({}));
-          if (!cancelled && actionsRes.ok) {
-            setRecordedActionKeys(new Set(
-              safeArray(actionsJson?.data?.actions)
-                .map((item) => item?.canonical_key || item?.item_key)
-                .filter(Boolean)
-            ));
+          let itemsJson = await itemsRes.json().catch(() => ({}));
+          if (!cancelled && itemsRes.ok && itemsJson?.data?.schema_ready !== false) {
+            const legacyEntries = readStoredCareShelf().map(legacyEntryToShopEntry).filter(Boolean);
+            if (legacyEntries.length) {
+              const migrateRes = await fetch("/api/care-shop/items", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({
+                  entries: legacyEntries.map((entry) => ({ item_key: entry.key, status: entry.status, item: entry.item })),
+                  preserve_purchased: true,
+                }),
+              });
+              if (migrateRes.ok) itemsJson = await migrateRes.json().catch(() => itemsJson);
+            }
+            setShopEntries(safeArray(itemsJson?.data?.items).map(shopEntryFromRow).filter(Boolean));
+            setShopSchemaReady(true);
+          } else if (!cancelled) {
+            setShopSchemaReady(false);
           }
         } catch {
-          // 記録一覧の取得に失敗しても、MYケアの商品閲覧は止めない。
+          if (!cancelled) setShopSchemaReady(false);
         }
 
         const res = await fetch("/api/care-navi/context", {
@@ -2708,10 +2735,6 @@ export default function CareNaviPage() {
     const params = new URLSearchParams(window.location.search);
     const nextCategory = params.get("category");
     const nextSymptom = params.get("symptom");
-    const nextLifeKeys = String(params.get("life") || "")
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
 
     if (nextSymptom && SYMPTOM_LABELS[nextSymptom]) {
       setSelectedSymptom(nextSymptom);
@@ -2722,9 +2745,6 @@ export default function CareNaviPage() {
       setViewMode("single");
     }
 
-    if (nextLifeKeys.length) {
-      setLifeKeys(nextLifeKeys.filter((key) => LIFE_OPTIONS.some((item) => item.key === key)).slice(0, 3));
-    }
   }, []);
 
   const symptomKey = selectedSymptom || profile?.active_symptom_focus || "fatigue";
@@ -2760,20 +2780,19 @@ export default function CareNaviPage() {
   const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
 
   const policyKeys = useMemo(
-    () => buildCareShelfPolicyKeys({
+    () => buildCareShopPolicyKeys({
       baseScores: karteCarePreferences?.scores || {},
       forecastCarePolicies,
       seasonKey,
-      lifeKeys,
+      purpose: shopPurpose,
     }),
-    [karteCarePreferences, forecastCarePolicies, seasonKey, lifeKeys]
+    [karteCarePreferences, forecastCarePolicies, seasonKey, shopPurpose]
   );
 
   const policyKeySignature = policyKeys.join("|");
-  const lifeKeySignature = lifeKeys.join("|");
   useEffect(() => {
     setVisibleLimit(CARE_SET_INITIAL_LIMIT);
-  }, [lifeKeySignature, symptomKey, policyKeySignature]);
+  }, [shopPurpose, symptomKey, policyKeySignature]);
 
   const tomorrowTriggerFactors = useMemo(
     () => (tomorrowBundle?.forecast ? getForecastTriggerFactors(tomorrowBundle.forecast) : []),
@@ -2880,7 +2899,7 @@ export default function CareNaviPage() {
       clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
+  }, [priceBand, policyKeySignature, symptomKey, basis, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -2908,7 +2927,7 @@ export default function CareNaviPage() {
     [priceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
   );
 
-  const careSetCards = useMemo(
+  const rawCareSetCards = useMemo(
     () =>
       buildCareSetCards({
         mode: CARE_SET_MODE,
@@ -2925,6 +2944,20 @@ export default function CareNaviPage() {
     [rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
   );
 
+  const setCandidateItems = useMemo(
+    () => buildSingleShelfItems({
+      rakutenItemsByCategory,
+      partnerItemsByCategory,
+      careSetCards: rawCareSetCards,
+      policyKeys,
+    }),
+    [rakutenItemsByCategory, partnerItemsByCategory, rawCareSetCards, policyKeys]
+  );
+  const careSetCards = useMemo(
+    () => rawCareSetCards.map((card) => completeThreeCategorySet(card, setCandidateItems)).filter((card) => card?.items?.length === 3),
+    [rawCareSetCards, setCandidateItems]
+  );
+
   const displaySets = careSetCards.slice(0, visibleLimit);
   const featuredSet = displaySets[0] || null;
   const alternativeSets = displaySets.slice(1);
@@ -2933,23 +2966,10 @@ export default function CareNaviPage() {
     () => buildSingleShelfItems({ rakutenItemsByCategory, partnerItemsByCategory, careSetCards, policyKeys }),
     [rakutenItemsByCategory, partnerItemsByCategory, careSetCards, policyKeys]
   );
-  const shelfEntryMap = useMemo(() => {
-    const map = new Map(shelfEntries.map((entry) => [entry.key, { ...entry }]));
-    const visibleItems = [
-      ...careSetCards.flatMap((card) => safeArray(card?.items)),
-      ...singleItems,
-    ];
-    visibleItems.forEach((item) => {
-      const shelfKey = getSetItemKey(item);
-      const actionKey = getMyCareActionKey(item);
-      map.set(shelfKey, {
-        ...(map.get(shelfKey) || {}),
-        recorded: recordedActionKeys.has(actionKey),
-        recording: recordingActionKey === actionKey,
-      });
-    });
-    return map;
-  }, [shelfEntries, careSetCards, singleItems, recordedActionKeys, recordingActionKey]);
+  const shopEntryMap = useMemo(
+    () => new Map(shopEntries.map((entry) => [entry.key, entry])),
+    [shopEntries]
+  );
 
   const trackingContext = useMemo(() => {
     const weatherSummary = compactForecastSummary(tomorrowBundle);
@@ -2963,12 +2983,13 @@ export default function CareNaviPage() {
       coreCode: profileLike.core_code || null,
       subCodes: safeArray(profileLike.sub_labels),
       policyKeys,
-      lifeKeys,
+      lifeKeys: [],
+      shopPurpose,
       weatherDate: weatherSummary.date,
       weatherRiskLevel: weatherSummary.riskLevel,
       weatherSummary,
     };
-  }, [basis, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
+  }, [basis, priceBand, symptomKey, profileLike, policyKeys, shopPurpose, tomorrowBundle]);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
@@ -2976,102 +2997,80 @@ export default function CareNaviPage() {
   const subLabels = getSubLabels(profileLike.sub_labels).slice(0, 2);
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
 
-  function toggleLifeKey(key) {
-    setLifeKeys((prev) =>
-      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key].slice(-3)
-    );
-  }
-
-
-
-  function toggleSavedItem(item) {
+  async function syncShopEntry(item, status = "interested") {
     const key = getSetItemKey(item);
-    if (!key) return;
-    setShelfEntries((prev) => {
-      const current = prev.find((entry) => entry.key === key);
-      const nextEntry = {
-        key,
-        item: compactShelfItem(item),
-        saved: !current?.saved,
-        updatedAt: new Date().toISOString(),
-      };
-      const rest = prev.filter((entry) => entry.key !== key);
-      if (!nextEntry.saved) return rest;
-      return [nextEntry, ...rest].slice(0, 40);
-    });
-  }
-
-  async function recordCareItem(item) {
-    const actionKey = getMyCareActionKey(item);
-    if (!actionKey || recordedActionKeys.has(actionKey) || recordingActionKey) return;
-
-    setCareRecordNotice("");
-    setCareRecordError("");
-    setRecordingActionKey(actionKey);
-
+    if (!key || shopSavingKey) return;
+    setShopSavingKey(key);
+    setShopNotice("");
+    setShopError("");
+    const nextEntry = { key, item: compactShelfItem(item), status, updatedAt: new Date().toISOString() };
     try {
-      if (!supabase?.auth) throw new Error("ログインすると、今日使ったケアを記録できます。");
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) throw new Error("ログインすると、今日使ったケアを記録できます。");
-
-      const { today } = getJstTodayTomorrow();
-      const detail = String(item?.useGuide || item?.reason || inferRoleLabelFromItem(item) || "MYケアで選んだケア").slice(0, 240);
-      const domain = getMyCareActionDomain(item);
-      const response = await fetch("/api/radar/care-actions", {
+      if (!token || !shopSchemaReady) {
+        setShopEntries((prev) => [nextEntry, ...prev.filter((entry) => entry.key !== key)].slice(0, 40));
+        setShopNotice("この端末の「気になる」に保存しました。ログインするとアカウントへ引き継げます。");
+        return;
+      }
+      const response = await fetch("/api/care-shop/items", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          target_date: today,
-          source_mode: "today",
-          domain,
-          kind: "my_care_item",
-          label: String(item?.title || "MYケアで選んだケア").slice(0, 160),
-          detail,
-          item_key: actionKey,
-          canonical_key: actionKey,
-          checked: true,
-          entry_origin: "record_page",
-          timing_relation: "same_day_unknown",
-          item_snapshot: {
-            label: String(item?.title || "MYケアで選んだケア").slice(0, 160),
-            detail,
-            kind: "my_care_item",
-            domain,
-            canonical_key: actionKey,
-            meta: {
-              card_key: "my_care_select",
-              card_label: "MYケアセレクト",
-              entry_origin: "record_page",
-            },
-          },
-        }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ item_key: key, status, item: nextEntry.item }),
       });
       const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json?.error || "記録できませんでした。時間をおいて、もう一度お試しください。");
-
-      setRecordedActionKeys((prev) => new Set([...prev, actionKey]));
-      setCareRecordNotice(`「${String(item?.title || "選んだケア").slice(0, 36)}」を今日の記録に追加しました。`);
+      if (!response.ok) throw new Error(json?.error || "保存できませんでした。");
+      setShopEntries(safeArray(json?.data?.items).map(shopEntryFromRow).filter(Boolean));
+      setShopNotice(status === "purchased" ? "購入済みにしました。体調予報のデイリーケアに表示されます。" : "「気になる」に保存しました。");
     } catch (error) {
-      setCareRecordError(error?.message || "記録できませんでした。時間をおいて、もう一度お試しください。");
+      setShopError(error?.message || "保存できませんでした。");
     } finally {
-      setRecordingActionKey("");
+      setShopSavingKey("");
     }
+  }
+
+  async function removeShopEntry(entry) {
+    if (!entry?.key || shopSavingKey) return;
+    setShopSavingKey(entry.key);
+    setShopError("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token || !shopSchemaReady) {
+        setShopEntries((prev) => prev.filter((item) => item.key !== entry.key));
+        return;
+      }
+      const response = await fetch("/api/care-shop/items", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ item_key: entry.key }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.error || "削除できませんでした。");
+      setShopEntries(safeArray(json?.data?.items).map(shopEntryFromRow).filter(Boolean));
+    } catch (error) {
+      setShopError(error?.message || "削除できませんでした。");
+    } finally {
+      setShopSavingKey("");
+    }
+  }
+
+  function toggleInterestedItem(item) {
+    const current = shopEntryMap.get(getSetItemKey(item));
+    if (current?.status === "interested") removeShopEntry(current);
+    else if (!current) syncShopEntry(item, "interested");
+    else setViewMode("interested");
   }
 
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
-        title="MYケアセレクト"
-        subtitle="備えて、試して、自分に合うケアへ"
+        title="パーソナルケアショップ"
+        subtitle="体質・不調・使いどきから選ぶ"
         headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>設定</Button>}
       >
         <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
           <div className="relative z-10">
-            <MyCareSelectHero
+            <PersonalCareShopHero
               loading={loading}
               profile={profile}
               profileError={profileError}
@@ -3090,7 +3089,7 @@ export default function CareNaviPage() {
               <div className="mt-3 rounded-[28px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_16px_34px_-30px_rgba(36,86,76,0.26)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">候補の出し方を調整する</div>
+                    <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">買い物条件を変える</div>
                   </div>
                   <div className="rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[#527064] ring-1 ring-[#D5E5DB]">任意</div>
                 </div>
@@ -3108,20 +3107,26 @@ export default function CareNaviPage() {
                   </div>
 
                   <div>
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活を足す</div>
-                      <div className="text-[10px] font-bold text-slate-400">任意・最大3つ</div>
+                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">何に合わせて探す？</div>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {SHOP_PURPOSE_OPTIONS.map((item) => (
+                        <button key={item.key} type="button" onClick={() => setShopPurpose(item.key)} className={["rounded-[18px] p-3 text-left ring-1 transition-colors", shopPurpose === item.key ? "bg-[#EAF7F1] text-[#24564C] ring-[#9CCBB7]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
+                          <div className="text-[12px] font-black">{item.label}</div>
+                          <div className="mt-1 text-[9px] font-bold leading-4 opacity-70">{item.lead}</div>
+                        </button>
+                      ))}
                     </div>
-                    <div className="flex flex-wrap gap-2">{LIFE_OPTIONS.map((item) => <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>{item.label}</Chip>)}</div>
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">見たいカテゴリ</div>
+                    <div className="flex flex-wrap gap-2">
+                      <Chip active={viewMode === "sets"} onClick={() => setViewMode("sets")}>3カテゴリ</Chip>
+                      {CATEGORY_OPTIONS.map((item) => <Chip key={item.key} active={viewMode === "single" && singleCategory === item.key} onClick={() => { setSingleCategory(item.key); setViewMode("single"); }}>{item.label}</Chip>)}
+                    </div>
                   </div>
 
                   <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={viewMode === "single" ? singleCategory : ""} />
-
-                  <div className="rounded-[24px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE]">
-                    <div className="text-[11px] font-black tracking-[0.14em] text-[#2F816E]/65">今回の方針</div>
-                    <div className="mt-2 flex flex-wrap gap-2">{policyKeys.map((key) => <PolicyPill key={key} policyKey={key} />)}</div>
-                    <div className="mt-3 flex flex-wrap gap-1.5">{approachTags.slice(0, 4).map((tag) => <span key={tag} className="rounded-full border border-[#CFE7DE] bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{tag}</span>)}</div>
-                  </div>
 
                 </div>
               </div>
@@ -3135,8 +3140,8 @@ export default function CareNaviPage() {
             <div className="flex min-w-0 items-start gap-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[var(--gold-soft)] text-[#8A5C0B] ring-1 ring-[#E4C56B] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
-                <div className="text-[17px] font-black tracking-tight text-slate-900">あなた向けのケア棚</div>
-                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">暮らす・食べる・ほぐすを組み合わせた本命から、気になるものを手元の棚へ。</div>
+                <div className="text-[17px] font-black tracking-tight text-slate-900">あなたへのおすすめ商品</div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">暮らす・食べる・ほぐすの3方向で比べるか、カテゴリごとに探せます。</div>
                 <div className="mt-1 text-[10px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
               </div>
             </div>
@@ -3145,15 +3150,23 @@ export default function CareNaviPage() {
 
           <div className="mt-3 grid gap-3">
             <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
-            {careRecordNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[11px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{careRecordNotice}</div> : null}
-            {careRecordError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[11px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{careRecordError}</div> : null}
+            {shopNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[11px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{shopNotice}</div> : null}
+            {shopError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[11px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{shopError}</div> : null}
 
-            {rakutenLoading ? (
+            {viewMode === "interested" ? (
+              <InterestedItemsView
+                entries={shopEntries}
+                savingKey={shopSavingKey}
+                onMarkPurchased={(entry) => syncShopEntry(entry.item, "purchased")}
+                onMarkInterested={(entry) => syncShopEntry(entry.item, "interested")}
+                onRemove={removeShopEntry}
+              />
+            ) : rakutenLoading ? (
               <RakutenLoadingCards />
             ) : careSetCards.length ? (
               viewMode === "sets" ? (
                 <>
-                  <FeaturedCareSetCard card={featuredSet} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />
+                  <FeaturedCareSetCard card={featuredSet} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />
                   {alternativeSets.length || canShowMore ? (
                     <details className="group rounded-[24px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
@@ -3163,24 +3176,22 @@ export default function CareNaviPage() {
                         <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
                       </summary>
                       <div className="grid gap-3 border-t border-[#D8E6DD] p-3">
-                        {alternativeSets.map((card, index) => <CareSetCard key={`${CARE_SET_MODE}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />)}
+                        {alternativeSets.map((card, index) => <CareSetCard key={`${CARE_SET_MODE}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />)}
                         {canShowMore ? <button type="button" onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))} className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]">別の組み方をもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）</button> : null}
                       </div>
                     </details>
                   ) : null}
                 </>
               ) : (
-                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />
+                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />
               )
             ) : (
-              <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合うMYケア候補を十分に組めませんでした。目的や気になる不調を少し変えてお試しください。</div>
+              <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合う商品候補を十分に組めませんでした。用途や気になる不調を少し変えてお試しください。</div>
             )}
-
-            <SavedCareShelf entries={shelfEntries} />
 
             <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
               <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">選び方と紹介リンクについて</summary>
-              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質・気になる不調・天気でゆらぎやすい傾向を土台に、季節や明日の予報、選んだ生活サインを重ねて候補を並べています。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。</p>
+              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質と気になる不調を土台に、選んだ用途に応じて季節と近いうちの天気を重ね、商品候補を並べています。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。</p>
             </details>
           </div>
         </Module>
