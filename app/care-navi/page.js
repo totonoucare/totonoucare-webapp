@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
-import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
@@ -75,29 +74,16 @@ const CATEGORY_OPTIONS = [
 
 const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
 
-const SET_MODE_OPTIONS = [
-  {
-    key: "starter",
-    label: "まず1つから",
-    lead: "取り入れやすい一手を中心に見ます。",
-  },
-  {
-    key: "steady",
-    label: "3方向をそろえる",
-    lead: "暮らす・食べる・ほぐすを組み合わせ、続けやすい棚を作ります。",
-  },
-  {
-    key: "environment",
-    label: "環境から見直す",
-    lead: "寝具・空気・ケア機器まで含め、生活の土台から探します。",
-  },
-];
+// セット表示は常に「暮らす・食べる・ほぐす」の3方向で組む。
+// ユーザー向けには「セットで見る／1つずつ見る」だけを表示し、
+// 同じ意味を持つスコープ選択は重ねない。
+const CARE_SET_MODE = "steady";
 
 const PRICE_BAND_OPTIONS = [
-  { key: "all", label: "すべて" },
-  { key: "light", label: "お手軽" },
-  { key: "standard", label: "標準" },
-  { key: "deep", label: "しっかり" },
+  { key: "all", label: "指定なし" },
+  { key: "light", label: "低め" },
+  { key: "standard", label: "中くらい" },
+  { key: "deep", label: "高め" },
 ];
 
 const CARE_NAVI_INITIAL_LIMIT = 12;
@@ -684,10 +670,18 @@ function TwoToneOrbitMark() {
   );
 }
 
-function EkkenFaceAccent() {
+function CoreTypeAvatar({ coreIconPath, coreTitle }) {
   return (
-    <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_72%)] shadow-[0_12px_24px_-18px_rgba(36,86,76,0.38)]">
-      <GuideBotAvatar mood="listening" className="h-[78px] w-[78px] -translate-y-[7px]" />
+    <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[20px] bg-[#F4F9F6] p-1.5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_72%)] shadow-[0_12px_24px_-18px_rgba(36,86,76,0.38)]">
+      {coreIconPath ? (
+        <img
+          src={coreIconPath}
+          alt={`${coreTitle || "あなた"}の体質キャラクター`}
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        <IconKarte className="h-7 w-7 text-[#2F816E]" />
+      )}
     </div>
   );
 }
@@ -984,10 +978,6 @@ function RakutenStatusCard({ error, onRetry, loading }) {
 }
 
 
-
-function getSetModeMeta(mode) {
-  return SET_MODE_OPTIONS.find((item) => item.key === mode) || SET_MODE_OPTIONS[0];
-}
 
 function getSetItemKey(item) {
   return item?.itemUrl || item?.clickUrl || item?.itemCode || `${item?.source || "item"}:${item?.title || ""}:${item?.shopName || ""}`;
@@ -2210,7 +2200,7 @@ function readStoredCareShelf() {
   }
 }
 
-function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions, onConsult }) {
+function MyCareSelectHero({ loading, profile, profileError, coreIconPath, coreTitle, subText, policyKeys, symptomLabel, seasonLabel, hasTomorrow, showConditions, onToggleConditions }) {
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
       <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
@@ -2219,9 +2209,9 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
 
       <div className="relative z-10">
         <div className="flex items-center gap-3">
-          <EkkenFaceAccent />
+          <CoreTypeAvatar coreIconPath={coreIconPath} coreTitle={coreTitle} />
           <div className="min-w-0">
-            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">MYケア</div>
+            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">MYケアセレクト</div>
             <div className="mt-0.5 text-[11px] font-bold text-slate-500">用意して、試して、自分に合うケアを見つける</div>
           </div>
         </div>
@@ -2260,42 +2250,6 @@ function EkkenGuideHero({ loading, profile, profileError, coreIconPath, coreTitl
           {showConditions ? "調整を閉じる" : "条件を調整"}
           <span aria-hidden="true" className={["text-[13px] transition-transform", showConditions ? "rotate-180" : ""].join(" ")}>⌄</span>
         </button>
-      </div>
-
-      <button
-        type="button"
-        onClick={onConsult}
-        className="relative z-10 mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] hover:bg-[#DFF2E9]"
-      >
-        <GuideBotAvatar mood="default" className="h-7 w-7" />
-        ケア選びをEkkenに相談する
-      </button>
-    </div>
-  );
-}
-
-function CareScopePicker({ value, onChange }) {
-  const styles = {
-    starter: { surface: "bg-[#FFF7E8]", ink: "text-[#946313]", ring: "ring-[#EED8B4]", active: "bg-[#D39422] text-white ring-[#D39422]" },
-    steady: { surface: "bg-[#EEF7F3]", ink: "text-[#2F816E]", ring: "ring-[#CFE7DE]", active: "bg-[#349B83] text-white ring-[#349B83]" },
-    environment: { surface: "bg-[#F5F0F7]", ink: "text-[#765E84]", ring: "ring-[#E2D6E7]", active: "bg-[#8A7097] text-white ring-[#8A7097]" },
-  };
-  return (
-    <div>
-      <div className="mb-2">
-        <div className="text-[11px] font-black text-slate-500">どこまで広げて見る？</div>
-      </div>
-      <div className="grid gap-2 sm:grid-cols-3">
-        {SET_MODE_OPTIONS.map((option, index) => {
-          const active = value === option.key;
-          const tone = styles[option.key];
-          return (
-            <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-[20px] px-3.5 py-3.5 text-left ring-1 transition-all", active ? `${tone.active} shadow-[0_16px_28px_-20px_rgba(50,45,40,0.42)]` : `${tone.surface} ${tone.ink} ${tone.ring} hover:-translate-y-0.5`].join(" ")}>
-              <div className="flex items-center justify-between gap-2"><span className="text-[13px] font-black">{option.label}</span><span className={["text-[9px] font-black", active ? "text-white/70" : "opacity-50"].join(" ")}>0{index + 1}</span></div>
-              <div className={["mt-1.5 text-[10px] font-bold leading-4", active ? "text-white/85" : "opacity-75"].join(" ")}>{option.lead}</div>
-            </button>
-          );
-        })}
       </div>
     </div>
   );
@@ -2628,7 +2582,6 @@ export default function CareNaviPage() {
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
 
   const basis = "shelf";
-  const [kitMode, setKitMode] = useState("steady");
   const [priceBand, setPriceBand] = useState("all");
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [lifeKeys, setLifeKeys] = useState([]);
@@ -2753,17 +2706,12 @@ export default function CareNaviPage() {
     if (typeof window === "undefined") return;
 
     const params = new URLSearchParams(window.location.search);
-    const nextMode = params.get("mode") || params.get("set") || params.get("depth");
     const nextCategory = params.get("category");
     const nextSymptom = params.get("symptom");
     const nextLifeKeys = String(params.get("life") || "")
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
-
-    if (SET_MODE_OPTIONS.some((option) => option.key === nextMode)) {
-      setKitMode(nextMode);
-    }
 
     if (nextSymptom && SYMPTOM_LABELS[nextSymptom]) {
       setSelectedSymptom(nextSymptom);
@@ -2825,7 +2773,7 @@ export default function CareNaviPage() {
   const lifeKeySignature = lifeKeys.join("|");
   useEffect(() => {
     setVisibleLimit(CARE_SET_INITIAL_LIMIT);
-  }, [kitMode, lifeKeySignature, symptomKey, policyKeySignature]);
+  }, [lifeKeySignature, symptomKey, policyKeySignature]);
 
   const tomorrowTriggerFactors = useMemo(
     () => (tomorrowBundle?.forecast ? getForecastTriggerFactors(tomorrowBundle.forecast) : []),
@@ -2845,8 +2793,6 @@ export default function CareNaviPage() {
       }),
     [basis, tomorrowTriggerFactors, seasonLabel, lifeKeys, symptomChanged, symptomLabel]
   );
-
-  const kitModeMeta = getSetModeMeta(kitMode);
 
   function retryRakutenSearch() {
     setRakutenRetryNonce((value) => value + 1);
@@ -2934,7 +2880,7 @@ export default function CareNaviPage() {
       clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [kitMode, priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
+  }, [priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -2955,17 +2901,17 @@ export default function CareNaviPage() {
             priceBand,
             // 表示件数ではなく内部候補プール。A8側を先に絞りすぎると、
             // スロット別には合う提携商品がセット組み立て前に落ちるため少し広めに渡す。
-            limit: kitMode === "environment" ? 16 : 12,
+            limit: 12,
           }),
         ])
       ),
-    [kitMode, priceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
+    [priceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
   );
 
   const careSetCards = useMemo(
     () =>
       buildCareSetCards({
-        mode: kitMode,
+        mode: CARE_SET_MODE,
         itemsByCategory: rakutenItemsByCategory,
         partnerItemsByCategory,
         policyKeys,
@@ -2976,7 +2922,7 @@ export default function CareNaviPage() {
         approachTags,
         profileLike,
       }),
-    [kitMode, rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
+    [rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
   );
 
   const displaySets = careSetCards.slice(0, visibleLimit);
@@ -3011,7 +2957,7 @@ export default function CareNaviPage() {
     return {
       basis,
       category: "set",
-      kitMode,
+      kitMode: CARE_SET_MODE,
       priceBand,
       symptomKey,
       coreCode: profileLike.core_code || null,
@@ -3022,7 +2968,7 @@ export default function CareNaviPage() {
       weatherRiskLevel: weatherSummary.riskLevel,
       weatherSummary,
     };
-  }, [basis, kitMode, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
+  }, [basis, priceBand, symptomKey, profileLike, policyKeys, lifeKeys, tomorrowBundle]);
 
   const coreLabel = profileLike.core_code ? getCoreLabel(profileLike.core_code) : null;
   const coreTitle = coreLabel?.title || coreLabel?.short || "";
@@ -3116,18 +3062,6 @@ export default function CareNaviPage() {
     }
   }
 
-  function openEkkenConsultation() {
-    const policies = policyKeys.slice(0, 3).map((key) => POLICY_META[key]?.label || key).join("・");
-    const prompt = [
-      "MYケア選びを相談したいです。",
-      coreTitle ? `体質は${coreTitle}${subText ? `（${subText}）` : ""}。` : "",
-      `気になるのは${symptomLabel}。`,
-      policies ? `今のケア方針は${policies}です。` : "",
-      "手元に用意して続けやすいケアを一緒に選んでください。",
-    ].filter(Boolean).join("");
-    router.push(`/records?tab=consult&prompt=${encodeURIComponent(prompt.slice(0, 240))}`);
-  }
-
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
@@ -3137,7 +3071,7 @@ export default function CareNaviPage() {
       >
         <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
           <div className="relative z-10">
-            <EkkenGuideHero
+            <MyCareSelectHero
               loading={loading}
               profile={profile}
               profileError={profileError}
@@ -3150,7 +3084,6 @@ export default function CareNaviPage() {
               hasTomorrow={Boolean(tomorrowBundle?.forecast)}
               showConditions={showConditions}
               onToggleConditions={() => setShowConditions((value) => !value)}
-              onConsult={openEkkenConsultation}
             />
 
             {showConditions ? (
@@ -3163,32 +3096,6 @@ export default function CareNaviPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div>
-                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">選ぶときの手がかり</div>
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      <div className="rounded-[20px] bg-[#EEF7F3] p-3 ring-1 ring-[#CFE7DE]">
-                        <div className="text-[10px] font-black text-[#2F816E]">体質トリセツ</div>
-                        <div className="mt-1 text-[12px] font-black text-slate-900">いつもの体質</div>
-                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">体質タイプや崩れやすい傾向から、長く使いやすいものを選びます。</div>
-                      </div>
-                      <div className="rounded-[20px] bg-[#EEF6FB] p-3 ring-1 ring-[#D6E6EF]">
-                        <div className="text-[10px] font-black text-[#52758B]">これからの天気</div>
-                        <div className="mt-1 text-[12px] font-black text-slate-900">近いうちの備え</div>
-                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">近いうちの気温・湿気・乾燥などに合わせて、用意しておきたいものを選びます。</div>
-                      </div>
-                      <div className="rounded-[20px] bg-[#FFF7E8] p-3 ring-1 ring-[#EED8B4]">
-                        <div className="text-[10px] font-black text-[#9B6818]">{seasonLabel}の傾向</div>
-                        <div className="mt-1 text-[12px] font-black text-slate-900">今の時季</div>
-                        <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">季節に合った使い方や、しばらく続けやすいものを選びます。</div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <CareScopePicker value={kitMode} onChange={setKitMode} />
-
-                  <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={viewMode === "single" ? singleCategory : ""} />
-
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">気になる不調を変更</div>
@@ -3207,6 +3114,8 @@ export default function CareNaviPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">{LIFE_OPTIONS.map((item) => <Chip key={item.key} active={lifeKeys.includes(item.key)} onClick={() => toggleLifeKey(item.key)}>{item.label}</Chip>)}</div>
                   </div>
+
+                  <PriceBandFilter value={priceBand} onChange={setPriceBand} categoryKey={viewMode === "single" ? singleCategory : ""} />
 
                   <div className="rounded-[24px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE]">
                     <div className="text-[11px] font-black tracking-[0.14em] text-[#2F816E]/65">今回の方針</div>
@@ -3227,7 +3136,7 @@ export default function CareNaviPage() {
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[var(--gold-soft)] text-[#8A5C0B] ring-1 ring-[#E4C56B] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
                 <div className="text-[17px] font-black tracking-tight text-slate-900">あなた向けのケア棚</div>
-                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{kitModeMeta.label}。本命から見て、気になるものを手元の棚へ。</div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">暮らす・食べる・ほぐすを組み合わせた本命から、気になるものを手元の棚へ。</div>
                 <div className="mt-1 text-[10px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
               </div>
             </div>
@@ -3254,7 +3163,7 @@ export default function CareNaviPage() {
                         <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
                       </summary>
                       <div className="grid gap-3 border-t border-[#D8E6DD] p-3">
-                        {alternativeSets.map((card, index) => <CareSetCard key={`${kitMode}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />)}
+                        {alternativeSets.map((card, index) => <CareSetCard key={`${CARE_SET_MODE}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shelfEntryMap={shelfEntryMap} onToggleSaved={toggleSavedItem} onToggleTried={recordCareItem} />)}
                         {canShowMore ? <button type="button" onClick={() => setVisibleLimit((prev) => Math.min(CARE_SET_EXPANDED_LIMIT, prev + 3))} className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]">別の組み方をもっと見る（{Math.min(CARE_SET_EXPANDED_LIMIT, careSetCards.length) - visibleLimit}件）</button> : null}
                       </div>
                     </details>
