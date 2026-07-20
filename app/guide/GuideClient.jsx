@@ -187,7 +187,7 @@ export default function GuidePage() {
       { key: "flow", label: "基本の流れ" },
       { key: "radar", label: "予報・ケア" },
       { key: "records", label: "記録・相談" },
-      { key: "care", label: "MYケア" },
+      { key: "care", label: "ショップ" },
     ],
     []
   );
@@ -289,7 +289,7 @@ export default function GuidePage() {
             </MiniNote>
 
             <GuideCard tone="teal" title="必要な時のサポート" icon={<IconCare />} compact>
-              MYケアセレクトでは、ケアを続けやすくする用品・食品候補を探せます。セルフケアだけでは足りない不調には、国家資格者によるオンライン相談を準備しています。AI分析を使っていなくても相談できます。
+              パーソナルケアショップでは、体質・不調・使いどきに合う用品や食品を探せます。セルフケアだけでは足りない不調には、国家資格者によるオンライン相談を準備しています。AI分析を使っていなくても相談できます。
             </GuideCard>
 
             <div className="grid gap-3 pt-2">
@@ -444,18 +444,18 @@ export default function GuidePage() {
 
       {tab === "care" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
-          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">MYケアセレクトは必要な時に</div>
+          <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">パーソナルケアショップ</div>
           <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
-            予報ページのケアを無理なく続けるために、用品・食品・サービス候補を探す場所です。毎日見る必要はありません。
+            ケア用品や食品が多すぎて選べない時に、体質と気になる不調から自分向けの商品を探す場所です。
           </div>
 
           <div className="space-y-4">
             <GuideCard tone="mint" title="予報ページとの違い" icon={<IconRadar />}>
-              予報ページは、今日・明日に道具なしでもできるケアを確認し、実行を記録する場所です。MYケアセレクトは、そのケアを続けやすくする候補を見る場所です。
+              予報ページは、今日・明日に行うデイリーケアを確認し、実行を記録する場所です。ショップは、そのケアに役立つ商品を選び、購入する場所です。
               <CheckList
                 items={[
                   "予報：今日どう過ごすか、何を試すかを決める。",
-                  "MYケア：続けたいケアを助ける商品やサービス候補を見る。",
+                  "ショップ：体質・不調・使いどきに合う商品を探す。",
                 ]}
               />
             </GuideCard>
@@ -471,27 +471,33 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="amber" title="目的に合わせて条件を切り替える" icon={<IconWeather />}>
-              体質トリセツ、明日の予報、季節、最近の生活条件から、今探したい条件を選びます。
+            <GuideCard tone="amber" title="商品の選ばれ方" icon={<IconWeather />}>
+              体質と気になる不調を土台に商品を選び、季節と近いうちの天気で使いやすい順に整えます。必要な時だけ買い物条件を変更できます。
               <CheckList
                 items={[
-                  "トリセツ：自分の基本的な崩れ方から探す。",
-                  "明日の予報：明日に備える前提で探す。",
-                  "季節・最近の生活：冷え、湿気、睡眠不足、食べすぎなどを加えて探す。",
+                  "体質トリセツ：崩れやすい傾向とケア方針の土台にする。",
+                  "気になる不調：いま用意したいケアの目的を絞る。",
+                  "季節：しばらく続けやすい選択肢を考える。",
+                  "近いうちの天気：直近で出番がありそうな商品へ少し注目する。",
+                  "買い物条件：優先する不調・カテゴリ・予算・用途を変更する。",
                 ]}
               />
             </GuideCard>
 
+            <GuideCard tone="mint" title="気になる商品と購入済み商品" icon={<IconSpark />}>
+              比べたい商品は「気になる」に保存できます。購入後に「購入済み」にすると、体調予報のデイリーケアに手持ちアイテムとして表示されます。
+            </GuideCard>
+
             <GuideCard tone="violet" title="買う前に、まず目的を確認" icon={<IconBowl />}>
-              MYケアセレクトは買い物を急がせる機能ではありません。今日すぐできる対策ケアだけでも十分です。続けやすくしたい時や、家に用意しておきたい時に使います。
+              商品を使った記録はショップではなく、体調予報のデイリーケアから行います。食品は「今日取り入れた」、用品やほぐす道具は「今日使った」として記録されます。
             </GuideCard>
 
             <MiniNote>
-              まず体調予報で今日の作戦を確認し、ケアを試す。続けたいケアが見えてからMYケアセレクトを見ると、情報が散らからず使いやすくなります。
+              体調予報で今日のケアを確認し、必要な道具や食品をショップで選ぶ。購入後はデイリーケアから実行を記録する、という流れです。
             </MiniNote>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/care-navi")} className="w-full shadow-md">MYケアセレクトへ</Button>
+              <Button onClick={() => router.push("/care-navi")} className="w-full shadow-md">パーソナルケアショップへ</Button>
             </div>
           </div>
         </Module>
