@@ -182,7 +182,7 @@ export default function HeroGuideBot({
   return (
     <div className={["relative", widthClass].join(" ")}>
       {showBubble ? (
-        <div className={`absolute rounded-2xl border border-[color:var(--ring)] bg-white px-4 py-2.5 text-left text-[12px] font-bold leading-6 text-[#586372] shadow-[0_12px_24px_-12px_rgba(40,55,48,0.2)] z-20 transition-all ${bubbleStyles}`}>
+        <div className={`absolute rounded-2xl border border-[color:var(--ring)] bg-white px-4 py-2.5 text-left text-[14px] font-bold leading-6 text-[#586372] shadow-[0_12px_24px_-12px_rgba(40,55,48,0.2)] z-20 transition-all ${bubbleStyles}`}>
           {tailStyles}
           <div className="relative z-10">{message}</div>
         </div>
