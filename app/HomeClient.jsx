@@ -727,8 +727,8 @@ function GuestStartCta({ onCheck, onLogin }) {
     },
     {
       key: "care",
-      title: "MYケア",
-      sub: "用品・食品・サービス",
+      title: "ショップ",
+      sub: "ケア用品・食品",
       icon: <AppIcon name="care" className="h-[22px] w-[22px]" />,
       tone: "text-[#2F8F79] bg-white ring-[#CFE0D3]",
     },
@@ -748,7 +748,7 @@ function GuestStartCta({ onCheck, onLogin }) {
             START GUIDE
           </div>
           <h2 className="mt-2 text-[17px] font-black tracking-tight text-[#24564C] leading-[1.35]">
-            体質トリセツを作って、体調予報とMYケアセレクトへ
+            体質トリセツを作って、体調予報とパーソナルケアショップへ
           </h2>
           <p className="mt-2 text-[12px] font-bold leading-6 text-[#5b6674]">
             1〜2分の体質チェックで、あなたの「崩れ方のクセ」をまとめます。作成後は、今日・明日の体調予報や、ケア用品・食品・サービス候補も自分向けに見られます。
@@ -809,13 +809,13 @@ function MyCareScopeBadge({ variant = "stack", className = "" }) {
   );
 }
 
-function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow }) {
-  const title = hasResult ? "MYケアセレクト" : "体質チェック後に、MYケアセレクト";
+function MyCareSelectHomeCard({ hasResult, onPrimary, onBrowseSingle }) {
+  const title = hasResult ? "パーソナルケアショップ" : "体質チェック後に、あなた向けの商品選び";
   const body = hasResult
-    ? "体質トリセツと気になる不調をもとに、ケア用品・食品・サービス候補をあなた向けに選べます。明日の天気を重ねた候補も見られます。"
-    : "体質チェックをすると、あなたの体質・不調・天気に合わせたケア用品・食品・サービス候補を見られます。";
-  const primaryLabel = hasResult ? "MYケアセレクトを見る" : "体質チェックしてMYケアを見る";
-  const secondaryLabel = hasResult && hasLocation ? "明日に備える候補を見る" : hasResult ? "地域設定して予報とつなぐ" : "まずは体質チェックへ";
+    ? "体質と気になる不調を土台に、暮らす・食べる・ほぐすの商品を提案します。季節と近いうちの天気も、商品の使いどきに反映します。"
+    : "体質チェックをすると、体質と気になる不調に合うケア商品を選びやすくなります。";
+  const primaryLabel = hasResult ? "おすすめ商品を見る" : "体質チェックして商品を見る";
+  const secondaryLabel = hasResult ? "カテゴリから探す" : "まずは体質チェックへ";
 
   return (
     <Module className="mt-5 relative overflow-hidden bg-white p-5 ring-1 ring-[#D3E1D5] shadow-[0_16px_36px_-28px_rgba(37,95,79,0.28)]">
@@ -826,9 +826,7 @@ function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow })
             <AppIcon name="care" className="h-6 w-6" />
           </div>
           <div className="min-w-0">
-            <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5]">
-              MY CARE SELECT
-            </div>
+            <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black text-[#2F8F79] ring-1 ring-[#D3E1D5]">あなた向けに選ぶショップ</div>
             <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
               {title}
             </h2>
@@ -846,7 +844,7 @@ function MyCareSelectHomeCard({ hasResult, hasLocation, onPrimary, onTomorrow })
         <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
           {primaryLabel}
         </Button>
-        <Button variant="secondary" onClick={onTomorrow} className="w-full bg-white py-4 shadow-sm sm:flex-1">
+        <Button variant="secondary" onClick={onBrowseSingle} className="w-full bg-white py-4 shadow-sm sm:flex-1">
           {secondaryLabel}
         </Button>
       </div>
@@ -1598,15 +1596,13 @@ export default function HomePage() {
 
       <MyCareSelectHomeCard
         hasResult={Boolean(latestResult && core)}
-        hasLocation={Boolean(radarLocation)}
         onPrimary={() => {
           if (!latestResult || !core) return router.push("/check");
-          return router.push("/care-navi?mode=starter&basis=base");
+          return router.push("/care-navi");
         }}
-        onTomorrow={() => {
+        onBrowseSingle={() => {
           if (!latestResult || !core) return router.push("/check");
-          if (!radarLocation) return router.push("/radar");
-          return router.push("/care-navi?mode=starter&basis=tomorrow");
+          return router.push("/care-navi?category=live");
         }}
       />
 
