@@ -418,7 +418,7 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="mb-6 text-[13px] font-bold leading-6 text-slate-600">
+            <div className="mb-6 text-[14px] font-bold leading-6 text-slate-600">
               Google アカウントですぐ始めるか、メールアドレスに届くログインリンクでも登録できます。
             </div>
 
@@ -500,7 +500,7 @@ export default function SignupClient() {
 
             {status.message ? (
               <div
-                className={`mt-5 rounded-[16px] px-4 py-3 text-[13px] font-bold leading-6 ring-1 ring-inset ${
+                className={`mt-5 rounded-[16px] px-4 py-3 text-[14px] font-bold leading-6 ring-1 ring-inset ${
                   status.state === "sent"
                     ? "bg-emerald-50 text-emerald-800 ring-emerald-200"
                     : status.state === "loading_oauth"
