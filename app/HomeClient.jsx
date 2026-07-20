@@ -549,7 +549,7 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
           </div>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-500">未設定</span>
         </div>
-        <div className="mt-3 text-[12px] font-bold leading-5 text-slate-600">{message}</div>
+        <div className="mt-3 text-[14px] font-bold leading-5 text-slate-600">{message}</div>
       </button>
     );
   }
@@ -691,7 +691,7 @@ function EkkenHomeCard({ signal = 0, onOpen }) {
           <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
           <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI</div>
           <div className="mt-1 text-[16px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}に相談</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">{message}</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{message}</div>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -750,7 +750,7 @@ function GuestStartCta({ onCheck, onLogin }) {
           <h2 className="mt-2 text-[17px] font-black tracking-tight text-[#24564C] leading-[1.35]">
             体質トリセツを作って、体調予報とパーソナルケアショップへ
           </h2>
-          <p className="mt-2 text-[12px] font-bold leading-6 text-[#5b6674]">
+          <p className="mt-2 text-[14px] font-bold leading-6 text-[#5b6674]">
             1〜2分の体質チェックで、あなたの「崩れ方のクセ」をまとめます。作成後は、今日・明日の体調予報や、ケア用品・食品・サービス候補も自分向けに見られます。
           </p>
         </div>
@@ -830,7 +830,7 @@ function MyCareSelectHomeCard({ hasResult, onPrimary, onBrowseSingle }) {
             <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
               {title}
             </h2>
-            <p className="mt-2 text-[12px] font-extrabold leading-6 text-slate-600">
+            <p className="mt-2 text-[14px] font-extrabold leading-6 text-slate-600">
               {body}
             </p>
           </div>
@@ -866,7 +866,7 @@ function ActionTile({ icon, title, sub, onClick }) {
         <IconChevron className="text-slate-300 transition-transform group-hover:translate-x-0.5" />
       </div>
       <div className="mt-4 text-[15px] font-black tracking-tight text-slate-950">{title}</div>
-      <div className="mt-1 text-[12px] font-extrabold leading-5 text-slate-600">{sub}</div>
+      <div className="mt-1 text-[14px] font-extrabold leading-6 text-slate-600">{sub}</div>
     </button>
   );
 }
@@ -906,7 +906,7 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
           <h2 className="mt-3 text-[24px] font-black tracking-tight text-slate-950 leading-[1.25]">
             あなた専用の体質トリセツ
           </h2>
-          <p className="mt-2 text-[13px] font-extrabold leading-6 text-slate-600">
+          <p className="mt-2 text-[14px] font-extrabold leading-6 text-slate-600">
             {primarySub}
           </p>
 
@@ -931,15 +931,15 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
       <div className="relative z-10 mt-5 grid gap-2.5 sm:grid-cols-3">
         <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
           <div className="text-[11px] font-black text-slate-900">崩れ方のクセ</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">いつ・どこに出やすいかを整理</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">いつ・どこに出やすいかを整理</div>
         </div>
         <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
           <div className="text-[11px] font-black text-slate-900">天気との相性</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">響きやすい要素を見返せる</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">響きやすい要素を見返せる</div>
         </div>
         <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
           <div className="text-[11px] font-black text-slate-900">ケアの使い方</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">予報ページとのつなぎ方まで</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">予報ページとのつなぎ方まで</div>
         </div>
       </div>
 
@@ -1015,7 +1015,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
           <h2 className="mt-3 text-[22px] font-black tracking-tight text-slate-950 leading-[1.25]">
             {title}
           </h2>
-          <p className="mt-2 text-[13px] font-extrabold leading-6 text-slate-600">
+          <p className="mt-2 text-[14px] font-extrabold leading-6 text-slate-600">
             {body}
           </p>
 
@@ -1067,7 +1067,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
             <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black tracking-wider text-slate-500">未設定</span>
           </div>
-          <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">{message}</div>
+          <div className="mt-3 text-[14px] font-bold leading-6 text-slate-600">{message}</div>
         </div>
         <Button className="mt-4 w-full shadow-sm" variant="secondary" onClick={errorOnClick}>
           {ctaLabel}
@@ -1165,7 +1165,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
       ) : null}
 
       {memo ? (
-        <div className="relative z-10 mt-4 rounded-[18px] bg-white/72 px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-black/5 shadow-sm">
+        <div className="relative z-10 mt-4 rounded-[18px] bg-white/72 px-4 py-3 text-[14px] font-extrabold leading-6 text-slate-600 ring-1 ring-black/5 shadow-sm">
           {memo}
         </div>
       ) : null}
@@ -1448,7 +1448,7 @@ export default function HomePage() {
           <div className="relative z-[3] mt-5 flex items-center justify-between">
             <div className="relative w-full max-w-[240px] rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
               <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-white" />
-              <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+              <div className="text-[14px] font-extrabold leading-6 text-slate-600">
                 {botMessage}
               </div>
             </div>
@@ -1565,7 +1565,7 @@ export default function HomePage() {
         <div className="relative z-[3] mt-5 flex items-center justify-between">
           <div className="relative w-full max-w-[240px] rounded-[20px] border border-[var(--ring)] bg-white px-4 py-3 text-left shadow-[0_10px_24px_-18px_rgba(77,111,85,0.24)]">
             <div className="absolute right-[-6px] top-[50%] h-3.5 w-3.5 -translate-y-1/2 rotate-45 border-r border-t border-[var(--ring)] bg-white" />
-            <div className="text-[13px] font-extrabold leading-6 text-slate-600">
+            <div className="text-[14px] font-extrabold leading-6 text-slate-600">
               {guideBotText}
             </div>
           </div>
