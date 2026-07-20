@@ -57,7 +57,7 @@ function TakeawayCards({ items = [] }) {
           </div>
           <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
           <div className="mt-2 text-[18px] font-black leading-[1.45] tracking-[-0.04em] text-[#10182d]">{item.value}</div>
-          {item.note ? <p className="mt-3 text-[13px] font-bold leading-6 text-[#64748b]">{item.note}</p> : null}
+          {item.note ? <p className="mt-3 text-[14px] font-bold leading-6 text-[#64748b]">{item.note}</p> : null}
         </div>
       ))}
     </section>
@@ -87,7 +87,7 @@ function MapFlow({ items = [] }) {
             ) : null}
             <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
             <div className="mt-2 text-[16px] font-black leading-[1.55] text-[#10182d]">{item.title}</div>
-            <p className="mt-2 text-[12px] font-bold leading-6 text-[#64748b]">{item.description}</p>
+            <p className="mt-2 text-[14px] font-bold leading-6 text-[#64748b]">{item.description}</p>
           </div>
         ))}
       </div>
@@ -260,14 +260,14 @@ function LockedPreview({ karte }) {
           <div key={item.label} className="rounded-[26px] border border-[#e6eee9] bg-[#f8fbf9] p-5">
             <div className="text-[11px] font-black tracking-[0.16em] text-[#9aa7b8]">{item.label}</div>
             <div className="mt-2 text-[16px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{item.title}</div>
-            <p className="mt-2 text-[13px] font-bold leading-6 text-[#64748b]">{item.body}</p>
+            <p className="mt-2 text-[14px] font-bold leading-6 text-[#64748b]">{item.body}</p>
           </div>
         ))}
         {beauty ? (
           <div className="rounded-[26px] border border-[#ead7a5] bg-[#fffaf0] p-5 md:col-span-2">
             <div className="text-[11px] font-black tracking-[0.16em] text-[#b17425]">まとめ</div>
             <div className="mt-2 text-[16px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{beauty.title}</div>
-            <p className="mt-2 text-[13px] font-bold leading-6 text-[#6b4a2a]">{beauty.teaser || beauty.preview}</p>
+            <p className="mt-2 text-[14px] font-bold leading-6 text-[#6b4a2a]">{beauty.teaser || beauty.preview}</p>
           </div>
         ) : null}
       </div>
@@ -398,7 +398,7 @@ function SectionCard({ section, locked, defaultOpen = false }) {
                   </div>
                   <div className="text-[17px] font-black leading-[1.5] tracking-[-0.04em] text-[#10182d]">{card.title}</div>
                   {card.risk ? <p className="mt-2 text-[13px] font-black leading-6 text-[#2f7567]">{card.risk}</p> : null}
-                  {card.reason ? <p className="mt-3 text-[13px] font-bold leading-6 text-[#64748b]">{card.reason}</p> : null}
+                  {card.reason ? <p className="mt-3 text-[14px] font-bold leading-6 text-[#64748b]">{card.reason}</p> : null}
                   {card.swap ? <p className="mt-3 rounded-[20px] border border-[#e6eee9] bg-white px-4 py-3 text-[13px] font-black leading-6 text-[#334155]">{card.swap}</p> : null}
                 </div>
               ))}
