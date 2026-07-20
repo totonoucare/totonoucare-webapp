@@ -185,7 +185,7 @@ export default function FeedbackPage() {
       {!loading && !user ? (
         <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
           <div className="text-[16px] font-black tracking-tight text-slate-900">ログインが必要です</div>
-          <div className="mt-2 text-[12px] font-bold leading-6 text-slate-500">
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
             報告の送信はログイン中のユーザーに限定しています。スパム防止のため、内部ではログインIDだけ保存します。
           </div>
           <Button className="mt-4 w-full shadow-sm" onClick={() => router.push("/signup")}>
@@ -196,7 +196,7 @@ export default function FeedbackPage() {
 
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[16px] font-black tracking-tight text-slate-900">報告内容</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
           体調相談や緊急症状の連絡ではなく、アプリの不具合・改善点の報告に使ってください。
         </div>
 
@@ -236,7 +236,7 @@ export default function FeedbackPage() {
             />
             <span className="min-w-0">
               <span className="block text-[12px] font-black text-[#24564C]">返信を希望する</span>
-              <span className="mt-1 block text-[11px] font-bold leading-5 text-slate-600">
+              <span className="mt-1 block text-[12px] font-bold leading-5 text-slate-600">
                 通常は返信なしで受け取ります。必要な場合だけ、下に連絡先を入力してください。
               </span>
             </span>
