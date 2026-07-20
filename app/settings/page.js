@@ -19,7 +19,7 @@ function Row({ label, value, action }) {
     <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
       <div>
         <div className="text-[13px] font-black text-slate-900">{label}</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{value || "—"}</div>
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{value || "—"}</div>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
@@ -31,7 +31,7 @@ function ToggleRow({ label, description, checked, disabled, onChange }) {
     <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
       <div className="min-w-0">
         <div className="text-[13px] font-black text-slate-900">{label}</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{description}</div>
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{description}</div>
       </div>
       <button
         type="button"
@@ -348,7 +348,7 @@ export default function SettingsPage() {
     <AppShell title="設定" subtitle="アカウントとアプリ設定">
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[22px] font-black tracking-tight text-slate-900">設定</div>
-        <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+        <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
           通知、地域、使い方、報告をここから確認できます。
         </div>
       </Module>
@@ -372,10 +372,10 @@ export default function SettingsPage() {
       <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="px-5 py-4 border-b border-slate-100">
           <div className="text-[16px] font-black tracking-tight text-slate-900">通知設定</div>
-          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+          <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
             天気の影響が強めの日を、前日夜・当日朝に短くお知らせします。
           </div>
-          <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[12px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
+          <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[14px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
             iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。
             <button
               type="button"
@@ -428,7 +428,7 @@ export default function SettingsPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[16px] font-black tracking-tight text-slate-900">体調予報の地域</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
               現在の地域：{loading ? "確認中…" : locationLabel}
             </div>
           </div>
@@ -471,7 +471,7 @@ export default function SettingsPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[16px] font-black tracking-tight text-slate-900">今気になる不調</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
               現在の不調：{loading ? "確認中…" : activeSymptomProfile?.active_symptom_label || "未設定"}
               {activeSymptomProfile?.diagnosis_symptom_focus && activeSymptomProfile?.active_symptom_focus !== activeSymptomProfile?.diagnosis_symptom_focus
                 ? `（チェック時：${activeSymptomProfile?.diagnosis_symptom_label || "—"}）`
@@ -481,7 +481,7 @@ export default function SettingsPage() {
           <Button size="sm" variant="secondary" onClick={() => router.push("/radar")}>予報へ</Button>
         </div>
 
-        <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
+        <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
           予報や体質トリセツの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
         </div>
 
@@ -517,7 +517,7 @@ export default function SettingsPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[16px] font-black tracking-tight text-slate-900">バグ・改善点を報告</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
               表示崩れ、文言の違和感、使いにくいところを送れます。
             </div>
           </div>
@@ -525,7 +525,7 @@ export default function SettingsPage() {
             💬
           </div>
         </div>
-        <div className="mt-4 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#CFE3DA]/70">
+        <div className="mt-4 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#CFE3DA]/70">
           メールアドレスや名前は自動送信されません。返信を希望する場合だけ、連絡先を入力できます。
         </div>
         <Button variant="secondary" className="mt-4 w-full bg-white" onClick={() => router.push("/feedback")}>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
 
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[16px] font-black tracking-tight text-slate-900">使い方ガイド</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
           トリセツ、予報、ケアカードの見方に迷った時はこちらから確認できます。
         </div>
         <div className="mt-4">
