@@ -204,7 +204,7 @@ function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) 
       <div className="mx-auto flex w-full max-w-[440px] items-center gap-3 rounded-[24px] border border-[#d7e6df] bg-white/96 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="min-w-0 flex-1">
           <div className="text-[12px] font-black tracking-[0.14em] text-[var(--accent-ink)]">SAVE GUIDE</div>
-          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">保存すると、今日・明日の体調予報に反映できます。</div>
+          <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">保存すると、今日・明日の体調予報に反映できます。</div>
         </div>
         <Button onClick={onClick} disabled={isLoggedIn && attaching} className="h-11 shrink-0 rounded-full px-5 text-[13px] shadow-md">
           {ctaLabel}
@@ -709,7 +709,7 @@ function ResultPage({ params }) {
         <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
             <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">まだ保存されていません</div>
-            <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の体調予報やケア提案に反映できます。</div>
+            <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の体調予報やケア提案に反映できます。</div>
           </div>
         </div>
       ) : null}
@@ -897,7 +897,7 @@ function ResultPage({ params }) {
                 <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
                   <div className="rounded-[24px] bg-slate-50 p-6 ring-1 ring-slate-100 text-[14px] leading-relaxed font-bold text-slate-700">
                     {carePreferences.summary}
-                    <div className="mt-3 text-[12px] font-bold leading-6 text-slate-500">
+                    <div className="mt-3 text-[14px] font-bold leading-6 text-slate-500">
                       これは体質チェック結果から見た、基本の整え方です。実際に今日どれを優先するかは、その日の天気や今の不調に合わせて未病レーダーで調整します。
                     </div>
                   </div>
@@ -922,7 +922,7 @@ function ResultPage({ params }) {
                       </div>
                       <div className="grid gap-2">
                         {carePreferences.reasons.map((reason, idx) => (
-                          <div key={idx} className="rounded-[18px] bg-white px-5 py-4 text-[13px] font-bold leading-6 text-slate-700 ring-1 ring-slate-200 shadow-sm">
+                          <div key={idx} className="rounded-[18px] bg-white px-5 py-4 text-[14px] font-bold leading-6 text-slate-700 ring-1 ring-slate-200 shadow-sm">
                             {reason}
                           </div>
                         ))}
@@ -932,7 +932,7 @@ function ResultPage({ params }) {
 
                   <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-5">
                     <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">この先につながること</div>
-                    <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
+                    <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">
                       7つの整え方は、未病レーダーの日々のケア提案、今後の整うアイテム検索、読みもの、相談先探しを横断して使う目印です。
                     </div>
                   </div>
