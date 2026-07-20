@@ -157,7 +157,7 @@ function CareSetNaviBridge({
       <div className="mt-1.5 text-[14px] font-black tracking-tight text-slate-900">
         {title}
       </div>
-      <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">
+      <div className="mt-1.5 text-[14px] font-bold leading-5 text-slate-600">
         {lead}
       </div>
       <Button
@@ -256,7 +256,7 @@ function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationL
           <div className="mt-4 text-[22px] font-black tracking-tight text-slate-900">
             {title}
           </div>
-          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
             {lead}
           </div>
 
@@ -1170,13 +1170,13 @@ export default function RadarPage() {
               <br />
               明日の体調予報を表示します。
             </div>
-            <div className="relative z-10 mt-3 text-[13px] font-bold leading-6 text-slate-600">
+            <div className="relative z-10 mt-3 text-[14px] font-bold leading-6 text-slate-600">
               体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の体調ゆらぎ予報と先回りケアを出します。
             </div>
           </div>
 
           <div className="px-6 py-5">
-            <div className="grid gap-2.5 text-[13px] font-bold leading-6 text-slate-600">
+            <div className="grid gap-2.5 text-[14px] font-bold leading-6 text-slate-600">
               <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
                 ・体質チェック結果をもとにパーソナル予報を作成
               </div>
@@ -1214,7 +1214,7 @@ export default function RadarPage() {
               <div className="mt-4 text-[20px] font-black tracking-tight text-slate-900">
                 {RADAR_LOADING_HINTS[loadingHintIndex] || RADAR_LOADING_HINTS[0]}
               </div>
-              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-600">
+              <div className="mt-3 text-[14px] font-bold leading-6 text-slate-600">
                 体質と気象の重なりを見て、明日の体調ゆらぎ予報と先回りケアを組み立てています。
               </div>
               <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5">
@@ -1237,7 +1237,7 @@ export default function RadarPage() {
       <AppShell title="体調予報" subtitle="地域設定">
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900">位置情報の設定が必要です</div>
-          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
             予報を固定保存するために、最初に現在地か生活圏の代表地点を設定してください。
           </div>
         </Module>
@@ -1319,7 +1319,7 @@ export default function RadarPage() {
       <AppShell title="体調予報" subtitle="予報を読み込めませんでした">
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900">予報を読み込めませんでした</div>
-          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
             {error || "時間をおいてもう一度お試しください。"}
           </div>
           <Button
@@ -1387,7 +1387,7 @@ export default function RadarPage() {
             <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">
               {symptomLabel || "未設定"}
             </div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
               今気になる不調に切り替えて反映できます。
             </div>
           </div>
@@ -1522,7 +1522,7 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 rounded-[22px] bg-white/72 px-4 py-3 text-[13px] font-extrabold leading-6 text-slate-700 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
+                <div className="mt-3 rounded-[22px] bg-white/72 px-4 py-3 text-[14px] font-extrabold leading-6 text-slate-700 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
                   {forecastModeLead}
                 </div>
 
@@ -1632,7 +1632,7 @@ export default function RadarPage() {
                             >
                               {index + 1}
                             </span>
-                            <span className="text-[13px] font-extrabold leading-6 text-slate-800">
+                            <span className="text-[14px] font-extrabold leading-6 text-slate-800">
                               {sign}
                             </span>
                           </div>
@@ -1662,7 +1662,7 @@ export default function RadarPage() {
                             className="flex items-start gap-2 rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.32)]"
                           >
                             <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
-                            <span className="text-[12px] font-extrabold leading-5 text-slate-700">
+                            <span className="text-[14px] font-extrabold leading-6 text-slate-700">
                               {item}
                             </span>
                           </div>
@@ -1704,7 +1704,7 @@ export default function RadarPage() {
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
                   {selectedIsToday ? "今日のケア" : "今夜のケア"}
                 </div>
-                <div className={["mt-1 text-[12px] font-extrabold leading-5", careTone.ink].join(" ")}>
+                <div className={["mt-1 text-[14px] font-extrabold leading-6", careTone.ink].join(" ")}>
                   {careStrategyTitle}
                 </div>
               </div>
@@ -1719,7 +1719,7 @@ export default function RadarPage() {
               <div className="relative mb-1 min-w-0 flex-1 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
                 <span className="absolute -left-1.5 bottom-5 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
                 <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI Ekken</div>
-                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+                <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
                   {selectedIsToday
                     ? sameDayCareCount > 0
                       ? `${checkedCareCount}件を今日に向けたケアとして記録しています（昨晩${previousNightCareCount}件・今日${sameDayCareCount}件）。全部やらなくても大丈夫です。`
@@ -1734,7 +1734,7 @@ export default function RadarPage() {
             </div>
 
             {careActionError ? (
-              <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-4 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+              <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-4 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
                 {careActionError}
               </div>
             ) : null}
@@ -1769,7 +1769,7 @@ export default function RadarPage() {
                 ))}
               </div>
 
-              <div className="mt-3 text-[13px] font-bold leading-6 text-slate-700">
+              <div className="mt-3 text-[14px] font-bold leading-6 text-slate-700">
                 {carePolicies?.summary || careStrategyLead}
               </div>
             </div>
@@ -1809,7 +1809,7 @@ export default function RadarPage() {
                       {lineCare.label || lineCare.action}
                     </div>
                     {lineCare.reason ? (
-                      <div className="mt-2 text-[12px] font-bold leading-5 text-slate-600">
+                      <div className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
                         {lineCare.reason} 強さは{lineCare.intensity || "やさしく短く"}で十分です。
                       </div>
                     ) : null}
@@ -1848,7 +1848,7 @@ export default function RadarPage() {
                             </div>
                           ) : null}
                         </div>
-                        <div className="mt-2 text-[13px] font-extrabold leading-6 text-slate-700">
+                        <div className="mt-2 text-[14px] font-extrabold leading-6 text-slate-700">
                           {getPointRoleSummary(primaryTsubo)}
                         </div>
                       </div>
@@ -1872,13 +1872,13 @@ export default function RadarPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-[22px] bg-[#F6EFF8] px-5 py-5 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#E2D6E7]">
+                  <div className="rounded-[22px] bg-[#F6EFF8] px-5 py-5 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-inset ring-[#E2D6E7]">
                     体質データに合わせたツボを準備しています。
                   </div>
                 )}
 
                 {carePlan?.night_note ? (
-                  <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-extrabold leading-5 text-slate-600 ring-1 ring-[#E8DFEB] shadow-sm">
+                  <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-extrabold leading-6 text-slate-600 ring-1 ring-[#E8DFEB] shadow-sm">
                     <span className="mr-2 text-[#7B6588]">ひとこと</span>
                     {carePlan.night_note}
                   </div>
@@ -2048,7 +2048,7 @@ export default function RadarPage() {
                                   {card.label}
                                 </div>
                                 {card.body ? (
-                                  <div className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">
+                                  <div className="mt-1.5 text-[14px] font-bold leading-5 text-slate-600">
                                     {card.body}
                                   </div>
                                 ) : null}
@@ -2147,7 +2147,7 @@ export default function RadarPage() {
                               <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                 {food.how_to_label || "取り入れ方"}
                               </div>
-                              <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                              <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
                                 {food.how_to}
                               </div>
                             </div>
@@ -2158,7 +2158,7 @@ export default function RadarPage() {
                               <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                 {food.avoid_label || "控えたいこと"}
                               </div>
-                              <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                              <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
                                 {food.avoid}
                               </div>
                             </div>
@@ -2169,7 +2169,7 @@ export default function RadarPage() {
                               {secondaryFoodCards.map((card, cardIndex) => (
                                 <div key={`${card.key || "detail"}-${cardIndex}`} className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#F0E2CA] shadow-sm">
                                   <div className="text-[12px] font-black text-[#A56C18]">{card.label}</div>
-                                  {card.body ? <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">{card.body}</div> : null}
+                                  {card.body ? <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">{card.body}</div> : null}
                                   {safeArray(card.items).length > 0 ? (
                                     <div className="mt-2 space-y-2">
                                       {safeArray(card.items).map((item, itemIndex) => (
@@ -2196,7 +2196,7 @@ export default function RadarPage() {
                               <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                 {food.reason_label || "ひとこと理由"}
                               </div>
-                              <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                              <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
                                 {food.reason}
                               </div>
                             </div>
@@ -2207,7 +2207,7 @@ export default function RadarPage() {
                               <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                                 {food.lifestyle_tip_label || "一緒に意識したいこと"}
                               </div>
-                              <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-700">
+                              <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
                                 {food.lifestyle_tip}
                               </div>
                             </div>
@@ -2249,7 +2249,7 @@ export default function RadarPage() {
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lifestylePlan.title}
                     </div>
-                    <div className="mt-2 text-[13px] font-bold leading-6 text-slate-700">
+                    <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">
                       {lifestylePlan.lead}
                     </div>
                   </div>
@@ -2262,11 +2262,11 @@ export default function RadarPage() {
                       <div className="flex items-start gap-3">
                         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">1</div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[13px] font-extrabold leading-6 text-slate-700">
+                          <div className="text-[14px] font-extrabold leading-6 text-slate-700">
                             {lifestylePrimaryAction?.label || safeArray(lifestylePlan.steps)[0]}
                           </div>
                           {lifestylePrimaryAction?.reason ? (
-                            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{lifestylePrimaryAction.reason}</div>
+                            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{lifestylePrimaryAction.reason}</div>
                           ) : null}
                         </div>
                       </div>
@@ -2281,12 +2281,12 @@ export default function RadarPage() {
                         <div className="space-y-2 border-t border-[#E1E6E1] px-4 py-3">
                           {lifestyleAlternatives.map((item, idx) => (
                             <div key={item.id || `${idx}-${item.label}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#F4FAF7] px-3 py-2">
-                              <span className="min-w-0 flex-1 text-[12px] font-extrabold leading-5 text-slate-700">{item.label}</span>
+                              <span className="min-w-0 flex-1 text-[13px] font-extrabold leading-5 text-slate-700">{item.label}</span>
                               {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[idx + 1], { compact: true })}
                             </div>
                           ))}
                           {lifestylePlan.trap ? (
-                            <div className="rounded-[14px] bg-[#FFF9ED] px-3 py-2 text-[12px] font-bold leading-5 text-slate-600 ring-1 ring-[#EAD8A6]">
+                            <div className="rounded-[14px] bg-[#FFF9ED] px-3 py-2 text-[14px] font-bold leading-5 text-slate-600 ring-1 ring-[#EAD8A6]">
                               {lifestylePlan.trap}
                             </div>
                           ) : null}
@@ -2393,7 +2393,7 @@ export default function RadarPage() {
         />
       ) : null}
 
-      <div className="pb-4 pt-2 text-[11px] font-extrabold leading-5 text-slate-400 text-center px-4">
+      <div className="pb-4 pt-2 text-[12px] font-extrabold leading-5 text-slate-400 text-center px-4">
         ※ 未病レーダーはセルフケア支援です。強い症状がある場合は無理をせず、必要に応じて医療機関に相談してください。
       </div>
     </AppShell>

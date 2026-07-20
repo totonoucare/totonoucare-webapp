@@ -68,7 +68,7 @@ function PointReasonLoadingBlock() {
         <div className="h-3.5 w-[92%] rounded-full bg-white/90 animate-pulse" />
         <div className="h-3.5 w-[74%] rounded-full bg-white/90 animate-pulse" />
       </div>
-      <p className="mt-4 text-[12px] font-bold leading-5 text-slate-600">
+      <p className="mt-4 text-[14px] font-bold leading-5 text-slate-600">
         このツボが今の不調や天気とどうつながるかを、わかりやすい言葉にまとめています。
       </p>
     </div>
@@ -177,17 +177,17 @@ function GooglePointImageSearch({ point, query }) {
         <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
           Google画像検索
         </div>
-        <div className="mt-1 line-clamp-2 text-[12px] font-extrabold leading-5 text-slate-700">
+        <div className="mt-1 line-clamp-2 text-[14px] font-extrabold leading-6 text-slate-700">
           検索ワード：{query || point?.name_ja || point?.code || "ツボ 位置"}
         </div>
       </div>
 
       {status === "missing-id" ? (
-        <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+        <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[14px] font-bold leading-6 text-slate-500">
           画像検索を表示するには、環境変数 NEXT_PUBLIC_GOOGLE_CSE_ID にProgrammable Search Engine IDを設定してください。
         </div>
       ) : status === "missing-query" ? (
-        <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+        <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[14px] font-bold leading-6 text-slate-500">
           検索ワードを準備できませんでした。
         </div>
       ) : (
@@ -198,7 +198,7 @@ function GooglePointImageSearch({ point, query }) {
             </div>
           ) : null}
           {status === "error" ? (
-            <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[12px] font-bold leading-6 text-slate-500">
+            <div className="flex min-h-[220px] items-center justify-center px-6 text-center text-[14px] font-bold leading-6 text-slate-500">
               画像検索を表示できませんでした。少し時間をおいて再度開いてください。
             </div>
           ) : (
@@ -235,7 +235,7 @@ function PointVisualPanel({ point }) {
             <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
               ツボの場所を確認
             </div>
-            <p className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+            <p className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
               位置は図解によって少し表現が違います。複数の画像で、おおまかな場所を確認してください。
             </p>
           </div>
@@ -336,7 +336,7 @@ export function LocationEditor({
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[18px] font-black tracking-tight text-slate-900">地域を設定する</div>
-          <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-600">
             現在地か、生活圏に近い代表地点を設定できます。
             変更した場合は選択中の予報にも反映されます。
           </div>
@@ -360,7 +360,7 @@ export function LocationEditor({
 
       <div className="mt-6 rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)] p-5">
         <div className="text-[14px] font-black text-slate-900">現在地を使う</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
           いまいる場所をそのまま保存します。
         </div>
         <Button
@@ -374,7 +374,7 @@ export function LocationEditor({
 
       <div className="mt-4 rounded-[24px] bg-white ring-1 ring-[var(--ring)] p-5 shadow-sm">
         <div className="text-[14px] font-black text-slate-900">地域を選んで設定する</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
           GPSを使わなくても、生活圏に近い地点を選べば使えます。
         </div>
 
@@ -491,7 +491,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
             {reasonLoading ? (
               <PointReasonLoadingBlock />
             ) : (
-              <div className="text-[13px] font-bold leading-6 text-slate-700">
+              <div className="text-[14px] font-bold leading-6 text-slate-700">
                 {getPointSelectionReason(point)}
               </div>
             )}
@@ -503,7 +503,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
           <div className="text-[12px] font-black uppercase tracking-widest text-[#AD7A18]/85">
             ほぐし方の目安
           </div>
-          <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-[#7B5619]">
+          <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-[#7B5619]">
             {getPointPressGuide(point)}
           </div>
         </div>
@@ -517,7 +517,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
               {cautions.map((item) => (
                 <li
                   key={item}
-                  className="flex items-start gap-2.5 text-[13px] font-bold leading-6 text-slate-700"
+                  className="flex items-start gap-2.5 text-[14px] font-bold leading-6 text-slate-700"
                 >
                   <span className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
                   <span>{item}</span>
@@ -532,4 +532,3 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
     </div>
   );
 }
-
