@@ -45,7 +45,7 @@ function RecordsTabs({ value, onChange }) {
               type="button"
               onClick={() => onChange(item.key)}
               className={[
-                "min-h-[42px] rounded-[18px] px-2 text-[11px] font-black leading-4 transition-all",
+                "min-h-[42px] rounded-[18px] px-2 text-[12px] font-black leading-4 transition-all",
                 active
                   ? "bg-[#EAF7F1] text-[#1F7D67] ring-1 ring-[#66B9A3] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.54)]"
                   : "text-slate-500 hover:bg-white/70",
@@ -304,7 +304,7 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
           <button
             type="button"
             onClick={() => router.push("/radar")}
-            className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD]"
+            className="rounded-full bg-white px-3 py-2 text-[11px] font-black text-slate-600 ring-1 ring-[#DCE8DD]"
           >
             体調予報へ
           </button>
@@ -331,7 +331,7 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
         <button
           type="button"
           onClick={() => router.push("/radar")}
-          className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD] shadow-sm"
+          className="rounded-full bg-white px-3 py-2 text-[11px] font-black text-slate-600 ring-1 ring-[#DCE8DD] shadow-sm"
         >
           体調予報へ
         </button>
@@ -357,7 +357,7 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
           />
 
           {recordError ? (
-            <div className="rounded-[18px] bg-[#FFF0EC] px-4 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+            <div className="rounded-[18px] bg-[#FFF0EC] px-4 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
               {recordError}
             </div>
           ) : null}
@@ -377,11 +377,11 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
             onClick={() => changeTab("analysis")}
             className="w-full rounded-[24px] bg-[#349B83] px-5 py-4 text-left text-white shadow-[0_16px_30px_-22px_rgba(52,155,131,0.56)]"
           >
-            <div className="text-[10px] font-black tracking-[0.14em] text-white/70">NEXT STEP</div>
+            <div className="text-[11px] font-black tracking-[0.14em] text-white/70">NEXT STEP</div>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div>
                 <div className="text-[15px] font-black">あなたの傾向をグラフで見る</div>
-                <div className="mt-1 text-[11px] font-bold text-white/80">予報・実感・ケアをAIと振り返る</div>
+                <div className="mt-1 text-[12px] font-bold text-white/80">予報・実感・ケアをAIと振り返る</div>
               </div>
               <span className="text-[24px]">›</span>
             </div>

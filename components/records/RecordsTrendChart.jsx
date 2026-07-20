@@ -143,7 +143,7 @@ export default function RecordsTrendChart({
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
       <div className="border-b border-[#EEF3EF] px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[9px] font-black text-slate-500">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-black text-slate-500">
           <span className="text-slate-700">体調ゆらぎ度 0〜100</span>
           {FORECAST_BANDS.slice().reverse().map((band) => (
             <span key={band.key} className="inline-flex items-center gap-1">
@@ -153,14 +153,14 @@ export default function RecordsTrendChart({
           ))}
           <span className="text-slate-400">○△×＝実感・下段＝ケア</span>
         </div>
-        <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">
+        <div className="mt-1 text-[11px] font-bold leading-4 text-slate-400">
           {isWeekly
             ? "週ごとの体調ゆらぎ度の平均と範囲、実感の日数、ケア日数を重ねています。"
             : "体調ゆらぎ度と実感は別の尺度です。同じ日付で、予報→ケア→実感の流れを見比べます。"}
         </div>
 
         <div className="mt-3">
-          <div className="mb-1.5 text-[9px] font-black text-slate-400">振り返りたい日を絞る</div>
+          <div className="mb-1.5 text-[11px] font-black text-slate-400">振り返りたい日を絞る</div>
           <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {PATTERN_FILTERS.map((filter) => {
               const count = filter.key === "all"
@@ -179,7 +179,7 @@ export default function RecordsTrendChart({
                     setSelectedIndex(null);
                   }}
                   className={[
-                    "shrink-0 rounded-full px-3 py-1.5 text-[9px] font-black ring-1 transition-all",
+                    "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ring-1 transition-all",
                     selected ? filter.active : "bg-white text-slate-500 ring-[#DCE8DD]",
                     disabled ? "opacity-35" : "active:scale-[0.98]",
                   ].join(" ")}
@@ -198,17 +198,17 @@ export default function RecordsTrendChart({
           style={{ width: axisWidth }}
           aria-hidden="true"
         >
-          <span className="absolute left-2 top-2 text-[8px] font-black leading-3 text-slate-400">体調<br />ゆらぎ度</span>
+          <span className="absolute left-2 top-2 text-[10px] font-black leading-3 text-slate-400">体調<br />ゆらぎ度</span>
           {[100, 70, 40, 0].map((value) => (
-            <span key={value} className="absolute right-2 text-[8px] font-extrabold text-slate-400" style={{ top: yForForecast(value) - 6 }}>{value}</span>
+            <span key={value} className="absolute right-2 text-[10px] font-extrabold text-slate-400" style={{ top: yForForecast(value) - 6 }}>{value}</span>
           ))}
-          <span className="absolute right-2 text-[8px] font-black text-slate-400" style={{ top: triggerY - 7 }}>主因</span>
+          <span className="absolute right-2 text-[10px] font-black text-slate-400" style={{ top: triggerY - 7 }}>主因</span>
           {[2, 1, 0].map((severity) => (
-            <span key={severity} className="absolute right-2 text-[9px] font-extrabold text-slate-400" style={{ top: yForActual(severity) - 7 }}>
+            <span key={severity} className="absolute right-2 text-[11px] font-extrabold text-slate-400" style={{ top: yForActual(severity) - 7 }}>
               {ACTUAL_META[severity].symbol} {severity === 1 ? "少し" : ACTUAL_META[severity].label}
             </span>
           ))}
-          <span className="absolute right-2 text-[9px] font-extrabold text-slate-400" style={{ top: careY - 6 }}>ケア</span>
+          <span className="absolute right-2 text-[11px] font-extrabold text-slate-400" style={{ top: careY - 6 }}>ケア</span>
         </div>
 
         <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -312,12 +312,12 @@ export default function RecordsTrendChart({
                     <g className="cursor-pointer" onClick={() => setSelectedIndex(index)}>
                       <circle cx={x} cy={yForForecast(point.forecast)} r={selected ? 6.5 : 5} fill="#FFFFFF" stroke="#2F816E" strokeWidth={selected ? 3 : 2.5} />
                       {showForecastNumber ? (
-                        <text x={x} y={Math.max(13, yForForecast(point.forecast) - 9)} textAnchor="middle" fontSize="8" fontWeight="900" fill="#2F816E">{formatForecastValue(point.forecast)}</text>
+                        <text x={x} y={Math.max(13, yForForecast(point.forecast) - 9)} textAnchor="middle" fontSize="10" fontWeight="900" fill="#2F816E">{formatForecastValue(point.forecast)}</text>
                       ) : null}
                     </g>
                   ) : null}
 
-                  <text x={x} y={triggerY} textAnchor="middle" fontSize="7.5" fontWeight="900" fill="#64748B">{triggerShort}</text>
+                  <text x={x} y={triggerY} textAnchor="middle" fontSize="9.5" fontWeight="900" fill="#64748B">{triggerShort}</text>
 
                   {isWeekly ? [0, 1, 2].map((severity) => {
                     const count = [counts.good, counts.mild, counts.hard][severity] || 0;
@@ -326,7 +326,7 @@ export default function RecordsTrendChart({
                     return (
                       <g key={`${point.date}-${severity}`} className="cursor-pointer" onClick={() => setSelectedIndex(index)}>
                         <circle cx={x} cy={yForActual(severity)} r={count > 1 ? 11 : 9} fill={meta.surface} stroke={meta.color} strokeWidth="2.5" />
-                        <text x={x} y={yForActual(severity) + 3} textAnchor="middle" fontSize="8" fontWeight="900" fill={meta.color}>{meta.symbol}{count}</text>
+                        <text x={x} y={yForActual(severity) + 3} textAnchor="middle" fontSize="10" fontWeight="900" fill={meta.color}>{meta.symbol}{count}</text>
                       </g>
                     );
                   }) : point.actual_severity != null ? (() => {
@@ -334,7 +334,7 @@ export default function RecordsTrendChart({
                     return (
                       <g className="cursor-pointer" onClick={() => setSelectedIndex(index)}>
                         <circle cx={x} cy={yForActual(point.actual_severity)} r="10" fill="#ffffff" stroke={meta.color} strokeWidth="3" />
-                        <text x={x} y={yForActual(point.actual_severity) + 4} textAnchor="middle" fontSize="11" fontWeight="900" fill={meta.color}>{meta.symbol}</text>
+                        <text x={x} y={yForActual(point.actual_severity) + 4} textAnchor="middle" fontSize="12" fontWeight="900" fill={meta.color}>{meta.symbol}</text>
                       </g>
                     );
                   })() : null}
@@ -346,14 +346,14 @@ export default function RecordsTrendChart({
                   })}
                   {!point.domains.length && point.care_count > 0 ? <circle cx={x} cy={careY} r="4" fill="#94A3B8" /> : null}
                   {!isWeekly && point.care_timing ? (
-                    <text x={x} y={careY + 15} textAnchor="middle" fontSize="7.5" fontWeight="900" fill="#94A3B8">{timingShort(point.care_timing)}</text>
+                    <text x={x} y={careY + 15} textAnchor="middle" fontSize="9.5" fontWeight="900" fill="#94A3B8">{timingShort(point.care_timing)}</text>
                   ) : null}
                   {isWeekly && point.care_count > 0 ? (
-                    <text x={x} y={careY + 15} textAnchor="middle" fontSize="7.5" fontWeight="900" fill="#94A3B8">{point.care_count}日</text>
+                    <text x={x} y={careY + 15} textAnchor="middle" fontSize="9.5" fontWeight="900" fill="#94A3B8">{point.care_count}日</text>
                   ) : null}
 
                   {showDate ? (
-                    <text x={x} y={dateY} textAnchor="middle" fontSize="9" fontWeight="800" fill="#94A3B8">{formatShortDate(point.date)}</text>
+                    <text x={x} y={dateY} textAnchor="middle" fontSize="11" fontWeight="800" fill="#94A3B8">{formatShortDate(point.date)}</text>
                   ) : null}
                 </g>
               );
@@ -362,7 +362,7 @@ export default function RecordsTrendChart({
         </div>
       </div>
 
-      <div className="border-t border-[#EEF3EF] px-4 py-2 text-[8px] font-bold leading-4 text-slate-400">
+      <div className="border-t border-[#EEF3EF] px-4 py-2 text-[10px] font-bold leading-4 text-slate-400">
         ケア時刻：先＝注意時間の前、後＝つらくなってから。絞り込みは当たり外れではなく、似た条件の日を探すために使います。
       </div>
 
@@ -370,22 +370,22 @@ export default function RecordsTrendChart({
         <div className="m-3 mt-1 rounded-[18px] bg-[#F7FAF8] px-4 py-3 ring-1 ring-[#E8F0EB]">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[11px] font-black text-slate-900">
+              <div className="text-[12px] font-black text-slate-900">
                 {selectedPoint.is_aggregate ? `${formatShortDate(selectedPoint.date)}〜${formatShortDate(selectedPoint.end_date)}` : formatShortDate(selectedPoint.date)}
               </div>
-              <div className="mt-1 text-[10px] font-bold leading-5 text-slate-600">
+              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
                 {selectedPoint.is_aggregate
                   ? `体調ゆらぎ度 平均${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_min != null ? `（${formatForecastValue(selectedPoint.forecast_min)}〜${formatForecastValue(selectedPoint.forecast_max)}）` : ""}・${actualSummary(selectedPoint)}`
                   : `体調ゆらぎ度：${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_severity == null ? "" : `（${signalLabel(selectedPoint.forecast_severity)}）`}・実感：${ACTUAL_META[selectedPoint.actual_severity]?.symbol || "－"} ${ACTUAL_META[selectedPoint.actual_severity]?.label || "未記録"}`}
               </div>
-              <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">
+              <div className="mt-1 text-[11px] font-bold leading-4 text-slate-400">
                 主な天気ストレス：{selectedPoint.trigger_label || "記録なし"}
                 {selectedPoint.domains.length ? `・ケア：${selectedPoint.domains.map(domainLabel).join("・")}` : selectedPoint.care_count > 0 ? `・ケア${selectedPoint.care_count}日` : "・ケアなし"}
                 {!selectedPoint.is_aggregate && selectedPoint.care_timing ? `・${careTimingLabel(selectedPoint.care_timing)}` : ""}
               </div>
             </div>
             {!selectedPoint.is_aggregate ? (
-              <button type="button" onClick={() => onSelectDate?.(selectedPoint.date)} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">この日を見る</button>
+              <button type="button" onClick={() => onSelectDate?.(selectedPoint.date)} className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">この日を見る</button>
             ) : null}
           </div>
         </div>

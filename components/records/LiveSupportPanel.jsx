@@ -21,7 +21,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   }
   if (consent?.active) {
     return (
-      <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
+      <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[10.5px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
         Ekkenには、体質トリセツ、今日・明日の予報とケア、最近の実感・記録、任意の受診状況、この会話を送ります。氏名・メール・住所・体質チェックの生回答は自動送信しません。入力したメモや会話は送信対象です。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>

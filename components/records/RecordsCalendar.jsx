@@ -66,7 +66,7 @@ export default function RecordsCalendar({
           ‹
         </button>
         <div className="text-center">
-          <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">RECORD CALENDAR</div>
+          <div className="text-[11px] font-black tracking-[0.14em] text-slate-400">RECORD CALENDAR</div>
           <div className="mt-1 text-[17px] font-black text-slate-900">{year}年{monthNumber}月</div>
         </div>
         <button
@@ -79,7 +79,7 @@ export default function RecordsCalendar({
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[9px] font-black text-slate-400">
+      <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-400">
         {["日", "月", "火", "水", "木", "金", "土"].map((weekday) => (
           <div key={weekday} className="py-1">{weekday}</div>
         ))}
@@ -116,7 +116,7 @@ export default function RecordsCalendar({
               {row?.forecast ? (
                 <span className={["absolute inset-x-0 top-0 h-1", tone.surface].join(" ")} style={{ backgroundColor: tone.hex }} />
               ) : null}
-              <div className={["text-[10px] font-black", isToday ? "text-[#2F816E]" : "text-slate-600"].join(" ")}>
+              <div className={["text-[11px] font-black", isToday ? "text-[#2F816E]" : "text-slate-600"].join(" ")}>
                 {cell.day}
               </div>
 
@@ -141,7 +141,7 @@ export default function RecordsCalendar({
         })}
       </div>
 
-      <div className="mt-4 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
+      <div className="mt-4 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[11px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
         上の細い色は予報、○△×は実際の体調、下の色点は暮らす・食べる・ほぐすの記録です。
       </div>
     </section>

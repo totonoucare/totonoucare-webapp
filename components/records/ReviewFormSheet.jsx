@@ -87,7 +87,7 @@ export default function ReviewFormSheet({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+            <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
               {formatDateLabel(date)} の記録
             </div>
             <div className="mt-1 text-[22px] font-black tracking-tight text-slate-900">{title}</div>
@@ -104,22 +104,22 @@ export default function ReviewFormSheet({
 
         {forecast ? (
           <div className="mt-6 rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">
               その日の予報
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={[
-                  "inline-flex items-center rounded-full px-3 py-1 text-[11px] font-extrabold shadow-sm ring-1 ring-inset",
+                  "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-extrabold shadow-sm ring-1 ring-inset",
                   signalBadgeClass(forecast.signal),
                 ].join(" ")}
               >
                 {signalLabel(forecast.signal)}
               </span>
-              <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
+              <span className="rounded-full bg-white px-3 py-1 text-[12px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
                 {forecast.score_0_10} / 10
               </span>
-              <span className="rounded-full bg-white px-3 py-1 text-[11px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
+              <span className="rounded-full bg-white px-3 py-1 text-[12px] font-black text-slate-600 ring-1 ring-black/5 shadow-sm">
                 {triggerLabel(forecast.main_trigger, forecast.trigger_dir)}
               </span>
             </div>
@@ -131,7 +131,7 @@ export default function ReviewFormSheet({
 
         <div className="mt-6 space-y-4">
           <div className="rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">実際どうだった？</div>
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-3">実際どうだった？</div>
             <div className="flex flex-wrap gap-2">
               {CONDITION_OPTIONS.map((opt) => (
                 <TogglePill
@@ -146,7 +146,7 @@ export default function ReviewFormSheet({
           </div>
 
           <div className="rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">前日〜当日の対策ケア</div>
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-3">前日〜当日の対策ケア</div>
             <div className="flex flex-wrap gap-2">
               {PREVENT_OPTIONS.map((opt) => (
                 <TogglePill
@@ -161,7 +161,7 @@ export default function ReviewFormSheet({
           </div>
 
           <div className="rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">やったこと</div>
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-3">やったこと</div>
             <div className="flex flex-wrap gap-2">
               {ACTION_TAG_OPTIONS.map((opt) => (
                 <TogglePill
@@ -176,7 +176,7 @@ export default function ReviewFormSheet({
           </div>
 
           <div className="rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">ひとことメモ（任意）</div>
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-3">ひとことメモ（任意）</div>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}

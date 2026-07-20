@@ -48,8 +48,8 @@ function ChoiceButton({ active, label, sub, onClick, tone = "mint" }) {
           : "bg-white text-slate-600 ring-[#DCE8DD] hover:bg-[#F7FAF8]",
       ].join(" ")}
     >
-      <div className="text-[11px] font-black leading-4 sm:text-[12px]">{label}</div>
-      {sub ? <div className={["mt-1 text-[9px] font-bold", active ? "text-white/80" : "text-slate-400"].join(" ")}>{sub}</div> : null}
+      <div className="text-[12px] font-black leading-4 sm:text-[12px]">{label}</div>
+      {sub ? <div className={["mt-1 text-[10px] font-bold", active ? "text-white/80" : "text-slate-400"].join(" ")}>{sub}</div> : null}
     </button>
   );
 }
@@ -60,7 +60,7 @@ function TogglePill({ active, children, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        "rounded-full px-3 py-2 text-[10px] font-black ring-1 transition-all",
+        "rounded-full px-3 py-2 text-[11px] font-black ring-1 transition-all",
         active ? "bg-[#66B9A3] text-white ring-[#66B9A3]" : "bg-white text-slate-600 ring-[#DCE8DD]",
       ].join(" ")}
     >
@@ -90,11 +90,11 @@ function CareActionsSummary({
     <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">今日に向けて行ったケア</div>
-          <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">Daily Careで「やってみた」と記録した内容です。</div>
+          <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">今日に向けて行ったケア</div>
+          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">Daily Careで「やってみた」と記録した内容です。</div>
         </div>
         {editable && onOpenRadar ? (
-          <button type="button" onClick={onOpenRadar} className="shrink-0 rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+          <button type="button" onClick={onOpenRadar} className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
             予報ページ
           </button>
         ) : null}
@@ -102,21 +102,21 @@ function CareActionsSummary({
       <div className="mt-3 space-y-3">
         {groups.map((group) => (
           <div key={group.key}>
-            <div className="text-[10px] font-black text-slate-500">{group.label}</div>
+            <div className="text-[11px] font-black text-slate-500">{group.label}</div>
             <div className="mt-1.5 space-y-1.5">
               {group.items.map((item) => (
                 <div key={`${item.source_mode}-${item.canonical_key || item.item_key}-${item.id || ""}`} className={["rounded-[15px] border-l-4 px-3 py-2.5 ring-1 ring-[#E6ECE8]", tone[item.domain] || "border-slate-300 bg-white"].join(" ")}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="text-[11px] font-black leading-5 text-slate-700">{item.label}</div>
-                      <div className="mt-0.5 text-[9px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
+                      <div className="text-[12px] font-black leading-5 text-slate-700">{item.label}</div>
+                      <div className="mt-0.5 text-[10px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
                     </div>
                     {editable && onRemoveAction && item.id ? (
                       <button
                         type="button"
                         disabled={removingActionId === item.id}
                         onClick={() => onRemoveAction(item)}
-                        className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[9px] font-black text-slate-400 ring-1 ring-slate-200 disabled:opacity-50"
+                        className="shrink-0 rounded-full bg-white px-2.5 py-1.5 text-[10px] font-black text-slate-400 ring-1 ring-slate-200 disabled:opacity-50"
                       >
                         {removingActionId === item.id ? "削除中" : "削除"}
                       </button>
@@ -318,22 +318,22 @@ export default function DailyRecordCard({
           <GuideBotAvatar mood={botMood} className="h-[82px] w-[82px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">記録サポート</div>
+            <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/65">記録サポート</div>
             <div className="mt-1">{botMessage}</div>
           </div>
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] bg-white/85 px-3.5 py-3 ring-1 ring-white shadow-sm">
           <div>
-            <div className="text-[10px] font-black tracking-widest text-slate-400">RECORD DATE</div>
+            <div className="text-[11px] font-black tracking-widest text-slate-400">RECORD DATE</div>
             <div className="mt-1 text-[14px] font-black text-slate-900">{formatDate(date)}</div>
           </div>
           {forecast ? (
-            <span className={["rounded-full px-3 py-1.5 text-[10px] font-black ring-1", forecastTone.surface, forecastTone.text, forecastTone.ring].join(" ")}>
+            <span className={["rounded-full px-3 py-1.5 text-[11px] font-black ring-1", forecastTone.surface, forecastTone.text, forecastTone.ring].join(" ")}>
               予報：{signalLabel(forecast.signal)}
             </span>
           ) : (
-            <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[10px] font-black text-slate-400 ring-1 ring-slate-200">予報なし</span>
+            <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-black text-slate-400 ring-1 ring-slate-200">予報なし</span>
           )}
         </div>
       </div>
@@ -342,11 +342,11 @@ export default function DailyRecordCard({
         <div className="p-4">
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-              <div className="text-[10px] font-black text-slate-400">実際の体調</div>
+              <div className="text-[11px] font-black text-slate-400">実際の体調</div>
               <div className="mt-1 text-[14px] font-black text-slate-900">{conditionLabel(review.condition_level)}</div>
             </div>
             <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-              <div className="text-[10px] font-black text-slate-400">{careActionSummary.count > 0 ? "行った具体的ケア" : "ケアはした？"}</div>
+              <div className="text-[11px] font-black text-slate-400">{careActionSummary.count > 0 ? "行った具体的ケア" : "ケアはした？"}</div>
               <div className="mt-1 text-[14px] font-black text-slate-900">{careActionSummary.count > 0 ? `${careActionSummary.count}件` : careLabel(manualCareLevel)}</div>
             </div>
           </div>
@@ -356,13 +356,13 @@ export default function DailyRecordCard({
               {displayedCareDomains.map((domain) => {
                 const meta = RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain);
                 return (
-                  <span key={domain} className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD]" style={{ borderLeft: `4px solid ${meta?.color || "#DCE8DD"}` }}>
+                  <span key={domain} className="rounded-full bg-white px-3 py-1.5 text-[11px] font-black text-slate-600 ring-1 ring-[#DCE8DD]" style={{ borderLeft: `4px solid ${meta?.color || "#DCE8DD"}` }}>
                     {meta?.label || domain}
                   </span>
                 );
               })}
               {reviewCareTiming(review) ? (
-                <span className="rounded-full bg-[#F7FAF8] px-3 py-1.5 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">
+                <span className="rounded-full bg-[#F7FAF8] px-3 py-1.5 text-[11px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">
                   {careTimingLabel(reviewCareTiming(review))}
                 </span>
               ) : null}
@@ -382,15 +382,15 @@ export default function DailyRecordCard({
           ) : null}
           {careActionSummary.count > 0 && manualCareLevel > 0 ? (
             <div className="mt-3 rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#DCE8DD]">
-              <div className="text-[9px] font-black text-slate-400">Daily Care以外にまとめて記録したケア</div>
-              <div className="mt-1 text-[11px] font-black text-slate-700">{careLabel(manualCareLevel)}{manualCareDomains.length ? `・${manualCareDomains.map((domain) => RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain)?.label || domain).join("・")}` : ""}</div>
+              <div className="text-[10px] font-black text-slate-400">Daily Care以外にまとめて記録したケア</div>
+              <div className="mt-1 text-[12px] font-black text-slate-700">{careLabel(manualCareLevel)}{manualCareDomains.length ? `・${manualCareDomains.map((domain) => RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain)?.label || domain).join("・")}` : ""}</div>
             </div>
           ) : null}
 
           {reviewFactors(review).length ? (
             <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
-              <div className="text-[9px] font-black text-[#A56C18]">天気以外で思い当たること</div>
-              <div className="mt-1 text-[11px] font-bold leading-5 text-slate-600">
+              <div className="text-[10px] font-black text-[#A56C18]">天気以外で思い当たること</div>
+              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
                 {reviewFactors(review).map(factorLabel).join("・")}
               </div>
             </div>
@@ -401,9 +401,9 @@ export default function DailyRecordCard({
           ) : null}
 
           <div className="mt-4 rounded-[20px] bg-[#EFF8F4] p-4 ring-1 ring-[#CFE7DE]">
-            <div className="text-[10px] font-black tracking-widest text-[#2F816E]/70">この日の見比べ</div>
+            <div className="text-[11px] font-black tracking-widest text-[#2F816E]/70">この日の見比べ</div>
             <div className="mt-1 text-[14px] font-black text-slate-900">{reflectionMeta?.title || classification.label}</div>
-            <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
+            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
               {reflectionMeta?.body || "予報が残っていないため、体調記録として見返します。"}
             </div>
           </div>
@@ -424,7 +424,7 @@ export default function DailyRecordCard({
       ) : (
         <div className="p-4">
           <div>
-            <div className="mb-2 text-[11px] font-black tracking-[0.1em] text-slate-400">体調</div>
+            <div className="mb-2 text-[12px] font-black tracking-[0.1em] text-slate-400">体調</div>
             <div className="grid grid-cols-3 gap-2">
               {RECORD_CONDITION_OPTIONS.map((item) => (
                 <ChoiceButton key={item.value} active={condition === item.value} label={`${item.symbol} ${item.label}`} onClick={() => setCondition(item.value)} />
@@ -443,9 +443,9 @@ export default function DailyRecordCard({
               />
               {careActionSummary.has_same_day ? (
                 <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-                  <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">今日当日のケアは、つらさを感じる前にできた？</div>
+                  <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">今日当日のケアは、つらさを感じる前にできた？</div>
                   {careActionSummary.has_previous_night ? (
-                    <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">昨晩のケアは先回りとして記録済みです。ここでは今日行った分だけ教えてください。</div>
+                    <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">昨晩のケアは先回りとして記録済みです。ここでは今日行った分だけ教えてください。</div>
                   ) : null}
                   <div className="mt-2 flex flex-wrap gap-2">
                     {[
@@ -459,7 +459,7 @@ export default function DailyRecordCard({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[18px] bg-[#EFF8F4] px-4 py-3 text-[11px] font-bold leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                <div className="rounded-[18px] bg-[#EFF8F4] px-4 py-3 text-[12px] font-bold leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
                   昨晩の「明日に向けたケア」なので、先回りケアとして記録します。
                 </div>
               )}
@@ -467,7 +467,7 @@ export default function DailyRecordCard({
           ) : (
             <>
               <div className="mt-5">
-                <div className="mb-2 text-[11px] font-black tracking-[0.1em] text-slate-400">今日に向けたケアはした？</div>
+                <div className="mb-2 text-[12px] font-black tracking-[0.1em] text-slate-400">今日に向けたケアはした？</div>
                 <div className="grid grid-cols-3 gap-2">
                   {RECORD_CARE_OPTIONS.map((item) => (
                     <ChoiceButton
@@ -489,7 +489,7 @@ export default function DailyRecordCard({
               {care > 0 ? (
                 <>
                   <div className="mt-5 rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-                    <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">やったこと</div>
+                    <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">やったこと</div>
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       {RECORD_DOMAIN_OPTIONS.map((item) => (
                         <ChoiceButton key={item.value} active={domains.includes(item.value)} label={item.label} onClick={() => toggleDomain(item.value)} tone={item.value === "eat" ? "amber" : item.value === "loosen" ? "violet" : "mint"} />
@@ -497,7 +497,7 @@ export default function DailyRecordCard({
                     </div>
                   </div>
                   <div className="mt-3 rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-                    <div className="text-[11px] font-black tracking-[0.1em] text-slate-400">いつケアした？</div>
+                    <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">いつケアした？</div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {RECORD_TIMING_OPTIONS.map((item) => (
                         <TogglePill key={item.value} active={timing === item.value} onClick={() => setTiming(item.value)}>{item.label}</TogglePill>
@@ -511,8 +511,8 @@ export default function DailyRecordCard({
 
           {condition != null && care != null && shouldAskFactors ? (
             <div className="mt-3 rounded-[22px] bg-[#FFF8EC] p-3.5 ring-1 ring-[#EED8B4]">
-              <div className="text-[11px] font-black text-[#A56C18]">天気以外で重なったことはある？</div>
-              <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">安定予報でもつらさがあった日の生活条件として残します。予報ロジックには混ぜません。</div>
+              <div className="text-[12px] font-black text-[#A56C18]">天気以外で重なったことはある？</div>
+              <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">安定予報でもつらさがあった日の生活条件として残します。予報ロジックには混ぜません。</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RECORD_FACTOR_OPTIONS.map((item) => (
                   <TogglePill key={item.value} active={factors.includes(item.value)} onClick={() => toggleFactor(item.value)}>{item.label}</TogglePill>
@@ -522,7 +522,7 @@ export default function DailyRecordCard({
           ) : null}
 
           <div className="mt-5">
-            <div className="mb-2 text-[11px] font-black tracking-[0.1em] text-slate-400">ひとことメモ <span className="text-slate-300">任意</span></div>
+            <div className="mb-2 text-[12px] font-black tracking-[0.1em] text-slate-400">ひとことメモ <span className="text-slate-300">任意</span></div>
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
@@ -540,9 +540,9 @@ export default function DailyRecordCard({
           >
             {saving ? "記録しています…" : review ? "変更を保存する" : isToday ? "今日を記録する" : "この日を記録する"}
           </Button>
-          {careActionSummary.count === 0 && care > 0 && !timing ? <div className="mt-2 text-center text-[10px] font-bold text-slate-400">ケアした時間も選ぶと保存できます</div> : null}
+          {careActionSummary.count === 0 && care > 0 && !timing ? <div className="mt-2 text-center text-[11px] font-bold text-slate-400">ケアした時間も選ぶと保存できます</div> : null}
           {review ? (
-            <button type="button" onClick={() => setEditing(false)} className="mt-3 w-full text-center text-[11px] font-black text-slate-400">編集をやめる</button>
+            <button type="button" onClick={() => setEditing(false)} className="mt-3 w-full text-center text-[12px] font-black text-slate-400">編集をやめる</button>
           ) : null}
         </div>
       )}

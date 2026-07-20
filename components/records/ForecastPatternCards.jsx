@@ -81,7 +81,7 @@ export default function ForecastPatternCards({ rows = [], onSelectDate }) {
     <section className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
       <div className="border-b border-[#EEF3EF] px-4 py-3">
         <div className="text-[13px] font-black text-slate-900">4つの振り返りパターン</div>
-        <div className="mt-1 text-[10px] font-bold leading-5 text-slate-500">
+        <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
           予報は症状の断定ではなく、備えの目安です。実感との組み合わせから、次に比べたい日を見つけます。
         </div>
       </div>
@@ -103,10 +103,10 @@ export default function ForecastPatternCards({ rows = [], onSelectDate }) {
                 group.days ? "active:scale-[0.99]" : "opacity-45",
               ].join(" ")}
             >
-              <div className={["text-[8px] font-black tracking-[0.08em]", meta.ink].join(" ")}>{meta.eyebrow}</div>
+              <div className={["text-[10px] font-black tracking-[0.08em]", meta.ink].join(" ")}>{meta.eyebrow}</div>
               <div className="mt-1 text-[12px] font-black leading-5 text-slate-800">{meta.title}</div>
               <div className={["mt-1 text-[22px] font-black", meta.ink].join(" ")}>{group.days}日</div>
-              <div className="mt-1 text-[9px] font-bold leading-4 text-slate-500">ケアあり {group.care_days}日・なし {group.no_care_days}日</div>
+              <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">ケアあり {group.care_days}日・なし {group.no_care_days}日</div>
             </button>
           );
         })}
@@ -114,8 +114,8 @@ export default function ForecastPatternCards({ rows = [], onSelectDate }) {
 
       {activeGroup?.days ? (
         <div className="m-3 mt-0 rounded-[20px] bg-[#F7FAF8] px-4 py-3 ring-1 ring-[#E8F0EB]">
-          <div className="text-[10px] font-black text-slate-900">{PATTERN_META[activeGroup.key].title}</div>
-          <div className="mt-1 text-[9px] font-bold leading-4 text-slate-500">{PATTERN_META[activeGroup.key].description}</div>
+          <div className="text-[11px] font-black text-slate-900">{PATTERN_META[activeGroup.key].title}</div>
+          <div className="mt-1 text-[10px] font-bold leading-4 text-slate-500">{PATTERN_META[activeGroup.key].description}</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {visiblePoints.map((point) => {
               const care = point.care_done
@@ -129,16 +129,16 @@ export default function ForecastPatternCards({ rows = [], onSelectDate }) {
                   onClick={() => onSelectDate?.(point.date)}
                   className="rounded-[16px] bg-white px-3 py-2 text-left ring-1 ring-[#DCE8DD]"
                 >
-                  <div className="text-[9px] font-black text-slate-700">
+                  <div className="text-[10px] font-black text-slate-700">
                     {shortDate(point.date)}・{signalLabel(point.forecast_severity)}・{actualSymbol(point.actual_severity)}
                   </div>
-                  <div className="mt-0.5 text-[8px] font-bold text-slate-400">{care}{timing ? `・${timing}` : ""}</div>
+                  <div className="mt-0.5 text-[10px] font-bold text-slate-400">{care}{timing ? `・${timing}` : ""}</div>
                 </button>
               );
             })}
           </div>
           {activeGroup.points.length > visiblePoints.length ? (
-            <div className="mt-2 text-[8px] font-bold text-slate-400">直近12日を表示・ほか{activeGroup.points.length - visiblePoints.length}日</div>
+            <div className="mt-2 text-[10px] font-bold text-slate-400">直近12日を表示・ほか{activeGroup.points.length - visiblePoints.length}日</div>
           ) : null}
         </div>
       ) : null}
