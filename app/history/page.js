@@ -107,7 +107,7 @@ export default function HistoryPage() {
           <div className="text-[16px] font-black tracking-tight text-slate-900">
             ログインが必要です
           </div>
-          <div className="mt-2 text-[13px] leading-6 font-bold text-slate-600">
+          <div className="mt-2 text-[14px] leading-6 font-bold text-slate-600">
             履歴を見るにはログインしてください。<br/>
             未ログイン時の結果も、結果画面から「保存」を押せば履歴に残せます。
           </div>
@@ -127,7 +127,7 @@ export default function HistoryPage() {
           <div className="text-[15px] font-black tracking-tight text-rose-900">
             履歴の取得に失敗しました
           </div>
-          <div className="mt-2 text-[13px] leading-6 font-bold text-rose-700 whitespace-pre-wrap">{err}</div>
+          <div className="mt-2 text-[14px] leading-6 font-bold text-rose-700 whitespace-pre-wrap">{err}</div>
           <div className="mt-5">
             <Button variant="secondary" onClick={() => window.location.reload()} className="bg-white shadow-sm">再読み込み</Button>
           </div>
@@ -141,7 +141,7 @@ export default function HistoryPage() {
           <div className="text-[15px] font-black tracking-tight text-slate-700">
             まだ履歴がありません
           </div>
-          <div className="mt-2 text-[13px] leading-6 font-bold text-slate-500">
+          <div className="mt-2 text-[14px] leading-6 font-bold text-slate-500">
             体質チェックを行い、結果画面で「保存」を押すとここに残ります。
           </div>
           <div className="mt-6">
