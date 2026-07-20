@@ -367,7 +367,7 @@ export function ForecastGauge({
             x={170}
             y={145}
             textAnchor="middle"
-            fontSize="11"
+            fontSize="12"
             fontWeight="900"
             letterSpacing="0.08em"
             fill="rgba(100,116,139,0.72)"
@@ -455,7 +455,7 @@ export function ForecastGauge({
         </div>
 
         <div
-          className="pointer-events-none absolute left-1/2 top-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[11px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
+          className="pointer-events-none absolute left-1/2 top-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full border px-4 py-1.5 text-[12px] font-black shadow-sm backdrop-blur-sm transition-all duration-300"
           style={{
             color: tone.labelText,
             background: tone.labelBg,
@@ -469,7 +469,6 @@ export function ForecastGauge({
     </div>
   );
 }
-
 
 
 

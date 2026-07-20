@@ -38,11 +38,11 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[13px] font-black tracking-tight">{item.label}</span>
                 {item.locked ? (
-                  <span className={active ? "text-[11px]" : "text-[11px] text-slate-400"}>🔒</span>
+                  <span className={active ? "text-[12px]" : "text-[12px] text-slate-400"}>🔒</span>
                 ) : null}
               </div>
               <div className={[
-                "mt-1 text-[10px] font-black uppercase tracking-wide",
+                "mt-1 text-[11px] font-black uppercase tracking-wide",
                 active ? "text-[#1F7D67]" : item.locked ? "text-slate-400" : "text-slate-500",
               ].join(" ")}
               >
@@ -59,7 +59,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
 function PointReasonLoadingBlock() {
   return (
     <div className="rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_82%)] p-4 ring-1 ring-[var(--ring)]">
-      <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[10px] font-black text-[var(--accent-ink)] ring-1 ring-black/5">
+      <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-black/5">
         <span className="h-2 w-2 rounded-full bg-[var(--accent-ink)] animate-pulse" />
         AIが理由を整えています…
       </div>
@@ -174,7 +174,7 @@ function GooglePointImageSearch({ point, query }) {
   return (
     <div className="overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-200">
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+        <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
           Google画像検索
         </div>
         <div className="mt-1 line-clamp-2 text-[12px] font-extrabold leading-5 text-slate-700">
@@ -232,7 +232,7 @@ function PointVisualPanel({ point }) {
       <div className="border-b border-slate-100 bg-white px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
               ツボの場所を確認
             </div>
             <p className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
@@ -248,7 +248,7 @@ function PointVisualPanel({ point }) {
                 type="button"
                 onClick={() => setMode("app")}
                 className={[
-                  "flex-1 rounded-full px-3 py-2 text-[11px] font-black transition-all",
+                  "flex-1 rounded-full px-3 py-2 text-[12px] font-black transition-all",
                   mode === "app" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
                 ].join(" ")}
               >
@@ -259,7 +259,7 @@ function PointVisualPanel({ point }) {
               type="button"
               onClick={() => setMode("search")}
               className={[
-                "flex-1 rounded-full px-3 py-2 text-[11px] font-black transition-all",
+                "flex-1 rounded-full px-3 py-2 text-[12px] font-black transition-all",
                 mode === "search" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500",
               ].join(" ")}
             >
@@ -345,7 +345,7 @@ export function LocationEditor({
         {showClose ? (
           <button
             onClick={onClose}
-            className="shrink-0 rounded-full bg-slate-100 px-3.5 py-2 text-[11px] font-extrabold text-slate-600 hover:bg-slate-200 transition-colors"
+            className="shrink-0 rounded-full bg-slate-100 px-3.5 py-2 text-[12px] font-extrabold text-slate-600 hover:bg-slate-200 transition-colors"
           >
             閉じる
           </button>
@@ -431,7 +431,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
+            <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/70">
               {sourceLabel(point.source)} / {getPointRegionLabel(point)}
             </div>
             <div
@@ -466,7 +466,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
         <PointVisualPanel point={point} />
 
         <div className="mt-5 rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_70%)] px-5 py-4 ring-1 ring-[var(--ring)]">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">
+          <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">
             どんなとき向き？
           </div>
           <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
@@ -476,11 +476,11 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
 
         <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-[var(--ring)] shadow-sm">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
               このツボを選んだ理由
             </div>
             {reasonLoading ? (
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mint),white_55%)] px-2.5 py-1 text-[10px] font-black text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mint),white_55%)] px-2.5 py-1 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-ink)] animate-pulse" />
                 AI生成中
               </div>
@@ -500,7 +500,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
         </div>
 
         <div className="mt-4 rounded-[20px] bg-[#FFF9ED] px-5 py-4 ring-1 ring-[#EAD8A6]/60 shadow-sm">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[#AD7A18]/85">
+          <div className="text-[12px] font-black uppercase tracking-widest text-[#AD7A18]/85">
             ほぐし方の目安
           </div>
           <div className="mt-1.5 text-[13px] font-extrabold leading-6 text-[#7B5619]">
@@ -510,7 +510,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
 
         {cautions.length > 0 ? (
           <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-slate-200 shadow-sm">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
               注意したいこと
             </div>
             <ul className="mt-3 space-y-2.5">
