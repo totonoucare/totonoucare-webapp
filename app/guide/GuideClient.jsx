@@ -103,7 +103,7 @@ function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
       <div
         className={[
           "pl-1 font-bold text-slate-700",
-          compact ? "mt-3 text-[12px] leading-5" : "mt-3.5 text-[13px] leading-6",
+          compact ? "mt-3 text-[13px] leading-6" : "mt-3.5 text-[14px] leading-6",
         ].join(" ")}
       >
         {children}
@@ -118,7 +118,7 @@ function MiniNote({ label = "使い方のコツ", children }) {
       <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-black tracking-widest text-[#2F816E] ring-1 ring-[#CFE7DE]">
         {label}
       </div>
-      <div className="text-[12px] font-extrabold leading-6 text-slate-700">{children}</div>
+      <div className="text-[14px] font-extrabold leading-6 text-slate-700">{children}</div>
     </div>
   );
 }
@@ -128,7 +128,7 @@ function CheckList({ items, tone = "mint" }) {
   return (
     <div className="mt-3 space-y-2">
       {items.map((item) => (
-        <div key={item} className="flex gap-2 text-[12px] font-bold leading-5 text-slate-600">
+        <div key={item} className="flex gap-2 text-[14px] font-bold leading-5 text-slate-600">
           <span className={["mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full", dot].join(" ")} />
           <span>{item}</span>
         </div>
@@ -155,7 +155,7 @@ function FlowItem({ num, title, children, tone = "mint" }) {
       </div>
       <div className="min-w-0">
         <div className="text-[15px] font-black leading-6 text-slate-900">{title}</div>
-        <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-600">{children}</div>
+        <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-600">{children}</div>
       </div>
     </div>
   );
@@ -221,7 +221,7 @@ export default function GuidePage() {
               <span className="text-[#2F816E]">自分の傾向</span>へつなげる。
             </div>
 
-            <div className="mt-3.5 text-[13px] font-bold leading-6 text-slate-700">
+            <div className="mt-3.5 text-[14px] font-bold leading-6 text-slate-700">
               体質と天気から今日・明日の体調ゆらぎを確認し、できそうなケアだけ試します。夜に実感を残すと、どんな日に何をすると過ごしやすかったかが少しずつ見えてきます。
             </div>
 
@@ -255,7 +255,7 @@ export default function GuidePage() {
       {tab === "flow" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">まず、この流れだけで大丈夫</div>
-          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mb-5 text-[14px] font-bold leading-6 text-slate-600">
             毎日すべての機能を使う必要はありません。初回にトリセツを作り、普段は予報を見て対策ケアを試し、実感の記録や必要な相談につなげます。
           </div>
 
@@ -304,7 +304,7 @@ export default function GuidePage() {
       {tab === "radar" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">体調予報と対策ケア</div>
-          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mb-5 text-[14px] font-bold leading-6 text-slate-600">
             体調ゆらぎ度で細かな変化を見て、3つのモードで今日の行動を決めます。そのままケア記録までつなげられます。
           </div>
 
@@ -365,7 +365,7 @@ export default function GuidePage() {
       {tab === "records" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">記録して、自分の傾向を振り返る</div>
-          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mb-5 text-[14px] font-bold leading-6 text-slate-600">
             記録ページでは、予報ページで残した対策ケアを引き継ぎ、その日の実感と合わせて1日の記録を完成させます。
           </div>
 
@@ -400,7 +400,7 @@ export default function GuidePage() {
                   "まだ分からないことと、次に試して確かめたいこと。",
                 ]}
               />
-              <div className="mt-3 rounded-[16px] bg-white/75 px-3 py-2.5 text-[10px] font-bold leading-5 text-slate-500 ring-1 ring-white">
+              <div className="mt-3 rounded-[16px] bg-white/75 px-3 py-2.5 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-white">
                 条件の違いによる勘違いを減らすため、同じ天気ストレスや近い体調ゆらぎ度の日を中心に見比べます。記録が少ない時は、効果を断定せず小さな手がかりとして扱います。
               </div>
             </GuideCard>
@@ -445,7 +445,7 @@ export default function GuidePage() {
       {tab === "care" ? (
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">パーソナルケアショップ</div>
-          <div className="mb-5 text-[13px] font-bold leading-6 text-slate-600">
+          <div className="mb-5 text-[14px] font-bold leading-6 text-slate-600">
             ケア用品や食品が多すぎて選べない時に、体質と気になる不調から自分向けの商品を探す場所です。
           </div>
 
