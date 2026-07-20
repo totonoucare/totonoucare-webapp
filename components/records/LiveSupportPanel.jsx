@@ -14,24 +14,24 @@ import { replyContextForAssistantMessage } from "@/lib/records/replyContext";
 function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.ai_enabled) {
     return (
-      <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[11px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
+      <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
         Ekken相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
       </div>
     );
   }
   if (consent?.active) {
     return (
-      <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[9px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        Ekkenには、解釈済みの体質トリセツ、今日・明日の予報と対策ケア、直近の実感・ケア・メモ、任意で登録した受診・相談状況、この相談の会話を送ります。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。
+      <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
+        Ekkenには、体質トリセツ、今日・明日の予報とケア、最近の実感・記録、任意の受診状況、この会話を送ります。氏名・メール・住所・体質チェックの生回答は自動送信しません。入力したメモや会話は送信対象です。
         <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </div>
     );
   }
   return (
     <div className="rounded-[22px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
-      <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
+      <div className="text-[11px] font-black tracking-[0.12em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">今の相談に必要なアプリ内データを使います</div>
-      <div className="mt-2 text-[11px] font-bold leading-6 text-slate-600">
+      <div className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
         送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。AIは診断や薬の個別判断を行いません。
       </div>
       <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、Ekkenに相談する"}</Button>
@@ -45,17 +45,17 @@ function ConsultationStatusCard({ status, saving, editing, onEdit, onSelect }) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#DCE8DD]">
         <div className="min-w-0">
-          <div className="text-[9px] font-black tracking-[0.12em] text-slate-400">現在の受診・相談状況</div>
-          <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{label}</div>
+          <div className="text-[11px] font-black tracking-[0.1em] text-slate-500">現在の受診・相談状況</div>
+          <div className="mt-1 text-[13px] font-black leading-6 text-slate-700">{label}</div>
         </div>
-        <button type="button" disabled={saving} onClick={onEdit} className="shrink-0 rounded-full bg-[#F4FAF7] px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">変更</button>
+        <button type="button" disabled={saving} onClick={onEdit} className="shrink-0 rounded-full bg-[#F4FAF7] px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">変更</button>
       </div>
     );
   }
   return (
     <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-      <div className="text-[10px] font-black text-slate-800">現在の受診・相談状況（任意）</div>
-      <div className="mt-1 text-[9px] font-bold leading-4 text-slate-400">一度選ぶと、同じ確認を繰り返しにくくなります。症状によって状況が違う場合は、会話で補足できます。</div>
+      <div className="text-[12px] font-black text-slate-800">現在の受診・相談状況（任意）</div>
+      <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">一度選ぶと、同じ確認を繰り返しにくくなります。症状によって状況が違う場合は、会話で補足できます。</div>
       <div className="mt-3 flex flex-wrap gap-2">
         {LIVE_SUPPORT_CONSULTATION_STATUS_OPTIONS.map((item) => (
           <button
@@ -64,7 +64,7 @@ function ConsultationStatusCard({ status, saving, editing, onEdit, onSelect }) {
             disabled={saving}
             onClick={() => onSelect(item.key)}
             className={[
-              "rounded-full px-3 py-2 text-left text-[10px] font-black leading-4 ring-1 transition",
+              "rounded-full px-3 py-2 text-left text-[12px] font-black leading-5 ring-1 transition",
               status === item.key
                 ? "bg-[#EAF7F1] text-[#2F816E] ring-[#9FD6C6]"
                 : "bg-white text-slate-600 ring-[#DCE8DD]",
@@ -93,7 +93,7 @@ function Bubble({ message }) {
             : "bg-white text-slate-600 ring-[#DCE8DD]",
       ].join(" ")}>
         {replyContext?.question ? (
-          <div className="mb-2 border-b border-white/25 pb-2 text-[9px] font-bold leading-4 text-white/80">
+          <div className="mb-2 border-b border-white/25 pb-2 text-[11px] font-bold leading-5 text-white/80">
             <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div>
             <div>{replyContext.question}</div>
           </div>
@@ -127,14 +127,14 @@ function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFee
 
   return (
     <div className="mt-1.5 max-w-[90%] px-1">
-      <div className="flex flex-wrap items-center gap-2 text-[9px] font-black text-slate-400">
+      <div className="flex flex-wrap items-center gap-2 text-[11px] font-black text-slate-500">
         <span>この返事はどうでしたか？</span>
         <button type="button" onClick={() => send(1)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === 1 ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👍 役に立った</button>
         <button type="button" onClick={() => setNegativeReasonFor(requestId)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === -1 ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👎 ちょっと違った</button>
       </div>
       {negativeReasonFor === requestId && !feedbackByRequest[requestId] ? (
         <div className="mt-2 rounded-[16px] bg-[#FFF8EC] p-2.5 ring-1 ring-[#EED8B4]">
-          <div className="text-[9px] font-black text-[#A56C18]">どこが合いませんでしたか？</div>
+          <div className="text-[11px] font-black text-[#A56C18]">どこが合いませんでしたか？</div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {[
               ["too_cold", "少し冷たく感じた"],
@@ -143,7 +143,7 @@ function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFee
               ["felt_unsafe", "内容が不安だった"],
               ["other", "その他"],
             ].map(([reason, label]) => (
-              <button key={reason} type="button" onClick={() => send(-1, reason)} className="rounded-full bg-white px-2.5 py-1.5 text-[9px] font-black text-slate-600 ring-1 ring-[#EED8B4]">{label}</button>
+              <button key={reason} type="button" onClick={() => send(-1, reason)} className="rounded-full bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-600 ring-1 ring-[#EED8B4]">{label}</button>
             ))}
           </div>
         </div>
@@ -395,9 +395,9 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           <GuideBotAvatar mood={sending ? "thinking" : mood} className="h-[88px] w-[88px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI</div>
+            <div className="text-[11px] font-black tracking-[0.12em] text-[#2F816E]/75">ケアナビAI</div>
             <div className="mt-1 text-[17px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}</div>
-            <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">今のつらさや迷いを、一言から一緒に整理します。</div>
+            <div className="mt-1 text-[12px] font-bold leading-6 text-slate-500">今のつらさや迷いを、一言から一緒に整理します。</div>
           </div>
         </div>
 
@@ -442,33 +442,33 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
               {urgentMessage ? (
                 <div className="rounded-[20px] bg-[#FFF0EC] p-3.5 ring-1 ring-[#F1C8BA]">
-                  <div className="text-[10px] font-black text-[#8F3E2A]">今は安全の確認を優先してください</div>
-                  <div className="mt-1 text-[10px] font-bold leading-5 text-[#9A5845]">通常のケア候補は一時的に隠しています。近くの人や緊急窓口へ連絡できたこと、今いる場所の安全などは、下の入力欄から続けて伝えられます。</div>
+                  <div className="text-[12px] font-black text-[#8F3E2A]">今は安全の確認を優先してください</div>
+                  <div className="mt-1 text-[12px] font-bold leading-6 text-[#9A5845]">通常のケア候補は一時的に隠しています。近くの人や緊急窓口へ連絡できたこと、今いる場所の安全などは、下の入力欄から続けて伝えられます。</div>
                 </div>
               ) : null}
 
               {pendingFollowUp ? (
                 <div className="rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                  <div className="text-[9px] font-black tracking-[0.12em] text-[#A56C18]/75">Ekkenから一つ確認</div>
-                  <div className="mt-1 text-[11px] font-black leading-5 text-slate-700">{followUp.question}</div>
+                  <div className="text-[11px] font-black tracking-[0.1em] text-[#A56C18]/80">Ekkenから一つ確認</div>
+                  <div className="mt-1 text-[13px] font-black leading-6 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
-                      <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
+                      <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
                     ))}
                   </div>
-                  <button type="button" onClick={detachFollowUp} className="mt-2 text-[9px] font-black text-[#A56C18]/70 underline underline-offset-2">この質問には答えず、別のことを話す</button>
+                  <button type="button" onClick={detachFollowUp} className="mt-2 text-[11px] font-black text-[#A56C18]/80 underline underline-offset-2">この質問には答えず、別のことを話す</button>
                 </div>
               ) : null}
 
               {routinePromptsVisible ? (
                 <div>
                   <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
-                    <span className="text-[9px] font-black tracking-[0.12em] text-[#2F816E]/75">一言から相談</span>
-                    <span className="text-[9px] font-bold text-slate-400">タップすると入力欄に入ります。送る前に編集できます。</span>
+                    <span className="text-[11px] font-black tracking-[0.1em] text-[#2F816E]/80">一言から相談</span>
+                    <span className="text-[11px] font-bold text-slate-500">タップすると入力欄に入ります。送る前に編集できます。</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(suggestions.length ? suggestions : starter?.quick_prompts || []).map((question) => (
-                      <button key={question} type="button" onClick={() => fillInput(question)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>
+                      <button key={question} type="button" onClick={() => fillInput(question)} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>
                     ))}
                   </div>
                 </div>
@@ -476,7 +476,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
               <div className="rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
                 {replyToFollowUp?.question ? (
-                  <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[9px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">
+                  <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[11px] font-bold leading-5 text-[#9A6A27] ring-1 ring-[#EED8B4]">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-black tracking-[0.08em] text-[#A56C18]/75">この確認への回答として送ります</div>
@@ -488,17 +488,17 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 ) : null}
                 <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder={urgentMessage ? "例）近くの人に連絡しました。今は一人ではありません" : "例）急に頭が重くなって、少しイライラします"} className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
-                  <button type="button" onClick={clearConversation} className="text-[10px] font-black text-slate-400">会話を削除</button>
+                  <button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-500">会話を削除</button>
                   <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに話す"}</Button>
                 </div>
               </div>
 
-              {remaining != null ? <div className="px-1 text-right text-[9px] font-black text-slate-400">今月あと{remaining}回</div> : null}
+              {remaining != null ? <div className="px-1 text-right text-[11px] font-black text-slate-500">今月あと{remaining}回</div> : null}
             </>
           ) : null}
 
           {error ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[11px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-          <div className="text-[9px] font-bold leading-4 text-slate-400">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
+          <div className="text-[11px] font-bold leading-5 text-slate-500">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
         </div>
       </section>
     </div>
