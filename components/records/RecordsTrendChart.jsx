@@ -134,7 +134,7 @@ export default function RecordsTrendChart({
 
   if (!points.length) {
     return (
-      <div className="rounded-[24px] bg-[#F7FAF8] p-6 text-center text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
+      <div className="rounded-[24px] bg-[#F7FAF8] p-6 text-center text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
         この期間の予報や記録はまだありません。
       </div>
     );
@@ -373,7 +373,7 @@ export default function RecordsTrendChart({
               <div className="text-[12px] font-black text-slate-900">
                 {selectedPoint.is_aggregate ? `${formatShortDate(selectedPoint.date)}〜${formatShortDate(selectedPoint.end_date)}` : formatShortDate(selectedPoint.date)}
               </div>
-              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+              <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
                 {selectedPoint.is_aggregate
                   ? `体調ゆらぎ度 平均${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_min != null ? `（${formatForecastValue(selectedPoint.forecast_min)}〜${formatForecastValue(selectedPoint.forecast_max)}）` : ""}・${actualSummary(selectedPoint)}`
                   : `体調ゆらぎ度：${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_severity == null ? "" : `（${signalLabel(selectedPoint.forecast_severity)}）`}・実感：${ACTUAL_META[selectedPoint.actual_severity]?.symbol || "－"} ${ACTUAL_META[selectedPoint.actual_severity]?.label || "未記録"}`}

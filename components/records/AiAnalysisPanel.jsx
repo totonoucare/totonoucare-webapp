@@ -32,10 +32,10 @@ function CompactAnalysisSummary({ analysis }) {
   return (
     <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
       <div className="text-[10px] font-black tracking-[0.14em] text-slate-400">この期間の要点</div>
-      <div className="mt-1.5 text-[12px] font-bold leading-6 text-slate-700">{analysis.empathy}</div>
-      <div className="mt-1 text-[12px] font-bold leading-6 text-slate-600">{analysis.observed}</div>
+      <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">{analysis.empathy}</div>
+      <div className="mt-1 text-[14px] font-bold leading-6 text-slate-600">{analysis.observed}</div>
       {analysis.hypotheses ? (
-        <div className="mt-2 border-t border-[#EEF3EF] pt-2 text-[12px] font-bold leading-5 text-slate-500">
+        <div className="mt-2 border-t border-[#EEF3EF] pt-2 text-[14px] font-bold leading-5 text-slate-500">
           <span className="font-black text-[#7B6588]">考えられること：</span>{analysis.hypotheses}
         </div>
       ) : null}
@@ -112,7 +112,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
     return (
       <div className="rounded-[24px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD]">
         <div className="text-[13px] font-black text-slate-900">AI分析は現在プレビュー表示です</div>
-        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">グラフと記録の振り返りは利用できます。対象期間または対象プランになると、AIによる個別の振り返りと会話が開きます。</div>
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">グラフと記録の振り返りは利用できます。対象期間または対象プランになると、AIによる個別の振り返りと会話が開きます。</div>
       </div>
     );
   }
@@ -128,7 +128,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
     <div className="rounded-[24px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
       <div className="text-[11px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">記録の一部をAIへ送って分析します</div>
-      <div className="mt-2 text-[12px] font-bold leading-6 text-slate-600">
+      <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
         送信するのは、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話です。期間の振り返りと今の体調相談の会話は分けて扱います。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
       </div>
       <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、AI分析を使う"}</Button>
@@ -492,7 +492,7 @@ export default function AiAnalysisPanel({
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-[11px] font-black tracking-[0.14em] text-[#A56C18]">AI分析 先行体験中</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
               {access?.beta_enabled ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。` : "グラフと記録の振り返りは無料で確認できます。"}
             </div>
           </div>
@@ -540,7 +540,7 @@ export default function AiAnalysisPanel({
         </div>
         <div className="space-y-2.5 px-4 pb-4">
           {analysisLoading || analysisLookupLoading ? (
-            <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
+            <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
               {analysisLoading ? "少し待ってください。予報・実感・ケアを順番に確認しています。" : "この期間の保存済み分析があるか確認しています。"}
             </div>
           ) : (
@@ -548,9 +548,9 @@ export default function AiAnalysisPanel({
               <CompactAnalysisSummary analysis={displayedAnalysis} />
               <div className="rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
                 <div className="text-[10px] font-black tracking-[0.14em] text-[#A56C18]/75">次に一つだけ</div>
-                <div className="mt-1 text-[12px] font-black leading-6 text-slate-700">{displayedAnalysis.next_step}</div>
+                <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{displayedAnalysis.next_step}</div>
               </div>
-              <div className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-6 text-[#2F816E] ring-1 ring-[#CFE7DE]">{displayedAnalysis.question}</div>
+              <div className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[14px] font-black leading-6 text-[#2F816E] ring-1 ring-[#CFE7DE]">{displayedAnalysis.question}</div>
               {displayedAnalysis.evidence?.length ? (
                 <details className="rounded-[16px] bg-white/65 px-3.5 py-2.5 text-[11px] font-bold text-slate-500 ring-1 ring-[#E8F0EB]">
                   <summary className="cursor-pointer font-black text-slate-500">根拠を確認</summary>
@@ -583,12 +583,12 @@ export default function AiAnalysisPanel({
           ) : null}
           {analysisMeta?.source === "ai" && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
           {analysisError ? (
-            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
               {analysisError}
             </div>
           ) : null}
           {analysisNotice ? (
-            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
               {analysisNotice}
             </div>
           ) : null}
@@ -606,15 +606,15 @@ export default function AiAnalysisPanel({
         </div>
 
         {!consent?.active || !access?.ai_enabled ? (
-          <div className="mt-4 rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">上のAI利用確認を完了すると、選択期間の記録を引き継いだ会話を始められます。</div>
+          <div className="mt-4 rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">上のAI利用確認を完了すると、選択期間の記録を引き継いだ会話を始められます。</div>
         ) : (
           <>
             <div ref={chatScrollRef} className="mt-4 max-h-[440px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
               {threadLoading ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#E8F0EB]">会話を読み込んでいます…</div> : null}
-              {!threadLoading && messages.length === 0 ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">気になった日や、ケアの種類・タイミングについて聞いてください。分からないことは断定せず、一緒に整理します。</div> : null}
+              {!threadLoading && messages.length === 0 ? <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">気になった日や、ケアの種類・タイミングについて聞いてください。分からないことは断定せず、一緒に整理します。</div> : null}
               {messages.map((message, index) => (
                 <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
-                  <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[12px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
+                  <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[14px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
                     {message.role === "user" && message.reply_to_follow_up?.question ? (
                       <div className="mb-2 border-b border-white/25 pb-2 text-[10px] font-bold leading-4 text-white/80">
                         <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div>
@@ -632,7 +632,7 @@ export default function AiAnalysisPanel({
             {hasPendingFollowUp ? (
               <div className="mt-3 rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
                 <div className="text-[10px] font-black tracking-[0.12em] text-[#A56C18]/75">AIからの確認</div>
-                <div className="mt-1 text-[12px] font-black leading-5 text-slate-700">{followUp.question}</div>
+                <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{followUp.question}</div>
                 <div className="mt-1 text-[10px] font-bold leading-4 text-slate-400">タップすると入力欄に入ります。必要なら補足してから送れます。</div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
@@ -664,7 +664,7 @@ export default function AiAnalysisPanel({
                   </div>
                 </div>
               ) : null}
-              <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[13px] font-bold leading-6 text-slate-700 outline-none" />
+              <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[14px] font-bold leading-6 text-slate-700 outline-none" />
               <div className="flex items-center justify-between gap-3 px-1 pb-1">
                 <button type="button" onClick={clearConversation} className="text-[11px] font-black text-slate-400">会話を削除</button>
                 <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに聞く"}</Button>
@@ -673,7 +673,7 @@ export default function AiAnalysisPanel({
           </>
         )}
 
-        {error ? <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
+        {error ? <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
         <div className="mt-3 text-[10px] font-bold leading-4 text-slate-400">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
       </section>
     </div>

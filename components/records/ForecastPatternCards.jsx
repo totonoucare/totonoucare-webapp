@@ -71,7 +71,7 @@ export default function ForecastPatternCards({ rows = [], onSelectDate }) {
 
   if (!comparableDays) {
     return (
-      <div className="rounded-[24px] bg-[#F7FAF8] p-5 text-center text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
+      <div className="rounded-[24px] bg-[#F7FAF8] p-5 text-center text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
         予報と記録が同じ日にそろうと、4つの振り返りパターンが表示されます。
       </div>
     );
@@ -81,7 +81,7 @@ export default function ForecastPatternCards({ rows = [], onSelectDate }) {
     <section className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
       <div className="border-b border-[#EEF3EF] px-4 py-3">
         <div className="text-[13px] font-black text-slate-900">4つの振り返りパターン</div>
-        <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">
+        <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
           予報は症状の断定ではなく、備えの目安です。実感との組み合わせから、次に比べたい日を見つけます。
         </div>
       </div>

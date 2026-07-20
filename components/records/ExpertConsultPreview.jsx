@@ -35,7 +35,7 @@ function Feature({ title, lead }) {
   return (
     <div className="rounded-[20px] bg-white px-4 py-3.5 ring-1 ring-[#DCE8DD]">
       <div className="text-[14px] font-black leading-6 text-slate-900">{title}</div>
-      <div className="mt-1 text-[12px] font-bold leading-6 text-slate-500">{lead}</div>
+      <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">{lead}</div>
     </div>
   );
 }
@@ -91,7 +91,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
           </div>
         </div>
         <div className="px-4 pb-4">
-          <div className="rounded-[22px] bg-white/85 p-4 text-[13px] font-bold leading-7 text-slate-600 ring-1 ring-white">
+          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-7 text-slate-600 ring-1 ring-white">
             病院に行くほどではないけれど気になる、検査では大きな異常がなくても不調が続く、セルフケアだけでは追いつかない。そんな時に、鍼灸師などの国家資格者へ相談できます。
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="text-[12px] font-black tracking-[0.1em] text-[#2F816E]">アプリの情報を引き継いで相談</div>
-        <div className="mt-2 rounded-[20px] bg-[#F4FAF7] px-4 py-3.5 text-[13px] font-bold leading-7 text-slate-600 ring-1 ring-[#DCE8DD]">
+        <div className="mt-2 rounded-[20px] bg-[#F4FAF7] px-4 py-3.5 text-[14px] font-bold leading-7 text-slate-600 ring-1 ring-[#DCE8DD]">
           体質トリセツ、気になる不調、毎日の予報・実感、試したケアを相談前に確認。一から説明する時間を減らし、今の状態を詳しく見てもらえます。
         </div>
 
@@ -109,7 +109,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
           <Feature title="ツボ・お灸・生活ケアを一緒に確認" lead="必要に応じて舌・姿勢・動作も見ながら、自宅で取り入れるケアを画面越しに確認します。" />
           <Feature title="次に試すケアを持ち帰る" lead="今週優先することや天気が変わる時の備え方を、自分で続けられる形にまとめます。" />
         </div>
-        <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#EED8B4]">
+        <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-3.5 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#EED8B4]">
           担当者の資格と対応範囲に応じて、一般用漢方薬を検討する時の考え方や、適切な相談先についても整理します。
         </div>
       </section>
@@ -117,7 +117,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
       <section className="rounded-[30px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
         <div className="text-[11px] font-black tracking-[0.12em] text-[#A56C18]">準備中</div>
         <div className="mt-1 text-[17px] font-black text-slate-900">オンライン相談の開始をお知らせします</div>
-        <div className="mt-2 text-[13px] font-bold leading-7 text-slate-600">
+        <div className="mt-2 text-[14px] font-bold leading-7 text-slate-600">
           人に詳しく相談したい時に利用できるサービスを準備しています。希望する方には、開始時にお知らせします。
         </div>
 
@@ -129,12 +129,12 @@ export default function ExpertConsultPreview({ authedFetch }) {
         >
           {saving ? "保存中…" : interested ? "お知らせ希望を登録済み ✓" : "開始したら知らせてほしい"}
         </Button>
-        <div className="mt-2 text-center text-[12px] font-bold leading-5 text-slate-500">
+        <div className="mt-2 text-center text-[14px] font-bold leading-5 text-slate-500">
           予約や料金は発生しません。もう一度押すと取り消せます。
         </div>
         {error ? <div className="mt-3 text-center text-[12px] font-bold text-[#B75C3E]">{error}</div> : null}
 
-        <div className="mt-4 border-t border-[#EED8B4] pt-3 text-[12px] font-bold leading-6 text-slate-500">
+        <div className="mt-4 border-t border-[#EED8B4] pt-3 text-[14px] font-bold leading-6 text-slate-500">
           強い症状や急な変化がある場合は、医療機関へ相談してください。
         </div>
       </section>

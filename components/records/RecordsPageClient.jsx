@@ -312,7 +312,7 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
       >
         <Module className="p-6 text-center">
           <div className="text-[18px] font-black text-slate-900">記録にはログインが必要です</div>
-          <div className="mt-2 text-[12px] font-bold leading-6 text-slate-500">
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
             予報と実際の体調を保存し、記録の振り返りや今の体調相談につなげます。
           </div>
           <Button onClick={() => router.push("/signup")} className="mt-5 w-full">
@@ -357,7 +357,7 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
           />
 
           {recordError ? (
-            <div className="rounded-[18px] bg-[#FFF0EC] px-4 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+            <div className="rounded-[18px] bg-[#FFF0EC] px-4 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
               {recordError}
             </div>
           ) : null}

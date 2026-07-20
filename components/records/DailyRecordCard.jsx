@@ -91,7 +91,7 @@ function CareActionsSummary({
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">今日に向けて行ったケア</div>
-          <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">Daily Careで「やってみた」と記録した内容です。</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">Daily Careで「やってみた」と記録した内容です。</div>
         </div>
         {editable && onOpenRadar ? (
           <button type="button" onClick={onOpenRadar} className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
@@ -316,7 +316,7 @@ export default function DailyRecordCard({
       <div className="bg-[#F4FAF7] px-4 pb-4 pt-5">
         <div className="flex items-end gap-3">
           <GuideBotAvatar mood={botMood} className="h-[82px] w-[82px] shrink-0" />
-          <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#CFE7DE] shadow-sm">
+          <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
             <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/65">記録サポート</div>
             <div className="mt-1">{botMessage}</div>
@@ -390,20 +390,20 @@ export default function DailyRecordCard({
           {reviewFactors(review).length ? (
             <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
               <div className="text-[10px] font-black text-[#A56C18]">天気以外で思い当たること</div>
-              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+              <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
                 {reviewFactors(review).map(factorLabel).join("・")}
               </div>
             </div>
           ) : null}
 
           {review.note ? (
-            <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">{review.note}</div>
+            <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">{review.note}</div>
           ) : null}
 
           <div className="mt-4 rounded-[20px] bg-[#EFF8F4] p-4 ring-1 ring-[#CFE7DE]">
             <div className="text-[11px] font-black tracking-widest text-[#2F816E]/70">この日の見比べ</div>
             <div className="mt-1 text-[14px] font-black text-slate-900">{reflectionMeta?.title || classification.label}</div>
-            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
               {reflectionMeta?.body || "予報が残っていないため、体調記録として見返します。"}
             </div>
           </div>
@@ -417,7 +417,7 @@ export default function DailyRecordCard({
         </div>
       ) : !editable ? (
         <div className="p-4">
-          <div className="rounded-[20px] bg-[#F7FAF8] px-4 py-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
+          <div className="rounded-[20px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
             未記録の日を後から追加できるのは{editWindowLabel}までです。今後の記録から少しずつ傾向をためていきましょう。
           </div>
         </div>
@@ -445,7 +445,7 @@ export default function DailyRecordCard({
                 <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
                   <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">今日当日のケアは、つらさを感じる前にできた？</div>
                   {careActionSummary.has_previous_night ? (
-                    <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">昨晩のケアは先回りとして記録済みです。ここでは今日行った分だけ教えてください。</div>
+                    <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">昨晩のケアは先回りとして記録済みです。ここでは今日行った分だけ教えてください。</div>
                   ) : null}
                   <div className="mt-2 flex flex-wrap gap-2">
                     {[
@@ -459,7 +459,7 @@ export default function DailyRecordCard({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[18px] bg-[#EFF8F4] px-4 py-3 text-[12px] font-bold leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                <div className="rounded-[18px] bg-[#EFF8F4] px-4 py-3 text-[14px] font-bold leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
                   昨晩の「明日に向けたケア」なので、先回りケアとして記録します。
                 </div>
               )}
@@ -512,7 +512,7 @@ export default function DailyRecordCard({
           {condition != null && care != null && shouldAskFactors ? (
             <div className="mt-3 rounded-[22px] bg-[#FFF8EC] p-3.5 ring-1 ring-[#EED8B4]">
               <div className="text-[12px] font-black text-[#A56C18]">天気以外で重なったことはある？</div>
-              <div className="mt-1 text-[11px] font-bold leading-5 text-slate-500">安定予報でもつらさがあった日の生活条件として残します。予報ロジックには混ぜません。</div>
+              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">安定予報でもつらさがあった日の生活条件として残します。予報ロジックには混ぜません。</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {RECORD_FACTOR_OPTIONS.map((item) => (
                   <TogglePill key={item.value} active={factors.includes(item.value)} onClick={() => toggleFactor(item.value)}>{item.label}</TogglePill>
@@ -529,7 +529,7 @@ export default function DailyRecordCard({
               rows={3}
               maxLength={500}
               placeholder="仕事が忙しかった、よく眠れた、夕方から重かった など"
-              className="w-full resize-none rounded-[20px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-6 text-slate-700 outline-none ring-1 ring-[#DCE8DD] focus:ring-2 focus:ring-[#66B9A3]"
+              className="w-full resize-none rounded-[20px] bg-[#F7FAF8] px-4 py-3 text-[14px] font-bold leading-6 text-slate-700 outline-none ring-1 ring-[#DCE8DD] focus:ring-2 focus:ring-[#66B9A3]"
             />
           </div>
 

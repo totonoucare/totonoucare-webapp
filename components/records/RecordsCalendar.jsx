@@ -141,7 +141,7 @@ export default function RecordsCalendar({
         })}
       </div>
 
-      <div className="mt-4 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[11px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
+      <div className="mt-4 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
         上の細い色は予報、○△×は実際の体調、下の色点は暮らす・食べる・ほぐすの記録です。
       </div>
     </section>

@@ -123,7 +123,7 @@ export default function ReviewFormSheet({
                 {triggerLabel(forecast.main_trigger, forecast.trigger_dir)}
               </span>
             </div>
-            <div className="mt-3 text-[12px] font-bold leading-5 text-slate-600">
+            <div className="mt-3 text-[14px] font-bold leading-5 text-slate-600">
               {forecast.why_short || "その日の気象と体質の重なりから出した予報です。"}
             </div>
           </div>
