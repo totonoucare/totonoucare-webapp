@@ -961,7 +961,7 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
 function RakutenStatusCard({ error, onRetry, loading }) {
   if (error) {
     return (
-      <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[12px] font-bold leading-6 text-[#77540B] ring-1 ring-[#E4C56B]/70">
+      <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[14px] font-bold leading-6 text-[#77540B] ring-1 ring-[#E4C56B]/70">
         <div>商品候補の読み込みがうまくいきませんでした。</div>
         <div className="mt-1 text-[11px] leading-5 text-[#A36E14]">
           通信が混み合っている可能性があります。少し時間をおいて、もう一度検索してください。
@@ -2232,7 +2232,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
 
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
-      <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
+      <div className="pointer-events-none absolute -right-10 -top-8 h-[180px] w-[180px] opacity-60" aria-hidden="true">
         <TwoToneOrbitMark />
       </div>
 
@@ -2241,7 +2241,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
           <CoreTypeAvatar coreIconPath={coreIconPath} coreTitle={coreTitle} />
           <div className="min-w-0">
             <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">あなたのセレクト</div>
-            <div className="mt-0.5 text-[11px] font-bold leading-5 text-slate-500">
+            <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-500">
               {loading
                 ? "体質トリセツを読み込んでいます"
                 : profile
@@ -2272,7 +2272,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
           ) : null}
         </div>
 
-        <p className="mt-3 max-w-[520px] text-[13px] font-bold leading-6 text-slate-600">
+        <p className="mt-3 max-w-[520px] text-[14px] font-bold leading-6 text-slate-600">
           暮らす・食べる・ほぐすから、今の生活に取り入れやすいアイテムを選びました。
         </p>
 
@@ -2358,7 +2358,7 @@ function ShopItemCard({ item, itemPosition, setKey, trackingContext, shopEntry, 
             {priceText ? <span className="font-black text-[var(--accent-ink)]">{priceText}</span> : null}
             {item.shopName ? <span>{item.shopName}</span> : null}
           </div>
-          {isPartner && item.reason ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">{item.reason}</p> : item.useGuide ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">{item.useGuide}</p> : null}
+          {isPartner && item.reason ? <p className="mt-2 text-[14px] font-bold leading-5 text-slate-500">{item.reason}</p> : item.useGuide ? <p className="mt-2 text-[14px] font-bold leading-5 text-slate-500">{item.useGuide}</p> : null}
         </div>
       </div>
       <ShopItemActions item={item} shopEntry={shopEntry} saving={saving} onToggleInterested={onToggleInterested} />
@@ -2384,7 +2384,7 @@ function FeaturedCareSetCard({ card, trackingContext, shopEntryMap, savingKey, o
       <div className="pr-24">
         <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">あなたへのおすすめ3アイテム</div>
         <h2 className="mt-1 text-[19px] font-black leading-7 tracking-tight text-slate-900">{card.title}</h2>
-        <p className="mt-1.5 text-[12px] font-bold leading-5 text-slate-600">{card.lead}</p>
+        <p className="mt-1.5 text-[14px] font-bold leading-5 text-slate-600">{card.lead}</p>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
@@ -2419,7 +2419,7 @@ function CareSetCard({ card, cardPosition, trackingContext, shopEntryMap, saving
       <div className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white text-[10px] font-black text-[#715F52] ring-1 ring-[#E1D7C9]">{String(cardPosition).padStart(2, "0")}</div>
       <div className="pr-12">
         <h3 className="text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
-        <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{card.lead}</p>
+        <p className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{card.lead}</p>
       </div>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         {includedCategories.map((categoryKey) => {
@@ -2459,7 +2459,7 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
     return (
       <div className="rounded-[22px] bg-[#F4F9F6] p-5 text-center ring-1 ring-[#D5E5DB]">
         <div className="text-[14px] font-black text-slate-800">気になる商品はまだありません</div>
-        <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">商品カードの「気になる」を押すと、ここでまとめて比べられます。</p>
+        <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">商品カードの「気になる」を押すと、ここでまとめて比べられます。</p>
       </div>
     );
   }
@@ -2467,7 +2467,7 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
     <div className="grid gap-3">
       <div className="rounded-[20px] bg-[#FFF9EA] px-4 py-3 ring-1 ring-[#EED8B4]">
         <div className="text-[13px] font-black text-slate-900">気になる・購入済み</div>
-        <p className="mt-1 text-[11px] font-bold leading-5 text-slate-500">購入した商品は「購入済み」にすると、体調予報のデイリーケアから使用を記録できます。</p>
+        <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">購入した商品は「購入済み」にすると、体調予報のデイリーケアから使用を記録できます。</p>
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {visible.slice(0, 40).map((entry) => {
@@ -2596,7 +2596,7 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
       <div className="grid gap-2.5 sm:grid-cols-2">
         {categoryItems.length ? categoryItems.map((item, index) => (
           <ShopItemCard key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shopEntry={shopEntryMap.get(getSetItemKey(item))} saving={savingKey === getSetItemKey(item)} onToggleInterested={onToggleInterested} />
-        )) : <div className="rounded-[20px] bg-[#F4F9F6] p-4 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#D5E5DB] sm:col-span-2">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
+        )) : <div className="rounded-[20px] bg-[#F4F9F6] p-4 text-[14px] font-bold leading-5 text-slate-500 ring-1 ring-[#D5E5DB] sm:col-span-2">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
       </div>
       {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[var(--shop)] px-4 py-3 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
     </div>
@@ -3197,7 +3197,7 @@ export default function CareNaviPage() {
               <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[var(--gold-soft)] text-[#8A5C0B] ring-1 ring-[#E4C56B] shadow-sm"><IconCare className="h-5 w-5" /></div>
               <div className="min-w-0">
                 <div className="text-[17px] font-black tracking-tight text-slate-900">今のケア方針から選んだ商品</div>
-                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">3カテゴリのセットで見るか、商品を1つずつ比べられます。</div>
+                <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">3カテゴリのセットで見るか、商品を1つずつ比べられます。</div>
                 <div className="mt-1 text-[10px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
               </div>
             </div>
@@ -3242,12 +3242,12 @@ export default function CareNaviPage() {
                 <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />
               )
             ) : (
-              <div className="rounded-[22px] bg-white p-4 text-[12px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合う商品候補を十分に組めませんでした。用途や気になる不調を少し変えてお試しください。</div>
+              <div className="rounded-[22px] bg-white p-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合う商品候補を十分に組めませんでした。用途や気になる不調を少し変えてお試しください。</div>
             )}
 
             <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
               <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">選び方と紹介リンクについて</summary>
-              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">体質と気になる不調を土台に、選んだ用途に応じて季節と近いうちの天気を重ね、商品候補を並べています。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。</p>
+              <p className="border-t border-[#D8E6DD] px-3 py-2 text-[12px] font-bold leading-5 text-slate-500">体質と気になる不調を土台に、選んだ用途に応じて季節と近いうちの天気を重ね、商品候補を並べています。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。</p>
             </details>
           </div>
         </Module>
