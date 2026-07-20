@@ -119,7 +119,7 @@ export default function CheckLandingPage() {
                       <div className="mt-2 text-[22px] font-black leading-tight tracking-tight text-slate-950">
                         最新のトリセツ
                       </div>
-                      <div className="mt-2 text-[14px] font-bold leading-6 text-[#536072]">
+                      <div className="mt-2 text-[13px] font-bold leading-6 text-[#536072]">
                         {latestCore ? `${latestCore.title}：${latestCore.short}` : "保存済みのトリセツを確認できます。"}
                       </div>
                       {latestSubs.length ? (
@@ -162,14 +162,14 @@ export default function CheckLandingPage() {
                 </div>
               </div>
 
-              <p className="mt-5 text-[14px] font-bold leading-7 text-[#536072]">
+              <p className="mt-5 text-[13px] font-bold leading-7 text-[#536072]">
                 {latestResult
                   ? "体調や気になる不調が変わったら、再チェックしてトリセツを更新できます。"
-                  : "約1〜2分の質問から、あなたの体質・崩れやすいサイン・天気との相性をまとめた体質トリセツを作ります。"}
+                  : "約3分で、体質のクセを多面的に整理。基本14問と回答に応じた追加質問から、アクセル・ブレーキ・余力、気・血・水、経絡の傾向まで読み解きます。"}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <MiniBadge>約1〜2分</MiniBadge>
+                <MiniBadge>約3分</MiniBadge>
                 <MiniBadge>途中保存</MiniBadge>
                 <MiniBadge>無料</MiniBadge>
               </div>
@@ -215,7 +215,7 @@ export default function CheckLandingPage() {
                 </Button>
               </div>
 
-              <p className="mt-4 text-[14px] font-bold leading-7 text-[#536072]">
+              <p className="mt-4 text-[13px] font-bold leading-7 text-[#536072]">
                 保存した過去の体質トリセツを見返して、体質の変化や崩れやすいパターンを確認できます。
               </p>
 
@@ -233,4 +233,3 @@ export default function CheckLandingPage() {
     </AppShell>
   );
 }
-
