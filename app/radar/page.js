@@ -24,7 +24,7 @@ import {
   SYMPTOM_LABELS,
 } from "@/lib/diagnosis/v2/labels";
 import { ForecastGauge } from "./ForecastGauge";
-import { buildDisplayedCareItems } from "@/lib/radar_v1/careActionItems";
+import { buildCareActionKey, buildDisplayedCareItems } from "@/lib/radar_v1/careActionItems";
 import { enhanceDailyCarePlan } from "@/lib/radar_v1/careRules/dailyCareV2";
 import {
   ForecastDateRail,
@@ -140,7 +140,7 @@ function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorde
 }
 
 function CareSetNaviBridge({
-  eyebrow = "MYケアセレクト",
+  eyebrow = "パーソナルケアショップ",
   title,
   lead,
   buttonLabel = "候補を見る",
@@ -168,6 +168,35 @@ function CareSetNaviBridge({
       >
         {buttonLabel}
       </Button>
+    </div>
+  );
+}
+
+function PurchasedCareItemsPanel({ items, renderActionButton }) {
+  if (!safeArray(items).length) return null;
+  return (
+    <div className="rounded-[20px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">手持ちアイテム</div>
+          <div className="mt-1 text-[13px] font-black text-slate-900">購入済みの商品を使ったら記録</div>
+        </div>
+        <span className="rounded-full bg-[#FFF6DF] px-2.5 py-1 text-[9px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">ショップ連携</span>
+      </div>
+      <div className="mt-3 grid gap-2">
+        {safeArray(items).slice(0, 6).map((item) => (
+          <div key={item.canonical_key} className="flex items-center gap-3 rounded-[16px] bg-[#F8FBF9] p-2.5 ring-1 ring-[#DCE8DD]">
+            <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-[13px] bg-white ring-1 ring-[#DCE8DD]">
+              {item.shopItem?.imageUrl ? <img src={item.shopItem.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" /> : <IconLifestyle className="h-5 w-5 text-[#2F816E]" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="line-clamp-2 text-[11px] font-black leading-4 text-slate-800">{item.label}</div>
+              <div className="mt-1 text-[9px] font-bold text-slate-400">{item.domain === "eat" ? "取り入れた内容として記録" : "使ったケアとして記録"}</div>
+            </div>
+            {renderActionButton(item, { compact: true, uncheckedLabel: item.domain === "eat" ? "今日取り入れた" : "今日使った" })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -314,6 +343,7 @@ export default function RadarPage() {
   const [careActionSavingKey, setCareActionSavingKey] = useState("");
   const [careActionError, setCareActionError] = useState("");
   const [careActionsSchemaReady, setCareActionsSchemaReady] = useState(true);
+  const [purchasedShopItems, setPurchasedShopItems] = useState([]);
 
   const requestSeqRef = useRef(0);
   const slowLoadingTimerRef = useRef(null);
@@ -747,6 +777,29 @@ export default function RadarPage() {
     };
   }, [session?.access_token, activeTargetDate]);
 
+  useEffect(() => {
+    if (!session?.access_token) {
+      setPurchasedShopItems([]);
+      return undefined;
+    }
+    let cancelled = false;
+    fetch("/api/care-shop/items?status=purchased", {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(json?.error || "購入済み商品を読み込めませんでした。");
+        if (!cancelled) setPurchasedShopItems(safeArray(json?.data?.items));
+      })
+      .catch(() => {
+        if (!cancelled) setPurchasedShopItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
+
   const riskContext = getRiskContext(bundle);
   const savedSymptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomFocus = selectedSymptomKey || savedSymptomFocus || null;
@@ -858,9 +911,8 @@ export default function RadarPage() {
       symptomFocus,
     });
   }, [carePlan?.care_theme, activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]);
-  const careNaviWeatherQuery = selectedIsToday ? "" : "&weather=tomorrow";
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
-  const buildCareNaviUrl = (category) => `/care-navi?category=${category}${careNaviWeatherQuery}${careNaviSymptomQuery}`;
+  const buildCareNaviUrl = (category) => `/care-navi?category=${category}${careNaviSymptomQuery}`;
 
   const derivedLifestylePlan = useMemo(
     () =>
@@ -937,6 +989,42 @@ export default function RadarPage() {
     });
     return map;
   }, [displayedCareItems]);
+  const purchasedCareItemsByCategory = useMemo(() => {
+    const groups = { live: [], eat: [], point: [] };
+    safeArray(purchasedShopItems).forEach((row) => {
+      const shopItem = row?.item_snapshot && typeof row.item_snapshot === "object" ? row.item_snapshot : {};
+      const category = ["live", "eat", "point"].includes(row?.category) ? row.category : shopItem.category;
+      if (!groups[category]) return;
+      const domain = category === "point" ? "loosen" : category;
+      const label = String(row?.title || shopItem.title || "購入済みのケアアイテム").slice(0, 160);
+      const detail = String(shopItem.useGuide || shopItem.reason || (domain === "eat" ? "購入済みの商品を取り入れた" : "購入済みの商品を使った")).slice(0, 240);
+      const canonicalKey = buildCareActionKey({
+        domain,
+        kind: "owned_care_item",
+        identity: row?.item_key || label,
+      });
+      groups[category].push({
+        item_key: canonicalKey,
+        canonical_key: canonicalKey,
+        domain,
+        kind: "owned_care_item",
+        label,
+        detail,
+        source_mode: "today",
+        shopItem,
+        meta: {
+          card_key: "purchased_care_items",
+          card_label: "手持ちアイテム",
+          shop_item_key: row?.item_key || null,
+          shop_item_title: label,
+          shop_item_source: row?.source || shopItem.source || null,
+          shop_item_url: row?.item_url || shopItem.itemUrl || null,
+          entry_origin: "daily_care_card",
+        },
+      });
+    });
+    return groups;
+  }, [purchasedShopItems]);
   const previousNightCareCount = safeArray(careActions).filter((item) => item?.source_mode === "tomorrow").length;
   const sameDayCareCount = safeArray(careActions).filter((item) => item?.source_mode === "today").length;
   const checkedCareCount = selectedIsToday
@@ -975,7 +1063,7 @@ export default function RadarPage() {
     }
   }
 
-  function actionButtonFor(item, { compact = false, stopPropagation = false } = {}) {
+  function actionButtonFor(item, { compact = false, stopPropagation = false, uncheckedLabel = "" } = {}) {
     if (!item) return null;
     return (
       <CareActionButton
@@ -983,7 +1071,7 @@ export default function RadarPage() {
         saving={careActionSavingKey === (item.canonical_key || item.item_key)}
         disabled={!careActionsSchemaReady}
         compact={compact}
-        uncheckedLabel={item.kind === "food_caution" ? "意識した" : "やってみた"}
+        uncheckedLabel={uncheckedLabel || (item.kind === "food_caution" ? "意識した" : "やってみた")}
         onClick={(event) => {
           if (stopPropagation) event?.stopPropagation?.();
           toggleCareAction(item);
@@ -1876,6 +1964,7 @@ export default function RadarPage() {
                     ) : null}
                   </div>
                 ) : null}
+                {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.point} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
                   title={selectedIsToday ? "このツボケアに合う道具を見る" : "明日に使うほぐし道具を見ておく"}
                   lead={selectedIsToday
@@ -2128,6 +2217,7 @@ export default function RadarPage() {
                     </div>
                   ) : null}
                 </div>
+                {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.eat} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
                   title={selectedIsToday ? "この食べ方に合う候補を見る" : "明日の食べ方候補を見ておく"}
                   lead={selectedIsToday
@@ -2205,6 +2295,7 @@ export default function RadarPage() {
                     ) : null}
                   </div>
                 </div>
+                {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.live} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
                   title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
@@ -2308,4 +2399,3 @@ export default function RadarPage() {
     </AppShell>
   );
 }
-
