@@ -102,6 +102,10 @@ function cleanSnapshot(value, fallback) {
       primary_trigger: compact(meta.primary_trigger, 40) || null,
       care_plan_id: compact(meta.care_plan_id, 80) || null,
       care_logic_version: compact(meta.care_logic_version, 80) || null,
+      shop_item_key: compact(meta.shop_item_key, 200) || null,
+      shop_item_title: compact(meta.shop_item_title, 160) || null,
+      shop_item_source: compact(meta.shop_item_source, 60) || null,
+      shop_item_url: compact(meta.shop_item_url, 1200) || null,
       entry_origin: compact(meta.entry_origin || fallback.entryOrigin, 40) || null,
     },
   };
