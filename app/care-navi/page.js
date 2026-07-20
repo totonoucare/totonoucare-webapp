@@ -2232,7 +2232,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
 
   return (
     <div className="relative overflow-hidden rounded-[32px] bg-white p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_22px_48px_-34px_rgba(36,86,76,0.26)] sm:p-6">
-      <div className="pointer-events-none absolute -right-10 -top-8 h-[180px] w-[180px] opacity-60" aria-hidden="true">
+      <div className="pointer-events-none absolute -right-6 -top-4 h-[196px] w-[196px] opacity-75 sm:-right-5 sm:-top-3" aria-hidden="true">
         <TwoToneOrbitMark />
       </div>
 
