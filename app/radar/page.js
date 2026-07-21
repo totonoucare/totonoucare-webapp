@@ -45,7 +45,7 @@ import {
   getCareStrategyLead,
   getCareStrategyTitle,
   getDateModeLabel,
-  getForecastBackgroundFactors,
+  getForecastWeatherLoadGroups,
   getForecastBodySigns,
   getForecastModeLabel,
   getForecastModeLead,
@@ -879,9 +879,9 @@ export default function RadarPage() {
     () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0, symptomFocus, displayDateMode),
     [triggerFactors, forecast?.signal, symptomFocus, displayDateMode]
   );
-  const backgroundFactors = useMemo(
-    () => getForecastBackgroundFactors(triggerFactors),
-    [triggerFactors]
+  const weatherLoadGroups = useMemo(
+    () => getForecastWeatherLoadGroups(forecast),
+    [forecast]
   );
   const careTriggerFactors = useMemo(() => getForecastTriggerFactors(activeCareForecast), [activeCareForecast]);
   const careTriggerKey = careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
@@ -1536,62 +1536,42 @@ export default function RadarPage() {
                       coreLabel={coreLabel?.title || ""}
                     />
 
-                    {backgroundFactors.length > 0 ? (
+                    {weatherLoadGroups.length > 0 ? (
                       <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                         <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気ストレスと注意時間</div>
+                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気負荷と注意時間</div>
                           <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
-                            予報背景
+                            負荷の内訳
                           </div>
                         </div>
 
-                        <div className="grid gap-2">
-                          {backgroundFactors.map((factor, index) => {
-                            const factorPeakStart =
-                              factor.peakStart || factor.peak_start || (factor.role === "primary" ? forecast.peak_start : null);
-                            const factorPeakEnd =
-                              factor.peakEnd || factor.peak_end || (factor.role === "primary" ? forecast.peak_end : null);
+                        <div className="grid grid-cols-3 gap-2">
+                          {weatherLoadGroups.map((factor, index) => {
+                            const factorPeakStart = factor.peakStart;
+                            const factorPeakEnd = factor.peakEnd;
                             const factorPeakLabel = factorPeakStart && factorPeakEnd
                               ? `${String(factorPeakStart).slice(0, 5)}–${String(factorPeakEnd).slice(0, 5)}`
                               : "—";
 
                             return (
                               <div
-                                key={`${factor.key}-${index}`}
-                                className="grid w-full gap-2 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
-                                title={factor.stressValue != null ? `${factor.label} ${factor.levelLabel} (${factor.stressPercent}%) / 注意時間 ${factorPeakLabel}` : `${factor.label} ${factor.levelLabel} / 注意時間 ${factorPeakLabel}`}
+                                key={`${factor.group}-${index}`}
+                                className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
+                                title={`${factor.label} ${factor.loadPercent == null ? "—" : `${factor.loadPercent}%`}（${factor.detailLabel}） / 注意時間 ${factorPeakLabel}`}
                               >
-                                <div className="flex items-center justify-between gap-3">
-                                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                                    <WeatherIcon triggerKey={factor.key} className="h-[24px] w-[24px] shrink-0" />
-                                    <span className="min-w-0 text-[13px] font-black text-slate-700">{factor.label}</span>
-                                  </div>
-                                  {factor.levelLabel ? (
-                                    <span
-                                      className={[
-                                        "shrink-0 rounded-full px-2 py-1 text-[12px] font-black leading-none ring-1",
-                                        factor.levelTone === "high"
-                                          ? "bg-[#FFF3E8] text-[#B86430] ring-[#F1D5BC]"
-                                          : factor.levelTone === "middle"
-                                            ? "bg-[#FFF8E7] text-[#9A6A16] ring-[#EBD9A8]"
-                                            : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
-                                      ].join(" ")}
-                                    >
-                                      {factor.levelLabel}
-                                    </span>
-                                  ) : null}
+                                <div className="flex min-w-0 items-center justify-center gap-1">
+                                  <WeatherIcon triggerKey={factor.key} className="h-[22px] w-[22px] shrink-0" />
+                                  <span className="truncate text-[11px] font-black text-slate-600">{factor.label}</span>
                                 </div>
 
-                                <div className="flex items-center justify-between gap-3 rounded-[13px] bg-[#F7FAF8]/55 px-2.5 py-1.5 ring-1 ring-[#EEF3EF]">
-                                  <div className="flex min-w-0 items-center gap-1.5 text-[11px] font-black tracking-[0.08em] text-slate-400">
-                                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/70 text-slate-400 ring-1 ring-[#EEF3EF]">
-                                      <IconBolt className="h-3.5 w-3.5" />
-                                    </span>
-                                    <span className="whitespace-nowrap">注意時間</span>
-                                  </div>
-                                  <span className="shrink-0 rounded-full bg-white/62 px-2.5 py-0.5 text-[12px] font-black text-slate-600 ring-1 ring-[#EEF3EF]">
-                                    {factorPeakLabel}
-                                  </span>
+                                <div className="text-[20px] font-black leading-none tracking-tight text-slate-800">
+                                  {factor.loadPercent == null ? "—" : `${factor.loadPercent}%`}
+                                </div>
+                                <div className="truncate text-[10px] font-extrabold text-slate-400">{factor.detailLabel}</div>
+
+                                <div className="mt-0.5 flex min-w-0 items-center justify-center gap-1 rounded-[11px] bg-[#F7FAF8]/70 px-1.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#EEF3EF]">
+                                  <IconBolt className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                  <span className="truncate">{factorPeakLabel}</span>
                                 </div>
                               </div>
                             );

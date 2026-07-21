@@ -1312,6 +1312,127 @@ export function getForecastBackgroundFactors(triggerFactors) {
   });
 }
 
+const WEATHER_LOAD_GROUP_ORDER = ["temperature", "moisture", "pressure"];
+
+const WEATHER_LOAD_GROUP_LABELS = {
+  temperature: "気温負荷",
+  moisture: "湿度負荷",
+  pressure: "気圧負荷",
+};
+
+function weatherLoadGroupFromExact(exact) {
+  if (["cold", "heat", "temp_shift", "temperature_shift"].includes(exact)) return "temperature";
+  if (["damp", "dry", "humidity"].includes(exact)) return "moisture";
+  if (["pressure_down", "pressure_up", "pressure_shift"].includes(exact)) return "pressure";
+  return null;
+}
+
+function weatherLoadIconKey(exact, direction) {
+  if (exact === "temp_shift" || exact === "temperature_shift") {
+    return direction === "down" ? "cold" : "heat";
+  }
+  if (exact === "pressure_shift") return direction === "up" ? "pressure_up" : "pressure_down";
+  return toWeatherIconKey(exact);
+}
+
+function weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load }) {
+  const meaningful = Number(weatherStrength || 0) > 0.05 || Number(load || 0) > 0.05;
+  if (!meaningful) return "大きな変化なし";
+  if (group === "temperature") {
+    if (exact === "cold") return "冷え込み";
+    if (exact === "heat") return "気温上昇";
+    return "寒暖差";
+  }
+  if (group === "moisture") return exact === "dry" ? "乾燥" : "湿気";
+  if (direction === "mixed") return "上下変動";
+  return exact === "pressure_up" || direction === "up" ? "気圧上昇" : "気圧低下";
+}
+
+/**
+ * Forecast UI representation for all three weather groups.
+ *
+ * V2 snapshots expose personal_load (weather x affinity x reserve). Older
+ * snapshots are kept renderable by filling known primary/secondary factors and
+ * showing an em dash for groups that were not stored at the time.
+ */
+export function getForecastWeatherLoadGroups(forecast) {
+  if (!forecast) return [];
+  const snapshot = getForecastSnapshot(forecast);
+  const riskContext = forecast?.computed?.radar_plan_meta?.risk_context || null;
+  const riskSummary = riskContext?.summary || null;
+  const personalizedMeta = riskContext?.meta?.personalized_meta || null;
+  const rawGroups =
+    forecast?.weather_load_groups ||
+    snapshot?.weather_load_groups ||
+    riskSummary?.weather_load_groups ||
+    riskContext?.weather_context?.weather_load_groups ||
+    personalizedMeta?.weather_load_groups ||
+    personalizedMeta?.effective_weather_groups ||
+    null;
+
+  const byGroup = {};
+  if (Array.isArray(rawGroups)) {
+    rawGroups.forEach((item) => {
+      const group = item?.group || weatherLoadGroupFromExact(item?.exact || item?.key);
+      if (group) byGroup[group] = item;
+    });
+  } else if (rawGroups && typeof rawGroups === "object") {
+    Object.entries(rawGroups).forEach(([entryKey, item]) => {
+      const group = item?.group || (WEATHER_LOAD_GROUP_ORDER.includes(entryKey) ? entryKey : weatherLoadGroupFromExact(item?.exact || item?.key));
+      if (group) byGroup[group] = item;
+    });
+  }
+
+  // Compatibility for forecasts generated before the three-group UI existed.
+  if (Object.keys(byGroup).length === 0) {
+    getForecastTriggerFactors(forecast).forEach((factor) => {
+      const exact = factor?.exact || factor?.key;
+      const group = weatherLoadGroupFromExact(exact);
+      if (group && !byGroup[group]) byGroup[group] = factor;
+    });
+  }
+
+  const channelPeaks =
+    forecast?.channel_peaks ||
+    snapshot?.channel_peaks ||
+    riskSummary?.channel_peaks ||
+    riskContext?.weather_context?.channel_peaks ||
+    null;
+  const reserveScalar = Number(personalizedMeta?.reserve_scalar || 1);
+
+  return WEATHER_LOAD_GROUP_ORDER.map((group) => {
+    const item = byGroup[group] || null;
+    const exact = item?.exact || item?.key || (
+      group === "temperature" ? "temp_shift" : group === "moisture" ? "damp" : "pressure_down"
+    );
+    const direction = item?.direction || item?.trigger_dir || null;
+    const effective = clamp01Number(item?.effective_load ?? item?.effectiveLoad);
+    const storedPersonal = clamp01Number(item?.personal_load ?? item?.display_load);
+    const load = storedPersonal ?? (effective == null ? null : clamp01Number(effective * reserveScalar));
+    const weatherStrength = clamp01Number(item?.weather_strength ?? item?.weatherStrength);
+    const iconKey = weatherLoadIconKey(exact, direction);
+    const peak = channelPeaks?.[exact] || channelPeaks?.[iconKey] || null;
+    const peakStart = item?.peak_start ?? item?.peakStart ?? peak?.start ?? null;
+    const peakEnd = item?.peak_end ?? item?.peakEnd ?? peak?.end ?? null;
+    const showPeak = load != null && load >= 0.08;
+
+    return {
+      group,
+      key: iconKey,
+      exact,
+      direction,
+      label: WEATHER_LOAD_GROUP_LABELS[group],
+      detailLabel: weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load }),
+      load,
+      loadPercent: load == null ? null : Math.round(load * 100),
+      weatherStrength,
+      peakStart: showPeak ? peakStart : null,
+      peakEnd: showPeak ? peakEnd : null,
+      personalized: item?.personalized !== false,
+    };
+  });
+}
+
 function softenPeakPrepItem(text) {
   const raw = String(text || "").trim();
   if (!raw) return "";
