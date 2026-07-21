@@ -238,6 +238,15 @@ export function IconSignal({ className = "h-6 w-6", ...props }) {
   );
 }
 
+export function IconAttention({ className = "h-6 w-6", ...props }) {
+  return (
+    <IconShell className={className} {...props}>
+      <path d="M12 3.5 21 19H3L12 3.5Z" fill="currentColor" fillOpacity="0.1" />
+      <path d="M12 8.4v5.2M12 16.9h.01" />
+    </IconShell>
+  );
+}
+
 export function IconSave({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
