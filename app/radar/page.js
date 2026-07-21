@@ -1520,9 +1520,6 @@ export default function RadarPage() {
                       <div className="text-[15px] font-black tracking-tight text-slate-900">
                         {scoreCardTitle}
                       </div>
-                      <div className="mt-1 text-[12px] font-black tracking-[0.16em] text-slate-400">
-                        対策ケア
-                      </div>
                     </div>
                   </div>
 
