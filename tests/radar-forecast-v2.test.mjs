@@ -14,6 +14,8 @@ const workflowSource = await readFile(new URL("../.github/workflows/radar-foreca
 const notificationSource = await readFile(new URL("../lib/push/runRadarNotificationCron.js", import.meta.url), "utf8");
 const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
 const radarUtilsSource = await readFile(new URL("../app/radar/utils.js", import.meta.url), "utf8");
+const resultPageSource = await readFile(new URL("../app/result/[id]/page.js", import.meta.url), "utf8");
+const personalKarteSource = await readFile(new URL("../lib/personalKarte.js", import.meta.url), "utf8");
 const publicForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/public/route.js", import.meta.url), "utf8");
 const riskContextSource = await readFile(new URL("../lib/radar_v1/buildRiskContext.js", import.meta.url), "utf8");
 const radarPlanSource = await readFile(new URL("../lib/radar_v1/buildRadarPlan.js", import.meta.url), "utf8");
@@ -364,11 +366,38 @@ test("today remains morning-fixed and only tomorrow refreshes in the evening", (
 test("forecast UI shows temperature moisture and pressure loads in three columns", () => {
   assert.match(radarPageSource, /天気負荷と注意時間/);
   assert.match(radarPageSource, /grid grid-cols-3 gap-2/);
+  assert.match(radarPageSource, /高・中・低の目安/);
+  assert.match(radarPageSource, /WEATHER_LOAD_SHORT_LABELS/);
+  assert.match(radarPageSource, /compactPeakLabel/);
+  assert.match(radarPageSource, /IconAttention/);
+  assert.match(radarPageSource, />負荷<\/span>/);
   assert.match(radarUtilsSource, /temperature: "気温負荷"/);
   assert.match(radarUtilsSource, /moisture: "湿度負荷"/);
   assert.match(radarUtilsSource, /pressure: "気圧負荷"/);
-  assert.match(radarPageSource, /factor\.loadPercent/);
+  assert.match(radarUtilsSource, /load >= 0\.67 \? "高" : load >= 0\.34 \? "中" : "低"/);
+  assert.match(radarPageSource, /factor\.loadLevelLabel/);
+  assert.doesNotMatch(radarPageSource, /factor\.loadPercent/);
   assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
+});
+
+test("constitution guide shares V2 affinities and treats pressure as one slot", () => {
+  const profile = forecast.buildConstitutionWeatherAffinityV2({
+    constitution: constitution({
+      yinYang: -0.7,
+      vectors: ["temp_swing"],
+      material: { fluid_deficiency: 4, fluid_damp: 0.2 },
+    }),
+  });
+  const ranked = forecast.rankConstitutionWeatherAffinityV2(profile.weights);
+
+  assert.equal(ranked.filter((item) => item.key.startsWith("pressure_")).length, 1);
+  assert.ok(ranked.some((item) => item.key === "temp_shift"));
+  assert.ok(profile.trace.dry.material_fluid_deficiency > 0);
+  assert.match(resultPageSource, /buildConstitutionWeatherAffinityV2/);
+  assert.match(personalKarteSource, /buildConstitutionWeatherAffinityV2/);
+  assert.match(personalKarteSource, /temp_swing: \{ label: "寒暖差", exact: \["temp_shift"\] \}/);
+  assert.doesNotMatch(resultPageSource, /buildPersonalWeatherAffinityProfile/);
+  assert.doesNotMatch(personalKarteSource, /buildPersonalWeatherAffinityProfile/);
 });
 
 test("three weather loads persist for signed-in and public forecasts", () => {
