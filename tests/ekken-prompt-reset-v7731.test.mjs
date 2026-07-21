@@ -45,6 +45,6 @@ test("structured output contract remains while conversational content stays free
   assert.match(live, /messageに自然な返答を書く/);
   assert.match(live, /確認が必要な時だけfollow_upを使う/);
   assert.match(live, /routineではsafety_messageを空にする/);
-  assert.match(liveRoute, /records_live_support_v11_living_language_2026-07-17/);
+  assert.match(liveRoute, /records_live_support_v12_forecast_v2_2026-07-21/);
   assert.match(liveRoute, /reasoning: \{ effort: "medium" \}/);
 });

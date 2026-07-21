@@ -92,7 +92,7 @@ test("live support knows the constitution hierarchy without forcing a fixed reas
 });
 
 test("prompt versions change so saved outputs do not reuse the old constitution interpretation", () => {
-  assert.match(liveRoute, /records_live_support_v11_living_language_2026-07-17/);
-  assert.match(periodRoute, /records_chat_v11_forecast_hierarchy_2026-07-16/);
-  assert.match(analysisRoute, /records_analysis_v10_forecast_hierarchy_2026-07-16/);
+  assert.match(liveRoute, /records_live_support_v12_forecast_v2_2026-07-21/);
+  assert.match(periodRoute, /records_chat_v12_forecast_v2_2026-07-21/);
+  assert.match(analysisRoute, /records_analysis_v11_forecast_v2_2026-07-21/);
 });

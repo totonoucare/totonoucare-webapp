@@ -60,7 +60,7 @@ test("Daily Care v2 uses one shared theme for lifestyle, food and loosen care", 
   assert.equal(plan.lifestyle_plan.care_theme, plan.care_theme);
   assert.equal(plan.tomorrow_food_context.care_theme, plan.care_theme);
   assert.equal(plan.night_tsubo_set.care_theme, plan.care_theme);
-  assert.match(plan.care_theme.summary, /重さ|ながす|逃が/);
+  assert.match(plan.care_theme.summary, /重だるさ|重さ|ながす|逃が/);
 });
 
 test("same conditions rotate the concrete daily action across adjacent dates but stay stable on reload", () => {
