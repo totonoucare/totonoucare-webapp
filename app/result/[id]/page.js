@@ -281,7 +281,7 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
     }));
 
   return {
-    intro: buildCompatIntro({ core, subLabels, symptomKey }),
+    intro: buildCompatIntro(),
     items,
     signs: buildLikelySigns({ symptomKey, subCodes }),
     radarBridge: buildRadarBridge({ symptomKey }),
@@ -364,10 +364,8 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
   return "この天気変化で、体調が揺れやすい傾向があります。";
 }
 
-function buildCompatIntro({ core, subLabels, symptomKey }) {
-  const subShorts = Array.isArray(subLabels) ? subLabels.map((s) => s.short).filter(Boolean) : [];
-  const subText = subShorts.length ? subShorts.join("・") : "大きな偏りなし";
-  return `${core?.title || "今回の体質"}は、${subText}の傾向が重なることで、天気の変化を受けた時の崩れ方に特徴が出やすいタイプです。特に「${SYMPTOM_LABELS[symptomKey] || symptomKey}」では、天候の影響がストレートに現れやすくなります。`;
+function buildCompatIntro() {
+  return "体質タイプだけでなく、寒さ・暑さへの感じ方、天気への感じやすさ、気・血・水の6つの傾向を合わせて、影響を受けやすい順に表示しています。";
 }
 
 function buildLikelySigns({ symptomKey, subCodes }) {
@@ -968,4 +966,3 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
