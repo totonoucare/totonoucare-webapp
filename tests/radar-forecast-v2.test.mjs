@@ -16,6 +16,8 @@ const radarPageSource = await readFile(new URL("../app/radar/page.js", import.me
 const radarUtilsSource = await readFile(new URL("../app/radar/utils.js", import.meta.url), "utf8");
 const resultPageSource = await readFile(new URL("../app/result/[id]/page.js", import.meta.url), "utf8");
 const personalKarteSource = await readFile(new URL("../lib/personalKarte.js", import.meta.url), "utf8");
+const pointExplanationSource = await readFile(new URL("../lib/radar_v1/explainPointSelection.js", import.meta.url), "utf8");
+const lifestyleRulesSource = await readFile(new URL("../lib/radar_v1/careRules/lifestyleRules.js", import.meta.url), "utf8");
 const publicForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/public/route.js", import.meta.url), "utf8");
 const riskContextSource = await readFile(new URL("../lib/radar_v1/buildRiskContext.js", import.meta.url), "utf8");
 const radarPlanSource = await readFile(new URL("../lib/radar_v1/buildRadarPlan.js", import.meta.url), "utf8");
@@ -398,6 +400,16 @@ test("constitution guide shares V2 affinities and treats pressure as one slot", 
   assert.match(personalKarteSource, /temp_swing: \{ label: "寒暖差", exact: \["temp_shift"\] \}/);
   assert.doesNotMatch(resultPageSource, /buildPersonalWeatherAffinityProfile/);
   assert.doesNotMatch(personalKarteSource, /buildPersonalWeatherAffinityProfile/);
+});
+
+test("forecast and constitution copy reflect the V2 hierarchy without removing useful metaphors", () => {
+  assert.equal((radarPageSource.match(/対策ケア/g) || []).length, 1);
+  assert.match(resultPageSource, /寒さ・暑さへの感じ方、天気への感じやすさ、気・血・水の6つの傾向/);
+  assert.doesNotMatch(resultPageSource, /天候の影響がストレートに現れやすくなります/);
+  assert.match(radarUtilsSource, /胃腸が水を含んだスポンジみたいに重く感じやすい日/);
+  assert.doesNotMatch(radarUtilsSource, /湿気の重い膜|胃腸を止めっぱなし/);
+  assert.doesNotMatch(pointExplanationSource, /湿気の重い膜/);
+  assert.doesNotMatch(lifestyleRulesSource, /胃腸を止めっぱなし/);
 });
 
 test("three weather loads persist for signed-in and public forecasts", () => {
