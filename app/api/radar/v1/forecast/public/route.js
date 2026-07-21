@@ -3,7 +3,7 @@
 
 import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
-import { buildWeatherStress } from "@/lib/radar_v1/weatherStress";
+import { buildWeatherStressV2 } from "@/lib/radar_v1/weatherStressV2";
 import { decideTargetDateJST, nowJstParts, toJstISODate } from "@/lib/radar_v1/timeJST";
 
 export const runtime = "nodejs";
@@ -14,13 +14,10 @@ export const revalidate = 0;
 const DEFAULT_LAT = 35.68944;
 const DEFAULT_LON = 139.69167;
 
-const UNIVERSAL_CHANNEL_IMPORTANCE = {
-  pressure_down: 1.0,
-  pressure_up: 0.74,
-  cold: 0.86,
-  heat: 0.76,
-  damp: 0.8,
-  dry: 0.66,
+const UNIVERSAL_GROUP_IMPORTANCE = {
+  pressure: 1,
+  temperature: 0.9,
+  moisture: 0.85,
 };
 
 function clamp(value, min, max) {
@@ -32,17 +29,27 @@ function clamp(value, min, max) {
 // 気象ストレス → シグナルへの汎用変換（体質なしバージョン）
 // 体質補正がないため、複数要因の単純合算ではなく「上位要因を中心に控えめ」に出す。
 function buildUniversalChannelRanking(weatherStress) {
+  const events = weatherStress?.event_strengths || {};
+  const temperatureKey = ["temp_shift", "cold", "heat"].sort((a, b) => {
+    const eventKey = (key) => key === "temp_shift" ? "temperature_shift" : key;
+    return Number(events[eventKey(b)] || 0) - Number(events[eventKey(a)] || 0);
+  })[0];
+  const moistureKey = Number(events.dry || 0) > Number(events.damp || 0) ? "dry" : "damp";
+  const pressureKey = (
+    weatherStress?.pressure_presentation_direction || weatherStress?.pressure_direction
+  ) === "up" ? "pressure_up" : "pressure_down";
   return [
-    { key: "pressure_down", strength: weatherStress.pressure_down_strength ?? 0 },
-    { key: "pressure_up", strength: weatherStress.pressure_up_strength ?? 0 },
-    { key: "cold", strength: weatherStress.cold_strength ?? 0 },
-    { key: "heat", strength: weatherStress.heat_strength ?? 0 },
-    { key: "damp", strength: weatherStress.damp_strength ?? 0 },
-    { key: "dry", strength: weatherStress.dry_strength ?? 0 },
+    { group: "pressure", key: pressureKey, strength: events.pressure_shift ?? 0 },
+    {
+      group: "temperature",
+      key: temperatureKey,
+      strength: events[temperatureKey === "temp_shift" ? "temperature_shift" : temperatureKey] ?? 0,
+    },
+    { group: "moisture", key: moistureKey, strength: events[moistureKey] ?? 0 },
   ]
     .map((channel) => ({
       ...channel,
-      weighted: clamp(channel.strength, 0, 1) * (UNIVERSAL_CHANNEL_IMPORTANCE[channel.key] || 1),
+      weighted: clamp(channel.strength, 0, 1) * (UNIVERSAL_GROUP_IMPORTANCE[channel.group] || 1),
     }))
     .sort((a, b) => b.weighted - a.weighted);
 }
@@ -67,8 +74,8 @@ function calcUniversalSignal(weatherStress) {
   const score = Math.round(scorePrecise);
 
   let signal;
-  if (score >= 7) signal = 2;      // 守り
-  else if (score >= 4) signal = 1; // いたわり
+  if (scorePrecise >= 7) signal = 2;      // 守り
+  else if (scorePrecise >= 4) signal = 1; // いたわり
   else signal = 0;                 // 安定
 
   return {
@@ -111,6 +118,7 @@ function buildTriggerFactor(channel, role) {
     pressure_up:   { main_trigger: "pressure", trigger_dir: "up", label: "気圧上昇" },
     cold:          { main_trigger: "temp",     trigger_dir: "down", label: "冷え込み" },
     heat:          { main_trigger: "temp",     trigger_dir: "up", label: "気温上昇" },
+    temp_shift:    { main_trigger: "temp",     trigger_dir: "change", label: "気温差" },
     damp:          { main_trigger: "humidity", trigger_dir: "up", label: "湿気" },
     dry:           { main_trigger: "humidity", trigger_dir: "down", label: "乾燥" },
   };
@@ -166,7 +174,7 @@ export async function GET(req) {
       return jsonUtf8({ ok: false, error: "No forecast points available" }, 503);
     }
 
-    const weatherStress = buildWeatherStress({
+    const weatherStress = buildWeatherStressV2({
       points: normalized.points,
       previousNightBridgePoints: includePreviousNightBridge
         ? normalized.previousNightBridgePoints
@@ -208,4 +216,3 @@ function isTomorrowTargetDate(targetDate) {
   const tomorrow = toJstISODate(tomorrowDate);
   return targetDate === tomorrow;
 }
-
