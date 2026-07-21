@@ -751,7 +751,7 @@ function GuestStartCta({ onCheck, onLogin }) {
             体質トリセツを作って、体調予報とパーソナルケアショップへ
           </h2>
           <p className="mt-2 text-[14px] font-bold leading-6 text-[#5b6674]">
-            1〜2分の体質チェックで、あなたの「崩れ方のクセ」をまとめます。作成後は、今日・明日の体調予報や、ケア用品・食品・サービス候補も自分向けに見られます。
+            約3分で、体質のクセを多面的に整理。基本14問と回答に応じた追加質問から、アクセル・ブレーキ・余力、気・血・水、経絡の傾向まで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。
           </p>
         </div>
       </div>
@@ -968,7 +968,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   let icon = <IconCheckCard />;
   let eyebrow = "TYPE GUIDE";
   let title = "体質トリセツを作る";
-  let body = "約1〜2分の体質チェックで、あなたの崩れやすいパターンと天気との相性を見える化します。";
+  let body = "約3分で、体質のクセを多面的に整理。基本14問と回答に応じた追加質問から、アクセル・ブレーキ・余力、気・血・水、経絡の傾向まで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。";
   let primaryLabel = "無料で体質チェックを始める";
   let secondaryLabel = "使い方を見る";
 
