@@ -1415,6 +1415,8 @@ export function getForecastWeatherLoadGroups(forecast) {
     const peakStart = item?.peak_start ?? item?.peakStart ?? peak?.start ?? null;
     const peakEnd = item?.peak_end ?? item?.peakEnd ?? peak?.end ?? null;
     const showPeak = load != null && load >= 0.08;
+    const loadLevelLabel = load == null ? "—" : load >= 0.67 ? "高" : load >= 0.34 ? "中" : "低";
+    const loadLevelTone = load == null ? "none" : load >= 0.67 ? "high" : load >= 0.34 ? "middle" : "low";
 
     return {
       group,
@@ -1425,6 +1427,8 @@ export function getForecastWeatherLoadGroups(forecast) {
       detailLabel: weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load }),
       load,
       loadPercent: load == null ? null : Math.round(load * 100),
+      loadLevelLabel,
+      loadLevelTone,
       weatherStrength,
       peakStart: showPeak ? peakStart : null,
       peakEnd: showPeak ? peakEnd : null,

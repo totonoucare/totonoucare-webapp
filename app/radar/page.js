@@ -10,6 +10,7 @@ import Button from "@/components/ui/Button";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import {
+  IconAttention,
   IconBolt,
   IconRadar,
   IconRipple,
@@ -70,6 +71,25 @@ import {
 } from "./utils";
 
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
+
+const WEATHER_LOAD_SHORT_LABELS = {
+  temperature: "気温",
+  moisture: "湿度",
+  pressure: "気圧",
+};
+
+function compactClockLabel(value) {
+  const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return "";
+  const hour = String(Number(match[1]));
+  return match[2] === "00" ? hour : `${hour}:${match[2]}`;
+}
+
+function compactPeakLabel(start, end) {
+  const startLabel = compactClockLabel(start);
+  const endLabel = compactClockLabel(end);
+  return startLabel && endLabel ? `${startLabel}–${endLabel}時` : "—";
+}
 
 function getPolicyIconPath(policyKey) {
   return `/illust/policy/policy-${policyKey}.svg`;
@@ -1541,7 +1561,7 @@ export default function RadarPage() {
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気負荷と注意時間</div>
                           <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
-                            負荷の内訳
+                            高・中・低の目安
                           </div>
                         </div>
 
@@ -1549,29 +1569,38 @@ export default function RadarPage() {
                           {weatherLoadGroups.map((factor, index) => {
                             const factorPeakStart = factor.peakStart;
                             const factorPeakEnd = factor.peakEnd;
-                            const factorPeakLabel = factorPeakStart && factorPeakEnd
-                              ? `${String(factorPeakStart).slice(0, 5)}–${String(factorPeakEnd).slice(0, 5)}`
-                              : "—";
+                            const factorPeakLabel = compactPeakLabel(factorPeakStart, factorPeakEnd);
+                            const factorShortLabel = WEATHER_LOAD_SHORT_LABELS[factor.group] || factor.label;
+                            const loadToneClass = factor.loadLevelTone === "high"
+                              ? "text-[#B86430]"
+                              : factor.loadLevelTone === "middle"
+                                ? "text-[#9A6A16]"
+                                : factor.loadLevelTone === "low"
+                                  ? "text-[#2F816E]"
+                                  : "text-slate-400";
 
                             return (
                               <div
                                 key={`${factor.group}-${index}`}
                                 className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
-                                title={`${factor.label} ${factor.loadPercent == null ? "—" : `${factor.loadPercent}%`}（${factor.detailLabel}） / 注意時間 ${factorPeakLabel}`}
+                                title={`${factor.label} 負荷${factor.loadLevelLabel}（${factor.detailLabel}） / 注意時間 ${factorPeakLabel}`}
                               >
                                 <div className="flex min-w-0 items-center justify-center gap-1">
                                   <WeatherIcon triggerKey={factor.key} className="h-[22px] w-[22px] shrink-0" />
-                                  <span className="truncate text-[11px] font-black text-slate-600">{factor.label}</span>
+                                  <span className="whitespace-nowrap text-[11px] font-black text-slate-600">{factorShortLabel}</span>
                                 </div>
 
-                                <div className="text-[20px] font-black leading-none tracking-tight text-slate-800">
-                                  {factor.loadPercent == null ? "—" : `${factor.loadPercent}%`}
+                                <div className="flex items-baseline justify-center gap-1 leading-none text-slate-800">
+                                  <span className="text-[10px] font-black text-slate-400">負荷</span>
+                                  <span className={`text-[22px] font-black tracking-tight ${loadToneClass}`}>
+                                    {factor.loadLevelLabel}
+                                  </span>
                                 </div>
-                                <div className="truncate text-[10px] font-extrabold text-slate-400">{factor.detailLabel}</div>
+                                <div className="whitespace-nowrap text-[10px] font-extrabold text-slate-400">{factor.detailLabel}</div>
 
                                 <div className="mt-0.5 flex min-w-0 items-center justify-center gap-1 rounded-[11px] bg-[#F7FAF8]/70 px-1.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#EEF3EF]">
-                                  <IconBolt className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                                  <span className="truncate">{factorPeakLabel}</span>
+                                  <IconAttention className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                  <span className="whitespace-nowrap">{factorPeakLabel}</span>
                                 </div>
                               </div>
                             );
