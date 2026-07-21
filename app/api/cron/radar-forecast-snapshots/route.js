@@ -39,6 +39,7 @@ export async function GET(req) {
       enrich: false,
       dryRun: searchParams.get("dry_run") === "1",
       userId: searchParams.get("user_id") || null,
+      generationSlot: searchParams.get("slot") || "scheduled",
     });
 
     return jsonUtf8(result);
@@ -47,4 +48,3 @@ export async function GET(req) {
     return jsonUtf8({ ok: false, error: String(error?.message || error) }, 500);
   }
 }
-
