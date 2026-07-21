@@ -12,6 +12,11 @@ const forecast = await importSource("../lib/radar_v1/personalizeForecastV2.js");
 const careSource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const workflowSource = await readFile(new URL("../.github/workflows/radar-forecast-snapshots.yml", import.meta.url), "utf8");
 const notificationSource = await readFile(new URL("../lib/push/runRadarNotificationCron.js", import.meta.url), "utf8");
+const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
+const radarUtilsSource = await readFile(new URL("../app/radar/utils.js", import.meta.url), "utf8");
+const publicForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/public/route.js", import.meta.url), "utf8");
+const riskContextSource = await readFile(new URL("../lib/radar_v1/buildRiskContext.js", import.meta.url), "utf8");
+const radarPlanSource = await readFile(new URL("../lib/radar_v1/buildRadarPlan.js", import.meta.url), "utf8");
 
 function point(hour, values = {}) {
   return {
@@ -32,7 +37,14 @@ function linearPoints({ start, end, field, from, to, base = {} }) {
   }));
 }
 
-function constitution({ yinYang = 0.7, drive = 0, thermo = "neutral" } = {}) {
+function constitution({
+  yinYang = 0.7,
+  drive = 0,
+  thermo = "neutral",
+  sensitivity = 2,
+  vectors = ["pressure_shift", "temp_swing"],
+  material = {},
+} = {}) {
   return {
     core_code: `${yinYang >= 0 ? "accel" : "brake"}_batt_standard`,
     sub_labels: ["qi_stagnation", "fluid_damp"],
@@ -43,11 +55,44 @@ function constitution({ yinYang = 0.7, drive = 0, thermo = "neutral" } = {}) {
       thermo_answer: thermo,
     },
     split_scores: {
-      qi: { deficiency: 1.2, stagnation: 2.4 },
-      blood: { deficiency: 0.8, stasis: 1.5 },
-      fluid: { deficiency: 0.7, damp: 2.1 },
+      qi: {
+        deficiency: material.qi_deficiency ?? 1.2,
+        stagnation: material.qi_stagnation ?? 2.4,
+      },
+      blood: {
+        deficiency: material.blood_deficiency ?? 0.8,
+        stasis: material.blood_stasis ?? 1.5,
+      },
+      fluid: {
+        deficiency: material.fluid_deficiency ?? 0.7,
+        damp: material.fluid_damp ?? 2.1,
+      },
     },
-    env: { sensitivity: 2, vectors: ["pressure_shift", "temp_swing"] },
+    env: { sensitivity, vectors },
+  };
+}
+
+function balancedWeatherStress() {
+  return {
+    event_strengths: {
+      pressure_shift: 0.72,
+      temperature_shift: 0.58,
+      cold: 0.62,
+      heat: 0.62,
+      damp: 0.66,
+      dry: 0.66,
+    },
+    pressure_direction: "mixed",
+    pressure_presentation_direction: "down",
+    temperature_direction: "mixed",
+    channel_peaks: {
+      pressure_shift: { start: "06:00", end: "09:00" },
+      temp_shift: { start: "12:00", end: "15:00" },
+      cold: { start: "06:00", end: "09:00" },
+      heat: { start: "12:00", end: "15:00" },
+      damp: { start: "09:00", end: "12:00" },
+      dry: { start: "15:00", end: "18:00" },
+    },
   };
 }
 
@@ -164,6 +209,95 @@ test("the user's cold or heat answer affects the matching absolute-temperature e
   assert.ok(heatAnswer.meta.exact_affinity_weights.heat > neutralSummer.meta.exact_affinity_weights.heat);
 });
 
+test("direct weather answers outrank the summarized accelerator or brake prior", () => {
+  const stress = balancedWeatherStress();
+  const coldAccel = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({ yinYang: 0.9, thermo: "cold", vectors: [] }),
+  });
+  const neutralAccel = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({ yinYang: 0.9, thermo: "neutral", vectors: [] }),
+  });
+  const dryBrake = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({ yinYang: -0.9, vectors: ["dryness_up"] }),
+  });
+  const neutralBrake = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({ yinYang: -0.9, vectors: [] }),
+  });
+
+  assert.ok(coldAccel.meta.exact_affinity_weights.cold > neutralAccel.meta.exact_affinity_weights.cold);
+  assert.ok(dryBrake.meta.exact_affinity_weights.dry > neutralBrake.meta.exact_affinity_weights.dry);
+});
+
+test("all six scores create cross-type heat, cold, damp and dry affinities", () => {
+  const stress = balancedWeatherStress();
+  const dryBrake = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({
+      yinYang: -0.7,
+      sensitivity: 1,
+      vectors: [],
+      material: {
+        qi_deficiency: 0.2,
+        qi_stagnation: 0.2,
+        blood_deficiency: 3.5,
+        blood_stasis: 0.2,
+        fluid_deficiency: 5,
+        fluid_damp: 0.1,
+      },
+    }),
+  });
+  const dampAccel = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({
+      yinYang: 0.7,
+      sensitivity: 1,
+      vectors: [],
+      material: {
+        qi_deficiency: 2.5,
+        qi_stagnation: 5,
+        blood_deficiency: 0.2,
+        blood_stasis: 0.2,
+        fluid_deficiency: 0.1,
+        fluid_damp: 4,
+      },
+    }),
+  });
+
+  assert.ok(dryBrake.meta.exact_affinity_weights.dry > dryBrake.meta.exact_affinity_weights.damp);
+  assert.ok(dampAccel.meta.exact_affinity_weights.damp > dampAccel.meta.exact_affinity_weights.dry);
+  assert.ok(dryBrake.meta.affinity_trace.channels.dry.material_fluid_deficiency > 0);
+  assert.ok(dampAccel.meta.affinity_trace.channels.damp.material_fluid_damp > 0);
+});
+
+test("reaction axis keeps modest heat-dry and cold-damp priors", () => {
+  const stress = balancedWeatherStress();
+  const sharedMaterial = {
+    qi_deficiency: 1,
+    qi_stagnation: 1,
+    blood_deficiency: 1,
+    blood_stasis: 1,
+    fluid_deficiency: 1,
+    fluid_damp: 1,
+  };
+  const accel = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({ yinYang: 0.9, sensitivity: 1, vectors: [], material: sharedMaterial }),
+  });
+  const brake = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({ yinYang: -0.9, sensitivity: 1, vectors: [], material: sharedMaterial }),
+  });
+
+  assert.ok(accel.meta.exact_affinity_weights.heat > brake.meta.exact_affinity_weights.heat);
+  assert.ok(accel.meta.exact_affinity_weights.dry > brake.meta.exact_affinity_weights.dry);
+  assert.ok(brake.meta.exact_affinity_weights.cold > accel.meta.exact_affinity_weights.cold);
+  assert.ok(brake.meta.exact_affinity_weights.damp > accel.meta.exact_affinity_weights.damp);
+});
+
 test("all six material scores are retained while the score uses three weather groups", () => {
   const stress = weather.buildWeatherStressV2({
     points: linearPoints({
@@ -199,8 +333,9 @@ test("reserve changes vulnerability modestly without overriding weather", () => 
   });
 
   assert.ok(lowReserve.score_precise_0_10 > highReserve.score_precise_0_10);
-  assert.ok(lowReserve.meta.reserve_scalar <= 1.08);
-  assert.ok(highReserve.meta.reserve_scalar >= 0.94);
+  assert.equal(lowReserve.meta.reserve_scalar, 1.1);
+  assert.equal(highReserve.meta.reserve_scalar, 0.9);
+  assert.ok(lowReserve.meta.weather_load_groups.pressure.personal_load > highReserve.meta.weather_load_groups.pressure.personal_load);
 });
 
 test("signal thresholds use the precise score", () => {
@@ -224,4 +359,21 @@ test("today remains morning-fixed and only tomorrow refreshes in the evening", (
   assert.match(workflowSource, /SLOT="evening_tomorrow"/);
   assert.match(notificationSource, /kind === "night"/);
   assert.match(notificationSource, /generationSlot: "notification_fallback"/);
+});
+
+test("forecast UI shows temperature moisture and pressure loads in three columns", () => {
+  assert.match(radarPageSource, /天気負荷と注意時間/);
+  assert.match(radarPageSource, /grid grid-cols-3 gap-2/);
+  assert.match(radarUtilsSource, /temperature: "気温負荷"/);
+  assert.match(radarUtilsSource, /moisture: "湿度負荷"/);
+  assert.match(radarUtilsSource, /pressure: "気圧負荷"/);
+  assert.match(radarPageSource, /factor\.loadPercent/);
+  assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
+});
+
+test("three weather loads persist for signed-in and public forecasts", () => {
+  assert.match(riskContextSource, /weather_load_groups: personalized\?\.meta\?\.weather_load_groups/);
+  assert.match(radarPlanSource, /weather_load_groups: riskContext\.summary\.weather_load_groups/);
+  assert.match(publicForecastSource, /weather_load_groups: weatherLoadGroups/);
+  assert.match(publicForecastSource, /buildUniversalWeatherLoadGroups/);
 });
