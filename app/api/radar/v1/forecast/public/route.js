@@ -54,6 +54,31 @@ function buildUniversalChannelRanking(weatherStress) {
     .sort((a, b) => b.weighted - a.weighted);
 }
 
+function buildUniversalWeatherLoadGroups(weatherStress) {
+  const channelPeaks = weatherStress?.channel_peaks || {};
+  return Object.fromEntries(buildUniversalChannelRanking(weatherStress).map((channel) => {
+    const peak = channelPeaks[channel.key] || null;
+    const load = Math.round(Number(channel.weighted || 0) * 1000) / 1000;
+    return [channel.group, {
+      group: channel.group,
+      exact: channel.key,
+      event_key: channel.key === "temp_shift" ? "temperature_shift" : channel.key,
+      direction:
+        channel.group === "pressure" ? weatherStress?.pressure_direction || "steady"
+          : channel.key === "temp_shift" ? weatherStress?.temperature_direction || "change"
+            : channel.key === "cold" || channel.key === "dry" ? "down" : "up",
+      weather_strength: Math.round(Number(channel.strength || 0) * 1000) / 1000,
+      effective_load: load,
+      personal_load: load,
+      display_load: load,
+      reserve_scalar: 1,
+      peak_start: peak?.start || null,
+      peak_end: peak?.end || null,
+      personalized: false,
+    }];
+  }));
+}
+
 function calcUniversalSignal(weatherStress) {
   const channels = buildUniversalChannelRanking(weatherStress);
 
@@ -182,6 +207,7 @@ export async function GET(req) {
     });
     const { score_0_10, score_display_0_10, score_precise_0_10, signal } = calcUniversalSignal(weatherStress);
     const triggerFactors = resolveTriggerFactors(weatherStress);
+    const weatherLoadGroups = buildUniversalWeatherLoadGroups(weatherStress);
     const primaryTrigger = triggerFactors[0] || buildTriggerFactor({ key: "pressure_down", strength: 0, weighted: 0.06 }, "primary");
     const secondaryTrigger = triggerFactors[1] || null;
 
@@ -200,6 +226,7 @@ export async function GET(req) {
         personal_secondary_trigger_exact: secondaryTrigger?.exact || null,
         secondary_trigger_label: secondaryTrigger?.label || null,
         trigger_factors: triggerFactors.length ? triggerFactors : [primaryTrigger],
+        weather_load_groups: weatherLoadGroups,
       },
     });
   } catch (e) {
