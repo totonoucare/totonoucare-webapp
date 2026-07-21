@@ -148,6 +148,7 @@ function triggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
   if (mainTrigger === "temp" && triggerDir === "down") return "冷え込み";
   if (mainTrigger === "temp" && triggerDir === "up") return "気温上昇";
+  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "気温差";
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿気";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
@@ -158,6 +159,7 @@ function exactTriggerKey(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "up") return "pressure_up";
   if (mainTrigger === "temp" && triggerDir === "down") return "cold";
   if (mainTrigger === "temp" && triggerDir === "up") return "heat";
+  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "temp_shift";
   if (mainTrigger === "humidity" && triggerDir === "up") return "damp";
   if (mainTrigger === "humidity" && triggerDir === "down") return "dry";
   return "pressure_down";
@@ -168,6 +170,7 @@ function compatFromExact(exact) {
   if (exact === "pressure_up") return { main_trigger: "pressure", trigger_dir: "up" };
   if (exact === "cold") return { main_trigger: "temp", trigger_dir: "down" };
   if (exact === "heat") return { main_trigger: "temp", trigger_dir: "up" };
+  if (exact === "temp_shift") return { main_trigger: "temp", trigger_dir: "change" };
   if (exact === "damp") return { main_trigger: "humidity", trigger_dir: "up" };
   if (exact === "dry") return { main_trigger: "humidity", trigger_dir: "down" };
   return { main_trigger: "pressure", trigger_dir: "down" };
@@ -256,10 +259,10 @@ function buildQuickLiveAdvice(forecast) {
   const key = factor?.key || exactTriggerKey(forecast?.main_trigger, forecast?.trigger_dir);
   const prefix = forecast?.signal === 2 ? "今日は早めに" : forecast?.signal === 1 ? "今日はこまめに" : "今日は軽く";
 
-  if (key === "pressure_down") return `${prefix}、首肩と耳まわりをゆるめて予定を詰めすぎないで。`;
-  if (key === "pressure_up") return `${prefix}、息を吐く時間を長めにして力みを抜いて。`;
+  if (key === "pressure_down" || key === "pressure_up") return `${prefix}、表示されたケア方針に合わせて予定を詰めすぎないで。`;
   if (key === "cold") return `${prefix}、首・お腹・足首を冷やさないようにして。`;
   if (key === "heat") return `${prefix}、こもる前に水分と休憩を先に入れて。`;
+  if (key === "temp_shift") return `${prefix}、脱ぎ着しやすい服装で急な気温差に備えて。`;
   if (key === "damp") return `${prefix}、重さを感じる前に軽く動いてめぐりを作って。`;
   if (key === "dry") return `${prefix}、のど・肌・目の乾きを放置しないで。`;
   return `${prefix}、無理を詰め込まず余白を残して。`;
@@ -293,10 +296,10 @@ function buildGuestSignHints(forecast) {
   const factor = getForecastTriggerFactors(forecast)[0];
   const key = factor?.key || exactTriggerKey(forecast?.main_trigger, forecast?.trigger_dir);
 
-  if (key === "pressure_down") return ["頭が重い", "首肩が張る", "眠気・だるさ"];
-  if (key === "pressure_up") return ["力みやすい", "呼吸が浅い", "寝つきにくい"];
+  if (key === "pressure_down" || key === "pressure_up") return ["張り・こわばり", "重だるさ", "切り替えの疲れ"];
   if (key === "cold") return ["手足が冷える", "腰が重い", "こわばる"];
   if (key === "heat") return ["のぼせる", "汗で消耗", "眠りが浅い"];
+  if (key === "temp_shift") return ["体がこわばる", "切り替えに疲れる", "だるさが出る"];
   if (key === "damp") return ["重だるい", "むくみやすい", "胃腸が重い"];
   if (key === "dry") return ["のどが乾く", "目が疲れる", "肌が乾く"];
   return ["だるさ", "こわばり", "切り替えにくさ"];
