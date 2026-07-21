@@ -212,8 +212,8 @@ export function ForecastGauge({
       ? "rgba(226,174,69,0.14)"
       : "rgba(102,185,163,0.13)";
 
-  const stableEnd = scoreToAngle(3.5);
-  const cautionEnd = scoreToAngle(6.5);
+  const stableEnd = scoreToAngle(4);
+  const cautionEnd = scoreToAngle(7);
 
   const bubblePos = polarToCartesian(cx, cy, bubbleRadius, valueAngle);
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
@@ -332,7 +332,7 @@ export function ForecastGauge({
             filter={`url(#gauge-shadow-${signal})`}
           />
 
-          {[0, 3.5, 6.5, 10].map((value) => {
+          {[0, 4, 7, 10].map((value) => {
             const angle = scoreToAngle(value);
             const inner = polarToCartesian(cx, cy, innerRadius + 4, angle);
             const outer = polarToCartesian(cx, cy, guideRadius - 4, angle);
@@ -469,7 +469,6 @@ export function ForecastGauge({
     </div>
   );
 }
-
 
 
 

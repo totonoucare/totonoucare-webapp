@@ -305,6 +305,7 @@ export const MATCH_TAG_LABELS = {
   mood: "今見ている不調：気分の浮き沈み",
   pressure_down: "天気の影響：低気圧",
   pressure_up: "天気の影響：気圧上昇",
+  temp_shift: "天気の影響：気温差",
   damp: "天気の影響：湿気",
   humidity: "天気の影響：湿気",
   cold: "天気の影響：冷え",
@@ -449,6 +450,7 @@ export function getCompatTriggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
   if (mainTrigger === "temp" && triggerDir === "down") return "冷え込み";
   if (mainTrigger === "temp" && triggerDir === "up") return "気温上昇";
+  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "気温差";
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿気";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
@@ -459,6 +461,7 @@ export function exactFromCompat(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "up") return "pressure_up";
   if (mainTrigger === "temp" && triggerDir === "down") return "cold";
   if (mainTrigger === "temp" && triggerDir === "up") return "heat";
+  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "temp_shift";
   if (mainTrigger === "humidity" && triggerDir === "up") return "damp";
   if (mainTrigger === "humidity" && triggerDir === "down") return "dry";
   return "pressure_down";
@@ -469,6 +472,7 @@ export function compatFromExact(exact) {
   if (exact === "pressure_up") return { main_trigger: "pressure", trigger_dir: "up" };
   if (exact === "cold") return { main_trigger: "temp", trigger_dir: "down" };
   if (exact === "heat") return { main_trigger: "temp", trigger_dir: "up" };
+  if (exact === "temp_shift") return { main_trigger: "temp", trigger_dir: "change" };
   if (exact === "damp") return { main_trigger: "humidity", trigger_dir: "up" };
   if (exact === "dry") return { main_trigger: "humidity", trigger_dir: "down" };
   return { main_trigger: "pressure", trigger_dir: "down" };
@@ -1485,7 +1489,7 @@ const RADAR_NARRATIVE_WEATHER_ACTIONS = {
   damp: "部屋の空気を5分だけ入れ替えて、体にまとわりつく重さを外へ逃がす",
   pressure_down: "耳まわりと首の後ろを10秒だけゆるめて、頭のこもりを逃がす",
   pressure_up: "肩をすくめてストンと落とし、前のめりの力みを一度ほどく",
-  cold: "足首・お腹・首元のどこか一つを守って、冷えの入口を閉じる",
+  cold: "足首・お腹・首元のどこか一つを温め、冷えを防ぐ",
   heat: "暑さを我慢で突破せず、涼しさと水分を先に入れる",
   dry: "喉が渇く前に一口入れて、目を10秒だけ閉じる",
 };
@@ -1741,7 +1745,7 @@ function getNarrativeCareLead(triggerFactors, signal = 0, mode = "today", sympto
     if (level <= 0) {
       return `今日は${joined}の影響は小さめ。${feel}だけ軽く見ながら、暮らす・食べる・ほぐすを“足しすぎないケア”にします。`;
     }
-    return `今日は${joined}で、${feel}が出やすい日。${symptom}を直接どうにかするより、暮らす・食べる・ほぐすで体の出口を作る方針です。`;
+    return `今日は${joined}で、${feel}が出やすい日。${symptom}に合わせて、暮らす・食べる・ほぐすで負担を増やさない方針です。`;
   }
 
   if (level <= 0) {
@@ -2025,50 +2029,51 @@ export const CARE_POLICY_DEFINITIONS = {
   shizumeru: {
     key: "shizumeru",
     label: "しずめる",
-    short: "熱と冴えを落ち着ける",
-    guide: "熱・冴え・高ぶりを落ち着ける",
+    short: "高ぶりを落ち着ける",
+    guide: "熱や高ぶりを落ち着ける",
   },
   yurumeru: {
     key: "yurumeru",
     label: "ゆるめる",
-    short: "力みをほどく",
-    guide: "力み・こわばり・緊張をほどく",
+    short: "力みをやわらげる",
+    guide: "力みやこわばりをやわらげる",
   },
   meguraseru: {
     key: "meguraseru",
     label: "めぐらせる",
-    short: "巡りを止めない",
-    guide: "滞りやこもりを止めずにめぐらせる",
+    short: "巡りを保つ",
+    guide: "巡りを保つ",
   },
   nagasu: {
     key: "nagasu",
     label: "ながす",
-    short: "重さを逃がす",
-    guide: "湿気・重だるさ・水っぽさをためない",
+    short: "重だるさをためない",
+    guide: "重だるさやむくみをためない",
   },
   uruosu: {
     key: "uruosu",
     label: "うるおす",
-    short: "乾きを残さない",
-    guide: "乾き・消耗を残さない",
+    short: "乾きを補う",
+    guide: "乾きと消耗を補う",
   },
   nukumeru: {
     key: "nukumeru",
     label: "ぬくめる",
-    short: "冷えを守る",
-    guide: "冷えの入口を守る",
+    short: "冷えを防ぐ",
+    guide: "冷えを防ぐ",
   },
   sasaeru: {
     key: "sasaeru",
     label: "ささえる",
-    short: "回復力を削らない",
-    guide: "胃腸・回復力・余力を削らない",
+    short: "疲れを増やさない",
+    guide: "疲れや消耗を増やさない",
   },
 };
 
 const TRIGGER_POLICY_SCORES = {
-  pressure_down: { meguraseru: 6, yurumeru: 3.5 },
-  pressure_up: { yurumeru: 6, shizumeru: 3.5 },
+  pressure_down: { meguraseru: 3, yurumeru: 3, sasaeru: 1.6, nagasu: 0.6 },
+  pressure_up: { yurumeru: 3, meguraseru: 3, sasaeru: 1.6, shizumeru: 0.6 },
+  temp_shift: { yurumeru: 4.2, sasaeru: 2.4, meguraseru: 1.8 },
   damp: { nagasu: 6, sasaeru: 2.1 },
   humidity: { nagasu: 6, sasaeru: 2.1 },
   cold: { nukumeru: 6, sasaeru: 2.2 },
@@ -2118,25 +2123,23 @@ const ENV_VECTOR_POLICY_SCORES = {
 };
 
 const POLICY_PAIR_SUMMARIES = {
-  "yurumeru+meguraseru": "首肩や呼吸を固めすぎず、巡りを止めないケアが合います。",
-  "meguraseru+yurumeru": "首肩や呼吸を固めすぎず、巡りを止めないケアが合います。",
-  "nagasu+sasaeru": "重さをため込まず、胃腸と回復力を守るケアが合います。",
-  "sasaeru+nagasu": "重さをため込まず、胃腸と回復力を守るケアが合います。",
-  "nukumeru+sasaeru": "冷えの入口を守りながら、消耗を増やさないケアが合います。",
-  "sasaeru+nukumeru": "冷えの入口を守りながら、消耗を増やさないケアが合います。",
-  "shizumeru+uruosu": "熱をこもらせず、乾きや消耗を残さないケアが合います。",
-  "uruosu+shizumeru": "熱をこもらせず、乾きや消耗を残さないケアが合います。",
-  "shizumeru+nagasu": "熱と重さをため込まず、軽さを残すケアが合います。",
-  "nagasu+shizumeru": "熱と重さをため込まず、軽さを残すケアが合います。",
-  "uruosu+sasaeru": "乾かしすぎず、回復力を残すケアが合います。",
-  "sasaeru+uruosu": "乾かしすぎず、回復力を残すケアが合います。",
-  "nagasu+meguraseru": "重さを逃がしながら、巡りを止めないケアが合います。",
-  "meguraseru+nagasu": "重さを逃がしながら、巡りを止めないケアが合います。",
-  "yurumeru+shizumeru": "力みと高ぶりを早めに落とすケアが合います。",
-  "shizumeru+yurumeru": "力みと高ぶりを早めに落とすケアが合います。",
-  "nukumeru+meguraseru": "冷やさず、固めず、動き出しやすさを残すケアが合います。",
-  "meguraseru+nukumeru": "冷やさず、固めず、動き出しやすさを残すケアが合います。",
+  "nagasu+sasaeru": "重だるさをためず、疲れを増やさないように整えます。",
+  "sasaeru+nagasu": "重だるさをためず、疲れを増やさないように整えます。",
+  "nagasu+meguraseru": "重だるさをためず、巡りを保つように整えます。",
+  "meguraseru+nagasu": "重だるさをためず、巡りを保つように整えます。",
+  "yurumeru+sasaeru": "力みやこわばりをやわらげ、疲れを増やさないように整えます。",
+  "sasaeru+yurumeru": "力みやこわばりをやわらげ、疲れを増やさないように整えます。",
+  "yurumeru+meguraseru": "力みやこわばりをやわらげ、巡りを保つように整えます。",
+  "meguraseru+yurumeru": "力みやこわばりをやわらげ、巡りを保つように整えます。",
+  "shizumeru+yurumeru": "熱や高ぶりを落ち着け、力みやこわばりをやわらげるように整えます。",
+  "yurumeru+shizumeru": "熱や高ぶりを落ち着け、力みやこわばりをやわらげるように整えます。",
+  "nukumeru+sasaeru": "冷えを防ぎ、疲れを増やさないように整えます。",
+  "sasaeru+nukumeru": "冷えを防ぎ、疲れを増やさないように整えます。",
+  "uruosu+sasaeru": "乾きと消耗を補うように整えます。",
+  "sasaeru+uruosu": "乾きと消耗を補うように整えます。",
 };
+
+const ALLOWED_POLICY_PAIRS = new Set(Object.keys(POLICY_PAIR_SUMMARIES));
 
 
 function getCarePolicyTriggerKeys(triggerFactors) {
@@ -2318,13 +2321,13 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
 }
 
 const SINGLE_POLICY_SUMMARIES = {
-  shizumeru: "熱や頭の冴えをこもらせず、落ち着けるケアが合います。",
-  yurumeru: "首肩・呼吸・気持ちの力みをほどくケアが合います。",
-  meguraseru: "止まりやすい巡りを、軽い動きでめぐらせるケアが合います。",
-  nagasu: "湿気や重だるさをため込まないケアが合います。",
-  uruosu: "乾きと消耗を残さないケアが合います。",
-  nukumeru: "足元・お腹・腰まわりの冷えを守るケアが合います。",
-  sasaeru: "無理を重ねず、回復力を削らないケアが合います。",
+  shizumeru: "高ぶりを落ち着けるように整えます。",
+  yurumeru: "力みやこわばりをやわらげるように整えます。",
+  meguraseru: "巡りを保つように整えます。",
+  nagasu: "重だるさをためないように整えます。",
+  uruosu: "乾きと消耗を補うように整えます。",
+  nukumeru: "冷えを防ぐように整えます。",
+  sasaeru: "疲れを増やさないように整えます。",
 };
 
 function addPolicyScores(scores, weights, multiplier = 1) {
@@ -2338,6 +2341,7 @@ function normalizeCarePolicyTriggerKey(value) {
   const key = String(value || "").trim();
   if (key === "humidity") return "damp";
   if (key === "temp") return "cold";
+  if (key === "temperature_shift") return "temp_shift";
   return key || "pressure_down";
 }
 
@@ -2375,30 +2379,51 @@ function toCarePolicyDirection(text) {
 }
 
 function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus }) {
-  const labels = getForecastBackgroundFactors(triggerFactors).map((f) => f.label).filter(Boolean);
-  const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "天気変化";
-  const target = mode === "today" ? "今日は" : "明日は";
-  const level = Number(signal || 0);
   const keys = safeArray(policies).map((p) => p.key).filter(Boolean);
   const detail =
     keys.length >= 2
       ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}方針です。`
       : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
-  const policyDirection = toCarePolicyDirection(detail);
-  const key = getNarrativePrimaryKey(triggerFactors);
-  const feel = CARE_STRATEGY_WEATHER_FEEL[key] || CARE_STRATEGY_WEATHER_FEEL.default;
+  return toCarePolicyDirection(detail);
+}
 
-  if (mode === "today") {
-    if (level <= 0) {
-      return `${target}${joined}の影響は小さめ。${feel}だけ軽く見ながら、${policyDirection} 暮らす・食べる・ほぐすは、やることを増やすより“重さを増やさない”組み立てにします。`;
-    }
-    return `${target}${joined}で${feel}が出やすい日。${policyDirection} 空気・食べ方・ほぐす場所を一つずつ軽くして、体の逃げ道を作ります。`;
-  }
+function getContinuousCareConstitution(constitutionContext) {
+  const axes = constitutionContext?.axes && typeof constitutionContext.axes === "object"
+    ? constitutionContext.axes
+    : null;
+  const split = constitutionContext?.split_scores && typeof constitutionContext.split_scores === "object"
+    ? constitutionContext.split_scores
+    : null;
+  return {
+    available: Boolean(axes || split),
+    yin_yang_score: Math.max(-1, Math.min(1, Number(axes?.yin_yang_score || 0))),
+    drive_score: Math.max(-1, Math.min(1, Number(axes?.drive_score || 0))),
+    obstruction_score: Math.max(0, Math.min(1, Number(axes?.obstruction_score || 0))),
+    material: {
+      qi_deficiency: Number(split?.qi?.deficiency || 0),
+      qi_stagnation: Number(split?.qi?.stagnation || 0),
+      blood_deficiency: Number(split?.blood?.deficiency || 0),
+      blood_stasis: Number(split?.blood?.stasis || 0),
+      fluid_deficiency: Number(split?.fluid?.deficiency || 0),
+      fluid_damp: Number(split?.fluid?.damp || 0),
+    },
+  };
+}
 
-  if (level <= 0) {
-    return `${target}${joined}の影響は小さめ。${policyDirection} 今夜は睡眠・飲み物・ほぐす場所を少し整えて、明日の安定を崩さない準備にします。`;
+function addContinuousCarePolicyScores(scores, continuous) {
+  if (!continuous?.available) return;
+  if (continuous.yin_yang_score > 0) {
+    addPolicyScores(scores, { yurumeru: 0.9, shizumeru: 0.55 }, continuous.yin_yang_score);
   }
-  return `${target}${joined}で${feel}が出やすい見込み。${policyDirection} 今夜のうちに、寝室・飲み物・ほぐす道具の候補まで先に決めて、明日の自分が迷わない準備にします。`;
+  if (continuous.yin_yang_score < 0) {
+    addPolicyScores(scores, { nagasu: 0.75, meguraseru: 0.7 }, Math.abs(continuous.yin_yang_score));
+  }
+  addPolicyScores(scores, { sasaeru: 1.35 }, Math.max(0, -continuous.drive_score));
+  addPolicyScores(scores, { meguraseru: 0.75, yurumeru: 0.4 }, continuous.obstruction_score);
+  Object.entries(continuous.material).forEach(([key, raw]) => {
+    const value = Math.max(0, Number(raw || 0));
+    addPolicyScores(scores, SUB_LABEL_POLICY_SCORES[key], value / (value + 2.5));
+  });
 }
 
 export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow", symptomFocus = null } = {}) {
@@ -2444,10 +2469,14 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
   addPolicyScores(scores, SYMPTOM_POLICY_SCORES[activeSymptomFocus], 1);
 
   const coreCode = String(constitutionContext.core_code || "");
-  if (coreCode.includes("batt_small")) addPolicyScores(scores, { sasaeru: 0.8, nukumeru: 0.25 });
-  if (coreCode.includes("batt_large")) addPolicyScores(scores, { yurumeru: 0.25, meguraseru: 0.25 });
-  if (coreCode.startsWith("accel_")) addPolicyScores(scores, { yurumeru: 0.35, shizumeru: 0.3 });
-  if (coreCode.startsWith("brake_")) addPolicyScores(scores, { nagasu: 0.35, meguraseru: 0.25 });
+  const continuous = getContinuousCareConstitution(constitutionContext);
+  addContinuousCarePolicyScores(scores, continuous);
+  if (!continuous.available) {
+    if (coreCode.includes("batt_small")) addPolicyScores(scores, { sasaeru: 0.8, nukumeru: 0.25 });
+    if (coreCode.includes("batt_large")) addPolicyScores(scores, { yurumeru: 0.25, meguraseru: 0.25 });
+    if (coreCode.startsWith("accel_")) addPolicyScores(scores, { yurumeru: 0.35, shizumeru: 0.3 });
+    if (coreCode.startsWith("brake_")) addPolicyScores(scores, { nagasu: 0.35, meguraseru: 0.25 });
+  }
 
   const env = constitutionContext.env || {};
   safeArray(env.vectors).forEach((vector) => {
@@ -2468,7 +2497,8 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
   const primaryTriggerKey = normalizeCarePolicyTriggerKey(normalizedTriggerFactors[0]?.key || normalizedTriggerFactors[0]?.exact);
   const primaryTriggerPolicies = Object.keys(TRIGGER_POLICY_SCORES[primaryTriggerKey] || {});
   primaryTriggerPolicies.forEach((key, index) => {
-    scores[key] += index === 0 ? 0.9 : 0.35;
+    const isPressure = primaryTriggerKey === "pressure_down" || primaryTriggerKey === "pressure_up";
+    scores[key] += isPressure ? 0.15 : index === 0 ? 0.9 : 0.35;
   });
 
   let ranked = Object.entries(scores)
@@ -2481,7 +2511,9 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
   }
 
   const selected = [ranked[0]];
-  const second = ranked.find((item) => item.key !== ranked[0].key);
+  const second = ranked.find((item) =>
+    item.key !== ranked[0].key && ALLOWED_POLICY_PAIRS.has(`${ranked[0].key}+${item.key}`)
+  );
   const shouldShowSecond =
     Number(signal) > 0 &&
     second &&
@@ -2663,5 +2695,3 @@ export function getLocationDisplayLabel(location) {
 
   return "設定中の地域";
 }
-
-
