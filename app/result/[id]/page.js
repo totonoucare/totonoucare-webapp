@@ -13,9 +13,9 @@ import {
   getMeridianLine,
 } from "@/lib/diagnosis/v2/labels";
 import {
-  buildPersonalWeatherAffinityProfile,
-  rankExactWeatherAffinity,
-} from "@/lib/radar_v1/weatherAffinityProfile";
+  buildConstitutionWeatherAffinityV2,
+  rankConstitutionWeatherAffinityV2,
+} from "@/lib/radar_v1/personalizeForecastV2";
 import { CoreIllust } from "@/components/illust/core";
 import { SubIllust } from "@/components/illust/sub";
 import { MeridianIllust } from "@/components/illust/meridian";
@@ -238,15 +238,23 @@ function CarePolicyCard({ item }) {
 /* -----------------------------
  * Weather compatibility Logic
  * ---------------------------- */
-function clamp(v, min, max) {
-  if (!Number.isFinite(v)) return min;
-  if (v < min) return min;
-  if (v > max) return max;
-  return v;
-}
-
-function round2(v) {
-  return Math.round(v * 100) / 100;
+function buildForecastConstitution({ answers, computed }) {
+  const answerThermo = Array.isArray(answers?.thermo) ? answers.thermo[0] : answers?.thermo;
+  const answerVectors = Array.isArray(answers?.env_vectors)
+    ? answers.env_vectors.filter((value) => value && value !== "none")
+    : [];
+  return {
+    core_code: computed?.core_code || "",
+    axes: {
+      ...(computed?.axes || {}),
+      thermo_answer: computed?.axes?.thermo_answer || answerThermo || "neutral",
+    },
+    split_scores: computed?.split_scores || {},
+    env: {
+      sensitivity: Number(answers?.env_sensitivity ?? computed?.env?.sensitivity ?? 0),
+      vectors: answerVectors.length ? answerVectors : (computed?.env?.vectors || []),
+    },
+  };
 }
 
 function getImpactRankLabel(index) {
@@ -259,21 +267,11 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
   const subCodes = Array.isArray(computed?.sub_labels) ? computed.sub_labels : [];
   const coreCode = computed?.core_code || "";
 
-  const affinityProfile = buildPersonalWeatherAffinityProfile({
-    coreType: coreCode,
-    subRiskWeights: subCodes,
-    envVectors: Array.isArray(answers?.env_vectors)
-      ? answers.env_vectors.filter((x) => x && x !== "none")
-      : [],
-    sensitivity:
-      Number(answers?.env_sensitivity ?? 1) >= 2
-        ? "high"
-        : Number(answers?.env_sensitivity ?? 1) <= 0
-          ? "low"
-          : "normal",
+  const affinityProfile = buildConstitutionWeatherAffinityV2({
+    constitution: buildForecastConstitution({ answers, computed }),
   });
 
-  const items = rankExactWeatherAffinity(affinityProfile.weights)
+  const items = rankConstitutionWeatherAffinityV2(affinityProfile.weights)
     .slice(0, 3)
     .map(({ key }, index) => ({
       key,
@@ -291,7 +289,7 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
 }
 
 function weatherLabel(key) {
-  const map = { pressure_down: "気圧が下がる日", pressure_up: "気圧が上がる日", cold: "冷え込む日", heat: "気温が上がりやすい日", damp: "湿っぽい日", dry: "乾燥しやすい日" };
+  const map = { pressure_down: "気圧が下がる日", pressure_up: "気圧が上がる日", temp_shift: "寒暖差が大きい日", cold: "冷え込む日", heat: "気温が上がりやすい日", damp: "湿っぽい日", dry: "乾燥しやすい日" };
   return map[key] || key;
 }
 
@@ -317,6 +315,13 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
       return "外からの圧力が強まる日は、体がギュッと締まりやすく、リラックスや気持ちの切り替えに時間がかかりやすくなります。";
     }
     return "外からの圧力が強まる日は、体がギュッと締まりやすくなります。無理に詰め込まず、少しゆるめる意識が合います。";
+  }
+
+  if (key === "temp_shift") {
+    if (isBattSmall || hasBloodDef) {
+      return "寒暖差が大きい日は、体温調節に余力を使いやすく、疲れやだるさが残りやすくなります。";
+    }
+    return "寒暖差が大きい日は、環境への切り替えが続き、張り・重さ・疲れとして揺れが表れやすくなります。";
   }
 
   if (key === "cold") {
@@ -963,5 +968,4 @@ function ResultPage({ params }) {
     </AppShell>
   );
 }
-
 
