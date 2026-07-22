@@ -9,6 +9,8 @@ async function importSource(relativePath) {
 
 const weather = await importSource("../lib/radar_v1/weatherStressV2.js");
 const forecast = await importSource("../lib/radar_v1/personalizeForecastV2.js");
+const constitutionCare = await importSource("../lib/diagnosis/v2/carePreferences.js");
+const constitutionCareSource = await readFile(new URL("../lib/diagnosis/v2/carePreferences.js", import.meta.url), "utf8");
 const careSource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const workflowSource = await readFile(new URL("../.github/workflows/radar-forecast-snapshots.yml", import.meta.url), "utf8");
 const notificationSource = await readFile(new URL("../lib/push/runRadarNotificationCron.js", import.meta.url), "utf8");
@@ -410,6 +412,27 @@ test("forecast and constitution copy reflect the V2 hierarchy without removing u
   assert.doesNotMatch(radarUtilsSource, /湿気の重い膜|胃腸を止めっぱなし/);
   assert.doesNotMatch(pointExplanationSource, /湿気の重い膜/);
   assert.doesNotMatch(lifestyleRulesSource, /胃腸を止めっぱなし/);
+});
+
+test("constitution care tab states the seven care goals in plain current language", () => {
+  const preferences = constitutionCare.buildBaseCarePreferences({
+    answers: { env_vectors: ["humidity_up"], symptom_focus: "digestion" },
+    computed: {
+      core_code: "brake_batt_small",
+      sub_labels: ["fluid_damp", "qi_deficiency"],
+      symptom_focus: "digestion",
+    },
+  });
+
+  assert.deepEqual(preferences.items.map((item) => item.key), ["sasaeru", "nagasu", "nukumeru"]);
+  assert.deepEqual(preferences.items.map((item) => item.rankLabel), ["基本にしたい", "次に意識したい", "補助として取り入れたい"]);
+  assert.equal(preferences.summary, "重だるさをためず、疲れを増やさない整え方が合いやすいです。");
+  assert.equal(constitutionCare.getCarePolicyDefinition("meguraseru").guide, "滞りをほどき、巡りを保つ");
+  assert.equal(constitutionCare.getCarePolicyDefinition("sasaeru").guide, "胃腸をいたわり、疲れを増やさない");
+  assert.match(resultPageSource, /この整え方が合いやすい理由/);
+  assert.match(resultPageSource, /パーソナルケアショップの商品選び、Ekkenへの相談/);
+  assert.doesNotMatch(constitutionCareSource, /巡りの逃げ道|回復しやすい余白|まず合いやすい/);
+  assert.doesNotMatch(resultPageSource, /今後の整うアイテム検索|見立ての補足/);
 });
 
 test("three weather loads persist for signed-in and public forecasts", () => {
