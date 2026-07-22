@@ -98,6 +98,18 @@
 
 # 未病レーダー AI引き継ぎ入口
 
+## v7.78.17 気圧の物理方向と体質反応の統合契約
+
+- `pressure_direction = up / down / mixed`は物理方向。天気カード、気圧アイコン、観測説明にだけ使う
+- `pressure_response_direction = accel / brake / balanced`は体質由来の表れ方。不調サイン、ケア、食事、ツボ、Ekken、商品選定に使う
+- `personal_main_trigger_exact = pressure_up / pressure_down`は物理イベントを保持する互換フィールドであり、体の表れ方を決めるキーとして直接使わない
+- 旧ケア辞書へ渡す場合は必ず`getLegacyCareTriggerKey`で反応方向から投影し、本文は`rewritePressureBodyCopyDeep`で物理方向の断定を中立化する
+- 4組すべてで同じ契約を守る: 低下×アクセル=張り、低下×ブレーキ=重だるさ、上昇×アクセル=張り、上昇×ブレーキ=重だるさ
+- `environmental_cautions`は絶対気温による別枠注意。体質別スコア、公的警戒アラート、WBGTの代用にしない
+- v7.78.17では体調ゆらぎ度の式と係数を変更していない
+
+詳細: `docs/RADAR_PRESSURE_RESPONSE_INTEGRATION_V77817.md`
+
 ## v7.78.16 体調予報V2の快適域方向・季節校正
 
 - `lib/radar_v1/weatherStressV2.js`で、気温18〜27℃と絶対湿度8〜14g/m³を変化方向判定用の中間帯として使う
