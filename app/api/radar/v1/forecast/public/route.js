@@ -4,6 +4,8 @@
 import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
 import { buildWeatherStressV2 } from "@/lib/radar_v1/weatherStressV2";
+import { personalizePublicForecastV2 } from "@/lib/radar_v1/personalizeForecastV2";
+import { getTriggerLabel } from "@/lib/radar_v1/copy";
 import { decideTargetDateJST, nowJstParts, toJstISODate } from "@/lib/radar_v1/timeJST";
 
 export const runtime = "nodejs";
@@ -13,155 +15,6 @@ export const revalidate = 0;
 // レート制限のため、東京をデフォルト座標として使う
 const DEFAULT_LAT = 35.68944;
 const DEFAULT_LON = 139.69167;
-
-const UNIVERSAL_GROUP_IMPORTANCE = {
-  pressure: 1,
-  temperature: 0.9,
-  moisture: 0.85,
-};
-
-function clamp(value, min, max) {
-  const num = Number(value);
-  if (!Number.isFinite(num)) return min;
-  return Math.max(min, Math.min(max, num));
-}
-
-// 気象ストレス → シグナルへの汎用変換（体質なしバージョン）
-// 体質補正がないため、複数要因の単純合算ではなく「上位要因を中心に控えめ」に出す。
-function buildUniversalChannelRanking(weatherStress) {
-  const events = weatherStress?.event_strengths || {};
-  const temperatureKey = ["temp_shift", "cold", "heat"].sort((a, b) => {
-    const eventKey = (key) => key === "temp_shift" ? "temperature_shift" : key;
-    return Number(events[eventKey(b)] || 0) - Number(events[eventKey(a)] || 0);
-  })[0];
-  const moistureKey = Number(events.dry || 0) > Number(events.damp || 0) ? "dry" : "damp";
-  const pressureKey = (
-    weatherStress?.pressure_presentation_direction || weatherStress?.pressure_direction
-  ) === "up" ? "pressure_up" : "pressure_down";
-  return [
-    { group: "pressure", key: pressureKey, strength: events.pressure_shift ?? 0 },
-    {
-      group: "temperature",
-      key: temperatureKey,
-      strength: events[temperatureKey === "temp_shift" ? "temperature_shift" : temperatureKey] ?? 0,
-    },
-    { group: "moisture", key: moistureKey, strength: events[moistureKey] ?? 0 },
-  ]
-    .map((channel) => ({
-      ...channel,
-      weighted: clamp(channel.strength, 0, 1) * (UNIVERSAL_GROUP_IMPORTANCE[channel.group] || 1),
-    }))
-    .sort((a, b) => b.weighted - a.weighted);
-}
-
-function buildUniversalWeatherLoadGroups(weatherStress) {
-  const channelPeaks = weatherStress?.channel_peaks || {};
-  return Object.fromEntries(buildUniversalChannelRanking(weatherStress).map((channel) => {
-    const peak = channelPeaks[channel.key] || null;
-    const load = Math.round(Number(channel.weighted || 0) * 1000) / 1000;
-    return [channel.group, {
-      group: channel.group,
-      exact: channel.key,
-      event_key: channel.key === "temp_shift" ? "temperature_shift" : channel.key,
-      direction:
-        channel.group === "pressure" ? weatherStress?.pressure_direction || "steady"
-          : channel.key === "temp_shift" ? weatherStress?.temperature_direction || "change"
-            : channel.key === "cold" || channel.key === "dry" ? "down" : "up",
-      weather_strength: Math.round(Number(channel.strength || 0) * 1000) / 1000,
-      effective_load: load,
-      personal_load: load,
-      display_load: load,
-      reserve_scalar: 1,
-      peak_start: peak?.start || null,
-      peak_end: peak?.end || null,
-      personalized: false,
-    }];
-  }));
-}
-
-function calcUniversalSignal(weatherStress) {
-  const channels = buildUniversalChannelRanking(weatherStress);
-
-  const [top = {}, second = {}, third = {}] = channels;
-
-  let normalizedLoad =
-    (top.weighted || 0) * 0.78 +
-    (second.weighted || 0) * 0.35 +
-    (third.weighted || 0) * 0.16;
-
-  // 9〜10は「強い主因 + もう1つ明確な負担」が重なる日に限定する。
-  if ((top.strength || 0) >= 0.88 && (second.strength || 0) >= 0.7) normalizedLoad += 0.13;
-  else if ((top.strength || 0) >= 0.9) normalizedLoad += 0.06;
-
-  if (channels.filter((channel) => channel.strength >= 0.72).length >= 3) normalizedLoad += 0.08;
-
-  const scorePrecise = Math.round((clamp(normalizedLoad, 0, 1.45) / 1.45) * 100) / 10;
-  const score = Math.round(scorePrecise);
-
-  let signal;
-  if (scorePrecise >= 7) signal = 2;      // 守り
-  else if (scorePrecise >= 4) signal = 1; // いたわり
-  else signal = 0;                 // 安定
-
-  return {
-    score_0_10: score,
-    score_display_0_10: scorePrecise,
-    score_precise_0_10: scorePrecise,
-    signal,
-  };
-}
-
-// メイン/副因のトリガー（強い気象変化）を特定
-function resolveTriggerFactors(weatherStress) {
-  const channels = buildUniversalChannelRanking(weatherStress);
-  const [top = {}, second = {}] = channels;
-
-  const primary = buildTriggerFactor(top, "primary");
-  if (!primary) return [];
-
-  const out = [primary];
-  const secondWeighted = Number(second?.weighted || 0);
-  const topWeighted = Number(top?.weighted || 0);
-  const secondIsMeaningful =
-    second?.key &&
-    secondWeighted >= 0.18 &&
-    secondWeighted >= topWeighted * 0.45;
-
-  if (secondIsMeaningful) {
-    const secondary = buildTriggerFactor(second, "secondary");
-    if (secondary) out.push(secondary);
-  }
-
-  return out;
-}
-
-function buildTriggerFactor(channel, role) {
-  if (!channel?.key || Number(channel.weighted || 0) <= 0.05) return null;
-
-  const TRIGGER_MAP = {
-    pressure_down: { main_trigger: "pressure", trigger_dir: "down", label: "気圧低下" },
-    pressure_up:   { main_trigger: "pressure", trigger_dir: "up", label: "気圧上昇" },
-    cold:          { main_trigger: "temp",     trigger_dir: "down", label: "冷え込み" },
-    heat:          { main_trigger: "temp",     trigger_dir: "up", label: "気温上昇" },
-    temp_shift:    { main_trigger: "temp",     trigger_dir: "change", label: "気温差" },
-    damp:          { main_trigger: "humidity", trigger_dir: "up", label: "湿気" },
-    dry:           { main_trigger: "humidity", trigger_dir: "down", label: "乾燥" },
-  };
-
-  const compat = TRIGGER_MAP[channel.key];
-  if (!compat) return null;
-
-  return {
-    key: channel.key,
-    exact: channel.key,
-    role,
-    main_trigger: compat.main_trigger,
-    trigger_dir: compat.trigger_dir,
-    label: compat.label,
-    weather_strength: Math.round(Number(channel.strength || 0) * 100) / 100,
-    effective_load: Math.round(Number(channel.weighted || 0) * 100) / 100,
-  };
-}
 
 function jsonUtf8(payload, status = 200) {
   return new Response(JSON.stringify(payload), {
@@ -205,28 +58,40 @@ export async function GET(req) {
         ? normalized.previousNightBridgePoints
         : null,
     });
-    const { score_0_10, score_display_0_10, score_precise_0_10, signal } = calcUniversalSignal(weatherStress);
-    const triggerFactors = resolveTriggerFactors(weatherStress);
-    const weatherLoadGroups = buildUniversalWeatherLoadGroups(weatherStress);
-    const primaryTrigger = triggerFactors[0] || buildTriggerFactor({ key: "pressure_down", strength: 0, weighted: 0.06 }, "primary");
+    const publicForecast = personalizePublicForecastV2({ weatherStress });
+    const triggerFactors = publicForecast.trigger_factors || [];
+    const weatherLoadGroups = Object.fromEntries(
+      Object.entries(publicForecast?.meta?.weather_load_groups || {}).map(([group, value]) => [group, {
+        ...value,
+        personalized: false,
+      }])
+    );
+    const primaryTrigger = triggerFactors[0] || {
+      exact: publicForecast.personal_main_trigger_exact || "pressure_down",
+      main_trigger: publicForecast.main_trigger || "pressure",
+      trigger_dir: publicForecast.trigger_dir || "down",
+    };
     const secondaryTrigger = triggerFactors[1] || null;
 
     return jsonUtf8({
       ok: true,
       target_date: targetDate,
       forecast: {
-        score_0_10,
-        score_display_0_10,
-        score_precise_0_10,
-        signal,
+        score_0_10: publicForecast.score_0_10,
+        score_display_0_10: publicForecast.score_display_0_10,
+        score_precise_0_10: publicForecast.score_precise_0_10,
+        signal: publicForecast.signal,
         main_trigger: primaryTrigger.main_trigger,
         trigger_dir: primaryTrigger.trigger_dir,
-        main_trigger_label: primaryTrigger.label,
+        main_trigger_label: getTriggerLabel(primaryTrigger.main_trigger, primaryTrigger.trigger_dir),
         personal_main_trigger_exact: primaryTrigger.exact,
         personal_secondary_trigger_exact: secondaryTrigger?.exact || null,
-        secondary_trigger_label: secondaryTrigger?.label || null,
+        secondary_trigger_label: secondaryTrigger
+          ? getTriggerLabel(secondaryTrigger.main_trigger, secondaryTrigger.trigger_dir)
+          : null,
         trigger_factors: triggerFactors.length ? triggerFactors : [primaryTrigger],
         weather_load_groups: weatherLoadGroups,
+        forecast_model_version: publicForecast.model_version,
       },
     });
   } catch (e) {
