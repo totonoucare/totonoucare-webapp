@@ -98,6 +98,18 @@
 
 # 未病レーダー AI引き継ぎ入口
 
+## v7.78.16 体調予報V2の快適域方向・季節校正
+
+- `lib/radar_v1/weatherStressV2.js`で、気温18〜27℃と絶対湿度8〜14g/m³を変化方向判定用の中間帯として使う
+- 中間帯から遠ざかる変化を主にし、中間帯へ戻る変化は気温22%・水分環境20%だけ残す
+- 湿気の絶対負担は気温と組み合わせる。UIの気温・湿度負荷は分けたまま、総合点では一つの温熱環境へまとめる
+- `lib/radar_v1/personalizeForecastV2.js`の有効負担は`気象×(0.38+0.62×本人親和性)`
+- 体調ゆらぎ度は`max(変化スコア, 絶対環境スコア)+小さな重なり`。通常の季節負担は体質差を残し、極端環境だけ共通下限を立てる
+- 公開予報は`personalizePublicForecastV2`を使い、専用の強い加算式へ戻さない
+- `RADAR_FORECAST_MODEL_VERSION=v2`の外部契約は維持。内部識別子は`radar_forecast_v2_2026-07-22_comfort_calibrated`
+
+詳細: `docs/RADAR_FORECAST_V2_COMFORT_CALIBRATION_V77816.md`
+
 ## v7.78.15 体質トリセツ「整え方」コピー
 
 - `lib/diagnosis/v2/carePreferences.js`のスコアと上位3方針は変更していない
