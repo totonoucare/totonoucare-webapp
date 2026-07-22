@@ -310,7 +310,7 @@ export default function GuidePage() {
 
           <div className="space-y-4">
             <GuideCard tone="amber" title="体調ゆらぎ度と3つのモード" icon={<IconRadar />}>
-              体調ゆらぎ度は、天気だけではなく、あなたのベース体質と6つの天気ストレスを組み合わせた0〜100の予報値です。症状が出る確率や、実際のつらさの点数ではありません。
+              体調ゆらぎ度は、気圧・気温・湿度の変化や極端さに、あなたのベース体質と余力を重ねた0〜100の予報値です。症状が出る確率や、実際のつらさの点数ではありません。
               <ModeGuide />
             </GuideCard>
 
