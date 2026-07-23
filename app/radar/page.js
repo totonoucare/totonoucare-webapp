@@ -92,6 +92,54 @@ function compactPeakLabel(start, end) {
   return startLabel && endLabel ? `${startLabel}–${endLabel}時` : "—";
 }
 
+function attentionDirectionLabel(direction) {
+  if (direction === "up") return "上昇側";
+  if (direction === "down") return "低下側";
+  if (direction === "mixed") return "上下変動";
+  return "";
+}
+
+function WeatherPeakDirectionIcon({ direction, className = "h-3.5 w-3.5" }) {
+  if (!["up", "down", "mixed"].includes(direction)) {
+    return <IconAttention className={`${className} text-slate-400`} />;
+  }
+
+  const toneClass = direction === "up"
+    ? "text-[#D97706]"
+    : direction === "down"
+      ? "text-[#0284C7]"
+      : "text-[#7C3AED]";
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`${className} ${toneClass}`}
+      aria-hidden="true"
+    >
+      {direction === "mixed" ? (
+        <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 19V5M5.5 7.5 8 5l2.5 2.5" />
+          <path d="M16 5v14m-2.5-2.5L16 19l2.5-2.5" />
+        </g>
+      ) : (
+        <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          {direction === "up" ? (
+            <>
+              <path d="M12 20V4" />
+              <path d="m6.5 9.5 5.5-5.5 5.5 5.5" />
+            </>
+          ) : (
+            <>
+              <path d="M12 4v16" />
+              <path d="m6.5 14.5 5.5 5.5 5.5-5.5" />
+            </>
+          )}
+        </g>
+      )}
+    </svg>
+  );
+}
+
 function getPolicyIconPath(policyKey) {
   return `/illust/policy/policy-${policyKey}.svg`;
 }
@@ -1601,6 +1649,9 @@ export default function RadarPage() {
                             const factorPeakStart = factor.peakStart;
                             const factorPeakEnd = factor.peakEnd;
                             const factorPeakLabel = compactPeakLabel(factorPeakStart, factorPeakEnd);
+                            const factorAttentionDirectionLabel = attentionDirectionLabel(
+                              factor.attentionDirection
+                            );
                             const factorShortLabel = WEATHER_LOAD_SHORT_LABELS[factor.group] || factor.label;
                             const loadToneClass = factor.loadLevelTone === "high"
                               ? "text-[#B86430]"
@@ -1614,7 +1665,7 @@ export default function RadarPage() {
                               <div
                                 key={`${factor.group}-${index}`}
                                 className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
-                                title={`${factor.label} 負荷${factor.loadLevelLabel}（${factor.detailLabel}） / 注意時間 ${factorPeakLabel}`}
+                                title={`${factor.label} 負荷${factor.loadLevelLabel}（${factor.detailLabel}） / 注意時間 ${factorAttentionDirectionLabel ? `${factorAttentionDirectionLabel} ` : ""}${factorPeakLabel}`}
                               >
                                 <div className="flex min-w-0 items-center justify-center gap-1">
                                   <WeatherIcon
@@ -1634,7 +1685,10 @@ export default function RadarPage() {
                                 <div className="whitespace-nowrap text-[10px] font-extrabold text-slate-400">{factor.detailLabel}</div>
 
                                 <div className="mt-0.5 flex min-w-0 items-center justify-center gap-1 rounded-[11px] bg-[#F7FAF8]/70 px-1.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#EEF3EF]">
-                                  <IconAttention className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                                  <WeatherPeakDirectionIcon
+                                    direction={factor.attentionDirection}
+                                    className="h-3.5 w-3.5 shrink-0"
+                                  />
                                   <span className="whitespace-nowrap">{factorPeakLabel}</span>
                                 </div>
                               </div>

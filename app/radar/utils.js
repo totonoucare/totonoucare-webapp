@@ -1477,6 +1477,16 @@ export function getForecastWeatherLoadGroups(forecast) {
     const peak = channelPeaks?.[exact] || channelPeaks?.[iconKey] || null;
     const peakStart = item?.peak_start ?? item?.peakStart ?? peak?.start ?? null;
     const peakEnd = item?.peak_end ?? item?.peakEnd ?? peak?.end ?? null;
+    const changeDriven =
+      group === "pressure" ||
+      (group === "temperature" && ["temp_shift", "temperature_shift"].includes(exact)) ||
+      item?.event_key === "moisture_shift";
+    const attentionDirection =
+      item?.attention_direction ??
+      item?.attentionDirection ??
+      item?.peak_direction ??
+      item?.peakDirection ??
+      (changeDriven ? direction : null);
     const showPeak = load != null && load >= 0.08;
     const loadLevelLabel = load == null ? "—" : load >= 0.67 ? "高" : load >= 0.34 ? "中" : "低";
     const loadLevelTone = load == null ? "none" : load >= 0.67 ? "high" : load >= 0.34 ? "middle" : "low";
@@ -1495,6 +1505,7 @@ export function getForecastWeatherLoadGroups(forecast) {
       weatherStrength,
       peakStart: showPeak ? peakStart : null,
       peakEnd: showPeak ? peakEnd : null,
+      attentionDirection: showPeak ? attentionDirection : null,
       personalized: item?.personalized !== false,
     };
   });
