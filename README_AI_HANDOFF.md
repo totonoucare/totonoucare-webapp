@@ -98,6 +98,18 @@
 
 # 未病レーダー AI引き継ぎ入口
 
+## v7.78.18 互換性とEkkenの気圧反応契約
+
+- `readExplicitPressureResponseDirection`は、反応方向が保存されていない旧データでは`null`を返す。欠損を`balanced`へ変換しない
+- 旧データは物理キー`pressure_down / pressure_up`の既存ケアを維持し、新データの明示的な`balanced`だけ`default`へ投影する
+- Ekken入力では物理方向と身体反応を推測させず、上位と各factorの両方に`pressure_direction`、`response_direction`、`body_response_key`を渡す
+- `environmental_cautions`は体質別ゆらぎ度とは別の独自注意であり、公的アラートやWBGTとして説明しない
+- 体質トリセツも`yin_yang_score`から同じ反応方向を読み、気圧の向きだけで張り／重さを固定しない
+- 4組の結合テストは`tests/radar-pressure-response-integration-v77818.test.mjs`が正本
+- v7.78.18は接続と互換性の仕上げであり、V2の予報スコア式と係数は変更しない
+
+詳細: `docs/RADAR_PRESSURE_RESPONSE_FINAL_INTEGRATION_V77818.md`
+
 ## v7.78.17 気圧の物理方向と体質反応の統合契約
 
 - `pressure_direction = up / down / mixed`は物理方向。天気カード、気圧アイコン、観測説明にだけ使う

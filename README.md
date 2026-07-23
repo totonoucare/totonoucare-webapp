@@ -10,6 +10,17 @@
 
 ---
 
+## v7.78.18 気圧反応の互換性とEkken接続仕上げ
+
+- 反応方向を持たない旧予報は、従来どおり`pressure_down / pressure_up`のケアへ接続し、明示的な`balanced`だけを中立ケアとして扱う
+- Ekkenへ`pressure_direction`、`pressure_response_direction`、`body_response_key`、`personal_main_event_key`、`environmental_cautions`を明示して渡す
+- 気圧の物理方向と体質反応を、予報本文、ケア、ツボ、ショップ、Ekken JSONまで4組の実出力で結合テスト
+- 体質トリセツの天気相性も、気圧低下／上昇で反応を固定せず、体質由来のアクセル／ブレーキ／中立反応から説明
+- 通常の絶対温度は`低温／高温`、変化は`気温低下／気温上昇`、極端域は別枠注意として区別
+- 体調ゆらぎ度の式・係数、今日01:05固定、明日16:30再計算、V1ロールバックは変更なし
+
+詳細: `docs/RADAR_PRESSURE_RESPONSE_FINAL_INTEGRATION_V77818.md`
+
 ## v7.78.17 気圧の物理方向と体質反応の完全分離
 
 - 気圧の上昇・低下・反転は、天気カードに出す物理情報として維持
