@@ -11,7 +11,6 @@ import { WeatherIcon } from "@/components/illust/icons/weather";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import {
   IconAttention,
-  IconBolt,
   IconRadar,
   IconRipple,
   IconBowl,
@@ -51,7 +50,6 @@ import {
   getForecastBodySigns,
   getForecastModeLabel,
   getForecastModeLead,
-  getForecastPeakPrepItems,
   getForecastTriggerFactors,
   getForecastTriggerKey,
   getHeroDecorClass,
@@ -90,13 +88,6 @@ function compactPeakLabel(start, end) {
   const startLabel = compactClockLabel(start);
   const endLabel = compactClockLabel(end);
   return startLabel && endLabel ? `${startLabel}–${endLabel}時` : "—";
-}
-
-function attentionDirectionLabel(direction) {
-  if (direction === "up") return "上昇側";
-  if (direction === "down") return "低下側";
-  if (direction === "mixed") return "上下変動";
-  return "";
 }
 
 function WeatherPeakDirectionIcon({ direction, className = "h-3.5 w-3.5" }) {
@@ -944,13 +935,22 @@ export default function RadarPage() {
     () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0, symptomFocus, displayDateMode),
     [triggerFactors, forecast?.signal, symptomFocus, displayDateMode]
   );
-  const peakPrepItems = useMemo(
-    () => getForecastPeakPrepItems(triggerFactors, forecast?.signal ?? 0, symptomFocus, displayDateMode),
-    [triggerFactors, forecast?.signal, symptomFocus, displayDateMode]
-  );
   const weatherLoadGroups = useMemo(
     () => getForecastWeatherLoadGroups(forecast),
     [forecast]
+  );
+  const weatherLoadPeak = useMemo(
+    () =>
+      weatherLoadGroups
+        .filter(
+          (factor) =>
+            factor?.load != null &&
+            factor.load >= 0.34 &&
+            factor.peakStart &&
+            factor.peakEnd
+        )
+        .sort((a, b) => Number(b.load || 0) - Number(a.load || 0))[0] || null,
+    [weatherLoadGroups]
   );
   const environmentalCautions = useMemo(
     () => getForecastEnvironmentalCautions(forecast),
@@ -1597,34 +1597,6 @@ export default function RadarPage() {
                   {forecastModeLead}
                 </div>
 
-                {environmentalCautions.length > 0 ? (
-                  <div className="mt-3 grid gap-2">
-                    {environmentalCautions.map((caution) => (
-                      <div
-                        key={caution.key}
-                        className={[
-                          "rounded-[20px] px-4 py-3 ring-1 shadow-sm",
-                          caution.level === "critical"
-                            ? "bg-[#FFF0EC] text-[#9D3F2B] ring-[#F1B9A8]"
-                            : "bg-[#FFF7E8] text-[#8A5B16] ring-[#EBCF91]",
-                        ].join(" ")}
-                      >
-                        <div className="flex items-center gap-2 text-[12px] font-black tracking-[0.08em]">
-                          <IconAttention className="h-4 w-4 shrink-0" />
-                          <span>体質別予報とは別の気温注意</span>
-                        </div>
-                        <div className="mt-1 text-[15px] font-black">{caution.label}</div>
-                        <div className="mt-1 text-[12px] font-bold leading-5 opacity-85">{caution.detail}</div>
-                        {!caution.officialAlert ? (
-                          <div className="mt-1.5 text-[10px] font-bold opacity-65">
-                            最高・最低気温による独自の注意です。公的な警戒アラートではありません。
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
                 <div className="relative mt-5">
                   <div className="relative mx-auto max-w-[420px] px-1">
                     <ForecastGauge
@@ -1638,7 +1610,7 @@ export default function RadarPage() {
                     {weatherLoadGroups.length > 0 ? (
                       <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                         <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気負荷と注意時間</div>
+                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気負荷</div>
                           <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
                             高・中・低の目安
                           </div>
@@ -1646,12 +1618,6 @@ export default function RadarPage() {
 
                         <div className="grid grid-cols-3 gap-2">
                           {weatherLoadGroups.map((factor, index) => {
-                            const factorPeakStart = factor.peakStart;
-                            const factorPeakEnd = factor.peakEnd;
-                            const factorPeakLabel = compactPeakLabel(factorPeakStart, factorPeakEnd);
-                            const factorAttentionDirectionLabel = attentionDirectionLabel(
-                              factor.attentionDirection
-                            );
                             const factorShortLabel = WEATHER_LOAD_SHORT_LABELS[factor.group] || factor.label;
                             const loadToneClass = factor.loadLevelTone === "high"
                               ? "text-[#B86430]"
@@ -1665,15 +1631,21 @@ export default function RadarPage() {
                               <div
                                 key={`${factor.group}-${index}`}
                                 className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
-                                title={`${factor.label} 負荷${factor.loadLevelLabel}（${factor.detailLabel}） / 注意時間 ${factorAttentionDirectionLabel ? `${factorAttentionDirectionLabel} ` : ""}${factorPeakLabel}`}
+                                title={`${factorShortLabel} ${factor.detailLabel} 負荷${factor.loadLevelLabel}`}
                               >
+                                <div className="whitespace-nowrap text-[11px] font-black text-slate-600">
+                                  {factorShortLabel}
+                                </div>
+
                                 <div className="flex min-w-0 items-center justify-center gap-1">
                                   <WeatherIcon
                                     triggerKey={factor.key}
                                     direction={factor.direction}
                                     className="h-[22px] w-[22px] shrink-0"
                                   />
-                                  <span className="whitespace-nowrap text-[11px] font-black text-slate-600">{factorShortLabel}</span>
+                                  <span className="whitespace-nowrap text-[10px] font-extrabold text-slate-400">
+                                    {factor.detailLabel}
+                                  </span>
                                 </div>
 
                                 <div className="flex items-baseline justify-center gap-1 leading-none text-slate-800">
@@ -1682,24 +1654,82 @@ export default function RadarPage() {
                                     {factor.loadLevelLabel}
                                   </span>
                                 </div>
-                                <div className="whitespace-nowrap text-[10px] font-extrabold text-slate-400">{factor.detailLabel}</div>
-
-                                <div className="mt-0.5 flex min-w-0 items-center justify-center gap-1 rounded-[11px] bg-[#F7FAF8]/70 px-1.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#EEF3EF]">
-                                  <WeatherPeakDirectionIcon
-                                    direction={factor.attentionDirection}
-                                    className="h-3.5 w-3.5 shrink-0"
-                                  />
-                                  <span className="whitespace-nowrap">{factorPeakLabel}</span>
-                                </div>
                               </div>
                             );
                           })}
                         </div>
+
+                        {weatherLoadPeak ? (
+                          <div className="mt-3 flex min-w-0 items-center justify-between gap-2 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-slate-500 ring-1 ring-[#E7EEE9] shadow-sm">
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              <WeatherPeakDirectionIcon
+                                direction={weatherLoadPeak.attentionDirection}
+                                className="h-3.5 w-3.5 shrink-0"
+                              />
+                              <span className="whitespace-nowrap">天気負荷のピーク</span>
+                            </div>
+                            <span className="min-w-0 truncate text-slate-600">
+                              {WEATHER_LOAD_SHORT_LABELS[weatherLoadPeak.group] || weatherLoadPeak.label}
+                              ・{weatherLoadPeak.detailLabel}
+                            </span>
+                            <span className="shrink-0 whitespace-nowrap text-slate-600">
+                              {compactPeakLabel(weatherLoadPeak.peakStart, weatherLoadPeak.peakEnd)}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {environmentalCautions.length > 0 ? (
+                      <div className="mt-3 grid gap-2">
+                        {environmentalCautions.map((caution) => (
+                          <details
+                            key={caution.key}
+                            className={[
+                              "group overflow-hidden rounded-[18px] ring-1 shadow-sm",
+                              caution.level === "critical"
+                                ? "bg-[#FFF0EC] text-[#9D3F2B] ring-[#F1B9A8]"
+                                : "bg-[#FFF7E8] text-[#8A5B16] ring-[#EBCF91]",
+                            ].join(" ")}
+                          >
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+                              <span className="flex min-w-0 items-center gap-2 text-[12px] font-black">
+                                <IconAttention className="h-4 w-4 shrink-0" />
+                                <span className="truncate">{caution.label}</span>
+                              </span>
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="m6 9 6 6 6-6" />
+                              </svg>
+                            </summary>
+                            <div className="border-t border-current/10 px-4 pb-3 pt-2.5">
+                              <div className="text-[10px] font-black tracking-[0.08em] opacity-70">
+                                体質別予報とは別の気温注意
+                              </div>
+                              <div className="mt-1 text-[12px] font-bold leading-5 opacity-85">
+                                {caution.detail}
+                              </div>
+                              {!caution.officialAlert ? (
+                                <div className="mt-1.5 text-[10px] font-bold opacity-65">
+                                  最高・最低気温による独自の注意です。公的な警戒アラートではありません。
+                                </div>
+                              ) : null}
+                            </div>
+                          </details>
+                        ))}
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  <div className="mt-4">
                     <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
@@ -1738,34 +1768,6 @@ export default function RadarPage() {
                       </div>
 
 
-                    </div>
-
-                    <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                          <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm">
-                            <IconBolt className="h-5 w-5" />
-                          </span>
-                          {selectedIsToday ? "注意時間の前に" : "今夜のうちに"}
-                        </div>
-                        <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-400 ring-1 ring-black/5">
-                          先回りケア
-                        </div>
-                      </div>
-
-                      <div className="mt-3 grid gap-2">
-                        {peakPrepItems.map((item, index) => (
-                          <div
-                            key={`${item}-${index}`}
-                            className="flex items-start gap-2 rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.32)]"
-                          >
-                            <span className="mt-[0.38rem] h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent-ink)]/45" />
-                            <span className="text-[14px] font-extrabold leading-6 text-slate-700">
-                              {item}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -2067,7 +2069,7 @@ export default function RadarPage() {
                   title={selectedIsToday ? "このツボケアに合う道具を見る" : "明日に使うほぐし道具を見ておく"}
                   lead={selectedIsToday
                     ? loosenItemHint || "表示中のツボや部位ケアに合わせて、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
-                    : loosenItemHint || "明日の予報に合わせて、注意時間の前に使いやすい温熱・ほぐし系アイテムの候補を見ておけます。"}
+                    : loosenItemHint || "明日の予報に合わせて、使いやすい温熱・ほぐし系アイテムの候補を見ておけます。"}
                   buttonLabel={selectedIsToday ? "ツボケアに合う候補を見る" : "明日のほぐし候補を見る"}
                   toneKey="loosen"
                   onClick={() => router.push(buildCareNaviUrl("point"))}
