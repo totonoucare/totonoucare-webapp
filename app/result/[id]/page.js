@@ -270,6 +270,8 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
   const affinityProfile = buildConstitutionWeatherAffinityV2({
     constitution: buildForecastConstitution({ answers, computed }),
   });
+  const reactionAxis = Number(affinityProfile?.normalized_constitution?.axes?.yin_yang_score || 0);
+  const pressureResponseDirection = reactionAxis > 0.18 ? "accel" : reactionAxis < -0.18 ? "brake" : "balanced";
 
   const items = rankConstitutionWeatherAffinityV2(affinityProfile.weights)
     .slice(0, 3)
@@ -277,7 +279,7 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
       key,
       label: weatherLabel(key),
       rankLabel: getImpactRankLabel(index),
-      body: weatherBody(key, symptomKey, coreCode, subCodes),
+      body: weatherBody(key, symptomKey, coreCode, subCodes, pressureResponseDirection),
     }));
 
   return {
@@ -289,32 +291,26 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
 }
 
 function weatherLabel(key) {
-  const map = { pressure_down: "気圧が下がる日", pressure_up: "気圧が上がる日", temp_shift: "寒暖差が大きい日", cold: "冷え込む日", heat: "気温が上がりやすい日", damp: "湿っぽい日", dry: "乾燥しやすい日" };
+  const map = { pressure_down: "気圧が下がる日", pressure_up: "気圧が上がる日", temp_shift: "寒暖差が大きい日", cold: "気温が低い日", heat: "気温が高い日", damp: "湿っぽい日", dry: "乾燥しやすい日" };
   return map[key] || key;
 }
 
-function weatherBody(key, symptomKey, coreCode, subCodes) {
+function weatherBody(key, symptomKey, coreCode, subCodes, pressureResponseDirection = "balanced") {
   const hasBloodDef = subCodes.includes("blood_deficiency");
   const hasFluidDef = subCodes.includes("fluid_deficiency");
   const hasFluidDamp = subCodes.includes("fluid_damp");
   const isBattSmall = coreCode.includes("batt_small");
   const isAccel = coreCode.startsWith("accel");
 
-  if (key === "pressure_down") {
-    if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "neck_shoulder") {
-      return "気圧が下がり外圧が緩む日に、体内の膨張感が強まりやすく、巡りの詰まりから頭や首肩の不調につながりやすくなります。";
+  if (key === "pressure_down" || key === "pressure_up") {
+    const physical = key === "pressure_up" ? "気圧が上がる変化" : "気圧が下がる変化";
+    if (pressureResponseDirection === "accel") {
+      return `${physical}に揺さぶられた時、張り・力み・切り替えにくさとして表れやすい傾向です。気圧の向きではなく、あなたの体質による反応の仕方を重ねて見ています。`;
     }
-    if (symptomKey === "swelling" || symptomKey === "low_back_pain") {
-      return "気圧が下がり外圧が緩む日に、体内の巡りが滞りやすく、下半身や全体の重だるさにつながりやすくなります。";
+    if (pressureResponseDirection === "brake") {
+      return `${physical}に揺さぶられた時、重だるさ・動き出しにくさとして表れやすい傾向です。気圧の向きではなく、あなたの体質による反応の仕方を重ねて見ています。`;
     }
-    return "気圧が下がり外圧が緩む日に、体内の圧力が相対的に高まり、緊張や巡りの詰まり、だるさが出やすくなります。";
-  }
-
-  if (key === "pressure_up") {
-    if (symptomKey === "mood" || symptomKey === "sleep") {
-      return "外からの圧力が強まる日は、体がギュッと締まりやすく、リラックスや気持ちの切り替えに時間がかかりやすくなります。";
-    }
-    return "外からの圧力が強まる日は、体がギュッと締まりやすくなります。無理に詰め込まず、少しゆるめる意識が合います。";
+    return `${physical}に揺さぶられた時、環境変化へ適応する疲れとして表れやすい傾向です。`;
   }
 
   if (key === "temp_shift") {
@@ -326,20 +322,20 @@ function weatherBody(key, symptomKey, coreCode, subCodes) {
 
   if (key === "cold") {
     if (symptomKey === "neck_shoulder" || symptomKey === "low_back_pain") {
-      return "冷え込む日は、血管や筋肉が縮こまり、首肩や腰のこわばり・痛みとして出やすくなります。";
+      return "気温が低い日は、血管や筋肉が縮こまり、首肩や腰のこわばり・痛みとして出やすくなります。";
     }
     if (hasBloodDef || isBattSmall || symptomKey === "fatigue") {
-      return "冷え込む日は、血管や筋肉が縮こまり、体を支える余力が削れやすく、消耗やだるさとして出やすくなります。";
+      return "気温が低い日は、血管や筋肉が縮こまり、体を支える余力が削れやすく、消耗やだるさとして出やすくなります。";
     }
-    return "冷え込む日は、体がギュッと縮こまりやすく、こわばりやだるさが残りやすくなります。";
+    return "気温が低い日は、体がギュッと縮こまりやすく、こわばりやだるさが残りやすくなります。";
   }
 
   if (key === "heat") {
     if (symptomKey === "headache" || symptomKey === "dizziness" || symptomKey === "sleep") {
-      return "気温が上がる日は、熱がこもりやすくのぼせ気味になり、上半身の張りや睡眠の質低下につながりやすくなります。";
+      return "気温が高い日は、熱がこもりやすくのぼせ気味になり、上半身の張りや睡眠の質低下につながりやすくなります。";
     }
     if (hasFluidDef || isAccel) {
-      return "気温が上がる日は、熱や刺激がこもりやすく、消耗やのぼせ感につながりやすくなります。";
+      return "気温が高い日は、熱や刺激がこもりやすく、消耗やのぼせ感につながりやすくなります。";
     }
     return "暑さや熱こもりで体力が奪われ、だるさや疲れが出やすくなります。";
   }
