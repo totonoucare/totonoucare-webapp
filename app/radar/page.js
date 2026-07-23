@@ -47,6 +47,7 @@ import {
   getCareStrategyTitle,
   getDateModeLabel,
   getForecastWeatherLoadGroups,
+  getForecastEnvironmentalCautions,
   getForecastBodySigns,
   getForecastModeLabel,
   getForecastModeLead,
@@ -903,9 +904,13 @@ export default function RadarPage() {
     () => getForecastWeatherLoadGroups(forecast),
     [forecast]
   );
+  const environmentalCautions = useMemo(
+    () => getForecastEnvironmentalCautions(forecast),
+    [forecast]
+  );
   const careTriggerFactors = useMemo(() => getForecastTriggerFactors(activeCareForecast), [activeCareForecast]);
-  const careTriggerKey = careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
-  const secondaryCareTriggerKey = careTriggerFactors[1]?.key || null;
+  const careTriggerKey = careTriggerFactors[0]?.careKey || careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
+  const secondaryCareTriggerKey = careTriggerFactors[1]?.careKey || careTriggerFactors[1]?.key || null;
   const careStrategyTitle = useMemo(
     () => getCareStrategyTitle(careTriggerKey, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
     [careTriggerKey, activeCareForecast?.signal, selectedIsToday]
@@ -942,8 +947,9 @@ export default function RadarPage() {
         activeCareForecast?.signal ?? 0,
         selectedIsToday ? "today" : "tomorrow",
         symptomFocus,
+        careTriggerFactors.find((factor) => factor?.responseDirection) || null,
       ),
-    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday, symptomFocus]
+    [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday, symptomFocus, careTriggerFactors]
   );
   const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
   const liveItemHint = useMemo(
@@ -1542,6 +1548,34 @@ export default function RadarPage() {
                 <div className="mt-3 rounded-[22px] bg-white/72 px-4 py-3 text-[14px] font-extrabold leading-6 text-slate-700 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
                   {forecastModeLead}
                 </div>
+
+                {environmentalCautions.length > 0 ? (
+                  <div className="mt-3 grid gap-2">
+                    {environmentalCautions.map((caution) => (
+                      <div
+                        key={caution.key}
+                        className={[
+                          "rounded-[20px] px-4 py-3 ring-1 shadow-sm",
+                          caution.level === "critical"
+                            ? "bg-[#FFF0EC] text-[#9D3F2B] ring-[#F1B9A8]"
+                            : "bg-[#FFF7E8] text-[#8A5B16] ring-[#EBCF91]",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center gap-2 text-[12px] font-black tracking-[0.08em]">
+                          <IconAttention className="h-4 w-4 shrink-0" />
+                          <span>体質別予報とは別の気温注意</span>
+                        </div>
+                        <div className="mt-1 text-[15px] font-black">{caution.label}</div>
+                        <div className="mt-1 text-[12px] font-bold leading-5 opacity-85">{caution.detail}</div>
+                        {!caution.officialAlert ? (
+                          <div className="mt-1.5 text-[10px] font-bold opacity-65">
+                            最高・最低気温による独自の注意です。公的な警戒アラートではありません。
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="relative mt-5">
                   <div className="relative mx-auto max-w-[420px] px-1">
