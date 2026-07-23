@@ -1514,7 +1514,7 @@ function mergeSlotBoosts(slot, boost = {}) {
 }
 
 function triggerProfileKeys(triggerFactors = []) {
-  return unique(safeArray(triggerFactors).map((factor) => factor?.exact || factor?.key || factor?.main_trigger).filter(Boolean));
+  return unique(safeArray(triggerFactors).map((factor) => factor?.careKey || factor?.exact || factor?.key || factor?.main_trigger).filter(Boolean));
 }
 
 function coreProfileKeys(profileLike) {
