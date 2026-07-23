@@ -9,6 +9,7 @@ async function importSource(relativePath) {
 
 const weather = await importSource("../lib/radar_v1/weatherStressV2.js");
 const forecast = await importSource("../lib/radar_v1/personalizeForecastV2.js");
+const pressureResponse = await importSource("../lib/radar_v1/pressureResponse.js");
 const constitutionCare = await importSource("../lib/diagnosis/v2/carePreferences.js");
 const constitutionCareSource = await readFile(new URL("../lib/diagnosis/v2/carePreferences.js", import.meta.url), "utf8");
 const careSource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
@@ -23,6 +24,11 @@ const lifestyleRulesSource = await readFile(new URL("../lib/radar_v1/careRules/l
 const publicForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/public/route.js", import.meta.url), "utf8");
 const riskContextSource = await readFile(new URL("../lib/radar_v1/buildRiskContext.js", import.meta.url), "utf8");
 const radarPlanSource = await readFile(new URL("../lib/radar_v1/buildRadarPlan.js", import.meta.url), "utf8");
+const motherChildSource = await readFile(new URL("../lib/radar_v1/selectMotherChild.js", import.meta.url), "utf8");
+const tcmPointSource = await readFile(new URL("../lib/radar_v1/pickTcmPoints.js", import.meta.url), "utf8");
+const promptContextSource = await readFile(new URL("../lib/radar_v1/radarPromptContext.js", import.meta.url), "utf8");
+const partnerOfferSource = await readFile(new URL("../lib/care-navi/partnerOffers.js", import.meta.url), "utf8");
+const todayCareSource = await readFile(new URL("../lib/radar_v1/careRules/todayCarePlan.js", import.meta.url), "utf8");
 
 function point(hour, values = {}) {
   return {
@@ -41,6 +47,17 @@ function linearPoints({ start, end, field, from, to, base = {} }) {
     ...base,
     [field]: from + ((to - from) * index) / length,
   }));
+}
+
+function dailyTemperaturePoints({ min, max, dewPoint, pressureFrom = 1012, pressureTo = 1012 }) {
+  return Array.from({ length: 24 }, (_, hour) => {
+    const daytime = Math.max(0, Math.sin(((hour - 6) / 24) * Math.PI * 2));
+    return point(hour, {
+      temp_c: min + (max - min) * daytime,
+      dew_point_c: dewPoint,
+      pressure_hpa: pressureFrom + ((pressureTo - pressureFrom) * hour) / 23,
+    });
+  });
 }
 
 function constitution({
@@ -134,14 +151,19 @@ test("pressure reversal is one event rather than down plus up", () => {
   );
 });
 
-test("summer evening cooling is temperature change, not cold exposure", () => {
-  const result = weather.buildWeatherStressV2({
+test("summer evening cooling toward the comfort band is not a large cold or change stress", () => {
+  const cooling = weather.buildWeatherStressV2({
     points: linearPoints({ start: 14, end: 20, field: "temp_c", from: 34, to: 28, base: { dew_point_c: 21 } }),
   });
+  const warming = weather.buildWeatherStressV2({
+    points: linearPoints({ start: 8, end: 14, field: "temp_c", from: 28, to: 34, base: { dew_point_c: 21 } }),
+  });
 
-  assert.equal(result.cold_strength, 0);
-  assert.ok(result.temperature_shift_strength > 0.3);
-  assert.ok(result.heat_strength > 0);
+  assert.equal(cooling.cold_strength, 0);
+  assert.ok(cooling.temperature_shift_strength <= 0.25);
+  assert.ok(cooling.meta.temperature.comfort_relief_strength > cooling.meta.temperature.comfort_departure_strength);
+  assert.ok(warming.temperature_shift_strength > cooling.temperature_shift_strength * 2);
+  assert.ok(cooling.heat_strength > 0);
 });
 
 test("ordinary smooth daytime warming and cooling stays below care mode", () => {
@@ -171,6 +193,124 @@ test("relative humidity drop caused by warming is not strong dryness", () => {
   assert.equal(result.meta.moisture.relative_humidity_used_as_secondary, true);
 });
 
+test("humidity load is coupled with temperature while water-content change stays separate", () => {
+  const mildHumid = weather.buildWeatherStressV2({
+    points: Array.from({ length: 12 }, (_, hour) => point(hour + 6, {
+      temp_c: 20,
+      dew_point_c: 18,
+      humidity_pct: 88,
+    })),
+  });
+  const hotHumid = weather.buildWeatherStressV2({
+    points: Array.from({ length: 12 }, (_, hour) => point(hour + 6, {
+      temp_c: 35,
+      dew_point_c: 24,
+      humidity_pct: 60,
+    })),
+  });
+
+  assert.ok(hotHumid.damp_strength > mildHumid.damp_strength + 0.5);
+  assert.ok(mildHumid.moisture_shift_strength < 0.1);
+  assert.ok(hotHumid.moisture_shift_strength < 0.1);
+});
+
+test("steady summer burden does not force every profile or the public demo into guard mode", () => {
+  const stress = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 28, max: 35, dewPoint: 24 }),
+  });
+  const sharedMaterial = {
+    qi_deficiency: 3,
+    qi_stagnation: 3,
+    blood_deficiency: 2,
+    blood_stasis: 2,
+    fluid_deficiency: 2,
+    fluid_damp: 4,
+  };
+  const sensitive = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({
+      yinYang: -0.8,
+      drive: -0.8,
+      sensitivity: 3,
+      vectors: ["humidity_up"],
+      material: sharedMaterial,
+    }),
+  });
+  const resilient = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({
+      yinYang: -0.8,
+      drive: 0.8,
+      sensitivity: 1,
+      vectors: [],
+      material: sharedMaterial,
+    }),
+  });
+  const publicForecast = forecast.personalizePublicForecastV2({ weatherStress: stress });
+
+  assert.ok(publicForecast.score_precise_0_10 < 7);
+  assert.ok(sensitive.score_precise_0_10 < 7);
+  assert.ok(sensitive.score_precise_0_10 - resilient.score_precise_0_10 >= 0.5);
+  assert.equal(publicForecast.meta.forecast_model.personalized, false);
+});
+
+test("the six continuous core combinations do not collapse to one summer score", () => {
+  const stress = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 28, max: 35, dewPoint: 24 }),
+  });
+  const sharedMaterial = {
+    qi_deficiency: 3,
+    qi_stagnation: 3,
+    blood_deficiency: 2,
+    blood_stasis: 2,
+    fluid_deficiency: 2,
+    fluid_damp: 4,
+  };
+  const scores = [];
+  for (const yinYang of [-0.8, 0.8]) {
+    for (const drive of [-0.8, 0, 0.8]) {
+      const result = forecast.personalizeForecastV2({
+        weatherStress: stress,
+        constitution: constitution({
+          yinYang,
+          drive,
+          thermo: yinYang < 0 ? "cold" : "heat",
+          sensitivity: 2,
+          vectors: yinYang < 0 ? ["humidity_up"] : ["temp_swing"],
+          material: sharedMaterial,
+        }),
+      });
+      scores.push(result.score_precise_0_10);
+    }
+  }
+
+  assert.ok(Math.max(...scores) - Math.min(...scores) >= 1);
+  assert.ok(new Set(scores).size >= 3);
+  assert.ok(scores[0] - scores[2] >= 0.5);
+});
+
+test("truly extreme steady heat keeps a guard floor without needing a weather change", () => {
+  const stress = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 40, max: 40, dewPoint: 25 }),
+  });
+  const publicForecast = forecast.personalizePublicForecastV2({ weatherStress: stress });
+
+  assert.equal(stress.temperature_shift_strength, 0);
+  assert.ok(stress.heat_strength >= 0.98);
+  assert.ok(publicForecast.score_precise_0_10 >= 7);
+  assert.ok(publicForecast.meta.score_trace.score_components.universal_extreme_floor >= 6.5);
+});
+
+test("steady but non-extreme winter weather does not become a permanent guard alert", () => {
+  const stress = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 5, max: 5, dewPoint: -3 }),
+  });
+  const publicForecast = forecast.personalizePublicForecastV2({ weatherStress: stress });
+
+  assert.equal(stress.temperature_shift_strength, 0);
+  assert.ok(publicForecast.score_precise_0_10 < 7);
+});
+
 test("accel and brake constitutions both respond to both pressure directions", () => {
   const down = weather.buildWeatherStressV2({
     points: linearPoints({ start: 6, end: 12, field: "pressure_hpa", from: 1016, to: 1008 }),
@@ -185,6 +325,68 @@ test("accel and brake constitutions both respond to both pressure directions", (
     assert.ok(downForecast.meta.effective_weather_groups.pressure.effective_load > 0.5);
     assert.ok(upForecast.meta.effective_weather_groups.pressure.effective_load > 0.5);
   }
+});
+
+test("pressure physical direction and body response remain independent in all four combinations", () => {
+  const weatherByDirection = {
+    down: weather.buildWeatherStressV2({
+      points: linearPoints({ start: 6, end: 12, field: "pressure_hpa", from: 1017, to: 1007 }),
+    }),
+    up: weather.buildWeatherStressV2({
+      points: linearPoints({ start: 6, end: 12, field: "pressure_hpa", from: 1007, to: 1017 }),
+    }),
+  };
+
+  for (const [direction, stress] of Object.entries(weatherByDirection)) {
+    for (const [response, yinYang] of [["accel", 0.9], ["brake", -0.9]]) {
+      const result = forecast.personalizeForecastV2({
+        weatherStress: stress,
+        constitution: constitution({ yinYang, sensitivity: 3, vectors: ["pressure_shift"] }),
+      });
+      const factor = result.trigger_factors[0];
+      assert.equal(result.personal_main_trigger_exact, `pressure_${direction}`);
+      assert.equal(result.pressure_direction, direction);
+      assert.equal(result.pressure_response_direction, response);
+      assert.equal(factor.physical_direction, direction);
+      assert.equal(factor.response_direction, response);
+      assert.equal(factor.body_response_key, `pressure_${response}`);
+    }
+  }
+});
+
+test("pressure compatibility projection follows response and neutralizes false direction prose", () => {
+  assert.equal(pressureResponse.getLegacyCareTriggerKey("pressure_down", "accel"), "pressure_up");
+  assert.equal(pressureResponse.getLegacyCareTriggerKey("pressure_up", "brake"), "pressure_down");
+  assert.equal(
+    pressureResponse.rewritePressureBodyCopy("気圧上昇の日は肩に力が入りやすい", "accel"),
+    "気圧変化の日は肩に力が入りやすい",
+  );
+  assert.equal(
+    pressureResponse.rewritePressureBodyCopy("低気圧の日は体が重くなりやすい", "brake"),
+    "気圧変化の日は体が重くなりやすい",
+  );
+});
+
+test("absolute temperature cautions are separate from the constitution score", () => {
+  const hot = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 28, max: 35, dewPoint: 22 }),
+  });
+  const critical = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 30, max: 40, dewPoint: 22 }),
+  });
+  const ordinary = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: 27, max: 34, dewPoint: 22 }),
+  });
+  const cold = weather.buildWeatherStressV2({
+    points: dailyTemperaturePoints({ min: -6, max: -1, dewPoint: -8 }),
+  });
+
+  assert.equal(hot.environmental_cautions[0]?.key, "extreme_heat_35");
+  assert.equal(critical.environmental_cautions[0]?.key, "extreme_heat_40");
+  assert.equal(ordinary.environmental_cautions.length, 0);
+  assert.equal(cold.environmental_cautions[0]?.key, "extreme_cold");
+  assert.equal(hot.environmental_cautions[0]?.official_alert, false);
+  assert.equal(hot.meta.extreme_environment.independent_from_yuragi_score, true);
 });
 
 test("the user's cold or heat answer affects the matching absolute-temperature event", () => {
@@ -439,5 +641,31 @@ test("three weather loads persist for signed-in and public forecasts", () => {
   assert.match(riskContextSource, /weather_load_groups: personalized\?\.meta\?\.weather_load_groups/);
   assert.match(radarPlanSource, /weather_load_groups: riskContext\.summary\.weather_load_groups/);
   assert.match(publicForecastSource, /weather_load_groups: weatherLoadGroups/);
-  assert.match(publicForecastSource, /buildUniversalWeatherLoadGroups/);
+  assert.match(publicForecastSource, /personalizePublicForecastV2/);
+  assert.doesNotMatch(publicForecastSource, /calcUniversalSignal|buildUniversalChannelRanking/);
+});
+
+test("pressure response reaches prose care points prompts and product selection", () => {
+  assert.match(radarUtilsSource, /first\?\.careKey \|\| getLegacyCareTriggerKey/);
+  assert.match(radarUtilsSource, /rewriteBodyCopyForPressure/);
+  assert.match(careSource, /getLegacyCareTriggerKey\(physicalTrigger, responseSource\)/);
+  assert.match(careSource, /rewritePressureBodyCopyDeep\(enhancedPlan, responseSource\)/);
+  assert.match(motherChildSource, /pressure_accel_release/);
+  assert.match(motherChildSource, /pressure_brake_support/);
+  assert.match(tcmPointSource, /ACTION_BONUS_BY_TRIGGER\[bodyTrigger\]/);
+  assert.match(tcmPointSource, /care_body_trigger/);
+  assert.match(pointExplanationSource, /getBodyExact/);
+  assert.match(pointExplanationSource, /readPressureResponseDirection\(riskContext \|\| point\)/);
+  assert.match(promptContextSource, /must_separate_pressure_direction_and_response/);
+  assert.match(partnerOfferSource, /factor\?\.careKey \|\| factor\?\.key/);
+  assert.match(todayCareSource, /getLegacyCareTriggerKey\(triggerKey, riskContext \|\| forecast\)/);
+  assert.match(todayCareSource, /triggerKey: careTriggerKey/);
+});
+
+test("temperature wording separates change absolute load and safety caution", () => {
+  assert.match(radarUtilsSource, /if \(exact === "cold"\) return "低温"/);
+  assert.match(radarUtilsSource, /if \(exact === "heat"\) return "高温"/);
+  assert.match(radarUtilsSource, /if \(direction === "down"\) return "気温低下"/);
+  assert.match(radarPageSource, /体質別予報とは別の気温注意/);
+  assert.match(radarPageSource, /公的な警戒アラートではありません/);
 });

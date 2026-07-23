@@ -50,7 +50,7 @@ test("quoted first-person current self-harm wording remains urgent", () => {
 
 test("live support sends contextual safety signals without forcing a fixed reply length", () => {
   assert.match(liveRoute, /potential_safety_signal/);
-  assert.match(liveRoute, /records_live_support_v12_forecast_v2/);
+  assert.match(liveRoute, /records_live_support_v13_pressure_response/);
   assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /回答の順序、長さ、提案数、質問数を型にはめず/);
   assert.match(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /それだけで本人の現在の緊急状態と断定しない/);
   assert.doesNotMatch(String(prompts.LIVE_SUPPORT_INSTRUCTIONS), /300〜500文字程度/);

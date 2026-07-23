@@ -53,10 +53,11 @@ const sampleForecast = {
 
 test("forecast common knowledge follows the actual forecast hierarchy", () => {
   const model = forecastReasoning.RECORDS_FORECAST_MODEL_CONTEXT;
-  assert.equal(model.personalization.universal_weather_share, 0.62);
-  assert.equal(model.personalization.personal_affinity_share, 0.38);
+  assert.equal(model.personalization.universal_weather_share, 0.38);
+  assert.equal(model.personalization.personal_affinity_share, 0.62);
   assert.match(model.personalization.direction_modifier, /0\.06/);
-  assert.match(model.weather_events.overlap_rule, /一つだけ/);
+  assert.match(model.weather_events.overlap_rule, /一つの温熱環境/);
+  assert.match(model.score_construction.overlap, /大きい方/);
   assert.match(model.trigger_selection.secondary, /0\.24/);
   assert.match(model.trigger_selection.secondary, /45％/);
   assert.ok(model.excluded_from_score.includes("当日の本人の体調実感"));
@@ -68,7 +69,7 @@ test("computed forecast context keeps primary, secondary, affinity and reserve r
   assert.equal(context.hierarchy_role, "weather_events_to_constitution_expression_to_reserve_to_mode_to_care");
   assert.equal(context.result.mode_label, "いたわり");
   assert.equal(context.result.primary.label, "湿気");
-  assert.equal(context.result.secondary.label, "厳しい寒さ");
+  assert.equal(context.result.secondary.label, "低温");
   assert.equal(context.personalization.formula.includes("0.62"), true);
   assert.equal(context.personalization.manifestation.reaction_direction, "brake");
   assert.equal(context.reserve_adjustment.raw_scalar, 1.04);
@@ -76,6 +77,21 @@ test("computed forecast context keeps primary, secondary, affinity and reserve r
   assert.equal(context.daily_weather.ranked_by_effective_load[0].group, "moisture");
   assert.equal(context.model_boundaries.actual_condition_is_separate, true);
   assert.equal(context.model_boundaries.pressure_direction_is_secondary, true);
+  assert.equal(context.model_boundaries.comfort_direction_calibration_applied, false);
+});
+
+test("forecast explanation distinguishes stored pre-calibration V2 from comfort-calibrated V2", () => {
+  const current = forecastReasoning.buildForecastReasoningContext({
+    ...sampleForecast,
+    reason_trace: {
+      ...sampleForecast.reason_trace,
+      forecast_model_version: "radar_forecast_v2_2026-07-22_comfort_calibrated",
+    },
+  });
+
+  assert.match(current.personalization.formula, /全員共通分0\.38/);
+  assert.match(current.personalization.formula, /体質親和分0\.62/);
+  assert.equal(current.model_boundaries.comfort_direction_calibration_applied, true);
 });
 
 test("forecast context does not invent missing reason trace", () => {
@@ -127,7 +143,7 @@ test("Ekken uses the computed forecast model without a rigid narration script", 
 });
 
 test("prompt versions invalidate older saved AI interpretations", () => {
-  assert.match(liveRoute, /records_live_support_v12_forecast_v2_2026-07-21/);
-  assert.match(periodRoute, /records_chat_v12_forecast_v2_2026-07-21/);
-  assert.match(analysisRoute, /records_analysis_v11_forecast_v2_2026-07-21/);
+  assert.match(liveRoute, /records_live_support_v13_pressure_response_2026-07-23/);
+  assert.match(periodRoute, /records_chat_v13_pressure_response_2026-07-23/);
+  assert.match(analysisRoute, /records_analysis_v12_pressure_response_2026-07-23/);
 });
