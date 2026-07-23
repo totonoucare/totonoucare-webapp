@@ -701,25 +701,39 @@ test("today remains morning-fixed and only tomorrow refreshes in the evening", (
   assert.match(notificationSource, /generationSlot: "notification_fallback"/);
 });
 
-test("forecast UI shows temperature moisture and pressure loads in three columns", () => {
-  assert.match(radarPageSource, /天気負荷と注意時間/);
+test("forecast UI keeps three weather loads simple and shows at most one meaningful peak", () => {
+  assert.match(radarPageSource, />天気負荷<\/div>/);
   assert.match(radarPageSource, /grid grid-cols-3 gap-2/);
   assert.match(radarPageSource, /高・中・低の目安/);
   assert.match(radarPageSource, /WEATHER_LOAD_SHORT_LABELS/);
   assert.match(radarPageSource, /compactPeakLabel/);
   assert.match(radarPageSource, /IconAttention/);
   assert.match(radarPageSource, />負荷<\/span>/);
+  assert.match(radarPageSource, /天気負荷のピーク/);
+  assert.match(radarPageSource, /factor\.load >= 0\.34/);
+  assert.match(radarPageSource, /weatherLoadPeak\.detailLabel/);
   assert.match(radarUtilsSource, /temperature: "気温負荷"/);
   assert.match(radarUtilsSource, /moisture: "湿度負荷"/);
   assert.match(radarUtilsSource, /pressure: "気圧負荷"/);
   assert.match(radarUtilsSource, /load >= 0\.67 \? "高" : load >= 0\.34 \? "中" : "低"/);
   assert.match(radarPageSource, /factor\.loadLevelLabel/);
   assert.match(radarPageSource, /WeatherPeakDirectionIcon/);
-  assert.match(radarPageSource, /factor\.attentionDirection/);
-  assert.match(radarPageSource, /上昇側/);
-  assert.match(radarPageSource, /低下側/);
+  assert.match(radarPageSource, /weatherLoadPeak\.attentionDirection/);
+  assert.doesNotMatch(radarPageSource, /天気負荷と注意時間/);
+  assert.doesNotMatch(radarPageSource, /peakPrepItems/);
+  assert.doesNotMatch(radarPageSource, /注意時間の前に/);
   assert.doesNotMatch(radarPageSource, /factor\.loadPercent/);
   assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
+});
+
+test("absolute temperature cautions sit below weather loads and stay collapsed by default", () => {
+  const weatherLoadPosition = radarPageSource.indexOf("天気負荷");
+  const cautionPosition = radarPageSource.indexOf("environmentalCautions.map");
+  assert.ok(weatherLoadPosition >= 0);
+  assert.ok(cautionPosition > weatherLoadPosition);
+  assert.match(radarPageSource, /<details[\s\S]*?caution\.key/);
+  assert.match(radarPageSource, /<summary[\s\S]*?\{caution\.label\}/);
+  assert.doesNotMatch(radarPageSource, /<details[^>]*\sopen(?:=|>)/);
 });
 
 test("weather icons separate temperature state direction and mixed changes", () => {
