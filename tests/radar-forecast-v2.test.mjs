@@ -17,6 +17,8 @@ const workflowSource = await readFile(new URL("../.github/workflows/radar-foreca
 const notificationSource = await readFile(new URL("../lib/push/runRadarNotificationCron.js", import.meta.url), "utf8");
 const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
 const radarUtilsSource = await readFile(new URL("../app/radar/utils.js", import.meta.url), "utf8");
+const homeClientSource = await readFile(new URL("../app/HomeClient.jsx", import.meta.url), "utf8");
+const weatherIconSource = await readFile(new URL("../components/illust/icons/weather.jsx", import.meta.url), "utf8");
 const resultPageSource = await readFile(new URL("../app/result/[id]/page.js", import.meta.url), "utf8");
 const personalKarteSource = await readFile(new URL("../lib/personalKarte.js", import.meta.url), "utf8");
 const pointExplanationSource = await readFile(new URL("../lib/radar_v1/explainPointSelection.js", import.meta.url), "utf8");
@@ -586,6 +588,25 @@ test("forecast UI shows temperature moisture and pressure loads in three columns
   assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
 });
 
+test("weather icons separate temperature state direction and mixed changes", () => {
+  assert.match(weatherIconSource, /export function IconWeatherHighTemperature/);
+  assert.match(weatherIconSource, /export function IconWeatherTemperatureDown/);
+  assert.match(weatherIconSource, /export function IconWeatherTemperatureSwing/);
+  assert.match(weatherIconSource, /export function IconWeatherPressureMixed/);
+  assert.match(weatherIconSource, /key === "heat".*return "high_temperature"/s);
+  assert.match(weatherIconSource, /key === "cold".*return "low_temperature"/s);
+  assert.match(weatherIconSource, /physicalDirection === "up".*return "temperature_up"/s);
+  assert.match(weatherIconSource, /physicalDirection === "down".*return "temperature_down"/s);
+  assert.match(weatherIconSource, /return "temperature_swing"/);
+  assert.match(weatherIconSource, /physicalDirection === "mixed".*return "pressure_mixed"/s);
+  assert.match(radarUtilsSource, /return "temp_shift"/);
+  assert.doesNotMatch(radarUtilsSource, /return direction === "down" \? "cold" : "heat"/);
+  assert.match(radarPageSource, /direction=\{factor\.direction\}/);
+  assert.match(homeClientSource, /direction=\{factor\.direction\}/);
+  assert.match(homeClientSource, /return "気圧変動"/);
+  assert.doesNotMatch(homeClientSource, /気温差/);
+});
+
 test("constitution guide shares V2 affinities and treats pressure as one slot", () => {
   const profile = forecast.buildConstitutionWeatherAffinityV2({
     constitution: constitution({
@@ -666,6 +687,8 @@ test("temperature wording separates change absolute load and safety caution", ()
   assert.match(radarUtilsSource, /if \(exact === "cold"\) return "低温"/);
   assert.match(radarUtilsSource, /if \(exact === "heat"\) return "高温"/);
   assert.match(radarUtilsSource, /if \(direction === "down"\) return "気温低下"/);
+  assert.match(radarUtilsSource, /return "寒暖差"/);
+  assert.doesNotMatch(radarUtilsSource, /気温差/);
   assert.match(radarPageSource, /体質別予報とは別の気温注意/);
   assert.match(radarPageSource, /公的な警戒アラートではありません/);
 });
