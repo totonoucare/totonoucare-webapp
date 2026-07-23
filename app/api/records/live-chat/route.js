@@ -57,7 +57,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v12_forecast_v2_2026-07-21";
+const PROMPT_VERSION = "records_live_support_v13_pressure_response_2026-07-23";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
