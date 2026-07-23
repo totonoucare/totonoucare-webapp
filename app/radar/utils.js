@@ -318,7 +318,7 @@ export const MATCH_TAG_LABELS = {
   headache: "今見ている不調：頭痛",
   dizziness: "今見ている不調：めまい",
   mood: "今見ている不調：気分の浮き沈み",
-  pressure_down: "天気の影響：低気圧",
+  pressure_down: "天気の影響：気圧低下",
   pressure_up: "天気の影響：気圧上昇",
   temp_shift: "天気の影響：気温差",
   damp: "天気の影響：湿気",
