@@ -65,7 +65,36 @@ export function IconWeatherPressureUp({ className = "h-10 w-10", ...props }) {
   );
 }
 
-// 3. 冷え（収縮・氷 / アイスブルー系）
+// 気圧の上下変動（上昇と低下が同日に重なる物理変化）
+export function IconWeatherPressureMixed({ className = "h-10 w-10", ...props }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <radialGradient id="grad-pressure-mixed" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="line-pressure-mixed" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#a855f7" />
+        </linearGradient>
+      </defs>
+
+      {/* 上下する気圧の波を受け止める、やわらかな同心円 */}
+      <circle cx="16" cy="16" r="12" fill="url(#grad-pressure-mixed)" />
+      <circle cx="16" cy="16" r="7" fill="none" stroke="url(#line-pressure-mixed)" strokeWidth="1.5" strokeDasharray="2.5 2.5" opacity="0.7" />
+      <path d="M8 16 C10.5 12.5 13 19.5 16 16 C19 12.5 21.5 19.5 24 16" fill="none" stroke="#7c3aed" strokeWidth="1.7" strokeLinecap="round" />
+
+      {/* 上昇と低下を並べ、どちらか一方に固定しない */}
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 23 V8 M7.5 11 L10 8 L12.5 11" stroke="#4f46e5" strokeWidth="1.8" />
+        <path d="M22 9 V24 M19.5 21 L22 24 L24.5 21" stroke="#9333ea" strokeWidth="1.8" />
+      </g>
+    </svg>
+  );
+}
+
+// 3. 低温（収縮・氷 / アイスブルー系）
 export function IconWeatherCold({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
@@ -92,7 +121,7 @@ export function IconWeatherCold({ className = "h-10 w-10", ...props }) {
 }
 
 
-// 4. 暑さ（気温上昇：上昇する熱気・陽炎 / オレンジレッド系）
+// 4. 気温上昇（上昇する熱気・陽炎 / オレンジレッド系）
 export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
@@ -126,6 +155,105 @@ export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
       {/* 外側へ発散する熱の粒子感 */}
       <path d="M5 18 Q 3 14, 6 10" fill="none" stroke="#fb923c" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 4" opacity="0.7" />
       <path d="M27 18 Q 29 14, 26 10" fill="none" stroke="#fb923c" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="2 4" opacity="0.7" />
+    </svg>
+  );
+}
+
+// 高温（強い日照・太陽熱 / サンイエロー〜オレンジ系）
+export function IconWeatherHighTemperature({ className = "h-10 w-10", ...props }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <radialGradient id="grad-high-temperature" cx="45%" cy="42%" r="55%">
+          <stop offset="0%" stopColor="#fde68a" stopOpacity="0.95" />
+          <stop offset="62%" stopColor="#fb923c" stopOpacity="0.48" />
+          <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="sun-high-temperature" x1="20%" y1="10%" x2="80%" y2="90%">
+          <stop offset="0%" stopColor="#facc15" />
+          <stop offset="100%" stopColor="#f97316" />
+        </linearGradient>
+      </defs>
+
+      {/* 日照そのものが強い、絶対的な高温環境 */}
+      <circle cx="16" cy="16" r="13" fill="url(#grad-high-temperature)" />
+      <circle cx="16" cy="16" r="6.5" fill="url(#sun-high-temperature)" />
+      <circle cx="14" cy="14" r="2.2" fill="#fff7cc" opacity="0.55" />
+
+      {/* 太陽から外へ伸びる熱の光 */}
+      <g stroke="#f97316" strokeWidth="1.8" strokeLinecap="round">
+        <path d="M16 2.5 V6" />
+        <path d="M16 26 V29.5" />
+        <path d="M2.5 16 H6" />
+        <path d="M26 16 H29.5" />
+        <path d="M6.5 6.5 L9 9" />
+        <path d="M23 23 L25.5 25.5" />
+        <path d="M25.5 6.5 L23 9" />
+        <path d="M9 23 L6.5 25.5" />
+      </g>
+    </svg>
+  );
+}
+
+// 気温低下（下向きの冷気・下降ベクトル / ブルー系）
+export function IconWeatherTemperatureDown({ className = "h-10 w-10", ...props }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <radialGradient id="grad-temperature-down" cx="50%" cy="42%" r="58%">
+          <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.48" />
+          <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="line-temperature-down" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#0369a1" />
+        </linearGradient>
+      </defs>
+
+      {/* 上から流れ込み、下へ沈む冷気 */}
+      <circle cx="16" cy="14" r="12" fill="url(#grad-temperature-down)" />
+      <path d="M16 5 C12 9 20 13 16 17 C13.5 19.5 16 23 16 27" fill="none" stroke="url(#line-temperature-down)" strokeWidth="2" strokeLinecap="round" />
+      <path d="M12.5 23.5 L16 27 L19.5 23.5" fill="none" stroke="#0369a1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+      <path d="M9 7 C6.5 10 11.5 14 9 17 C7.5 19 9 22 9 25" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M6.5 22.5 L9 25 L11.5 22.5" fill="none" stroke="#0284c7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+
+      <path d="M23 7 C25.5 10 20.5 14 23 17 C24.5 19 23 22 23 25" fill="none" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M20.5 22.5 L23 25 L25.5 22.5" fill="none" stroke="#0284c7" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+
+      {/* 冷気の粒子 */}
+      <circle cx="5" cy="13" r="1" fill="#7dd3fc" opacity="0.75" />
+      <circle cx="27" cy="11" r="1.2" fill="#38bdf8" opacity="0.65" />
+    </svg>
+  );
+}
+
+// 寒暖差（暖気の上昇と冷気の低下が同日に重なる変化）
+export function IconWeatherTemperatureSwing({ className = "h-10 w-10", ...props }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
+      <defs>
+        <linearGradient id="grad-temperature-swing" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.28" />
+          <stop offset="48%" stopColor="#f8fafc" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#fb923c" stopOpacity="0.3" />
+        </linearGradient>
+        <linearGradient id="line-temperature-swing" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#0284c7" />
+          <stop offset="100%" stopColor="#f97316" />
+        </linearGradient>
+      </defs>
+
+      <circle cx="16" cy="16" r="13" fill="url(#grad-temperature-swing)" />
+      <path d="M6 19 C9 14 12 22 16 16 C20 10 23 18 26 13" fill="none" stroke="url(#line-temperature-swing)" strokeWidth="1.8" strokeLinecap="round" strokeDasharray="2.5 2.5" />
+
+      {/* 暖気は上へ、冷気は下へ */}
+      <path d="M11 24 C14 20 8 16 11 12 C12.5 10 11 7 11 5" fill="none" stroke="#f97316" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M8 8 L11 5 L14 8" fill="none" stroke="#f97316" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 6 C18 10 24 14 21 18 C19.5 20 21 23 21 27" fill="none" stroke="#0284c7" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M18 24 L21 27 L24 24" fill="none" stroke="#0284c7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+
+      <circle cx="16" cy="16" r="2.5" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" opacity="0.9" />
     </svg>
   );
 }
@@ -191,13 +319,38 @@ export function IconWeatherDry({ className = "h-10 w-10", ...props }) {
   );
 }
 
+export function resolveWeatherIconKey(triggerKey, direction = null) {
+  const key = String(triggerKey || "").trim();
+  const physicalDirection = String(direction || "").trim();
+
+  if (key === "pressure_shift") {
+    if (physicalDirection === "mixed") return "pressure_mixed";
+    return physicalDirection === "up" ? "pressure_up" : "pressure_down";
+  }
+  if (key === "pressure_down" || key === "pressure_up") {
+    return physicalDirection === "mixed" ? "pressure_mixed" : key;
+  }
+  if (key === "temp_shift" || key === "temperature_shift" || key === "temp") {
+    if (physicalDirection === "up") return "temperature_up";
+    if (physicalDirection === "down") return "temperature_down";
+    return "temperature_swing";
+  }
+  if (key === "heat" || key === "high_temperature") return "high_temperature";
+  if (key === "cold" || key === "low_temperature") return "low_temperature";
+  return key;
+}
+
 // トリガーに応じたアイコンを返すラッパーコンポーネント
-export function WeatherIcon({ triggerKey, className = "h-10 w-10" }) {
-  switch (triggerKey) {
+export function WeatherIcon({ triggerKey, direction = null, className = "h-10 w-10" }) {
+  switch (resolveWeatherIconKey(triggerKey, direction)) {
     case "pressure_down": return <IconWeatherPressureDown className={className} />;
     case "pressure_up": return <IconWeatherPressureUp className={className} />;
-    case "cold": return <IconWeatherCold className={className} />;
-    case "heat": return <IconWeatherHeat className={className} />;
+    case "pressure_mixed": return <IconWeatherPressureMixed className={className} />;
+    case "low_temperature": return <IconWeatherCold className={className} />;
+    case "high_temperature": return <IconWeatherHighTemperature className={className} />;
+    case "temperature_up": return <IconWeatherHeat className={className} />;
+    case "temperature_down": return <IconWeatherTemperatureDown className={className} />;
+    case "temperature_swing": return <IconWeatherTemperatureSwing className={className} />;
     case "damp": return <IconWeatherDamp className={className} />;
     case "dry": return <IconWeatherDry className={className} />;
     default: return null;
