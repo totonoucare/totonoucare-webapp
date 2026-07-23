@@ -3,9 +3,24 @@
 import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
+import {
+  getBodyResponseKey,
+  getLegacyCareTriggerKey,
+  readExplicitPressureResponseDirection,
+  isPressureTrigger,
+  readPressureResponseDirection,
+  rewritePressureBodyCopyDeep,
+} from "@/lib/radar_v1/pressureResponse";
 
 export function safeArray(v) {
   return Array.isArray(v) ? v : [];
+}
+
+function rewriteBodyCopyForPressure(value, triggerFactors = []) {
+  const source = safeArray(triggerFactors).find((factor) =>
+    isPressureTrigger(factor?.physical_exact || factor?.key || factor?.exact)
+  );
+  return source ? rewritePressureBodyCopyDeep(value, source) : value;
 }
 
 
@@ -448,7 +463,7 @@ export function getRiskContext(bundle) {
 export function getCompatTriggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "down") return "気圧低下";
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
-  if (mainTrigger === "temp" && triggerDir === "down") return "冷え込み";
+  if (mainTrigger === "temp" && triggerDir === "down") return "気温低下";
   if (mainTrigger === "temp" && triggerDir === "up") return "気温上昇";
   if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "気温差";
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿気";
@@ -518,6 +533,23 @@ export function normalizeForecastTriggerFactor(item, index, forecast) {
   const peak = channelPeaks?.[key] || null;
   const peakStart = item?.peakStart ?? item?.peak_start ?? item?.peak?.start ?? peak?.start ?? null;
   const peakEnd = item?.peakEnd ?? item?.peak_end ?? item?.peak?.end ?? peak?.end ?? null;
+  const responseSource = {
+    response_direction: item?.response_direction || item?.responseDirection || null,
+    pressure_response_direction:
+      forecast?.pressure_response_direction ||
+      forecast?.reaction_direction ||
+      riskSummary?.pressure_response_direction ||
+      riskSummary?.reaction_direction ||
+      snapshot?.pressure_response_direction ||
+      snapshot?.reaction_direction ||
+      null,
+    physical_direction: item?.physical_direction || item?.direction || item?.trigger_dir || compat.trigger_dir,
+  };
+  const responseDirection = isPressureTrigger(key)
+    ? readExplicitPressureResponseDirection(responseSource)
+    : item?.response_direction || item?.responseDirection || null;
+  const bodyResponseKey = item?.body_response_key || getBodyResponseKey(key, responseSource);
+  const careKey = getLegacyCareTriggerKey(key, responseSource);
 
   return {
     key,
@@ -525,7 +557,16 @@ export function normalizeForecastTriggerFactor(item, index, forecast) {
     role: item?.role || (index === 0 ? "primary" : "secondary"),
     main_trigger: item?.main_trigger || compat.main_trigger,
     trigger_dir: item?.trigger_dir || compat.trigger_dir,
-    label: getCompatTriggerLabel(item?.main_trigger || compat.main_trigger, item?.trigger_dir || compat.trigger_dir),
+    direction: item?.direction || item?.physical_direction || item?.trigger_dir || compat.trigger_dir,
+    physicalDirection: item?.physical_direction || item?.direction || item?.trigger_dir || compat.trigger_dir,
+    responseDirection,
+    bodyResponseKey,
+    bodyKey: bodyResponseKey,
+    careKey,
+    label: getExactForecastLabel(
+      key,
+      item?.direction || item?.physical_direction || item?.trigger_dir || compat.trigger_dir
+    ),
     effective_load: item?.effective_load,
     effectiveLoad: item?.effectiveLoad ?? item?.effective_load,
     weather_strength: item?.weather_strength,
@@ -537,6 +578,18 @@ export function normalizeForecastTriggerFactor(item, index, forecast) {
     peakStart,
     peakEnd,
   };
+}
+
+function getExactForecastLabel(exact, direction = null) {
+  if (exact === "cold") return "低温";
+  if (exact === "heat") return "高温";
+  if (exact === "temp_shift" || exact === "temperature_shift") {
+    if (direction === "down") return "気温低下";
+    if (direction === "up") return "気温上昇";
+    return "寒暖差";
+  }
+  const compat = compatFromExact(exact);
+  return getCompatTriggerLabel(compat.main_trigger, compat.trigger_dir);
 }
 
 export function getForecastTriggerFactors(forecast) {
@@ -608,8 +661,8 @@ const WEATHER_PAIR_LABELS = {
   damp_cold: "湿気と冷え込み",
   dry_heat: "乾燥と気温上昇",
   dry_cold: "乾燥と冷え込み",
-  pressure_down_damp: "気圧低下と湿気",
-  pressure_up_heat: "気圧上昇と気温上昇",
+  pressure_down_damp: "気圧変化と湿気",
+  pressure_up_heat: "気圧変化と高温",
 };
 
 // 2位背景は、東洋医学的な説明に通しやすい組み合わせだけ本文に使う。
@@ -1300,6 +1353,10 @@ export function getForecastBackgroundFactors(triggerFactors) {
 
     return {
       key: toWeatherIconKey(key),
+      exact: key,
+      responseDirection: factor?.responseDirection || factor?.response_direction || null,
+      bodyKey: factor?.bodyKey || factor?.body_response_key || getBodyResponseKey(key, factor),
+      careKey: factor?.careKey || getLegacyCareTriggerKey(key, factor),
       label: factor?.label || "気象変化",
       role: factor?.role || null,
       stressValue: clamp01Number(stressValue),
@@ -1339,8 +1396,10 @@ function weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load
   const meaningful = Number(weatherStrength || 0) > 0.05 || Number(load || 0) > 0.05;
   if (!meaningful) return "大きな変化なし";
   if (group === "temperature") {
-    if (exact === "cold") return "冷え込み";
-    if (exact === "heat") return "気温上昇";
+    if (exact === "cold") return "低温";
+    if (exact === "heat") return "高温";
+    if (direction === "down") return "気温低下";
+    if (direction === "up") return "気温上昇";
     return "寒暖差";
   }
   if (group === "moisture") return exact === "dry" ? "乾燥" : "湿気";
@@ -1435,6 +1494,26 @@ export function getForecastWeatherLoadGroups(forecast) {
       personalized: item?.personalized !== false,
     };
   });
+}
+
+export function getForecastEnvironmentalCautions(forecast) {
+  if (!forecast) return [];
+  const snapshot = getForecastSnapshot(forecast);
+  const riskContext = forecast?.computed?.radar_plan_meta?.risk_context || null;
+  const candidates =
+    forecast?.environmental_cautions ||
+    snapshot?.environmental_cautions ||
+    riskContext?.summary?.environmental_cautions ||
+    riskContext?.weather_context?.environmental_cautions ||
+    [];
+  return safeArray(candidates)
+    .filter((item) => item?.key && item?.label)
+    .slice(0, 2)
+    .map((item) => ({
+      ...item,
+      level: item.level === "critical" ? "critical" : "high",
+      officialAlert: Boolean(item.official_alert),
+    }));
 }
 
 function softenPeakPrepItem(text) {
@@ -1725,7 +1804,9 @@ function adaptNarrativeActionForMode(action, mode = "today") {
 
 function getNarrativePrimaryKey(triggerFactors) {
   const first = safeArray(triggerFactors)[0];
-  return normalizeWeatherContextKey(first?.key || first?.exact || "pressure_down");
+  return normalizeWeatherContextKey(
+    first?.careKey || getLegacyCareTriggerKey(first?.key || first?.exact, first)
+  );
 }
 
 function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
@@ -1736,7 +1817,10 @@ function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", sympto
   const level = Number(signal ?? 0);
 
   if (level <= 0) {
-    return getStableNarrativeLead(triggerFactors, mode, symptomFocus);
+    return rewriteBodyCopyForPressure(
+      getStableNarrativeLead(triggerFactors, mode, symptomFocus),
+      triggerFactors
+    );
   }
 
   const state = String(parts[0] || "体の小さなサインに気づきやすい日").trim();
@@ -1745,9 +1829,10 @@ function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", sympto
     ? state.replace(/少し/g, "").replace(/小さな/g, "")
     : state;
 
-  return action
+  const lead = action
     ? `${target}${normalizedState}。${action}。`
     : `${target}${normalizedState}。`;
+  return rewriteBodyCopyForPressure(lead, triggerFactors);
 }
 
 function getNarrativeBodySigns(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
@@ -1757,14 +1842,14 @@ function getNarrativeBodySigns(triggerFactors, signal = 0, symptomFocus = null, 
   if (level === 0) {
     const symptomPoints = RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM.default;
     const weatherPoint = RADAR_NARRATIVE_STABLE_WEATHER_POINT[key];
-    return uniqueTake([weatherPoint, ...symptomPoints], 3);
+    return rewriteBodyCopyForPressure(uniqueTake([weatherPoint, ...symptomPoints], 3), triggerFactors);
   }
 
   const symptomSigns = RADAR_NARRATIVE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_SIGN_BY_SYMPTOM.default;
   const weatherSign = RADAR_NARRATIVE_WEATHER_SIGN[key];
 
   // 見出し側で「今日/明日」を出すため、本文はサイン単体として読める形にする。
-  return uniqueTake([weatherSign, ...symptomSigns], 3);
+  return rewriteBodyCopyForPressure(uniqueTake([weatherSign, ...symptomSigns], 3), triggerFactors);
 }
 
 function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
@@ -1775,7 +1860,7 @@ function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = nu
     const weatherAction = RADAR_NARRATIVE_TOMORROW_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_TOMORROW_WEATHER_ACTIONS.pressure_down;
     const symptomAction = RADAR_NARRATIVE_TOMORROW_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_TOMORROW_SYMPTOM_ACTIONS.default;
     const avoid = RADAR_NARRATIVE_TOMORROW_AVOIDS[key] || "夜のうちに一つだけ軽く整えて、明日に重さを持ち越しすぎない";
-    return uniqueTake([weatherAction, symptomAction, avoid], 3);
+    return rewriteBodyCopyForPressure(uniqueTake([weatherAction, symptomAction, avoid], 3), triggerFactors);
   }
 
   const weatherAction = RADAR_NARRATIVE_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_WEATHER_ACTIONS.pressure_down;
@@ -1784,7 +1869,7 @@ function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = nu
   const stableAvoid = RADAR_NARRATIVE_STABLE_AVOIDS[key] || "いつもの調子を崩さないよう、重さを増やす要素を一つだけ外す";
   const avoid = level === 0 ? stableAvoid : strongAvoid;
   const first = level >= 2 && !weatherAction.startsWith("注意時間") ? `注意時間の前に、${weatherAction}` : weatherAction;
-  return uniqueTake([first, symptomAction, avoid], 3);
+  return rewriteBodyCopyForPressure(uniqueTake([first, symptomAction, avoid], 3), triggerFactors);
 }
 
 const CARE_STRATEGY_WEATHER_FEEL = {
@@ -1884,7 +1969,7 @@ export function getCareItemHint(category = "live", triggerFactors = [], mode = "
   const safeMode = mode === "tomorrow" ? "tomorrow" : "today";
   const safeCategory = ["live", "eat", "loosen"].includes(category) ? category : "live";
   const hints = CARE_ITEM_HINTS[safeMode]?.[safeCategory] || CARE_ITEM_HINTS.today.live;
-  return hints[key] || hints.default || "";
+  return rewriteBodyCopyForPressure(hints[key] || hints.default || "", triggerFactors);
 }
 
 export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
@@ -1892,7 +1977,9 @@ export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = 
   if (narrative.length) return narrative;
 
   const level = Number(signal ?? 0);
-  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
+  const keys = safeArray(triggerFactors)
+    .map((factor) => factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor))
+    .filter(Boolean);
   const focusedWeatherSigns = getSymptomWeatherItems(SYMPTOM_WEATHER_BODY_SIGN_LABELS, symptomFocus, keys);
 
   if (level === 0) {
@@ -1927,7 +2014,9 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
   if (narrative.length) return narrative;
 
   const level = Number(signal ?? 0);
-  const keys = safeArray(triggerFactors).map((factor) => factor?.key || factor?.exact).filter(Boolean);
+  const keys = safeArray(triggerFactors)
+    .map((factor) => factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor))
+    .filter(Boolean);
   const weatherItems = keys.flatMap((key) => PEAK_PREP_ITEMS[normalizeWeatherContextKey(key)] || []);
   const focusedWeatherItems = getSymptomWeatherItems(SYMPTOM_WEATHER_PEAK_PREP_ITEMS, symptomFocus, keys);
 
@@ -2018,21 +2107,21 @@ export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", 
 
 export function getMoodHeadline(triggerKey, signal) {
   if (signal === 2) {
-    if (triggerKey === "pressure_down") return "低気圧による重だるさ対策を優先";
+    if (triggerKey === "pressure_down") return "気圧変化による重だるさ対策を優先";
     if (triggerKey === "damp") return "湿気による重さ・むくみ対策を優先";
     if (triggerKey === "cold") return "冷えによるこわばり対策を優先";
     if (triggerKey === "heat") return "熱こもりによる消耗対策を優先";
     if (triggerKey === "dry") return "乾燥による荒れ対策を優先";
-    if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を優先";
+    if (triggerKey === "pressure_up") return "気圧変化による張りつめ対策を優先";
   }
 
   if (signal === 1) {
-    if (triggerKey === "pressure_down") return "低気圧による重だるさ対策を意識";
+    if (triggerKey === "pressure_down") return "気圧変化による重だるさ対策を意識";
     if (triggerKey === "damp") return "湿気による重さ・むくみ対策を意識";
     if (triggerKey === "cold") return "冷えによるこわばり対策を意識";
     if (triggerKey === "heat") return "熱こもり対策を意識";
     if (triggerKey === "dry") return "乾燥対策を意識";
-    if (triggerKey === "pressure_up") return "高気圧による張りつめ対策を意識";
+    if (triggerKey === "pressure_up") return "気圧変化による張りつめ対策を意識";
   }
 
   return "影響は比較的小さめ";
@@ -2129,7 +2218,7 @@ export function getCareStrategyTitle(triggerKey, signal, mode = "tomorrow") {
 
 export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", symptomFocus = null) {
   const narrative = getNarrativeCareLead(triggerFactors, signal, mode, symptomFocus);
-  if (narrative) return narrative;
+  if (narrative) return rewriteBodyCopyForPressure(narrative, triggerFactors);
 
   const labels = safeArray(triggerFactors).map((f) => f?.label).filter(Boolean);
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "気象変化";
@@ -2268,8 +2357,10 @@ const ALLOWED_POLICY_PAIRS = new Set(Object.keys(POLICY_PAIR_SUMMARIES));
 
 
 function getCarePolicyTriggerKeys(triggerFactors) {
-  return getForecastBackgroundFactors(triggerFactors)
-    .map((factor) => normalizeCarePolicyTriggerKey(factor?.key || factor?.exact))
+  return safeArray(triggerFactors)
+    .map((factor) => normalizeCarePolicyTriggerKey(
+      factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor)
+    ))
     .filter(Boolean);
 }
 
@@ -2282,11 +2373,10 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
   const weatherLead = (() => {
     const pairKey = getAllowedWeatherPairKey(keys);
     if (pairKey) return WEATHER_PAIR_LABELS[pairKey];
-    if (has("pressure_down")) return "気圧低下";
-    if (has("pressure_up")) return "気圧上昇";
+    if (has("pressure_down") || has("pressure_up")) return "気圧変化";
     if (has("damp")) return "湿気";
-    if (has("cold")) return "冷え込み";
-    if (has("heat")) return "気温上昇";
+    if (has("cold")) return "低温";
+    if (has("heat")) return "高温";
     if (has("dry")) return "乾燥";
     return "天気変化";
   })();
@@ -2323,7 +2413,7 @@ function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "t
       }
       if (has("damp") || has("pressure_down")) {
         return sentence(
-          "湿気や気圧低下で胃腸の重さが残りやすいため、詰め込みすぎない方向で整えます。",
+          "湿気や気圧変化で胃腸の重さが残りやすいため、詰め込みすぎない方向で整えます。",
           "冷たいもの・甘いもの・食後の重さを控えめにし、明朝の胃腸を軽くする方向で整えます。",
         );
       }
@@ -2482,11 +2572,18 @@ function getRiskContextTriggerFactors(riskContext) {
         .map((exact, index) => ({ exact, key: exact, role: index === 0 ? "primary" : "secondary" }));
 
   return safeArray(raw).map((factor, index) => {
-    const key = normalizeCarePolicyTriggerKey(factor?.key || factor?.exact);
+    const physicalExact = factor?.key || factor?.exact;
+    const responseDirection = factor?.response_direction || summary.pressure_response_direction || summary.reaction_direction || null;
+    const careKey = getLegacyCareTriggerKey(physicalExact, responseDirection);
+    const key = normalizeCarePolicyTriggerKey(careKey);
     return {
       ...factor,
+      physical_exact: physicalExact,
       key,
       exact: key,
+      careKey: key,
+      responseDirection,
+      bodyKey: getBodyResponseKey(physicalExact, responseDirection),
       role: factor?.role || (index === 0 ? "primary" : "secondary"),
       label: factor?.label || getCompatTriggerLabel(factor?.main_trigger, factor?.trigger_dir),
     };
@@ -2562,12 +2659,16 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
       ? getForecastTriggerFactors(forecast)
       : getRiskContextTriggerFactors(riskContext);
 
-  const normalizedTriggerFactors = safeArray(personalizedTriggerFactors).map((factor, index) => ({
-    ...factor,
-    key: normalizeCarePolicyTriggerKey(factor?.key || factor?.exact),
-    exact: normalizeCarePolicyTriggerKey(factor?.exact || factor?.key),
-    role: factor?.role || (index === 0 ? "primary" : "secondary"),
-  })).slice(0, 2);
+  const normalizedTriggerFactors = safeArray(personalizedTriggerFactors).map((factor, index) => {
+    const careKey = factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor);
+    return {
+      ...factor,
+      physical_exact: factor?.exact || factor?.key || null,
+      key: normalizeCarePolicyTriggerKey(careKey),
+      exact: normalizeCarePolicyTriggerKey(careKey),
+      role: factor?.role || (index === 0 ? "primary" : "secondary"),
+    };
+  }).slice(0, 2);
 
   normalizedTriggerFactors.forEach((factor, index) => {
     const key = normalizeCarePolicyTriggerKey(factor?.key || factor?.exact);
@@ -2666,8 +2767,9 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
 }
 
 
-export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomorrow", symptomFocus = null) {
-  return getLifestylePlanFromRules(primaryKey, secondaryKey, signal, mode, symptomFocus);
+export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomorrow", symptomFocus = null, pressureSource = null) {
+  const plan = getLifestylePlanFromRules(primaryKey, secondaryKey, signal, mode, symptomFocus);
+  return rewritePressureBodyCopyDeep(plan, pressureSource);
 }
 
 
@@ -2778,13 +2880,20 @@ export function getPointCautions(point) {
 export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explicitSymptomFocus = null } = {}) {
   if (!forecast) return null;
   const triggerFactors = getForecastTriggerFactors(forecast);
-  const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
-  const secondaryKey = triggerFactors[1]?.key || null;
+  const triggerKey = triggerFactors[0]?.careKey || getLegacyCareTriggerKey(
+    triggerFactors[0]?.key || getForecastTriggerKey(forecast),
+    triggerFactors[0] || forecast
+  );
+  const secondaryKey = triggerFactors[1]?.careKey || (
+    triggerFactors[1]
+      ? getLegacyCareTriggerKey(triggerFactors[1]?.key, triggerFactors[1])
+      : null
+  );
   const signal = Number(forecast?.signal ?? 0);
   const symptomFocus = explicitSymptomFocus || riskContext?.constitution_context?.symptom_focus || null;
   const fallbackTriggerKey = getForecastTriggerKey({ main_trigger: triggerKey });
 
-  return buildTodayCarePlanCore({
+  const plan = buildTodayCarePlanCore({
     forecast,
     triggerKey,
     secondaryKey,
@@ -2794,6 +2903,7 @@ export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explic
     fallbackTriggerKey,
     riskContext,
   });
+  return rewritePressureBodyCopyDeep(plan, riskContext || triggerFactors[0] || null);
 }
 
 
