@@ -143,12 +143,22 @@ function signalDecorClass(signal) {
   return "bg-emerald-200/26 border-emerald-200/40";
 }
 
-function triggerLabel(mainTrigger, triggerDir) {
+function triggerLabel(mainTrigger, triggerDir, exact = null, direction = null) {
+  const physicalDirection = direction || triggerDir;
+  if (["temp_shift", "temperature_shift"].includes(exact)) {
+    if (physicalDirection === "up") return "気温上昇";
+    if (physicalDirection === "down") return "気温低下";
+    return "寒暖差";
+  }
+  if (
+    mainTrigger === "pressure" &&
+    physicalDirection === "mixed"
+  ) return "気圧変動";
   if (mainTrigger === "pressure" && triggerDir === "down") return "気圧低下";
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
   if (mainTrigger === "temp" && triggerDir === "down") return "低温";
   if (mainTrigger === "temp" && triggerDir === "up") return "高温";
-  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "気温差";
+  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "寒暖差";
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿気";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
@@ -203,6 +213,11 @@ function normalizeForecastTriggerFactor(item, index, forecast) {
     trigger_dir: item?.trigger_dir || forecast?.trigger_dir,
   };
   const key = exact || exactTriggerKey(compat.main_trigger, compat.trigger_dir);
+  const direction =
+    item?.direction ||
+    item?.physical_direction ||
+    item?.trigger_dir ||
+    compat.trigger_dir;
 
   return {
     key,
@@ -210,7 +225,13 @@ function normalizeForecastTriggerFactor(item, index, forecast) {
     role: item?.role || (index === 0 ? "primary" : "secondary"),
     main_trigger: item?.main_trigger || compat.main_trigger,
     trigger_dir: item?.trigger_dir || compat.trigger_dir,
-    label: triggerLabel(item?.main_trigger || compat.main_trigger, item?.trigger_dir || compat.trigger_dir),
+    direction,
+    label: triggerLabel(
+      item?.main_trigger || compat.main_trigger,
+      item?.trigger_dir || compat.trigger_dir,
+      key,
+      direction
+    ),
   };
 }
 
@@ -262,7 +283,7 @@ function buildQuickLiveAdvice(forecast) {
   if (key === "pressure_down" || key === "pressure_up") return `${prefix}、表示されたケア方針に合わせて予定を詰めすぎないで。`;
   if (key === "cold") return `${prefix}、首・お腹・足首を冷やさないようにして。`;
   if (key === "heat") return `${prefix}、こもる前に水分と休憩を先に入れて。`;
-  if (key === "temp_shift") return `${prefix}、脱ぎ着しやすい服装で急な気温差に備えて。`;
+  if (key === "temp_shift") return `${prefix}、脱ぎ着しやすい服装で急な寒暖差に備えて。`;
   if (key === "damp") return `${prefix}、重さを感じる前に軽く動いてめぐりを作って。`;
   if (key === "dry") return `${prefix}、のど・肌・目の乾きを放置しないで。`;
   return `${prefix}、無理を詰め込まず余白を残して。`;
@@ -593,7 +614,7 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
       <div className="mt-2 flex flex-wrap gap-1.5">
         {factors.map((factor, index) => (
           <span key={`${label}-${factor.key}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-black text-slate-700 ring-1 ring-black/5 shadow-sm">
-            <WeatherIcon triggerKey={factor.key} className="h-4 w-4" />
+            <WeatherIcon triggerKey={factor.key} direction={factor.direction} className="h-4 w-4" />
             {factor.label}
           </span>
         ))}
@@ -1137,7 +1158,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
                 className="inline-flex items-center gap-1.5 rounded-full bg-white/72 px-2.5 py-1.5 text-[12px] font-black text-slate-800 ring-1 ring-black/5 shadow-sm"
               >
                 <span className="text-[var(--accent-ink)] opacity-95">
-                  <WeatherIcon triggerKey={factor.key} className="h-5 w-5" />
+                  <WeatherIcon triggerKey={factor.key} direction={factor.direction} className="h-5 w-5" />
                 </span>
                 <span>{factor.label}</span>
               </div>
