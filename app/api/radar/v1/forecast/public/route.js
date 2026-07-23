@@ -86,12 +86,16 @@ export async function GET(req) {
         main_trigger_label: getTriggerLabel(primaryTrigger.main_trigger, primaryTrigger.trigger_dir),
         personal_main_trigger_exact: primaryTrigger.exact,
         personal_secondary_trigger_exact: secondaryTrigger?.exact || null,
+        personal_main_event_key: publicForecast.personal_main_event_key || null,
+        pressure_direction: publicForecast.pressure_direction || null,
+        pressure_response_direction: publicForecast.pressure_response_direction || "balanced",
         secondary_trigger_label: secondaryTrigger
           ? getTriggerLabel(secondaryTrigger.main_trigger, secondaryTrigger.trigger_dir)
           : null,
         trigger_factors: triggerFactors.length ? triggerFactors : [primaryTrigger],
         weather_load_groups: weatherLoadGroups,
         forecast_model_version: publicForecast.model_version,
+        environmental_cautions: publicForecast.environmental_cautions || [],
       },
     });
   } catch (e) {
