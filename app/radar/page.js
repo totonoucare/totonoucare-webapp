@@ -1617,7 +1617,11 @@ export default function RadarPage() {
                                 title={`${factor.label} 負荷${factor.loadLevelLabel}（${factor.detailLabel}） / 注意時間 ${factorPeakLabel}`}
                               >
                                 <div className="flex min-w-0 items-center justify-center gap-1">
-                                  <WeatherIcon triggerKey={factor.key} className="h-[22px] w-[22px] shrink-0" />
+                                  <WeatherIcon
+                                    triggerKey={factor.key}
+                                    direction={factor.direction}
+                                    className="h-[22px] w-[22px] shrink-0"
+                                  />
                                   <span className="whitespace-nowrap text-[11px] font-black text-slate-600">{factorShortLabel}</span>
                                 </div>
 

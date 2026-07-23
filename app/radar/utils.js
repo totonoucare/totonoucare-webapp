@@ -318,15 +318,15 @@ export const MATCH_TAG_LABELS = {
   headache: "今見ている不調：頭痛",
   dizziness: "今見ている不調：めまい",
   mood: "今見ている不調：気分の浮き沈み",
-  pressure_down: "天気の影響：気圧低下",
+  pressure_down: "天気の影響：低気圧",
   pressure_up: "天気の影響：気圧上昇",
-  temp_shift: "天気の影響：気温差",
+  temp_shift: "天気の影響：寒暖差",
   damp: "天気の影響：湿気",
   humidity: "天気の影響：湿気",
   cold: "天気の影響：冷え",
   heat: "天気の影響：暑さ",
   dry: "天気の影響：乾燥",
-  temp: "天気の影響：気温差",
+  temp: "天気の影響：寒暖差",
 };
 
 const LEGACY_TSUBO_REASON_TARGETS = {
@@ -465,7 +465,7 @@ export function getCompatTriggerLabel(mainTrigger, triggerDir) {
   if (mainTrigger === "pressure" && triggerDir === "up") return "気圧上昇";
   if (mainTrigger === "temp" && triggerDir === "down") return "気温低下";
   if (mainTrigger === "temp" && triggerDir === "up") return "気温上昇";
-  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "気温差";
+  if (mainTrigger === "temp" && ["change", "mixed", "steady"].includes(triggerDir)) return "寒暖差";
   if (mainTrigger === "humidity" && triggerDir === "up") return "湿気";
   if (mainTrigger === "humidity" && triggerDir === "down") return "乾燥";
   return "気象変化";
@@ -588,6 +588,10 @@ function getExactForecastLabel(exact, direction = null) {
     if (direction === "up") return "気温上昇";
     return "寒暖差";
   }
+  if (
+    ["pressure_down", "pressure_up", "pressure_shift"].includes(exact) &&
+    direction === "mixed"
+  ) return "気圧変動";
   const compat = compatFromExact(exact);
   return getCompatTriggerLabel(compat.main_trigger, compat.trigger_dir);
 }
@@ -1386,7 +1390,7 @@ function weatherLoadGroupFromExact(exact) {
 
 function weatherLoadIconKey(exact, direction) {
   if (exact === "temp_shift" || exact === "temperature_shift") {
-    return direction === "down" ? "cold" : "heat";
+    return "temp_shift";
   }
   if (exact === "pressure_shift") return direction === "up" ? "pressure_up" : "pressure_down";
   return toWeatherIconKey(exact);
