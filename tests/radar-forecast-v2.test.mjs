@@ -216,6 +216,136 @@ test("humidity load is coupled with temperature while water-content change stays
   assert.ok(hotHumid.moisture_shift_strength < 0.1);
 });
 
+test("directional channel peaks identify the actionable side of mixed changes", () => {
+  const personalized = forecast.personalizeForecastV2({
+    weatherStress: {
+      event_strengths: {
+        pressure_shift: 0.82,
+        temperature_shift: 0.86,
+        cold: 0.08,
+        heat: 0.1,
+        damp: 0.12,
+        dry: 0.1,
+      },
+      pressure_direction: "mixed",
+      pressure_presentation_direction: "down",
+      temperature_direction: "mixed",
+      moisture_shift_strength: 0.1,
+      moisture_direction: "steady",
+      channel_peaks: {
+        pressure_shift: { start: "09:00", end: "12:00", strength: 0.82 },
+        pressure_down: { start: "06:00", end: "09:00", strength: 0.58 },
+        pressure_up: { start: "15:00", end: "18:00", strength: 0.91 },
+        temp_shift: { start: "12:00", end: "15:00", strength: 0.86 },
+        temp_down: { start: "18:00", end: "21:00", strength: 0.88 },
+        temp_up: { start: "10:00", end: "13:00", strength: 0.52 },
+        damp: { start: "12:00", end: "15:00", strength: 0.12 },
+        dry: { start: "06:00", end: "09:00", strength: 0.1 },
+      },
+      meta: {
+        temperature: { dominant_direction: "down" },
+        moisture: { dominant_direction: "up" },
+      },
+    },
+    constitution: constitution(),
+  });
+
+  const groups = personalized.meta.weather_load_groups;
+  assert.equal(groups.pressure.direction, "mixed");
+  assert.equal(groups.pressure.attention_direction, "up");
+  assert.equal(groups.pressure.peak_start, "15:00");
+  assert.equal(groups.temperature.exact, "temp_shift");
+  assert.equal(groups.temperature.direction, "mixed");
+  assert.equal(groups.temperature.attention_direction, "down");
+  assert.equal(groups.temperature.peak_start, "18:00");
+});
+
+test("moisture change is folded into damp or dry instead of creating a third UI state", () => {
+  const personalized = forecast.personalizeForecastV2({
+    weatherStress: {
+      event_strengths: {
+        pressure_shift: 0.1,
+        temperature_shift: 0.1,
+        cold: 0.05,
+        heat: 0.05,
+        damp: 0.08,
+        dry: 0.12,
+      },
+      pressure_direction: "steady",
+      pressure_presentation_direction: "down",
+      temperature_direction: "steady",
+      moisture_shift_strength: 0.84,
+      moisture_direction: "down",
+      channel_peaks: {
+        pressure_down: { start: "09:00", end: "12:00", strength: 0.1 },
+        temp_shift: { start: "09:00", end: "12:00", strength: 0.1 },
+        moisture_shift: { start: "15:00", end: "18:00", strength: 0.84 },
+        moisture_down: { start: "15:00", end: "18:00", strength: 0.8 },
+        moisture_up: { start: "06:00", end: "09:00", strength: 0.12 },
+        damp: { start: "09:00", end: "12:00", strength: 0.08 },
+        dry: { start: "15:00", end: "18:00", strength: 0.12 },
+      },
+      meta: {
+        temperature: { dominant_direction: "up" },
+        moisture: { dominant_direction: "down" },
+      },
+    },
+    constitution: constitution({ vectors: ["dryness_up"] }),
+  });
+
+  const moisture = personalized.meta.weather_load_groups.moisture;
+  assert.equal(moisture.event_key, "moisture_shift");
+  assert.equal(moisture.exact, "dry");
+  assert.equal(moisture.load_source, "change");
+  assert.equal(moisture.attention_direction, "down");
+  assert.equal(moisture.peak_start, "15:00");
+  assert.ok(moisture.effective_load > personalized.meta.event_effective_loads.dry);
+});
+
+test("moisture relief toward the comfort band does not masquerade as the opposite environment", () => {
+  const personalized = forecast.personalizeForecastV2({
+    weatherStress: {
+      event_strengths: {
+        pressure_shift: 0.05,
+        temperature_shift: 0.05,
+        cold: 0,
+        heat: 0,
+        damp: 0.04,
+        dry: 0,
+      },
+      pressure_direction: "steady",
+      pressure_presentation_direction: "down",
+      temperature_direction: "steady",
+      moisture_shift_strength: 0.18,
+      moisture_direction: "down",
+      channel_peaks: {
+        pressure_down: { start: "09:00", end: "12:00", strength: 0.05 },
+        temp_shift: { start: "09:00", end: "12:00", strength: 0.05 },
+        moisture_shift: { start: "12:00", end: "15:00", strength: 0.18 },
+        moisture_down: { start: "12:00", end: "15:00", strength: 0.82 },
+        damp: { start: "09:00", end: "12:00", strength: 0.04 },
+        dry: { start: "12:00", end: "15:00", strength: 0 },
+      },
+      meta: {
+        temperature: { dominant_direction: "up" },
+        moisture: {
+          direction: "down",
+          dominant_direction: "down",
+          raw_shift_strength: 0.82,
+          comfort_departure_strength: 0,
+          comfort_relief_strength: 0.82,
+        },
+      },
+    },
+    constitution: constitution({ vectors: ["humidity_up"] }),
+  });
+
+  const moisture = personalized.meta.weather_load_groups.moisture;
+  assert.equal(moisture.event_key, "moisture_shift");
+  assert.equal(moisture.exact, "damp");
+  assert.equal(moisture.attention_direction, "down");
+});
+
 test("steady summer burden does not force every profile or the public demo into guard mode", () => {
   const stress = weather.buildWeatherStressV2({
     points: dailyTemperaturePoints({ min: 28, max: 35, dewPoint: 24 }),
@@ -584,6 +714,10 @@ test("forecast UI shows temperature moisture and pressure loads in three columns
   assert.match(radarUtilsSource, /pressure: "気圧負荷"/);
   assert.match(radarUtilsSource, /load >= 0\.67 \? "高" : load >= 0\.34 \? "中" : "低"/);
   assert.match(radarPageSource, /factor\.loadLevelLabel/);
+  assert.match(radarPageSource, /WeatherPeakDirectionIcon/);
+  assert.match(radarPageSource, /factor\.attentionDirection/);
+  assert.match(radarPageSource, /上昇側/);
+  assert.match(radarPageSource, /低下側/);
   assert.doesNotMatch(radarPageSource, /factor\.loadPercent/);
   assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
 });
