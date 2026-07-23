@@ -1,3 +1,13 @@
+## v7.78.21 天気負荷UIの簡素化
+
+- `/radar`の3カードはカテゴリ名を上、現象アイコン＋現象名を中央、負荷段階を下に表示する
+- 個別カードではピーク時刻を表示しない
+- `weatherLoadPeak`は、`load >= 0.34`かつ`peakStart / peakEnd`を持つ3群から、最大負荷の1件だけを選ぶ
+- 表示名は`天気負荷のピーク`。身体症状が出る時刻とは説明しない
+- `environmentalCautions`は天気負荷枠の下に置き、native `details`で初期状態を閉じる
+- 予報ヒーロー内の`注意時間の前に／先回りケア`は削除。対策ケアの生成・表示は維持
+- 計算エンジン、保存データ、DB、環境変数の変更はない
+
 ## v7.78.20 注意時間と水分環境の表示契約
 
 - `channel_peaks`は各方向の`strength`を持ち、気圧は`pressure_up / pressure_down`、気温は`temp_up / temp_down`、水分環境は`moisture_up / moisture_down`を保存する
