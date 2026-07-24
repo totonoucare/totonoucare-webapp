@@ -6,29 +6,24 @@
 
 -- Main tables confirmed in public schema:
 --
--- care_cards
 -- constitution_events
 -- constitution_profiles
--- daily_care_logs
--- daily_checkins
 -- diagnosis_events
 -- diagnosis_guest_access
 -- entitlements
 -- notification_logs
 -- notification_settings
--- personal_karte_reports
--- personal_karte_unlocks
 -- profiles
 -- push_subscriptions
 -- radar_care_plans
 -- radar_forecasts
 -- radar_locations
 -- radar_reviews
--- radar_tsubo_cards
 -- radar_tsubo_points
--- weekly_ai_reports
 --
 -- Important:
+-- Obsolete tables were removed by
+-- supabase/migrations/20260724_remove_obsolete_routes_data_v77825.sql.
 -- Full schema was pasted in the 2026-05-08 AI handoff conversation.
 -- RLS/index/trigger/function status is summarized in:
 -- docs/DB_CURRENT_STATUS_20260508.md
