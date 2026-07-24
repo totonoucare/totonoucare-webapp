@@ -272,7 +272,7 @@ function formatPeakWindow(forecast) {
   const end = String(forecast?.peak_end || "").slice(0, 5);
   if (start && end) return `${start}–${end}`;
   if (start) return `${start}ごろ`;
-  return "まだ目立った注意時間なし";
+  return "まだ目立った天気ストレスのピークなし";
 }
 
 function buildQuickLiveAdvice(forecast) {
