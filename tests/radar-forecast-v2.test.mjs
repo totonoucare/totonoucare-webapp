@@ -717,8 +717,9 @@ test("forecast UI keeps three weather loads simple and shows at most one meaning
   assert.match(radarUtilsSource, /pressure: "気圧負荷"/);
   assert.match(radarUtilsSource, /load >= 0\.67 \? "高" : load >= 0\.34 \? "中" : "低"/);
   assert.match(radarPageSource, /factor\.loadLevelLabel/);
-  assert.match(radarPageSource, /WeatherPeakDirectionIcon/);
-  assert.match(radarPageSource, /weatherLoadPeak\.attentionDirection/);
+  assert.match(radarPageSource, /<IconBolt className="h-3\.5 w-3\.5 shrink-0 text-\[#D79A2B\]" \/>/);
+  assert.doesNotMatch(radarPageSource, /WeatherPeakDirectionIcon/);
+  assert.doesNotMatch(radarPageSource, /weatherLoadPeak\.attentionDirection/);
   assert.doesNotMatch(radarPageSource, /天気負荷と注意時間/);
   assert.doesNotMatch(radarPageSource, /peakPrepItems/);
   assert.doesNotMatch(radarPageSource, /注意時間の前に/);
