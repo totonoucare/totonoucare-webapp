@@ -97,5 +97,5 @@ supabase/checks/20260508_check_db_metadata.sql
 supabase/seeds/radar_tsubo_points_seed.sql
 ```
 
-`care_cards` と `radar_tsubo_cards` は旧設計の名残の可能性が高い。  
-現時点では削除しないが、本線では `radar_tsubo_points` が重要。
+`care_cards` と `radar_tsubo_cards` はv7.78.25で削除済み。  
+現行のツボマスターは `radar_tsubo_points`。

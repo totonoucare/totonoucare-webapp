@@ -1,5 +1,7 @@
 # v7.69 → v7.70 完成版 差分一覧
 
+> 履歴資料。ここに記載された旧Karte、旧calendar／insights、live予報の導線はv7.78.25で削除済み。
+
 > v7.70.3更新: 旧 `ForecastActualMap.jsx` は削除し、`ForecastPatternCards.jsx` と `aiContext.js` を追加。詳細は `RECORDS_AI_REFLECTION_CONTEXT_V7703.md` を参照。
 
 比較元: `totonoucare-webapp-my-care-select-v7-69-daily-care-category-tones`
