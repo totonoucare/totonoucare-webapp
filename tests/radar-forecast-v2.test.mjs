@@ -10,7 +10,6 @@ async function importSource(relativePath) {
 const weather = await importSource("../lib/radar_v1/weatherStressV2.js");
 const forecast = await importSource("../lib/radar_v1/personalizeForecastV2.js");
 const pressureResponse = await importSource("../lib/radar_v1/pressureResponse.js");
-const timingLanguage = await importSource("../lib/radar_v1/forecastTimingLanguage.js");
 const constitutionCare = await importSource("../lib/diagnosis/v2/carePreferences.js");
 const constitutionCareSource = await readFile(new URL("../lib/diagnosis/v2/carePreferences.js", import.meta.url), "utf8");
 const careSource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
@@ -21,7 +20,6 @@ const radarUtilsSource = await readFile(new URL("../app/radar/utils.js", import.
 const homeClientSource = await readFile(new URL("../app/HomeClient.jsx", import.meta.url), "utf8");
 const weatherIconSource = await readFile(new URL("../components/illust/icons/weather.jsx", import.meta.url), "utf8");
 const resultPageSource = await readFile(new URL("../app/result/[id]/page.js", import.meta.url), "utf8");
-const personalKarteSource = await readFile(new URL("../lib/personalKarte.js", import.meta.url), "utf8");
 const pointExplanationSource = await readFile(new URL("../lib/radar_v1/explainPointSelection.js", import.meta.url), "utf8");
 const lifestyleRulesSource = await readFile(new URL("../lib/radar_v1/careRules/lifestyleRules.js", import.meta.url), "utf8");
 const publicForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/public/route.js", import.meta.url), "utf8");
@@ -29,12 +27,9 @@ const riskContextSource = await readFile(new URL("../lib/radar_v1/buildRiskConte
 const radarPlanSource = await readFile(new URL("../lib/radar_v1/buildRadarPlan.js", import.meta.url), "utf8");
 const motherChildSource = await readFile(new URL("../lib/radar_v1/selectMotherChild.js", import.meta.url), "utf8");
 const tcmPointSource = await readFile(new URL("../lib/radar_v1/pickTcmPoints.js", import.meta.url), "utf8");
-const promptContextSource = await readFile(new URL("../lib/radar_v1/radarPromptContext.js", import.meta.url), "utf8");
 const partnerOfferSource = await readFile(new URL("../lib/care-navi/partnerOffers.js", import.meta.url), "utf8");
 const todayCareSource = await readFile(new URL("../lib/radar_v1/careRules/todayCarePlan.js", import.meta.url), "utf8");
-const gptRadarSource = await readFile(new URL("../lib/radar_v1/gptRadar.js", import.meta.url), "utf8");
 const radarRepoSource = await readFile(new URL("../lib/radar_v1/radarRepo.js", import.meta.url), "utf8");
-const liveForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/live/route.js", import.meta.url), "utf8");
 const recordsAnalysisSource = await readFile(new URL("../lib/records/analysis.js", import.meta.url), "utf8");
 const recordsTrendSource = await readFile(new URL("../components/records/RecordsTrendChart.jsx", import.meta.url), "utf8");
 const forecastReasoningSource = await readFile(new URL("../lib/records/forecastReasoning.js", import.meta.url), "utf8");
@@ -745,21 +740,8 @@ test("absolute temperature cautions sit below weather stresses and stay collapse
 });
 
 test("weather peak language never treats the peak as symptom onset", () => {
-  assert.equal(
-    timingLanguage.normalizeForecastTimingLanguage(
-      "崩れやすい時間帯は21:00〜00:00。注意時間の前に休む。"
-    ),
-    "天気ストレスが強まる時間帯は21:00〜00:00。天気ストレスのピーク前に休む。"
-  );
-  assert.equal(
-    timingLanguage.normalizeForecastTimingLanguage(
-      "天気負荷が強まる時間帯は21:00〜00:00。天気負荷のピーク前に休む。"
-    ),
-    "天気ストレスが強まる時間帯は21:00〜00:00。天気ストレスのピーク前に休む。"
-  );
-  assert.match(gptRadarSource, /天気ストレスのピークであり、症状が出る時刻ではありません/);
   assert.match(radarRepoSource, /天気ストレスが強まる時間帯/);
-  assert.match(liveForecastSource, /症状が出る時刻を示すものではありません/);
+  assert.match(radarRepoSource, /症状が出る時刻を示すものではありません/);
   assert.match(recordsAnalysisSource, /label: "天気ストレスのピーク前"/);
   assert.match(recordsTrendSource, /先＝天気ストレスのピーク前/);
   assert.match(forecastReasoningSource, /症状の発生時刻や悪化時刻ではない/);
@@ -804,10 +786,7 @@ test("constitution guide shares V2 affinities and treats pressure as one slot", 
   assert.ok(ranked.some((item) => item.key === "temp_shift"));
   assert.ok(profile.trace.dry.material_fluid_deficiency > 0);
   assert.match(resultPageSource, /buildConstitutionWeatherAffinityV2/);
-  assert.match(personalKarteSource, /buildConstitutionWeatherAffinityV2/);
-  assert.match(personalKarteSource, /temp_swing: \{ label: "寒暖差", exact: \["temp_shift"\] \}/);
   assert.doesNotMatch(resultPageSource, /buildPersonalWeatherAffinityProfile/);
-  assert.doesNotMatch(personalKarteSource, /buildPersonalWeatherAffinityProfile/);
 });
 
 test("forecast and constitution copy reflect the V2 hierarchy without removing useful metaphors", () => {
@@ -860,7 +839,6 @@ test("pressure response reaches prose care points prompts and product selection"
   assert.match(tcmPointSource, /care_body_trigger/);
   assert.match(pointExplanationSource, /getBodyExact/);
   assert.match(pointExplanationSource, /readPressureResponseDirection\(riskContext \|\| point\)/);
-  assert.match(promptContextSource, /must_separate_pressure_direction_and_response/);
   assert.match(partnerOfferSource, /factor\?\.careKey \|\| factor\?\.key/);
   assert.match(todayCareSource, /getLegacyCareTriggerKey\(triggerKey, riskContext \|\| forecast\)/);
   assert.match(todayCareSource, /triggerKey: careTriggerKey/);

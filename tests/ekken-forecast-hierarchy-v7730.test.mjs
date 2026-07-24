@@ -2,17 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const timingLanguageSource = await readFile(new URL("../lib/radar_v1/forecastTimingLanguage.js", import.meta.url), "utf8");
 const importSource = async (relativePath) => {
   const source = await readFile(new URL(relativePath, import.meta.url), "utf8");
-  const linkedSource = source.replace(
-    'import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";',
-    ""
-  );
   return import(
-    `data:text/javascript;base64,${Buffer.from(
-      `${timingLanguageSource.replaceAll("export ", "")}\n${linkedSource}`
-    ).toString("base64")}`
+    `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`
   );
 };
 

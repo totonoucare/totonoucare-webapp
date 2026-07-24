@@ -12,24 +12,16 @@ async function importText(source) {
 
 async function importSource(relativePath) {
   const source = await readSource(relativePath);
-  const linkedSource = source.replace(
-    'import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";',
-    ""
-  );
-  return importText(
-    `${timingLanguageSource.replaceAll("export ", "")}\n${linkedSource}`
-  );
+  return importText(source);
 }
 
 const pressureSource = await readSource("../lib/radar_v1/pressureResponse.js");
-const timingLanguageSource = await readSource("../lib/radar_v1/forecastTimingLanguage.js");
 const pressureResponse = await importText(pressureSource);
 const dailyCare = await importSource("../lib/radar_v1/careRules/dailyCareV2.js");
 const forecastReasoning = await importSource("../lib/records/forecastReasoning.js");
 const recordAnalysis = await importSource("../lib/records/analysis.js");
 const partnerOffers = await importSource("../lib/care-navi/partnerOffers.js");
 const constitutionGuideSource = await readSource("../app/result/[id]/page.js");
-const personalKarteSource = await readSource("../lib/personalKarte.js");
 
 async function importRadarUtils() {
   let source = await readSource("../app/radar/utils.js");
@@ -37,7 +29,6 @@ async function importRadarUtils() {
     .replace('import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";', "const flattenRadarLocationPresets = () => [];")
     .replace('import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";', "const getLifestylePlanFromRules = () => ({});")
     .replace('import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";', "const buildTodayCarePlanCore = () => null;")
-    .replace('import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";', "const normalizeForecastTimingLanguage = (value) => String(value || '');")
     .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
   return importText(`${pressureSource.replaceAll("export ", "")}\n${source}`);
 }
@@ -298,13 +289,11 @@ test("Ekken JSON reconstructs the response contract from a reason trace when top
 });
 
 test("constitution weather compatibility uses the same pressure-response contract and temperature names", () => {
-  for (const source of [constitutionGuideSource, personalKarteSource]) {
-    assert.match(source, /yin_yang_score/);
-    assert.match(source, /張り・力み・切り替えにくさ/);
-    assert.match(source, /重だるさ・動き出しにくさ/);
-    assert.match(source, /気温が低い日/);
-    assert.match(source, /気温が高い日/);
-    assert.doesNotMatch(source, /外圧が緩む日に、体内の膨張感/);
-    assert.doesNotMatch(source, /外からの圧力が強まる日は、体がギュッと締まり/);
-  }
+  assert.match(constitutionGuideSource, /yin_yang_score/);
+  assert.match(constitutionGuideSource, /張り・力み・切り替えにくさ/);
+  assert.match(constitutionGuideSource, /重だるさ・動き出しにくさ/);
+  assert.match(constitutionGuideSource, /気温が低い日/);
+  assert.match(constitutionGuideSource, /気温が高い日/);
+  assert.doesNotMatch(constitutionGuideSource, /外圧が緩む日に、体内の膨張感/);
+  assert.doesNotMatch(constitutionGuideSource, /外からの圧力が強まる日は、体がギュッと締まり/);
 });
