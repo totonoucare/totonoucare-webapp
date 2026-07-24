@@ -408,11 +408,6 @@ function buildRadarBridge({ symptomKey }) {
   return `未病レーダーでは、その日の天気の変化とあなたの体質を組み合わせて、「今日はどの要素が響きやすいか」「日中のどの時間帯に気をつけたいか」「${symptomText}に対してどんなツボや食養生が合いやすいか」を先回りして見られます。`;
 }
 
-
-function PersonalKarteTeaser() {
-  return null;
-}
-
 function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
