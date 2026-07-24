@@ -11,6 +11,7 @@ import { WeatherIcon } from "@/components/illust/icons/weather";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import {
   IconAttention,
+  IconBolt,
   IconRadar,
   IconRipple,
   IconBowl,
@@ -88,47 +89,6 @@ function compactPeakLabel(start, end) {
   const startLabel = compactClockLabel(start);
   const endLabel = compactClockLabel(end);
   return startLabel && endLabel ? `${startLabel}–${endLabel}時` : "—";
-}
-
-function WeatherPeakDirectionIcon({ direction, className = "h-3.5 w-3.5" }) {
-  if (!["up", "down", "mixed"].includes(direction)) {
-    return <IconAttention className={`${className} text-slate-400`} />;
-  }
-
-  const toneClass = direction === "up"
-    ? "text-[#D97706]"
-    : direction === "down"
-      ? "text-[#0284C7]"
-      : "text-[#7C3AED]";
-
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={`${className} ${toneClass}`}
-      aria-hidden="true"
-    >
-      {direction === "mixed" ? (
-        <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M8 19V5M5.5 7.5 8 5l2.5 2.5" />
-          <path d="M16 5v14m-2.5-2.5L16 19l2.5-2.5" />
-        </g>
-      ) : (
-        <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          {direction === "up" ? (
-            <>
-              <path d="M12 20V4" />
-              <path d="m6.5 9.5 5.5-5.5 5.5 5.5" />
-            </>
-          ) : (
-            <>
-              <path d="M12 4v16" />
-              <path d="m6.5 14.5 5.5 5.5 5.5-5.5" />
-            </>
-          )}
-        </g>
-      )}
-    </svg>
-  );
 }
 
 function getPolicyIconPath(policyKey) {
@@ -1662,10 +1622,7 @@ export default function RadarPage() {
                         {weatherLoadPeak ? (
                           <div className="mt-3 flex min-w-0 items-center justify-between gap-2 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-slate-500 ring-1 ring-[#E7EEE9] shadow-sm">
                             <div className="flex shrink-0 items-center gap-1.5">
-                              <WeatherPeakDirectionIcon
-                                direction={weatherLoadPeak.attentionDirection}
-                                className="h-3.5 w-3.5 shrink-0"
-                              />
+                              <IconBolt className="h-3.5 w-3.5 shrink-0 text-[#D79A2B]" />
                               <span className="whitespace-nowrap">天気負荷のピーク</span>
                             </div>
                             <span className="min-w-0 truncate text-slate-600">
