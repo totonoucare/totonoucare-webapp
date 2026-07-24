@@ -151,19 +151,18 @@ export default function SettingsPage() {
 
         if (!data?.user) return;
 
-        const [unlocksRes, notificationRes, locationRes, symptomRes] = await Promise.allSettled([
+        const [diagnosesRes, notificationRes, locationRes, symptomRes] = await Promise.allSettled([
           supabase
-            .from("personal_karte_unlocks")
+            .from("diagnosis_events")
             .select("id", { count: "exact", head: true })
-            .eq("user_id", data.user.id)
-            .in("status", ["active", "paid"]),
+            .eq("user_id", data.user.id),
           authedFetch("/api/push/settings"),
           authedFetch("/api/radar/location"),
           authedFetch("/api/profile/active-symptom-focus"),
         ]);
 
         if (cancelled) return;
-        if (unlocksRes.status === "fulfilled") setKarteCount(unlocksRes.value?.count ?? 0);
+        if (diagnosesRes.status === "fulfilled") setKarteCount(diagnosesRes.value?.count ?? 0);
         if (notificationRes.status === "fulfilled") setNotificationSettings(notificationRes.value?.settings || null);
         if (locationRes.status === "fulfilled") setLocation(locationRes.value?.location || null);
         if (symptomRes.status === "fulfilled") {
@@ -582,5 +581,4 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
-
 
