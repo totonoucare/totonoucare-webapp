@@ -10,7 +10,7 @@ export default function BottomTabs() {
 
   const active =
     pathname === "/" ? "home" :
-    pathname.startsWith("/check") || pathname.startsWith("/result") || pathname.startsWith("/karte") ? "check" :
+    pathname.startsWith("/check") || pathname.startsWith("/result") ? "check" :
     pathname.startsWith("/radar") ? "radar" :
     pathname.startsWith("/care-navi") ? "care" :
     pathname.startsWith("/records") ? "records" :
