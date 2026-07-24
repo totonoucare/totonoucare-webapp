@@ -3,7 +3,6 @@
 import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
-import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";
 import {
   getBodyResponseKey,
   getLegacyCareTriggerKey,
@@ -428,9 +427,7 @@ export function getPointReading(point) {
 }
 
 export function getForecastText(bundle) {
-  return normalizeForecastTimingLanguage(
-    bundle?.forecast?.gpt_summary ||
-    bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
+  return String(
     bundle?.forecast?.why_short ||
     "気象の変化と体質の重なりを見て、崩れやすさを出しています。"
   );
