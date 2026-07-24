@@ -43,7 +43,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_CHAT_MODEL;
-const PROMPT_VERSION = "records_chat_v13_pressure_response_2026-07-23";
+const PROMPT_VERSION = "records_chat_v14_weather_peak_semantics_2026-07-24";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
