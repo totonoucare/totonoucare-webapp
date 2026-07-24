@@ -35,8 +35,6 @@ export async function GET(req) {
       dates: searchParams.get("dates") || "today,tomorrow",
       limit: searchParams.get("limit") || 100,
       force: asBool(searchParams.get("force"), true),
-      // AI補完は一時停止中。クエリでenrich=1が来ても有効化しない。
-      enrich: false,
       dryRun: searchParams.get("dry_run") === "1",
       userId: searchParams.get("user_id") || null,
       generationSlot: searchParams.get("slot") || "scheduled",
