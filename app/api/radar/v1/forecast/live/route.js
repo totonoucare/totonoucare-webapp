@@ -115,7 +115,7 @@ function buildWhyShort(radarPlan) {
   const peakEnd = radarPlan?.forecast?.peak_end;
 
   if (peakStart && peakEnd) {
-    return `${trigger}。このあと響きやすい時間帯は ${peakStart}〜${peakEnd}。`;
+    return `${trigger}。天気ストレスが強まる時間帯は ${peakStart}〜${peakEnd}。症状が出る時刻を示すものではありません。`;
   }
 
   return `${trigger}。`;
