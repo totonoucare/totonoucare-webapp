@@ -1,3 +1,34 @@
+## v7.78.25 旧導線・予報GPTの削除
+
+- 旧`/karte/[id]`、Karte Plus、単品Stripe購入は削除済み
+- Stripeは`radar_subscription`のCheckout／Webhook／entitlementsを、将来のサブスク実装用に保持
+- 旧`/calendar`、`/insights`、`daily_checkins`、`daily_care_logs`、`weekly_ai_reports`は削除済み
+- 予報GPTのenrich/live route、prompt、生成待ち、旧生成文温存処理は削除済み
+- 予報の正本は`buildFastRadarBundle`→`buildRadarPlan`→`saveForecast`の構造化ルール出力
+- Ekkenの記録分析・相談は現行機能なので削除しない
+- DB整理SQL: `supabase/migrations/20260724_remove_obsolete_routes_data_v77825.sql`
+
+## v7.78.24 天気ストレスへの表示語統一
+
+- ユーザー表示は`天気負荷`ではなく`天気ストレス`を正本とする
+- ピークは`天気ストレスのピーク`、時間の意味は`天気ストレスが強まる時間帯`、ケア時刻は`天気ストレスのピーク前`
+- `/radar`の各カードは`負荷`の小見出しを表示せず、`高／中／低`だけを表示する
+- `effective_load`、weather load系の内部キー、DB列、`before_peak`は互換性のため変更しない
+- 予報計算・DB・環境変数の変更なし
+
+## v7.78.23 天気負荷ピークの意味統合
+
+- `peak_start / peak_end`は`天気負荷が強まる時間帯`。症状発現・悪化時刻として扱わない
+- ユーザー表示は`天気負荷のピーク`、ケア・記録の前後関係は`天気負荷のピーク前`
+- DB列と内部enum `before_peak`は変更しない
+- records AI共通知識と3プロンプトへ症状時刻ではない境界を追加
+- records prompt versions:
+  - analysis: `records_analysis_v13_weather_peak_semantics_2026-07-24`
+  - chat: `records_chat_v14_weather_peak_semantics_2026-07-24`
+  - live support: `records_live_support_v14_weather_peak_semantics_2026-07-24`
+- 深夜またぎは`開始時–翌終了時`、ピークピルは12px
+- 予報計算・DB・環境変数の変更なし
+
 ## v7.78.22 天気負荷ピークの記号
 
 - `/radar`の`天気負荷のピーク`は`IconBolt`を使う
