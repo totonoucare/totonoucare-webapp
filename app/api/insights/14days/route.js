@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { requireUser } from "@/lib/requireUser";
 import { jstDateString } from "@/lib/dateJST";
+import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -162,7 +163,7 @@ export async function GET(req) {
               signal: forecast.signal ?? null,
               main_trigger: forecast.main_trigger || null,
               trigger_dir: forecast.trigger_dir || null,
-              why_short: forecast.why_short || "",
+              why_short: normalizeForecastTimingLanguage(forecast.why_short),
             }
           : null,
         review: review
