@@ -8,11 +8,9 @@ export default function robots() {
       allow: ["/", "/guide"],
       disallow: [
         "/api/",
-        "/calendar",
         "/check",
         "/feedback",
         "/history",
-        "/insights",
         "/radar",
         "/records",
         "/settings",
