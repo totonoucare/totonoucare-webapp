@@ -3,7 +3,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
-import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";
 import {
   ACTION_TAG_OPTIONS,
   CONDITION_OPTIONS,
@@ -125,9 +124,7 @@ export default function ReviewFormSheet({
               </span>
             </div>
             <div className="mt-3 text-[14px] font-bold leading-5 text-slate-600">
-              {normalizeForecastTimingLanguage(
-                forecast.why_short || "その日の気象と体質の重なりから出した予報です。"
-              )}
+              {forecast.why_short || "その日の気象と体質の重なりから出した予報です。"}
             </div>
           </div>
         ) : null}
