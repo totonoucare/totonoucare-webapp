@@ -3,6 +3,7 @@
 import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
+import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";
 import {
   getBodyResponseKey,
   getLegacyCareTriggerKey,
@@ -138,7 +139,7 @@ export function buildScoreCardTitle(mode, targetDate) {
 export function getSectionLabels(mode) {
   if (mode === "today") {
     return {
-      noticeTitle: "このあとの注意時間",
+      noticeTitle: "このあとの天気ストレス",
       tsuboTitle: "今日これから使えるツボケア",
       tsuboSubtitle: "このあとの不調に合わせた実用寄りの3点セット",
       foodTitle: "今日これからの食べ方",
@@ -427,7 +428,7 @@ export function getPointReading(point) {
 }
 
 export function getForecastText(bundle) {
-  return (
+  return normalizeForecastTimingLanguage(
     bundle?.forecast?.gpt_summary ||
     bundle?.forecast?.computed?.forecast_snapshot?.gpt_summary ||
     bundle?.forecast?.why_short ||
@@ -639,7 +640,7 @@ const BODY_SIGN_LABELS = {
 };
 
 const PEAK_PREP_ITEMS = {
-  pressure_down: ["首肩を固めたまま注意時間に入らない", "目・耳まわりを一度ゆるめる", "大事な作業は早めに寄せる"],
+  pressure_down: ["天気ストレスが強まる前に首肩を一度ゆるめる", "目・耳まわりを一度ゆるめる", "大事な作業は早めに寄せる"],
   pressure_up: ["予定を詰め込みすぎない", "肩の力を抜いて呼吸を一度整える", "刺激の強い飲食を控える"],
   damp: ["昼食を重くしすぎない", "甘いものと冷たい飲み物ばかりにしない", "食後に少しだけ歩く"],
   humidity: ["昼食を重くしすぎない", "甘いものと冷たい飲み物ばかりにしない", "食後に少しだけ歩く"],
@@ -1159,15 +1160,15 @@ const SYMPTOM_STABLE_PEAK_PREP_ITEMS = {
 };
 
 const SYMPTOM_HIGH_PEAK_PREP_ITEMS = {
-  fatigue: ["注意時間の前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "注意時間の前に休憩を一つ入れておく"],
+  fatigue: ["天気ストレスが強まる前に作業量を一つ減らしておく", "空腹と食べすぎの差を小さくしておく", "天気ストレスが強まる前に休憩を一つ入れておく"],
   sleep: ["夕方以降の画面・光を先に減らす", "寝る前に首肩と目をしっかり休ませる", "夜の食べすぎ・飲みすぎを避ける"],
-  digestion: ["注意時間の前に冷たいものを続けない", "食べすぎを先に避ける", "温かい汁物かお茶を早めにとる"],
-  neck_shoulder: ["注意時間の前に首元を冷やしたままにしない", "注意時間の前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
-  low_back_pain: ["注意時間の前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
-  swelling: ["注意時間の前に足首を小さく動かす", "甘いもの・塩辛いもの・冷たい飲み物ばかりにしない", "同じ姿勢を長く続けない"],
-  headache: ["注意時間の前に首・耳・目まわりをゆるめる", "脂っこいものとお酒をとりすぎない", "画面姿勢を先にリセットする"],
+  digestion: ["天気ストレスが強まる前に冷たいものを続けない", "食べすぎを先に避ける", "温かい汁物かお茶を早めにとる"],
+  neck_shoulder: ["天気ストレスが強まる前に首元を冷やしたままにしない", "天気ストレスが強まる前に画面姿勢を切って肩を落とす", "耳まわりと肩甲骨まわりを先にゆるめる"],
+  low_back_pain: ["天気ストレスが強まる前に座りっぱなしを一度切る", "腰腹か足首を先に冷やさない", "深く座る前に骨盤を小さく動かす"],
+  swelling: ["天気ストレスが強まる前に足首を小さく動かす", "甘いもの・塩辛いもの・冷たい飲み物ばかりにしない", "同じ姿勢を長く続けない"],
+  headache: ["天気ストレスが強まる前に首・耳・目まわりをゆるめる", "脂っこいものとお酒をとりすぎない", "画面姿勢を先にリセットする"],
   dizziness: ["動き出す前に一呼吸置く", "空腹のまま急に動かない", "首を急に振らず、動き出しをゆっくりにする"],
-  mood: ["注意時間の前に予定を一つに絞る", "注意時間の前に途中で別件を増やさない", "甘いもの・カフェインで無理に上げない"],
+  mood: ["天気ストレスが強まる前に予定を一つに絞る", "天気ストレスが強まる前に途中で別件を増やさない", "甘いもの・カフェインで無理に上げない"],
 };
 
 const SYMPTOM_MODE_HINTS = {
@@ -1376,9 +1377,9 @@ export function getForecastBackgroundFactors(triggerFactors) {
 const WEATHER_LOAD_GROUP_ORDER = ["temperature", "moisture", "pressure"];
 
 const WEATHER_LOAD_GROUP_LABELS = {
-  temperature: "気温負荷",
-  moisture: "湿度負荷",
-  pressure: "気圧負荷",
+  temperature: "気温ストレス",
+  moisture: "湿度ストレス",
+  pressure: "気圧ストレス",
 };
 
 function weatherLoadGroupFromExact(exact) {
@@ -1541,7 +1542,7 @@ function softenPeakPrepItem(text) {
     .replace("夕方以降の画面・光を少し減らす", "夕方以降の画面・光を少し控えめにする")
     .replace("寝る前に首肩と目を休ませる", "寝る前に目と首肩を一度休ませる")
     .replace("夜の食べすぎ・飲みすぎを避ける", "夜の食べすぎ・飲みすぎを重ねすぎない")
-    .replace("首元を冷やしたまま固めない", "注意時間の前に首元の冷えだけ確認する")
+    .replace("首元を冷やしたまま固めない", "天気ストレスが強まる前に首元の冷えだけ確認する")
     .replace("画面から目を離して肩を落とす", "画面姿勢が続いたら肩を一度落とす")
     .replace("耳まわりと肩甲骨まわりを一度ゆるめる", "耳まわりか肩甲骨まわりを軽くゆるめる")
     .replace("座りっぱなしを一度切る", "座りっぱなしを一度だけ切る")
@@ -1564,9 +1565,9 @@ function softenPeakPrepItem(text) {
 function strengthenPeakPrepItem(text) {
   const raw = String(text || "").trim();
   if (!raw) return "";
-  if (raw.includes("先に") || raw.includes("注意時間の前に")) return raw;
-  if (raw.includes("一度")) return raw.replace("一度", "注意時間の前に一度");
-  return `注意時間の前に${raw}`;
+  if (raw.includes("先に") || raw.includes("天気ストレスが強まる前に")) return raw;
+  if (raw.includes("一度")) return raw.replace("一度", "天気ストレスが強まる前に一度");
+  return `天気ストレスが強まる前に${raw}`;
 }
 
 
@@ -1669,7 +1670,7 @@ const RADAR_NARRATIVE_SIGN_BY_SYMPTOM = {
   headache: ["頭だけでなく、首・耳・目まわりもセットで重くなりやすい", "画面刺激のあと、頭の中が混み合いやすい", "首肩のこわばりが、頭まわりに回収されやすい"],
   dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れやすい", "頭だけ先に動いて、体があとから追いつく感じが出やすい", "空腹・急な動き・首のこわばりが重なると揺れを感じやすい"],
   mood: ["胃腸が重い日は、気分にも湿気がたまりやすい", "体がまだ切り替わらないのに、頭だけ先に焦りやすい", "やる気がないというより、体が動き出すまでに時間がかかりやすい"],
-  default: ["いつもより体の小さな違和感に気づきやすい", "注意時間に向けて、重さやこわばりが少し出やすい", "無理に押すより、軽く整える方が合いやすい"],
+  default: ["いつもより体の小さな違和感に気づきやすい", "天気の負荷が重なると、重さやこわばりが少し出やすい", "無理に押すより、軽く整える方が合いやすい"],
 };
 
 const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
@@ -1683,7 +1684,7 @@ const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
   headache: ["頭だけでなく首・耳・目も少し重いかも", "画面を見た後、頭の中が少し混み合うかも", "首肩のこわばりが、頭に少し回るかも"],
   dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れるかも", "頭だけ先に動いて、体があとから追いつくかも", "空腹・急な動き・首のこわばりが重なると、少し揺れるかも"],
   mood: ["胃腸の重さが、気分に少し移るかも", "体がまだ切り替わらないのに、頭だけ先に焦るかも", "やる気がないというより、体が動き出すまで少し時間がかかるかも"],
-  default: ["いつもより小さな違和感が出るかも", "注意時間に向けて、重さが少し残るかも", "無理に押すより、軽く整える方が合うかも"],
+  default: ["いつもより小さな違和感が出るかも", "天気の負荷が重なると、重さが少し残るかも", "無理に押すより、軽く整える方が合うかも"],
 };
 
 const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
@@ -1883,7 +1884,7 @@ function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = nu
   const strongAvoid = RADAR_NARRATIVE_WEATHER_AVOIDS[key] || "無理に押し切るより、体の重いサインを一つ減らす";
   const stableAvoid = RADAR_NARRATIVE_STABLE_AVOIDS[key] || "いつもの調子を崩さないよう、重さを増やす要素を一つだけ外す";
   const avoid = level === 0 ? stableAvoid : strongAvoid;
-  const first = level >= 2 && !weatherAction.startsWith("注意時間") ? `注意時間の前に、${weatherAction}` : weatherAction;
+  const first = level >= 2 && !weatherAction.startsWith("天気ストレス") ? `天気ストレスが強まる前に、${weatherAction}` : weatherAction;
   return rewriteBodyCopyForPressure(uniqueTake([first, symptomAction, avoid], 3), triggerFactors);
 }
 
@@ -1953,7 +1954,7 @@ const CARE_ITEM_HINTS = {
       cold: "明日は冷えで固まりやすい見込み。温熱系や足元を守るものを、寝る前の候補にします。",
       heat: "明日は熱が上に残りやすい見込み。首の後ろを短く整えるもの、熱を逃がすものを候補にします。",
       dry: "明日は乾きで目・首肩がこわばりやすい見込み。目を休めるもの、首肩をやさしくゆるめるものが候補です。",
-      default: "明日の注意時間の前に使えるよう、ほぐす場所と道具を一つだけ先に決めておきます。",
+      default: "明日の天気ストレスが強まる前に使えるよう、ほぐす場所と道具を一つだけ先に決めておきます。",
     },
   },
 };
@@ -2042,7 +2043,7 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
         ...focusedWeatherItems.map(softenPeakPrepItem),
         ...stableItems,
         ...weatherItems.map(softenPeakPrepItem),
-        "注意時間の前に一度だけ体勢を変える",
+        "天気ストレスが強まる前に一度だけ体勢を変える",
         "食事と休憩のリズムを大きく崩さない",
         "違和感が出たら早めに一息入れる",
       ],
@@ -2060,8 +2061,8 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
         ...highSymptomItems,
         ...normalSymptomItems.map(strengthenPeakPrepItem),
         ...highWeatherItems,
-        "注意時間の前に首肩をゆるめる",
-        "注意時間の前に食事を重くしすぎない",
+        "天気ストレスが強まる前に首肩をゆるめる",
+        "天気ストレスが強まる前に食事を重くしすぎない",
         "予定を一つ減らす",
       ],
       3
@@ -2074,7 +2075,7 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
       ...focusedWeatherItems,
       ...symptomItems,
       ...weatherItems,
-      "注意時間の前に首肩をゆるめる",
+      "天気ストレスが強まる前に首肩をゆるめる",
       "食事を重くしすぎない",
       "予定を一つ減らす",
     ],
@@ -2240,7 +2241,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", s
 
   if (mode === "today") {
     if (signal === 0) return `今日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い一手にします。`;
-    if (signal === 2) return `${joined}がこのあと響きやすい時間があります。注意時間の前に、ほぐす・食べる・暮らすを今日用に少し調整します。`;
+    if (signal === 2) return `${joined}による天気ストレスがこのあと強まる時間帯があります。症状が出る時刻ではなく、天気の変化を目安に、ほぐす・食べる・暮らすを少し早めに調整します。`;
     return `${joined}が少し響きやすい見込みです。今からできる範囲で、こもり・冷え・重さを残さないようにします。`;
   }
 
@@ -2248,7 +2249,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", s
     return `明日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い整え方を選びます。`;
   }
   if (signal === 2) {
-    return `${joined}の影響が出やすい日です。明日は注意時間の前に疲れすぎないよう、今夜のうちに体を軽く動かしておきます。`;
+    return `${joined}の影響が出やすい日です。明日の天気ストレスが強まる前に疲れを重ねすぎないよう、今夜のうちに体を軽く動かしておきます。`;
   }
   return `${joined}が少し響きやすい日です。大きく構えすぎず、今夜のうちに一手だけ先回りしておきます。`;
 }

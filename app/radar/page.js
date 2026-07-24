@@ -88,7 +88,22 @@ function compactClockLabel(value) {
 function compactPeakLabel(start, end) {
   const startLabel = compactClockLabel(start);
   const endLabel = compactClockLabel(end);
-  return startLabel && endLabel ? `${startLabel}–${endLabel}時` : "—";
+  if (!startLabel || !endLabel) return "—";
+
+  const startHour = Number(String(start || "").slice(0, 2));
+  const endHour = Number(String(end || "").slice(0, 2));
+  const crossesMidnight =
+    Number.isFinite(startHour) &&
+    Number.isFinite(endHour) &&
+    endHour < startHour;
+
+  if (crossesMidnight) {
+    const startWithUnit = startLabel.includes(":") ? startLabel : `${startLabel}時`;
+    const endWithUnit = endLabel.includes(":") ? endLabel : `${endLabel}時`;
+    return `${startWithUnit}–翌${endWithUnit}`;
+  }
+
+  return `${startLabel}–${endLabel}時`;
 }
 
 function getPolicyIconPath(policyKey) {
@@ -1570,7 +1585,7 @@ export default function RadarPage() {
                     {weatherLoadGroups.length > 0 ? (
                       <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                         <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気負荷</div>
+                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気ストレス</div>
                           <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
                             高・中・低の目安
                           </div>
@@ -1591,7 +1606,7 @@ export default function RadarPage() {
                               <div
                                 key={`${factor.group}-${index}`}
                                 className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
-                                title={`${factorShortLabel} ${factor.detailLabel} 負荷${factor.loadLevelLabel}`}
+                                title={`${factorShortLabel} ${factor.detailLabel} ストレス ${factor.loadLevelLabel}`}
                               >
                                 <div className="whitespace-nowrap text-[11px] font-black text-slate-600">
                                   {factorShortLabel}
@@ -1608,8 +1623,7 @@ export default function RadarPage() {
                                   </span>
                                 </div>
 
-                                <div className="flex items-baseline justify-center gap-1 leading-none text-slate-800">
-                                  <span className="text-[10px] font-black text-slate-400">負荷</span>
+                                <div className="flex items-baseline justify-center leading-none text-slate-800">
                                   <span className={`text-[22px] font-black tracking-tight ${loadToneClass}`}>
                                     {factor.loadLevelLabel}
                                   </span>
@@ -1620,10 +1634,10 @@ export default function RadarPage() {
                         </div>
 
                         {weatherLoadPeak ? (
-                          <div className="mt-3 flex min-w-0 items-center justify-between gap-2 rounded-full bg-white/80 px-3 py-2 text-[10px] font-black text-slate-500 ring-1 ring-[#E7EEE9] shadow-sm">
+                          <div className="mt-3 flex min-w-0 items-center justify-between gap-2 rounded-full bg-white/80 px-3 py-2 text-[12px] font-black text-slate-500 ring-1 ring-[#E7EEE9] shadow-sm">
                             <div className="flex shrink-0 items-center gap-1.5">
                               <IconBolt className="h-3.5 w-3.5 shrink-0 text-[#D79A2B]" />
-                              <span className="whitespace-nowrap">天気負荷のピーク</span>
+                              <span className="whitespace-nowrap">天気ストレスのピーク</span>
                             </div>
                             <span className="min-w-0 truncate text-slate-600">
                               {WEATHER_LOAD_SHORT_LABELS[weatherLoadPeak.group] || weatherLoadPeak.label}
