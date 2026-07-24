@@ -12,7 +12,6 @@ import {
   upsertPrimaryRadarLocation,
 } from "@/lib/radar_v1/radarRepo";
 import { resolveRadarLocationMeta } from "@/lib/radar_v1/reverseGeocode";
-import { hasCompletedGpt } from "@/lib/radar_v1/gptCompletion";
 import {
   getSafeLocationLabelHint,
   isVisibleLocationLabel,
@@ -164,7 +163,6 @@ export async function GET(req) {
         ok: true,
         cached: Boolean(existing?.forecast && existing?.care_plan),
         recomputed: false,
-        gpt_pending: Boolean(existing?.forecast && existing?.care_plan && !hasCompletedGpt(existing)),
         target_date: targetDate,
         target_mode: mode,
         relative_target_mode: relativeTargetMode,
@@ -222,7 +220,6 @@ export async function GET(req) {
       ok: true,
       cached: bundle.cached,
       recomputed: !bundle.cached,
-      gpt_pending: !hasCompletedGpt(bundle),
       target_date: targetDate,
       target_mode: mode,
       relative_target_mode: relativeTargetMode,
