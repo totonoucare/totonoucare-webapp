@@ -2,8 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
+const timingLanguageSource = await readFile(new URL("../lib/radar_v1/forecastTimingLanguage.js", import.meta.url), "utf8");
 const analysisSource = await readFile(new URL("../lib/records/analysis.js", import.meta.url), "utf8");
-const analysisModule = await import(`data:text/javascript;base64,${Buffer.from(analysisSource).toString("base64")}`);
+const linkedAnalysisSource = analysisSource.replace(
+  'import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";',
+  ""
+);
+const analysisModule = await import(
+  `data:text/javascript;base64,${Buffer.from(
+    `${timingLanguageSource.replaceAll("export ", "")}\n${linkedAnalysisSource}`
+  ).toString("base64")}`
+);
 
 const {
   buildActionTags,

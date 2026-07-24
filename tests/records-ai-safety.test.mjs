@@ -43,7 +43,7 @@ test("chat output never mixes AI follow-up questions with user suggestion pills"
     follow_up: {
       kind: "care_timing",
       question: "ケアをしたのはいつですか？",
-      options: ["注意時間の前", "つらくなってから"],
+      options: ["天気ストレスのピーク前", "つらくなってから"],
       date: "2026-07-10",
     },
     safety_level: "routine",
@@ -112,6 +112,8 @@ test("AI prompts keep AI questions separate from user-to-AI suggestion pills", (
 
 test("AI instructions understand forecast modes as preparation rather than symptom predictions", () => {
   assert.match(prompts.ANALYSIS_INSTRUCTIONS, /症状の予測値ではなく備えの目安/);
+  assert.match(prompts.ANALYSIS_INSTRUCTIONS, /peak_startとpeak_endは天気ストレスが強まる時間帯/);
+  assert.match(prompts.CHAT_INSTRUCTIONS, /症状の発生時刻や悪化時刻ではない/);
   assert.match(prompts.CHAT_INSTRUCTIONS, /的中率として扱わない/);
   assert.match(prompts.ANALYSIS_INSTRUCTIONS, /displayed_care/);
 });

@@ -2,9 +2,18 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
+const timingLanguageSource = await readFile(new URL("../lib/radar_v1/forecastTimingLanguage.js", import.meta.url), "utf8");
 const importSource = async (relativePath) => {
   const source = await readFile(new URL(relativePath, import.meta.url), "utf8");
-  return import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+  const linkedSource = source.replace(
+    'import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";',
+    ""
+  );
+  return import(
+    `data:text/javascript;base64,${Buffer.from(
+      `${timingLanguageSource.replaceAll("export ", "")}\n${linkedSource}`
+    ).toString("base64")}`
+  );
 };
 
 const forecastReasoning = await importSource("../lib/records/forecastReasoning.js");
@@ -143,7 +152,7 @@ test("Ekken uses the computed forecast model without a rigid narration script", 
 });
 
 test("prompt versions invalidate older saved AI interpretations", () => {
-  assert.match(liveRoute, /records_live_support_v13_pressure_response_2026-07-23/);
-  assert.match(periodRoute, /records_chat_v13_pressure_response_2026-07-23/);
-  assert.match(analysisRoute, /records_analysis_v12_pressure_response_2026-07-23/);
+  assert.match(liveRoute, /records_live_support_v14_weather_peak_semantics_2026-07-24/);
+  assert.match(periodRoute, /records_chat_v14_weather_peak_semantics_2026-07-24/);
+  assert.match(analysisRoute, /records_analysis_v13_weather_peak_semantics_2026-07-24/);
 });

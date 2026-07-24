@@ -47,5 +47,5 @@ test("live route exposes prior safety level to the model and applies duplicate s
   assert.match(liveRoute, /safety_level: row\.safety_level \|\| "routine"/);
   assert.match(liveRoute, /shouldAppendSafetyMessage/);
   assert.match(liveRoute, /professionalMessage\(output, conversation\)/);
-  assert.match(liveRoute, /records_live_support_v13_pressure_response_2026-07-23/);
+  assert.match(liveRoute, /records_live_support_v14_weather_peak_semantics_2026-07-24/);
 });

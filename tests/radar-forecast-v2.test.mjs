@@ -10,6 +10,7 @@ async function importSource(relativePath) {
 const weather = await importSource("../lib/radar_v1/weatherStressV2.js");
 const forecast = await importSource("../lib/radar_v1/personalizeForecastV2.js");
 const pressureResponse = await importSource("../lib/radar_v1/pressureResponse.js");
+const timingLanguage = await importSource("../lib/radar_v1/forecastTimingLanguage.js");
 const constitutionCare = await importSource("../lib/diagnosis/v2/carePreferences.js");
 const constitutionCareSource = await readFile(new URL("../lib/diagnosis/v2/carePreferences.js", import.meta.url), "utf8");
 const careSource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
@@ -31,6 +32,12 @@ const tcmPointSource = await readFile(new URL("../lib/radar_v1/pickTcmPoints.js"
 const promptContextSource = await readFile(new URL("../lib/radar_v1/radarPromptContext.js", import.meta.url), "utf8");
 const partnerOfferSource = await readFile(new URL("../lib/care-navi/partnerOffers.js", import.meta.url), "utf8");
 const todayCareSource = await readFile(new URL("../lib/radar_v1/careRules/todayCarePlan.js", import.meta.url), "utf8");
+const gptRadarSource = await readFile(new URL("../lib/radar_v1/gptRadar.js", import.meta.url), "utf8");
+const radarRepoSource = await readFile(new URL("../lib/radar_v1/radarRepo.js", import.meta.url), "utf8");
+const liveForecastSource = await readFile(new URL("../app/api/radar/v1/forecast/live/route.js", import.meta.url), "utf8");
+const recordsAnalysisSource = await readFile(new URL("../lib/records/analysis.js", import.meta.url), "utf8");
+const recordsTrendSource = await readFile(new URL("../components/records/RecordsTrendChart.jsx", import.meta.url), "utf8");
+const forecastReasoningSource = await readFile(new URL("../lib/records/forecastReasoning.js", import.meta.url), "utf8");
 
 function point(hour, values = {}) {
   return {
@@ -701,20 +708,20 @@ test("today remains morning-fixed and only tomorrow refreshes in the evening", (
   assert.match(notificationSource, /generationSlot: "notification_fallback"/);
 });
 
-test("forecast UI keeps three weather loads simple and shows at most one meaningful peak", () => {
-  assert.match(radarPageSource, />天気負荷<\/div>/);
+test("forecast UI keeps three weather stresses simple and shows at most one meaningful peak", () => {
+  assert.match(radarPageSource, />天気ストレス<\/div>/);
   assert.match(radarPageSource, /grid grid-cols-3 gap-2/);
   assert.match(radarPageSource, /高・中・低の目安/);
   assert.match(radarPageSource, /WEATHER_LOAD_SHORT_LABELS/);
   assert.match(radarPageSource, /compactPeakLabel/);
   assert.match(radarPageSource, /IconAttention/);
-  assert.match(radarPageSource, />負荷<\/span>/);
-  assert.match(radarPageSource, /天気負荷のピーク/);
+  assert.doesNotMatch(radarPageSource, />負荷<\/span>/);
+  assert.match(radarPageSource, /天気ストレスのピーク/);
   assert.match(radarPageSource, /factor\.load >= 0\.34/);
   assert.match(radarPageSource, /weatherLoadPeak\.detailLabel/);
-  assert.match(radarUtilsSource, /temperature: "気温負荷"/);
-  assert.match(radarUtilsSource, /moisture: "湿度負荷"/);
-  assert.match(radarUtilsSource, /pressure: "気圧負荷"/);
+  assert.match(radarUtilsSource, /temperature: "気温ストレス"/);
+  assert.match(radarUtilsSource, /moisture: "湿度ストレス"/);
+  assert.match(radarUtilsSource, /pressure: "気圧ストレス"/);
   assert.match(radarUtilsSource, /load >= 0\.67 \? "高" : load >= 0\.34 \? "中" : "低"/);
   assert.match(radarPageSource, /factor\.loadLevelLabel/);
   assert.match(radarPageSource, /<IconBolt className="h-3\.5 w-3\.5 shrink-0 text-\[#D79A2B\]" \/>/);
@@ -727,14 +734,41 @@ test("forecast UI keeps three weather loads simple and shows at most one meaning
   assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
 });
 
-test("absolute temperature cautions sit below weather loads and stay collapsed by default", () => {
-  const weatherLoadPosition = radarPageSource.indexOf("天気負荷");
+test("absolute temperature cautions sit below weather stresses and stay collapsed by default", () => {
+  const weatherLoadPosition = radarPageSource.indexOf("天気ストレス");
   const cautionPosition = radarPageSource.indexOf("environmentalCautions.map");
   assert.ok(weatherLoadPosition >= 0);
   assert.ok(cautionPosition > weatherLoadPosition);
   assert.match(radarPageSource, /<details[\s\S]*?caution\.key/);
   assert.match(radarPageSource, /<summary[\s\S]*?\{caution\.label\}/);
   assert.doesNotMatch(radarPageSource, /<details[^>]*\sopen(?:=|>)/);
+});
+
+test("weather peak language never treats the peak as symptom onset", () => {
+  assert.equal(
+    timingLanguage.normalizeForecastTimingLanguage(
+      "崩れやすい時間帯は21:00〜00:00。注意時間の前に休む。"
+    ),
+    "天気ストレスが強まる時間帯は21:00〜00:00。天気ストレスのピーク前に休む。"
+  );
+  assert.equal(
+    timingLanguage.normalizeForecastTimingLanguage(
+      "天気負荷が強まる時間帯は21:00〜00:00。天気負荷のピーク前に休む。"
+    ),
+    "天気ストレスが強まる時間帯は21:00〜00:00。天気ストレスのピーク前に休む。"
+  );
+  assert.match(gptRadarSource, /天気ストレスのピークであり、症状が出る時刻ではありません/);
+  assert.match(radarRepoSource, /天気ストレスが強まる時間帯/);
+  assert.match(liveForecastSource, /症状が出る時刻を示すものではありません/);
+  assert.match(recordsAnalysisSource, /label: "天気ストレスのピーク前"/);
+  assert.match(recordsTrendSource, /先＝天気ストレスのピーク前/);
+  assert.match(forecastReasoningSource, /症状の発生時刻や悪化時刻ではない/);
+});
+
+test("weather peak pill is readable and marks cross-midnight windows explicitly", () => {
+  assert.match(radarPageSource, /endHour < startHour/);
+  assert.match(radarPageSource, /`\$\{startWithUnit\}–翌\$\{endWithUnit\}`/);
+  assert.match(radarPageSource, /rounded-full[\s\S]*?text-\[12px\][\s\S]*?天気ストレスのピーク/);
 });
 
 test("weather icons separate temperature state direction and mixed changes", () => {

@@ -11,10 +11,18 @@ async function importText(source) {
 }
 
 async function importSource(relativePath) {
-  return importText(await readSource(relativePath));
+  const source = await readSource(relativePath);
+  const linkedSource = source.replace(
+    'import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";',
+    ""
+  );
+  return importText(
+    `${timingLanguageSource.replaceAll("export ", "")}\n${linkedSource}`
+  );
 }
 
 const pressureSource = await readSource("../lib/radar_v1/pressureResponse.js");
+const timingLanguageSource = await readSource("../lib/radar_v1/forecastTimingLanguage.js");
 const pressureResponse = await importText(pressureSource);
 const dailyCare = await importSource("../lib/radar_v1/careRules/dailyCareV2.js");
 const forecastReasoning = await importSource("../lib/records/forecastReasoning.js");
@@ -29,6 +37,7 @@ async function importRadarUtils() {
     .replace('import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";', "const flattenRadarLocationPresets = () => [];")
     .replace('import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";', "const getLifestylePlanFromRules = () => ({});")
     .replace('import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";', "const buildTodayCarePlanCore = () => null;")
+    .replace('import { normalizeForecastTimingLanguage } from "@/lib/radar_v1/forecastTimingLanguage";', "const normalizeForecastTimingLanguage = (value) => String(value || '');")
     .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
   return importText(`${pressureSource.replaceAll("export ", "")}\n${source}`);
 }
