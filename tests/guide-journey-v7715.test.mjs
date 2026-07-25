@@ -22,7 +22,9 @@ test("使い方ガイドのユーザー表示は対策ケアへ統一する", as
   assert.match(guide, /体調予報と対策ケア/);
   assert.match(page, /対策ケアで先回りする/);
   assert.doesNotMatch(guide, /Daily Care/);
+  assert.doesNotMatch(guide, /デイリーケア/);
   assert.doesNotMatch(page, /Daily Care/);
+  assert.doesNotMatch(page, /デイリーケア/);
 });
 
 test("使い方ガイドは現行4タブ構成を使う", async () => {
@@ -30,7 +32,7 @@ test("使い方ガイドは現行4タブ構成を使う", async () => {
   assert.match(text, /基本の流れ/);
   assert.match(text, /予報・ケア/);
   assert.match(text, /記録・相談/);
-  assert.match(text, /MYケア/);
+  assert.match(text, /ショップ|パーソナルケアショップ/);
   assert.doesNotMatch(text, /①トリセツ/);
 });
 
