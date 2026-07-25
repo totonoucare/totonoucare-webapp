@@ -99,7 +99,7 @@ export default function HeroMiniCards({ compact = false }) {
               <span className="tracking-tighter text-2xl font-black text-slate-900">4</span>{" "}
               <span className="text-xs font-bold text-[#c7cad1]">/ 10</span>
             </div>
-            <StatusChip label="注意" tone="warn" />
+            <StatusChip label="いたわり" tone="warn" />
           </div>
         </div>
         <div className="absolute bottom-[-20px] right-[-20px] scale-[0.6] opacity-15 transition-opacity group-hover:opacity-25">
@@ -109,7 +109,7 @@ export default function HeroMiniCards({ compact = false }) {
 
       <div className="group relative overflow-hidden rounded-[30px] border border-[color:var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_28%)] p-5 shadow-[0_18px_34px_-14px_rgba(40,55,48,0.12)]">
         <div className="relative z-10">
-          <div className="text-[11px] font-black uppercase tracking-widest text-[#77818e]">セルフケアガイド</div>
+          <div className="text-[11px] font-black uppercase tracking-widest text-[#77818e]">対策ケア</div>
           <div className="mt-1 text-base font-black leading-tight text-slate-900">今日のうちに整えておく</div>
 
           <div className="mt-4 flex flex-wrap gap-2">
