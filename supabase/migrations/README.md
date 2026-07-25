@@ -16,6 +16,24 @@ Supabase SQL Editorで実際に実行するDB変更SQLを置く場所。
 - 失敗した実験SQLは入れない。
 - 秘密情報は絶対に入れない。
 
+## v7.78.25.2 / v7.78.26.2 寒暖差の予報保存
+
+```text
+20260725_expand_radar_forecasts_trigger_dir_v778252.sql
+20260725_rollback_radar_forecasts_trigger_dir_v778252.sql
+```
+
+`radar_forecasts.trigger_dir`へV2の`change / none`を追加する。先にmigrationを適用してからアプリをデプロイする。確認SQLは`supabase/checks/20260725_check_radar_forecasts_trigger_dir_v778252.sql`。
+
+## v7.78.0 パーソナルケアショップ
+
+```text
+20260719_create_user_care_shop_items_v7780.sql
+20260719_rollback_user_care_shop_items_v7780.sql
+```
+
+`気になる／購入済み`の商品状態をアカウント単位で保存する。確認SQLは `supabase/checks/20260719_check_user_care_shop_items_v7780.sql`、仕様は `docs/PERSONAL_CARE_SHOP_V7780.md` を参照する。
+
 ## v7.71 Daily Care実行記録
 
 ```text
@@ -34,7 +52,7 @@ Supabase SQL Editorで実際に実行するDB変更SQLを置く場所。
 
 v7.71 migration適用後に実行する。確認SQLは `supabase/checks/20260713_check_care_data_integrity_v7712.sql`、仕様は `docs/CARE_ACTION_DATA_INTEGRITY_V7712.md` を参照する。
 
-## v7.72.0 Ekiken・今の体調相談
+## v7.72.0 Ekken・今の体調相談
 
 ```text
 20260714_add_ekiken_live_support_v7720.sql
@@ -43,7 +61,7 @@ v7.71 migration適用後に実行する。確認SQLは `supabase/checks/20260713
 
 期間振り返りチャットと今の体調相談の会話を `thread_kind` で分離する。確認SQLは `supabase/checks/20260714_check_ekiken_live_support_v7720.sql`、仕様は `docs/EKIKEN_LIVE_SUPPORT_V7720.md` を参照する。
 
-## v7.72.2 Ekiken会話品質・利用イベント
+## v7.72.2 Ekken会話品質・利用イベント
 
 ```text
 20260714_add_live_support_quality_v7722.sql
