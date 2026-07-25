@@ -254,10 +254,10 @@ export async function POST(req) {
     if (contextFactors.includes("none")) contextFactors = ["none"];
 
     if (manualPreventLevel > 0 && !manualDomains.length) {
-      return NextResponse.json({ error: "Daily Care以外のケアをした場合は種類を選んでください" }, { status: 400 });
+      return NextResponse.json({ error: "対策ケア以外のケアをした場合は種類を選んでください" }, { status: 400 });
     }
     if (manualPreventLevel > 0 && !manualTiming) {
-      return NextResponse.json({ error: "Daily Care以外のケアをした時間を選んでください" }, { status: 400 });
+      return NextResponse.json({ error: "対策ケア以外のケアをした時間を選んでください" }, { status: 400 });
     }
 
     const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : "";
