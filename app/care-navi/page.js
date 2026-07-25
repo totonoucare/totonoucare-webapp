@@ -2467,7 +2467,7 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
     <div className="grid gap-3">
       <div className="rounded-[20px] bg-[#FFF9EA] px-4 py-3 ring-1 ring-[#EED8B4]">
         <div className="text-[13px] font-black text-slate-900">気になる・購入済み</div>
-        <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">購入した商品は「購入済み」にすると、体調予報のデイリーケアから使用を記録できます。</p>
+        <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">購入した商品は「購入済み」にすると、体調予報の対策ケアから使用を記録できます。</p>
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {visible.slice(0, 40).map((entry) => {
@@ -3060,7 +3060,7 @@ export default function CareNaviPage() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json?.error || "保存できませんでした。");
       setShopEntries(safeArray(json?.data?.items).map(shopEntryFromRow).filter(Boolean));
-      setShopNotice(status === "purchased" ? "購入済みにしました。体調予報のデイリーケアに表示されます。" : "「気になる」に保存しました。");
+      setShopNotice(status === "purchased" ? "購入済みにしました。体調予報の対策ケアに表示されます。" : "「気になる」に保存しました。");
     } catch (error) {
       setShopError(error?.message || "保存できませんでした。");
     } finally {
