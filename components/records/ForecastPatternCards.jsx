@@ -11,7 +11,7 @@ import {
 const PATTERN_META = {
   attention_good: {
     eyebrow: "いたわり・守り × ○",
-    title: "注意予報でも穏やか",
+    title: "いたわり・守りでも穏やか",
     description: "ケアや生活の土台を、次も比べたい日",
     surface: "bg-[#F2FAF6]",
     ring: "ring-[#BFDCCE]",
@@ -19,7 +19,7 @@ const PATTERN_META = {
   },
   attention_difficult: {
     eyebrow: "いたわり・守り × △・×",
-    title: "注意予報でつらさあり",
+    title: "いたわり・守りでつらさあり",
     description: "負担とケアの種類・時刻を見直す日",
     surface: "bg-[#FFF7EC]",
     ring: "ring-[#E9D0A8]",

@@ -24,8 +24,8 @@ const FORECAST_BANDS = [
 
 const PATTERN_FILTERS = [
   { key: "all", label: "すべて", short: "すべて", active: "bg-slate-700 text-white ring-slate-700" },
-  { key: "attention_good", label: "注意予報でも体調○", short: "注意予報でも体調○", active: "bg-[#EAF7F1] text-[#2F816E] ring-[#9FCFBE]" },
-  { key: "attention_difficult", label: "注意予報で体調△・×", short: "注意予報で体調△・×", active: "bg-[#FFF4DE] text-[#9B6417] ring-[#E2AE45]" },
+  { key: "attention_good", label: "いたわり・守りでも体調○", short: "いたわり・守り × ○", active: "bg-[#EAF7F1] text-[#2F816E] ring-[#9FCFBE]" },
+  { key: "attention_difficult", label: "いたわり・守りで体調△・×", short: "いたわり・守り × △・×", active: "bg-[#FFF4DE] text-[#9B6417] ring-[#E2AE45]" },
   { key: "stable_good", label: "安定予報で体調○", short: "安定予報で体調○", active: "bg-[#F1F5F3] text-slate-600 ring-[#B9C9C0]" },
   { key: "stable_difficult", label: "安定予報だが体調△・×", short: "安定予報だが体調△・×", active: "bg-[#FFF0EC] text-[#A6513A] ring-[#E1A993]" },
 ];
@@ -33,8 +33,8 @@ const PATTERN_FILTERS = [
 const TRIGGER_SHORT = {
   pressure_down: "気圧↓",
   pressure_up: "気圧↑",
-  cold: "冷え",
-  heat: "暑さ",
+  cold: "低温",
+  heat: "高温",
   damp: "湿気",
   dry: "乾燥",
 };

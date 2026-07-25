@@ -91,7 +91,7 @@ function CareActionsSummary({
       <div className="flex items-center justify-between gap-3">
         <div>
           <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">今日に向けて行ったケア</div>
-          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">Daily Careで「やってみた」と記録した内容です。</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">対策ケアで「やってみた」と記録した内容です。</div>
         </div>
         {editable && onOpenRadar ? (
           <button type="button" onClick={onOpenRadar} className="shrink-0 rounded-full bg-white px-3 py-2 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
@@ -229,11 +229,11 @@ export default function DailyRecordCard({
   const shouldAskFactors = reflectionPattern === "stable_difficult";
   const reflectionMeta = {
     attention_good: {
-      title: "注意予報でも穏やかに過ごせた",
+      title: "いたわり・守り予報でも穏やかに過ごせた",
       body: "先回りケアや生活の土台が、次に再現したい手がかりになります。",
     },
     attention_difficult: {
-      title: "注意予報でつらさがあった",
+      title: "いたわり・守り予報でつらさがあった",
       body: "体調ゆらぎ度、天気ストレス、ケアの内容と時刻を一緒に振り返ります。",
     },
     stable_good: {
@@ -382,7 +382,7 @@ export default function DailyRecordCard({
           ) : null}
           {careActionSummary.count > 0 && manualCareLevel > 0 ? (
             <div className="mt-3 rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#DCE8DD]">
-              <div className="text-[10px] font-black text-slate-400">Daily Care以外にまとめて記録したケア</div>
+              <div className="text-[10px] font-black text-slate-400">対策ケア以外にまとめて記録したケア</div>
               <div className="mt-1 text-[12px] font-black text-slate-700">{careLabel(manualCareLevel)}{manualCareDomains.length ? `・${manualCareDomains.map((domain) => RECORD_DOMAIN_OPTIONS.find((item) => item.value === domain)?.label || domain).join("・")}` : ""}</div>
             </div>
           ) : null}
