@@ -535,7 +535,7 @@ export default function SettingsPage() {
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[16px] font-black tracking-tight text-slate-900">使い方ガイド</div>
         <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
-          トリセツ、予報、ケアカードの見方に迷った時はこちらから確認できます。
+          トリセツ、体調予報、対策ケアの見方に迷った時はこちらから確認できます。
         </div>
         <div className="mt-4">
           <Button variant="secondary" className="w-full bg-white" onClick={() => router.push("/guide")}>使い方ガイドを開く</Button>
@@ -581,4 +581,3 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
-
