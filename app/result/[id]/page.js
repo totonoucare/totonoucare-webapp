@@ -169,7 +169,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
       <div className="space-y-4">
         <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
           <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
-          <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の体調予報とケア提案に反映できます。"}</div>
+          <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の体調予報と対策ケアに反映できます。"}</div>
           {session?.user?.email ? (
             <div className="mt-3 rounded-[18px] bg-white/80 px-4 py-3 text-[12px] font-bold text-slate-600 ring-1 ring-black/5">
               ログイン中：{session.user.email}
@@ -187,7 +187,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
     <div className="space-y-4">
       <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
         <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
-        <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の体調予報とケア提案に進めます。"}</div>
+        <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の体調予報と対策ケアを確認できます。"}</div>
       </div>
       <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">無料で保存して予報を見る</Button>
       <Button variant="secondary" onClick={onLogin} className="w-full bg-white shadow-sm py-4">ログインはこちら</Button>
@@ -703,7 +703,7 @@ function ResultPage({ params }) {
         <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
             <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">まだ保存されていません</div>
-            <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の体調予報やケア提案に反映できます。</div>
+            <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の体調予報や対策ケアに反映できます。</div>
           </div>
         </div>
       ) : null}
@@ -878,7 +878,7 @@ function ResultPage({ params }) {
                   onLogin={goLoginToRadar}
                   compact={true}
                   title="このトリセツを保存すると、予報で使えます"
-                  body="保存すると、今日・明日の体調予報やケア提案にこのトリセツが反映されます。"
+                  body="保存すると、今日・明日の体調予報や対策ケアにこのトリセツが反映されます。"
                 />
               </div>
             </Card>
