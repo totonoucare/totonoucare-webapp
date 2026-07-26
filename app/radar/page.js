@@ -1637,7 +1637,7 @@ export default function RadarPage() {
                           <div className="mt-3 flex min-w-0 items-center justify-between gap-2 rounded-full bg-white/80 px-3 py-2 text-[12px] font-black text-slate-500 ring-1 ring-[#E7EEE9] shadow-sm">
                             <div className="flex shrink-0 items-center gap-1.5">
                               <IconBolt className="h-3.5 w-3.5 shrink-0 text-[#D79A2B]" />
-                              <span className="whitespace-nowrap">天気ストレスのピーク</span>
+                              <span className="whitespace-nowrap">ピーク時間帯</span>
                             </div>
                             <span className="min-w-0 truncate text-slate-600">
                               {WEATHER_LOAD_SHORT_LABELS[weatherLoadPeak.group] || weatherLoadPeak.label}
