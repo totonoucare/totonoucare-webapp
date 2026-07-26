@@ -1,3 +1,24 @@
+## v7.78.26.2 trigger_dir DB契約
+
+- `radar_forecasts.trigger_dir`は`up / down / change / none`
+- `temp_shift`は`main_trigger=temp / trigger_dir=change`で保存する
+- `mixed / steady`は詳細な物理方向として`computed.forecast_snapshot`へ保持
+- コード側で`change`を`up/down`へ変換しない
+- migration適用後にアプリをデプロイする
+- 予報計算、体質補正、ケア選定の変更なし
+
+## v7.78.26 対策ケアと表示語の統一
+
+- ユーザー向けの正式名称は`対策ケア`。記録、ガイド、ショップ、体質チェック結果、設定、Ekkenでも同じ語を使う
+- 予報段階の表示は`安定 / いたわり / 守り`。旧`注意 / 要警戒 / 注意予報`へ戻さない
+- 通常の絶対温度は`低温 / 高温`、水分環境は`湿気 / 乾燥`
+- `dailyCare`、`displayed_care`、`performed_care_items`、`dailyCareV2.js`は内部互換名なので変更しない
+- DB、予報計算、体質補正、ケア選定は変更なし
+- records prompt versions:
+  - analysis: `records_analysis_v14_care_terminology_2026-07-25`
+  - chat: `records_chat_v15_care_terminology_2026-07-25`
+  - live support: `records_live_support_v15_care_terminology_2026-07-25`
+
 ## v7.78.25 旧導線・予報GPTの削除
 
 - 旧`/karte/[id]`、Karte Plus、単品Stripe購入は削除済み
@@ -11,7 +32,8 @@
 ## v7.78.24 天気ストレスへの表示語統一
 
 - ユーザー表示は`天気負荷`ではなく`天気ストレス`を正本とする
-- ピークは`天気ストレスのピーク`、時間の意味は`天気ストレスが強まる時間帯`、ケア時刻は`天気ストレスのピーク前`
+- `/radar`の天気ストレス枠内では、重複を避けてピークピルを`ピーク時間帯`と表示する
+- 時間の意味は`天気ストレスが強まる時間帯`、ケア時刻は`天気ストレスのピーク前`
 - `/radar`の各カードは`負荷`の小見出しを表示せず、`高／中／低`だけを表示する
 - `effective_load`、weather load系の内部キー、DB列、`before_peak`は互換性のため変更しない
 - 予報計算・DB・環境変数の変更なし
