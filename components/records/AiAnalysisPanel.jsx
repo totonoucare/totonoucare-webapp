@@ -182,6 +182,8 @@ export default function AiAnalysisPanel({
   const hasPendingFollowUp = Boolean(
     followUp?.kind && followUp.kind !== "none" && followUp.question
   );
+  const premiumActive = Boolean(access?.entitled);
+  const betaActive = Boolean(access?.beta_enabled && !premiumActive);
 
   const loadConsent = useCallback(async () => {
     setConsentLoading(true);
@@ -490,7 +492,7 @@ export default function AiAnalysisPanel({
     <div className="space-y-5">
       <div className={[
         "rounded-[24px] px-4 py-3.5 ring-1",
-        access?.beta_enabled
+        betaActive
           ? "bg-[#FFF8EC] ring-[#EED8B4]"
           : "bg-[#F4FAF7] ring-[#CFE7DE]",
       ].join(" ")}>
@@ -498,23 +500,23 @@ export default function AiAnalysisPanel({
           <div>
             <div className={[
               "text-[11px] font-black tracking-[0.14em]",
-              access?.beta_enabled ? "text-[#A56C18]" : "text-[#2F816E]",
+              betaActive ? "text-[#A56C18]" : "text-[#2F816E]",
             ].join(" ")}>
-              {access?.beta_enabled ? "AI分析 先行体験中" : "プレミアム・AI分析"}
+              {betaActive ? "AI分析 先行体験中" : "プレミアム・AI分析"}
             </div>
             <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
-              {access?.beta_enabled
+              {betaActive
                 ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。`
                 : "期間別グラフと記録をもとに、体調とケアの傾向を振り返れます。"}
             </div>
           </div>
           <span className={[
             "shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black ring-1",
-            access?.beta_enabled
+            betaActive
               ? "text-[#A56C18] ring-[#EED8B4]"
               : "text-[#2F816E] ring-[#CFE7DE]",
           ].join(" ")}>
-            {access?.beta_enabled ? "先行体験中" : "契約中"}
+            {betaActive ? "先行体験中" : "契約中"}
           </span>
         </div>
       </div>

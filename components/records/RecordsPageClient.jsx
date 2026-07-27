@@ -84,6 +84,7 @@ export default function RecordsPageClient({
   initialTab = "record",
   initialLivePrompt = "",
   initialCheckoutStatus = "",
+  initialCheckoutSessionId = "",
 }) {
   const router = useRouter();
   const today = useMemo(() => jstDateString(new Date()), []);
@@ -197,9 +198,46 @@ export default function RecordsPageClient({
     }
     let cancelled = false;
     (async () => {
+      const removeCheckoutParams = () => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("checkout");
+        url.searchParams.delete("session_id");
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `${url.pathname}${url.search}${url.hash}`
+        );
+      };
+      if (initialCheckoutStatus === "cancel") removeCheckoutParams();
+
+      if (initialCheckoutStatus === "success" && initialCheckoutSessionId) {
+        try {
+          const confirmed = await authedFetch("/api/stripe/checkout/confirm", {
+            method: "POST",
+            body: JSON.stringify({ session_id: initialCheckoutSessionId }),
+          });
+          const confirmedAccess = confirmed?.billing?.access || null;
+          if (cancelled) return;
+          if (confirmedAccess) {
+            setFeatureAccess(confirmedAccess);
+            setAccessError("");
+            setAccessLoading(false);
+            if (confirmedAccess.entitled) removeCheckoutParams();
+            return;
+          }
+        } catch (confirmError) {
+          if (!cancelled) {
+            setAccessError(confirmError?.message || "決済情報を確認できませんでした");
+          }
+        }
+      }
+
       const attempts = initialCheckoutStatus === "success" ? 4 : 1;
       for (let index = 0; index < attempts; index += 1) {
         const access = await loadFeatureAccess();
+        if (access?.entitled && initialCheckoutStatus === "success") {
+          removeCheckoutParams();
+        }
         if (cancelled || access?.entitled || index === attempts - 1) break;
         await new Promise((resolve) => window.setTimeout(resolve, 1200));
       }
@@ -207,7 +245,27 @@ export default function RecordsPageClient({
     return () => {
       cancelled = true;
     };
-  }, [authLoading, session?.access_token, initialCheckoutStatus, loadFeatureAccess]);
+  }, [
+    authLoading,
+    session?.access_token,
+    initialCheckoutStatus,
+    initialCheckoutSessionId,
+    authedFetch,
+    loadFeatureAccess,
+  ]);
+
+  useEffect(() => {
+    if (!session?.access_token) return undefined;
+    const refresh = () => {
+      if (document.visibilityState === "visible") loadFeatureAccess();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [session?.access_token, loadFeatureAccess]);
 
   useEffect(() => {
     if (!featureAccess?.beta_enabled || !featureAccess?.beta_ends_at) return;
