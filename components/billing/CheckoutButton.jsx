@@ -11,6 +11,7 @@ export default function CheckoutButton({
   onStart,
   onComplete,
   onError,
+  onAlreadySubscribed,
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -49,7 +50,19 @@ export default function CheckoutButton({
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(json?.error || "Checkout の作成に失敗しました");
+        if (json?.code === "already_subscribed") {
+          if (onAlreadySubscribed) {
+            await onAlreadySubscribed(json);
+          } else {
+            window.location.reload();
+          }
+          return;
+        }
+        const requestError = new Error(json?.error || "Checkout の作成に失敗しました");
+        requestError.code = json?.code || "checkout_failed";
+        requestError.status = res.status;
+        requestError.payload = json;
+        throw requestError;
       }
 
       if (!json?.url) {
