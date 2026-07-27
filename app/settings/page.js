@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
@@ -95,6 +95,14 @@ function isProbablyIos() {
   return /iPhone|iPad|iPod/i.test(ua) || (platform === "MacIntel" && Number(window.navigator.maxTouchPoints || 0) > 1);
 }
 
+function removeCheckoutParamsFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("checkout");
+  url.searchParams.delete("session_id");
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  window.history.replaceState(window.history.state, "", next);
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -102,6 +110,7 @@ export default function SettingsPage() {
   const [karteCount, setKarteCount] = useState(null);
   const [error, setError] = useState("");
   const [billingStatus, setBillingStatus] = useState(null);
+  const [billingError, setBillingError] = useState("");
   const [checkoutStatus, setCheckoutStatus] = useState("");
 
   const [notificationSettings, setNotificationSettings] = useState(null);
@@ -121,7 +130,7 @@ export default function SettingsPage() {
   const [pwaGuideOpen, setPwaGuideOpen] = useState(false);
   const [standalone, setStandalone] = useState(false);
 
-  async function authedFetch(path, options = {}) {
+  const authedFetch = useCallback(async (path, options = {}) => {
     const { data } = await supabase.auth.getSession();
     const token = data?.session?.access_token;
     if (!token) throw new Error("ログインが必要です。");
@@ -136,9 +145,38 @@ export default function SettingsPage() {
       cache: "no-store",
     });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok || json?.ok === false) throw new Error(json?.error || `HTTP ${res.status}`);
+    if (!res.ok || json?.ok === false) {
+      const requestError = new Error(json?.error || `HTTP ${res.status}`);
+      requestError.code = json?.code || "request_failed";
+      requestError.status = res.status;
+      requestError.payload = json;
+      throw requestError;
+    }
     return json;
-  }
+  }, []);
+
+  const loadBillingStatus = useCallback(async () => {
+    try {
+      const next = await authedFetch("/api/premium/status");
+      setBillingStatus(next || null);
+      setBillingError("");
+      return next || null;
+    } catch (loadError) {
+      setBillingError(loadError?.message || "利用プランを確認できませんでした。");
+      return null;
+    }
+  }, [authedFetch]);
+
+  const handleAlreadySubscribed = useCallback(async (payload) => {
+    const next = payload?.billing || await loadBillingStatus();
+    if (next) {
+      setBillingStatus(next);
+      setBillingError("");
+    }
+    if (next?.isPremium || next?.access?.entitled) {
+      setCheckoutStatus("success");
+    }
+  }, [loadBillingStatus]);
 
   useEffect(() => {
     let cancelled = false;
@@ -148,9 +186,12 @@ export default function SettingsPage() {
         setLoading(true);
         setError("");
         setStandalone(isStandalonePwa());
-        const checkout = new URLSearchParams(window.location.search).get("checkout");
+        const search = new URLSearchParams(window.location.search);
+        const checkout = search.get("checkout");
+        const checkoutSessionId = search.get("session_id") || "";
         const normalizedCheckout = checkout === "success" || checkout === "cancel" ? checkout : "";
         setCheckoutStatus(normalizedCheckout);
+        if (normalizedCheckout === "cancel") removeCheckoutParamsFromUrl();
 
         const { data } = await supabase.auth.getUser();
         if (cancelled) return;
@@ -180,16 +221,41 @@ export default function SettingsPage() {
         }
         let latestBilling = billingRes.status === "fulfilled" ? billingRes.value || null : null;
         if (latestBilling) setBillingStatus(latestBilling);
+        if (billingRes.status === "rejected") {
+          setBillingError(billingRes.reason?.message || "利用プランを確認できませんでした。");
+        }
 
-        if (normalizedCheckout === "success" && !latestBilling?.isPremium) {
+        if (normalizedCheckout === "success" && checkoutSessionId) {
+          try {
+            const confirmed = await authedFetch("/api/stripe/checkout/confirm", {
+              method: "POST",
+              body: JSON.stringify({ session_id: checkoutSessionId }),
+            });
+            latestBilling = confirmed?.billing || null;
+            if (latestBilling) {
+              setBillingStatus(latestBilling);
+              setBillingError("");
+            }
+            if (latestBilling?.isPremium || latestBilling?.access?.entitled) {
+              removeCheckoutParamsFromUrl();
+            }
+          } catch (confirmError) {
+            setBillingError(confirmError?.message || "決済情報を確認できませんでした。");
+          }
+        } else if (
+          normalizedCheckout === "success"
+          && (latestBilling?.isPremium || latestBilling?.access?.entitled)
+        ) {
+          removeCheckoutParamsFromUrl();
+        } else if (normalizedCheckout === "success") {
           for (let attempt = 1; attempt < 4; attempt += 1) {
             await new Promise((resolve) => window.setTimeout(resolve, 1200));
             if (cancelled) return;
-            try {
-              latestBilling = await authedFetch("/api/premium/status");
-              setBillingStatus(latestBilling || null);
-              if (latestBilling?.isPremium || latestBilling?.access?.entitled) break;
-            } catch {}
+            latestBilling = await loadBillingStatus();
+            if (latestBilling?.isPremium || latestBilling?.access?.entitled) {
+              removeCheckoutParamsFromUrl();
+              break;
+            }
           }
         }
       } catch (e) {
@@ -202,8 +268,20 @@ export default function SettingsPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authedFetch, loadBillingStatus]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    const refresh = () => {
+      if (document.visibilityState === "visible") loadBillingStatus();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [loadBillingStatus, user]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -388,7 +466,9 @@ export default function SettingsPage() {
           <div className="text-[13px] font-black leading-5 text-[#2F816E]">
             {premiumActive
               ? "プレミアムの利用を開始しました。"
-              : "決済情報を確認しています。反映まで少し時間がかかる場合があります。"}
+              : billingError
+                ? "決済情報を確認できませんでした。利用プラン欄からもう一度確認してください。"
+                : "決済情報を確認しています。"}
           </div>
         </Module>
       ) : null}
@@ -444,6 +524,22 @@ export default function SettingsPage() {
               : "記録カレンダーは無料です。AI分析とEkken相談はプレミアムで利用できます。"}
         </div>
 
+        {billingError ? (
+          <div className="mt-4 rounded-[18px] bg-[#FFF0EC] p-4 ring-1 ring-[#F1C8BA]">
+            <div className="text-[12px] font-black leading-5 text-[#B75C3E]">
+              {billingError}
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={loadBillingStatus}
+              className="mt-3"
+            >
+              利用プランをもう一度確認
+            </Button>
+          </div>
+        ) : null}
+
         {premiumActive && billingStatus?.subscription?.customer_portal_available ? (
           <BillingPortalButton returnPath="/settings" className="mt-4 w-full bg-white" />
         ) : null}
@@ -455,13 +551,21 @@ export default function SettingsPage() {
             <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
               無料公開中でも、テスト用Stripeキーの環境では申込み・Webhook・解約導線を確認できます。実際の請求は発生しません。
             </div>
-            <CheckoutButton returnPath="/settings" className="mt-3 w-full">
+            <CheckoutButton
+              returnPath="/settings"
+              className="mt-3 w-full"
+              onAlreadySubscribed={handleAlreadySubscribed}
+            >
               テスト決済を試す
             </CheckoutButton>
           </div>
         ) : null}
         {!premiumActive && !betaActive ? (
-          <CheckoutButton returnPath="/settings" className="mt-4 w-full">
+          <CheckoutButton
+            returnPath="/settings"
+            className="mt-4 w-full"
+            onAlreadySubscribed={handleAlreadySubscribed}
+          >
             プレミアムの内容を確認する
           </CheckoutButton>
         ) : null}
