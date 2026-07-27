@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
 import { requireUser } from "@/lib/requireUser";
-import { getPremiumStatus } from "@/lib/premium";
+import { getBillingStatus } from "@/lib/billingStatus";
 import { RECORDS_SUBSCRIPTION_PRODUCT } from "@/lib/records/policy";
-import { getRecordsAccess } from "@/lib/records/access";
 import { stripeModeFromSecret } from "@/lib/stripeMode";
 
 export const runtime = "nodejs";
@@ -90,18 +89,19 @@ export async function POST(req) {
 
     const stripe = getStripeServer();
     const body = await req.json().catch(() => ({}));
-    const [premium, access] = await Promise.all([
-      getPremiumStatus(user.id),
-      getRecordsAccess(user.id),
-    ]);
-    if (premium.isPremium || access.entitled) {
+    const billing = await getBillingStatus(user.id);
+    if (billing.isPremium || billing.access?.entitled) {
       return NextResponse.json(
-        { error: "すでにプレミアムを利用中です", code: "already_subscribed" },
+        {
+          error: "すでにプレミアムを利用中です",
+          code: "already_subscribed",
+          billing,
+        },
         { status: 409 }
       );
     }
     const stripeTestMode = stripeModeFromSecret() === "test";
-    if (access.beta_enabled && !stripeTestMode) {
+    if (billing.access?.beta_enabled && !stripeTestMode) {
       return NextResponse.json(
         {
           error: "プレミアムの申込みは2026年9月1日から開始します",
