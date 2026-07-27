@@ -12,6 +12,7 @@ import RecordsCalendar from "@/components/records/RecordsCalendar";
 import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
 import ExpertConsultPreview from "@/components/records/ExpertConsultPreview";
 import LiveSupportPanel from "@/components/records/LiveSupportPanel";
+import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 
 const TAB_OPTIONS = [
   { key: "record", label: "記録カレンダー", short: "記録" },
@@ -33,12 +34,26 @@ function monthRange(month) {
   };
 }
 
-function RecordsTabs({ value, onChange }) {
+function IconLockSmall() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3 shrink-0" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RecordsTabs({ value, onChange, access }) {
   return (
     <div className="sticky top-[66px] z-30 -mx-1 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
       <div className="grid grid-cols-3 gap-1 rounded-[22px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
         {TAB_OPTIONS.map((item) => {
           const active = value === item.key;
+          const locked = Boolean(
+            access &&
+            ((item.key === "analysis" && !access.analysis_enabled) ||
+              (item.key === "consult" && !access.consult_enabled))
+          );
           return (
             <button
               key={item.key}
@@ -51,8 +66,12 @@ function RecordsTabs({ value, onChange }) {
                   : "text-slate-500 hover:bg-white/70",
               ].join(" ")}
             >
-              <span className="sm:hidden">{item.short}</span>
-              <span className="hidden sm:inline">{item.label}</span>
+              <span className="inline-flex items-center justify-center gap-1 sm:hidden">
+                {item.short}{locked ? <IconLockSmall /> : null}
+              </span>
+              <span className="hidden items-center justify-center gap-1 sm:inline-flex">
+                {item.label}{locked ? <IconLockSmall /> : null}
+              </span>
             </button>
           );
         })}
@@ -61,7 +80,11 @@ function RecordsTabs({ value, onChange }) {
   );
 }
 
-export default function RecordsPageClient({ initialTab = "record", initialLivePrompt = "" }) {
+export default function RecordsPageClient({
+  initialTab = "record",
+  initialLivePrompt = "",
+  initialCheckoutStatus = "",
+}) {
   const router = useRouter();
   const today = useMemo(() => jstDateString(new Date()), []);
   const earliestEditableDate = useMemo(() => addDaysYmd(today, -6), [today]);
@@ -81,6 +104,9 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
   const [careActionSaving, setCareActionSaving] = useState("");
   const [analysisPrompt, setAnalysisPrompt] = useState("");
   const [livePrompt, setLivePrompt] = useState(initialLivePrompt || "");
+  const [featureAccess, setFeatureAccess] = useState(null);
+  const [accessLoading, setAccessLoading] = useState(true);
+  const [accessError, setAccessError] = useState("");
 
   useEffect(() => {
     setTab(normalizeTab(initialTab));
@@ -146,6 +172,54 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
       });
     } catch {}
   }, [authedFetch]);
+
+  const loadFeatureAccess = useCallback(async () => {
+    setAccessLoading(true);
+    setAccessError("");
+    try {
+      const data = await authedFetch("/api/records/access");
+      setFeatureAccess(data?.access || null);
+      return data?.access || null;
+    } catch (loadError) {
+      setAccessError(loadError?.message || "利用プランを確認できませんでした");
+      return null;
+    } finally {
+      setAccessLoading(false);
+    }
+  }, [authedFetch]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!session?.access_token) {
+      setFeatureAccess(null);
+      setAccessLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const attempts = initialCheckoutStatus === "success" ? 4 : 1;
+      for (let index = 0; index < attempts; index += 1) {
+        const access = await loadFeatureAccess();
+        if (cancelled || access?.entitled || index === attempts - 1) break;
+        await new Promise((resolve) => window.setTimeout(resolve, 1200));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, session?.access_token, initialCheckoutStatus, loadFeatureAccess]);
+
+  useEffect(() => {
+    if (!featureAccess?.beta_enabled || !featureAccess?.beta_ends_at) return;
+    const endMs = Date.parse(`${featureAccess.beta_ends_at}T23:59:59.999+09:00`);
+    if (!Number.isFinite(endMs)) return;
+    const untilBoundary = Math.max(1000, endMs + 1 - Date.now());
+    const delay = Math.min(untilBoundary, 24 * 60 * 60 * 1000);
+    const timer = window.setTimeout(() => {
+      loadFeatureAccess();
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [featureAccess?.beta_enabled, featureAccess?.beta_ends_at, loadFeatureAccess]);
 
   useEffect(() => {
     if (!session?.access_token) return;
@@ -337,7 +411,25 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
         </button>
       }
     >
-      <RecordsTabs value={tab} onChange={changeTab} />
+      <RecordsTabs value={tab} onChange={changeTab} access={featureAccess} />
+
+      {initialCheckoutStatus === "success" ? (
+        <div className="rounded-[20px] bg-[#EAF7F1] px-4 py-3 text-[13px] font-black leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
+          {featureAccess?.entitled
+            ? "プレミアムの利用を開始しました。"
+            : "決済情報を確認しています。反映まで少し時間がかかる場合があります。"}
+        </div>
+      ) : null}
+      {initialCheckoutStatus === "cancel" ? (
+        <div className="rounded-[20px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-5 text-slate-500 ring-1 ring-[#DCE8DD]">
+          申込みはキャンセルされました。料金は発生していません。
+        </div>
+      ) : null}
+      {accessError ? (
+        <div className="rounded-[18px] bg-[#FFF0EC] px-4 py-3 text-[13px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
+          {accessError}
+        </div>
+      ) : null}
 
       {tab === "record" ? (
         <div className="space-y-5">
@@ -390,25 +482,37 @@ export default function RecordsPageClient({ initialTab = "record", initialLivePr
       ) : null}
 
       {tab === "analysis" ? (
-        <AiAnalysisPanel
-          active
-          today={today}
-          authedFetch={authedFetch}
-          initialPrompt={analysisPrompt}
-          onConsumePrompt={() => setAnalysisPrompt("")}
-          onSelectDate={openDateFromAnalysis}
-          onTrackEvent={sendEvent}
-        />
+        accessLoading ? (
+          <div className="h-56 animate-pulse rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE]" />
+        ) : featureAccess?.analysis_enabled ? (
+          <AiAnalysisPanel
+            active
+            today={today}
+            authedFetch={authedFetch}
+            initialPrompt={analysisPrompt}
+            onConsumePrompt={() => setAnalysisPrompt("")}
+            onSelectDate={openDateFromAnalysis}
+            onTrackEvent={sendEvent}
+          />
+        ) : (
+          <SubscriptionPaywall feature="analysis" returnPath="/records?tab=analysis" />
+        )
       ) : null}
 
       {tab === "consult" ? (
         <div className="space-y-5">
-          <LiveSupportPanel
-            active
-            authedFetch={authedFetch}
-            initialPrompt={livePrompt}
-            onConsumePrompt={() => setLivePrompt("")}
-          />
+          {accessLoading ? (
+            <div className="h-56 animate-pulse rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE]" />
+          ) : featureAccess?.consult_enabled ? (
+            <LiveSupportPanel
+              active
+              authedFetch={authedFetch}
+              initialPrompt={livePrompt}
+              onConsumePrompt={() => setLivePrompt("")}
+            />
+          ) : (
+            <SubscriptionPaywall feature="consult" returnPath="/records?tab=consult" />
+          )}
           <ExpertConsultPreview authedFetch={authedFetch} />
         </div>
       ) : null}

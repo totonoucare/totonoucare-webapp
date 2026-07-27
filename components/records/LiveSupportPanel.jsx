@@ -12,7 +12,7 @@ import { activeUrgentMessage, showRoutinePrompts } from "@/lib/records/liveSuppo
 import { replyContextForAssistantMessage } from "@/lib/records/replyContext";
 
 function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
-  if (!access?.ai_enabled) {
+  if (!access?.consult_enabled) {
     return (
       <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
         Ekken相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
@@ -314,7 +314,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
   async function sendMessage(value = input) {
     const content = String(value || "").trim();
-    if (!content || sending || !consent?.active || !access?.ai_enabled) return;
+    if (!content || sending || !consent?.active || !access?.consult_enabled) return;
     const replyContext = replyToFollowUp;
     const localId = `local-${Date.now()}`;
     setMessages((current) => [...current, {
@@ -404,7 +404,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
         <div className="space-y-3 px-4 pb-4">
           <AiConsent access={access} consent={consent} saving={consentSaving} onAccept={acceptConsent} onRevoke={revokeConsent} />
 
-          {consent?.active && access?.ai_enabled ? (
+          {consent?.active && access?.consult_enabled ? (
             <ConsultationStatusCard
               status={consultationStatus}
               saving={consultationStatusSaving}
@@ -416,7 +416,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
           {loading ? (
             <div className="h-44 animate-pulse rounded-[22px] bg-white/70 ring-1 ring-[#E8F0EB]" />
-          ) : consent?.active && access?.ai_enabled ? (
+          ) : consent?.active && access?.consult_enabled ? (
             <>
               <div ref={chatScrollRef} className="max-h-[500px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
                 {messages.length === 0 && starter?.greeting ? (

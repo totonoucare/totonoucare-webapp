@@ -108,7 +108,7 @@ function FeedbackButtons({ requestId, surface, authedFetch, feedbackByRequest, s
 
 function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) {
   if (loading) return <div className="h-32 animate-pulse rounded-[24px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" />;
-  if (!access?.ai_enabled) {
+  if (!access?.analysis_enabled) {
     return (
       <div className="rounded-[24px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD]">
         <div className="text-[13px] font-black text-slate-900">AI分析は現在プレビュー表示です</div>
@@ -271,10 +271,10 @@ export default function AiAnalysisPanel({
   useEffect(() => {
     if (!active || !bundle || consentLoading) return;
     loadAnalysis({ generate: false });
-  }, [active, bundle, consentLoading, consent?.active, access?.ai_enabled, loadAnalysis]);
+  }, [active, bundle, consentLoading, consent?.active, access?.analysis_enabled, loadAnalysis]);
 
   useEffect(() => {
-    if (!active || !consent?.active || !access?.ai_enabled) {
+    if (!active || !consent?.active || !access?.analysis_enabled) {
       setThreadId("");
       setMessages([]);
       setReplyToFollowUp(null);
@@ -308,7 +308,7 @@ export default function AiAnalysisPanel({
       }
     })();
     return () => { cancelled = true; };
-  }, [active, consent?.active, access?.ai_enabled, authedFetch, periodKey, range.start, range.end]);
+  }, [active, consent?.active, access?.analysis_enabled, authedFetch, periodKey, range.start, range.end]);
 
   useEffect(() => {
     if (!active || !initialPrompt) return;
@@ -387,7 +387,7 @@ export default function AiAnalysisPanel({
 
   async function sendMessage(value = input) {
     const content = String(value || "").trim();
-    if (!content || sending || !consent?.active || !access?.ai_enabled) return;
+    if (!content || sending || !consent?.active || !access?.analysis_enabled) return;
     const replyContext = replyToFollowUp;
     const localId = `local-${Date.now()}`;
     const optimistic = {
@@ -488,15 +488,34 @@ export default function AiAnalysisPanel({
 
   return (
     <div className="space-y-5">
-      <div className="rounded-[24px] bg-[#FFF8EC] px-4 py-3.5 ring-1 ring-[#EED8B4]">
+      <div className={[
+        "rounded-[24px] px-4 py-3.5 ring-1",
+        access?.beta_enabled
+          ? "bg-[#FFF8EC] ring-[#EED8B4]"
+          : "bg-[#F4FAF7] ring-[#CFE7DE]",
+      ].join(" ")}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-[11px] font-black tracking-[0.14em] text-[#A56C18]">AI分析 先行体験中</div>
+            <div className={[
+              "text-[11px] font-black tracking-[0.14em]",
+              access?.beta_enabled ? "text-[#A56C18]" : "text-[#2F816E]",
+            ].join(" ")}>
+              {access?.beta_enabled ? "AI分析 先行体験中" : "プレミアム・AI分析"}
+            </div>
             <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
-              {access?.beta_enabled ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。` : "グラフと記録の振り返りは無料で確認できます。"}
+              {access?.beta_enabled
+                ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。`
+                : "期間別グラフと記録をもとに、体調とケアの傾向を振り返れます。"}
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{access?.beta_enabled ? "先行体験中" : "AI"}</span>
+          <span className={[
+            "shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-black ring-1",
+            access?.beta_enabled
+              ? "text-[#A56C18] ring-[#EED8B4]"
+              : "text-[#2F816E] ring-[#CFE7DE]",
+          ].join(" ")}>
+            {access?.beta_enabled ? "先行体験中" : "契約中"}
+          </span>
         </div>
       </div>
 
@@ -561,7 +580,7 @@ export default function AiAnalysisPanel({
               ) : null}
             </>
           )}
-          {!analysisLoading && !analysisLookupLoading && analysisMeta?.generation_required && analysisMeta?.can_generate && consent?.active && access?.ai_enabled ? (
+          {!analysisLoading && !analysisLookupLoading && analysisMeta?.generation_required && analysisMeta?.can_generate && consent?.active && access?.analysis_enabled ? (
             <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#CFE7DE]">
               <div className="text-[12px] font-black leading-5 text-slate-700">
                 {analysisMeta.stale
@@ -605,7 +624,7 @@ export default function AiAnalysisPanel({
           {chatUsage?.chat ? <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
         </div>
 
-        {!consent?.active || !access?.ai_enabled ? (
+        {!consent?.active || !access?.analysis_enabled ? (
           <div className="mt-4 rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">上のAI利用確認を完了すると、選択期間の記録を引き継いだ会話を始められます。</div>
         ) : (
           <>
