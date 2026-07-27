@@ -31,9 +31,10 @@ test("obsolete Karte, forecast GPT, calendar and insight routes are removed", ()
 test("Stripe checkout and webhook retain only the subscription product", async () => {
   const checkout = await source("app/api/stripe/checkout/route.js");
   const webhook = await source("app/api/stripe/webhook/route.js");
+  const stripeSubscription = await source("lib/stripeSubscription.js");
   const policy = await source("lib/records/policy.js");
 
-  for (const text of [checkout, webhook]) {
+  for (const text of [checkout, `${webhook}\n${stripeSubscription}`]) {
     assert.match(text, /RECORDS_SUBSCRIPTION_PRODUCT/);
     assert.doesNotMatch(text, /personal_mibyo_karte|STRIPE_PERSONAL_KARTE_PRICE_ID|personal_karte_unlocks/);
   }
@@ -41,7 +42,7 @@ test("Stripe checkout and webhook retain only the subscription product", async (
   assert.match(checkout, /mode: "subscription"/);
   assert.match(checkout, /STRIPE_PREMIUM_PRICE_ID/);
   assert.match(webhook, /customer\.subscription\.updated/);
-  assert.match(webhook, /subscription\?\.metadata\?\.product !== PRODUCT/);
+  assert.match(stripeSubscription, /subscription\?\.metadata\?\.product !== PRODUCT/);
 });
 
 test("database cleanup removes only retired models and keeps subscription entitlements", async () => {
