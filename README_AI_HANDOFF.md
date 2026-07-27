@@ -1,3 +1,17 @@
+## v7.79.3 水分環境の状態・方向契約
+
+- `moisture_state`は対象日の絶対湿度帯を表す
+  - `damp`: 14g/m³超を含み、8g/m³未満を含まない
+  - `dry`: 8g/m³未満を含み、14g/m³超を含まない
+  - `neutral`: 全点が8〜14g/m³
+  - `mixed`: 8g/m³未満と14g/m³超の両方を含む
+- `moisture_direction`は絶対湿度の変化方向であり、`up / down / mixed / steady`
+- `damp / dry`が明確な日は、状態側で親和性を決める。方向は現象説明とピーク選択に使う
+- `neutral / mixed`または旧データでは、従来のcomfort departure / reliefから`damp / dry`へ投影する
+- 予報、リスク文脈、公開デモへ`moisture_state`を明示的に引き継ぐ
+
+詳細: `docs/RADAR_MOISTURE_STATE_DIRECTION_V7793.md`
+
 ## v7.79.2 予報文の条件整合と比喩表現
 
 - `app/radar/utils.js`の出やすいサインは、1件目が主な天気現象、2・3件目が選択中の不調から感じ取れるサイン
