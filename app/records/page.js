@@ -9,5 +9,14 @@ export default function RecordsPage({ searchParams }) {
     ? (rawTab === "expert" ? "consult" : rawTab)
     : "record";
   const initialLivePrompt = String(searchParams?.prompt || "").slice(0, 240);
-  return <RecordsPageClient initialTab={tab} initialLivePrompt={initialLivePrompt} />;
+  const checkout = ["success", "cancel"].includes(String(searchParams?.checkout || ""))
+    ? String(searchParams.checkout)
+    : "";
+  return (
+    <RecordsPageClient
+      initialTab={tab}
+      initialLivePrompt={initialLivePrompt}
+      initialCheckoutStatus={checkout}
+    />
+  );
 }
