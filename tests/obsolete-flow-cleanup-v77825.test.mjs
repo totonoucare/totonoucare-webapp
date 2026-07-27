@@ -31,11 +31,13 @@ test("obsolete Karte, forecast GPT, calendar and insight routes are removed", ()
 test("Stripe checkout and webhook retain only the subscription product", async () => {
   const checkout = await source("app/api/stripe/checkout/route.js");
   const webhook = await source("app/api/stripe/webhook/route.js");
+  const policy = await source("lib/records/policy.js");
 
   for (const text of [checkout, webhook]) {
-    assert.match(text, /radar_subscription/);
+    assert.match(text, /RECORDS_SUBSCRIPTION_PRODUCT/);
     assert.doesNotMatch(text, /personal_mibyo_karte|STRIPE_PERSONAL_KARTE_PRICE_ID|personal_karte_unlocks/);
   }
+  assert.match(policy, /product: "radar_subscription"/);
   assert.match(checkout, /mode: "subscription"/);
   assert.match(checkout, /STRIPE_PREMIUM_PRICE_ID/);
   assert.match(webhook, /customer\.subscription\.updated/);
