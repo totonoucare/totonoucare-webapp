@@ -348,6 +348,50 @@ test("moisture relief toward the comfort band does not masquerade as the opposit
   assert.equal(moisture.attention_direction, "down");
 });
 
+test("an all-damp day stays damp even while absolute humidity is falling", () => {
+  const points = Array.from({ length: 24 }, (_, hour) => point(hour, {
+    temp_c: 29 + Math.max(0, Math.sin(((hour - 6) / 24) * Math.PI * 2)) * 5,
+    dew_point_c: 24 - (hour / 23) * 4,
+    humidity_pct: 78 - (hour / 23) * 18,
+  }));
+  const stress = weather.buildWeatherStressV2({ points });
+  const personalized = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({
+      vectors: ["humidity_up"],
+      material: { fluid_damp: 4, qi_deficiency: 3 },
+    }),
+  });
+
+  assert.ok(stress.meta.moisture.min_absolute_humidity_gm3 > 14);
+  assert.equal(stress.moisture_state, "damp");
+  assert.equal(stress.moisture_direction, "down");
+  assert.equal(personalized.moisture_state, "damp");
+  assert.equal(personalized.meta.weather_load_groups.moisture.exact, "damp");
+});
+
+test("an all-dry day stays dry even while absolute humidity is rising", () => {
+  const points = Array.from({ length: 24 }, (_, hour) => point(hour, {
+    temp_c: 12 + Math.max(0, Math.sin(((hour - 6) / 24) * Math.PI * 2)) * 6,
+    dew_point_c: -7 + (hour / 23) * 5,
+    humidity_pct: 28 + (hour / 23) * 12,
+  }));
+  const stress = weather.buildWeatherStressV2({ points });
+  const personalized = forecast.personalizeForecastV2({
+    weatherStress: stress,
+    constitution: constitution({
+      vectors: ["dryness_up"],
+      material: { fluid_deficiency: 4, blood_deficiency: 3 },
+    }),
+  });
+
+  assert.ok(stress.meta.moisture.max_absolute_humidity_gm3 < 8);
+  assert.equal(stress.moisture_state, "dry");
+  assert.equal(stress.moisture_direction, "up");
+  assert.equal(personalized.moisture_state, "dry");
+  assert.equal(personalized.meta.weather_load_groups.moisture.exact, "dry");
+});
+
 test("steady summer burden does not force every profile or the public demo into guard mode", () => {
   const stress = weather.buildWeatherStressV2({
     points: dailyTemperaturePoints({ min: 28, max: 35, dewPoint: 24 }),
@@ -825,6 +869,9 @@ test("three weather loads persist for signed-in and public forecasts", () => {
   assert.match(riskContextSource, /weather_load_groups: personalized\?\.meta\?\.weather_load_groups/);
   assert.match(radarPlanSource, /weather_load_groups: riskContext\.summary\.weather_load_groups/);
   assert.match(publicForecastSource, /weather_load_groups: weatherLoadGroups/);
+  assert.match(riskContextSource, /moisture_state: weatherStress\.moisture_state/);
+  assert.match(radarPlanSource, /moisture_state: riskContext\.summary\.moisture_state/);
+  assert.match(publicForecastSource, /moisture_state: publicForecast\.moisture_state/);
   assert.match(publicForecastSource, /personalizePublicForecastV2/);
   assert.doesNotMatch(publicForecastSource, /calcUniversalSignal|buildUniversalChannelRanking/);
 });
