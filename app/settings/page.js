@@ -10,6 +10,8 @@ import {
   flattenRadarLocationPresets,
 } from "@/lib/radar_v1/locationPresets";
 import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
+import CheckoutButton from "@/components/billing/CheckoutButton";
+import BillingPortalButton from "@/components/billing/BillingPortalButton";
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
@@ -99,6 +101,8 @@ export default function SettingsPage() {
   const [user, setUser] = useState(null);
   const [karteCount, setKarteCount] = useState(null);
   const [error, setError] = useState("");
+  const [billingStatus, setBillingStatus] = useState(null);
+  const [checkoutStatus, setCheckoutStatus] = useState("");
 
   const [notificationSettings, setNotificationSettings] = useState(null);
   const [savingNotifications, setSavingNotifications] = useState(false);
@@ -144,6 +148,9 @@ export default function SettingsPage() {
         setLoading(true);
         setError("");
         setStandalone(isStandalonePwa());
+        const checkout = new URLSearchParams(window.location.search).get("checkout");
+        const normalizedCheckout = checkout === "success" || checkout === "cancel" ? checkout : "";
+        setCheckoutStatus(normalizedCheckout);
 
         const { data } = await supabase.auth.getUser();
         if (cancelled) return;
@@ -151,7 +158,7 @@ export default function SettingsPage() {
 
         if (!data?.user) return;
 
-        const [diagnosesRes, notificationRes, locationRes, symptomRes] = await Promise.allSettled([
+        const [diagnosesRes, notificationRes, locationRes, symptomRes, billingRes] = await Promise.allSettled([
           supabase
             .from("diagnosis_events")
             .select("id", { count: "exact", head: true })
@@ -159,6 +166,7 @@ export default function SettingsPage() {
           authedFetch("/api/push/settings"),
           authedFetch("/api/radar/location"),
           authedFetch("/api/profile/active-symptom-focus"),
+          authedFetch("/api/premium/status"),
         ]);
 
         if (cancelled) return;
@@ -169,6 +177,20 @@ export default function SettingsPage() {
           const profile = symptomRes.value?.profile || null;
           setActiveSymptomProfile(profile);
           setSelectedSymptomKey(profile?.active_symptom_focus || profile?.diagnosis_symptom_focus || "");
+        }
+        let latestBilling = billingRes.status === "fulfilled" ? billingRes.value || null : null;
+        if (latestBilling) setBillingStatus(latestBilling);
+
+        if (normalizedCheckout === "success" && !latestBilling?.isPremium) {
+          for (let attempt = 1; attempt < 4; attempt += 1) {
+            await new Promise((resolve) => window.setTimeout(resolve, 1200));
+            if (cancelled) return;
+            try {
+              latestBilling = await authedFetch("/api/premium/status");
+              setBillingStatus(latestBilling || null);
+              if (latestBilling?.isPremium || latestBilling?.access?.entitled) break;
+            } catch {}
+          }
         }
       } catch (e) {
         if (!cancelled) setError(e?.message || "設定情報を読み込めませんでした。");
@@ -342,6 +364,9 @@ export default function SettingsPage() {
     if (!location) return "未設定";
     return location.display_name || location.region_name || location.label || "設定済み";
   }, [location]);
+  const premiumActive = Boolean(billingStatus?.isPremium || billingStatus?.access?.entitled);
+  const betaActive = Boolean(billingStatus?.access?.beta_enabled);
+  const stripeTestMode = billingStatus?.stripe_mode === "test";
 
   return (
     <AppShell title="設定" subtitle="アカウントとアプリ設定">
@@ -358,6 +383,23 @@ export default function SettingsPage() {
         </Module>
       ) : null}
 
+      {checkoutStatus === "success" ? (
+        <Module className="p-4 bg-[#EAF7F1] ring-1 ring-[#CFE7DE]">
+          <div className="text-[13px] font-black leading-5 text-[#2F816E]">
+            {premiumActive
+              ? "プレミアムの利用を開始しました。"
+              : "決済情報を確認しています。反映まで少し時間がかかる場合があります。"}
+          </div>
+        </Module>
+      ) : null}
+      {checkoutStatus === "cancel" ? (
+        <Module className="p-4 bg-[#F7FAF8] ring-1 ring-[#DCE8DD]">
+          <div className="text-[13px] font-bold leading-5 text-slate-500">
+            申込みはキャンセルされました。料金は発生していません。
+          </div>
+        </Module>
+      ) : null}
+
       <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
         <Row label="メールアドレス" value={user?.email || "未ログイン"} />
@@ -366,6 +408,63 @@ export default function SettingsPage() {
           value={loading ? "確認中…" : `${karteCount ?? 0}件`}
           action={<Button size="sm" variant="secondary" onClick={() => router.push("/history")}>履歴へ</Button>}
         />
+      </Module>
+
+      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-black tracking-[0.12em] text-[#2F816E]/70">利用プラン</div>
+            <div className="mt-1 text-[17px] font-black text-slate-900">
+              {loading
+                ? "確認中…"
+                : premiumActive
+                  ? "プレミアム利用中"
+                  : betaActive
+                    ? "AI先行体験中"
+                    : "無料プラン"}
+            </div>
+          </div>
+          <span className={[
+            "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ring-1",
+            premiumActive
+              ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]"
+              : betaActive
+                ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
+                : "bg-[#F7FAF8] text-slate-500 ring-[#DCE8DD]",
+          ].join(" ")}>
+            {premiumActive ? "契約中" : betaActive ? "無料公開中" : "無料"}
+          </span>
+        </div>
+
+        <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">
+          {premiumActive
+            ? "AI分析とEkken相談を利用できます。記録カレンダーは契約状態にかかわらず無料です。"
+            : betaActive
+              ? "2026年8月31日まで、AI分析とEkken相談を無料で体験できます。9月1日以降も記録カレンダーは無料です。"
+              : "記録カレンダーは無料です。AI分析とEkken相談はプレミアムで利用できます。"}
+        </div>
+
+        {premiumActive && billingStatus?.subscription?.customer_portal_available ? (
+          <BillingPortalButton returnPath="/settings" className="mt-4 w-full bg-white" />
+        ) : null}
+        {!premiumActive && betaActive && stripeTestMode ? (
+          <div className="mt-4 rounded-[18px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
+            <div className="text-[11px] font-black tracking-[0.12em] text-[#A56C18]">
+              STRIPE TEST MODE
+            </div>
+            <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
+              無料公開中でも、テスト用Stripeキーの環境では申込み・Webhook・解約導線を確認できます。実際の請求は発生しません。
+            </div>
+            <CheckoutButton returnPath="/settings" className="mt-3 w-full">
+              テスト決済を試す
+            </CheckoutButton>
+          </div>
+        ) : null}
+        {!premiumActive && !betaActive ? (
+          <CheckoutButton returnPath="/settings" className="mt-4 w-full">
+            プレミアムの内容を確認する
+          </CheckoutButton>
+        ) : null}
       </Module>
 
       <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
