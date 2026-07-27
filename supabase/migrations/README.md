@@ -16,6 +16,15 @@ Supabase SQL Editorで実際に実行するDB変更SQLを置く場所。
 - 失敗した実験SQLは入れない。
 - 秘密情報は絶対に入れない。
 
+## v7.79.0 Stripeサブスク識別子
+
+```text
+20260727_add_stripe_subscription_identity_v7790.sql
+20260727_rollback_stripe_subscription_identity_v7790.sql
+```
+
+`entitlements`へStripe Customer / Subscription / Price IDを追加し、Subscription IDをWebhookの一意な更新キーにする。アプリをデプロイする前にmigrationを適用する。確認SQLは`supabase/checks/20260727_check_stripe_subscription_identity_v7790.sql`、Stripe Dashboardを含む全手順は`docs/STRIPE_SUBSCRIPTION_LAUNCH_V7790.md`。
+
 ## v7.78.25.2 / v7.78.26.2 寒暖差の予報保存
 
 ```text
