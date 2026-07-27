@@ -264,7 +264,7 @@ export async function POST(req) {
       getRecordsAccess(user.id),
       hasActiveAiConsent(user.id),
     ]);
-    if (!access.ai_enabled) {
+    if (!access.analysis_enabled) {
       return NextResponse.json({ error: "AI相談は現在利用できません", code: "ai_access_required" }, { status: 403 });
     }
     if (!consent) {
