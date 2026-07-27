@@ -12,11 +12,13 @@ export default function RecordsPage({ searchParams }) {
   const checkout = ["success", "cancel"].includes(String(searchParams?.checkout || ""))
     ? String(searchParams.checkout)
     : "";
+  const checkoutSessionId = String(searchParams?.session_id || "").slice(0, 255);
   return (
     <RecordsPageClient
       initialTab={tab}
       initialLivePrompt={initialLivePrompt}
       initialCheckoutStatus={checkout}
+      initialCheckoutSessionId={checkoutSessionId}
     />
   );
 }
