@@ -1,18 +1,34 @@
 import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
 import { requireUser } from "@/lib/requireUser";
+import { getPremiumStatus } from "@/lib/premium";
+import { RECORDS_SUBSCRIPTION_PRODUCT } from "@/lib/records/policy";
+import { getRecordsAccess } from "@/lib/records/access";
+import { stripeModeFromSecret } from "@/lib/stripeMode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getOrigin(req) {
-  return process.env.NEXT_PUBLIC_APP_URL || req.headers.get("origin");
+  return process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
 }
 
 function safeReturnPath(value, fallback = "/records") {
   if (typeof value !== "string") return fallback;
-  if (!value.startsWith("/") || value.startsWith("//")) return fallback;
+  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
   return value;
+}
+
+function checkoutReturnUrls(origin, returnPath) {
+  const success = new URL(returnPath, origin);
+  success.searchParams.set("checkout", "success");
+  success.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+  const cancel = new URL(returnPath, origin);
+  cancel.searchParams.set("checkout", "cancel");
+  return {
+    successUrl: success.toString().replace("%7BCHECKOUT_SESSION_ID%7D", "{CHECKOUT_SESSION_ID}"),
+    cancelUrl: cancel.toString(),
+  };
 }
 
 async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
@@ -33,6 +49,7 @@ async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
       { status: 500 }
     );
   }
+  const { successUrl, cancelUrl } = checkoutReturnUrls(origin, returnPath);
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
@@ -43,17 +60,18 @@ async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
         quantity: 1,
       },
     ],
-    success_url: `${origin}${returnPath}?checkout=success`,
-    cancel_url: `${origin}${returnPath}?checkout=cancel`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
     client_reference_id: user.id,
+    customer_email: user.email || undefined,
     metadata: {
       supabase_user_id: user.id,
-      product: "radar_subscription",
+      product: RECORDS_SUBSCRIPTION_PRODUCT,
     },
     subscription_data: {
       metadata: {
         supabase_user_id: user.id,
-        product: "radar_subscription",
+        product: RECORDS_SUBSCRIPTION_PRODUCT,
       },
     },
     allow_promotion_codes: true,
@@ -72,6 +90,26 @@ export async function POST(req) {
 
     const stripe = getStripeServer();
     const body = await req.json().catch(() => ({}));
+    const [premium, access] = await Promise.all([
+      getPremiumStatus(user.id),
+      getRecordsAccess(user.id),
+    ]);
+    if (premium.isPremium || access.entitled) {
+      return NextResponse.json(
+        { error: "すでにプレミアムを利用中です", code: "already_subscribed" },
+        { status: 409 }
+      );
+    }
+    const stripeTestMode = stripeModeFromSecret() === "test";
+    if (access.beta_enabled && !stripeTestMode) {
+      return NextResponse.json(
+        {
+          error: "プレミアムの申込みは2026年9月1日から開始します",
+          code: "billing_not_started",
+        },
+        { status: 409 }
+      );
+    }
 
     return await createRadarSubscriptionCheckout({ req, stripe, user, body });
   } catch (error) {
