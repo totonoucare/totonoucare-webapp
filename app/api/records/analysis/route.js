@@ -151,19 +151,22 @@ export async function POST(req) {
       return NextResponse.json({ error: "invalid start/end" }, { status: 400 });
     }
 
-    const [bundle, profile, access] = await Promise.all([
+    const access = await getRecordsAccess(user.id);
+    if (!access.analysis_enabled) {
+      return NextResponse.json(
+        { error: "AI分析はプレミアム機能です", code: "analysis_access_required" },
+        { status: 403 }
+      );
+    }
+    const [bundle, profile] = await Promise.all([
       loadRecordsRange(user.id, start, end, { includeCarePlans: true }),
       loadRecordsProfile(user.id),
-      getRecordsAccess(user.id),
     ]);
     const summary = buildRecordsSummary(bundle.rows);
     const fallback = deterministicAnalysis(summary);
 
     if (summary.recorded_days < 3) {
       return algorithmResponse({ fallback, summary, access, reason: "insufficient_records", canGenerate: false });
-    }
-    if (!access.ai_enabled) {
-      return algorithmResponse({ fallback, summary, access, reason: "ai_access_required", canGenerate: false });
     }
     if (!process.env.OPENAI_API_KEY) {
       return algorithmResponse({ fallback, summary, access, reason: "openai_not_configured", canGenerate: false });
