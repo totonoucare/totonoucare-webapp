@@ -2,11 +2,12 @@
 import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabaseAdmin";
+import { RECORDS_SUBSCRIPTION_PRODUCT } from "@/lib/records/policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PRODUCT = "radar_subscription";
+const PRODUCT = RECORDS_SUBSCRIPTION_PRODUCT;
 const SOURCE = "stripe";
 
 function unixToIso(value) {
@@ -28,10 +29,19 @@ function mapStripeStatus(subscription) {
   return "inactive";
 }
 
+function stripeObjectId(value) {
+  if (!value) return null;
+  return typeof value === "string" ? value : value.id || null;
+}
+
+function subscriptionPriceId(subscription) {
+  return subscription?.items?.data?.[0]?.price?.id || null;
+}
+
 async function findLatestEntitlement(supabase, userId) {
   const { data, error } = await supabase
     .from("entitlements")
-    .select("id, user_id, status, starts_at, ends_at, created_at")
+    .select("id,user_id,status,starts_at,ends_at,created_at,stripe_customer_id,stripe_subscription_id,stripe_price_id,stripe_livemode")
     .eq("user_id", userId)
     .eq("product", PRODUCT)
     .eq("source", SOURCE)
@@ -48,37 +58,62 @@ async function upsertEntitlement({
   status,
   startsAt = null,
   endsAt = null,
+  customerId = null,
+  subscriptionId = null,
+  priceId = null,
+  livemode = null,
 }) {
   const supabase = createAdminClient();
+  const now = new Date().toISOString();
+  const payload = {
+    user_id: userId,
+    product: PRODUCT,
+    source: SOURCE,
+    status,
+    starts_at: startsAt || now,
+    ends_at: endsAt,
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscriptionId,
+    stripe_price_id: priceId,
+    stripe_livemode: typeof livemode === "boolean" ? livemode : null,
+    updated_at: now,
+  };
+
+  if (subscriptionId) {
+    const { error } = await supabase
+      .from("entitlements")
+      .upsert(payload, { onConflict: "stripe_subscription_id" });
+    if (error) throw error;
+    return;
+  }
+
   const existing = await findLatestEntitlement(supabase, userId);
 
   if (existing) {
-    const payload = {
+    const updatePayload = {
       status,
       ends_at: endsAt,
+      updated_at: now,
     };
 
     if (!existing.starts_at && startsAt) {
-      payload.starts_at = startsAt;
+      updatePayload.starts_at = startsAt;
     }
+    if (!existing.stripe_customer_id && customerId) updatePayload.stripe_customer_id = customerId;
+    if (!existing.stripe_subscription_id && subscriptionId) updatePayload.stripe_subscription_id = subscriptionId;
+    if (priceId) updatePayload.stripe_price_id = priceId;
+    if (typeof livemode === "boolean") updatePayload.stripe_livemode = livemode;
 
     const { error } = await supabase
       .from("entitlements")
-      .update(payload)
+      .update(updatePayload)
       .eq("id", existing.id);
 
     if (error) throw error;
     return;
   }
 
-  const { error } = await supabase.from("entitlements").insert({
-    user_id: userId,
-    product: PRODUCT,
-    source: SOURCE,
-    status,
-    starts_at: startsAt || new Date().toISOString(),
-    ends_at: endsAt,
-  });
+  const { error } = await supabase.from("entitlements").insert(payload);
 
   if (error) throw error;
 }
@@ -101,6 +136,8 @@ async function handleCheckoutCompleted(session) {
   let startsAt = new Date().toISOString();
   let endsAt = null;
   let status = "active";
+  let customerId = stripeObjectId(session.customer);
+  let priceId = null;
 
   const subscriptionId =
     typeof session.subscription === "string"
@@ -110,6 +147,8 @@ async function handleCheckoutCompleted(session) {
   if (subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     status = mapStripeStatus(subscription);
+    customerId = stripeObjectId(subscription.customer) || customerId;
+    priceId = subscriptionPriceId(subscription);
     startsAt =
       unixToIso(subscription.current_period_start) ||
       unixToIso(subscription.start_date) ||
@@ -125,6 +164,10 @@ async function handleCheckoutCompleted(session) {
     status,
     startsAt,
     endsAt,
+    customerId,
+    subscriptionId,
+    priceId,
+    livemode: Boolean(session.livemode),
   });
 }
 
@@ -138,6 +181,9 @@ async function handleSubscriptionChanged(subscription) {
   }
 
   const status = mapStripeStatus(subscription);
+  const customerId = stripeObjectId(subscription.customer);
+  const subscriptionId = subscription.id || null;
+  const priceId = subscriptionPriceId(subscription);
 
   const startsAt =
     unixToIso(subscription.current_period_start) ||
@@ -161,7 +207,22 @@ async function handleSubscriptionChanged(subscription) {
     status,
     startsAt,
     endsAt,
+    customerId,
+    subscriptionId,
+    priceId,
+    livemode: Boolean(subscription.livemode),
   });
+}
+
+async function handleInvoiceChanged(invoice) {
+  const subscriptionId = stripeObjectId(
+    invoice?.subscription ||
+    invoice?.parent?.subscription_details?.subscription
+  );
+  if (!subscriptionId) return;
+  const stripe = getStripeServer();
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  await handleSubscriptionChanged(subscription);
 }
 
 export async function POST(req) {
@@ -205,8 +266,16 @@ export async function POST(req) {
         }
 
         case "customer.subscription.updated":
+        case "customer.subscription.created":
         case "customer.subscription.deleted": {
           await handleSubscriptionChanged(event.data.object);
+          break;
+        }
+
+        case "invoice.paid":
+        case "invoice.payment_failed":
+        case "invoice.payment_action_required": {
+          await handleInvoiceChanged(event.data.object);
           break;
         }
 
