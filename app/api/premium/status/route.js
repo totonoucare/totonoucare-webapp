@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/requireUser";
 import { getPremiumStatus } from "@/lib/premium";
+import { getRecordsAccess } from "@/lib/records/access";
+import { stripeModeFromSecret } from "@/lib/stripeMode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,9 +16,14 @@ export async function GET(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const result = await getPremiumStatus(user.id);
+    const [result, access] = await Promise.all([
+      getPremiumStatus(user.id),
+      getRecordsAccess(user.id),
+    ]);
 
-    return NextResponse.json(result);
+    const stripeMode = stripeModeFromSecret();
+
+    return NextResponse.json({ ...result, access, stripe_mode: stripeMode });
   } catch (error) {
     console.error("[premium.status]", error);
     return NextResponse.json(
