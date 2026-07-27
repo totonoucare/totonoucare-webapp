@@ -1,3 +1,13 @@
+## v7.79.2 予報文の条件整合と比喩表現
+
+- `app/radar/utils.js`の出やすいサインは、1件目が主な天気現象、2・3件目が選択中の不調から感じ取れるサイン
+- `mood`を選んだだけで`胃腸が重い`、`気分に湿気がたまる`などの別条件を補わない
+- 胃腸・湿気などを気分の文へ接続する場合は、実際の天気イベント、体質傾向、不調条件のいずれかに根拠が必要
+- 東洋医学の感覚を伝える比喩は使用可。ただし、身体領域を飛び越える因果、意味の定まらない空間比喩、複数の機械比喩を重ねた表現は避ける
+- 予報スコア、体質補正、天気ストレス、対策ケア選定は変更していない
+
+詳細: `docs/RADAR_COPY_CLARITY_V7792.md`
+
 ## v7.78.26.2 trigger_dir DB契約
 
 - `radar_forecasts.trigger_dir`は`up / down / change / none`
@@ -189,6 +199,31 @@
 - 体質・予報・商品選定ロジック、SQL、環境変数は変更なし
 
 # 未病レーダー AI引き継ぎ入口
+
+## v7.79.1 Stripe決済後の同期契約
+
+- 契約表示の正本は`getBillingStatus(userId)`。`getPremiumStatus`と
+  `getRecordsAccess`を別々に読んで画面判断を分岐させない
+- 有効なentitlementと無料先行体験が同時に存在する場合、`mode = paid`を優先する
+- Checkout成功URLには`session_id={CHECKOUT_SESSION_ID}`を付け、
+  `/api/stripe/checkout/confirm`でログインユーザー、商品、Price、test/liveモードを
+  検証してから同期する
+- Checkout確認とWebhookは`lib/stripeSubscription.js`を共用する
+- `already_subscribed`は契約状態を含む正常な競合応答として扱い、赤いエラーへ戻さない
+- 契約状態APIは`private, no-store`。設定・記録画面はfocus/visibility復帰時にも再確認する
+- Checkout queryは契約確認後に削除し、失敗時は再読込で再試行できるよう保持する
+- DB migrationと環境変数の追加はない
+
+詳細: `docs/STRIPE_CHECKOUT_CONFIRMATION_V7791.md`
+
+## v7.79.0 Stripeサブスク境界
+
+- 無料: 体質チェック、体質トリセツ、体調予報、対策ケア、記録カレンダー
+- プレミアム: AI分析タブ全体、Ekken相談
+- 2026年8月31日までは先行体験。9月1日0:00 JSTから有効なentitlementで判定
+- test/liveのStripe権限を`stripe_livemode`で分離する
+
+詳細: `docs/STRIPE_SUBSCRIPTION_LAUNCH_V7790.md`
 
 ## v7.78.18 互換性とEkkenの気圧反応契約
 
