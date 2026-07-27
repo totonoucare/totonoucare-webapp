@@ -250,8 +250,21 @@ export async function GET(req) {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const today = jstDateString(new Date());
-    const [access, consent, starter, usage, thread] = await Promise.all([
-      getRecordsAccess(user.id),
+    const access = await getRecordsAccess(user.id);
+    if (!access.consult_enabled) {
+      return NextResponse.json({
+        data: {
+          access,
+          consent: { active: false },
+          starter: null,
+          usage: null,
+          thread: null,
+          consultation_status: null,
+          messages: [],
+        },
+      });
+    }
+    const [consent, starter, usage, thread] = await Promise.all([
       hasActiveAiConsent(user.id),
       loadStarterContext(user.id, today),
       getAiUsage(user.id),
@@ -294,7 +307,7 @@ export async function POST(req) {
       hasActiveAiConsent(user.id),
       getAiUsage(user.id),
     ]);
-    if (!access.ai_enabled) {
+    if (!access.consult_enabled) {
       return NextResponse.json({ error: "Ekken相談は現在利用できません", code: "ai_access_required" }, { status: 403 });
     }
     if (!consent) {
