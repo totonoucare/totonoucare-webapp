@@ -159,38 +159,57 @@ export function IconWeatherHeat({ className = "h-10 w-10", ...props }) {
   );
 }
 
-// 高温（強い日照・太陽熱 / サンイエロー〜オレンジ系）
+// 高温（熱が空間にこもる灼熱コア / イエロー〜レッド系）
 export function IconWeatherHighTemperature({ className = "h-10 w-10", ...props }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true" {...props}>
       <defs>
-        <radialGradient id="grad-high-temperature" cx="45%" cy="42%" r="55%">
-          <stop offset="0%" stopColor="#fde68a" stopOpacity="0.95" />
-          <stop offset="62%" stopColor="#fb923c" stopOpacity="0.48" />
-          <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
+        <radialGradient id="grad-high-temperature" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#fff7ed" stopOpacity="0.92" />
+          <stop offset="58%" stopColor="#fb923c" stopOpacity="0.34" />
+          <stop offset="100%" stopColor="#dc2626" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="sun-high-temperature" x1="20%" y1="10%" x2="80%" y2="90%">
-          <stop offset="0%" stopColor="#facc15" />
-          <stop offset="100%" stopColor="#f97316" />
+        <linearGradient id="core-high-temperature" x1="20%" y1="12%" x2="82%" y2="88%">
+          <stop offset="0%" stopColor="#fde047" />
+          <stop offset="54%" stopColor="#f97316" />
+          <stop offset="100%" stopColor="#dc2626" />
+        </linearGradient>
+        <linearGradient id="wave-high-temperature" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fb923c" />
+          <stop offset="100%" stopColor="#dc2626" />
         </linearGradient>
       </defs>
 
-      {/* 日照そのものが強い、絶対的な高温環境 */}
+      {/* 熱が空間にこもっている、やわらかな灼熱の背景 */}
       <circle cx="16" cy="16" r="13" fill="url(#grad-high-temperature)" />
-      <circle cx="16" cy="16" r="6.5" fill="url(#sun-high-temperature)" />
-      <circle cx="14" cy="14" r="2.2" fill="#fff7cc" opacity="0.55" />
 
-      {/* 太陽から外へ伸びる熱の光 */}
-      <g stroke="#f97316" strokeWidth="1.8" strokeLinecap="round">
-        <path d="M16 2.5 V6" />
-        <path d="M16 26 V29.5" />
-        <path d="M2.5 16 H6" />
-        <path d="M26 16 H29.5" />
-        <path d="M6.5 6.5 L9 9" />
-        <path d="M23 23 L25.5 25.5" />
-        <path d="M25.5 6.5 L23 9" />
-        <path d="M9 23 L6.5 25.5" />
+      {/* 太陽ではなく、内部に熱を蓄えた不定形の熱源 */}
+      <path
+        d="M16 8 C19.4 8.3 22.6 10.1 23.4 13.2 C24.3 16.5 23.3 20.3 20.5 22.3 C17.8 24.2 13.4 24.2 10.7 21.8 C8.2 19.6 7.7 15.7 9 12.5 C10.2 9.5 13 7.7 16 8 Z"
+        fill="url(#core-high-temperature)"
+      />
+      <path
+        d="M13.2 11.2 C15.1 9.8 18.2 10.1 19.7 11.7"
+        fill="none"
+        stroke="#fff7cc"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        opacity="0.58"
+      />
+
+      {/* 全方向へ揺らぐ熱波。矢印を使わず、絶対的な高温を表現 */}
+      <g fill="none" stroke="url(#wave-high-temperature)" strokeLinecap="round">
+        <path d="M10.2 5.6 C12.8 4.2 19.2 4.2 21.8 5.6" strokeWidth="1.6" opacity="0.88" />
+        <path d="M10.2 26.4 C12.8 27.8 19.2 27.8 21.8 26.4" strokeWidth="1.6" opacity="0.72" />
+        <path d="M5.6 10.2 C4.2 12.8 4.2 19.2 5.6 21.8" strokeWidth="1.6" opacity="0.8" />
+        <path d="M26.4 10.2 C27.8 12.8 27.8 19.2 26.4 21.8" strokeWidth="1.6" opacity="0.8" />
       </g>
+
+      {/* 熱密度の高さを示す小さな粒子 */}
+      <circle cx="7.6" cy="7.7" r="1" fill="#fb923c" opacity="0.7" />
+      <circle cx="24.7" cy="7.9" r="1.15" fill="#f97316" opacity="0.72" />
+      <circle cx="7.5" cy="24.3" r="1.15" fill="#f97316" opacity="0.62" />
+      <circle cx="24.6" cy="24.4" r="1" fill="#dc2626" opacity="0.55" />
     </svg>
   );
 }
