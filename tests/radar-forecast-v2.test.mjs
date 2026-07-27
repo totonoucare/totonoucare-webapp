@@ -711,7 +711,7 @@ test("forecast UI keeps three weather stresses simple and shows at most one mean
   assert.match(radarPageSource, /compactPeakLabel/);
   assert.match(radarPageSource, /IconAttention/);
   assert.doesNotMatch(radarPageSource, />負荷<\/span>/);
-  assert.match(radarPageSource, /天気ストレスのピーク/);
+  assert.match(radarPageSource, /ピーク時間帯/);
   assert.match(radarPageSource, /factor\.load >= 0\.34/);
   assert.match(radarPageSource, /weatherLoadPeak\.detailLabel/);
   assert.match(radarUtilsSource, /temperature: "気温ストレス"/);
@@ -750,7 +750,7 @@ test("weather peak language never treats the peak as symptom onset", () => {
 test("weather peak pill is readable and marks cross-midnight windows explicitly", () => {
   assert.match(radarPageSource, /endHour < startHour/);
   assert.match(radarPageSource, /`\$\{startWithUnit\}–翌\$\{endWithUnit\}`/);
-  assert.match(radarPageSource, /rounded-full[\s\S]*?text-\[12px\][\s\S]*?天気ストレスのピーク/);
+  assert.match(radarPageSource, /rounded-full[\s\S]*?text-\[12px\][\s\S]*?ピーク時間帯/);
 });
 
 test("weather icons separate temperature state direction and mixed changes", () => {
@@ -789,11 +789,12 @@ test("constitution guide shares V2 affinities and treats pressure as one slot", 
   assert.doesNotMatch(resultPageSource, /buildPersonalWeatherAffinityProfile/);
 });
 
-test("forecast and constitution copy reflect the V2 hierarchy without removing useful metaphors", () => {
+test("forecast and constitution copy reflect the V2 hierarchy while keeping metaphors concrete", () => {
   assert.equal((radarPageSource.match(/対策ケア/g) || []).length, 1);
   assert.match(resultPageSource, /寒さ・暑さへの感じ方、天気への感じやすさ、気・血・水の6つの傾向/);
   assert.doesNotMatch(resultPageSource, /天候の影響がストレートに現れやすくなります/);
-  assert.match(radarUtilsSource, /胃腸が水を含んだスポンジみたいに重く感じやすい日/);
+  assert.match(radarUtilsSource, /胃腸に水分を含んだような重さが残りやすい日/);
+  assert.doesNotMatch(radarUtilsSource, /気分にも湿気|水を含んだスポンジ/);
   assert.doesNotMatch(radarUtilsSource, /湿気の重い膜|胃腸を止めっぱなし/);
   assert.doesNotMatch(pointExplanationSource, /湿気の重い膜/);
   assert.doesNotMatch(lifestyleRulesSource, /胃腸を止めっぱなし/);
