@@ -88,6 +88,7 @@ export async function GET(req) {
         personal_secondary_trigger_exact: secondaryTrigger?.exact || null,
         personal_main_event_key: publicForecast.personal_main_event_key || null,
         pressure_direction: publicForecast.pressure_direction || null,
+        moisture_state: publicForecast.moisture_state || weatherStress.moisture_state || null,
         pressure_response_direction: publicForecast.pressure_response_direction || "balanced",
         secondary_trigger_label: secondaryTrigger
           ? getTriggerLabel(secondaryTrigger.main_trigger, secondaryTrigger.trigger_dir)
