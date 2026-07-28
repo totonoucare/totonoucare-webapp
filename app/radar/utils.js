@@ -3,6 +3,7 @@
 import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
+import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";
 import {
   getBodyResponseKey,
   getLegacyCareTriggerKey,
@@ -623,19 +624,6 @@ export function getForecastTriggerFactors(forecast) {
 
   return factors.slice(0, 2);
 }
-
-
-
-const BODY_SIGN_LABELS = {
-  pressure_down: ["頭が重くなりやすい", "首肩がこわばりやすい", "だるさが抜けにくい"],
-  pressure_up: ["張りつめ感が出やすい", "首肩に力が入りやすい", "気分が落ち着きにくい"],
-  damp: ["体が重だるくなりやすい", "眠気が出やすい", "胃腸が重く感じやすい"],
-  humidity: ["体が重だるくなりやすい", "眠気が出やすい", "胃腸が重く感じやすい"],
-  cold: ["手足やお腹が冷えやすい", "腰・首肩がこわばりやすい", "動き出しにくさが出やすい"],
-  heat: ["熱がこもって疲れやすい", "のぼせ・イライラが出やすい", "汗で消耗しやすい"],
-  dry: ["喉・肌・目が乾きやすい", "疲れがカサつきとして出やすい", "呼吸が浅くなりやすい"],
-};
-
 const PEAK_PREP_ITEMS = {
   pressure_down: ["天気ストレスが強まる前に首肩を一度ゆるめる", "目・耳まわりを一度ゆるめる", "大事な作業は早めに寄せる"],
   pressure_up: ["予定を詰め込みすぎない", "肩の力を抜いて呼吸を一度整える", "刺激の強い飲食を控える"],
@@ -821,135 +809,6 @@ const SYMPTOM_WEATHER_LEADS = {
   },
 };
 
-const SYMPTOM_WEATHER_BODY_SIGN_LABELS = {
-  fatigue: {
-    pressure_down: ["頭や体が重く、だるさが抜けにくい", "動き出しに時間がかかりやすい"],
-    pressure_up: ["張りつめた後に疲れが出やすい", "肩の力みで消耗しやすい"],
-    damp: ["体が重だるく感じやすい", "眠気やだるさが残りやすい"],
-    cold: ["冷えで動き出しが重くなりやすい", "手足やお腹の冷えで疲れやすい"],
-    heat: ["暑さで消耗しやすい", "汗や暑さで疲れが出やすい"],
-    dry: ["乾きで疲れが抜けにくい", "のどや目の乾きで集中が切れやすい"],
-    damp_heat: ["体は重いのに暑さで消耗しやすい", "だるさと熱こもりが重なりやすい"],
-    damp_cold: ["体が重く冷えて、動き出しが鈍りやすい", "だるさと冷えが重なりやすい"],
-    dry_heat: ["乾きと暑さで消耗感が出やすい", "のどや目の乾きで疲れやすい"],
-    dry_cold: ["冷えと乾きで疲れが残りやすい", "体がこわばって休まりにくい"],
-    pressure_down_damp: ["重だるさが強まりやすい", "眠気やだるさが残りやすい"],
-    pressure_up_heat: ["張りつめと暑さで疲れやすい", "急いだ後の消耗が出やすい"],
-  },
-  sleep: {
-    pressure_down: ["日中の眠気が夜のリズムにも残りやすい", "頭の重さで寝起きが重くなりやすい"],
-    pressure_up: ["張りつめが残って眠りに入りにくい", "肩の力が抜けにくい"],
-    damp: ["湿で眠気や寝起きのだるさが残りやすい", "食後の重さが夜まで残りやすい"],
-    cold: ["冷えで体が休みに入りにくい", "朝のだるさにつながりやすい"],
-    heat: ["熱がこもって寝つきに響きやすい", "寝る前まで頭が冴えやすい"],
-    dry: ["目やのどの乾きで休まりにくい", "乾きで眠りが浅く感じやすい"],
-    damp_heat: ["体は重いのに熱がこもって寝つきに響きやすい", "眠気と寝苦しさが重なりやすい"],
-    damp_cold: ["体が重く冷えて、休みに入りにくい", "寝起きのだるさが残りやすい"],
-    dry_heat: ["乾きと熱こもりで頭が冴えやすい", "目やのどの疲れが夜まで残りやすい"],
-    dry_cold: ["冷えと乾きで体が休まりにくい", "寝る前にこわばりが残りやすい"],
-    pressure_down_damp: ["眠気と体の重さが残りやすい", "寝起きのだるさにつながりやすい"],
-    pressure_up_heat: ["張りつめと熱こもりが残りやすい", "寝る前まで頭が冴えやすい"],
-  },
-  digestion: {
-    pressure_down: ["胃腸の動きが重く感じやすい", "お腹の張りやもたれが残りやすい"],
-    pressure_up: ["張りつめが胃腸の重さに出やすい", "急いで食べると負担が出やすい"],
-    damp: ["胃腸まわりが重く感じやすい", "食後のもたれが残りやすい"],
-    cold: ["冷えで胃腸の動きが鈍りやすい", "冷たいものが響きやすい"],
-    heat: ["冷たいものが増えると胃腸に負担が出やすい", "暑さで食べ方が乱れやすい"],
-    dry: ["のどや便通の乾きに気づきやすい", "水分の入れ方が乱れやすい"],
-    damp_heat: ["胃腸の重さと冷たい飲み物の負担が重なりやすい", "もたれや張りが出やすい"],
-    damp_cold: ["胃腸が冷えて重くなりやすい", "食後のもたれが残りやすい"],
-    dry_heat: ["のどの渇きで冷たい飲み物に寄りやすい", "冷たいものが胃腸に響きやすい"],
-    dry_cold: ["冷えと乾きで胃腸のリズムが乱れやすい", "温かい水分が不足しやすい"],
-    pressure_down_damp: ["胃腸の重さや張りが残りやすい", "食後のだるさが出やすい"],
-    pressure_up_heat: ["張りつめや暑さで食べ方が乱れやすい", "冷たい飲み物が胃腸に響きやすい"],
-  },
-  neck_shoulder: {
-    pressure_down: ["頭から首肩に重さが残りやすい", "首肩のこわばりが出やすい"],
-    pressure_up: ["張りつめが首肩の力みに出やすい", "肩に力が入りやすい"],
-    damp: ["首肩に重だるさが残りやすい", "肩まわりがすっきりしにくい"],
-    cold: ["冷えで首肩がこわばりやすい", "首元を冷やすと固まりやすい"],
-    heat: ["暑さで力みが抜けにくい", "汗冷えの後に首肩が固まりやすい"],
-    dry: ["目やのどの乾きから首肩が緊張しやすい", "画面作業の疲れが首肩に残りやすい"],
-    damp_heat: ["首肩に重だるさと力みが重なりやすい", "汗や暑さで肩の力が抜けにくい"],
-    damp_cold: ["首肩が冷えて重くなりやすい", "こわばりと重だるさが重なりやすい"],
-    dry_heat: ["目の乾きと熱こもりで首肩が張りやすい", "画面疲れが首肩に出やすい"],
-    dry_cold: ["冷えと乾きで首肩がこわばりやすい", "目の疲れと首元の冷えが重なりやすい"],
-    pressure_down_damp: ["頭から首肩に重さが出やすい", "首肩の重だるさが残りやすい"],
-    pressure_up_heat: ["上にのぼる力みが首肩に出やすい", "肩の力みと暑さの消耗が重なりやすい"],
-  },
-  low_back_pain: {
-    pressure_down: ["腰腹まわりに重さが残りやすい", "下半身の動き出しが重くなりやすい"],
-    pressure_up: ["張りつめが腰まわりの力みに出やすい", "急いだ動きで腰に負担が出やすい"],
-    damp: ["腰腹・下半身に重だるさが残りやすい", "座りっぱなしで腰が重くなりやすい"],
-    cold: ["冷えで腰腹がこわばりやすい", "足元の冷えが腰に響きやすい"],
-    heat: ["暑さで消耗すると腰まわりの支えが抜けやすい", "汗冷えで腰が固まりやすい"],
-    dry: ["乾きや疲れで腰まわりのこわばりが残りやすい", "水分不足で体が固まりやすい"],
-    damp_heat: ["腰腹・下半身に重だるさが残りやすい", "暑さの消耗で腰まわりの支えが抜けやすい"],
-    damp_cold: ["腰腹・下半身が冷えて重くなりやすい", "腰のこわばりと重だるさが重なりやすい"],
-    dry_heat: ["暑さと乾きで消耗し、腰まわりの支えが抜けやすい", "水分不足で体が固まりやすい"],
-    dry_cold: ["冷えと乾きで腰まわりがこわばりやすい", "足元の冷えが腰に響きやすい"],
-    pressure_down_damp: ["腰腹・下半身に重さが残りやすい", "座りっぱなしで腰が重くなりやすい"],
-    pressure_up_heat: ["張りつめと暑さで腰まわりが疲れやすい", "急いだ動きで腰に負担が出やすい"],
-  },
-  swelling: {
-    pressure_down: ["水の巡りが重く感じやすい", "顔や脚のむくみ感が残りやすい"],
-    pressure_up: ["張りつめで足元の巡りが鈍りやすい", "同じ姿勢でむくみ感が出やすい"],
-    damp: ["顔や脚のむくみ感が出やすい", "足首まわりが重だるくなりやすい"],
-    cold: ["冷えで足元の巡りが鈍りやすい", "足首まわりが重くなりやすい"],
-    heat: ["水分の入れ方が乱れるとむくみ感が残りやすい", "暑さでだるさが脚に出やすい"],
-    dry: ["水分の入れ方が偏りやすい", "乾きと塩気でむくみ感が残りやすい"],
-    damp_heat: ["湿気と暑さでむくみ感が残りやすい", "冷たい飲み物に寄ると脚が重くなりやすい"],
-    damp_cold: ["冷えと湿気で足元の巡りが鈍りやすい", "足首まわりに重だるさが残りやすい"],
-    dry_heat: ["乾きと暑さで水分の入れ方が乱れやすい", "塩気や冷たい飲み物に寄りやすい"],
-    dry_cold: ["冷えと乾きで足元の巡りが鈍りやすい", "水分の入れ方が偏りやすい"],
-    pressure_down_damp: ["水の巡りが重く感じやすい", "顔や脚のむくみ感が残りやすい"],
-    pressure_up_heat: ["張りつめと暑さで水分の入れ方が乱れやすい", "脚のだるさが残りやすい"],
-  },
-  headache: {
-    pressure_down: ["頭・耳まわりが重くなりやすい", "首肩のこわばりが頭に響きやすい"],
-    pressure_up: ["頭まわりに張りを感じやすい", "焦りや力みが頭に響きやすい"],
-    damp: ["重だるさが頭まわりにも残りやすい", "頭がすっきりしにくい"],
-    cold: ["冷えで首肩がこわばり、頭に響きやすい", "首元の冷えで頭が重くなりやすい"],
-    heat: ["熱がこもって頭が重く感じやすい", "のぼせ感が出やすい"],
-    dry: ["目の乾きや疲れが頭に響きやすい", "のどや目の乾きで頭が疲れやすい"],
-    damp_heat: ["重だるさと熱こもりが頭まわりに出やすい", "冷たい飲み物や刺激に寄りやすい"],
-    damp_cold: ["首肩が冷えて重く、頭まわりにも響きやすい", "頭の重さとこわばりが重なりやすい"],
-    dry_heat: ["目やのどの乾きと熱こもりが頭に響きやすい", "頭まわりが冴えて疲れやすい"],
-    dry_cold: ["冷えと乾きで首肩がこわばり、頭に響きやすい", "目の疲れと首元の冷えが重なりやすい"],
-    pressure_down_damp: ["頭・耳・首肩まわりに重さが出やすい", "頭がすっきりしにくい"],
-    pressure_up_heat: ["上にのぼる力みや熱こもりが出やすい", "頭まわりに張りを感じやすい"],
-  },
-  dizziness: {
-    pressure_down: ["頭が重く、立ち上がりでふわつきやすい", "動き出しに時間がかかりやすい"],
-    pressure_up: ["張りつめや上にのぼる感じでふわつきやすい", "急いで動くと揺れやすい"],
-    damp: ["体が重く、動き出しでふわつきやすい", "重だるさで足取りが乱れやすい"],
-    cold: ["冷えで首肩がこわばり、動き出しで揺れやすい", "足元の冷えでふわつきやすい"],
-    heat: ["暑さで消耗するとふわつきやすい", "汗や暑さで立ち上がりが不安定になりやすい"],
-    dry: ["乾きや水分不足でふわつきやすい", "のどの渇きや目の疲れが出やすい"],
-    damp_heat: ["体の重さと暑さの消耗でふわつきやすい", "冷たい飲み物に寄ると動き出しが乱れやすい"],
-    damp_cold: ["体が重く冷えて、動き出しでふわつきやすい", "足元の冷えと重だるさが重なりやすい"],
-    dry_heat: ["乾きと暑さで消耗し、ふわつきやすい", "水分不足に気づきやすい"],
-    dry_cold: ["冷えと乾きで体がこわばり、動き出しで揺れやすい", "足元の冷えがふわつきに響きやすい"],
-    pressure_down_damp: ["頭の重さやふわつきに気づきやすい", "動き出しに時間がかかりやすい"],
-    pressure_up_heat: ["張りつめや暑さの消耗でふわつきやすい", "急いで動くと揺れやすい"],
-  },
-  mood: {
-    pressure_down: ["頭の重さから気分が沈みやすい", "動き出しに時間がかかりやすい"],
-    pressure_up: ["焦りや落ち着かなさが出やすい", "肩の力みが気分にも出やすい"],
-    damp: ["体の重だるさから気分も重く感じやすい", "だるさで動き出しが遅れやすい"],
-    cold: ["冷えで動き出しが重くなりやすい", "気分が内向きになりやすい"],
-    heat: ["そわそわ感や焦りが出やすい", "甘いもの・カフェインで無理に上げたくなりやすい"],
-    dry: ["目やのどの疲れで集中が切れやすい", "小さな刺激が気になりやすい"],
-    damp_heat: ["体は重いのに気分が落ち着きにくい", "甘いもの・冷たい飲み物に寄りやすい"],
-    damp_cold: ["体が重く冷えて、動き出しが遅れやすい", "気分が内向きになりやすい"],
-    dry_heat: ["目やのどの疲れでそわそわしやすい", "小さな刺激が気になりやすい"],
-    dry_cold: ["体が冷えて、目やのどの疲れも出やすい", "集中が切れやすい"],
-    pressure_down_damp: ["重だるさから気分が沈みやすい", "動き出しに時間がかかりやすい"],
-    pressure_up_heat: ["焦りや落ち着かなさが出やすい", "肩の力みが気分にも出やすい"],
-  },
-};
-
 const SYMPTOM_WEATHER_PEAK_PREP_ITEMS = {
   fatigue: {
     pressure_down: ["最初の作業を一つに絞る", "早めに一度休憩を入れる"],
@@ -1108,30 +967,6 @@ function getSymptomFocusLabel(symptomFocus) {
   return FORECAST_SYMPTOM_LABELS[symptomFocus] || "今気になる不調";
 }
 
-const SYMPTOM_BODY_SIGN_LABELS = {
-  fatigue: ["だるさが残りやすい", "動き出しが重くなりやすい", "休んでも抜けにくく感じやすい"],
-  sleep: ["画面・光の影響が夜まで残りやすい", "寝る前に体が休みに入りにくい", "朝のだるさにつながりやすい"],
-  digestion: ["胃もたれやお腹の張りが残りやすい", "食後の重さが出やすい", "冷たいものや食べすぎが負担になりやすい"],
-  neck_shoulder: ["首元・肩甲骨まわりがこわばりやすい", "画面姿勢で肩の力が抜けにくい", "頭〜首の重さとして感じやすい"],
-  low_back_pain: ["腰腹・骨盤まわりが重くなりやすい", "座りっぱなしで腰に残りやすい", "動き出しでこわばりを感じやすい"],
-  swelling: ["顔や脚の重さが残りやすい", "足首まわりが重く感じやすい", "冷たさ・甘さ・塩気が重なりやすい"],
-  headache: ["頭・目・耳まわりにこもりやすい", "首肩のこわばりが頭に響きやすい", "空腹・画面刺激のあとに頭が重くなりやすい"],
-  dizziness: ["ふわつき感が出やすい", "立ち上がりで揺れを感じやすい", "首や耳まわりの緊張が残りやすい"],
-  mood: ["気分の重さや焦りが出やすい", "甘いもの・カフェインで無理に上げたくなりやすい", "予定の詰め込みが負担になりやすい"],
-};
-
-const SYMPTOM_STABLE_BODY_POINTS = {
-  fatigue: ["午後に残る小さな重だるさ", "動き出しの重さ", "休んでも抜けにくい感じ"],
-  sleep: ["夕方以降の目・頭の冴え", "画面を見た後の休まりにくさ", "朝に残るだるさ"],
-  digestion: ["食後に残る小さな重さ", "お腹の張り感", "朝の胃腸の重さ"],
-  neck_shoulder: ["首元・肩甲骨まわりのこわばり感", "画面姿勢が続いた後の肩の重さ", "頭〜首に残る重さ"],
-  low_back_pain: ["腰腹・骨盤まわりの重さ", "座りっぱなしの後のこわばり感", "動き出しの腰の重さ"],
-  swelling: ["夕方の足首まわりの重だるさ", "顔や脚のむくみ感", "冷たさ・甘さ・塩気の残りやすさ"],
-  headache: ["頭・目・耳まわりの重さ", "首肩から頭にかけてのこわばり感", "空腹・画面刺激のあとに残る頭の重さ"],
-  dizziness: ["立ち上がりのふわつき", "動き出しの揺れ感", "首や耳まわりの緊張感"],
-  mood: ["気分の重さや焦り", "あれこれ同時に進めた後の疲れ", "予定を詰めた後の余裕のなさ"],
-};
-
 const SYMPTOM_PEAK_PREP_ITEMS = {
   fatigue: ["午後の作業を一つ減らす", "空腹と食べすぎの差を小さくする", "休憩を一つ先に入れる"],
   sleep: ["夕方以降の画面・光を少し減らす", "寝る前に首肩と目を休ませる", "夜の食べすぎ・飲みすぎを避ける"],
@@ -1269,28 +1104,6 @@ function getSignalTone(signal) {
 function getForecastSymptomLeadClause(symptomFocus, signal = 0) {
   const tone = getSignalTone(signal);
   return FORECAST_SYMPTOM_LEAD_CLAUSES[symptomFocus]?.[tone] || null;
-}
-
-function qualifyBodySignForSignal(text, signal = 0) {
-  const raw = String(text || "").trim();
-  if (!raw) return "";
-
-  const level = Number(signal ?? 0);
-  if (level === 0) {
-    if (raw.includes("少し")) return raw;
-    if (raw.includes("が")) return raw.replace("が", "が少し");
-    if (raw.includes("に")) return raw.replace("に", "に少し");
-    return `少し${raw}`;
-  }
-
-  if (level >= 2) {
-    if (raw.includes("強く")) return raw;
-    if (raw.includes("が")) return raw.replace("が", "が強く");
-    if (raw.includes("に")) return raw.replace("に", "に強く");
-    return `強く${raw}`;
-  }
-
-  return raw;
 }
 
 function uniqueTake(items, limit = 3) {
@@ -1702,135 +1515,6 @@ const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
   default: ["いつもより小さな違和感が出るかも", "天気の負荷が重なると、重さが少し残るかも", "無理に押すより、軽く整える方が合うかも"],
 };
 
-// 2・3件目は、天気名を添えるだけでなく、
-// 「環境への調整」×「選択中の不調で気づける小さな変化」として組み立てる。
-// 1件目の気象前提を受けて、利用者がその日の自分を観察できる文章にする。
-const RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS = {
-  damp: [
-    "湿気で汗が蒸発しにくい日は",
-    "湿った空気に体が合わせ続けると",
-    "体に水分の重さを感じる時は",
-  ],
-  pressure_down: [
-    "気圧低下に体が合わせる日は",
-    "気圧の変化を体が拾いやすい時は",
-    "気圧が変わる時間帯をまたぐと",
-  ],
-  pressure_up: [
-    "気圧上昇に体が合わせる日は",
-    "気圧の変化を体が拾いやすい時は",
-    "気圧が変わる時間帯をまたぐと",
-  ],
-  temp_shift: [
-    "寒暖差に合わせて体温調節が切り替わる日は",
-    "暖かさと冷えを行き来すると",
-    "気温の変化へ合わせ続けると",
-  ],
-  cold: [
-    "冷えで血管や筋肉が縮こまりやすい日は",
-    "体温を守るために体が身構えると",
-    "足元や首元の冷えが続くと",
-  ],
-  heat: [
-    "暑さで体温を逃がすために力を使う日は",
-    "熱と発汗への対応が続くと",
-    "昼の熱が体に残りやすい日は",
-  ],
-  dry: [
-    "乾いた空気に体が合わせ続けると",
-    "目・のど・肌の乾きが小さな刺激になる日は",
-    "うるおいが減りやすい環境では",
-  ],
-  default: [
-    "天気の変化に体が合わせ続けると",
-    "環境の切り替わりを体が拾う時は",
-    "天気ストレスが重なる日は",
-  ],
-};
-
-const RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS = {
-  fatigue: [
-    "目は覚めていても、体の立ち上がりを遅く感じやすい",
-    "少し動いたあとのだるさが戻りやすい",
-    "休んだ時間より、休んだあとの重さが残りやすい",
-    "いつもの用事でも、途中で使える余力が減りやすい",
-    "気合いの問題に見えても、体の消耗が先に出やすい",
-    "動く前より、動き始めた直後の重さに気づきやすい",
-  ],
-  sleep: [
-    "眠気はあっても、頭だけ休む準備に入りにくい",
-    "夜の眠りより先に、夕方の切り替わりにくさが出やすい",
-    "寝る前の光や音を、いつもより強く拾いやすい",
-    "休んだ時間より、休みに入るまでの長さが気になりやすい",
-    "体は疲れていても、考える働きだけ残りやすい",
-    "朝の眠気より、起きた直後のすっきりしなさに気づきやすい",
-  ],
-  digestion: [
-    "空腹より、食後の動き出しを重く感じやすい",
-    "量は同じでも、冷たさや早食いの影響を拾いやすい",
-    "胃腸の重さが、全身の動きの鈍さとして先に出やすい",
-    "食欲より、食後にもう少し座っていたい感覚が目印になりやすい",
-    "食べた直後より、少し時間がたった後にもたつきが残りやすい",
-    "お腹の張りより先に、呼吸の浅さとして気づきやすい",
-  ],
-  neck_shoulder: [
-    "肩を回した時より、画面から顔を上げた時に重さを感じやすい",
-    "首そのものより、目や肩甲骨の疲れが先に出やすい",
-    "力を入れた時より、抜こうとした時にこわばりへ気づきやすい",
-    "左右差より、同じ姿勢のあとに戻りにくさを感じやすい",
-    "頭を支えるだけでも、首すじの疲れが残りやすい",
-    "肩の高さより、息を吐いた時の下がりにくさが目印になりやすい",
-  ],
-  low_back_pain: [
-    "座っている間より、立ち上がる一歩目に重さを感じやすい",
-    "腰そのものより、足元や骨盤の動きにくさが先に出やすい",
-    "大きく動いた時より、同じ姿勢のあとにこわばりへ気づきやすい",
-    "前後に曲げる時より、体の向きを変える時に重さが残りやすい",
-    "腰を伸ばした時より、歩き始めの歩幅が小さくなりやすい",
-    "痛みの強さより、動き始めをためらう感覚が目印になりやすい",
-  ],
-  swelling: [
-    "見た目より、靴下や指輪の跡で重さに気づきやすい",
-    "朝より、同じ姿勢が続いたあとの脚に重さが残りやすい",
-    "水分量より、一度に飲んだ時の重さを感じやすい",
-    "顔や脚の張りより、足首の動かしにくさが先に出やすい",
-    "むくみそのものより、体全体の動きの鈍さへつながりやすい",
-    "左右差より、夕方に靴がきつく感じるかが目印になりやすい",
-  ],
-  headache: [
-    "頭だけでなく、首・耳・目の疲れが先に出やすい",
-    "痛みより先に、画面の光を強く感じやすい",
-    "頭の重さより、肩を下げにくい感覚に気づきやすい",
-    "集中している間より、手を止めた時に重さが残りやすい",
-    "頭だけを休めても、首肩のこわばりが戻りやすい",
-    "強さより、いつもの刺激をわずらわしく感じるかが目印になりやすい",
-  ],
-  dizziness: [
-    "立っている間より、立ち上がる一拍目に揺れを感じやすい",
-    "歩いている時より、振り向いた直後にふわつきへ気づきやすい",
-    "頭だけ先に動き、体があとから追いつく感覚が出やすい",
-    "長く動いた時より、動き始めの向きの変化を拾いやすい",
-    "ふわつきの強さより、足元を確かめたくなる感覚が目印になりやすい",
-    "首や目を急に動かした後に、揺れが少し残りやすい",
-  ],
-  mood: [
-    "気分そのものより、体の消耗に気持ちが引っぱられやすい",
-    "いつもなら流せる小さな刺激に、反応が残りやすい",
-    "やる気の少なさより、気持ちの切り替えに時間がかかりやすい",
-    "落ち込みより先に、焦りや落ち着かなさが前に出やすい",
-    "考えの内容より、あれこれ同時に進めたくなる感覚が目印になりやすい",
-    "気持ちを上げようとするほど、体の疲れにあとから気づきやすい",
-  ],
-  default: [
-    "いつもなら流せる小さな違和感を拾いやすい",
-    "体調そのものより、動き始めの感覚に変化が出やすい",
-    "強い症状より、いつもの調子へ戻るまでの長さが気になりやすい",
-    "一つの不調より、重さとこわばりの重なりに気づきやすい",
-    "できるかどうかより、始めるまでの間が長くなりやすい",
-    "休む前より、休んだあとの戻り方が目印になりやすい",
-  ],
-};
-
 const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
   damp: "湿気を含んだ服を着たような重さが、少し出るかも",
   pressure_down: "頭・耳・首まわりに、少しこもるかも",
@@ -1971,50 +1655,6 @@ function getNarrativePrimaryKey(triggerFactors) {
   );
 }
 
-function softenWeatherSymptomObservation(value) {
-  const text = String(value || "").trim();
-  if (!text || text.endsWith("かも")) return text;
-
-  const endings = [
-    ["目印になりやすい", "目印になるかも"],
-    ["つながりやすい", "つながるかも"],
-    ["引っぱられやすい", "引っぱられるかも"],
-    ["気づきやすい", "気づくかも"],
-    ["感じやすい", "感じるかも"],
-    ["拾いやすい", "拾うかも"],
-    ["戻りやすい", "戻るかも"],
-    ["残りやすい", "残るかも"],
-    ["減りやすい", "減るかも"],
-    ["出やすい", "出るかも"],
-    ["なりやすい", "なるかも"],
-    ["入りにくい", "入りにくいかも"],
-    ["かかりやすい", "かかるかも"],
-  ];
-  const matched = endings.find(([suffix]) => text.endsWith(suffix));
-  if (matched) {
-    return `${text.slice(0, -matched[0].length)}${matched[1]}`;
-  }
-  return `${text}かも`;
-}
-
-function buildWeatherSymptomSignPool(weatherKey, symptomFocus, signal = 0) {
-  const contexts =
-    RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS[weatherKey] ||
-    RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS.default;
-  const observations =
-    RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS[symptomFocus] ||
-    RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS.default;
-  const stable = Number(signal ?? 0) === 0;
-
-  return observations.map((observation, index) => {
-    const context = contexts[index % contexts.length];
-    const body = stable
-      ? softenWeatherSymptomObservation(observation)
-      : observation;
-    return `${context}、${body}`;
-  });
-}
-
 function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
   const key = getNarrativePrimaryKey(triggerFactors);
   const target = mode === "today" ? "今日は" : "明日は";
@@ -2046,40 +1686,34 @@ function getNarrativeBodySigns(
   signal = 0,
   symptomFocus = null,
   mode = "today",
-  targetDate = null
+  targetDate = null,
+  constitutionContext = null
 ) {
   const key = getNarrativePrimaryKey(triggerFactors);
   const level = Number(signal ?? 0);
-  const rotationScope = `${key}:${symptomFocus || "default"}:${level}:${mode}`;
-  const intersectionSigns = buildWeatherSymptomSignPool(key, symptomFocus, level);
+  const groundedDetails = buildGroundedBodySignDetails({
+    weatherKey: key,
+    symptomFocus,
+    signal: level,
+    targetDate,
+    constitutionContext,
+  });
 
   if (level === 0) {
     const symptomPoints = RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM.default;
     const weatherPoint = RADAR_NARRATIVE_STABLE_WEATHER_POINT[key];
-    const selectedSymptoms = selectDatedSigns(
-      intersectionSigns,
-      2,
-      targetDate,
-      rotationScope
-    );
     return rewriteBodyCopyForPressure(
-      uniqueTake([weatherPoint, ...selectedSymptoms, ...symptomPoints], 3),
+      uniqueTake([weatherPoint, ...groundedDetails, ...symptomPoints], 3),
       triggerFactors
     );
   }
 
   const symptomSigns = RADAR_NARRATIVE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_SIGN_BY_SYMPTOM.default;
   const weatherSign = RADAR_NARRATIVE_WEATHER_SIGN[key];
-  const selectedSymptoms = selectDatedSigns(
-    intersectionSigns,
-    2,
-    targetDate,
-    rotationScope
-  );
 
   // 見出し側で「今日/明日」を出すため、本文はサイン単体として読める形にする。
   return rewriteBodyCopyForPressure(
-    uniqueTake([weatherSign, ...selectedSymptoms, ...symptomSigns], 3),
+    uniqueTake([weatherSign, ...groundedDetails, ...symptomSigns], 3),
     triggerFactors
   );
 }
@@ -2209,48 +1843,17 @@ export function getForecastBodySigns(
   signal = 0,
   symptomFocus = null,
   mode = "today",
-  targetDate = null
+  targetDate = null,
+  constitutionContext = null
 ) {
-  const narrative = getNarrativeBodySigns(
+  return getNarrativeBodySigns(
     triggerFactors,
     signal,
     symptomFocus,
     mode,
-    targetDate
+    targetDate,
+    constitutionContext
   );
-  if (narrative.length) return narrative;
-
-  const level = Number(signal ?? 0);
-  const keys = safeArray(triggerFactors)
-    .map((factor) => factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor))
-    .filter(Boolean);
-  const focusedWeatherSigns = getSymptomWeatherItems(SYMPTOM_WEATHER_BODY_SIGN_LABELS, symptomFocus, keys);
-
-  if (level === 0) {
-    const stablePoints = SYMPTOM_STABLE_BODY_POINTS[symptomFocus] || [];
-    const weatherPoints = keys.flatMap((key) => BODY_SIGN_LABELS[normalizeWeatherContextKey(key)] || [])
-      .map((item) => String(item || "").replace(/感じやすい/g, "感じ").replace(/なりやすい/g, "なりそうな場面").replace(/出やすい/g, "出そうな場面"));
-    return uniqueTake(
-      [
-        ...focusedWeatherSigns,
-        ...stablePoints,
-        ...weatherPoints,
-        "注意したい時間に、小さな違和感が出るかも",
-        "だるさがいつもより少し残るかも",
-        "動き出しで少しこわばるかも",
-      ],
-      3
-    );
-  }
-
-  const symptomSigns = (SYMPTOM_BODY_SIGN_LABELS[symptomFocus] || [])
-    .map((item) => qualifyBodySignForSignal(item, level));
-  const signs = [
-    ...focusedWeatherSigns,
-    ...symptomSigns,
-    ...keys.flatMap((key) => BODY_SIGN_LABELS[normalizeWeatherContextKey(key)] || []),
-  ];
-  return uniqueTake(signs.length ? signs : ["重だるさが出やすい", "首肩がこわばりやすい", "疲れが残りやすい"], 3);
 }
 
 export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {

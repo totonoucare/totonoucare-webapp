@@ -907,8 +907,15 @@ export default function RadarPage() {
     [triggerFactors, forecast?.signal, displayDateMode, symptomFocus]
   );
   const bodySigns = useMemo(
-    () => getForecastBodySigns(triggerFactors, forecast?.signal ?? 0, symptomFocus, displayDateMode),
-    [triggerFactors, forecast?.signal, symptomFocus, displayDateMode]
+    () => getForecastBodySigns(
+      triggerFactors,
+      forecast?.signal ?? 0,
+      symptomFocus,
+      displayDateMode,
+      activeTargetDate,
+      riskContext
+    ),
+    [triggerFactors, forecast?.signal, symptomFocus, displayDateMode, activeTargetDate, riskContext]
   );
   const weatherLoadGroups = useMemo(
     () => getForecastWeatherLoadGroups(forecast),
