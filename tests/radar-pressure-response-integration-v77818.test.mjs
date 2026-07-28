@@ -24,13 +24,17 @@ const partnerOffers = await importSource("../lib/care-navi/partnerOffers.js");
 const constitutionGuideSource = await readSource("../app/result/[id]/page.js");
 
 async function importRadarUtils() {
+  const bodySignSource = await readSource("../lib/radar_v1/bodySignInsights.js");
   let source = await readSource("../app/radar/utils.js");
   source = source
     .replace('import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";', "const flattenRadarLocationPresets = () => [];")
     .replace('import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";', "const getLifestylePlanFromRules = () => ({});")
     .replace('import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";', "const buildTodayCarePlanCore = () => null;")
+    .replace('import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";', "")
     .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
-  return importText(`${pressureSource.replaceAll("export ", "")}\n${source}`);
+  return importText(
+    `${pressureSource.replaceAll("export ", "")}\n${bodySignSource.replaceAll("export ", "")}\n${source}`
+  );
 }
 
 async function importPointExplanation() {

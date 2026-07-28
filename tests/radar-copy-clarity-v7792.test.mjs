@@ -12,6 +12,7 @@ async function importText(source) {
 
 async function importRadarUtils() {
   const pressureSource = await readSource("../lib/radar_v1/pressureResponse.js");
+  const bodySignSource = await readSource("../lib/radar_v1/bodySignInsights.js");
   let source = await readSource("../app/radar/utils.js");
   source = source
     .replace(
@@ -26,8 +27,14 @@ async function importRadarUtils() {
       'import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";',
       "const buildTodayCarePlanCore = () => null;",
     )
+    .replace(
+      'import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";',
+      "",
+    )
     .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
-  return importText(`${pressureSource.replaceAll("export ", "")}\n${source}`);
+  return importText(
+    `${pressureSource.replaceAll("export ", "")}\n${bodySignSource.replaceAll("export ", "")}\n${source}`
+  );
 }
 
 const radarUtils = await importRadarUtils();
@@ -42,14 +49,16 @@ function weatherFactor(key) {
 }
 
 test("mood signs do not invent stomach symptoms or emotional humidity", () => {
-  assert.deepEqual(
-    radarUtils.getForecastBodySigns([weatherFactor("heat")], 1, "mood", "today"),
-    [
-      "熱が上にこもって、消耗やそわつきが出やすい",
-      "暑さで体温を逃がすために力を使う日は、気分そのものより、体の消耗に気持ちが引っぱられやすい",
-      "熱と発汗への対応が続くと、いつもなら流せる小さな刺激に、反応が残りやすい",
-    ],
+  const signs = radarUtils.getForecastBodySigns(
+    [weatherFactor("heat")],
+    1,
+    "mood",
+    "today",
   );
+  assert.equal(signs[0], "熱が上にこもって、消耗やそわつきが出やすい");
+  assert.match(signs[1], /高温.*焦り|高温.*刺激|高温.*集中/);
+  assert.match(signs[2], /気持ち/);
+  assert.doesNotMatch(JSON.stringify(signs), /胃腸|食後|お腹|気分に.*湿気/);
 
   const stable = radarUtils.getForecastBodySigns(
     [weatherFactor("heat")],
@@ -91,7 +100,7 @@ test("body sign cards contain observations, not unrelated care conditions", () =
     "today",
   );
   assert.doesNotMatch(JSON.stringify(sleepSigns), /夕方以降の光や画面/);
-  assert.match(JSON.stringify(sleepSigns), /休む準備|夕方の切り替わり/);
+  assert.match(JSON.stringify(sleepSigns), /眠|寝|休ま|目覚め/);
 });
 
 test("damp mood copy describes felt heaviness without assuming digestion trouble", () => {

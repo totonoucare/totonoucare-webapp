@@ -12,6 +12,7 @@ async function importText(source) {
 
 async function importRadarUtils() {
   const pressureSource = await readSource("../lib/radar_v1/pressureResponse.js");
+  const bodySignSource = await readSource("../lib/radar_v1/bodySignInsights.js");
   let source = await readSource("../app/radar/utils.js");
   source = source
     .replace(
@@ -26,8 +27,14 @@ async function importRadarUtils() {
       'import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";',
       "const buildTodayCarePlanCore = () => null;",
     )
+    .replace(
+      'import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";',
+      "",
+    )
     .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
-  return importText(`${pressureSource.replaceAll("export ", "")}\n${source}`);
+  return importText(
+    `${pressureSource.replaceAll("export ", "")}\n${bodySignSource.replaceAll("export ", "")}\n${source}`
+  );
 }
 
 const radarUtils = await importRadarUtils();
@@ -44,7 +51,7 @@ function weatherFactor(key) {
   };
 }
 
-test("body signs stay stable on reload and rotate only the weather-symptom observations on the next day", () => {
+test("body signs stay stable on reload and rotate only the grounded details on the next day", () => {
   const factors = [weatherFactor("heat")];
   const first = radarUtils.getForecastBodySigns(
     factors,
@@ -75,7 +82,7 @@ test("body signs stay stable on reload and rotate only the weather-symptom obser
   assert.doesNotMatch(JSON.stringify([...first, ...nextDay]), /胃腸|気分に.*湿気/);
 });
 
-test("stable-mode observation points also rotate without changing the weather premise", () => {
+test("stable-mode grounded details also rotate without changing the weather premise", () => {
   const factors = [weatherFactor("damp")];
   const first = radarUtils.getForecastBodySigns(
     factors,
