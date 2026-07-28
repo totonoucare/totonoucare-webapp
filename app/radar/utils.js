@@ -1306,6 +1306,24 @@ function uniqueTake(items, limit = 3) {
   return result;
 }
 
+function selectDatedSigns(items, limit, targetDate, scope = "") {
+  const candidates = uniqueTake(items, Number.MAX_SAFE_INTEGER);
+  if (!candidates.length || limit <= 0) return [];
+  if (!targetDate) return candidates.slice(0, limit);
+
+  const parsed = Date.parse(`${targetDate}T00:00:00Z`);
+  const daySerial = Number.isFinite(parsed) ? Math.floor(parsed / 86400000) : 0;
+  const scopeOffset = [...String(scope)].reduce(
+    (sum, char) => (sum + char.codePointAt(0)) % candidates.length,
+    0
+  );
+  const start = (daySerial + scopeOffset) % candidates.length;
+  return Array.from(
+    { length: Math.min(limit, candidates.length) },
+    (_, index) => candidates[(start + index) % candidates.length]
+  );
+}
+
 function toWeatherIconKey(key) {
   if (key === "humidity") return "damp";
   if (key === "temp") return "cold";
@@ -1684,10 +1702,140 @@ const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
   default: ["いつもより小さな違和感が出るかも", "天気の負荷が重なると、重さが少し残るかも", "無理に押すより、軽く整える方が合うかも"],
 };
 
+// 2・3件目は、天気名を添えるだけでなく、
+// 「環境への調整」×「選択中の不調で気づける小さな変化」として組み立てる。
+// 1件目の気象前提を受けて、利用者がその日の自分を観察できる文章にする。
+const RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS = {
+  damp: [
+    "湿気で汗が蒸発しにくい日は",
+    "湿った空気に体が合わせ続けると",
+    "体に水分の重さを感じる時は",
+  ],
+  pressure_down: [
+    "気圧低下に体が合わせる日は",
+    "気圧の変化を体が拾いやすい時は",
+    "気圧が変わる時間帯をまたぐと",
+  ],
+  pressure_up: [
+    "気圧上昇に体が合わせる日は",
+    "気圧の変化を体が拾いやすい時は",
+    "気圧が変わる時間帯をまたぐと",
+  ],
+  temp_shift: [
+    "寒暖差に合わせて体温調節が切り替わる日は",
+    "暖かさと冷えを行き来すると",
+    "気温の変化へ合わせ続けると",
+  ],
+  cold: [
+    "冷えで血管や筋肉が縮こまりやすい日は",
+    "体温を守るために体が身構えると",
+    "足元や首元の冷えが続くと",
+  ],
+  heat: [
+    "暑さで体温を逃がすために力を使う日は",
+    "熱と発汗への対応が続くと",
+    "昼の熱が体に残りやすい日は",
+  ],
+  dry: [
+    "乾いた空気に体が合わせ続けると",
+    "目・のど・肌の乾きが小さな刺激になる日は",
+    "うるおいが減りやすい環境では",
+  ],
+  default: [
+    "天気の変化に体が合わせ続けると",
+    "環境の切り替わりを体が拾う時は",
+    "天気ストレスが重なる日は",
+  ],
+};
+
+const RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS = {
+  fatigue: [
+    "目は覚めていても、体の立ち上がりを遅く感じやすい",
+    "少し動いたあとのだるさが戻りやすい",
+    "休んだ時間より、休んだあとの重さが残りやすい",
+    "いつもの用事でも、途中で使える余力が減りやすい",
+    "気合いの問題に見えても、体の消耗が先に出やすい",
+    "動く前より、動き始めた直後の重さに気づきやすい",
+  ],
+  sleep: [
+    "眠気はあっても、頭だけ休む準備に入りにくい",
+    "夜の眠りより先に、夕方の切り替わりにくさが出やすい",
+    "寝る前の光や音を、いつもより強く拾いやすい",
+    "休んだ時間より、休みに入るまでの長さが気になりやすい",
+    "体は疲れていても、考える働きだけ残りやすい",
+    "朝の眠気より、起きた直後のすっきりしなさに気づきやすい",
+  ],
+  digestion: [
+    "空腹より、食後の動き出しを重く感じやすい",
+    "量は同じでも、冷たさや早食いの影響を拾いやすい",
+    "胃腸の重さが、全身の動きの鈍さとして先に出やすい",
+    "食欲より、食後にもう少し座っていたい感覚が目印になりやすい",
+    "食べた直後より、少し時間がたった後にもたつきが残りやすい",
+    "お腹の張りより先に、呼吸の浅さとして気づきやすい",
+  ],
+  neck_shoulder: [
+    "肩を回した時より、画面から顔を上げた時に重さを感じやすい",
+    "首そのものより、目や肩甲骨の疲れが先に出やすい",
+    "力を入れた時より、抜こうとした時にこわばりへ気づきやすい",
+    "左右差より、同じ姿勢のあとに戻りにくさを感じやすい",
+    "頭を支えるだけでも、首すじの疲れが残りやすい",
+    "肩の高さより、息を吐いた時の下がりにくさが目印になりやすい",
+  ],
+  low_back_pain: [
+    "座っている間より、立ち上がる一歩目に重さを感じやすい",
+    "腰そのものより、足元や骨盤の動きにくさが先に出やすい",
+    "大きく動いた時より、同じ姿勢のあとにこわばりへ気づきやすい",
+    "前後に曲げる時より、体の向きを変える時に重さが残りやすい",
+    "腰を伸ばした時より、歩き始めの歩幅が小さくなりやすい",
+    "痛みの強さより、動き始めをためらう感覚が目印になりやすい",
+  ],
+  swelling: [
+    "見た目より、靴下や指輪の跡で重さに気づきやすい",
+    "朝より、同じ姿勢が続いたあとの脚に重さが残りやすい",
+    "水分量より、一度に飲んだ時の重さを感じやすい",
+    "顔や脚の張りより、足首の動かしにくさが先に出やすい",
+    "むくみそのものより、体全体の動きの鈍さへつながりやすい",
+    "左右差より、夕方に靴がきつく感じるかが目印になりやすい",
+  ],
+  headache: [
+    "頭だけでなく、首・耳・目の疲れが先に出やすい",
+    "痛みより先に、画面の光を強く感じやすい",
+    "頭の重さより、肩を下げにくい感覚に気づきやすい",
+    "集中している間より、手を止めた時に重さが残りやすい",
+    "頭だけを休めても、首肩のこわばりが戻りやすい",
+    "強さより、いつもの刺激をわずらわしく感じるかが目印になりやすい",
+  ],
+  dizziness: [
+    "立っている間より、立ち上がる一拍目に揺れを感じやすい",
+    "歩いている時より、振り向いた直後にふわつきへ気づきやすい",
+    "頭だけ先に動き、体があとから追いつく感覚が出やすい",
+    "長く動いた時より、動き始めの向きの変化を拾いやすい",
+    "ふわつきの強さより、足元を確かめたくなる感覚が目印になりやすい",
+    "首や目を急に動かした後に、揺れが少し残りやすい",
+  ],
+  mood: [
+    "気分そのものより、体の消耗に気持ちが引っぱられやすい",
+    "いつもなら流せる小さな刺激に、反応が残りやすい",
+    "やる気の少なさより、気持ちの切り替えに時間がかかりやすい",
+    "落ち込みより先に、焦りや落ち着かなさが前に出やすい",
+    "考えの内容より、あれこれ同時に進めたくなる感覚が目印になりやすい",
+    "気持ちを上げようとするほど、体の疲れにあとから気づきやすい",
+  ],
+  default: [
+    "いつもなら流せる小さな違和感を拾いやすい",
+    "体調そのものより、動き始めの感覚に変化が出やすい",
+    "強い症状より、いつもの調子へ戻るまでの長さが気になりやすい",
+    "一つの不調より、重さとこわばりの重なりに気づきやすい",
+    "できるかどうかより、始めるまでの間が長くなりやすい",
+    "休む前より、休んだあとの戻り方が目印になりやすい",
+  ],
+};
+
 const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
   damp: "湿気を含んだ服を着たような重さが、少し出るかも",
   pressure_down: "頭・耳・首まわりに、少しこもるかも",
   pressure_up: "体が知らないうちに、少し前のめりになるかも",
+  temp_shift: "寒暖差に合わせるため、体が少しこわばるかも",
   cold: "冷えで体が、少しこわばるかも",
   heat: "熱が上にこもって、少しそわつくかも",
   dry: "目・のど・肌のカサつきが、少し疲れに変わるかも",
@@ -1697,6 +1845,7 @@ const RADAR_NARRATIVE_WEATHER_SIGN = {
   damp: "湿気を含んだ服を着たような重さが出やすい",
   pressure_down: "頭・耳・首まわりに、こもる重さが出やすい",
   pressure_up: "体が知らないうちに前のめりになりやすい",
+  temp_shift: "寒暖差に合わせるため、体がこわばりやすい",
   cold: "冷えで体がこわばって、動き出しが重くなりやすい",
   heat: "熱が上にこもって、消耗やそわつきが出やすい",
   dry: "目・のど・肌の乾きが、疲れやこわばりに変わりやすい",
@@ -1822,6 +1971,50 @@ function getNarrativePrimaryKey(triggerFactors) {
   );
 }
 
+function softenWeatherSymptomObservation(value) {
+  const text = String(value || "").trim();
+  if (!text || text.endsWith("かも")) return text;
+
+  const endings = [
+    ["目印になりやすい", "目印になるかも"],
+    ["つながりやすい", "つながるかも"],
+    ["引っぱられやすい", "引っぱられるかも"],
+    ["気づきやすい", "気づくかも"],
+    ["感じやすい", "感じるかも"],
+    ["拾いやすい", "拾うかも"],
+    ["戻りやすい", "戻るかも"],
+    ["残りやすい", "残るかも"],
+    ["減りやすい", "減るかも"],
+    ["出やすい", "出るかも"],
+    ["なりやすい", "なるかも"],
+    ["入りにくい", "入りにくいかも"],
+    ["かかりやすい", "かかるかも"],
+  ];
+  const matched = endings.find(([suffix]) => text.endsWith(suffix));
+  if (matched) {
+    return `${text.slice(0, -matched[0].length)}${matched[1]}`;
+  }
+  return `${text}かも`;
+}
+
+function buildWeatherSymptomSignPool(weatherKey, symptomFocus, signal = 0) {
+  const contexts =
+    RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS[weatherKey] ||
+    RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS.default;
+  const observations =
+    RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS[symptomFocus] ||
+    RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS.default;
+  const stable = Number(signal ?? 0) === 0;
+
+  return observations.map((observation, index) => {
+    const context = contexts[index % contexts.length];
+    const body = stable
+      ? softenWeatherSymptomObservation(observation)
+      : observation;
+    return `${context}、${body}`;
+  });
+}
+
 function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
   const key = getNarrativePrimaryKey(triggerFactors);
   const target = mode === "today" ? "今日は" : "明日は";
@@ -1848,21 +2041,47 @@ function getNarrativeLeadText(triggerFactors, signal = 0, mode = "today", sympto
   return rewriteBodyCopyForPressure(lead, triggerFactors);
 }
 
-function getNarrativeBodySigns(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
+function getNarrativeBodySigns(
+  triggerFactors,
+  signal = 0,
+  symptomFocus = null,
+  mode = "today",
+  targetDate = null
+) {
   const key = getNarrativePrimaryKey(triggerFactors);
   const level = Number(signal ?? 0);
+  const rotationScope = `${key}:${symptomFocus || "default"}:${level}:${mode}`;
+  const intersectionSigns = buildWeatherSymptomSignPool(key, symptomFocus, level);
 
   if (level === 0) {
     const symptomPoints = RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM.default;
     const weatherPoint = RADAR_NARRATIVE_STABLE_WEATHER_POINT[key];
-    return rewriteBodyCopyForPressure(uniqueTake([weatherPoint, ...symptomPoints], 3), triggerFactors);
+    const selectedSymptoms = selectDatedSigns(
+      intersectionSigns,
+      2,
+      targetDate,
+      rotationScope
+    );
+    return rewriteBodyCopyForPressure(
+      uniqueTake([weatherPoint, ...selectedSymptoms, ...symptomPoints], 3),
+      triggerFactors
+    );
   }
 
   const symptomSigns = RADAR_NARRATIVE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_SIGN_BY_SYMPTOM.default;
   const weatherSign = RADAR_NARRATIVE_WEATHER_SIGN[key];
+  const selectedSymptoms = selectDatedSigns(
+    intersectionSigns,
+    2,
+    targetDate,
+    rotationScope
+  );
 
   // 見出し側で「今日/明日」を出すため、本文はサイン単体として読める形にする。
-  return rewriteBodyCopyForPressure(uniqueTake([weatherSign, ...symptomSigns], 3), triggerFactors);
+  return rewriteBodyCopyForPressure(
+    uniqueTake([weatherSign, ...selectedSymptoms, ...symptomSigns], 3),
+    triggerFactors
+  );
 }
 
 function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
@@ -1985,8 +2204,20 @@ export function getCareItemHint(category = "live", triggerFactors = [], mode = "
   return rewriteBodyCopyForPressure(hints[key] || hints.default || "", triggerFactors);
 }
 
-export function getForecastBodySigns(triggerFactors, signal = 0, symptomFocus = null, mode = "today") {
-  const narrative = getNarrativeBodySigns(triggerFactors, signal, symptomFocus, mode);
+export function getForecastBodySigns(
+  triggerFactors,
+  signal = 0,
+  symptomFocus = null,
+  mode = "today",
+  targetDate = null
+) {
+  const narrative = getNarrativeBodySigns(
+    triggerFactors,
+    signal,
+    symptomFocus,
+    mode,
+    targetDate
+  );
   if (narrative.length) return narrative;
 
   const level = Number(signal ?? 0);
