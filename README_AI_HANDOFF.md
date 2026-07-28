@@ -1,3 +1,30 @@
+## v7.79.5 天気ストレス×不調の観察サイン契約
+
+- 出やすいサインの役割は次の3件
+  1. 主な天気現象から想定する身体反応
+  2. 主な天気ストレスと選択中の不調を接続した観察サイン
+  3. 同じ交差条件から見た別の観察サイン
+- 2・3件目は`RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS`と`RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS`から構成する
+- 天気名を機械的に付けるだけでなく、環境への調整と本人が気づける兆候を一文でつなぐ
+- 日付による選択は決定的。同じ日・同じ入力で文言を変えない
+- 不調を横断しない。`mood`へ胃腸、`sleep`へ食後など、未選択領域を条件として補わない
+- 気圧の物理方向と身体反応方向を再結合しない。気圧本文は既存のpressure response rewriteを通す
+- 表示候補のみの変更で、体調ゆらぎ度、天気ストレス、体質親和性、余力、対策ケアへ影響させない
+
+詳細: `docs/RADAR_WEATHER_SYMPTOM_INSIGHTS_V7795.md`
+
+## v7.79.4 参考体質デモとサイン選択契約
+
+- 未ログイン公開予報は文字どおりの`天気だけ`ではなく、`reference_profile.kind = neutral_reference`を前提にする
+- 参考体質は`reaction_balance = balanced`、`reserve_level = standard`、`affinity_policy = flat_midpoint`
+- 公開APIの`forecast.reference_profile`を、UI上の`参考体質で見る体調予報デモ`という説明と対応させる
+- `getForecastBodySigns`の第5引数`targetDate`は任意。未指定時も後方互換を保つ
+- 出やすいサインの1件目は天気現象から固定し、2・3件目だけを日付と不調キーで決定的に選ぶ
+- 同じ日・同じ入力では同じ結果を返す。`Math.random()`などの非決定的な選択を入れない
+- 日付による選択は表示候補だけに作用し、予報点数、体質親和性、余力補正、ケア選定を変更しない
+
+詳細: `docs/RADAR_REFERENCE_DEMO_SIGN_ROTATION_V7794.md`
+
 ## v7.79.3 水分環境の状態・方向契約
 
 - `moisture_state`は対象日の絶対湿度帯を表す
