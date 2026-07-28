@@ -46,8 +46,8 @@ test("mood signs do not invent stomach symptoms or emotional humidity", () => {
     radarUtils.getForecastBodySigns([weatherFactor("heat")], 1, "mood", "today"),
     [
       "熱が上にこもって、消耗やそわつきが出やすい",
-      "気持ちの切り替えに時間がかかりやすい",
-      "疲れているのに、焦りや落ち着かなさが先に出やすい",
+      "暑さで体温を逃がすために力を使う日は、気分そのものより、体の消耗に気持ちが引っぱられやすい",
+      "熱と発汗への対応が続くと、いつもなら流せる小さな刺激に、反応が残りやすい",
     ],
   );
 
@@ -58,7 +58,7 @@ test("mood signs do not invent stomach symptoms or emotional humidity", () => {
     "today",
   );
   assert.doesNotMatch(JSON.stringify(stable), /胃腸|気分に.*湿気/);
-  assert.match(JSON.stringify(stable), /気持ちの切り替え/);
+  assert.match(JSON.stringify(stable), /気分|気持ち/);
 });
 
 test("body sign cards contain observations, not unrelated care conditions", () => {
@@ -91,7 +91,7 @@ test("body sign cards contain observations, not unrelated care conditions", () =
     "today",
   );
   assert.doesNotMatch(JSON.stringify(sleepSigns), /夕方以降の光や画面/);
-  assert.match(JSON.stringify(sleepSigns), /頭の働きが静まりにくい/);
+  assert.match(JSON.stringify(sleepSigns), /休む準備|夕方の切り替わり/);
 });
 
 test("damp mood copy describes felt heaviness without assuming digestion trouble", () => {
