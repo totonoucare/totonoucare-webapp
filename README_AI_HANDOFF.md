@@ -1,4 +1,25 @@
+## v7.79.6 根拠別サイン生成契約
+
+- `/radar`の出やすいサインは必ず次の3件
+  1. 主な天気現象から想定する広い身体反応
+  2. 主な天気ストレスと選択中の不調を結ぶ短い観察サイン
+  3. 体質の反応様式と選択中の不調を結ぶ個別サイン
+- 2・3件目の正本は`lib/radar_v1/bodySignInsights.js`
+- `app/radar/page.js`は`riskContext`を`getForecastBodySigns`へ渡す
+- 体質側で使う情報は`core_code`、`sub_labels`、`manifestation.reaction_direction`
+- `reaction_direction`が明示されている場合は`accel / brake / balanced`を優先。未保存の旧データだけ`core_code`の軸で補完する
+- 天気×不調は完成文の辞書から選び、天気説明と症状断片を自由結合しない
+- 日付ローテーションは同一根拠内の候補選択だけに使う。同じ日・同じ入力では同じ結果を返す
+- 未選択の身体領域、根拠のない部位比較、症状の発生順、行動時の細かな条件を推測して補わない
+- 気圧の物理方向は表示用、身体反応方向はサイン用として再結合しない
+- v7.79.5の`RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS`と`RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS`は削除済み
+- 表示文だけの変更で、体調ゆらぎ度、天気ストレス、体質親和性、余力、対策ケア、DBへ影響させない
+
+詳細: `docs/RADAR_GROUNDED_BODY_SIGNS_V7796.md`
+
 ## v7.79.5 天気ストレス×不調の観察サイン契約
+
+> この契約はv7.79.6で廃止済み。実装時は直上の根拠別サイン生成契約を正本とする。
 
 - 出やすいサインの役割は次の3件
   1. 主な天気現象から想定する身体反応
