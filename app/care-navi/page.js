@@ -163,6 +163,11 @@ const PRODUCT_ROLE_LABELS = {
   bath_shift: "入浴で切り替える",
   humidity_control: "湿気をためない",
   moisture_air: "乾燥を守る",
+  cooling_support: "暑さから退避する",
+  task_support: "作業を一つへ絞る",
+  meal_transition: "食後の座りっぱなしを切る",
+  hydration_support: "補給の一回を作る",
+  rest_support: "早めに中断する",
   open_grip: "強く握り込まない",
   handle_support: "持ち手の食い込みを減らす",
   rotation_support: "手首だけで向きを変えない",
@@ -1221,6 +1226,11 @@ const LIVE_KIND_RULES = [
   { key: "bath_shift", pattern: /(入浴剤|バスソルト|炭酸|温浴|足湯|浴用|バス)/i },
   { key: "humidity_control", pattern: /(除湿|湿気|防湿|ドライ|炭八|湿気取り|除湿剤|サーキュレーター)/i },
   { key: "moisture_air", pattern: /(加湿|乾燥|保湿|マスク|うるおい)/i },
+  { key: "cooling_support", pattern: /(ネッククーラー|保冷|冷却|クール)/i },
+  { key: "task_support", pattern: /(アナログ タイマー|メモパッド|デイリー メモ)/i },
+  { key: "meal_transition", pattern: /(軽量 トレー|持ち手 滑り止め)/i },
+  { key: "hydration_support", pattern: /(水筒 軽量|ワンタッチ ボトル)/i },
+  { key: "rest_support", pattern: /(アナログ タイマー|作業 タイマー)/i },
 ];
 
 function inferLiveKinds(item) {
