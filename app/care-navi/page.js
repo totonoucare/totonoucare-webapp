@@ -163,6 +163,28 @@ const PRODUCT_ROLE_LABELS = {
   bath_shift: "入浴で切り替える",
   humidity_control: "湿気をためない",
   moisture_air: "乾燥を守る",
+  open_grip: "強く握り込まない",
+  handle_support: "持ち手の食い込みを減らす",
+  rotation_support: "手首だけで向きを変えない",
+  grounding_support: "足元を安定させる",
+  balance_training: "立つ位置を安定させる",
+  walking_support: "歩幅を小さくする",
+  hand_training: "手を握り続けない",
+  screen_height: "画面の高さを合わせる",
+  phone_height: "スマホの位置を合わせる",
+  forearm_support: "腕の重さを預ける",
+  sit_to_stand: "立ち上がりを助ける",
+  sitting_support: "足裏と座面で支える",
+  turning_support: "腰だけでねじらない",
+  carry_support: "持つ重さを分ける",
+  reach_support: "無理に手を伸ばさない",
+  standing_support: "立ち仕事を支える",
+  long_handle_support: "前かがみを減らす",
+  grip_support: "握る力を減らす",
+  sleep_turning: "寝返りを支える",
+  bath_safety: "浴室の足場を作る",
+  step_support: "段差の足場を作る",
+  pace_support: "作業を小さく区切る",
   warm_drink: "温かい飲み物",
   caffeine_shift: "香りの一杯",
   light_meal: "軽めの食事",
@@ -180,6 +202,7 @@ const PRODUCT_ROLE_LABELS = {
 };
 
 const SOURCE_TYPE_LABELS = {
+  body_mechanics: "暮らしの一手から",
   life: "生活サインから",
   symptom: "不調フォーカスから",
   policy: "今回の方針から",
@@ -1170,6 +1193,28 @@ function inferRoleLabelFromItem(item) {
 
 
 const LIVE_KIND_RULES = [
+  { key: "open_grip", pattern: /(軽量 マグカップ 大きい 持ち手|包丁 軽量 握りやすい)/i },
+  { key: "handle_support", pattern: /(バッグ 持ち手 カバー|持ち手 カバー 太め)/i },
+  { key: "rotation_support", pattern: /(軽量 トレー 持ち手)/i },
+  { key: "grounding_support", pattern: /(トレーニング マット 滑り止め 薄手)/i },
+  { key: "balance_training", pattern: /(バランスパッド)/i },
+  { key: "walking_support", pattern: /(ウォーキングシューズ 軽量 幅広)/i },
+  { key: "hand_training", pattern: /(フィンガーストレッチャー|指 開く ソフト)/i },
+  { key: "screen_height", pattern: /(ノートパソコン スタンド|モニター台|画面の高さ)/i },
+  { key: "phone_height", pattern: /(スマホ スタンド|スマートフォン スタンド)/i },
+  { key: "forearm_support", pattern: /(アームレスト|前腕|肘置き)/i },
+  { key: "sit_to_stand", pattern: /(座面 クッション 高さ|立ち上がり)/i },
+  { key: "sitting_support", pattern: /(フットレスト|足台|座面クッション)/i },
+  { key: "turning_support", pattern: /(回転 クッション|回転座面)/i },
+  { key: "carry_support", pattern: /(ショッピングカート|ランドリー バスケット キャスター|軽量 リュック|2way バッグ)/i },
+  { key: "reach_support", pattern: /(踏み台|ピックアップ ツール|ロング ハンドル ピックアップ)/i },
+  { key: "standing_support", pattern: /(疲労軽減 マット|キッチン マット)/i },
+  { key: "long_handle_support", pattern: /(軽量 モップ|長さ調整)/i },
+  { key: "grip_support", pattern: /(補助 グリップ|補助 取っ手)/i },
+  { key: "sleep_turning", pattern: /(抱き枕|膝 枕|寝返り サポート)/i },
+  { key: "bath_safety", pattern: /(浴室 滑り止め)/i },
+  { key: "step_support", pattern: /(階段 滑り止め)/i },
+  { key: "pace_support", pattern: /(キッチン タイマー|振動 タイマー)/i },
   { key: "reduce_light", pattern: /(アイマスク|耳栓|遮光|遮音|ブルーライト|目元|ホットアイ)/i },
   { key: "sleep_environment", pattern: /(枕|まくら|ピロー|pillow|マットレス|寝具|寝敷|敷布団|掛け布団|毛布|ブランケット|睡眠|寝返り)/i },
   { key: "warm_body", pattern: /(腹巻|湯たんぽ|レッグウォーマー|ネックウォーマー|ウォーマー|カイロ|温熱|発熱|遠赤外線|毛布)/i },
@@ -1186,12 +1231,15 @@ function inferLiveKinds(item) {
 
 function liveItemHasSlotMeaning(item, slot) {
   const roles = safeArray(slot?.roles);
+  const contextRoles = safeArray(slot?.contextBoostRoles);
   const kinds = inferLiveKinds(item);
   const keywordMatched = safeArray(slot?.keywords).length && hasAnyText(item, slot.keywords);
 
   // 暮らす枠は「商品名がたまたまキーワードを含む」だけでは通さない。
   // 枕・寝具・入浴・温熱・湿度・光刺激など、暮らし側の用途が商品側から読めることを必須にする。
+  if (roles.includes(item?.productRole) || contextRoles.includes(item?.productRole)) return true;
   if (roles.length && kinds.some((kind) => roles.includes(kind))) return true;
+  if (contextRoles.length && kinds.some((kind) => contextRoles.includes(kind))) return true;
   if (keywordMatched && kinds.length) return true;
   if ((item.source === "a8" || item.sourceType === "partner") && roles.includes(item.productRole)) return true;
   return false;
@@ -1532,6 +1580,10 @@ function applyContextSlotProfiles(slot, context = {}) {
   let next = slot;
   const category = slot.category;
 
+  if (category === "live" && context.lifestyleItemRole) {
+    next = mergeSlotBoosts(next, { boostRoles: [context.lifestyleItemRole] });
+  }
+
   safeArray(context.lifeKeys).forEach((lifeKey) => {
     next = mergeSlotBoosts(next, LIFE_KIT_PROFILES[lifeKey]?.[category]);
   });
@@ -1826,11 +1878,12 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   if (roleMatched) score += 14;
   if (safeArray(slot.productTypes).includes(item.productType)) score += 6;
   if (keywordMatched) score += 7;
-  if (contextRoleMatched) score += 4;
+  if (contextRoleMatched) score += 18;
   if (contextKeywordMatched) score += 4;
   if (hasAnyText(item, slot.avoidKeywords)) score -= 30;
 
-  if (slotRoles.length && !roleMatched) score -= 6;
+  if (slotRoles.length && !roleMatched && !contextRoleMatched) score -= 6;
+  if (item.sourceType === "body_mechanics" && contextRoleMatched) score += 8;
 
   if (slot.category === "point") {
     const areas = inferPointAreas(item);
@@ -2126,7 +2179,19 @@ function assembleCareSetCards({ definitions, byCategory, mode, policyKeys, appro
   return cards;
 }
 
-function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, triggerFactors, symptomLabel, approachTags, profileLike }) {
+function buildCareSetCards({
+  mode,
+  itemsByCategory,
+  partnerItemsByCategory,
+  policyKeys,
+  symptomKey,
+  lifeKeys,
+  lifestyleItemRole = "",
+  triggerFactors,
+  symptomLabel,
+  approachTags,
+  profileLike,
+}) {
   const byCategory = Object.fromEntries(
     CATEGORY_ORDER.map((category) => {
       const partner = safeArray(partnerItemsByCategory?.[category]).map((item) => ({ ...item, category, source: item.source || "a8", sourceType: item.sourceType || "partner" }));
@@ -2135,7 +2200,16 @@ function buildCareSetCards({ mode, itemsByCategory, partnerItemsByCategory, poli
     })
   );
 
-  const context = { mode, policyKeys: safeArray(policyKeys), symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), symptomLabel, profileLike };
+  const context = {
+    mode,
+    policyKeys: safeArray(policyKeys),
+    symptomKey,
+    lifeKeys: safeArray(lifeKeys),
+    lifestyleItemRole,
+    triggerFactors: safeArray(triggerFactors),
+    symptomLabel,
+    profileLike,
+  };
   const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike });
 
   const strictCards = assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 0 });
@@ -2616,6 +2690,8 @@ export default function CareNaviPage() {
   const [selectedSymptom, setSelectedSymptom] = useState("");
   const [shopPurpose, setShopPurpose] = useState("everyday");
   const [lifeKeys, setLifeKeys] = useState([]);
+  const [lifestyleActionKey, setLifestyleActionKey] = useState("");
+  const [lifestyleItemRole, setLifestyleItemRole] = useState("");
 
   const [rakutenItemsByCategory, setRakutenItemsByCategory] = useState({ live: [], eat: [], point: [] });
   const [rakutenQueries, setRakutenQueries] = useState([]);
@@ -2755,6 +2831,8 @@ export default function CareNaviPage() {
     const params = new URLSearchParams(window.location.search);
     const nextCategory = params.get("category");
     const nextSymptom = params.get("symptom");
+    const nextLifestyleActionKey = String(params.get("liveAction") || "").trim();
+    const nextLifestyleItemRole = String(params.get("liveRole") || "").trim();
     const nextLifeKeys = String(params.get("life") || "")
       .split(",")
       .map((item) => item.trim())
@@ -2771,6 +2849,13 @@ export default function CareNaviPage() {
 
     if (nextLifeKeys.length) {
       setLifeKeys(nextLifeKeys.filter((key) => LIFE_OPTIONS.some((item) => item.key === key)).slice(0, 3));
+    }
+
+    if (/^(?:body|tension)-[a-z0-9-]{1,64}$/.test(nextLifestyleActionKey)) {
+      setLifestyleActionKey(nextLifestyleActionKey);
+    }
+    if (/^[a-z][a-z0-9_]{1,48}$/.test(nextLifestyleItemRole)) {
+      setLifestyleItemRole(nextLifestyleItemRole);
     }
 
   }, []);
@@ -2876,6 +2961,8 @@ export default function CareNaviPage() {
                 symptomKey,
                 basis,
                 lifeKeys,
+                lifestyleActionKey: categoryKey === "live" ? lifestyleActionKey : "",
+                lifestyleItemRole: categoryKey === "live" ? lifestyleItemRole : "",
                 priceBand,
                 limit: 24,
                 totalLimit: CARE_NAVI_TOTAL_LIMIT,
@@ -2929,7 +3016,7 @@ export default function CareNaviPage() {
       clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, rakutenRetryNonce]);
+  }, [priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, lifestyleActionKey, lifestyleItemRole, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -2966,12 +3053,13 @@ export default function CareNaviPage() {
         policyKeys,
         symptomKey,
         lifeKeys,
+        lifestyleItemRole,
         triggerFactors: tomorrowTriggerFactors,
         symptomLabel,
         approachTags,
         profileLike,
       }),
-    [rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
+    [rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, lifestyleItemRole, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
   );
 
   const setCandidateItems = useMemo(
