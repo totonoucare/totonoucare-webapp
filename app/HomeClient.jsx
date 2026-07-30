@@ -313,17 +313,89 @@ function modeActionLabel(signal) {
   return "いつも通りで大丈夫";
 }
 
-function buildGuestSignHints(forecast) {
+const GUEST_SIGN_HINTS = {
+  pressure: [
+    "張り・こわばり",
+    "重だるさ",
+    "切り替えの疲れ",
+    "頭・耳まわりの重さ",
+    "動き出しにくさ",
+    "落ち着きにくさ",
+  ],
+  cold: [
+    "手足が冷える",
+    "腰が重い",
+    "こわばる",
+    "動き出しが遅い",
+    "首元が縮こまる",
+    "疲れが残る",
+  ],
+  heat: [
+    "のぼせる",
+    "汗で消耗",
+    "眠りが浅い",
+    "体に熱がこもる",
+    "そわつきやすい",
+    "だるさが残る",
+  ],
+  temp_shift: [
+    "体がこわばる",
+    "切り替えに疲れる",
+    "だるさが出る",
+    "首肩に力が入る",
+    "動き出しが重い",
+    "体温調節で消耗する",
+  ],
+  damp: [
+    "重だるい",
+    "むくみやすい",
+    "胃腸が重い",
+    "眠気が残る",
+    "体が動きにくい",
+    "頭が重い",
+  ],
+  dry: [
+    "のどが乾く",
+    "目が疲れる",
+    "肌が乾く",
+    "呼吸が浅くなる",
+    "こわばりやすい",
+    "水分不足を感じる",
+  ],
+  default: [
+    "だるさ",
+    "こわばり",
+    "切り替えにくさ",
+    "動き出しにくさ",
+    "疲れが残る",
+    "小さな違和感",
+  ],
+};
+
+function buildDatedSelection(items, limit, targetDate, scope = "") {
+  const candidates = [...new Set((items || []).map((item) => String(item || "").trim()).filter(Boolean))];
+  if (!candidates.length || limit <= 0) return [];
+  if (!targetDate) return candidates.slice(0, limit);
+
+  const parsed = Date.parse(`${targetDate}T00:00:00Z`);
+  const daySerial = Number.isFinite(parsed) ? Math.floor(parsed / 86400000) : 0;
+  const scopeOffset = [...String(scope)].reduce(
+    (sum, char) => (sum + char.codePointAt(0)) % candidates.length,
+    0
+  );
+  const start = (daySerial + scopeOffset) % candidates.length;
+  return Array.from(
+    { length: Math.min(limit, candidates.length) },
+    (_, index) => candidates[(start + index) % candidates.length]
+  );
+}
+
+function buildGuestSignHints(forecast, targetDate = null) {
   const factor = getForecastTriggerFactors(forecast)[0];
   const key = factor?.key || exactTriggerKey(forecast?.main_trigger, forecast?.trigger_dir);
-
-  if (key === "pressure_down" || key === "pressure_up") return ["張り・こわばり", "重だるさ", "切り替えの疲れ"];
-  if (key === "cold") return ["手足が冷える", "腰が重い", "こわばる"];
-  if (key === "heat") return ["のぼせる", "汗で消耗", "眠りが浅い"];
-  if (key === "temp_shift") return ["体がこわばる", "切り替えに疲れる", "だるさが出る"];
-  if (key === "damp") return ["重だるい", "むくみやすい", "胃腸が重い"];
-  if (key === "dry") return ["のどが乾く", "目が疲れる", "肌が乾く"];
-  return ["だるさ", "こわばり", "切り替えにくさ"];
+  const poolKey = key === "pressure_down" || key === "pressure_up" ? "pressure" : key;
+  const candidates = GUEST_SIGN_HINTS[poolKey] || GUEST_SIGN_HINTS.default;
+  return buildDatedSelection(candidates, 3, targetDate, `guest:${poolKey}`);
 }
 
 function buildFixedGuideText(bundle) {
@@ -1389,7 +1461,11 @@ export default function HomePage() {
         const { lat, lon } = publicLocation;
         const res = await fetch(`/api/radar/v1/forecast/public?lat=${lat}&lon=${lon}`);
         const json = await res.json().catch(() => ({}));
-        if (!cancelled) setPublicForecast(json?.ok ? json.forecast : null);
+        if (!cancelled) {
+          setPublicForecast(json?.ok
+            ? { ...json.forecast, target_date: json.target_date || getJstDateString(0) }
+            : null);
+        }
       } catch {
         if (!cancelled) setPublicForecast(null);
       } finally {
@@ -1428,14 +1504,16 @@ export default function HomePage() {
 
     // ★ 未ログイン時のテキストもダッシュボードと統一
     const botMessages = {
-      2: `今日は警戒の日。無理せず自分を甘やかす一日にしようね。`,
-      1: `今日は少し波があるかも。こまめな休憩を意識してね。`,
-      0: `今日はおだやかな日。自分のペースで進んでいこう！`,
+      2: `今日は守りモード。無理を重ねず、休憩を先に入れようね。`,
+      1: `今日はいたわりモード。少し早めに整えておこう。`,
+      0: `今日は安定モード。自分のペースで進んでいこう！`,
     };
     const botMessage = publicForecastLoading
       ? "今日の体調予報デモを確認中…"
       : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
-    const guestSignHints = pf ? buildGuestSignHints(pf) : [];
+    const guestSignHints = pf
+      ? buildGuestSignHints(pf, pf?.target_date || getJstDateString(0))
+      : [];
 
     const QUICK_PRESETS = [
       { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
@@ -1487,8 +1565,10 @@ export default function HomePage() {
           {/* mb-5に広げてタイトルとカード本体との余白を調整 */}
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <div className="text-[15px] font-black tracking-tight text-slate-900">天気だけで見る体調予報デモ</div>
-              <div className="mt-0.5 text-[10px] font-extrabold text-slate-500">体質チェック前のため、天気要素だけで表示しています</div>
+              <div className="text-[15px] font-black tracking-tight text-slate-900">参考体質で見る体調予報デモ</div>
+              <div className="mt-0.5 text-[10px] font-extrabold leading-4 text-slate-500">
+                体質チェック前のため、反応の偏りと余力を中間に置いた仮の体質で試算しています
+              </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#CFE3DA]">
               <IconPin className="w-3.5 h-3.5 text-[#24564C]" />
