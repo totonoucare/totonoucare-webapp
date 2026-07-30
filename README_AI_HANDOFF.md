@@ -1,3 +1,44 @@
+## v7.79.8 暮らすケアの二段階選定契約
+
+- v7.79.7の`BODY_MECHANICS_INTERNAL_CANDIDATES`と`PUBLIC_ACTION_COPY_BY_ID`は維持する
+- 選定単位は22件の個別候補ではなく、`LIFESTYLE_SCENE_DEFINITIONS`の9基本動作
+- 基本動作は`hold_carry / push_pull_turn / reach_take / bend_height / sit_rise / walk_step / screen_handwork / hold_posture / lie_turn`
+- 第一段階で、不調に合う場面を優先し、天気ストレス、体質、余力、ケア方針を候補スコアへ反映する
+- 第二段階で、選ばれた場面に属する具体操作を日付で決定的に選ぶ
+- 個別家事名を`scene`へ戻さない。具体的な道具や生活例は`label`側のバリエーションとして扱う
+- `primary_action`と`alternatives`は互いに異なる`scene_family`から返す
+- 関連場面が4件以上あれば、同条件の7日間で4種類以上を回し、隣接日に同じ場面を出さない
+- 同一日・同一条件は固定。複数案がある場面は、次の巡回時に具体操作も切り替える
+- `scene_label`を追加し、`scene / scene_label / scene_family`の対応を固定する
+- v7.79.7の画面構造を維持し、A/B比較用のUIや追加入力を導入しない
+- 既存`tension-*` action idを維持し、ショップ検索との対応を壊さない
+- 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
+
+詳細: `docs/RADAR_BROAD_SCENE_LIFESTYLE_CARE_V7798.md`
+
+## v7.79.7 正中張力OSと暮らすケアの接続契約
+
+- `暮らす`の思想的な正本は`docs/BODY_USE_TENSION_CONTINUITY_OS.md`
+- これは一般的な姿勢矯正、筋力トレーニング、局所の脱力、単純な負担分散ではない
+- 内部モデルは、足の内側から体幹深部・頭頂・母指橈骨側へ伸張を保ち、局所で止めない荷重通過として扱う
+- 内部候補の身体OSと、`PUBLIC_ACTION_COPY_BY_ID`のユーザー表示文を混ぜない
+- ユーザー文へ`橈骨・母指・正中・張力・起始側・伸張・荷重・重心線・拮抗`を出さない
+- 場面は9つの基本動作へまとめ、操作は身体や道具の位置、実際の動き、目で確認できる成功条件、戻し方へ翻訳する
+- `lifestyle_plan.primary_action`は`scene / label / reason / felt_sense / reset / scene_family / item_role`を返す
+- 候補選定には主・副天気ストレス、不調、ケア方針、`core_code`、`reserve_small`を使う
+- 同日・同条件では固定。同じ条件が続く日は、上位候補内で`scene_family`を決定的に回す
+- `excluded_symptoms`へ該当する候補は選ばない。めまい時の歩行・階段・深い拾い動作は除外する
+- 開発者のトレーニング例を、生活上の一般場面より優先して候補化しない
+- 対策ケアへ商品名や検索語を持たせない。ショップへ渡すのは`liveAction / liveRole / liveScene`
+- 検索語の正本は`app/api/care-navi/rakuten/route.js`の`BODY_MECHANICS_LIVE_QUERY_RULES`
+- URLの自由入力を検索語へ使わず、登録済み`tension-*` action idだけを変換する
+- 予報オブジェクト、予報点数、天気ストレス、体質親和性、DBは変更しない
+
+詳細:
+
+- `docs/RADAR_TENSION_CONTINUITY_LIFESTYLE_CARE_V7797.md`
+- `docs/BODY_USE_TENSION_CONTINUITY_OS.md`
+
 ## v7.79.6 根拠別サイン生成契約
 
 - `/radar`の出やすいサインは必ず次の3件
