@@ -2341,8 +2341,13 @@ export default function RadarPage() {
                     </div>
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
                       {lifestylePrimaryAction?.scene ? (
-                        <div className="mb-2 text-[11px] font-black tracking-wide text-[#2F816E]">
-                          {lifestylePrimaryAction.scene}
+                        <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-black tracking-wide text-[#2F816E]">
+                          {lifestylePrimaryAction?.kind_label ? (
+                            <span className="rounded-full bg-[#EAF7F1] px-2 py-0.5 ring-1 ring-[#CFE7DE]">
+                              {lifestylePrimaryAction.kind_label}
+                            </span>
+                          ) : null}
+                          <span>{lifestylePrimaryAction.scene}</span>
                         </div>
                       ) : null}
                       <div className="flex items-start gap-3">
@@ -2374,7 +2379,13 @@ export default function RadarPage() {
                           {lifestyleAlternatives.map((item, idx) => (
                             <div key={item.id || `${idx}-${item.label}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#F4FAF7] px-3 py-2">
                               <span className="min-w-0 flex-1">
-                                {item.scene ? <span className="block text-[10px] font-black text-[#2F816E]">{item.scene}</span> : null}
+                                {(item.kind_label || item.scene) ? (
+                                  <span className="flex flex-wrap items-center gap-1.5 text-[10px] font-black text-[#2F816E]">
+                                    {item.kind_label ? <span>{item.kind_label}</span> : null}
+                                    {item.kind_label && item.scene ? <span aria-hidden="true">・</span> : null}
+                                    {item.scene ? <span>{item.scene}</span> : null}
+                                  </span>
+                                ) : null}
                                 <span className="mt-0.5 block text-[13px] font-extrabold leading-5 text-slate-700">{item.label}</span>
                               </span>
                               {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[idx + 1], { compact: true })}
@@ -2400,8 +2411,8 @@ export default function RadarPage() {
                 <CareSetNaviBridge
                   title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
-                    ? "表示中の身体操作とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
-                    : "明日の身体操作とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで先に見ておけます。"}
+                    ? "表示中の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
+                    : "明日の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで先に見ておけます。"}
                   buttonLabel={selectedIsToday ? "暮らしケアに合う候補を見る" : "明日の暮らし候補を見る"}
                   toneKey="live"
                   onClick={() => router.push(buildCareNaviUrl("live"))}
