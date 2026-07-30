@@ -1,5 +1,6 @@
 // app/api/radar/v1/forecast/public/route.js
-// 未ログインユーザー向け。認証不要、体質なし、気象ストレスのみ返す。
+// 未ログインユーザー向け。認証不要。
+// 体質情報がないため、反応の偏りと余力を中間に置いた参考体質で試算する。
 
 import { fetchMetnoLocationForecast } from "@/lib/radar_v1/metnoClient";
 import { normalizeMetnoForTargetDate } from "@/lib/radar_v1/metnoNormalize";
@@ -90,6 +91,13 @@ export async function GET(req) {
         pressure_direction: publicForecast.pressure_direction || null,
         moisture_state: publicForecast.moisture_state || weatherStress.moisture_state || null,
         pressure_response_direction: publicForecast.pressure_response_direction || "balanced",
+        reference_profile: publicForecast.reference_profile || {
+          kind: "neutral_reference",
+          label: "参考体質",
+          reaction_balance: "balanced",
+          reserve_level: "standard",
+          affinity_policy: "flat_midpoint",
+        },
         secondary_trigger_label: secondaryTrigger
           ? getTriggerLabel(secondaryTrigger.main_trigger, secondaryTrigger.trigger_dir)
           : null,
