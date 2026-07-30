@@ -748,6 +748,35 @@ function careQueryRow(keyword, reason, tags = [], options = {}) {
   };
 }
 
+// 予報ページの「暮らす」で選ばれた身体操作は、商品名を画面へ
+// 直書きせず、この許可済みキーからショップ検索だけを絞り込む。
+// URLの任意文字列をそのまま楽天検索へ流さないため、action idで解決する。
+const BODY_MECHANICS_LIVE_QUERY_RULES = {
+  "tension-open-palm-carry": careQueryRow("軽量 マグカップ 大きい 持ち手", "強く握り込まずに持ちやすい、軽い道具の候補です。", ["軽量", "大きい持ち手"], { productRole: "open_grip" }),
+  "tension-little-finger-thumb-line": careQueryRow("バッグ 持ち手 カバー 太め", "細い取っ手が指へ食い込みにくくなる候補です。", ["持ち手", "握り込みを減らす"], { productRole: "handle_support" }),
+  "tension-load-to-ground": careQueryRow("ショッピングカート 軽量 折りたたみ", "一度に持つ重さを減らし、車輪で運べる候補です。", ["運ぶ", "持つ量を減らす"], { productRole: "carry_support" }),
+  "tension-fixed-object-turn": careQueryRow("軽量 トレー 持ち手 滑り止め", "物を両手で持ったまま、足を踏み替えやすい候補です。", ["両手で持つ", "軽量"], { productRole: "rotation_support" }),
+  "tension-phone-thumb-line": careQueryRow("スマホ スタンド 高さ調整 卓上", "端末を片手で握り続けずに操作しやすくします。", ["スマホの位置", "手を休める"], { productRole: "phone_height" }),
+  "tension-screen-head-up": careQueryRow("ノートパソコン スタンド 高さ調整", "画面の上端を目の高さへ近づけやすくします。", ["画面の高さ", "首を曲げ続けない"], { productRole: "screen_height" }),
+  "tension-wall-axis": careQueryRow("デスク アームレスト 後付け", "前腕を載せる場所を作り、肩で腕を支え続けにくくします。", ["前腕を載せる", "デスク作業"], { productRole: "forearm_support" }),
+  "tension-inner-ankle-stand": careQueryRow("疲労軽減 マット 立ち仕事", "立ち仕事で足裏の一か所だけへ体重が集まりにくくなる候補です。", ["立つ", "足裏"], { productRole: "standing_support" }),
+  "tension-supported-one-leg": careQueryRow("疲労軽減 マット 立ち仕事", "足を前後へ入れ替えながら立ちやすい場所を作ります。", ["立ち仕事", "足を入れ替える"], { productRole: "standing_support" }),
+  "tension-walk-center-first": careQueryRow("ウォーキングシューズ 軽量 幅広", "歩幅を小さくしても足先が窮屈になりにくい候補です。", ["歩く", "軽量"], { productRole: "walking_support" }),
+  "tension-seated-foot-head": careQueryRow("デスク フットレスト 高さ調整", "両足裏を置く場所を作り、座る位置をそろえやすくします。", ["足裏を置く", "座る"], { productRole: "sitting_support" }),
+  "tension-sit-stand-innerline": careQueryRow("椅子 座面 クッション 高さ", "足裏を床へ着け、上体を前へ移して立ちやすい高さを補います。", ["立ち上がり", "座面"], { productRole: "sit_to_stand" }),
+  "tension-stairs-center-up": careQueryRow("階段 滑り止め マット", "足裏を置ける場所を明確にし、後ろ足だけで蹴り上がりにくくします。", ["階段", "足場"], { productRole: "step_support" }),
+  "tension-reach-thumb-line": careQueryRow("踏み台 安定 滑り止め", "ひじが少し曲がる距離まで物へ近づきやすくします。", ["高い所", "距離を縮める"], { productRole: "reach_support" }),
+  "tension-floor-object-axis": careQueryRow("ロング ハンドル ピックアップ ツール", "床へ深くかがんで物を取る回数を減らしやすくします。", ["床の物", "長い柄"], { productRole: "reach_support" }),
+  "tension-door-origin-move": careQueryRow("取っ手 補助 グリップ 太め", "取っ手を強く握らず、足を動かして開閉しやすくします。", ["取っ手", "握り込みを減らす"], { productRole: "grip_support" }),
+  "tension-mop-fixed-end": careQueryRow("軽量 モップ 長さ調整", "道具の先を床へ置き、腕で振らずに体側を歩かせやすくします。", ["掃除", "長さ調整"], { productRole: "long_handle_support" }),
+  "tension-kitchen-open-grip": careQueryRow("包丁 軽量 握りやすい ハンドル", "強く握り込まず、肩とひじへ余白を残して扱いやすい候補です。", ["調理", "軽い道具"], { productRole: "open_grip" }),
+  "tension-laundry-axis": careQueryRow("ランドリー バスケット キャスター", "洗濯物を一度に持たず、床を転がして運びやすくします。", ["洗濯", "運ぶ"], { productRole: "carry_support" }),
+  "tension-bed-long-roll": careQueryRow("抱き枕 寝返り サポート", "両膝と肩を同じ方向へ動かして寝返りしやすくします。", ["寝返り", "向きを変える"], { productRole: "sleep_turning" }),
+  "tension-head-sky-line": careQueryRow("回転 クッション 椅子", "首だけをひねらず、椅子ごと見たい方向へ向きやすくします。", ["向きを変える", "座る"], { productRole: "turning_support" }),
+  "tension-palm-axis-reset": careQueryRow("マウスパッド リストレスト", "手首を曲げ続けず、道具から手を離す休憩を入れやすくします。", ["手首", "デスク作業"], { productRole: "grip_support" }),
+};
+
+
 
 const LIFE_POLICY_HINTS = {
   screen: ["yurumeru", "meguraseru"],
@@ -1163,6 +1192,28 @@ const PRODUCT_ROLE_META = {
   bath_shift: { label: "入浴で切り替える" },
   humidity_control: { label: "湿気をためない" },
   moisture_air: { label: "乾燥を守る" },
+  open_grip: { label: "強く握り込まない" },
+  handle_support: { label: "持ち手の食い込みを減らす" },
+  rotation_support: { label: "手首だけで向きを変えない" },
+  grounding_support: { label: "足元を安定させる" },
+  balance_training: { label: "立つ位置を安定させる" },
+  walking_support: { label: "歩幅を小さくする" },
+  hand_training: { label: "手を握り続けない" },
+  screen_height: { label: "画面の高さを合わせる" },
+  phone_height: { label: "スマホの位置を合わせる" },
+  forearm_support: { label: "腕の重さを預ける" },
+  sit_to_stand: { label: "立ち上がりを助ける" },
+  sitting_support: { label: "足裏と座面で支える" },
+  turning_support: { label: "腰だけでねじらない" },
+  carry_support: { label: "持つ重さを分ける" },
+  reach_support: { label: "無理に手を伸ばさない" },
+  standing_support: { label: "立ち仕事を支える" },
+  long_handle_support: { label: "前かがみを減らす" },
+  grip_support: { label: "握る力を減らす" },
+  sleep_turning: { label: "寝返りを支える" },
+  bath_safety: { label: "浴室の足場を作る" },
+  step_support: { label: "段差の足場を作る" },
+  pace_support: { label: "作業を小さく区切る" },
   warm_drink: { label: "温かい飲み物" },
   caffeine_shift: { label: "香りの一杯" },
   light_meal: { label: "軽めの食事" },
@@ -1200,6 +1251,28 @@ function inferProductRole({ category, normalized, policyKey }) {
   }
 
   if (category === "live") {
+    if (/(軽量 マグカップ 大きい 持ち手|包丁 軽量 握りやすい)/.test(text)) return "open_grip";
+    if (/(バッグ 持ち手 カバー|持ち手 カバー 太め)/.test(text)) return "handle_support";
+    if (/(軽量 トレー 持ち手)/.test(text)) return "rotation_support";
+    if (/(トレーニング マット 滑り止め 薄手)/.test(text)) return "grounding_support";
+    if (/(バランスパッド)/.test(text)) return "balance_training";
+    if (/(ウォーキングシューズ 軽量 幅広)/.test(text)) return "walking_support";
+    if (/(フィンガーストレッチャー|指 開く ソフト)/.test(text)) return "hand_training";
+    if (/(ノートパソコン スタンド|モニター台|画面の高さ)/.test(text)) return "screen_height";
+    if (/(スマホ スタンド|スマートフォン スタンド)/.test(text)) return "phone_height";
+    if (/(アームレスト|前腕|肘置き)/.test(text)) return "forearm_support";
+    if (/(座面 クッション 高さ|立ち上がり)/.test(text)) return "sit_to_stand";
+    if (/(フットレスト|足台|座面クッション)/.test(text)) return "sitting_support";
+    if (/(回転 クッション|回転座面)/.test(text)) return "turning_support";
+    if (/(ショッピングカート|ランドリー バスケット キャスター|軽量 リュック|2way バッグ)/.test(text)) return "carry_support";
+    if (/(踏み台|ピックアップ ツール|ロング ハンドル ピックアップ)/.test(text)) return "reach_support";
+    if (/(疲労軽減 マット|キッチン マット)/.test(text)) return "standing_support";
+    if (/(軽量 モップ|長さ調整)/.test(text)) return "long_handle_support";
+    if (/(補助 グリップ|補助 取っ手)/.test(text)) return "grip_support";
+    if (/(抱き枕|膝 枕|寝返り サポート)/.test(text)) return "sleep_turning";
+    if (/(浴室 滑り止め)/.test(text)) return "bath_safety";
+    if (/(階段 滑り止め)/.test(text)) return "step_support";
+    if (/(キッチン タイマー|振動 タイマー)/.test(text)) return "pace_support";
     if (/(アイマスク|耳栓|遮光|遮音|ブルーライト)/.test(text)) return policyKey === "sleep" ? "sleep_environment" : "reduce_light";
     if (/(枕|まくら|ピロー|pillow|睡眠|リカバリーウェア|寝室|寝具|マットレス)/.test(text)) return "sleep_environment";
     if (/(腹巻|湯たんぽ|レッグウォーマー|ネックウォーマー|温熱|カイロ|足湯)/.test(text)) return "warm_body";
@@ -1225,7 +1298,17 @@ function inferProductRole({ category, normalized, policyKey }) {
   return "general";
 }
 
-function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, lifeKeys, limit }) {
+function buildQueryPlans({
+  category,
+  policyKeys,
+  symptomKey,
+  priceBand,
+  basis,
+  lifeKeys,
+  lifestyleActionKey = "",
+  lifestyleItemRole = "",
+  limit,
+}) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
   const safePolicyKeys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
   const primaryPolicyKey = safePolicyKeys[0] || "sasaeru";
@@ -1274,6 +1357,29 @@ function buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, l
 
     seenKeywords.add(keyword);
     return true;
+  }
+
+  // 予報ページから入った時だけ、表示中の身体操作を助ける「暮らす」候補を
+  // 先頭へ置く。検索語はaction idに紐づく許可済みルールだけを使う。
+  const safeLifestyleActionKey = /^(?:body|tension)-[a-z0-9-]{1,64}$/.test(String(lifestyleActionKey || ""))
+    ? String(lifestyleActionKey)
+    : "";
+  const safeLifestyleItemRole = /^[a-z][a-z0-9_]{1,48}$/.test(String(lifestyleItemRole || ""))
+    ? String(lifestyleItemRole)
+    : "";
+  const bodyMechanicsRow = safeCategory === "live"
+    ? BODY_MECHANICS_LIVE_QUERY_RULES[safeLifestyleActionKey]
+    : null;
+  if (bodyMechanicsRow) {
+    const normalized = {
+      ...normalizeQueryRow(bodyMechanicsRow),
+      productRole: normalizeQueryRow(bodyMechanicsRow)?.productRole || (PRODUCT_ROLE_META[safeLifestyleItemRole] ? safeLifestyleItemRole : null),
+    };
+    addPlanFromRow(normalized, {
+      policyKey: primaryPolicyKey,
+      source: "body_mechanics",
+      sourceKey: "body_mechanics",
+    });
   }
 
   // 1本目: 生活サインは「方針別検索の材料」ではなく、生活サイン自身の文脈で1本だけ先に立てる。
@@ -1727,10 +1833,11 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length >= 3) {
     return [
-      { key: "life", count: 2 },
+      { key: "body_mechanics", count: 2 },
+      { key: "life", count: 1 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 2 },
-      { key: keys[1], count: 2 },
+      { key: keys[1], count: 1 },
       { key: keys[2], count: 1 },
       { key: "__remaining__", count: 1 },
     ];
@@ -1738,9 +1845,10 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length >= 2) {
     return [
-      { key: "life", count: 2 },
+      { key: "body_mechanics", count: 2 },
+      { key: "life", count: 1 },
       { key: "symptom", count: 2 },
-      { key: keys[0], count: 3 },
+      { key: keys[0], count: 2 },
       { key: keys[1], count: 2 },
       { key: "__remaining__", count: 1 },
     ];
@@ -1748,17 +1856,19 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length === 1) {
     return [
-      { key: "life", count: 2 },
+      { key: "body_mechanics", count: 2 },
+      { key: "life", count: 1 },
       { key: "symptom", count: 2 },
-      { key: keys[0], count: 4 },
+      { key: keys[0], count: 3 },
       { key: "__remaining__", count: 2 },
     ];
   }
 
   return [
-    { key: "life", count: 2 },
+    { key: "body_mechanics", count: 2 },
+    { key: "life", count: 1 },
     { key: "symptom", count: 2 },
-    { key: "__remaining__", count: 6 },
+    { key: "__remaining__", count: 5 },
   ];
 }
 
@@ -1911,6 +2021,8 @@ export async function POST(req) {
     const totalLimit = Math.max(displayLimit, clampNumber(body?.totalLimit, 32, displayLimit, 48));
     const lifeKeys = uniqueStrings(body?.lifeKeys).slice(0, 4);
     const basis = String(body?.basis || "");
+    const lifestyleActionKey = String(body?.lifestyleActionKey || "");
+    const lifestyleItemRole = String(body?.lifestyleItemRole || "");
 
     const credentials = getRakutenCredentials();
     if (!credentials.applicationId || !credentials.accessKey) {
@@ -1926,7 +2038,17 @@ export async function POST(req) {
       });
     }
 
-    const plans = buildQueryPlans({ category, policyKeys, symptomKey, priceBand, basis, lifeKeys, limit: displayLimit });
+    const plans = buildQueryPlans({
+      category,
+      policyKeys,
+      symptomKey,
+      priceBand,
+      basis,
+      lifeKeys,
+      lifestyleActionKey,
+      lifestyleItemRole,
+      limit: displayLimit,
+    });
     if (!plans.length) {
       return jsonUtf8({ ok: true, items: [], queries: [], category, priceBand, priceRange });
     }
