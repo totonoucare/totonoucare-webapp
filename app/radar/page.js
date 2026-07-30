@@ -967,7 +967,14 @@ export default function RadarPage() {
     });
   }, [carePlan?.care_theme, activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]);
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
-  const buildCareNaviUrl = (category) => `/care-navi?category=${category}${careNaviSymptomQuery}`;
+  const buildCareNaviUrl = (category) => {
+    const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
+    if (category !== "live") return base;
+    const actionKey = String(lifestylePlan?.primary_action?.id || "").trim();
+    const role = String(lifestylePlan?.primary_action?.item_role || "").trim();
+    const sceneFamily = String(lifestylePlan?.primary_action?.scene_family || "").trim();
+    return `${base}${actionKey ? `&liveAction=${encodeURIComponent(actionKey)}` : ""}${role ? `&liveRole=${encodeURIComponent(role)}` : ""}${sceneFamily ? `&liveScene=${encodeURIComponent(sceneFamily)}` : ""}`;
+  };
 
   const derivedLifestylePlan = useMemo(
     () =>
@@ -982,10 +989,6 @@ export default function RadarPage() {
     [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday, symptomFocus, careTriggerFactors]
   );
   const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
-  const liveItemHint = useMemo(
-    () => getCareItemHint("live", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
-    [careTriggerFactors, selectedIsToday, symptomFocus]
-  );
   const eatItemHint = useMemo(
     () => getCareItemHint("eat", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
     [careTriggerFactors, selectedIsToday, symptomFocus]
@@ -2337,6 +2340,11 @@ export default function RadarPage() {
                       {selectedIsToday ? "今日の一手" : "今夜の一手"}
                     </div>
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
+                      {lifestylePrimaryAction?.scene ? (
+                        <div className="mb-2 text-[11px] font-black tracking-wide text-[#2F816E]">
+                          {lifestylePrimaryAction.scene}
+                        </div>
+                      ) : null}
                       <div className="flex items-start gap-3">
                         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">1</div>
                         <div className="min-w-0 flex-1">
@@ -2345,6 +2353,12 @@ export default function RadarPage() {
                           </div>
                           {lifestylePrimaryAction?.reason ? (
                             <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{lifestylePrimaryAction.reason}</div>
+                          ) : null}
+                          {lifestylePrimaryAction?.felt_sense ? (
+                            <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
+                              <span className="mr-1.5 font-black text-[#2F816E]">できた目安</span>
+                              {lifestylePrimaryAction.felt_sense}
+                            </div>
                           ) : null}
                         </div>
                       </div>
@@ -2359,13 +2373,22 @@ export default function RadarPage() {
                         <div className="space-y-2 border-t border-[#E1E6E1] px-4 py-3">
                           {lifestyleAlternatives.map((item, idx) => (
                             <div key={item.id || `${idx}-${item.label}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#F4FAF7] px-3 py-2">
-                              <span className="min-w-0 flex-1 text-[13px] font-extrabold leading-5 text-slate-700">{item.label}</span>
+                              <span className="min-w-0 flex-1">
+                                {item.scene ? <span className="block text-[10px] font-black text-[#2F816E]">{item.scene}</span> : null}
+                                <span className="mt-0.5 block text-[13px] font-extrabold leading-5 text-slate-700">{item.label}</span>
+                              </span>
                               {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[idx + 1], { compact: true })}
                             </div>
                           ))}
                           {lifestylePlan.trap ? (
                             <div className="rounded-[14px] bg-[#FFF9ED] px-3 py-2 text-[14px] font-bold leading-5 text-slate-600 ring-1 ring-[#EAD8A6]">
                               {lifestylePlan.trap}
+                            </div>
+                          ) : null}
+                          {lifestylePrimaryAction?.reset ? (
+                            <div className="rounded-[14px] bg-[#F6F7F8] px-3 py-2 text-[13px] font-bold leading-5 text-slate-500">
+                              <span className="mr-1.5 font-black text-slate-600">うまくいかない時</span>
+                              {lifestylePrimaryAction.reset}
                             </div>
                           ) : null}
                         </div>
@@ -2377,8 +2400,8 @@ export default function RadarPage() {
                 <CareSetNaviBridge
                   title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
-                    ? liveItemHint || "表示中の生活ケアに合わせて、温める・休む・眠る・湿度を整える道具の候補を見られます。"
-                    : liveItemHint || "明日の予報と季節に合わせて、温める・休む・眠る・湿度を整える道具の候補を先に見ておけます。"}
+                    ? "表示中の身体操作とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
+                    : "明日の身体操作とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで先に見ておけます。"}
                   buttonLabel={selectedIsToday ? "暮らしケアに合う候補を見る" : "明日の暮らし候補を見る"}
                   toneKey="live"
                   onClick={() => router.push(buildCareNaviUrl("live"))}
