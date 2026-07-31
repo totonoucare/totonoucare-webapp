@@ -1,3 +1,37 @@
+## v7.79.10 暮らすケアの文脈優先選定契約
+
+- `/radar`の暮らすカードは`今日の一手 / 今夜の一手`から始める
+- `まずはこれ`、`lifestylePlan.title`、`lifestylePlan.lead`を主提案の前へ重複表示しない
+- 主レーンは`body_score`と`environment_score`の高い方
+- 最高点差が`LIFESTYLE_LANE_NEAR_TIE_DELTA = 0.75`以内の時だけ日付ローテーション
+- 各レーン内も`LIFESTYLE_CANDIDATE_NEAR_TIE_DELTA = 0.75`以内の場面・具体策だけを日付ローテーション
+- 適合候補を四場面まで強制拡張しない
+- 身体操作は選択中の不調に直接対応する候補がある時だけレーンを有効化する
+- 身体操作の画面文は、一般分類ではなく`PUBLIC_ACTION_COPY_BY_ID.scene`の具体場面を先に表示
+- `selection_basis`は`lane_score_gap / near_tie_delta / lane_rotation_applied / primary_candidate_score`を返す
+- `foundation`は従来どおり強い日または余力が小さい日の補助案だけ
+- 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
+
+詳細: `docs/RADAR_CONTEXT_FIRST_LIFESTYLE_CARE_V77910.md`
+
+## v7.79.9 暮らすケアの三レーン選定契約
+
+- この版の強制交代契約はv7.79.10で廃止済み。主レーンは適合度優先とする
+- `enhanceLifestylePlan`は身体操作だけを候補にせず、`body / environment / foundation`の三レーンを扱う
+- 主提案へ選べるのは`body`または`environment`だけ。`foundation`を主提案へ昇格させない
+- 身体操作候補はv7.79.8の9基本動作・22具体策を維持する
+- 環境実験は`ENVIRONMENT_EXPERIMENT_CANDIDATES`を正本とし、`scene / text / reason / felt_sense / reset`を必須にする
+- 環境候補は主・副の天気ストレスに一致する候補へ絞り、選択中の不調に一致する候補があればそれを優先する
+- 身体操作と環境実験の適合度差は各レーン内の順位に使い、両レーンが存在する日は日付で主役を交代する
+- 主提案と別案には`body`と`environment`を一つずつ含める
+- `foundation`は`signal=2`または`reserve_small=true`の時だけ補助案へ追加する
+- `care_kind / kind_label / selection_basis`を表示・検証用に返す
+- ショップへ渡すaction idは`BODY_MECHANICS_LIVE_QUERY_RULES`と`ENVIRONMENT_LIVE_QUERY_RULES`の許可済み辞書で解決する
+- 対策ケア本文へ商品名・楽天検索語を出さない
+- 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
+
+詳細: `docs/RADAR_LIFESTYLE_CARE_LANES_V7799.md`
+
 ## v7.79.8 暮らすケアの二段階選定契約
 
 - v7.79.7の`BODY_MECHANICS_INTERNAL_CANDIDATES`と`PUBLIC_ACTION_COPY_BY_ID`は維持する
