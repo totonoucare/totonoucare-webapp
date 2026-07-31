@@ -2322,20 +2322,8 @@ export default function RadarPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-[24px] bg-[#EAF7F1] ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
-                  <div className="px-4 py-4">
-                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-[0_10px_20px_-16px_rgba(37,95,79,0.30)]">
-                      まずはこれ
-                    </div>
-                    <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
-                      {lifestylePlan.title}
-                    </div>
-                    <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">
-                      {lifestylePlan.lead}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-white/70 bg-[#F4FAF7] px-4 py-4">
+                <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
+                  <div>
                     <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                       {selectedIsToday ? "今日の一手" : "今夜の一手"}
                     </div>
