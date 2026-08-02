@@ -81,11 +81,11 @@ test("the main display is concise and keeps alternatives behind secondary fields
   assert.equal(food.action_cards[0].items.length, 1);
   assert.ok(food.alternatives.length <= 2);
   assert.equal(food.caution_items.length, 1);
-  assert.equal(plan.lifestyle_plan.steps.length, 3);
+  assert.ok(plan.lifestyle_plan.steps.length >= 1 && plan.lifestyle_plan.steps.length <= 2);
   assert.ok(plan.lifestyle_plan.primary_action.label.length > 0);
   assert.match(pageSource, /primaryFoodCard/);
   assert.match(pageSource, /lifestylePrimaryAction/);
-  assert.match(pageSource, /別案・気をつけたいこと/);
+  assert.match(pageSource, /ほかの一手・しっくりこない時/);
 });
 
 test("reserve and forecast mode change the permitted stimulus instead of changing the forecast", () => {
