@@ -2350,7 +2350,9 @@ export default function RadarPage() {
                           ) : null}
                           {lifestylePrimaryAction?.felt_sense ? (
                             <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
-                              <span className="mr-1.5 font-black text-[#2F816E]">ラクになった目安</span>
+                              <span className="mr-1.5 font-black text-[#2F816E]">
+                                {lifestylePrimaryAction.care_kind === "environment" ? "合っている目安" : "ラクになった目安"}
+                              </span>
                               {lifestylePrimaryAction.felt_sense}
                             </div>
                           ) : null}
@@ -2362,7 +2364,7 @@ export default function RadarPage() {
                     </div>
                     ) : (
                       <div className="mt-3 rounded-[17px] bg-white px-4 py-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1E6E1]">
-                        {lifestylePlan.no_suggestion_text || "今日は、暮らし方を変える提案はお休みです。食べる・ほぐすも見てみてください。"}
+                        {lifestylePlan.no_suggestion_text || "今日は、環境や身体の使い方で足す一手はありません。食べる・ほぐすを見てみてください。"}
                       </div>
                     )}
 
