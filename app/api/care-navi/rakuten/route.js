@@ -777,6 +777,8 @@ const BODY_MECHANICS_LIVE_QUERY_RULES = {
 };
 
 const ENVIRONMENT_LIVE_QUERY_RULES = {
+  "env-stop-line": careQueryRow("アナログ タイマー 卓上", "始める前に止め時を決め、続けすぎを防ぎやすくする候補です。", ["止め時", "余力"], { productRole: "rest_support" }),
+  "env-breathing-room": careQueryRow("デイリー プランナー 時間軸", "外せない予定の前後へ、短い空白を作りやすくする候補です。", ["予定", "すき間"], { productRole: "task_support" }),
   "env-damp-source-route": careQueryRow("サーキュレーター 衣類乾燥 静音", "浴室や部屋干しで増えた湿気を、部屋全体へ広げにくくする候補です。", ["湿気の通り道", "空気を動かす"], { productRole: "humidity_control" }),
   "env-damp-work-zone": careQueryRow("サーキュレーター 卓上 静音", "過ごす場所を変えにくい時も、湿気の発生源側へ空気を動かしやすくします。", ["湿気", "作業場所"], { productRole: "humidity_control" }),
   "env-dry-airflow-line": careQueryRow("エアコン 風よけ カバー", "顔や首へ乾いた風が直接当たる線を変えやすくします。", ["乾いた風", "風向き"], { productRole: "moisture_air" }),
@@ -1217,10 +1219,10 @@ const PRODUCT_ROLE_META = {
   humidity_control: { label: "湿気をためない" },
   moisture_air: { label: "乾燥を守る" },
   cooling_support: { label: "暑さから退避する" },
-  task_support: { label: "作業を一つへ絞る" },
+  task_support: { label: "予定にすき間を作る" },
   meal_transition: { label: "食後の座りっぱなしを切る" },
   hydration_support: { label: "補給の一回を作る" },
-  rest_support: { label: "早めに中断する" },
+  rest_support: { label: "止め時を先に作る" },
   open_grip: { label: "強く握り込まない" },
   handle_support: { label: "持ち手の食い込みを減らす" },
   rotation_support: { label: "手首だけで向きを変えない" },
