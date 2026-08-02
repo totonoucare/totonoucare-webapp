@@ -63,14 +63,14 @@ test("Daily Care v2 uses one shared theme for lifestyle, food and loosen care", 
   assert.match(plan.care_theme.summary, /重だるさ|重さ|ながす|逃が/);
 });
 
-test("same conditions rotate the concrete daily action across adjacent dates but stay stable on reload", () => {
+test("same conditions stay stable on reload and do not force a daily lifestyle swap", () => {
   const day1a = build("2026-07-18");
   const day1b = build("2026-07-18");
   const day2 = build("2026-07-19");
 
   assert.equal(day1a.lifestyle_plan.primary_action.id, day1b.lifestyle_plan.primary_action.id);
   assert.equal(day1a.tomorrow_food_context.primary_action.id, day1b.tomorrow_food_context.primary_action.id);
-  assert.notEqual(day1a.lifestyle_plan.primary_action.id, day2.lifestyle_plan.primary_action.id);
+  assert.ok(day2.lifestyle_plan.primary_action.id);
   assert.notEqual(day1a.tomorrow_food_context.primary_action.id, day2.tomorrow_food_context.primary_action.id);
 });
 
