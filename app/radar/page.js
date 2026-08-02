@@ -2327,6 +2327,7 @@ export default function RadarPage() {
                     <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                       {selectedIsToday ? "今日の一手" : "今夜の一手"}
                     </div>
+                    {lifestylePrimaryAction ? (
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
                       {lifestylePrimaryAction?.scene ? (
                         <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-black tracking-wide text-[#2F816E]">
@@ -2349,7 +2350,7 @@ export default function RadarPage() {
                           ) : null}
                           {lifestylePrimaryAction?.felt_sense ? (
                             <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
-                              <span className="mr-1.5 font-black text-[#2F816E]">できた目安</span>
+                              <span className="mr-1.5 font-black text-[#2F816E]">ラクになった目安</span>
                               {lifestylePrimaryAction.felt_sense}
                             </div>
                           ) : null}
@@ -2359,10 +2360,15 @@ export default function RadarPage() {
                         {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[0], { compact: true })}
                       </div>
                     </div>
+                    ) : (
+                      <div className="mt-3 rounded-[17px] bg-white px-4 py-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1E6E1]">
+                        {lifestylePlan.no_suggestion_text || "今日は、暮らし方を変える提案はお休みです。食べる・ほぐすも見てみてください。"}
+                      </div>
+                    )}
 
                     {(lifestyleAlternatives.length > 0 || lifestylePlan.trap) ? (
                       <details className="mt-3 rounded-[17px] bg-white ring-1 ring-[#E1E6E1]">
-                        <summary className="cursor-pointer px-4 py-3 text-[12px] font-black text-[#2F816E]">別案・気をつけたいこと</summary>
+                        <summary className="cursor-pointer px-4 py-3 text-[12px] font-black text-[#2F816E]">ほかの一手・しっくりこない時</summary>
                         <div className="space-y-2 border-t border-[#E1E6E1] px-4 py-3">
                           {lifestyleAlternatives.map((item, idx) => (
                             <div key={item.id || `${idx}-${item.label}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#F4FAF7] px-3 py-2">
@@ -2386,7 +2392,7 @@ export default function RadarPage() {
                           ) : null}
                           {lifestylePrimaryAction?.reset ? (
                             <div className="rounded-[14px] bg-[#F6F7F8] px-3 py-2 text-[13px] font-bold leading-5 text-slate-500">
-                              <span className="mr-1.5 font-black text-slate-600">うまくいかない時</span>
+                              <span className="mr-1.5 font-black text-slate-600">しっくりこない時</span>
                               {lifestylePrimaryAction.reset}
                             </div>
                           ) : null}
@@ -2396,7 +2402,7 @@ export default function RadarPage() {
                   </div>
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.live} renderActionButton={actionButtonFor} /> : null}
-                <CareSetNaviBridge
+                {lifestylePrimaryAction ? <CareSetNaviBridge
                   title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
                     ? "表示中の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
@@ -2404,7 +2410,7 @@ export default function RadarPage() {
                   buttonLabel={selectedIsToday ? "暮らしケアに合う候補を見る" : "明日の暮らし候補を見る"}
                   toneKey="live"
                   onClick={() => router.push(buildCareNaviUrl("live"))}
-                />
+                /> : null}
               </div>
             ) : null}
           </Module>
