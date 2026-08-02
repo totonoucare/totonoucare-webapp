@@ -777,24 +777,12 @@ const BODY_MECHANICS_LIVE_QUERY_RULES = {
 };
 
 const ENVIRONMENT_LIVE_QUERY_RULES = {
-  "env-stop-line": careQueryRow("アナログ タイマー 卓上", "始める前に止め時を決め、続けすぎを防ぎやすくする候補です。", ["止め時", "余力"], { productRole: "rest_support" }),
-  "env-breathing-room": careQueryRow("デイリー プランナー 時間軸", "外せない予定の前後へ、短い空白を作りやすくする候補です。", ["予定", "すき間"], { productRole: "task_support" }),
-  "env-damp-source-route": careQueryRow("サーキュレーター 衣類乾燥 静音", "浴室や部屋干しで増えた湿気を、部屋全体へ広げにくくする候補です。", ["湿気の通り道", "空気を動かす"], { productRole: "humidity_control" }),
-  "env-damp-work-zone": careQueryRow("サーキュレーター 卓上 静音", "過ごす場所を変えにくい時も、湿気の発生源側へ空気を動かしやすくします。", ["湿気", "作業場所"], { productRole: "humidity_control" }),
+  "env-damp-window-choice": careQueryRow("除湿機 コンプレッサー 静音", "外の湿気が強い日も、窓を開け続けず室内の水分を減らしやすくします。", ["湿気", "除湿"], { productRole: "humidity_control" }),
+  "env-heat-window-radiation": careQueryRow("遮熱 カーテン ライナー", "日が当たる窓から入る熱を減らしやすくします。", ["窓の熱", "遮熱"], { productRole: "heat_shielding" }),
+  "env-heat-humidity-mode": careQueryRow("除湿機 コンプレッサー 静音", "暑さと湿気が重なる日に、汗が乾きにくい空気を整えやすくします。", ["暑さ", "湿気"], { productRole: "heat_moisture_control" }),
   "env-dry-airflow-line": careQueryRow("エアコン 風よけ カバー", "顔や首へ乾いた風が直接当たる線を変えやすくします。", ["乾いた風", "風向き"], { productRole: "moisture_air" }),
   "env-cold-airflow-line": careQueryRow("エアコン 風よけ カバー", "室温を上げすぎず、首肩へ冷風が当たり続ける条件を外しやすくします。", ["冷風", "風向き"], { productRole: "warm_body" }),
   "env-cold-floor-contact": careQueryRow("足元 マット 断熱 薄型", "床から足裏へ続く冷たさだけを切り分けやすくします。", ["足元", "床の冷え"], { productRole: "warm_body" }),
-  "env-heat-task-zone": careQueryRow("ネッククーラー 保冷 軽量", "暑い作業のあと、涼しい場所へ移るまでの熱を逃がしやすくします。", ["暑い作業", "退避"], { productRole: "cooling_support" }),
-  "env-heat-input-load": careQueryRow("デスクライト 調光 調色", "暑い日に重なる光刺激を、一段だけ下げやすくします。", ["光刺激", "調光"], { productRole: "reduce_light" }),
-  "env-pressure-single-input": careQueryRow("アナログ タイマー 卓上", "通知を増やさず、一つの作業時間だけを区切りやすくします。", ["一作業", "時間を区切る"], { productRole: "task_support" }),
-  "env-pressure-task-offload": careQueryRow("デイリー メモパッド 卓上", "次の一件を頭の外へ置き、同時に抱える予定を減らしやすくします。", ["予定", "一件だけ"], { productRole: "task_support" }),
-  "env-digestion-transition": careQueryRow("軽量 トレー 持ち手 滑り止め", "食後の片づけを短い移動へ変え、座りっぱなしを切りやすくします。", ["食後", "片づけ"], { productRole: "meal_transition" }),
-  "env-sleep-screen-exit": careQueryRow("スマホ 充電スタンド 卓上", "端末の置き場所を決め、寝床へ持ち込み続けにくくします。", ["充電場所", "寝る前"], { productRole: "sleep_environment" }),
-  "foundation-heat-break": careQueryRow("ネッククーラー 保冷 軽量", "暑さが強い日に、早めの中断と退避を助ける候補です。", ["暑さ", "休憩"], { productRole: "cooling_support" }),
-  "foundation-dry-sip": careQueryRow("水筒 軽量 ワンタッチ", "作業の前に数口補給する一回を作りやすくします。", ["補給", "持ち歩き"], { productRole: "hydration_support" }),
-  "foundation-damp-change": careQueryRow("吸水 タオル 速乾 コンパクト", "首元や背中の湿った場所を、一か所だけ乾いた状態へ戻しやすくします。", ["汗", "速乾"], { productRole: "humidity_control" }),
-  "foundation-cold-guard": careQueryRow("レッグウォーマー 薄手 腹巻", "最も冷える一か所だけへ、薄い一枚を足す候補です。", ["冷え", "薄手"], { productRole: "warm_body" }),
-  "foundation-reserve-pause": careQueryRow("アナログ タイマー 卓上", "疲れ切る前の中断地点を決め、作業を小さく区切りやすくします。", ["中断", "余力"], { productRole: "rest_support" }),
 };
 
 const LIFESTYLE_ACTION_LIVE_QUERY_RULES = {
@@ -1219,10 +1207,12 @@ const PRODUCT_ROLE_META = {
   humidity_control: { label: "湿気をためない" },
   moisture_air: { label: "乾燥を守る" },
   cooling_support: { label: "暑さから退避する" },
-  task_support: { label: "予定にすき間を作る" },
+  heat_shielding: { label: "窓からの熱を減らす" },
+  heat_moisture_control: { label: "暑さと湿気を整える" },
+  task_support: { label: "作業を一つへ絞る" },
   meal_transition: { label: "食後の座りっぱなしを切る" },
   hydration_support: { label: "補給の一回を作る" },
-  rest_support: { label: "止め時を先に作る" },
+  rest_support: { label: "早めに中断する" },
   open_grip: { label: "強く握り込まない" },
   handle_support: { label: "持ち手の食い込みを減らす" },
   rotation_support: { label: "手首だけで向きを変えない" },
