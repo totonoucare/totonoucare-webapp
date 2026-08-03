@@ -970,10 +970,9 @@ export default function RadarPage() {
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
     if (category !== "live") return base;
-    const shopContext = lifestylePlan?.shop_context || null;
-    const actionKey = String(shopContext?.action_id || "").trim();
-    const role = String(shopContext?.item_role || "").trim();
-    const sceneFamily = String(shopContext?.scene_family || "").trim();
+    const actionKey = String(lifestylePlan?.primary_action?.id || "").trim();
+    const role = String(lifestylePlan?.primary_action?.item_role || "").trim();
+    const sceneFamily = String(lifestylePlan?.primary_action?.scene_family || "").trim();
     return `${base}${actionKey ? `&liveAction=${encodeURIComponent(actionKey)}` : ""}${role ? `&liveRole=${encodeURIComponent(role)}` : ""}${sceneFamily ? `&liveScene=${encodeURIComponent(sceneFamily)}` : ""}`;
   };
 
@@ -1009,7 +1008,6 @@ export default function RadarPage() {
   const foodContextChips = safeArray(food.context_chips);
   const hasFoodActionCards = foodActionCards.length > 0;
   const lifestylePrimaryAction = lifestylePlan?.primary_action || null;
-  const lifestyleShopContext = lifestylePlan?.shop_context || null;
   const lifestyleAlternatives = safeArray(lifestylePlan?.alternatives);
   const lineCare = tsuboSet?.line_care || null;
   const hasFoodDetails = hasFoodActionCards
@@ -1883,7 +1881,7 @@ export default function RadarPage() {
                 {lineCare ? (
                   <div className="rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(123,101,136,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
-                      {selectedIsToday ? "今日の一手" : "今夜〜明朝の一手"}
+                      今日の一手
                     </div>
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lineCare.title || "体質ラインを軽くゆるめる"}
@@ -2049,11 +2047,11 @@ export default function RadarPage() {
                 ) : null}
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.point} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
-                  title={selectedIsToday ? "このツボケアに合う道具を見る" : "今夜〜明朝に使うほぐし道具を見る"}
+                  title={selectedIsToday ? "このツボケアに合う道具を見る" : "明日に使うほぐし道具を見ておく"}
                   lead={selectedIsToday
                     ? loosenItemHint || "表示中のツボや部位ケアに合わせて、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
-                    : loosenItemHint || "今夜〜明朝のケアに合わせて、使いやすい温熱・ほぐし系アイテムの候補を見られます。"}
-                  buttonLabel={selectedIsToday ? "ツボケアに合う候補を見る" : "今夜〜明朝のほぐし候補を見る"}
+                    : loosenItemHint || "明日の予報に合わせて、使いやすい温熱・ほぐし系アイテムの候補を見ておけます。"}
+                  buttonLabel={selectedIsToday ? "ツボケアに合う候補を見る" : "明日のほぐし候補を見る"}
                   toneKey="loosen"
                   onClick={() => router.push(buildCareNaviUrl("point"))}
                 />
@@ -2302,11 +2300,11 @@ export default function RadarPage() {
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.eat} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
-                  title={selectedIsToday ? "この食べ方に合う候補を見る" : "今夜〜明朝の食べ方候補を見る"}
+                  title={selectedIsToday ? "この食べ方に合う候補を見る" : "明日の食べ方候補を見ておく"}
                   lead={selectedIsToday
                     ? eatItemHint || "表示中の食べ方に合わせて、飲み物・汁物・素材系アイテムの候補を見られます。"
-                    : eatItemHint || "今夜〜明朝の予報と季節に合わせて、飲み物・汁物・素材系アイテムの候補を見られます。"}
-                  buttonLabel={selectedIsToday ? "食べ方に合う候補を見る" : "今夜〜明朝の食べ方候補を見る"}
+                    : eatItemHint || "明日の予報と季節に合わせて、飲み物・汁物・素材系アイテムの候補を先に見ておけます。"}
+                  buttonLabel={selectedIsToday ? "食べ方に合う候補を見る" : "明日の食べ方候補を見る"}
                   toneKey="eat"
                   onClick={() => router.push(buildCareNaviUrl("eat"))}
                 />
@@ -2327,7 +2325,7 @@ export default function RadarPage() {
                 <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div>
                     <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                      {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "今夜〜明朝の一手")}
+                      {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
                     {lifestylePrimaryAction ? (
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
@@ -2339,6 +2337,11 @@ export default function RadarPage() {
                             </span>
                           ) : null}
                           <span>{lifestylePrimaryAction.scene}</span>
+                        </div>
+                      ) : null}
+                      {lifestylePrimaryAction?.why_today ? (
+                        <div className="mb-3 rounded-[12px] bg-[#F4FAF7] px-3 py-2 text-[12px] font-bold leading-5 text-[#496D63] ring-1 ring-[#DCEBE5]">
+                          {lifestylePrimaryAction.why_today}
                         </div>
                       ) : null}
                       <div className="flex items-start gap-3">
@@ -2353,7 +2356,7 @@ export default function RadarPage() {
                           {lifestylePrimaryAction?.felt_sense ? (
                             <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
                               <span className="mr-1.5 font-black text-[#2F816E]">
-                                {lifestylePrimaryAction.care_kind === "environment" ? "合っている目安" : "ラクになった目安"}
+                                ラクになった目安
                               </span>
                               {lifestylePrimaryAction.felt_sense}
                             </div>
@@ -2367,14 +2370,14 @@ export default function RadarPage() {
                     ) : (
                       <div className="mt-3 rounded-[17px] bg-white px-4 py-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1E6E1]">
                         {lifestylePlan.no_suggestion_text || (selectedIsToday
-                          ? "今日は、環境や身体の使い方で足す一手はありません。食べる・ほぐすを見てみてください。"
-                          : "明日は、環境や身体の使い方で足す一手はありません。食べる・ほぐすを見てみてください。")}
+                          ? "今日は、身体の使い方や道具と配置で足す一手はありません。食べる・ほぐすを見てみてください。"
+                          : "今夜〜明朝は、身体の使い方や道具と配置で足す一手はありません。食べる・ほぐすを見てみてください。")}
                       </div>
                     )}
 
-                    {lifestyleAlternatives.length > 0 ? (
+                    {(lifestyleAlternatives.length > 0 || lifestylePlan.trap) ? (
                       <details className="mt-3 rounded-[17px] bg-white ring-1 ring-[#E1E6E1]">
-                        <summary className="cursor-pointer px-4 py-3 text-[12px] font-black text-[#2F816E]">ほかの一手</summary>
+                        <summary className="cursor-pointer px-4 py-3 text-[12px] font-black text-[#2F816E]">ほかの一手・しっくりこない時</summary>
                         <div className="space-y-2 border-t border-[#E1E6E1] px-4 py-3">
                           {lifestyleAlternatives.map((item, idx) => (
                             <div key={item.id || `${idx}-${item.label}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#F4FAF7] px-3 py-2">
@@ -2391,18 +2394,29 @@ export default function RadarPage() {
                               {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[idx + 1], { compact: true })}
                             </div>
                           ))}
+                          {lifestylePlan.trap ? (
+                            <div className="rounded-[14px] bg-[#FFF9ED] px-3 py-2 text-[14px] font-bold leading-5 text-slate-600 ring-1 ring-[#EAD8A6]">
+                              {lifestylePlan.trap}
+                            </div>
+                          ) : null}
+                          {lifestylePrimaryAction?.reset ? (
+                            <div className="rounded-[14px] bg-[#F6F7F8] px-3 py-2 text-[13px] font-bold leading-5 text-slate-500">
+                              <span className="mr-1.5 font-black text-slate-600">しっくりこない時</span>
+                              {lifestylePrimaryAction.reset}
+                            </div>
+                          ) : null}
                         </div>
                       </details>
                     ) : null}
                   </div>
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.live} renderActionButton={actionButtonFor} /> : null}
-                {lifestyleShopContext ? <CareSetNaviBridge
-                  title={selectedIsToday ? "今日の天気に合う暮らし道具を見る" : "今夜〜明朝の環境に合う道具を見る"}
+                {lifestylePrimaryAction?.shop_eligible ? <CareSetNaviBridge
+                  title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
-                    ? "今日の気温・湿度とケア方針に合う環境道具を、暮らす・食べる・ほぐすのセットで見られます。"
-                    : "今夜〜明朝の気温・湿度とケア方針に合う環境道具を、セットで見られます。"}
-                  buttonLabel={selectedIsToday ? "今日の環境候補を見る" : "今夜〜明朝の環境候補を見る"}
+                    ? "表示中の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
+                    : "明日の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで先に見ておけます。"}
+                  buttonLabel={selectedIsToday ? "暮らしケアに合う候補を見る" : "明日の暮らし候補を見る"}
                   toneKey="live"
                   onClick={() => router.push(buildCareNaviUrl("live"))}
                 /> : null}
