@@ -164,9 +164,10 @@ const PRODUCT_ROLE_LABELS = {
   humidity_control: "湿気をためない",
   moisture_air: "乾燥を守る",
   cooling_support: "暑さから退避する",
-  temperature_transition: "部屋間の温度差を整える",
   heat_shielding: "窓からの熱を減らす",
   heat_moisture_control: "暑さと湿気を整える",
+  airflow_redirect: "直風を外す",
+  bedding_moisture: "寝床の湿気を逃がす",
   task_support: "作業を一つへ絞る",
   meal_transition: "食後の座りっぱなしを切る",
   hydration_support: "補給の一回を作る",
@@ -1232,6 +1233,8 @@ const LIVE_KIND_RULES = [
   { key: "cooling_support", pattern: /(ネッククーラー|保冷|冷却|クール)/i },
   { key: "heat_shielding", pattern: /(遮熱|カーテン ライナー|ブラインド)/i },
   { key: "heat_moisture_control", pattern: /(除湿機|コンプレッサー|冷房 除湿)/i },
+  { key: "airflow_redirect", pattern: /(風よけ|風向板|サーキュレーター)/i },
+  { key: "bedding_moisture", pattern: /(寝具 除湿シート|敷布団 除湿|ベッド 除湿)/i },
   { key: "task_support", pattern: /(アナログ タイマー|メモパッド|デイリー メモ)/i },
   { key: "meal_transition", pattern: /(軽量 トレー|持ち手 滑り止め)/i },
   { key: "hydration_support", pattern: /(水筒 軽量|ワンタッチ ボトル)/i },
@@ -1366,7 +1369,7 @@ const SYMPTOM_SET_ANCHORS = {
   swelling: {
     label: "むくみ感",
     pointSlot: () => makeSlot("point", ["foot_leg_release", "gentle_stretch"], ["ふくらはぎ", "足裏", "足首", "足元", "ローラー"], { requiredAreas: ["foot_leg"], avoidKeywords: ["顔", "小顔", "美容", "フェイス", "頭皮"] }),
-    liveSlot: () => makeSlot("live", ["humidity_control", "bath_shift", "warm_body"], ["除湿", "入浴", "足湯", "サーキュレーター", "レッグウォーマー"]),
+    liveSlot: () => makeSlot("live", ["bedding_moisture", "bath_shift", "warm_body"], ["寝具", "除湿シート", "入浴", "足湯", "レッグウォーマー"]),
     eatSlot: (policyKey) => policyKey === "nagasu" ? makeSlot("eat", ["warm_drink", "ingredient"], ["はとむぎ", "ハトムギ", "とうもろこし", "小豆", "黒豆"], { teaDirections: ["light"] }) : eatSlot(policyKey),
     titles: {
       nagasu: ["むくみ感対策", "湿気だるさ対策"],
@@ -1501,7 +1504,7 @@ const LIFE_KIT_PROFILES = {
     point: { boostRoles: ["gentle_stretch", "neck_shoulder_release", "posture_release"], boostKeywords: ["ストレッチ", "首", "肩", "腰", "背中"] },
   },
   low_activity: {
-    live: { boostRoles: ["bath_shift", "humidity_control"], boostKeywords: ["入浴", "足湯", "サーキュレーター"] },
+    live: { boostRoles: ["bath_shift", "warm_body"], boostKeywords: ["入浴", "足湯", "温熱"] },
     eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜", "しょうが"] },
     point: { boostRoles: ["foot_leg_release", "gentle_stretch", "posture_release"], boostKeywords: ["足裏", "ふくらはぎ", "ストレッチ", "フォームローラー"] },
   },
@@ -1529,7 +1532,7 @@ const WEATHER_KIT_PROFILES = {
     point: { boostRoles: ["neck_shoulder_release", "tsubo_support"], boostKeywords: ["首", "肩", "こめかみ", "頭皮"] },
   },
   damp: {
-    live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "湿気", "防湿", "サーキュレーター", "入浴"] },
+    live: { boostRoles: ["bedding_moisture", "bath_shift"], boostKeywords: ["寝具", "除湿シート", "入浴"] },
     eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "小豆", "黒豆"] },
     point: { boostRoles: ["foot_leg_release", "gentle_stretch"], boostKeywords: ["足裏", "ふくらはぎ", "足元", "ストレッチ"] },
   },
@@ -1555,15 +1558,15 @@ const SUB_LABEL_KIT_PROFILES = {
   qi_deficiency: { live: { boostRoles: ["sleep_environment", "warm_body"], boostKeywords: ["寝具", "腹巻", "湯たんぽ"] }, eat: { teaDirections: ["support", "warming"], boostKeywords: ["なつめ", "黒豆", "玄米", "穀物"] } },
   blood_deficiency: { live: { boostRoles: ["sleep_environment", "moisture_air"], boostKeywords: ["寝具", "加湿", "乾燥"] }, eat: { teaDirections: ["moist", "support"], boostKeywords: ["なつめ", "黒豆", "ルイボス"] } },
   blood_stasis: { point: { boostRoles: ["posture_release", "foot_leg_release", "neck_shoulder_release"], boostKeywords: ["腰", "背中", "ふくらはぎ", "首", "肩"] }, eat: { teaDirections: ["warming", "support"] } },
-  fluid_damp: { live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "湿気", "入浴"] }, eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "黒豆"] } },
+  fluid_damp: { live: { boostRoles: ["bedding_moisture", "bath_shift"], boostKeywords: ["寝具", "除湿シート", "入浴"] }, eat: { teaDirections: ["light", "support"], boostKeywords: ["はとむぎ", "とうもろこし", "黒豆"] } },
   fluid_deficiency: { live: { boostRoles: ["moisture_air", "reduce_light"], boostKeywords: ["加湿", "乾燥", "アイマスク"] }, eat: { teaDirections: ["moist", "barley"], boostKeywords: ["ルイボス", "麦茶", "黒豆", "なつめ"] } },
 };
 
 const CORE_KIT_PROFILES = {
   accel: { live: { boostRoles: ["reduce_light", "bath_shift"], boostKeywords: ["アイマスク", "耳栓", "入浴"] }, eat: { teaDirections: ["calming", "moist"] }, point: { boostRoles: ["neck_shoulder_release", "tsubo_support"] } },
-  brake: { live: { boostRoles: ["warm_body", "bath_shift", "humidity_control"], boostKeywords: ["温熱", "入浴", "除湿"] }, eat: { teaDirections: ["warming", "light", "support"] }, point: { boostRoles: ["foot_leg_release", "posture_release", "gentle_stretch"] } },
+  brake: { live: { boostRoles: ["warm_body", "bath_shift"], boostKeywords: ["温熱", "入浴"] }, eat: { teaDirections: ["warming", "light", "support"] }, point: { boostRoles: ["foot_leg_release", "posture_release", "gentle_stretch"] } },
   batt_small: { live: { boostRoles: ["sleep_environment", "warm_body"], boostKeywords: ["寝具", "腹巻", "湯たんぽ"] }, eat: { teaDirections: ["support", "moist"], boostKeywords: ["なつめ", "黒豆", "玄米", "穀物"] } },
-  batt_large: { live: { boostRoles: ["humidity_control", "bath_shift"], boostKeywords: ["除湿", "入浴"] }, eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜"] }, point: { boostRoles: ["foot_leg_release", "posture_release"] } },
+  batt_large: { live: { boostRoles: ["bath_shift", "bedding_moisture"], boostKeywords: ["入浴", "寝具", "除湿シート"] }, eat: { teaDirections: ["light", "warming"], boostKeywords: ["はとむぎ", "黒豆", "生姜"] }, point: { boostRoles: ["foot_leg_release", "posture_release"] } },
 };
 
 function mergeSlotBoosts(slot, boost = {}) {
@@ -1655,7 +1658,7 @@ function pointSlotFor(policyKey, context) {
 function liveSlotFor(policyKey, context) {
   const anchor = getSymptomAnchor(context.symptomKey);
   if (anchor?.liveSlot) return anchor.liveSlot(policyKey, context);
-  if (policyKey === "nagasu") return makeSlot("live", ["humidity_control", "bath_shift"], ["除湿", "湿気", "サーキュレーター", "入浴"]);
+  if (policyKey === "nagasu") return makeSlot("live", ["bedding_moisture", "bath_shift"], ["寝具", "除湿シート", "入浴"]);
   if (policyKey === "uruosu") return makeSlot("live", ["moisture_air", "sleep_environment"], ["加湿", "乾燥", "マスク", "寝室"]);
   if (policyKey === "nukumeru") return makeSlot("live", ["warm_body", "bath_shift"], ["腹巻", "湯たんぽ", "足湯", "入浴", "温熱"]);
   if (policyKey === "shizumeru") return makeSlot("live", ["reduce_light", "sleep_environment"], ["アイマスク", "遮光", "耳栓", "寝室"]);
@@ -1857,6 +1860,9 @@ function scorePartnerSlotPriority(item, slot, { mode, roleMatched, keywordMatche
   const environmentalRoles = new Set([
     "sleep_environment",
     "humidity_control",
+    "bedding_moisture",
+    "airflow_redirect",
+    "heat_shielding",
     "moisture_air",
     "light_meal",
     "warm_body",
