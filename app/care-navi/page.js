@@ -164,6 +164,7 @@ const PRODUCT_ROLE_LABELS = {
   humidity_control: "湿気をためない",
   moisture_air: "乾燥を守る",
   cooling_support: "暑さから退避する",
+  temperature_transition: "部屋間の温度差を整える",
   heat_shielding: "窓からの熱を減らす",
   heat_moisture_control: "暑さと湿気を整える",
   task_support: "作業を一つへ絞る",
