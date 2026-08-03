@@ -1,4 +1,21 @@
+## v7.79.12 暮らすケアの広い場面・実行タイミング契約
+
+- 暮らすケアの現行ロジック版は`daily_care_v2_10_2026-08-02_broad_scene_timing_care`
+- 身体操作の画面`scene`は`LIFESTYLE_SCENE_DEFINITIONS`の9基本動作だけを正本にする
+- `PUBLIC_ACTION_COPY_BY_ID`へ個別の`scene`を追加して、まな板・モップ・スマホなどの家事名で上書きしない
+- 個別候補は基本動作の中の具体策。特定家事専用にせず、同じ動作を含む生活場面へ転用できる文章にする
+- tomorrowの身体操作は`明日の一手`、tomorrowの環境調整は`今夜の準備`。bodyを`今夜の一手`と表示しない
+- today/tomorrowをローテーションhashへ混ぜない。日付で隣接候補を回し、同じscene内のvariantだけtomorrow offsetを使う
+- 適合度差が`0.75`を超える場合は、今日と明日が同じ候補でも無理に替えない
+- `enhanceDailyCarePlan`は旧versionの`lifestyle_plan`をbaseとして再利用せず、現行候補から再構築する
+- `trap`は常に空。予定、段取り、休憩、止め時、先送りなどの旧コピーを復活させない
+- 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
+
+詳細: `docs/RADAR_BROAD_SCENE_TIMING_LIFESTYLE_CARE_V77912.md`
+
 ## v7.79.11 暮らすケアの環境・身体二系統契約
+
+> 場面表示とtoday/tomorrowの契約はv7.79.12で更新済み。現行仕様は直上を正本とする。
 
 - v7.79.10の適合度優先と近似候補ローテーションは維持する
 - 現行レーンは`environment / body`だけ。`foundation`、予定、休憩、止め時、ペース配分を新規選定しない
@@ -24,7 +41,7 @@
 - 各レーン内も`LIFESTYLE_CANDIDATE_NEAR_TIE_DELTA = 0.75`以内の場面・具体策だけを日付ローテーション
 - 適合候補を四場面まで強制拡張しない
 - 身体操作は選択中の不調に直接対応する候補がある時だけレーンを有効化する
-- 身体操作の画面文は、一般分類ではなく`PUBLIC_ACTION_COPY_BY_ID.scene`の具体場面を先に表示
+- この版で採用した`PUBLIC_ACTION_COPY_BY_ID.scene`の個別場面表示はv7.79.12で廃止済み
 - `selection_basis`は`lane_score_gap / near_tie_delta / lane_rotation_applied / primary_candidate_score`を返す
 - `foundation`は従来どおり強い日または余力が小さい日の補助案だけ
 - 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
