@@ -1,4 +1,22 @@
+## v7.79.13 暮らすケアの文脈・時間帯・季節契約
+
+- 現行ロジック版は`daily_care_v2_11_2026-08-03_context_timed_lifestyle_care`
+- 暮らすのレーンは`body / environment`だけ。予定、段取り、休憩、止め時、ペース配分を候補に戻さない
+- 身体操作の画面`scene`は9基本動作。具体的な道具名は、理解に必要な時だけ`label`へ置く
+- bodyの既定`modes`は`today`。tomorrowで許可するbodyは`寝返る / 仰向けへ戻る / 横向きから起きる`の3候補だけ
+- tomorrowの暮らす・食べる・ほぐすの時間表示は`今夜〜明朝`へ統一する
+- 環境候補は18件。`modes / seasons / requires_all_triggers / requires_any_styles`で時間帯・季節・複合天気・体質を制御する
+- 季節判定は5〜9月をwarm、11〜3月をcoldとして暦を優先し、真冬の一時的なheatを冷房ケアへ接続しない
+- primaryがbodyでも`shop_context`は同日に適合したenvironmentから作る。環境候補がなければ暮らすのショップ導線を出さない
+- `LIFESTYLE_ACTION_LIVE_QUERY_RULES`へ`tension-*`を置かない。身体操作そのものに商品を割り当てない
+- UIは`trap / reset / しっくりこない時`のグレー欄を表示しない
+- 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
+
+詳細: `docs/RADAR_CONTEXT_TIMED_LIFESTYLE_CARE_V77913.md`
+
 ## v7.79.12 暮らすケアの広い場面・実行タイミング契約
+
+> today/tomorrow、季節、環境候補、ショップ接続の契約はv7.79.13で更新済み。現行仕様は直上を正本とする。
 
 - 暮らすケアの現行ロジック版は`daily_care_v2_10_2026-08-02_broad_scene_timing_care`
 - 身体操作の画面`scene`は`LIFESTYLE_SCENE_DEFINITIONS`の9基本動作だけを正本にする
