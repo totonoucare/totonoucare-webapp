@@ -2325,7 +2325,7 @@ export default function RadarPage() {
                 <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div>
                     <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                      {selectedIsToday ? "今日の一手" : "今夜の一手"}
+                      {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
                     {lifestylePrimaryAction ? (
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
@@ -2364,7 +2364,9 @@ export default function RadarPage() {
                     </div>
                     ) : (
                       <div className="mt-3 rounded-[17px] bg-white px-4 py-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1E6E1]">
-                        {lifestylePlan.no_suggestion_text || "今日は、環境や身体の使い方で足す一手はありません。食べる・ほぐすを見てみてください。"}
+                        {lifestylePlan.no_suggestion_text || (selectedIsToday
+                          ? "今日は、環境や身体の使い方で足す一手はありません。食べる・ほぐすを見てみてください。"
+                          : "明日は、環境や身体の使い方で足す一手はありません。食べる・ほぐすを見てみてください。")}
                       </div>
                     )}
 
