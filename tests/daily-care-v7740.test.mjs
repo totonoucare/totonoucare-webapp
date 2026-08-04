@@ -56,11 +56,16 @@ function build(date) {
 test("Daily Care v2 uses one shared theme for lifestyle, food and loosen care", () => {
   const plan = build("2026-07-18");
   assert.equal(plan.version, daily.DAILY_CARE_LOGIC_VERSION);
-  assert.ok(plan.care_theme.policies.slice(0, 2).some((policy) => policy.key === "nagasu"));
+  assert.deepEqual(
+    plan.care_theme.policies.slice(0, 2).map((policy) => policy.key),
+    ["meguraseru", "yurumeru"],
+  );
   assert.equal(plan.lifestyle_plan.care_theme, plan.care_theme);
   assert.equal(plan.tomorrow_food_context.care_theme, plan.care_theme);
   assert.equal(plan.night_tsubo_set.care_theme, plan.care_theme);
-  assert.match(plan.care_theme.summary, /重だるさ|重さ|ながす|逃が/);
+  assert.equal(plan.care_theme.response_profile.reaction_direction, "accel");
+  assert.equal(plan.care_theme.response_profile.symptom_key, "mood");
+  assert.match(plan.care_theme.summary, /力み|巡り/);
 });
 
 test("same conditions stay stable on reload and do not force a daily lifestyle swap", () => {
@@ -74,7 +79,7 @@ test("same conditions stay stable on reload and do not force a daily lifestyle s
   assert.notEqual(day1a.tomorrow_food_context.primary_action.id, day2.tomorrow_food_context.primary_action.id);
 });
 
-test("the main display is concise and keeps alternatives behind secondary fields", () => {
+test("the main display is concise and presents the second care as a numbered card", () => {
   const plan = build("2026-07-18");
   const food = plan.tomorrow_food_context;
   assert.equal(food.action_cards.filter((card) => card.primary).length, 1);
@@ -85,8 +90,8 @@ test("the main display is concise and keeps alternatives behind secondary fields
   assert.ok(plan.lifestyle_plan.primary_action.label.length > 0);
   assert.match(pageSource, /primaryFoodCard/);
   assert.match(pageSource, /lifestylePrimaryAction/);
-  assert.match(pageSource, /ほかの一手/);
-  assert.doesNotMatch(pageSource, /しっくりこない時/);
+  assert.match(pageSource, /lifestyleSecondaryAction/);
+  assert.doesNotMatch(pageSource, /ほかの一手・しっくりこない時/);
 });
 
 test("reserve and forecast mode change the permitted stimulus instead of changing the forecast", () => {
