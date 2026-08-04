@@ -1,22 +1,25 @@
-## v7.79.13 暮らすケアの文脈・時間帯・季節契約
+## v7.79.13 暮らすケアの根拠付き選定契約
 
-- 現行ロジック版は`daily_care_v2_11_2026-08-03_context_timed_lifestyle_care`
-- 暮らすのレーンは`body / environment`だけ。予定、段取り、休憩、止め時、ペース配分を候補に戻さない
-- 身体操作の画面`scene`は9基本動作。具体的な道具名は、理解に必要な時だけ`label`へ置く
-- bodyの既定`modes`は`today`。tomorrowで許可するbodyは`寝返る / 仰向けへ戻る / 横向きから起きる`の3候補だけ
-- tomorrowの暮らす・食べる・ほぐすの時間表示は`今夜〜明朝`へ統一する
-- 環境候補は18件。`modes / seasons / requires_all_triggers / requires_any_styles`で時間帯・季節・複合天気・体質を制御する
-- 季節判定は5〜9月をwarm、11〜3月をcoldとして暦を優先し、真冬の一時的なheatを冷房ケアへ接続しない
-- primaryがbodyでも`shop_context`は同日に適合したenvironmentから作る。環境候補がなければ暮らすのショップ導線を出さない
-- `LIFESTYLE_ACTION_LIVE_QUERY_RULES`へ`tension-*`を置かない。身体操作そのものに商品を割り当てない
-- UIは`trap / reset / しっくりこない時`のグレー欄を表示しない
+- 現行ロジック版は`daily_care_v2_11_2026-08-04_grounded_lifestyle_needs`
+- 暮らすの候補は`body / tool_layout`のみ。`environment / foundation`を現行選定へ戻さない
+- 主提案は、選択中の`symptom_focus`を`candidate.symptoms`に持つ候補だけから選ぶ
+- 候補点は`不調40 / 天気25 / 体質20 / 時間10 / 実行しやすさ5`を上限とし、商品・アフィリエイト適性を加点しない
+- 体質点はコア型だけでなく、`yin_yang_score / drive_score / obstruction_score / material six scores / sub_labels`を使う
+- 各候補は`care_needs`を持ち、別案は主提案と異なる場面・負担の減らし方を優先する
+- `selected_because`は`symptom / weather / constitution`の根拠を保持し、`score_breakdown`と`why_today`を画面・監査へ渡す
+- 高温、直風、寝床の湿気のような気象前提候補は`requires_weather_match`を必須にする
+- `tool-bed-moisture-layer`はtomorrow専用。todayへ出さない
+- tomorrowの暮らす表示は種別にかかわらず`今夜〜明朝の一手`へ統一する
+- 主レーンの強制交代はしない。最高点差4以内だけ日付ローテーションする
+- 身体操作は`shop_eligible=false`。許可済み`tool-*`が主提案の時だけショップ導線を表示する
+- 旧`humidity_control`分類は既存商品互換用に残すが、天気・体質・不調の現行ブーストへ使わない
 - 予報点数、天気ストレス、体質親和性、余力補正、DBは変更しない
 
-詳細: `docs/RADAR_CONTEXT_TIMED_LIFESTYLE_CARE_V77913.md`
+詳細: `docs/RADAR_GROUNDED_LIFESTYLE_CARE_V77913.md`
+
+> v7.79.12以前の`environment / body`レーン、種別別tomorrow表示、点差0.75の契約は廃止済み。現行仕様は直上を正本とする。
 
 ## v7.79.12 暮らすケアの広い場面・実行タイミング契約
-
-> today/tomorrow、季節、環境候補、ショップ接続の契約はv7.79.13で更新済み。現行仕様は直上を正本とする。
 
 - 暮らすケアの現行ロジック版は`daily_care_v2_10_2026-08-02_broad_scene_timing_care`
 - 身体操作の画面`scene`は`LIFESTYLE_SCENE_DEFINITIONS`の9基本動作だけを正本にする
