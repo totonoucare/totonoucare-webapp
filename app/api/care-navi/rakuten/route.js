@@ -758,9 +758,9 @@ const BODY_MECHANICS_LIVE_QUERY_RULES = {
   "tension-fixed-object-turn": careQueryRow("軽量 トレー 持ち手 滑り止め", "物を両手で持ったまま、足を踏み替えやすい候補です。", ["両手で持つ", "軽量"], { productRole: "rotation_support" }),
   "tension-phone-thumb-line": careQueryRow("スマホ スタンド 高さ調整 卓上", "端末を片手で握り続けずに操作しやすくします。", ["スマホの位置", "手を休める"], { productRole: "phone_height" }),
   "tension-screen-head-up": careQueryRow("ノートパソコン スタンド 高さ調整", "画面の上端を目の高さへ近づけやすくします。", ["画面の高さ", "首を曲げ続けない"], { productRole: "screen_height" }),
-  "tension-wall-axis": careQueryRow("デスク アームレスト 後付け", "前腕を載せる場所を作り、肩で腕を支え続けにくくします。", ["前腕を載せる", "デスク作業"], { productRole: "forearm_support" }),
+  "tension-wall-axis": careQueryRow("トレーニング マット 滑り止め 薄手", "壁へ手を当てた時に、足元が滑りにくい場所を作ります。", ["足元", "滑りにくい"], { productRole: "grounding_support" }),
   "tension-inner-ankle-stand": careQueryRow("疲労軽減 マット 立ち仕事", "立ち仕事で足裏の一か所だけへ体重が集まりにくくなる候補です。", ["立つ", "足裏"], { productRole: "standing_support" }),
-  "tension-supported-one-leg": careQueryRow("疲労軽減 マット 立ち仕事", "足を前後へ入れ替えながら立ちやすい場所を作ります。", ["立ち仕事", "足を入れ替える"], { productRole: "standing_support" }),
+  "tension-supported-one-leg": careQueryRow("トレーニング マット 滑り止め 薄手", "机や壁へ手を添えて立つ時に、足元が滑りにくい場所を作ります。", ["足元", "支えを使う"], { productRole: "balance_training" }),
   "tension-walk-center-first": careQueryRow("ウォーキングシューズ 軽量 幅広", "歩幅を小さくしても足先が窮屈になりにくい候補です。", ["歩く", "軽量"], { productRole: "walking_support" }),
   "tension-seated-foot-head": careQueryRow("デスク フットレスト 高さ調整", "両足裏を置く場所を作り、座る位置をそろえやすくします。", ["足裏を置く", "座る"], { productRole: "sitting_support" }),
   "tension-sit-stand-innerline": careQueryRow("椅子 座面 クッション 高さ", "足裏を床へ着け、上体を前へ移して立ちやすい高さを補います。", ["立ち上がり", "座面"], { productRole: "sit_to_stand" }),
@@ -772,7 +772,7 @@ const BODY_MECHANICS_LIVE_QUERY_RULES = {
   "tension-kitchen-open-grip": careQueryRow("包丁 軽量 握りやすい ハンドル", "強く握り込まず、肩とひじへ余白を残して扱いやすい候補です。", ["調理", "軽い道具"], { productRole: "open_grip" }),
   "tension-laundry-axis": careQueryRow("ランドリー バスケット キャスター", "洗濯物を一度に持たず、床を転がして運びやすくします。", ["洗濯", "運ぶ"], { productRole: "carry_support" }),
   "tension-bed-long-roll": careQueryRow("抱き枕 寝返り サポート", "両膝と肩を同じ方向へ動かして寝返りしやすくします。", ["寝返り", "向きを変える"], { productRole: "sleep_turning" }),
-  "tension-head-sky-line": careQueryRow("回転 クッション 椅子", "首だけをひねらず、椅子ごと見たい方向へ向きやすくします。", ["向きを変える", "座る"], { productRole: "turning_support" }),
+  "tension-head-sky-line": careQueryRow("ノートパソコン スタンド 高さ調整", "頭を上へ戻しやすい位置まで、画面の高さを近づけます。", ["画面の高さ", "首を曲げ続けない"], { productRole: "screen_height" }),
   "tension-palm-axis-reset": careQueryRow("マウスパッド リストレスト", "手首を曲げ続けず、道具から手を離す休憩を入れやすくします。", ["手首", "デスク作業"], { productRole: "grip_support" }),
 };
 
@@ -786,6 +786,11 @@ const TOOL_LAYOUT_LIVE_QUERY_RULES = {
   "tool-airflow-redirect": careQueryRow("エアコン 風よけ カバー サーキュレーター", "室温を変えすぎず、顔や首肩へ当たり続ける直風を外しやすくします。", ["直風", "風向き"], { productRole: "airflow_redirect" }),
   "tool-bed-moisture-layer": careQueryRow("寝具 除湿シート 洗える", "部屋全体ではなく、身体が触れ続ける寝床の湿気を逃がしやすくします。", ["寝床", "湿気"], { productRole: "bedding_moisture" }),
   "tool-light-zone": careQueryRow("間接照明 調光 卓上 ライト", "部屋全体を照らし続けず、必要な場所だけを見やすくします。", ["光を絞る", "目元"], { productRole: "reduce_light" }),
+  "tool-back-support": careQueryRow("ランバーサポート クッション 薄型", "背もたれへ重さを分け、腰だけで座り続けにくくします。", ["背もたれ", "腰の支持"], { productRole: "sitting_support" }),
+  "tool-leg-rest": careQueryRow("足枕 脚枕 低め", "横になる時に、膝下からふくらはぎまでを面で支えます。", ["脚を預ける", "休む姿勢"], { productRole: "leg_support" }),
+  "tool-side-sleep-support": careQueryRow("膝枕 横向き クッション", "横向きで上側の脚を支え、腰のねじれを小さくしやすくします。", ["横向き", "膝の間"], { productRole: "sleep_environment" }),
+  "tool-facing-layout": careQueryRow("卓上 収納 トレー スマホスタンド", "よく見る物を身体の正面へ集め、頭を動かす回数を減らしやすくします。", ["正面へ集める", "見る位置"], { productRole: "screen_height" }),
+  "tool-sound-zone": careQueryRow("耳栓 遮音 やわらかい", "周囲の音が重なる場面で、耳へ入る刺激を減らしやすくします。", ["音を減らす", "刺激を絞る"], { productRole: "reduce_sound" }),
 };
 
 const LIFESTYLE_ACTION_LIVE_QUERY_RULES = {
@@ -1214,6 +1219,8 @@ const PRODUCT_ROLE_META = {
   heat_moisture_control: { label: "暑さと湿気を整える" },
   airflow_redirect: { label: "直風を外す" },
   bedding_moisture: { label: "寝床の湿気を逃がす" },
+  leg_support: { label: "脚の重さを預ける" },
+  reduce_sound: { label: "音の刺激を減らす" },
   task_support: { label: "作業を一つへ絞る" },
   meal_transition: { label: "食後の座りっぱなしを切る" },
   hydration_support: { label: "補給の一回を作る" },
@@ -1289,6 +1296,7 @@ function inferProductRole({ category, normalized, policyKey }) {
     if (/(アームレスト|前腕|肘置き)/.test(text)) return "forearm_support";
     if (/(座面 クッション 高さ|立ち上がり)/.test(text)) return "sit_to_stand";
     if (/(フットレスト|足台|座面クッション)/.test(text)) return "sitting_support";
+    if (/(足枕|脚枕|膝下.*クッション)/.test(text)) return "leg_support";
     if (/(回転 クッション|回転座面)/.test(text)) return "turning_support";
     if (/(ショッピングカート|ランドリー バスケット キャスター|軽量 リュック|2way バッグ)/.test(text)) return "carry_support";
     if (/(踏み台|ピックアップ ツール|ロング ハンドル ピックアップ)/.test(text)) return "reach_support";
@@ -1299,7 +1307,8 @@ function inferProductRole({ category, normalized, policyKey }) {
     if (/(浴室 滑り止め)/.test(text)) return "bath_safety";
     if (/(階段 滑り止め)/.test(text)) return "step_support";
     if (/(キッチン タイマー|振動 タイマー)/.test(text)) return "pace_support";
-    if (/(アイマスク|耳栓|遮光|遮音|ブルーライト)/.test(text)) return policyKey === "sleep" ? "sleep_environment" : "reduce_light";
+    if (/(耳栓|遮音|イヤーマフ)/.test(text)) return "reduce_sound";
+    if (/(アイマスク|遮光|ブルーライト)/.test(text)) return policyKey === "sleep" ? "sleep_environment" : "reduce_light";
     if (/(枕|まくら|ピロー|pillow|睡眠|リカバリーウェア|寝室|寝具|マットレス)/.test(text)) return "sleep_environment";
     if (/(腹巻|湯たんぽ|レッグウォーマー|ネックウォーマー|温熱|カイロ|足湯)/.test(text)) return "warm_body";
     if (/(入浴剤|バスソルト|炭酸|温浴|足湯)/.test(text)) return "bath_shift";
