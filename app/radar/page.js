@@ -970,9 +970,11 @@ export default function RadarPage() {
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
     if (category !== "live") return base;
-    const actionKey = String(lifestylePlan?.primary_action?.id || "").trim();
-    const role = String(lifestylePlan?.primary_action?.item_role || "").trim();
-    const sceneFamily = String(lifestylePlan?.primary_action?.scene_family || "").trim();
+    const shopAction = [lifestylePlan?.primary_action, ...safeArray(lifestylePlan?.alternatives)]
+      .find((action) => action?.shop_eligible && action?.item_role) || lifestylePlan?.primary_action;
+    const actionKey = String(shopAction?.id || "").trim();
+    const role = String(shopAction?.item_role || "").trim();
+    const sceneFamily = String(shopAction?.scene_family || "").trim();
     return `${base}${actionKey ? `&liveAction=${encodeURIComponent(actionKey)}` : ""}${role ? `&liveRole=${encodeURIComponent(role)}` : ""}${sceneFamily ? `&liveScene=${encodeURIComponent(sceneFamily)}` : ""}`;
   };
 
@@ -1009,6 +1011,10 @@ export default function RadarPage() {
   const hasFoodActionCards = foodActionCards.length > 0;
   const lifestylePrimaryAction = lifestylePlan?.primary_action || null;
   const lifestyleAlternatives = safeArray(lifestylePlan?.alternatives);
+  const lifestyleSecondaryAction = lifestyleAlternatives[0] || null;
+  const lifestyleContextChips = safeArray(lifestylePrimaryAction?.context_chips);
+  const lifestyleShopAction = [lifestylePrimaryAction, ...lifestyleAlternatives]
+    .find((action) => action?.shop_eligible && action?.item_role) || null;
   const lineCare = tsuboSet?.line_care || null;
   const hasFoodDetails = hasFoodActionCards
     ? secondaryFoodCards.length > 0 || !!food.reason || !!food.lifestyle_tip
@@ -2327,6 +2333,18 @@ export default function RadarPage() {
                     <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                       {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
+                    {lifestyleContextChips.length > 0 ? (
+                      <div className="mt-2.5 flex flex-wrap gap-2">
+                        {lifestyleContextChips.map((chip) => (
+                          <span
+                            key={chip}
+                            className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[#496D63] ring-1 ring-[#DCEBE5]"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                     {lifestylePrimaryAction ? (
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
                       {lifestylePrimaryAction?.scene ? (
@@ -2337,11 +2355,6 @@ export default function RadarPage() {
                             </span>
                           ) : null}
                           <span>{lifestylePrimaryAction.scene}</span>
-                        </div>
-                      ) : null}
-                      {lifestylePrimaryAction?.why_today ? (
-                        <div className="mb-3 rounded-[12px] bg-[#F4FAF7] px-3 py-2 text-[12px] font-bold leading-5 text-[#496D63] ring-1 ring-[#DCEBE5]">
-                          {lifestylePrimaryAction.why_today}
                         </div>
                       ) : null}
                       <div className="flex items-start gap-3">
@@ -2356,7 +2369,7 @@ export default function RadarPage() {
                           {lifestylePrimaryAction?.felt_sense ? (
                             <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
                               <span className="mr-1.5 font-black text-[#2F816E]">
-                                ラクになった目安
+                                {lifestylePrimaryAction.care_kind === "environment" ? "合っている目安" : "ラクになった目安"}
                               </span>
                               {lifestylePrimaryAction.felt_sense}
                             </div>
@@ -2370,48 +2383,51 @@ export default function RadarPage() {
                     ) : (
                       <div className="mt-3 rounded-[17px] bg-white px-4 py-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1E6E1]">
                         {lifestylePlan.no_suggestion_text || (selectedIsToday
-                          ? "今日は、身体の使い方や道具と配置で足す一手はありません。食べる・ほぐすを見てみてください。"
-                          : "今夜〜明朝は、身体の使い方や道具と配置で足す一手はありません。食べる・ほぐすを見てみてください。")}
+                          ? "今日は、身体の使い方や環境調整で足す一手はありません。食べる・ほぐすを見てみてください。"
+                          : "今夜〜明朝は、身体の使い方や環境調整で足す一手はありません。食べる・ほぐすを見てみてください。")}
                       </div>
                     )}
 
-                    {(lifestyleAlternatives.length > 0 || lifestylePlan.trap) ? (
-                      <details className="mt-3 rounded-[17px] bg-white ring-1 ring-[#E1E6E1]">
-                        <summary className="cursor-pointer px-4 py-3 text-[12px] font-black text-[#2F816E]">ほかの一手・しっくりこない時</summary>
-                        <div className="space-y-2 border-t border-[#E1E6E1] px-4 py-3">
-                          {lifestyleAlternatives.map((item, idx) => (
-                            <div key={item.id || `${idx}-${item.label}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#F4FAF7] px-3 py-2">
-                              <span className="min-w-0 flex-1">
-                                {(item.kind_label || item.scene) ? (
-                                  <span className="flex flex-wrap items-center gap-1.5 text-[10px] font-black text-[#2F816E]">
-                                    {item.kind_label ? <span>{item.kind_label}</span> : null}
-                                    {item.kind_label && item.scene ? <span aria-hidden="true">・</span> : null}
-                                    {item.scene ? <span>{item.scene}</span> : null}
-                                  </span>
-                                ) : null}
-                                <span className="mt-0.5 block text-[13px] font-extrabold leading-5 text-slate-700">{item.label}</span>
+                    {lifestyleSecondaryAction ? (
+                      <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.24)]">
+                        {(lifestyleSecondaryAction.kind_label || lifestyleSecondaryAction.scene) ? (
+                          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-black tracking-wide text-[#2F816E]">
+                            {lifestyleSecondaryAction.kind_label ? (
+                              <span className="rounded-full bg-[#EAF7F1] px-2 py-0.5 ring-1 ring-[#CFE7DE]">
+                                {lifestyleSecondaryAction.kind_label}
                               </span>
-                              {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[idx + 1], { compact: true })}
+                            ) : null}
+                            {lifestyleSecondaryAction.scene ? <span>{lifestyleSecondaryAction.scene}</span> : null}
+                          </div>
+                        ) : null}
+                        <div className="flex items-start gap-3">
+                          <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">2</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[14px] font-extrabold leading-6 text-slate-700">
+                              {lifestyleSecondaryAction.label}
                             </div>
-                          ))}
-                          {lifestylePlan.trap ? (
-                            <div className="rounded-[14px] bg-[#FFF9ED] px-3 py-2 text-[14px] font-bold leading-5 text-slate-600 ring-1 ring-[#EAD8A6]">
-                              {lifestylePlan.trap}
-                            </div>
-                          ) : null}
-                          {lifestylePrimaryAction?.reset ? (
-                            <div className="rounded-[14px] bg-[#F6F7F8] px-3 py-2 text-[13px] font-bold leading-5 text-slate-500">
-                              <span className="mr-1.5 font-black text-slate-600">しっくりこない時</span>
-                              {lifestylePrimaryAction.reset}
-                            </div>
-                          ) : null}
+                            {lifestyleSecondaryAction.reason ? (
+                              <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{lifestyleSecondaryAction.reason}</div>
+                            ) : null}
+                            {lifestyleSecondaryAction.felt_sense ? (
+                              <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
+                                <span className="mr-1.5 font-black text-[#2F816E]">
+                                  {lifestyleSecondaryAction.care_kind === "environment" ? "合っている目安" : "ラクになった目安"}
+                                </span>
+                                {lifestyleSecondaryAction.felt_sense}
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
-                      </details>
+                        <div className="mt-3 flex justify-end">
+                          {actionButtonFor(careItemsByKind.get("lifestyle_step")?.[1], { compact: true })}
+                        </div>
+                      </div>
                     ) : null}
                   </div>
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.live} renderActionButton={actionButtonFor} /> : null}
-                {lifestylePrimaryAction?.shop_eligible ? <CareSetNaviBridge
+                {lifestyleShopAction ? <CareSetNaviBridge
                   title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
                     ? "表示中の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
