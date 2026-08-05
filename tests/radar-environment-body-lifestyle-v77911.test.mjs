@@ -104,14 +104,11 @@ test("環境調整は人間工学と回復環境を扱い、冷房・除湿の�
   const toolBlock = dailySource.match(/const ENVIRONMENT_ADJUSTMENT_CANDIDATES = \[(.*?)\n\];\n\n\/\/ 身体OS/s)?.[1] || "";
   const ids = [...toolBlock.matchAll(/id:\s*"(tool-[a-z0-9-]+)"/g)].map((match) => match[1]).sort();
   assert.deepEqual(ids, [
-    "tool-airflow-redirect",
     "tool-arm-support",
     "tool-back-support",
-    "tool-bed-moisture-layer",
     "tool-carry-distribution",
     "tool-facing-layout",
     "tool-foot-support",
-    "tool-heat-shield",
     "tool-leg-rest",
     "tool-light-zone",
     "tool-screen-height",
@@ -125,30 +122,21 @@ test("環境調整は人間工学と回復環境を扱い、冷房・除湿の�
   assert.match(toolBlock, /shop_eligible: true/);
 });
 
-test("天気を前提にする道具は、その天気がある時だけ候補になる", () => {
-  const collectIds = (options) => new Set(Array.from({ length: 28 }, (_, index) => shown(build({
-    ...options,
-    date: `2026-08-${String(index + 1).padStart(2, "0")}`,
-  }).lifestyle_plan).map((item) => item.id)).flat());
-
-  const heat = collectIds({ trigger: "heat", symptomFocus: "sleep" });
-  const pressure = collectIds({ trigger: "pressure_down", symptomFocus: "sleep" });
-  assert.equal(heat.has("tool-heat-shield"), true);
-  assert.equal(pressure.has("tool-heat-shield"), false);
-  assert.equal(pressure.has("tool-airflow-redirect"), false);
-
-  const tonightDamp = collectIds({ trigger: "damp", symptomFocus: "sleep", mode: "tomorrow" });
-  const todayDamp = collectIds({ trigger: "damp", symptomFocus: "sleep", mode: "today" });
-  assert.equal(tonightDamp.has("tool-bed-moisture-layer"), true);
-  assert.equal(todayDamp.has("tool-bed-moisture-layer"), false);
+test("個別ケア候補は天気への直結用品を外し、身体反応に応じた環境調整へ絞る", () => {
+  const toolBlock = dailySource.match(/const ENVIRONMENT_ADJUSTMENT_CANDIDATES = \[(.*?)\n\];\n\n\/\/ 身体OS/s)?.[1] || "";
+  assert.doesNotMatch(toolBlock, /tool-heat-shield|tool-airflow-redirect|tool-bed-moisture-layer/);
+  assert.doesNotMatch(toolBlock, /遮熱カーテン|冷房の風向き|敷きパッド/);
+  assert.match(toolBlock, /tool-arm-support|tool-screen-height|tool-back-support|tool-leg-rest/);
 });
 
-test("商品適性は候補スコアへ入れず、身体操作の日も補助用品へ接続できる", () => {
+test("商品適性は候補スコアへ入れず、身体操作は商品へ直結させない", () => {
   const scoringBlock = dailySource.match(/function lifestyleCandidateScore\(.*?\n\}/s)?.[0] || "";
   assert.doesNotMatch(scoringBlock, /shop_eligible|item_role|product|商品/);
   const bodyMapBlock = dailySource.match(/const BODY_MECHANICS_LIFESTYLE_CANDIDATES.*?\n\}\);/s)?.[0] || "";
-  assert.match(bodyMapBlock, /shop_eligible: Boolean\(candidate\.item_role\)/);
-  assert.match(radarPageSource, /lifestyleShopAction \? <CareSetNaviBridge/);
+  assert.match(bodyMapBlock, /item_role: null/);
+  assert.match(bodyMapBlock, /shop_eligible: false/);
+  assert.match(radarPageSource, /lifestylePlan\?\.shop_context/);
+  assert.match(radarPageSource, /lifestyleShopContext \? <CareSetNaviBridge/);
 });
 
 test("身体操作と環境調整は同じ条件の再読込で固定し、別方向の二手を優先する", () => {
@@ -176,9 +164,6 @@ test("環境調整の許可済みaction idだけをショップ検索へ接続�
     "tool-carry-distribution",
     "tool-work-height",
     "tool-foot-support",
-    "tool-heat-shield",
-    "tool-airflow-redirect",
-    "tool-bed-moisture-layer",
     "tool-light-zone",
     "tool-back-support",
     "tool-leg-rest",
@@ -188,11 +173,11 @@ test("環境調整の許可済みaction idだけをショップ検索へ接続�
   ]) {
     assert.match(rakutenRouteSource, new RegExp(`"${id}":\\s*careQueryRow`));
   }
-  assert.match(rakutenRouteSource, /\(\?:body\|tension\|tool\|env\|foundation\)/);
-  assert.match(rakutenRouteSource, /airflow_redirect:\s*\{ label: "直風を外す" \}/);
-  assert.match(rakutenRouteSource, /bedding_moisture:\s*\{ label: "寝床の湿気を逃がす" \}/);
-  assert.match(careNaviPageSource, /airflow_redirect:\s*"直風を外す"/);
-  assert.match(careNaviPageSource, /bedding_moisture:\s*"寝床の湿気を逃がす"/);
+  assert.match(rakutenRouteSource, /\(\?:tool\|env\|foundation\)/);
+  assert.match(rakutenRouteSource, /const LIFESTYLE_ACTION_ROLE_QUERY_RULES/);
+  assert.match(rakutenRouteSource, /source:\s*"lifestyle_action"/);
+  assert.doesNotMatch(rakutenRouteSource, /BODY_MECHANICS_LIVE_QUERY_RULES/);
+  assert.match(careNaviPageSource, /lifestyle_action:\s*"暮らしの環境調整から"/);
   assert.doesNotMatch(rakutenRouteSource.match(/const TOOL_LAYOUT_LIVE_QUERY_RULES = \{(.*?)\n\};/s)?.[1] || "", /除湿機|除湿剤/);
 });
 
