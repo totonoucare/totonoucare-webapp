@@ -186,6 +186,7 @@ const PRODUCT_ROLE_LABELS = {
   sitting_support: "足裏と座面で支える",
   leg_support: "脚の重さを預ける",
   reduce_sound: "音の刺激を減らす",
+  visual_layout: "見る物を正面へ集める",
   turning_support: "腰だけでねじらない",
   carry_support: "持つ重さを分ける",
   reach_support: "無理に手を伸ばさない",
@@ -213,7 +214,7 @@ const PRODUCT_ROLE_LABELS = {
 };
 
 const SOURCE_TYPE_LABELS = {
-  body_mechanics: "暮らしの一手から",
+  lifestyle_action: "暮らしの環境調整から",
   life: "生活サインから",
   symptom: "不調フォーカスから",
   policy: "今回の方針から",
@@ -1123,7 +1124,7 @@ function hasAnyText(item, keywords = []) {
 
 const POINT_BEAUTY_REJECT_PATTERN = /(小顔|美顔|美容|フェイス|顔|表情筋|ほうれい線|リフトアップ|美肌|しわ|シワ|たるみ|かっさ|カッサ|フェイシャル)/;
 const FIRST_AID_REJECT_PATTERN = /(絆創膏|ばんそうこう|バンドエイド|キズテープ|傷テープ|キズパワーパッド|ムヒのキズ|救急絆|創傷|傷口|切り傷|擦り傷|すり傷|靴ずれ|あかぎれ|ひび割れ|ガーゼ|包帯|消毒|殺菌|サージカルテープ|防水フィルム|防水タイプ)/i;
-const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
+const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定帯|固定具|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
 // 楽天検索結果に紛れやすいが、MYケアセレクトの人向け導線からは外す。
 const PET_PRODUCT_REJECT_PATTERN = /(ペット用品|ペットフード|犬用|猫用|犬猫|犬・猫|猫犬|犬\s*猫|ドッグフード|キャットフード|ドッグ|キャット|わんこ|ワンちゃん|にゃんこ|うさぎ用|ウサギ用|小動物用|鳥用|爬虫類用|愛犬|愛猫)/i;
 const LOW_CONTEXT_OLIGO_REJECT_PATTERN = /(オリゴ糖|イヌリン|フラクトオリゴ糖|ガラクトオリゴ糖|難消化性デキストリン)/i;
@@ -1211,7 +1212,8 @@ const LIVE_KIND_RULES = [
   { key: "balance_training", pattern: /(バランスパッド)/i },
   { key: "walking_support", pattern: /(ウォーキングシューズ 軽量 幅広)/i },
   { key: "hand_training", pattern: /(フィンガーストレッチャー|指 開く ソフト)/i },
-  { key: "screen_height", pattern: /(ノートパソコン スタンド|モニター台|画面の高さ)/i },
+  { key: "screen_height", pattern: /(スマホ.*スタンド|タブレット.*スタンド|ノートパソコン.*スタンド|モニター台|書見台|ブックスタンド|画面の高さ)/i },
+  { key: "visual_layout", pattern: /(デスクオーガナイザー|オーガナイザー|卓上収納|デスク収納)/i },
   { key: "phone_height", pattern: /(スマホ スタンド|スマートフォン スタンド)/i },
   { key: "forearm_support", pattern: /(アームレスト|前腕|肘置き)/i },
   { key: "sit_to_stand", pattern: /(座面 クッション 高さ|立ち上がり)/i },
@@ -1868,6 +1870,15 @@ function scorePartnerSlotPriority(item, slot, { mode, roleMatched, keywordMatche
     "airflow_redirect",
     "heat_shielding",
     "moisture_air",
+    "screen_height",
+    "visual_layout",
+    "forearm_support",
+    "sitting_support",
+    "leg_support",
+    "reach_support",
+    "reduce_light",
+    "reduce_sound",
+    "carry_support",
     "light_meal",
     "warm_body",
     "bath_shift",
@@ -1908,7 +1919,7 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   if (hasAnyText(item, slot.avoidKeywords)) score -= 30;
 
   if (slotRoles.length && !roleMatched && !contextRoleMatched) score -= 6;
-  if (item.sourceType === "body_mechanics" && contextRoleMatched) score += 8;
+  if (item.sourceType === "lifestyle_action" && contextRoleMatched) score += 8;
 
   if (slot.category === "point") {
     const areas = inferPointAreas(item);
