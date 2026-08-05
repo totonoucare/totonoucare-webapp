@@ -970,11 +970,10 @@ export default function RadarPage() {
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
     if (category !== "live") return base;
-    const shopAction = [lifestylePlan?.primary_action, ...safeArray(lifestylePlan?.alternatives)]
-      .find((action) => action?.shop_eligible && action?.item_role) || lifestylePlan?.primary_action;
-    const actionKey = String(shopAction?.id || "").trim();
-    const role = String(shopAction?.item_role || "").trim();
-    const sceneFamily = String(shopAction?.scene_family || "").trim();
+    const shopContext = lifestylePlan?.shop_context || null;
+    const actionKey = String(shopContext?.action_id || "").trim();
+    const role = String(shopContext?.item_role || "").trim();
+    const sceneFamily = String(shopContext?.scene_family || "").trim();
     return `${base}${actionKey ? `&liveAction=${encodeURIComponent(actionKey)}` : ""}${role ? `&liveRole=${encodeURIComponent(role)}` : ""}${sceneFamily ? `&liveScene=${encodeURIComponent(sceneFamily)}` : ""}`;
   };
 
@@ -1013,8 +1012,7 @@ export default function RadarPage() {
   const lifestyleAlternatives = safeArray(lifestylePlan?.alternatives);
   const lifestyleSecondaryAction = lifestyleAlternatives[0] || null;
   const lifestyleContextChips = safeArray(lifestylePrimaryAction?.context_chips);
-  const lifestyleShopAction = [lifestylePrimaryAction, ...lifestyleAlternatives]
-    .find((action) => action?.shop_eligible && action?.item_role) || null;
+  const lifestyleShopContext = lifestylePlan?.shop_context || null;
   const lineCare = tsuboSet?.line_care || null;
   const hasFoodDetails = hasFoodActionCards
     ? secondaryFoodCards.length > 0 || !!food.reason || !!food.lifestyle_tip
@@ -2427,7 +2425,7 @@ export default function RadarPage() {
                   </div>
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.live} renderActionButton={actionButtonFor} /> : null}
-                {lifestyleShopAction ? <CareSetNaviBridge
+                {lifestyleShopContext ? <CareSetNaviBridge
                   title={selectedIsToday ? "この暮らしケアに合う道具を見る" : "明日に使う暮らし道具を見ておく"}
                   lead={selectedIsToday
                     ? "表示中の暮らしの一手とケア方針を手助けする道具を、暮らす・食べる・ほぐすのセットで見られます。"
