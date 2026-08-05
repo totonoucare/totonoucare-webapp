@@ -1,3 +1,22 @@
+## v7.79.15 暮らすケア・商品境界の現行契約
+
+- 現行ロジック版は`daily_care_v2_13_2026-08-05_product_boundary_copy_audit`
+- 身体操作22候補はすべて`shop_eligible=false / item_role=null`。`tension-*`を楽天検索ルールへ再接続しない
+- `lifestyle_plan.shop_context`は、表示中の環境調整を優先し、なければ同じ不調・反応プロファイルに適合する環境調整から作る
+- `/radar`は`primary_action`や`alternatives`の商品属性ではなく、`shop_context.action_id / item_role / scene_family`だけをショップへ渡す
+- 個別ケア候補へ`tool-heat-shield / tool-airflow-redirect / tool-bed-moisture-layer`を戻さない。気候の一般対策は安全注意または一般ショップ方針で扱う
+- 身体操作の持ち方は、指先を接触位置へ残し、手首に近い手のひらの付け根を物へ近づけ、手のひら中央に浅いくぼみを残すのが正本
+- 物の形、持ち手、個数、実際に行っている家事を根拠なく限定しない。条件が必要なら`〜なら / 〜できる時は`と書く
+- `tool-work-height`の胃腸専用文は`item_role=screen_height`。一般の作業高用`reach_support`検索へ落とさない
+- `screen_height`商品は、画面・本の用途語とスタンド形状語の両方がある時だけ通す。収納トレーやマイクスタンドを混ぜない
+- 医療用品除外で裸の`固定`を使わない。`クランプ固定`のスタンドを落とさず、除外は`固定帯 / 固定具`へ限定する
+- 商品適性を暮らす候補の選定スコアへ加えない
+- 予報点数、天気ストレス、共通反応プロファイル、7方針、DBは変更しない
+
+詳細: `docs/RADAR_LIFESTYLE_PRODUCT_BOUNDARY_V77915.md`
+
+> v7.79.14以前の身体操作action idから商品へ接続する記述、および天気へ直結する個別環境候補の記述は廃止済み。現行仕様は直上を正本とする。
+
 ## v7.79.13 暮らすケアの根拠付き選定契約
 
 - 現行ロジック版は`daily_care_v2_11_2026-08-04_grounded_lifestyle_needs`
