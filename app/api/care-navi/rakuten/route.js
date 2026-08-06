@@ -1,3 +1,5 @@
+import { matchesLifestyleProductRole } from "@/lib/care-navi/lifestyleProductFit";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -748,53 +750,28 @@ function careQueryRow(keyword, reason, tags = [], options = {}) {
   };
 }
 
-// 予報ページの「暮らす」で選ばれた身体操作は、商品名を画面へ
+// 予報ページの「暮らす」で選ばれた環境調整は、商品名を画面へ
 // 直書きせず、この許可済みキーからショップ検索だけを絞り込む。
 // URLの任意文字列をそのまま楽天検索へ流さないため、action idで解決する。
-const BODY_MECHANICS_LIVE_QUERY_RULES = {
-  "tension-open-palm-carry": careQueryRow("軽量 マグカップ 大きい 持ち手", "強く握り込まずに持ちやすい、軽い道具の候補です。", ["軽量", "大きい持ち手"], { productRole: "open_grip" }),
-  "tension-little-finger-thumb-line": careQueryRow("バッグ 持ち手 カバー 太め", "細い取っ手が指へ食い込みにくくなる候補です。", ["持ち手", "握り込みを減らす"], { productRole: "handle_support" }),
-  "tension-load-to-ground": careQueryRow("ショッピングカート 軽量 折りたたみ", "一度に持つ重さを減らし、車輪で運べる候補です。", ["運ぶ", "持つ量を減らす"], { productRole: "carry_support" }),
-  "tension-fixed-object-turn": careQueryRow("軽量 トレー 持ち手 滑り止め", "物を両手で持ったまま、足を踏み替えやすい候補です。", ["両手で持つ", "軽量"], { productRole: "rotation_support" }),
-  "tension-phone-thumb-line": careQueryRow("スマホ スタンド 高さ調整 卓上", "端末を片手で握り続けずに操作しやすくします。", ["スマホの位置", "手を休める"], { productRole: "phone_height" }),
-  "tension-screen-head-up": careQueryRow("ノートパソコン スタンド 高さ調整", "画面の上端を目の高さへ近づけやすくします。", ["画面の高さ", "首を曲げ続けない"], { productRole: "screen_height" }),
-  "tension-wall-axis": careQueryRow("トレーニング マット 滑り止め 薄手", "壁へ手を当てた時に、足元が滑りにくい場所を作ります。", ["足元", "滑りにくい"], { productRole: "grounding_support" }),
-  "tension-inner-ankle-stand": careQueryRow("疲労軽減 マット 立ち仕事", "立ち仕事で足裏の一か所だけへ体重が集まりにくくなる候補です。", ["立つ", "足裏"], { productRole: "standing_support" }),
-  "tension-supported-one-leg": careQueryRow("トレーニング マット 滑り止め 薄手", "机や壁へ手を添えて立つ時に、足元が滑りにくい場所を作ります。", ["足元", "支えを使う"], { productRole: "balance_training" }),
-  "tension-walk-center-first": careQueryRow("ウォーキングシューズ 軽量 幅広", "歩幅を小さくしても足先が窮屈になりにくい候補です。", ["歩く", "軽量"], { productRole: "walking_support" }),
-  "tension-seated-foot-head": careQueryRow("デスク フットレスト 高さ調整", "両足裏を置く場所を作り、座る位置をそろえやすくします。", ["足裏を置く", "座る"], { productRole: "sitting_support" }),
-  "tension-sit-stand-innerline": careQueryRow("椅子 座面 クッション 高さ", "足裏を床へ着け、上体を前へ移して立ちやすい高さを補います。", ["立ち上がり", "座面"], { productRole: "sit_to_stand" }),
-  "tension-stairs-center-up": careQueryRow("階段 滑り止め マット", "足裏を置ける場所を明確にし、後ろ足だけで蹴り上がりにくくします。", ["階段", "足場"], { productRole: "step_support" }),
-  "tension-reach-thumb-line": careQueryRow("踏み台 安定 滑り止め", "ひじが少し曲がる距離まで物へ近づきやすくします。", ["高い所", "距離を縮める"], { productRole: "reach_support" }),
-  "tension-floor-object-axis": careQueryRow("ロング ハンドル ピックアップ ツール", "床へ深くかがんで物を取る回数を減らしやすくします。", ["床の物", "長い柄"], { productRole: "reach_support" }),
-  "tension-door-origin-move": careQueryRow("取っ手 補助 グリップ 太め", "取っ手を強く握らず、足を動かして開閉しやすくします。", ["取っ手", "握り込みを減らす"], { productRole: "grip_support" }),
-  "tension-mop-fixed-end": careQueryRow("軽量 モップ 長さ調整", "道具の先を床へ置き、腕で振らずに体側を歩かせやすくします。", ["掃除", "長さ調整"], { productRole: "long_handle_support" }),
-  "tension-kitchen-open-grip": careQueryRow("包丁 軽量 握りやすい ハンドル", "強く握り込まず、肩とひじへ余白を残して扱いやすい候補です。", ["調理", "軽い道具"], { productRole: "open_grip" }),
-  "tension-laundry-axis": careQueryRow("ランドリー バスケット キャスター", "洗濯物を一度に持たず、床を転がして運びやすくします。", ["洗濯", "運ぶ"], { productRole: "carry_support" }),
-  "tension-bed-long-roll": careQueryRow("抱き枕 寝返り サポート", "両膝と肩を同じ方向へ動かして寝返りしやすくします。", ["寝返り", "向きを変える"], { productRole: "sleep_turning" }),
-  "tension-head-sky-line": careQueryRow("ノートパソコン スタンド 高さ調整", "頭を上へ戻しやすい位置まで、画面の高さを近づけます。", ["画面の高さ", "首を曲げ続けない"], { productRole: "screen_height" }),
-  "tension-palm-axis-reset": careQueryRow("マウスパッド リストレスト", "手首を曲げ続けず、道具から手を離す休憩を入れやすくします。", ["手首", "デスク作業"], { productRole: "grip_support" }),
-};
-
 const TOOL_LAYOUT_LIVE_QUERY_RULES = {
   "tool-arm-support": careQueryRow("デスク アームレスト 後付け", "腕の重さを机へ預け、首肩で腕を吊り続けにくくします。", ["腕を預ける", "首肩"], { productRole: "forearm_support" }),
-  "tool-screen-height": careQueryRow("スマホ タブレット 書見台 高さ調整", "画面や読み物を、首を大きく曲げずに見やすい高さへ寄せます。", ["見る高さ", "首肩"], { productRole: "screen_height" }),
+  "tool-screen-height": careQueryRow("スマホ タブレット 書見台 スタンド 高さ調整", "画面や読み物を、首を大きく曲げずに見やすい高さへ寄せます。", ["見る高さ", "首肩"], { productRole: "screen_height" }),
   "tool-carry-distribution": careQueryRow("買い物 キャリー 軽量 折りたたみ", "片手や片肩へ重さを集めず、荷物を分けて運びやすくします。", ["荷物", "重さを分ける"], { productRole: "carry_support" }),
-  "tool-work-height": careQueryRow("卓上 収納 トレー 高さ調整", "よく使う物を、肩や腰を曲げ続けない距離へまとめやすくします。", ["作業の高さ", "手元"], { productRole: "reach_support" }),
+  "tool-work-height": careQueryRow("卓上 作業台 高さ調整", "よく使う物を、肩や腰を曲げ続けない距離へまとめやすくします。", ["作業の高さ", "手元"], { productRole: "reach_support" }),
   "tool-foot-support": careQueryRow("デスク フットレスト 高さ調整", "足裏を預ける場所を作り、太もも裏や腰だけで座り続けにくくします。", ["足裏", "座る"], { productRole: "sitting_support" }),
-  "tool-heat-shield": careQueryRow("遮熱 カーテン ライナー", "冷房を強くする前に、窓から入る日射の熱を減らしやすくします。", ["窓の熱", "遮熱"], { productRole: "heat_shielding" }),
-  "tool-airflow-redirect": careQueryRow("エアコン 風よけ カバー サーキュレーター", "室温を変えすぎず、顔や首肩へ当たり続ける直風を外しやすくします。", ["直風", "風向き"], { productRole: "airflow_redirect" }),
-  "tool-bed-moisture-layer": careQueryRow("寝具 除湿シート 洗える", "部屋全体ではなく、身体が触れ続ける寝床の湿気を逃がしやすくします。", ["寝床", "湿気"], { productRole: "bedding_moisture" }),
   "tool-light-zone": careQueryRow("間接照明 調光 卓上 ライト", "部屋全体を照らし続けず、必要な場所だけを見やすくします。", ["光を絞る", "目元"], { productRole: "reduce_light" }),
   "tool-back-support": careQueryRow("ランバーサポート クッション 薄型", "背もたれへ重さを分け、腰だけで座り続けにくくします。", ["背もたれ", "腰の支持"], { productRole: "sitting_support" }),
   "tool-leg-rest": careQueryRow("足枕 脚枕 低め", "横になる時に、膝下からふくらはぎまでを面で支えます。", ["脚を預ける", "休む姿勢"], { productRole: "leg_support" }),
   "tool-side-sleep-support": careQueryRow("膝枕 横向き クッション", "横向きで上側の脚を支え、腰のねじれを小さくしやすくします。", ["横向き", "膝の間"], { productRole: "sleep_environment" }),
-  "tool-facing-layout": careQueryRow("卓上 収納 トレー スマホスタンド", "よく見る物を身体の正面へ集め、頭を動かす回数を減らしやすくします。", ["正面へ集める", "見る位置"], { productRole: "screen_height" }),
+  "tool-facing-layout": careQueryRow("デスク オーガナイザー スマホ スタンド", "よく見る物を身体の正面へ集め、頭を動かす回数を減らしやすくします。", ["正面へ集める", "見る位置"], { productRole: "visual_layout" }),
   "tool-sound-zone": careQueryRow("耳栓 遮音 やわらかい", "周囲の音が重なる場面で、耳へ入る刺激を減らしやすくします。", ["音を減らす", "刺激を絞る"], { productRole: "reduce_sound" }),
 };
 
+const LIFESTYLE_ACTION_ROLE_QUERY_RULES = {
+  "tool-work-height:screen_height": careQueryRow("タブレット 書見台 スタンド 高さ調整", "画面や読み物を上げ、前かがみでお腹を折りたたむ時間を減らしやすくします。", ["見る高さ", "手元"], { productRole: "screen_height" }),
+};
+
 const LIFESTYLE_ACTION_LIVE_QUERY_RULES = {
-  ...BODY_MECHANICS_LIVE_QUERY_RULES,
   ...TOOL_LAYOUT_LIVE_QUERY_RULES,
 };
 
@@ -952,6 +929,41 @@ const EAT_POLICY_DIVERSITY_ROWS = {
   sasaeru: [
     careQueryRow("なつめ 黒豆 茶", "無理を重ねた日の飲み物を、軽く整える候補です。", ["なつめ", "黒豆"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
   ],
+};
+
+// 予報内の一食をそのまま検索せず、体質・不調・余力から作った
+// 継続ケア需要を、常備品・毎日の一杯・宅食・栄養補助へ変換する。
+const FOOD_COMMERCE_QUERY_ROWS = {
+  byFunction: {
+    jianpi: careQueryRow("黒豆 なつめ 陳皮 茶", "食事の土台を整えたい時に、日々の一杯として続けやすい素材です。", ["黒豆", "なつめ"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea", "yakuzenIngredient"] }),
+    buqi: careQueryRow("なつめ 黒豆 和漢 茶", "消耗しやすい時の食生活に、温かい一杯を置きやすくします。", ["なつめ", "黒豆"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    yangxue: careQueryRow("黒ごま なつめ クコ 薬膳 素材", "日々の食事へ黒ごま・なつめ・クコなどを少量足したい時の素材候補です。", ["黒ごま", "なつめ"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
+    liqi: careQueryRow("陳皮 なつめ ジャスミン 茶", "香りのある一杯へ切り替えたい時に、常備しやすい素材です。", ["陳皮", "香り"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea", "yakuzenIngredient"] }),
+    huoxue: careQueryRow("黒豆 山査子 陳皮 茶", "食後や同じ姿勢のあとに重さを残しやすい人が、香りの一杯を持つための候補です。", ["黒豆", "山査子"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    huashi: careQueryRow("はとむぎ 小豆 とうもろこしのひげ 茶", "湿気や食後の重さが気になる日に、甘い冷たい飲み物以外の一杯を選びやすくします。", ["はとむぎ", "小豆"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    lishui: careQueryRow("はとむぎ 小豆 黒豆 ブレンド 茶", "水分の取り方が偏りやすい時に、日々の飲み物を見直す候補です。", ["はとむぎ", "黒豆"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    wenzhong: careQueryRow("生姜 なつめ 桂皮 茶", "冷たい食事や飲み物が続いた時に、温かい一杯へ戻りやすくします。", ["生姜", "桂皮"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    qingre: careQueryRow("菊花 ハッカ 桑葉 茶", "熱や刺激を重ねたくない時に、香りのある一杯を選びやすくします。", ["菊花", "ハッカ"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    shengjin: careQueryRow("白きくらげ なつめ クコ 薬膳 素材", "乾いた食事へ偏りやすい時に、汁物やデザートへ足せる素材候補です。", ["白きくらげ", "なつめ"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
+    anshen: careQueryRow("カモミール レモンバーム ルイボス ティー", "夜のカフェインや甘い飲み物を切り替える一杯として続けやすい候補です。", ["夜", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+  },
+  byNeed: {
+    meal_continuity: careQueryRow("栄養バランス 冷凍 宅食 定期", "食事を考える余力が少ない時も、主食と主菜のある一食へ戻りやすくするサービスです。", ["宅食", "食事を続ける"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"] }),
+    protein_continuity: careQueryRow("たんぱく質 スープ 食事 セット", "食事量が小さい時にも、たんぱく質を含む一品を常備したい人向けです。", ["たんぱく質", "常備"], { intentType: "nutrition_support", preferredProductTypes: ["supplement", "soupMeal"] }),
+    iron_b_food_support: careQueryRow("鉄 ビタミンB 栄養補助 食品", "鉄やビタミンB群を含む食生活を、食事だけで続けにくい時の補助枠です。", ["鉄", "ビタミンB群"], { intentType: "nutrition_support", preferredProductTypes: ["supplement"] }),
+    digestive_load_management: careQueryRow("はとむぎ 小豆 陳皮 茶", "食後の重さが気になる日に、甘い冷たい飲み物へ偏らない一杯として並べています。", ["食後", "重さ"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    fiber_mineral_balance: careQueryRow("雑穀 豆 乾燥野菜 食事 セット", "穀物・豆・野菜を、毎日の食事へ少量ずつ足しやすくする常備品です。", ["雑穀", "豆"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
+    hydration_routine: careQueryRow("ルイボス 黒豆 穀物茶 ノンカフェイン", "水分をコーヒーや甘い飲み物だけに寄せず、日常の一杯を持つための候補です。", ["ノンカフェイン", "毎日の一杯"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    caffeine_shift: careQueryRow("カモミール レモンバーム ノンカフェイン ティー", "カフェイン以外の一杯を常備し、夜まで刺激を重ねにくくします。", ["カフェイン切替", "夜"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    warm_meal_routine: careQueryRow("生姜 薬膳 スープ 食事 セット", "冷たい食事が続いた時に、温かい食事へ戻るための常備候補です。", ["温かい食事", "常備"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient", "soupMeal"] }),
+  },
+  byRole: {
+    daily_tea: careQueryRow("和漢 薬膳茶 ノンカフェイン ブレンド", "体質と食事傾向に合わせて、毎日の一杯を選ぶための候補です。", ["毎日の一杯", "和漢茶"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
+    pantry_food: careQueryRow("薬膳 素材 なつめ クコ 陳皮 黒豆", "汁物・お茶・日々の食事へ少量足しやすい常備素材です。", ["常備品", "薬膳素材"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
+    prepared_meal: careQueryRow("野菜 冷凍 惣菜 食事 セット", "用意する余力が少ない日に、一食を外へ預けるための候補です。", ["冷凍惣菜", "食事負担"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"] }),
+    meal_subscription: careQueryRow("栄養管理 宅食 定期 冷凍", "食事選びを毎回考えず、数週間続ける仕組みとして比べる候補です。", ["宅食", "定期"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"] }),
+    nutrition_support: careQueryRow("栄養補助 食品 たんぱく質 ビタミン", "食事だけで続けにくい栄養を補助する別枠として並べています。", ["栄養補助", "食事の補助"], { intentType: "nutrition_support", preferredProductTypes: ["supplement"] }),
+  },
 };
 
 
@@ -1133,6 +1145,21 @@ function eatPolicyDiversityRowsFor(policyKey) {
   return asArray(EAT_POLICY_DIVERSITY_ROWS[policyKey]);
 }
 
+function foodCommerceRowsFor({ functionKeys = [], needKeys = [], productRoleKeys = [] } = {}) {
+  const rows = [
+    ...uniqueStrings(functionKeys).slice(0, 3).map((key) => FOOD_COMMERCE_QUERY_ROWS.byFunction[key]),
+    ...uniqueStrings(needKeys).slice(0, 3).map((key) => FOOD_COMMERCE_QUERY_ROWS.byNeed[key]),
+    ...uniqueStrings(productRoleKeys).slice(0, 3).map((key) => FOOD_COMMERCE_QUERY_ROWS.byRole[key]),
+  ].filter(Boolean);
+  const seen = new Set();
+  return rows.filter((row) => {
+    const keyword = cleanKeyword(normalizeQueryRow(row)?.keyword);
+    if (!keyword || seen.has(keyword)) return false;
+    seen.add(keyword);
+    return true;
+  });
+}
+
 function countPlansByIntent(plans, intentType) {
   return plans.filter((plan) => plan?.intentType === intentType).length;
 }
@@ -1221,6 +1248,7 @@ const PRODUCT_ROLE_META = {
   bedding_moisture: { label: "寝床の湿気を逃がす" },
   leg_support: { label: "脚の重さを預ける" },
   reduce_sound: { label: "音の刺激を減らす" },
+  visual_layout: { label: "見る物を正面へ集める" },
   task_support: { label: "作業を一つへ絞る" },
   meal_transition: { label: "食後の座りっぱなしを切る" },
   hydration_support: { label: "補給の一回を作る" },
@@ -1344,6 +1372,9 @@ function buildQueryPlans({
   lifeKeys,
   lifestyleActionKey = "",
   lifestyleItemRole = "",
+  foodFunctionKeys = [],
+  foodNeedKeys = [],
+  foodProductRoleKeys = [],
   limit,
 }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
@@ -1354,6 +1385,11 @@ function buildQueryPlans({
   const plans = [];
   const seenKeywords = new Set();
   const lifeRows = lifeRowsFor(lifeKeys, safeCategory);
+  const foodCommerceRows = safeCategory === "eat" ? foodCommerceRowsFor({
+    functionKeys: foodFunctionKeys,
+    needKeys: foodNeedKeys,
+    productRoleKeys: foodProductRoleKeys,
+  }) : [];
 
   function addPlanFromRow(row, { policyKey, source, sourceKey }) {
     const normalized = normalizeQueryRow(row);
@@ -1396,26 +1432,29 @@ function buildQueryPlans({
     return true;
   }
 
-  // 予報ページから入った時だけ、表示中の身体操作・環境実験・基礎ケアを
-  // 先頭へ置く。検索語はaction idに紐づく許可済みルールだけを使う。
-  const safeLifestyleActionKey = /^(?:body|tension|tool|env|foundation)-[a-z0-9-]{1,64}$/.test(String(lifestyleActionKey || ""))
+  // 予報ページから入った時だけ、表示中の環境調整を先頭へ置く。
+  // 身体操作そのものは商品へ変換せず、action idに紐づく許可済みルールだけを使う。
+  const safeLifestyleActionKey = /^(?:tool|env|foundation)-[a-z0-9-]{1,64}$/.test(String(lifestyleActionKey || ""))
     ? String(lifestyleActionKey)
     : "";
   const safeLifestyleItemRole = /^[a-z][a-z0-9_]{1,48}$/.test(String(lifestyleItemRole || ""))
     ? String(lifestyleItemRole)
     : "";
   const lifestyleActionRow = safeCategory === "live"
-    ? LIFESTYLE_ACTION_LIVE_QUERY_RULES[safeLifestyleActionKey]
+    ? LIFESTYLE_ACTION_ROLE_QUERY_RULES[`${safeLifestyleActionKey}:${safeLifestyleItemRole}`]
+      || LIFESTYLE_ACTION_LIVE_QUERY_RULES[safeLifestyleActionKey]
     : null;
   if (lifestyleActionRow) {
     const normalized = {
       ...normalizeQueryRow(lifestyleActionRow),
-      productRole: normalizeQueryRow(lifestyleActionRow)?.productRole || (PRODUCT_ROLE_META[safeLifestyleItemRole] ? safeLifestyleItemRole : null),
+      productRole: PRODUCT_ROLE_META[safeLifestyleItemRole]
+        ? safeLifestyleItemRole
+        : normalizeQueryRow(lifestyleActionRow)?.productRole || null,
     };
     addPlanFromRow(normalized, {
       policyKey: primaryPolicyKey,
-      source: safeLifestyleActionKey.startsWith("tension-") ? "body_mechanics" : "lifestyle_action",
-      sourceKey: safeLifestyleActionKey.startsWith("tension-") ? "body_mechanics" : "lifestyle_action",
+      source: "lifestyle_action",
+      sourceKey: "lifestyle_action",
     });
   }
 
@@ -1423,6 +1462,13 @@ function buildQueryPlans({
   // これで味噌汁・スープのような中立アイテムが、たまたま別方針のラベルを背負う事故を減らす。
   if (lifeRows.length) {
     addPlanFromRow(lifeRows[0], { policyKey: primaryPolicyKey, source: "life", sourceKey: "life" });
+  }
+
+  // 今日の料理名ではなく、継続ケア需要から最大2本だけ先に置く。
+  // 毎日の一杯・常備素材・宅食・栄養補助が同じ料理へ引っ張られないための枝。
+  for (const row of foodCommerceRows) {
+    if (plans.length >= planLimit || plans.filter((plan) => plan.source === "food_commerce").length >= 2) break;
+    addPlanFromRow(row, { policyKey: primaryPolicyKey, source: "food_commerce", sourceKey: "food_commerce" });
   }
 
   const primaryContextRows = contextRowsFor(symptomKey, primaryPolicyKey, safeCategory);
@@ -1511,7 +1557,7 @@ const BEVERAGE_REJECT_PATTERN = /(飴|のど飴|キャンディ|菓子|京菓|�
 const HEALTH_CLAIM_REJECT_PATTERN = /(増血|血糖|血圧|糖尿|便秘|痩せ|痩身|ダイエット|脂肪|肝臓|腎臓|精力|解毒|デトックス|排出|下剤|センナ|キャンドルブッシュ|利尿|便通|便秘茶|減肥)/i;
 const GIFT_REJECT_PATTERN = /(ギフト|贈答|贈り物|プレゼント|母の日|父の日|敬老の日|お中元|御中元|お歳暮|御歳暮|内祝い|出産祝い|結婚祝い|快気祝い|香典返し|お返し|御礼|御祝|お祝い|熨斗|のし|ラッピング|桐箱)/i;
 const FIRST_AID_REJECT_PATTERN = /(絆創膏|ばんそうこう|バンドエイド|キズテープ|傷テープ|キズパワーパッド|ムヒのキズ|救急絆|創傷|傷口|切り傷|擦り傷|すり傷|靴ずれ|あかぎれ|ひび割れ|ガーゼ|包帯|消毒|殺菌|サージカルテープ|防水フィルム|防水タイプ)/i;
-const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
+const MEDICAL_SUPPORT_REJECT_PATTERN = /(腱鞘炎|ドケルバン|ばね指|バネ指|サポーター|リストガード|手首ガード|固定帯|固定具|矯正|コルセット|ギプス|外反母趾|テーピング|一般医療機器|管理医療機器|医療機器|医療用|病院用|湿布|貼付|磁気治療|低周波治療器|EMS|膝用|手首用|足首用|腰痛ベルト|頚椎カラー|牽引|リハビリ|介護用品)/i;
 // MYケアセレクトは人向けのセルフケア棚。楽天検索で混ざりやすいペット用品は全カテゴリで除外する。
 const PET_PRODUCT_REJECT_PATTERN = /(ペット用品|ペットフード|犬用|猫用|犬猫|犬・猫|猫犬|犬\s*猫|ドッグフード|キャットフード|ドッグ|キャット|わんこ|ワンちゃん|にゃんこ|うさぎ用|ウサギ用|小動物用|鳥用|爬虫類用|愛犬|愛猫)/i;
 // オリゴ糖・イヌリンの大容量甘味料/原料は「ここで買うケア候補」として納得感が弱いため除外する。
@@ -1590,7 +1636,13 @@ function isAcceptableBeverageItem(item, plan) {
   return true;
 }
 
+function isAcceptableLiveRoleItem(item, plan) {
+  if (plan?.category !== "live" || plan?.source !== "lifestyle_action") return true;
+  return matchesLifestyleProductRole(rakutenItemText(item), plan?.productRole);
+}
+
 function isAcceptableForPlanProductType(item, plan) {
+  if (plan?.category === "live") return isAcceptableLiveRoleItem(item, plan);
   if (plan?.category !== "eat") return true;
 
   const productType = getEatProductTypeFromText(rakutenItemText(item));
@@ -1870,7 +1922,7 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length >= 3) {
     return [
-      { key: "body_mechanics", count: 2 },
+      { key: "lifestyle_action", count: 2 },
       { key: "life", count: 1 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 2 },
@@ -1882,7 +1934,7 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length >= 2) {
     return [
-      { key: "body_mechanics", count: 2 },
+      { key: "lifestyle_action", count: 2 },
       { key: "life", count: 1 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 2 },
@@ -1893,7 +1945,7 @@ function buildDisplayQuotas(policyKeys) {
 
   if (keys.length === 1) {
     return [
-      { key: "body_mechanics", count: 2 },
+      { key: "lifestyle_action", count: 2 },
       { key: "life", count: 1 },
       { key: "symptom", count: 2 },
       { key: keys[0], count: 3 },
@@ -1902,7 +1954,7 @@ function buildDisplayQuotas(policyKeys) {
   }
 
   return [
-    { key: "body_mechanics", count: 2 },
+    { key: "lifestyle_action", count: 2 },
     { key: "life", count: 1 },
     { key: "symptom", count: 2 },
     { key: "__remaining__", count: 5 },
@@ -2060,6 +2112,15 @@ export async function POST(req) {
     const basis = String(body?.basis || "");
     const lifestyleActionKey = String(body?.lifestyleActionKey || "");
     const lifestyleItemRole = String(body?.lifestyleItemRole || "");
+    const foodFunctionKeys = uniqueStrings(body?.foodFunctionKeys)
+      .filter((key) => FOOD_COMMERCE_QUERY_ROWS.byFunction[key])
+      .slice(0, 5);
+    const foodNeedKeys = uniqueStrings(body?.foodNeedKeys)
+      .filter((key) => FOOD_COMMERCE_QUERY_ROWS.byNeed[key])
+      .slice(0, 5);
+    const foodProductRoleKeys = uniqueStrings(body?.foodProductRoleKeys)
+      .filter((key) => FOOD_COMMERCE_QUERY_ROWS.byRole[key])
+      .slice(0, 5);
 
     const credentials = getRakutenCredentials();
     if (!credentials.applicationId || !credentials.accessKey) {
@@ -2084,6 +2145,9 @@ export async function POST(req) {
       lifeKeys,
       lifestyleActionKey,
       lifestyleItemRole,
+      foodFunctionKeys,
+      foodNeedKeys,
+      foodProductRoleKeys,
       limit: displayLimit,
     });
     if (!plans.length) {
