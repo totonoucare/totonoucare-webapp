@@ -3,6 +3,7 @@
 import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
+import { buildDailyCareTheme } from "@/lib/radar_v1/careRules/dailyCareV2";
 import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";
 import {
   getBodyResponseKey,
@@ -1404,7 +1405,7 @@ function strengthenPeakPrepItem(text) {
 const RADAR_NARRATIVE_LEADS = {
   fatigue: {
     default: ["体の立ち上がりが、いつもよりゆっくりになりやすい日", "だるさは気合い不足というより、体が休息を求めているサインかもしれません", "まずは動く量を増やすより、重さを増やさない一手から始めましょう"],
-    damp: ["体が湿気を吸った布団みたいに重くなりやすい日", "胃腸まわりがもたつくと、だるさまで長引きやすくなります", "まずは空気・食べ方・足もとを軽くして、体の起動を助けましょう"],
+    damp: ["体が湿気を吸った布団みたいに重くなりやすい日", "胃腸まわりがもたつくと、だるさまで長引きやすくなります", "まずは空気・食べ方・足もとを整えて、動き始めやすくしましょう"],
     pressure_down: ["頭と体の立ち上がりが、少しスローモーションになりやすい日", "気圧低下でこもり感が出ると、休んでも抜けにくいだるさに感じやすくなります", "目・首・呼吸を短く切り替えて、ぼんやりをため込まないようにしましょう"],
     pressure_up: ["体が知らないうちに前のめりになりやすい日", "張りつめたまま進むと、あとからどっと疲れとして出やすくなります", "用事を急いで全部進めるより、肩の力を一度抜いてから動きましょう"],
     cold: ["冷えで、体が動き始めにくい日", "足元やお腹が冷えると、だるさが“動き出せなさ”として出やすくなります", "まずは一か所だけ温めて、動き始めやすい状態を作りましょう"],
@@ -1422,15 +1423,15 @@ const RADAR_NARRATIVE_LEADS = {
   },
   digestion: {
     default: ["胃腸の重さが、体全体に影響しやすい日", "食べ方が重なると、体全体も重く感じやすくなります", "量を減らすより、冷たい・甘い・脂っこいの重なりをほどきましょう"],
-    damp: ["胃腸に水分を含んだような重さが残りやすい日", "湿気の日は、冷たいものや甘いものが続くとお腹まわりがもたつきやすくなります", "今日は“軽く流れる食べ方”に寄せて、胃腸の重さを残しにくくしましょう"],
+    damp: ["食後の重さが残りやすい日", "湿気の日は、冷たいものや甘いものが続くとお腹まわりがもたつきやすくなります", "今日は油を控えた軽めの食事にして、胃腸の重さを残しにくくしましょう"],
     pressure_down: ["胃腸の動きまで少しスローになりやすい日", "気圧低下で体が重い時は、食後のもたれも長引いて感じやすくなります", "食べる量より、食後に動き出せる軽さを目安にしましょう"],
     pressure_up: ["急ぎモードが胃腸にも入りやすい日", "張りつめたまま食べると、量は普通でも重く感じやすくなります", "食べ始める前に一呼吸置いて、胃腸の負担を増やさないようにしましょう"],
     cold: ["お腹まわりが冷えると、胃腸の動きが鈍くなりやすい日", "冷たいものが続くと、食後の重さや張りとして出やすくなります", "温かい汁物や飲み物を一つ挟んで、内側を固めすぎないようにしましょう"],
-    heat: ["暑さで冷たいものに寄りたくなる日", "一気に冷やすと、その場は楽でも胃腸があとから重く感じやすくなります", "冷たさだけで押し切らず、常温や温かい一口も混ぜましょう"],
+    heat: ["暑さで冷たいものに寄りたくなる日", "一気に冷やすと、その場は楽でも胃腸があとから重く感じやすくなります", "冷たいものだけに偏らず、常温の飲み物や温かい汁物も少し加えましょう"],
     dry: ["水分不足が、胃腸の調子にも響きやすい日", "水分の入り方が偏ると、のど・お腹・便通の小さな違和感につながりやすくなります", "汁物や水分のある食べものを足して、流れを止めないようにしましょう"],
   },
   neck_shoulder: {
-    default: ["首肩まわりが、いつもより荷物を背負いやすい日", "首本人を直接がんばらせるより、胸・肩甲骨・目の使い方が影響しやすくなります", "首を回す前に、まず肩甲骨と胸からほどきましょう"],
+    default: ["首肩に、いつもより負担が集まりやすい日", "首だけを動かして整えようとしても、胸・肩甲骨・目の使い方が変わらないと負担が戻りやすくなります", "首を回す前に、まず肩甲骨と胸からほどきましょう"],
     damp: ["首肩まわりに、湿った上着を一枚かぶったような重さが出やすい日", "湿気で体がもたつくと、肩だけでなく頭まわりまで重く感じやすくなります", "首をがんばって回すより、肩甲骨と胸からほどきましょう"],
     pressure_down: ["頭から首肩に、重さが降りてきやすい日", "気圧低下で耳・首・後頭部がこもると、肩まで負担が残りやすくなります", "耳まわりと肩甲骨を軽く動かして、首だけに負担を集めないようにしましょう"],
     pressure_up: ["肩に力が入りっぱなしになりやすい日", "張りつめが上にのぼると、首肩が“待機中”のまま固まりやすくなります", "急いで伸ばすより、息を吐いて肩をストンと落としましょう"],
@@ -1460,14 +1461,14 @@ const RADAR_NARRATIVE_LEADS = {
     default: ["頭まわりが、首・目・耳の影響を拾いやすい日", "頭だけを見るより、首肩と画面刺激の負担が出やすくなります", "首・耳・目を先にゆるめて、頭だけに負担を集めすぎないようにしましょう"],
     damp: ["頭に湿気がまとわりつくような重さが出やすい日", "体の重だるさが上に残ると、頭まわりもすっきりしにくくなります", "空気を入れ替え、首肩をゆるめて、こもりを逃がしましょう"],
     pressure_down: ["頭・耳・首肩がセットで重くなりやすい日", "気圧低下の日は、頭だけでなく耳まわりと首のこわばりも一緒に見たいところです", "耳まわりを軽く動かし、画面姿勢を一度リセットしましょう"],
-    pressure_up: ["頭の上の方に、張りつめが集まりやすい日", "焦りや力みが続くと、頭まわりに圧がかかるように感じやすくなります", "刺激を増やすより、肩を落として呼吸を長めに吐きましょう"],
+    pressure_up: ["頭の上の方に、張りつめた感じが出やすい日", "焦りや力みが続くと、頭まわりに圧がかかるように感じやすくなります", "カフェインや強い刺激を増やさず、肩を落として息を長めに吐きましょう"],
     cold: ["首元の冷えが、頭まわりに響きやすい日", "首肩が縮むと、後頭部から頭の重さにつながりやすくなります", "首元を守って、肩をすくめて落とすくらいから始めましょう"],
     heat: ["熱が上にこもって、頭まわりが重く感じやすい日", "暑さ・刺激・水分不足が重なると、頭の中が混み合いやすくなります", "涼しさと水分を先に入れて、熱を上にためないようにしましょう"],
     dry: ["目とのどの乾きが、頭まわりの疲れに変わりやすい日", "画面や乾いた空気が続くと、頭の奥が疲れたように感じやすくなります", "目を閉じる時間と水分を先に入れて、乾いた疲れを増やさないようにしましょう"],
   },
   dizziness: {
     default: ["体の向きが変わる瞬間に、揺れを感じやすい日", "急いで動くほど、頭と体のタイミングがずれやすくなります", "立つ・振り向く・歩き出す前に、一呼吸だけ挟みましょう"],
-    damp: ["体が重く、動き出しでふわっとしやすい日", "湿気で足取りが重い時は、頭だけ先に動かすと揺れを感じやすくなります", "急に立たず、足元からゆっくり起動しましょう"],
+    damp: ["体が重く、動き出しでふわっとしやすい日", "湿気で足取りが重い時は、頭だけ先に動かすと揺れを感じやすくなります", "急に立たず、足元を確かめてからゆっくり動きましょう"],
     pressure_down: ["頭と耳まわりが重く、ふわつきに気づきやすい日", "気圧低下の日は、動き出しの一拍目を急がない方が合います", "耳まわりを軽くゆるめて、立ち上がる前に一呼吸置きましょう"],
     pressure_up: ["上にのぼる力みで、ふわつきやすい日", "急いで動くと、頭だけ前に出て体が追いつきにくくなることがあります", "肩の力を抜いて、動き出しを一段ゆっくりにしましょう"],
     cold: ["足元や首元が冷えると、動き出しが不安定になりやすい日", "冷えで体が固まると、立つ瞬間の揺れに気づきやすくなります", "足指を数回動かしてから、ゆっくり立ち上がりましょう"],
@@ -1498,7 +1499,7 @@ const RADAR_NARRATIVE_SIGN_BY_SYMPTOM = {
   headache: ["頭だけでなく、首・耳・目まわりもセットで重くなりやすい", "画面刺激のあと、頭の中が混み合いやすい", "頭の重さと首肩のこわばりが重なりやすい"],
   dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れやすい", "頭だけ先に動いて、体があとから追いつく感じが出やすい", "動き出しの一拍目に、ふわっとしやすい"],
   mood: ["気持ちの切り替えに時間がかかりやすい", "疲れているのに、焦りや落ち着かなさが先に出やすい", "いつもなら流せる小さな刺激が気になりやすい"],
-  default: ["いつもより体の小さな違和感に気づきやすい", "天気の負荷が重なると、重さやこわばりが少し出やすい", "無理に押すより、軽く整える方が合いやすい"],
+  default: ["いつもより体の小さな違和感に気づきやすい", "天気の負荷が重なると、重さやこわばりが少し出やすい", "無理を重ねず、軽く整える方が合いやすい"],
 };
 
 const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
@@ -1512,7 +1513,7 @@ const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
   headache: ["頭だけでなく首・耳・目も少し重いかも", "画面を見た後、頭の中が少し混み合うかも", "首肩のこわばりが、頭に少し回るかも"],
   dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れるかも", "頭だけ先に動いて、体があとから追いつくかも", "空腹・急な動き・首のこわばりが重なると、少し揺れるかも"],
   mood: ["気持ちの切り替えに少し時間がかかるかも", "疲れているのに、焦りや落ち着かなさが先に出るかも", "いつもなら流せる小さな刺激が気になるかも"],
-  default: ["いつもより小さな違和感が出るかも", "天気の負荷が重なると、重さが少し残るかも", "無理に押すより、軽く整える方が合うかも"],
+  default: ["いつもより小さな違和感が出るかも", "天気の負荷が重なると、重さが少し残るかも", "無理を重ねず、軽く整える方が合うかも"],
 };
 
 const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
@@ -1546,7 +1547,7 @@ const RADAR_NARRATIVE_WEATHER_ACTIONS = {
 
 const RADAR_NARRATIVE_WEATHER_AVOIDS = {
   damp: "甘いものとキンキンの飲み物だけで、気分や体を無理やり起こそうとしない",
-  pressure_down: "ぼんやりをカフェインだけで押し切らず、首と耳の重さも一緒に逃がす",
+  pressure_down: "カフェインだけで乗り切ろうとせず、首や耳まわりも一度休ませる",
   pressure_up: "用事を急いで進めるほど、肩と頭に力が集まりやすいので一呼吸置く",
   cold: "冷たい飲み物で内側まで冷やして、こわばりに追い打ちをかけない",
   heat: "辛いもの・濃い味・カフェインで、熱とそわつきを上乗せしない",
@@ -1563,14 +1564,14 @@ const RADAR_NARRATIVE_TOMORROW_WEATHER_ACTIONS = {
 };
 
 const RADAR_NARRATIVE_TOMORROW_SYMPTOM_ACTIONS = {
-  fatigue: "明日の起動を軽くするため、寝る前に足首か肩を30秒だけ動かす",
+  fatigue: "明日の朝に動き出しやすいよう、寝る前に足首か肩を30秒だけ動かす",
   sleep: "明日の夜まで引きずらないよう、今夜は画面と光を少し早めに区切る",
   digestion: "明日の胃腸を重くしないよう、夜は冷たい・甘い・脂っこいの重なりを一つ外す",
   neck_shoulder: "明日の首肩を固めないよう、寝る前に肩甲骨をゆっくり寄せて離す",
   low_back_pain: "明日の立ち上がりを軽くするため、寝る前に骨盤を小さく揺らす",
   swelling: "明日の水はけを助けるため、足首をゆっくり回してから休む",
   headache: "明日の頭まわりを軽くするため、首・耳・目を短くゆるめておく",
-  dizziness: "明日の動き出しに備えて、足元からゆっくり起動する準備をしておく",
+  dizziness: "明日の動き出しに備えて、足指や足首をゆっくり動かしておく",
   mood: "明日の気分を直接上げようとする前に、今夜は体の負担を一つ減らす",
   default: "明日の自分が動き出しやすいよう、体のどこか一つを30秒だけゆるめる",
 };
@@ -1586,7 +1587,7 @@ const RADAR_NARRATIVE_TOMORROW_AVOIDS = {
 
 const RADAR_NARRATIVE_STABLE_AVOIDS = {
   damp: "冷たいものと甘いものが重なりすぎないよう、どこか一つだけ外す",
-  pressure_down: "ぼんやりをカフェインだけで押し切らず、首か耳を一度だけゆるめる",
+  pressure_down: "カフェインだけで乗り切ろうとせず、首か耳を一度だけゆるめる",
   pressure_up: "用事を急いで進める前に、肩を一度ストンと落とす",
   cold: "冷たい飲み物で内側まで冷やしすぎない",
   heat: "暑さを我慢で通さず、水分と涼しさを一度だけ先に入れる",
@@ -1597,8 +1598,8 @@ const RADAR_NARRATIVE_SYMPTOM_ACTIONS = {
   fatigue: "やる気を待つより、足踏み30秒で体を動き始めやすくする",
   sleep: "夜のために、夕方の画面と光を一度だけ区切る",
   digestion: "食後の重さを残しにくくするため、2〜3分だけ歩く",
-  neck_shoulder: "首本人をいきなり回さず、肩甲骨をゆっくり寄せて離す",
-  low_back_pain: "立ち上がる前に骨盤を小さく揺らして、腰の起動準備をする",
+  neck_shoulder: "首をいきなり回さず、肩甲骨をゆっくり寄せて離す",
+  low_back_pain: "立ち上がる前に骨盤を小さく揺らし、腰を動かす準備をする",
   swelling: "足首をゆっくり回して、脚の巡りを促す",
   headache: "首・耳・目まわりを先にゆるめて、頭だけに負担を集めない",
   dizziness: "立つ・振り向く・歩き出す前に、一呼吸だけ入れる",
@@ -1731,7 +1732,7 @@ function getNarrativePeakPrepItems(triggerFactors, signal = 0, symptomFocus = nu
 
   const weatherAction = RADAR_NARRATIVE_WEATHER_ACTIONS[key] || RADAR_NARRATIVE_WEATHER_ACTIONS.pressure_down;
   const symptomAction = RADAR_NARRATIVE_SYMPTOM_ACTIONS[symptomFocus] || RADAR_NARRATIVE_SYMPTOM_ACTIONS.default;
-  const strongAvoid = RADAR_NARRATIVE_WEATHER_AVOIDS[key] || "無理に押し切るより、体の重いサインを一つ減らす";
+  const strongAvoid = RADAR_NARRATIVE_WEATHER_AVOIDS[key] || "無理を重ねず、体の重いサインを一つ減らす";
   const stableAvoid = RADAR_NARRATIVE_STABLE_AVOIDS[key] || "いつもの調子を崩さないよう、重さを増やす要素を一つだけ外す";
   const avoid = level === 0 ? stableAvoid : strongAvoid;
   const first = level >= 2 && !weatherAction.startsWith("天気ストレス") ? `天気ストレスが強まる前に、${weatherAction}` : weatherAction;
@@ -1761,15 +1762,15 @@ const CARE_ITEM_HINTS = {
     },
     eat: {
       damp: "飲み物や汁物を選ぶなら、冷たく甘いものより、ほうじ茶・とうもろこし茶・温かい汁物が候補です。",
-      pressure_down: "ぼんやりをカフェインだけで押すより、軽い主食・味噌汁・ほうじ茶など、あとで重くなりにくいものが候補です。",
-      pressure_up: "刺激で押すより、麦茶・ルイボスティー・軽い汁物など、前のめりを足さないものが候補です。",
+      pressure_down: "カフェインだけで済ませず、軽い主食・味噌汁・ほうじ茶など、あとで重くなりにくいものを候補にします。",
+      pressure_up: "辛味やカフェインを増やさず、麦茶・ルイボスティー・軽い汁物などを候補にします。",
       cold: "冷たいものを続けるより、白湯・ほうじ茶・温かい汁物など、内側を冷やしすぎない候補を選びます。",
-      heat: "辛さや濃い味で押すより、麦茶・豆腐・軽い汁物など、熱をこもらせにくい候補が使いやすいです。",
+      heat: "辛い物や濃い味を続けず、麦茶・豆腐・軽い汁物など、暑い日にも取り入れやすい候補を選びます。",
       dry: "乾いた菓子とコーヒーだけでつなぐより、ルイボスティー・白湯・汁物・ごま系のちょい足しが候補です。",
       default: "食材を完璧に選ぶより、飲み物・汁物・主食を一つだけ軽くする候補を見ます。",
     },
     loosen: {
-      damp: "強くほぐすより、足元やお腹まわりを軽く流す日。ツボ押し棒や温める道具があれば短時間で十分です。",
+      damp: "強くほぐさず、足元やお腹まわりをやさしく整える日。ツボ押し棒や温める道具があれば短時間で十分です。",
       pressure_down: "耳・首・後頭部を休ませる日。首肩を温めるものや、目を休ませるものが候補になります。",
       pressure_up: "肩と胸の力みを抜く日。押し込む道具より、手首・足首・香りなど“力を抜くきっかけ”を選びます。",
       cold: "冷えて固まる前に守る日。温熱系や足元を冷やさないものを使うなら、短く早めが合います。",
@@ -1791,7 +1792,7 @@ const CARE_ITEM_HINTS = {
     eat: {
       damp: "明日の朝に重さを残したくない日は、はとむぎ茶・とうもろこし茶・温かい汁物などを今夜の候補にします。",
       pressure_down: "明日の低気圧に備えるなら、ほうじ茶・味噌汁・軽い主食など、朝に重くなりにくい候補を見ておきます。",
-      pressure_up: "明日の前のめり感に備えるなら、麦茶・ルイボスティー・豆腐や軽い汁物など、刺激を足さない候補を選びます。",
+      pressure_up: "明日は気持ちが急ぎやすくなることもあるため、麦茶・ルイボスティー・豆腐や軽い汁物など、辛味やカフェインを増やさない候補を選びます。",
       cold: "明日の冷えに備えるなら、白湯・ほうじ茶・温かい汁物など、朝の内側を冷やさない候補を先に見ます。",
       heat: "明日の暑さに備えるなら、麦茶・豆腐・トマト・軽い汁物など、熱をこもらせにくい候補を見ておきます。",
       dry: "明日の乾燥に備えるなら、白湯・ルイボスティー・汁物・ごま系など、うるおいを足す候補を用意します。",
@@ -2086,533 +2087,47 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", s
 }
 
 
-export const CARE_POLICY_DEFINITIONS = {
-  shizumeru: {
-    key: "shizumeru",
-    label: "しずめる",
-    short: "高ぶりを落ち着ける",
-    guide: "熱や高ぶりを落ち着ける",
-  },
-  yurumeru: {
-    key: "yurumeru",
-    label: "ゆるめる",
-    short: "力みをやわらげる",
-    guide: "力みやこわばりをやわらげる",
-  },
-  meguraseru: {
-    key: "meguraseru",
-    label: "めぐらせる",
-    short: "巡りを保つ",
-    guide: "巡りを保つ",
-  },
-  nagasu: {
-    key: "nagasu",
-    label: "ながす",
-    short: "重だるさをためない",
-    guide: "重だるさやむくみをためない",
-  },
-  uruosu: {
-    key: "uruosu",
-    label: "うるおす",
-    short: "乾きを補う",
-    guide: "乾きと消耗を補う",
-  },
-  nukumeru: {
-    key: "nukumeru",
-    label: "ぬくめる",
-    short: "冷えを防ぐ",
-    guide: "冷えを防ぐ",
-  },
-  sasaeru: {
-    key: "sasaeru",
-    label: "ささえる",
-    short: "疲れを増やさない",
-    guide: "疲れや消耗を増やさない",
-  },
-};
-
-const TRIGGER_POLICY_SCORES = {
-  pressure_down: { meguraseru: 3, yurumeru: 3, sasaeru: 1.6, nagasu: 0.6 },
-  pressure_up: { yurumeru: 3, meguraseru: 3, sasaeru: 1.6, shizumeru: 0.6 },
-  temp_shift: { yurumeru: 4.2, sasaeru: 2.4, meguraseru: 1.8 },
-  damp: { nagasu: 6, sasaeru: 2.1 },
-  humidity: { nagasu: 6, sasaeru: 2.1 },
-  cold: { nukumeru: 6, sasaeru: 2.2 },
-  heat: { shizumeru: 6, uruosu: 3.5 },
-  dry: { uruosu: 6, sasaeru: 2.1 },
-};
-
-const TCM_ACTION_POLICY_SCORES = {
-  move_qi: { yurumeru: 1.5, meguraseru: 1.2 },
-  move_blood: { meguraseru: 2 },
-  soothe_liver: { yurumeru: 1.6, shizumeru: 1 },
-  transform_damp: { nagasu: 2 },
-  strengthen_spleen: { sasaeru: 1.4, nagasu: 1 },
-  tonify_qi: { sasaeru: 2 },
-  nourish_blood: { uruosu: 1.6, sasaeru: 1 },
-  generate_fluids: { uruosu: 2 },
-  support_kidney: { nukumeru: 1.6, sasaeru: 1.3 },
-};
-
-const SUB_LABEL_POLICY_SCORES = {
-  qi_stagnation: { yurumeru: 1.2, meguraseru: 0.9 },
-  qi_deficiency: { sasaeru: 1.3, nukumeru: 0.6 },
-  blood_deficiency: { uruosu: 1.2, sasaeru: 0.8 },
-  blood_stasis: { meguraseru: 1.4, yurumeru: 0.6 },
-  fluid_damp: { nagasu: 1.4, sasaeru: 0.8 },
-  fluid_deficiency: { uruosu: 1.4, shizumeru: 0.8 },
-};
-
-const SYMPTOM_POLICY_SCORES = {
-  fatigue: { sasaeru: 1.1, nagasu: 0.4 },
-  sleep: { shizumeru: 1.0, sasaeru: 0.7, uruosu: 0.5 },
-  digestion: { sasaeru: 1.25, nukumeru: 0.75, nagasu: 0.55 },
-  neck_shoulder: { yurumeru: 1.0, meguraseru: 0.8 },
-  low_back_pain: { nukumeru: 0.9, meguraseru: 0.6, sasaeru: 0.6 },
-  swelling: { nagasu: 1.2 },
-  headache: { yurumeru: 0.9, meguraseru: 0.8, shizumeru: 0.5 },
-  dizziness: { sasaeru: 0.8, meguraseru: 0.6, uruosu: 0.5 },
-  mood: { yurumeru: 0.9, shizumeru: 0.8, meguraseru: 0.5 },
-};
-
-const ENV_VECTOR_POLICY_SCORES = {
-  pressure_shift: { yurumeru: 0.45, meguraseru: 0.45 },
-  temp_swing: { nukumeru: 0.35, sasaeru: 0.3, uruosu: 0.2 },
-  humidity_up: { nagasu: 0.55, sasaeru: 0.25 },
-  dryness_up: { uruosu: 0.55, sasaeru: 0.25 },
-  wind_strong: { yurumeru: 0.35, shizumeru: 0.3 },
-};
-
-const POLICY_PAIR_SUMMARIES = {
-  "nagasu+sasaeru": "重だるさをためず、疲れを増やさないように整えます。",
-  "sasaeru+nagasu": "重だるさをためず、疲れを増やさないように整えます。",
-  "nagasu+meguraseru": "重だるさをためず、巡りを保つように整えます。",
-  "meguraseru+nagasu": "重だるさをためず、巡りを保つように整えます。",
-  "yurumeru+sasaeru": "力みやこわばりをやわらげ、疲れを増やさないように整えます。",
-  "sasaeru+yurumeru": "力みやこわばりをやわらげ、疲れを増やさないように整えます。",
-  "yurumeru+meguraseru": "力みやこわばりをやわらげ、巡りを保つように整えます。",
-  "meguraseru+yurumeru": "力みやこわばりをやわらげ、巡りを保つように整えます。",
-  "shizumeru+yurumeru": "熱や高ぶりを落ち着け、力みやこわばりをやわらげるように整えます。",
-  "yurumeru+shizumeru": "熱や高ぶりを落ち着け、力みやこわばりをやわらげるように整えます。",
-  "nukumeru+sasaeru": "冷えを防ぎ、疲れを増やさないように整えます。",
-  "sasaeru+nukumeru": "冷えを防ぎ、疲れを増やさないように整えます。",
-  "uruosu+sasaeru": "乾きと消耗を補うように整えます。",
-  "sasaeru+uruosu": "乾きと消耗を補うように整えます。",
-};
-
-const ALLOWED_POLICY_PAIRS = new Set(Object.keys(POLICY_PAIR_SUMMARIES));
-
-
-function getCarePolicyTriggerKeys(triggerFactors) {
-  return safeArray(triggerFactors)
-    .map((factor) => normalizeCarePolicyTriggerKey(
-      factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor)
-    ))
-    .filter(Boolean);
-}
-
-function buildCarePolicySymptomContext({ symptomFocus, triggerFactors, mode = "today" } = {}) {
-  const keys = getCarePolicyTriggerKeys(triggerFactors);
-  if (!symptomFocus || !keys.length) return "";
-
-  const has = (...targets) => targets.some((target) => keys.includes(target));
-  const today = mode === "today";
-  const weatherLead = (() => {
-    const pairKey = getAllowedWeatherPairKey(keys);
-    if (pairKey) return WEATHER_PAIR_LABELS[pairKey];
-    if (has("pressure_down") || has("pressure_up")) return "気圧変化";
-    if (has("damp")) return "湿気";
-    if (has("cold")) return "低温";
-    if (has("heat")) return "高温";
-    if (has("dry")) return "乾燥";
-    return "天気変化";
-  })();
-
-  const todaySentence = (body) => `${getSymptomFocusLabel(symptomFocus)}を見ている場合は、${weatherLead}で${body}`;
-  const tomorrowSentence = (body) => `${getSymptomFocusLabel(symptomFocus)}を見ている場合は、明日の${weatherLead}に備えて、今夜は${body}`;
-  const sentence = (todayBody, tomorrowBody) => today ? todaySentence(todayBody) : tomorrowSentence(tomorrowBody);
-
-  switch (symptomFocus) {
-    case "fatigue":
-      return sentence(
-        "消耗やだるさが残りやすいため、重さをため込まない方向で整えます。",
-        "食べすぎ・冷え・予定の詰め込みを軽くし、明朝のだるさを残さない方向で整えます。",
-      );
-
-    case "sleep":
-      if (has("heat") || has("pressure_up")) {
-        return sentence(
-          "頭の冴えや熱が夜まで残りやすいため、刺激をこもらせない方向で整えます。",
-          "光・刺激・食後の重さを控えめにし、寝つきに響く冴えを残さない方向で整えます。",
-        );
-      }
-      return sentence(
-        "冷えや食後の重さが夜まで残りやすいため、寝る前まで重だるさを残しにくくします。",
-        "冷えと食後の重さを軽くし、明朝のだるさを残しにくくします。",
-      );
-
-    case "digestion":
-      if (has("cold")) {
-        return sentence(
-          "胃腸まわりが冷えで重くなりやすいため、冷たいものを続けず内側を守る方向で整えます。",
-          "冷たいものや夜の食べすぎを控えめにし、明朝の胃腸の重さを残さない方向で整えます。",
-        );
-      }
-      if (has("damp") || has("pressure_down")) {
-        return sentence(
-          "湿気や気圧変化で胃腸の重さが残りやすいため、詰め込みすぎない方向で整えます。",
-          "冷たいもの・甘いもの・食後の重さを控えめにし、明朝の胃腸を軽くする方向で整えます。",
-        );
-      }
-      if (has("heat")) {
-        return sentence(
-          "暑さで冷たいものが増えやすいため、胃腸を冷やしすぎない方向で整えます。",
-          "冷たい飲み物や刺激を控えめにし、胃腸に重さを残さない方向で整えます。",
-        );
-      }
-      return sentence(
-        "食後の重さやお腹の張りを残しやすいため、胃腸に負担を重ねない方向で整えます。",
-        "食べすぎや冷えを軽くし、明朝の胃腸の重さを残さない方向で整えます。",
-      );
-
-    case "neck_shoulder":
-      if (has("cold")) {
-        return sentence(
-          "首元・肩甲骨まわりが固まりやすいため、冷やしてこわばらせない方向で整えます。",
-          "首元を冷やしたまま寝ないようにし、明朝のこわばりを残さない方向で整えます。",
-        );
-      }
-      if (has("pressure_down")) {
-        return sentence(
-          "首肩から後頭部にこもりが残りやすいため、力みをためない方向で整えます。",
-          "首肩と耳まわりを軽くゆるめ、明朝のこもりを残さない方向で整えます。",
-        );
-      }
-      return sentence(
-        "首元・肩甲骨まわりが固まりやすいため、力みをためない方向で整えます。",
-        "画面姿勢と首元の冷えを残さず、明朝のこわばりを軽くする方向で整えます。",
-      );
-
-    case "low_back_pain":
-      if (has("cold")) {
-        return sentence(
-          "腰腹まわりと下半身が冷えて固まりやすいため、冷えを入口で止める方向で整えます。",
-          "腰腹まわりを冷やしたまま寝ないようにし、明朝の動き出しを重くしない方向で整えます。",
-        );
-      }
-      if (has("damp")) {
-        return sentence(
-          "腰まわり・下半身に重だるさが残りやすいため、重さをため込まない方向で整えます。",
-          "冷たいものや食後の重さを控えめにし、腰まわりの重だるさを持ち越さない方向で整えます。",
-        );
-      }
-      return sentence(
-        "腰腹・下半身に重さが残りやすいため、動き出しを重くしない方向で整えます。",
-        "冷えや食後の重さを軽くし、明朝の動き出しに重さを残さない方向で整えます。",
-      );
-
-    case "swelling":
-      if (has("damp")) {
-        return sentence(
-          "顔や脚のむくみ感が出やすいため、冷たいもの・甘いもの・塩気を重ねすぎないようにします。",
-          "冷たいもの・甘いもの・塩気を重ねすぎず、明朝の顔や脚の重さを増やしにくくします。",
-        );
-      }
-      return sentence(
-        "顔や脚に重さが残りやすいため、ため込まない方向で整えます。",
-        "食後の重さと冷えを軽くし、明朝の顔・脚の重さを増やさない方向で整えます。",
-      );
-
-    case "headache":
-      if (has("pressure_down")) {
-        return sentence(
-          "首・耳・目まわりが固まりやすいため、先にゆるめて頭の重さを残しにくくします。",
-          "お酒・脂っこさ・画面の刺激を控えめにし、頭の重さを持ち越しにくくします。",
-        );
-      }
-      if (has("heat") || has("pressure_up")) {
-        return sentence(
-          "熱や頭の冴えがこもりやすいため、刺激を増やしすぎない方向で整えます。",
-          "刺激と夜更かしを控えめにし、頭の冴えを残さない方向で整えます。",
-        );
-      }
-      return sentence(
-        "首・耳・目まわりが固まりやすいため、頭の重さにつながる前にゆるめます。",
-        "首肩と耳まわりを固めず、頭の重さを持ち越しにくくします。",
-      );
-
-    case "dizziness":
-      if (has("pressure_down") || has("pressure_up")) {
-        return sentence(
-          "急な動きや立ち上がりが負担になりやすいため、動き出しを急がない方向で整えます。",
-          "寝不足や食後の重さを控えめにし、明朝の動き出しを急がない方向で整えます。",
-        );
-      }
-      return sentence(
-        "冷えや重さで動き出しが乱れやすいため、立ち上がりを急がない方向で整えます。",
-        "冷えと食後の重さを軽くし、明朝の立ち上がりを急がない方向で整えます。",
-      );
-
-    case "mood":
-      if (has("heat") && has("cold")) {
-        return sentence(
-          "頭の冴えと身構えが残りやすいため、予定を詰めすぎず、情報量を少し軽くする方向で整えます。",
-          "画面時間を早めに区切り、明日の動き出しを重くしない形で整えます。",
-        );
-      }
-      if (has("heat") || has("pressure_up")) {
-        return sentence(
-          "頭の冴えや高ぶりが残りやすいため、急いで片付けようとせず、休憩を先に入れる方向で整えます。",
-          "刺激と情報量を控えめにし、明日の始まりを軽くする方向で整えます。",
-        );
-      }
-      if (has("damp") || has("pressure_down")) {
-        return sentence(
-          "気分の重さや動き出しにくさが出やすいため、予定を詰めすぎず、体を軽く動かして気分を変える方向で整えます。",
-          "食後の重さと情報量を控えめにし、明日の動き出しを重くしない方向で整えます。",
-        );
-      }
-      return sentence(
-        "気分を変えるのに負担が出やすいため、予定を一つ減らして、休憩を先に入れる方向で整えます。",
-        "刺激を減らし、予定を一つ軽くして明日の始まりを重くしない形で整えます。",
-      );
-
-    default:
-      return "";
-  }
-}
-
-const SINGLE_POLICY_SUMMARIES = {
-  shizumeru: "高ぶりを落ち着けるように整えます。",
-  yurumeru: "力みやこわばりをやわらげるように整えます。",
-  meguraseru: "巡りを保つように整えます。",
-  nagasu: "重だるさをためないように整えます。",
-  uruosu: "乾きと消耗を補うように整えます。",
-  nukumeru: "冷えを防ぐように整えます。",
-  sasaeru: "疲れを増やさないように整えます。",
-};
-
-function addPolicyScores(scores, weights, multiplier = 1) {
-  Object.entries(weights || {}).forEach(([key, value]) => {
-    if (!Object.prototype.hasOwnProperty.call(scores, key)) return;
-    scores[key] += Number(value || 0) * multiplier;
-  });
-}
-
-function normalizeCarePolicyTriggerKey(value) {
-  const key = String(value || "").trim();
-  if (key === "humidity") return "damp";
-  if (key === "temp") return "cold";
-  if (key === "temperature_shift") return "temp_shift";
-  return key || "pressure_down";
-}
-
-function getRiskContextTriggerFactors(riskContext) {
-  const summary = riskContext?.summary || {};
-  const raw = Array.isArray(summary.trigger_factors) && summary.trigger_factors.length
-    ? summary.trigger_factors
-    : [
-        summary.personal_main_trigger_exact || summary.main_trigger_exact,
-        summary.personal_secondary_trigger_exact || summary.secondary_trigger_exact,
-      ]
-        .filter(Boolean)
-        .map((exact, index) => ({ exact, key: exact, role: index === 0 ? "primary" : "secondary" }));
-
-  return safeArray(raw).map((factor, index) => {
-    const physicalExact = factor?.key || factor?.exact;
-    const responseDirection = factor?.response_direction || summary.pressure_response_direction || summary.reaction_direction || null;
-    const careKey = getLegacyCareTriggerKey(physicalExact, responseDirection);
-    const key = normalizeCarePolicyTriggerKey(careKey);
-    return {
-      ...factor,
-      physical_exact: physicalExact,
-      key,
-      exact: key,
-      careKey: key,
-      responseDirection,
-      bodyKey: getBodyResponseKey(physicalExact, responseDirection),
-      role: factor?.role || (index === 0 ? "primary" : "secondary"),
-      label: factor?.label || getCompatTriggerLabel(factor?.main_trigger, factor?.trigger_dir),
-    };
-  });
-}
-
-function toCarePolicyDirection(text) {
-  const normalized = String(text || "").trim();
-  if (!normalized) return "いつもの調子を崩さない方針です。";
-  return normalized
-    .replace(/ケアが合います。$/, "方針です。")
-    .replace(/ケアが合います$/, "方針です。")
-    .replace(/ケアです。$/, "方針です。")
-    .replace(/ケアです$/, "方針です。");
-}
-
-function getPolicySummary({ policies, triggerFactors, signal, mode, symptomFocus }) {
-  const keys = safeArray(policies).map((p) => p.key).filter(Boolean);
-  const detail =
-    keys.length >= 2
-      ? POLICY_PAIR_SUMMARIES[`${keys[0]}+${keys[1]}`] || `${policies[0].short}、${policies[1].short}方針です。`
-      : SINGLE_POLICY_SUMMARIES[keys[0]] || "いつもの調子を崩さないケアが合います。";
-  return toCarePolicyDirection(detail);
-}
-
-function getContinuousCareConstitution(constitutionContext) {
-  const axes = constitutionContext?.axes && typeof constitutionContext.axes === "object"
-    ? constitutionContext.axes
-    : null;
-  const split = constitutionContext?.split_scores && typeof constitutionContext.split_scores === "object"
-    ? constitutionContext.split_scores
-    : null;
-  return {
-    available: Boolean(axes || split),
-    yin_yang_score: Math.max(-1, Math.min(1, Number(axes?.yin_yang_score || 0))),
-    drive_score: Math.max(-1, Math.min(1, Number(axes?.drive_score || 0))),
-    obstruction_score: Math.max(0, Math.min(1, Number(axes?.obstruction_score || 0))),
-    material: {
-      qi_deficiency: Number(split?.qi?.deficiency || 0),
-      qi_stagnation: Number(split?.qi?.stagnation || 0),
-      blood_deficiency: Number(split?.blood?.deficiency || 0),
-      blood_stasis: Number(split?.blood?.stasis || 0),
-      fluid_deficiency: Number(split?.fluid?.deficiency || 0),
-      fluid_damp: Number(split?.fluid?.damp || 0),
-    },
-  };
-}
-
-function addContinuousCarePolicyScores(scores, continuous) {
-  if (!continuous?.available) return;
-  if (continuous.yin_yang_score > 0) {
-    addPolicyScores(scores, { yurumeru: 0.9, shizumeru: 0.55 }, continuous.yin_yang_score);
-  }
-  if (continuous.yin_yang_score < 0) {
-    addPolicyScores(scores, { nagasu: 0.75, meguraseru: 0.7 }, Math.abs(continuous.yin_yang_score));
-  }
-  addPolicyScores(scores, { sasaeru: 1.35 }, Math.max(0, -continuous.drive_score));
-  addPolicyScores(scores, { meguraseru: 0.75, yurumeru: 0.4 }, continuous.obstruction_score);
-  Object.entries(continuous.material).forEach(([key, raw]) => {
-    const value = Math.max(0, Number(raw || 0));
-    addPolicyScores(scores, SUB_LABEL_POLICY_SCORES[key], value / (value + 2.5));
-  });
-}
-
 export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode = "tomorrow", symptomFocus = null } = {}) {
-  const scores = Object.fromEntries(
-    Object.keys(CARE_POLICY_DEFINITIONS).map((key) => [key, 0])
-  );
-
-  const personalizedTriggerFactors = safeArray(triggerFactors).length
+  const summary = riskContext?.summary || {};
+  const fallbackFactors = [
+    summary.personal_main_trigger_exact || summary.main_trigger_exact,
+    summary.personal_secondary_trigger_exact || summary.secondary_trigger_exact,
+  ]
+    .filter(Boolean)
+    .map((exact, index) => ({
+      exact,
+      key: exact,
+      role: index === 0 ? "primary" : "secondary",
+    }));
+  const factors = safeArray(triggerFactors).length
     ? safeArray(triggerFactors)
     : forecast
       ? getForecastTriggerFactors(forecast)
-      : getRiskContextTriggerFactors(riskContext);
-
-  const normalizedTriggerFactors = safeArray(personalizedTriggerFactors).map((factor, index) => {
-    const careKey = factor?.careKey || getLegacyCareTriggerKey(factor?.key || factor?.exact, factor);
-    return {
-      ...factor,
-      physical_exact: factor?.exact || factor?.key || null,
-      key: normalizeCarePolicyTriggerKey(careKey),
-      exact: normalizeCarePolicyTriggerKey(careKey),
-      role: factor?.role || (index === 0 ? "primary" : "secondary"),
-    };
-  }).slice(0, 2);
-
-  normalizedTriggerFactors.forEach((factor, index) => {
-    const key = normalizeCarePolicyTriggerKey(factor?.key || factor?.exact);
-    const multiplier = index === 0 ? 1 : 0.42;
-    addPolicyScores(scores, TRIGGER_POLICY_SCORES[key], multiplier);
-  });
-
-  const tcmContext = riskContext?.tcm_context || forecast?.computed?.radar_plan_meta?.risk_context?.tcm_context || {};
-  safeArray(tcmContext.primary_actions).forEach((action) => {
-    addPolicyScores(scores, TCM_ACTION_POLICY_SCORES[action], 1.25);
-  });
-  safeArray(tcmContext.secondary_actions).forEach((action) => {
-    addPolicyScores(scores, TCM_ACTION_POLICY_SCORES[action], 0.65);
-  });
-
-  const constitutionContext =
-    riskContext?.constitution_context || forecast?.computed?.radar_plan_meta?.risk_context?.constitution_context || {};
-
-  safeArray(constitutionContext.sub_labels).forEach((label, index) => {
-    addPolicyScores(scores, SUB_LABEL_POLICY_SCORES[label], index === 0 ? 1 : 0.62);
-  });
-
-  const activeSymptomFocus = symptomFocus || constitutionContext.symptom_focus || null;
-  addPolicyScores(scores, SYMPTOM_POLICY_SCORES[activeSymptomFocus], 1);
-
-  const coreCode = String(constitutionContext.core_code || "");
-  const continuous = getContinuousCareConstitution(constitutionContext);
-  addContinuousCarePolicyScores(scores, continuous);
-  if (!continuous.available) {
-    if (coreCode.includes("batt_small")) addPolicyScores(scores, { sasaeru: 0.8, nukumeru: 0.25 });
-    if (coreCode.includes("batt_large")) addPolicyScores(scores, { yurumeru: 0.25, meguraseru: 0.25 });
-    if (coreCode.startsWith("accel_")) addPolicyScores(scores, { yurumeru: 0.35, shizumeru: 0.3 });
-    if (coreCode.startsWith("brake_")) addPolicyScores(scores, { nagasu: 0.35, meguraseru: 0.25 });
-  }
-
-  const env = constitutionContext.env || {};
-  safeArray(env.vectors).forEach((vector) => {
-    addPolicyScores(scores, ENV_VECTOR_POLICY_SCORES[vector], 0.75);
-  });
-
+      : fallbackFactors;
+  const primary = factors[0]?.careKey || factors[0]?.key || factors[0]?.exact || "default";
+  const secondary = factors[1]?.careKey || factors[1]?.key || factors[1]?.exact || null;
   const signal = Number(
     forecast?.signal ??
       riskContext?.target?.signal ??
       forecast?.computed?.radar_plan_meta?.risk_context?.target?.signal ??
       0
   );
-  if (signal >= 2) addPolicyScores(scores, { sasaeru: 0.45 }, 1);
-  if (signal === 1) addPolicyScores(scores, { sasaeru: 0.15 }, 1);
-
-  // The primary policy should stay anchored to the personalized forecast trigger.
-  // Constitution, symptoms, and TCM actions only translate that trigger into care language.
-  const primaryTriggerKey = normalizeCarePolicyTriggerKey(normalizedTriggerFactors[0]?.key || normalizedTriggerFactors[0]?.exact);
-  const primaryTriggerPolicies = Object.keys(TRIGGER_POLICY_SCORES[primaryTriggerKey] || {});
-  primaryTriggerPolicies.forEach((key, index) => {
-    const isPressure = primaryTriggerKey === "pressure_down" || primaryTriggerKey === "pressure_up";
-    scores[key] += isPressure ? 0.15 : index === 0 ? 0.9 : 0.35;
+  const theme = buildDailyCareTheme({
+    mode,
+    targetDate: forecast?.target_date || riskContext?.target?.target_date || null,
+    triggerKey: primary,
+    secondaryKey: secondary,
+    signal,
+    symptomFocus: symptomFocus || riskContext?.constitution_context?.symptom_focus || null,
+    riskContext,
   });
-
-  let ranked = Object.entries(scores)
-    .map(([key, score]) => ({ key, score }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score);
-
-  if (!ranked.length) {
-    ranked = [{ key: "sasaeru", score: 1 }];
-  }
-
-  const selected = [ranked[0]];
-  const second = ranked.find((item) =>
-    item.key !== ranked[0].key && ALLOWED_POLICY_PAIRS.has(`${ranked[0].key}+${item.key}`)
-  );
-  const shouldShowSecond =
-    Number(signal) > 0 &&
-    second &&
-    second.score >= Math.max(2.15, ranked[0].score * 0.48) &&
-    !(ranked[0].key === "shizumeru" && second.key === "nukumeru") &&
-    !(ranked[0].key === "nukumeru" && second.key === "shizumeru");
-
-  if (shouldShowSecond) selected.push(second);
-
-  const policies = selected
-    .map((item) => CARE_POLICY_DEFINITIONS[item.key])
-    .filter(Boolean);
-
   return {
-    policies,
-    scores,
-    summary: getPolicySummary({
-      policies,
-      triggerFactors: normalizedTriggerFactors,
-      signal,
-      mode,
-      symptomFocus: activeSymptomFocus,
-    }),
+    policies: theme.policies,
+    scores: theme.scores,
+    summary: theme.summary,
+    response_profile: theme.response_profile,
   };
 }
-
 
 export function getLifestylePlan(primaryKey, secondaryKey, signal, mode = "tomorrow", symptomFocus = null, pressureSource = null) {
   const plan = getLifestylePlanFromRules(primaryKey, secondaryKey, signal, mode, symptomFocus);
