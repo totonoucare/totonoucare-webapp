@@ -46,7 +46,7 @@ test("food main area gives the concrete meal and the subtraction habit equal pro
   const prominent = food.action_cards.filter((card) => card.prominent);
   assert.deepEqual(prominent.map((card) => card.key), ["choice", "caution"]);
   assert.equal(prominent[0].items.length, 1);
-  assert.equal(prominent[1].label, "今日は控えたい");
+  assert.equal(prominent[1].label, "今日は重ねない");
   assert.equal(prominent[1].items.length, 1);
 });
 
@@ -57,8 +57,8 @@ test("subtraction advice is concrete, reasoned and not the old generic heading",
   assert.equal(caution.items.length, 1);
   assert.equal(caution.items[0], food.subtraction_action.label);
   assert.ok(food.subtraction_action.reason.length > 20);
-  assert.doesNotMatch(caution.label, /重ねない/);
-  assert.doesNotMatch(dailySource, /今日は重ねない/);
+  assert.equal(caution.label, "今日は重ねない");
+  assert.match(caution.items[0], /ない|避け|控え|だけで|一気に/);
 });
 
 test("subtraction advice is stable on reload and rotates across similar forecast dates", () => {
@@ -100,9 +100,9 @@ test("food subtraction changes with constitution even under the same weather", (
 test("the disclosure label describes its actual contents", () => {
   const food = buildFood();
   assert.equal(food.detail_eyebrow, "ほかの選び方");
-  assert.equal(food.detail_title, "別案・飲み物・選んだ理由");
+  assert.equal(food.detail_title, "買う・外食・別の気分");
   assert.match(pageSource, /visiblePrimaryFoodCards/);
   assert.match(pageSource, /food\.detail_eyebrow \|\| "ほかの選び方"/);
-  assert.match(pageSource, /別案・飲み物・選んだ理由/);
+  assert.match(pageSource, /food\.detail_title/);
   assert.doesNotMatch(foodRulesSource, /なぜこの食材\?|なぜ明日の候補\?/);
 });

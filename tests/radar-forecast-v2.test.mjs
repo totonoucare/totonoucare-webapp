@@ -837,7 +837,8 @@ test("forecast and constitution copy reflect the V2 hierarchy while keeping meta
   assert.equal((radarPageSource.match(/対策ケア/g) || []).length, 1);
   assert.match(resultPageSource, /寒さ・暑さへの感じ方、天気への感じやすさ、気・血・水の6つの傾向/);
   assert.doesNotMatch(resultPageSource, /天候の影響がストレートに現れやすくなります/);
-  assert.match(radarUtilsSource, /胃腸に水分を含んだような重さが残りやすい日/);
+  assert.match(radarUtilsSource, /食後の重さが残りやすい日/);
+  assert.match(radarUtilsSource, /冷たいものや甘いものが続くとお腹まわりがもたつきやすくなります/);
   assert.doesNotMatch(radarUtilsSource, /気分にも湿気|水を含んだスポンジ/);
   assert.doesNotMatch(radarUtilsSource, /湿気の重い膜|胃腸を止めっぱなし/);
   assert.doesNotMatch(pointExplanationSource, /湿気の重い膜/);
