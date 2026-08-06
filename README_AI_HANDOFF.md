@@ -1,3 +1,49 @@
+## v7.79.17 食べるケアと継続商品軸の現行契約
+
+- 現行ロジック版は`daily_care_v2_15_2026-08-06_response_meals_macro_shop`
+- 食べるケアの入力は、天気だけではなく共通反応プロファイルの`policies / reaction_direction / reserve_level / material_keys / symptom_focus`を使う
+- 天気は温度・汁気・軽さなどの小さな調理適合度にだけ使い、献立母集団を天気別に固定しない
+- ユーザー表示用の料理は、文字列部品から自由合成せず、次の独立した完成候補を正本にする
+  - `RESPONSE_MEAL_CATALOG`: 今日の完成料理
+  - `BUY_MEAL_CATALOG`: コンビニ・惣菜等の具体的な買い合わせ
+  - `EAT_OUT_MEAL_CATALOG`: 外食で注文できる具体案
+  - `TOMORROW_BREAKFAST_CATALOG`: 明日の朝食と今夜の準備
+  - `NIGHT_SNACK_CATALOG`: 本当に空腹の時だけの任意の夜食
+- todayとtomorrowで同じ辞書を共用しない。todayは一食の選択支援、tomorrowは今夜から明朝への準備として書き分ける
+- `おにぎり / パン / スープ / サラダ`の一般名一語を購入案に戻さず、具・味・組み合わせまで表示する
+- 同じ日・同じ入力では同じ候補を返す。日付ハッシュは適合候補内の巡回だけに使い、隣接日とtoday/tomorrowの重複を抑える
+- `buildFoodCommerceContext`は、体質サブラベル・不調・反応方向・余力から継続軸を作る。単日の`trigger_key`と選択された料理IDを商品軸へ含めない
+- `/radar`から`/care-navi`へ渡す食のパラメータは`eatPolicies / eatFunctions / eatNeeds / eatRoles / eatSummary`だけ。レシピや料理材料を直接検索しない
+- ショップは`daily_tea / pantry_food / prepared_meal / meal_subscription / nutrition_support`を、食養生機能と栄養上の継続課題で検索・順位付けする
+- `nutrition_support`は、余力小・気虚・血虚・疲れ・めまいなど継続理由がある時だけ残す
+- 予報点数、天気ストレス、共通反応プロファイル、出やすいサイン、暮らすケアの商品境界、DBは変更しない
+
+詳細: `docs/RADAR_RESPONSE_MEALS_MACRO_COMMERCE_V77917.md`
+
+> v7.79.16の天気別`FOOD_IDEAS`を主献立の正本とする契約、およびtoday/tomorrowが同じ献立辞書を一日差で巡回する契約は廃止済み。現行仕様は直上を正本とする。
+
+## v7.79.16 身体操作・食事文・献立ローテーションの現行契約
+
+- 現行ロジック版は`daily_care_v2_14_2026-08-06_natural_food_rotation_body_restore`
+- 次の身体操作5件は、生活内で試せる旧実用動作を正本とする
+  - `tension-screen-head-up`: 後頭部を1cm上へ運ぶ
+  - `tension-head-sky-line`: 見たい方向へ椅子か足を動かし、胸も向ける
+  - `tension-wall-axis`: 手元へ近づき、前腕のひじ寄りを台へ預ける
+  - `tension-supported-one-leg`: 片足を半歩前へ出し、前後を入れ替える
+  - `tension-seated-foot-head`: お尻を左右へ小さく揺らし、左右差の少ない座る場所を探す
+- 上記を`頭全体を上へ10秒 / 壁押し / 支え付き片足立ち / 足は下・頭は上`などの抽象トレーニングへ置換しない
+- 一般向けコピーは、行動・対象・目的が一読で分かる生活語にする。`刺激で押す / 燃料 / 荷物 / 火を足す / 交通整理 / 起動`など、目的語や身体反応が曖昧な比喩を新規追加しない
+- ただし実物の荷物、壁を押す動作、ツボを押す行為など、対象が明確な通常語は禁止しない
+- 食べるケアの主献立は、天気ごとの監修済み`FOOD_IDEAS`から選ぶ。`mode`を適合度へ加点せず、対象日の一日差で回す
+- 適合度が近い候補と上位候補を合わせて最低3件のローテーション母集団を確保し、同条件の隣接日で主献立を重複させない
+- 同じ入力と対象日は同じ献立を返す。ランダム選択へ変更しない
+- 気圧は物理的な上下より、明示された`reaction_direction`を優先して食事・ケアの反応側を決める
+- 予報点数、天気ストレス、共通反応プロファイル、7方針、出やすいサイン、暮らすの商品境界、DBは変更しない
+
+詳細: `docs/RADAR_NATURAL_FOOD_ROTATION_BODY_RESTORE_V77916.md`
+
+> v7.79.15以前に記載された身体操作5件の文面と、today/tomorrow別の献立加点は現行仕様ではない。直上を正本とする。
+
 ## v7.79.15 暮らすケア・商品境界の現行契約
 
 - 現行ロジック版は`daily_care_v2_13_2026-08-05_product_boundary_copy_audit`
