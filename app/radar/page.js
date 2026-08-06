@@ -969,6 +969,21 @@ export default function RadarPage() {
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
+    if (category === "eat") {
+      const commerce = food?.commerce_context || null;
+      const params = new URLSearchParams();
+      const addList = (key, values) => {
+        const cleaned = safeArray(values).map((value) => String(value || "").trim()).filter(Boolean).slice(0, 5);
+        if (cleaned.length) params.set(key, cleaned.join(","));
+      };
+      addList("eatPolicies", commerce?.policy_keys);
+      addList("eatFunctions", commerce?.tcm_function_keys);
+      addList("eatNeeds", commerce?.nutrition_need_keys);
+      addList("eatRoles", commerce?.product_role_keys);
+      if (commerce?.summary) params.set("eatSummary", String(commerce.summary).slice(0, 120));
+      const query = params.toString();
+      return query ? `${base}&${query}` : base;
+    }
     if (category !== "live") return base;
     const shopContext = lifestylePlan?.shop_context || null;
     const actionKey = String(shopContext?.action_id || "").trim();
@@ -990,10 +1005,6 @@ export default function RadarPage() {
     [careTriggerKey, secondaryCareTriggerKey, activeCareForecast?.signal, selectedIsToday, symptomFocus, careTriggerFactors]
   );
   const lifestylePlan = carePlan?.lifestyle_plan || derivedLifestylePlan;
-  const eatItemHint = useMemo(
-    () => getCareItemHint("eat", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
-    [careTriggerFactors, selectedIsToday, symptomFocus]
-  );
   const loosenItemHint = useMemo(
     () => getCareItemHint("loosen", careTriggerFactors, selectedIsToday ? "today" : "tomorrow", symptomFocus),
     [careTriggerFactors, selectedIsToday, symptomFocus]
@@ -2107,7 +2118,15 @@ export default function RadarPage() {
                   {hasFoodActionCards ? (
                     <div className="mt-4 space-y-2.5">
                       {visiblePrimaryFoodCards.map((card, idx) => {
-                        const marker = card.key === "add" ? "＋" : card.key === "drink" ? "茶" : card.key === "caution" ? "−" : "○";
+                        const marker = card.key === "add" ? "＋"
+                          : card.key === "drink" ? "茶"
+                            : card.key === "caution" ? "−"
+                              : card.key === "buy" ? "買"
+                                : card.key === "eat_out" ? "外"
+                                  : card.key === "night" ? "夜"
+                                    : card.key === "prep" ? "朝"
+                                      : card.key === "choice" ? "食"
+                                        : "○";
                         const markerClass = card.key === "caution"
                           ? "bg-[#FFF0EA] text-[#B75C3E] ring-[#F1C8BA]"
                           : card.key === "drink"
@@ -2304,11 +2323,15 @@ export default function RadarPage() {
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.eat} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
-                  title={selectedIsToday ? "この食べ方に合う候補を見る" : "明日の食べ方候補を見ておく"}
+                  title="この傾向の日に備えるものを見る"
                   lead={selectedIsToday
-                    ? eatItemHint || "表示中の食べ方に合わせて、飲み物・汁物・素材系アイテムの候補を見られます。"
-                    : eatItemHint || "明日の予報と季節に合わせて、飲み物・汁物・素材系アイテムの候補を先に見ておけます。"}
-                  buttonLabel={selectedIsToday ? "食べ方に合う候補を見る" : "明日の食べ方候補を見る"}
+                    ? food?.commerce_context?.summary
+                      ? `${food.commerce_context.summary}を続けやすくする、毎日の一杯・常備品・宅食などを見られます。今日の料理材料を探す導線ではありません。`
+                      : "今日の料理材料ではなく、同じ傾向の日に使い続けやすい飲み物・常備品・宅食などを見られます。"
+                    : food?.commerce_context?.summary
+                      ? `${food.commerce_context.summary}を続けやすくする、毎日の一杯・常備品・宅食などを先に見ておけます。`
+                      : "明日の一食そのものではなく、似た傾向の日に備える飲み物・常備品・宅食などを見られます。"}
+                  buttonLabel="食べるケアを続ける候補を見る"
                   toneKey="eat"
                   onClick={() => router.push(buildCareNaviUrl("eat"))}
                 />
