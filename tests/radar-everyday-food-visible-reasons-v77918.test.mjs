@@ -80,7 +80,7 @@ test("食事と飲み物を主表示に残し、控えたい物と追加候補�
   assert.deepEqual(prominentKeys, ["choice", "drink"]);
   const drink = food.action_cards.find((card) => card.key === "drink");
   assert.deepEqual(drink.items, ["麦茶", "ほうじ茶"]);
-  assert.deepEqual(drink.item_details[0].reasons.map((reason) => reason.label), ["食養生", "成分・飲み方"]);
+  assert.deepEqual(drink.item_details[0].reasons.map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
   assert.ok(food.action_cards.find((card) => card.key === "caution"));
   assert.match(pageSource, /itemDetail\.reasons/);
 });
@@ -95,11 +95,11 @@ test("買う・外食は一つの作らない選択へまとめ、入手場面�
   assert.equal(noCook.item_details.length, 2);
 });
 
-test("食事候補は食養生を先、栄養面を補足として表示する", () => {
+test("食事候補は体調との相性を先、栄養面を補足として表示する", () => {
   const food = build();
   for (const card of food.action_cards.filter((item) => ["choice", "no_cook", "alternative", "night"].includes(item.key))) {
     for (const detail of card.item_details || []) {
-      assert.deepEqual(detail.reasons.map((reason) => reason.label), ["食養生", "栄養面"]);
+      assert.deepEqual(detail.reasons.map((reason) => reason.label), ["体調との相性", "栄養面"]);
       assert.ok(detail.reasons.every((reason) => reason.text.length >= 20));
       assert.ok(detail.focus_ingredients.length >= 1);
       assert.equal(detail.meal_example.length > 0, true);

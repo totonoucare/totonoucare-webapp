@@ -28,14 +28,14 @@ function buildHeatContext(mode = "today") {
   });
 }
 
-test("実際の飲み物辞書も食養生を先、成分と飲み方を補足にする", () => {
+test("実際の飲み物辞書も体調との相性を先、成分と飲み方を補足にする", () => {
   const food = buildHeatContext();
   const drink = food.action_cards.find((card) => card.key === "drink");
   assert.ok(drink);
   assert.ok(drink.items.length >= 2);
   for (const detail of drink.item_details) {
-    assert.deepEqual(detail.reasons.map((reason) => reason.label), ["食養生", "成分・飲み方"]);
-    assert.match(detail.reasons[0].text, /食養生では/);
+    assert.deepEqual(detail.reasons.map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
+    assert.doesNotMatch(detail.reasons[0].text, /食養生では/);
     assert.match(detail.reasons[0].text, /温める|冷ます|偏りが少ない/);
     assert.match(detail.reasons[1].text, /カフェイン/);
   }
@@ -55,8 +55,8 @@ test("料理は取り入れたい食材を先に見せ、料理名を料理案�
   const meal = food.action_cards.find((card) => card.key === "choice")?.item_details?.[0];
   assert.ok(meal.focus_ingredients.length >= 2, JSON.stringify(meal));
   assert.ok(meal.meal_example.length > 0);
-  assert.deepEqual(meal.reasons.map((reason) => reason.label), ["食養生", "栄養面"]);
-  assert.match(meal.reasons[0].text, /食養生では/);
+  assert.deepEqual(meal.reasons.map((reason) => reason.label), ["体調との相性", "栄養面"]);
+  assert.doesNotMatch(meal.reasons[0].text, /食養生では/);
   assert.match(pageSource, /取り入れたい食材/);
   assert.match(pageSource, /itemDetail\?\.meal_example/);
 });
