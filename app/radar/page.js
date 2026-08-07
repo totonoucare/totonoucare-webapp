@@ -244,7 +244,7 @@ function CareActionButton({ checked, saving, disabled, onClick, compact = false,
       onClick={onClick}
       className={[
         "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full font-black ring-1 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60",
-        compact ? "px-3 py-2 text-[11px]" : "px-3.5 py-2.5 text-[12px]",
+        compact ? "px-3 py-2 text-[12px]" : "px-3.5 py-2.5 text-[13px]",
         checked
           ? "bg-[#349B83] text-white ring-[#349B83] shadow-sm"
           : "bg-white text-[#2F816E] ring-[#BFDCCF] hover:bg-[#F4FAF7]",
@@ -1794,7 +1794,7 @@ export default function RadarPage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className={["text-[11px] font-black uppercase tracking-widest", careTone.inkSoft].join(" ")}>
+                <div className={["text-[12px] font-black uppercase tracking-widest", careTone.inkSoft].join(" ")}>
                   対策ケア
                 </div>
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
@@ -1844,10 +1844,10 @@ export default function RadarPage() {
               ].join(" ")}
             >
               <div className="flex items-center justify-between gap-3">
-                <div className={["text-[11px] font-black uppercase tracking-widest", careTone.inkSoft].join(" ")}>
+                <div className={["text-[12px] font-black uppercase tracking-widest", careTone.inkSoft].join(" ")}>
                   この日の方針
                 </div>
-                <div className={["rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1", careTone.ring].join(" ")}>
+                <div className={["rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1", careTone.ring].join(" ")}>
                   {symptomFocus ? "体質 × 天気 × 不調" : "体質 × 天気"}
                 </div>
               </div>
@@ -1865,7 +1865,7 @@ export default function RadarPage() {
                 ))}
               </div>
 
-              <div className="mt-3 text-[14px] font-bold leading-6 text-slate-700">
+              <div className="mt-3 text-[15px] font-bold leading-7 text-slate-700">
                 {carePolicies?.summary || careStrategyLead}
               </div>
             </div>
@@ -2076,23 +2076,23 @@ export default function RadarPage() {
             {careTab === "eat" ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between gap-3 px-1">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                     食べる
                   </div>
-                  <div className="rounded-full bg-[#FFF5E6] px-2.5 py-1 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">
-                    食養生
+                  <div className="rounded-full bg-[#FFF5E6] px-2.5 py-1 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">
+                    食事ケア
                   </div>
                 </div>
 
                 <div className="rounded-[24px] bg-[#FFF5E6] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(165,108,24,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
-                  <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4] shadow-[0_10px_20px_-16px_rgba(165,108,24,0.30)]">
+                  <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4] shadow-[0_10px_20px_-16px_rgba(165,108,24,0.30)]">
                     {food.badge || "まずはこれ"}
                   </div>
 
-                  <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
+                  <div className="mt-3 text-[19px] font-black tracking-tight text-slate-900">
                     {food.display_compact
                       ? (selectedIsToday ? "今日の食べる一手" : "今夜〜明朝の食べる一手")
-                      : food.title || sectionLabels.foodTitle || `${getDateModeLabel(bundleDateMode)}の食養生`}
+                      : food.title || sectionLabels.foodTitle || `${getDateModeLabel(bundleDateMode)}の食事ケア`}
                   </div>
 
 
@@ -2101,7 +2101,7 @@ export default function RadarPage() {
                       {foodContextChips.map((chip, idx) => (
                         <span
                           key={`${chip}-${idx}`}
-                          className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-black text-[#A56C18]/80 ring-1 ring-[#EED8B4]"
+                          className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-black text-[#A56C18]/80 ring-1 ring-[#EED8B4]"
                         >
                           {chip}
                         </span>
@@ -2110,7 +2110,7 @@ export default function RadarPage() {
                   ) : null}
 
                   {food.recommendation || food.focus ? (
-                    <div className="mt-3 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
+                    <div className="mt-3 text-[15px] font-extrabold leading-7 text-[var(--accent-ink)]">
                       {food.recommendation || food.focus}
                     </div>
                   ) : null}
@@ -2149,7 +2149,7 @@ export default function RadarPage() {
                                 {marker}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="text-[13px] font-black tracking-tight text-slate-900">
+                                <div className="text-[15px] font-black tracking-tight text-slate-900">
                                   {card.label}
                                 </div>
                               </div>
@@ -2165,17 +2165,17 @@ export default function RadarPage() {
                                   return (
                                     <div
                                       key={`${card.key}-${item}-${itemIdx}`}
-                                      className="rounded-[15px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
+                                      className="rounded-[15px] bg-[#FFF5E6] px-3 py-3 text-[14px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
                                     >
                                       <div className="flex items-center justify-between gap-2">
                                         <div className="min-w-0 flex-1 leading-5">
                                           {safeArray(itemDetail?.focus_ingredients).length ? (
                                             <>
-                                              <div className="text-[10px] font-black text-[#9A6B20]">取り入れたい食材</div>
-                                              <div className="mt-0.5 text-[13px] font-black text-slate-800">
+                                              <div className="text-[12px] font-black text-[#9A6B20]">取り入れたい食材</div>
+                                              <div className="mt-1 text-[16px] font-black leading-6 text-slate-800">
                                                 {safeArray(itemDetail.focus_ingredients).join("・")}
                                               </div>
-                                              <div className="mt-1.5 text-[11px] font-bold text-slate-500">
+                                              <div className="mt-2 text-[13px] font-bold leading-6 text-slate-500">
                                                 <span className="mr-1 font-black text-[#9A6B20]">料理案</span>
                                                 {itemDetail?.meal_example || item}
                                               </div>
@@ -2189,7 +2189,7 @@ export default function RadarPage() {
                                       {safeArray(itemDetail?.reasons).length ? (
                                         <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                           {safeArray(itemDetail.reasons).map((reason, reasonIdx) => (
-                                            <div key={`${reason?.label || "reason"}-${reasonIdx}`} className="text-[11px] font-bold leading-5 text-slate-500">
+                                            <div key={`${reason?.label || "reason"}-${reasonIdx}`} className="text-[13px] font-bold leading-6 text-slate-500">
                                               <span className="mr-1 font-black text-[#9A6B20]">{reason?.label}</span>
                                               {reason?.text}
                                             </div>
@@ -2202,7 +2202,7 @@ export default function RadarPage() {
                               </div>
                             ) : null}
                             {card.body ? (
-                              <div className={["mt-3 text-[12px] font-bold leading-5 text-slate-500", safeArray(card.items).length ? "pl-11" : ""].join(" ")}>
+                              <div className={["mt-3 text-[13px] font-bold leading-6 text-slate-500", safeArray(card.items).length ? "pl-11" : ""].join(" ")}>
                                 {card.body}
                               </div>
                             ) : null}
@@ -2219,14 +2219,14 @@ export default function RadarPage() {
 
                   {!hasFoodActionCards && foodExamples.length > 0 ? (
                     <div className="mt-4">
-                      <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                         {food.examples_label || "例"}
                       </div>
                       <div className="mt-2 space-y-2">
                         {foodExamples.map((x, idx) => (
                           <div
                             key={`${x}-${idx}`}
-                            className="flex items-center justify-between gap-2 rounded-[15px] bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#F1E5D1]"
+                            className="flex items-center justify-between gap-2 rounded-[15px] bg-white px-3 py-3 text-[14px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#F1E5D1]"
                           >
                             <span className="min-w-0 flex-1 leading-5">{x}</span>
                             {actionButtonFor(careItemsByKind.get("food_example_item")?.[idx], { compact: true })}
@@ -2250,10 +2250,10 @@ export default function RadarPage() {
                         className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#EED8B4] text-left shadow-sm"
                       >
                         <div>
-                          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                          <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                             {food.detail_eyebrow || "ほかの選び方"}
                           </div>
-                          <div className="mt-1 text-[13px] font-black tracking-tight text-slate-900">
+                          <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">
                             {food.detail_title || "別案・飲み物・選んだ理由"}
                           </div>
                         </div>
@@ -2277,7 +2277,7 @@ export default function RadarPage() {
                         <div className="mt-4 space-y-4 border-t border-slate-200 pt-4">
                           {!hasFoodActionCards && food.how_to ? (
                             <div>
-                              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                              <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                                 {food.how_to_label || "取り入れ方"}
                               </div>
                               <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
@@ -2288,7 +2288,7 @@ export default function RadarPage() {
 
                           {!hasFoodActionCards && food.avoid ? (
                             <div>
-                              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                              <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                                 {food.avoid_label || "控えたいこと"}
                               </div>
                               <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
@@ -2301,23 +2301,23 @@ export default function RadarPage() {
                             <div className="space-y-2.5">
                               {secondaryFoodCards.map((card, cardIndex) => (
                                 <div key={`${card.key || "detail"}-${cardIndex}`} className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#F0E2CA] shadow-sm">
-                                  <div className="text-[12px] font-black text-[#A56C18]">{card.label}</div>
-                                  {card.body ? <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">{card.body}</div> : null}
+                                  <div className="text-[14px] font-black text-[#A56C18]">{card.label}</div>
+                                  {card.body ? <div className="mt-1 text-[14px] font-bold leading-6 text-slate-600">{card.body}</div> : null}
                                   {safeArray(card.items).length > 0 ? (
                                     <div className="mt-2 space-y-2">
                                       {safeArray(card.items).map((item, itemIndex) => {
                                         const itemDetail = safeArray(card.item_details)?.[itemIndex] || null;
                                         return (
-                                          <div key={`${card.key}-${itemIndex}`} className="rounded-[14px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">
+                                          <div key={`${card.key}-${itemIndex}`} className="rounded-[14px] bg-[#FFF5E6] px-3 py-3 text-[14px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">
                                             <div className="flex items-center justify-between gap-2">
                                               <div className="min-w-0 flex-1 leading-5">
                                                 {safeArray(itemDetail?.focus_ingredients).length ? (
                                                   <>
-                                                    <div className="text-[10px] font-black text-[#9A6B20]">取り入れたい食材</div>
-                                                    <div className="mt-0.5 text-[13px] font-black text-slate-800">
+                                                    <div className="text-[12px] font-black text-[#9A6B20]">取り入れたい食材</div>
+                                                    <div className="mt-1 text-[16px] font-black leading-6 text-slate-800">
                                                       {safeArray(itemDetail.focus_ingredients).join("・")}
                                                     </div>
-                                                    <div className="mt-1.5 text-[11px] font-bold text-slate-500">
+                                                    <div className="mt-2 text-[13px] font-bold leading-6 text-slate-500">
                                                       <span className="mr-1 font-black text-[#9A6B20]">料理案</span>
                                                       {itemDetail?.meal_example || item}
                                                     </div>
@@ -2333,7 +2333,7 @@ export default function RadarPage() {
                                             {safeArray(itemDetail?.reasons).length ? (
                                               <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                                 {safeArray(itemDetail.reasons).map((reason, reasonIndex) => (
-                                                  <div key={`${reason?.label || "reason"}-${reasonIndex}`} className="text-[11px] font-bold leading-5 text-slate-500">
+                                                  <div key={`${reason?.label || "reason"}-${reasonIndex}`} className="text-[13px] font-bold leading-6 text-slate-500">
                                                     <span className="mr-1 font-black text-[#9A6B20]">{reason?.label}</span>
                                                     {reason?.text}
                                                   </div>
@@ -2356,7 +2356,7 @@ export default function RadarPage() {
 
                           {food.reason ? (
                             <div>
-                              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                              <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                                 {food.reason_label || "ひとこと理由"}
                               </div>
                               <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
@@ -2367,7 +2367,7 @@ export default function RadarPage() {
 
                           {food.lifestyle_tip ? (
                             <div className="rounded-[18px] bg-white px-4 py-4 ring-1 ring-[var(--ring)] shadow-sm">
-                              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                              <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                                 {food.lifestyle_tip_label || "一緒に意識したいこと"}
                               </div>
                               <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">
@@ -2400,17 +2400,17 @@ export default function RadarPage() {
             {careTab === "live" ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between gap-3 px-1">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                     暮らす
                   </div>
-                  <div className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[11px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+                  <div className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
                     生活ケア
                   </div>
                 </div>
 
                 <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div>
-                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                       {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
                     {lifestyleContextChips.length > 0 ? (
@@ -2418,17 +2418,22 @@ export default function RadarPage() {
                         {lifestyleContextChips.map((chip) => (
                           <span
                             key={chip}
-                            className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-[#496D63] ring-1 ring-[#DCEBE5]"
+                            className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-[#496D63] ring-1 ring-[#DCEBE5]"
                           >
                             {chip}
                           </span>
                         ))}
                       </div>
                     ) : null}
+                    {lifestylePlan?.recommendation ? (
+                      <div className="mt-3 text-[15px] font-extrabold leading-7 text-[#315C50]">
+                        {lifestylePlan.recommendation}
+                      </div>
+                    ) : null}
                     {lifestylePrimaryAction ? (
                     <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.30)]">
                       {lifestylePrimaryAction?.scene ? (
-                        <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-black tracking-wide text-[#2F816E]">
+                        <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] font-black tracking-wide text-[#2F816E]">
                           {lifestylePrimaryAction?.kind_label ? (
                             <span className="rounded-full bg-[#EAF7F1] px-2 py-0.5 ring-1 ring-[#CFE7DE]">
                               {lifestylePrimaryAction.kind_label}
@@ -2440,14 +2445,14 @@ export default function RadarPage() {
                       <div className="flex items-start gap-3">
                         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">1</div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-[14px] font-extrabold leading-6 text-slate-700">
+                          <div className="text-[16px] font-extrabold leading-7 text-slate-700">
                             {lifestylePrimaryAction?.label || safeArray(lifestylePlan.steps)[0]}
                           </div>
                           {lifestylePrimaryAction?.reason ? (
-                            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{lifestylePrimaryAction.reason}</div>
+                            <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">{lifestylePrimaryAction.reason}</div>
                           ) : null}
                           {lifestylePrimaryAction?.felt_sense ? (
-                            <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
+                            <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#DCEBE5]">
                               <span className="mr-1.5 font-black text-[#2F816E]">
                                 {lifestylePrimaryAction.care_kind === "environment" ? "合っている目安" : "ラクになった目安"}
                               </span>
@@ -2471,7 +2476,7 @@ export default function RadarPage() {
                     {lifestyleSecondaryAction ? (
                       <div className="mt-3 rounded-[17px] bg-white px-4 py-3 ring-1 ring-[#E1E6E1] shadow-[0_12px_24px_-18px_rgba(15,23,42,0.24)]">
                         {(lifestyleSecondaryAction.kind_label || lifestyleSecondaryAction.scene) ? (
-                          <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px] font-black tracking-wide text-[#2F816E]">
+                          <div className="mb-2 flex flex-wrap items-center gap-2 text-[12px] font-black tracking-wide text-[#2F816E]">
                             {lifestyleSecondaryAction.kind_label ? (
                               <span className="rounded-full bg-[#EAF7F1] px-2 py-0.5 ring-1 ring-[#CFE7DE]">
                                 {lifestyleSecondaryAction.kind_label}
@@ -2483,14 +2488,14 @@ export default function RadarPage() {
                         <div className="flex items-start gap-3">
                           <div className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#66B9A3] text-[12px] font-black text-white ring-1 ring-[#CFE7DE] shadow-sm">2</div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-[14px] font-extrabold leading-6 text-slate-700">
+                            <div className="text-[16px] font-extrabold leading-7 text-slate-700">
                               {lifestyleSecondaryAction.label}
                             </div>
                             {lifestyleSecondaryAction.reason ? (
-                              <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{lifestyleSecondaryAction.reason}</div>
+                              <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">{lifestyleSecondaryAction.reason}</div>
                             ) : null}
                             {lifestyleSecondaryAction.felt_sense ? (
-                              <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCEBE5]">
+                              <div className="mt-3 rounded-[14px] bg-[#F4FAF7] px-3 py-2 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#DCEBE5]">
                                 <span className="mr-1.5 font-black text-[#2F816E]">
                                   {lifestyleSecondaryAction.care_kind === "environment" ? "合っている目安" : "ラクになった目安"}
                                 </span>
