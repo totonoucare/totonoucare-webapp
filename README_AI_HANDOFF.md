@@ -1,3 +1,39 @@
+## v7.79.19 食性中心・食材優先表示の現行契約
+
+- 現行ロジック版は`daily_care_v2_17_2026-08-07_food_nature_first_reasons`
+- 食べるケアの理由順は`食養生 → 栄養面`。飲み物の理由順は`食養生 → 成分・飲み方`。栄養学・カフェイン・時間帯を先頭理由へ戻さない
+- 飲み物は`DRINK_ITEMS`の`nature / flavors / tags / goodFor / cautionFor / caffeine`を採点と理由表示の両方に使う
+- `reaction_direction`を飲み物選定へ渡す。アクセル寄りは`calm`を加点しカフェインを小さく減点、ブレーキ寄りは`support_spleen / wake`を小さく加点する
+- 食事カードの元の`items`は記録互換のため完成料理を保持する。画面の主表示は`item_details.focus_ingredients`、完成料理は`item_details.meal_example`を`料理案`として表示する
+- 食材抽出は自由な形態素推定ではなく`MEAL_FOCUS_INGREDIENTS`の監修済みパターンだけを使う。部分文字列の偶然一致を許さない
+- 食事の`item_details.reasons`は、料理案に実際に含まれる食材を使った食養生理由を優先し、調理法の理由は補完にだけ使う
+- `enhanceFoodContext`は、`foodIngredientRules`から渡された飲み物の構造化`item_details`を落とさない。旧文字列しかない保存データだけ`parseDrinkChoice`で互換変換する
+- 今日と明日の料理は引き続き別カタログ。主・副天気、方針、不調、体質、対象日を安定キーに持ち、同じ食性方針でも料理案を固定しない
+- ショップには当日の食材や料理案を渡さず、v7.79.17のマクロな`7方針 / 食養生機能 / 栄養課題 / 商品役割`だけを渡す
+- 予報点数、天気ストレス、出やすいサイン、暮らすケア、ほぐすケア、DBは変更しない
+
+詳細: `docs/RADAR_FOOD_NATURE_FIRST_REASONS_V77919.md`
+
+> v7.79.18の`栄養面 → 食養生`、飲み物の単一`選んだ理由`、料理名を第一表示にする契約は廃止済み。
+
+## v7.79.18 日常食・飲み物・理由表示の旧契約
+
+- 現行ロジック版は`daily_care_v2_16_2026-08-07_everyday_food_visible_reasons`
+- 食べるケアの導入文を`AよりB / AではなくB`の否定比較で始めない。`buildFoodForecastInsight`で天気・反応方向・不調を先に示し、食べ方を直接書く
+- `context_chips`の先頭へ`theme.trigger_labels`を入れる。食べるケアから天気根拠を隠さない
+- `selectFoodIdeas`の安定キーは主・副天気トリガーを含む。方針・不調・体質が同じでも、天気が違えば同じ巡回位置へ固定しない
+- 通常表示は`SPECIALTY_CUISINES`を除いた候補を優先する。専門店前提の外国料理名を日常的な多様性として数えない
+- 主表示の`prominent`は`choice / drink`。`caution / no_cook / alternative / night / prep`は詳細側を正本にする
+- `buy / eat_out`の独立カードは廃止。`no_cook`カード内の`コンビニ・スーパー｜... / 外食｜...`で入手場面だけを区別する
+- 各料理の`item_details.reasons`は`栄養面 / 食養生`の二件を持つ。飲み物は`選んだ理由`を持つ
+- 飲み物の画面`items`へ`◎ / ○ / △`を含めない。内部評価記号は選定に使えても、ユーザー表示の理由を置き換えない
+- 今日と明日の第一方針を、異なる表示を作る目的だけで変更しない。同じ方針の場合も、各日の天気ラベルとtoday/tomorrowの時間帯文で根拠を判別可能にする
+- v7.79.17の料理カタログとマクロ商品軸は維持する。ショップへ当日の料理IDや材料を渡さない
+
+詳細: `docs/RADAR_EVERYDAY_FOOD_VISIBLE_REASONS_V77918.md`
+
+> v7.79.17の`買う / 外食 / 別の気分`を別カードで並べる表示、飲み物を詳細末尾へ置く表示、第一方針だけから導入文を作る契約は廃止済み。
+
 ## v7.79.17 食べるケアと継続商品軸の現行契約
 
 - 現行ロジック版は`daily_care_v2_15_2026-08-06_response_meals_macro_shop`
