@@ -2123,6 +2123,7 @@ export default function RadarPage() {
                             : card.key === "caution" ? "−"
                               : card.key === "buy" ? "買"
                                 : card.key === "eat_out" ? "外"
+                                  : card.key === "no_cook" ? "店"
                                   : card.key === "night" ? "夜"
                                     : card.key === "prep" ? "朝"
                                       : card.key === "choice" ? "食"
@@ -2151,30 +2152,43 @@ export default function RadarPage() {
                                 <div className="text-[13px] font-black tracking-tight text-slate-900">
                                   {card.label}
                                 </div>
-                                {card.body ? (
-                                  <div className="mt-1.5 text-[14px] font-bold leading-5 text-slate-600">
-                                    {card.body}
-                                  </div>
-                                ) : null}
                               </div>
                             </div>
 
                             {safeArray(card.items).length > 0 ? (
                               <div className="mt-3 space-y-2 pl-11">
                                 {safeArray(card.items).map((item, itemIdx) => {
+                                  const itemDetail = safeArray(card.item_details)?.[itemIdx] || null;
                                   const itemAction = card.key === "caution"
                                     ? null
                                     : careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIdx];
                                   return (
                                     <div
                                       key={`${card.key}-${item}-${itemIdx}`}
-                                      className="flex items-center justify-between gap-2 rounded-[15px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
+                                      className="rounded-[15px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
                                     >
-                                      <span className="min-w-0 flex-1 leading-5">{item}</span>
-                                      {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="min-w-0 flex-1 leading-5">{item}</span>
+                                        {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
+                                      </div>
+                                      {safeArray(itemDetail?.reasons).length ? (
+                                        <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
+                                          {safeArray(itemDetail.reasons).map((reason, reasonIdx) => (
+                                            <div key={`${reason?.label || "reason"}-${reasonIdx}`} className="text-[11px] font-bold leading-5 text-slate-500">
+                                              <span className="mr-1 font-black text-[#9A6B20]">{reason?.label}</span>
+                                              {reason?.text}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : null}
                                     </div>
                                   );
                                 })}
+                              </div>
+                            ) : null}
+                            {card.body ? (
+                              <div className={["mt-3 text-[12px] font-bold leading-5 text-slate-500", safeArray(card.items).length ? "pl-11" : ""].join(" ")}>
+                                {card.body}
                               </div>
                             ) : null}
                             {card.key === "caution" || safeArray(card.items).length === 0 ? (
