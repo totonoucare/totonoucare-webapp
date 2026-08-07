@@ -2168,7 +2168,22 @@ export default function RadarPage() {
                                       className="rounded-[15px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]"
                                     >
                                       <div className="flex items-center justify-between gap-2">
-                                        <span className="min-w-0 flex-1 leading-5">{item}</span>
+                                        <div className="min-w-0 flex-1 leading-5">
+                                          {safeArray(itemDetail?.focus_ingredients).length ? (
+                                            <>
+                                              <div className="text-[10px] font-black text-[#9A6B20]">取り入れたい食材</div>
+                                              <div className="mt-0.5 text-[13px] font-black text-slate-800">
+                                                {safeArray(itemDetail.focus_ingredients).join("・")}
+                                              </div>
+                                              <div className="mt-1.5 text-[11px] font-bold text-slate-500">
+                                                <span className="mr-1 font-black text-[#9A6B20]">料理案</span>
+                                                {itemDetail?.meal_example || item}
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <span>{item}</span>
+                                          )}
+                                        </div>
                                         {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
                                       </div>
                                       {safeArray(itemDetail?.reasons).length ? (
@@ -2290,14 +2305,44 @@ export default function RadarPage() {
                                   {card.body ? <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">{card.body}</div> : null}
                                   {safeArray(card.items).length > 0 ? (
                                     <div className="mt-2 space-y-2">
-                                      {safeArray(card.items).map((item, itemIndex) => (
-                                        <div key={`${card.key}-${itemIndex}`} className="flex items-center justify-between gap-2 rounded-[14px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">
-                                          <span className="min-w-0 flex-1 leading-5">{item}</span>
-                                          {card.key !== "caution"
-                                            ? actionButtonFor(careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIndex], { compact: true })
-                                            : null}
-                                        </div>
-                                      ))}
+                                      {safeArray(card.items).map((item, itemIndex) => {
+                                        const itemDetail = safeArray(card.item_details)?.[itemIndex] || null;
+                                        return (
+                                          <div key={`${card.key}-${itemIndex}`} className="rounded-[14px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="min-w-0 flex-1 leading-5">
+                                                {safeArray(itemDetail?.focus_ingredients).length ? (
+                                                  <>
+                                                    <div className="text-[10px] font-black text-[#9A6B20]">取り入れたい食材</div>
+                                                    <div className="mt-0.5 text-[13px] font-black text-slate-800">
+                                                      {safeArray(itemDetail.focus_ingredients).join("・")}
+                                                    </div>
+                                                    <div className="mt-1.5 text-[11px] font-bold text-slate-500">
+                                                      <span className="mr-1 font-black text-[#9A6B20]">料理案</span>
+                                                      {itemDetail?.meal_example || item}
+                                                    </div>
+                                                  </>
+                                                ) : (
+                                                  <span>{item}</span>
+                                                )}
+                                              </div>
+                                              {card.key !== "caution"
+                                                ? actionButtonFor(careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIndex], { compact: true })
+                                                : null}
+                                            </div>
+                                            {safeArray(itemDetail?.reasons).length ? (
+                                              <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
+                                                {safeArray(itemDetail.reasons).map((reason, reasonIndex) => (
+                                                  <div key={`${reason?.label || "reason"}-${reasonIndex}`} className="text-[11px] font-bold leading-5 text-slate-500">
+                                                    <span className="mr-1 font-black text-[#9A6B20]">{reason?.label}</span>
+                                                    {reason?.text}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : null}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   ) : card.key === "caution" ? (
                                     <div className="mt-2 flex justify-end">
