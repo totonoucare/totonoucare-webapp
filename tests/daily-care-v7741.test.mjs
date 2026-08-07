@@ -41,13 +41,14 @@ function buildFood(date = "2026-07-18") {
   });
 }
 
-test("food main area gives the concrete meal and the subtraction habit equal prominence", () => {
+test("food main area keeps the concrete meal and drink visible before secondary choices", () => {
   const food = buildFood();
   const prominent = food.action_cards.filter((card) => card.prominent);
-  assert.deepEqual(prominent.map((card) => card.key), ["choice", "caution"]);
+  assert.deepEqual(prominent.map((card) => card.key), ["choice", "drink"]);
   assert.equal(prominent[0].items.length, 1);
-  assert.equal(prominent[1].label, "今日は重ねない");
-  assert.equal(prominent[1].items.length, 1);
+  assert.equal(prominent[1].label, "今日の飲み物");
+  assert.equal(prominent[1].items.length, 2);
+  assert.ok(food.action_cards.find((card) => card.key === "caution"));
 });
 
 test("subtraction advice is concrete, reasoned and not the old generic heading", () => {
@@ -100,7 +101,7 @@ test("food subtraction changes with constitution even under the same weather", (
 test("the disclosure label describes its actual contents", () => {
   const food = buildFood();
   assert.equal(food.detail_eyebrow, "ほかの選び方");
-  assert.equal(food.detail_title, "買う・外食・別の気分");
+  assert.equal(food.detail_title, "作らない時・別の候補・控えたい物");
   assert.match(pageSource, /visiblePrimaryFoodCards/);
   assert.match(pageSource, /food\.detail_eyebrow \|\| "ほかの選び方"/);
   assert.match(pageSource, /food\.detail_title/);

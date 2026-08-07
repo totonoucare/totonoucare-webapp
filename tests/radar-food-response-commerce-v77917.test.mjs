@@ -63,17 +63,18 @@ test("完成料理・買い合わせ・外食・朝食・夜食を別カタロ�
   assert.ok((nightBlock.match(/mealCandidate\("/g) || []).length >= 21);
 });
 
-test("今日の一食・買って済ませる・外食は具体名で、一般名一語へ戻さない", () => {
+test("今日の一食と作らずに食べる案は具体名で、一般名一語へ戻さない", () => {
   const triggers = ["damp", "heat", "dry", "cold", "pressure_down", "pressure_up", "temp_shift"];
   const symptoms = ["fatigue", "sleep", "digestion", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness", "mood"];
   for (const trigger of triggers) {
     for (const symptomFocus of symptoms) {
       const food = build({ trigger, symptomFocus });
-      const buy = food.action_cards.find((card) => card.key === "buy");
-      const eatOut = food.action_cards.find((card) => card.key === "eat_out");
-      assert.ok(buy?.items?.[0]?.includes("＋"), `${trigger}/${symptomFocus}/${buy?.items?.[0]}`);
-      assert.ok(eatOut?.items?.[0]?.length >= 16, `${trigger}/${symptomFocus}/${eatOut?.items?.[0]}`);
-      assert.doesNotMatch(buy.items[0], /^(?:おにぎり|パン|サンド|スープ|弁当|麺|サラダ)$/);
+      const noCook = food.action_cards.find((card) => card.key === "no_cook");
+      assert.equal(noCook?.items?.length, 2, `${trigger}/${symptomFocus}`);
+      assert.match(noCook.items[0], /^コンビニ・スーパー｜.+＋.+/);
+      assert.match(noCook.items[1], /^外食｜.{12,}/);
+      assert.doesNotMatch(noCook.items[0], /｜(?:おにぎり|パン|サンド|スープ|弁当|麺|サラダ)$/);
+      assert.equal(noCook.item_details?.length, 2);
       assert.ok(food.scene_options.home && food.scene_options.buy && food.scene_options.eat_out);
     }
   }
