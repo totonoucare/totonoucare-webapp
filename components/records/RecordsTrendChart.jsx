@@ -143,7 +143,7 @@ export default function RecordsTrendChart({
   return (
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
       <div className="border-b border-[#EEF3EF] px-4 py-3">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[11px] font-black text-slate-500">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] font-black text-slate-500">
           <span className="text-slate-700">体調ゆらぎ度 0〜100</span>
           {FORECAST_BANDS.slice().reverse().map((band) => (
             <span key={band.key} className="inline-flex items-center gap-1">
@@ -153,14 +153,14 @@ export default function RecordsTrendChart({
           ))}
           <span className="text-slate-400">○△×＝実感・下段＝ケア</span>
         </div>
-        <div className="mt-1 text-[11px] font-bold leading-4 text-slate-400">
+        <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">
           {isWeekly
             ? "週ごとの体調ゆらぎ度の平均と範囲、実感の日数、ケア日数を重ねています。"
             : "体調ゆらぎ度と実感は別の尺度です。同じ日付で、予報→ケア→実感の流れを見比べます。"}
         </div>
 
         <div className="mt-3">
-          <div className="mb-1.5 text-[11px] font-black text-slate-400">振り返りたい日を絞る</div>
+          <div className="mb-1.5 text-[12px] font-black text-slate-400">振り返りたい日を絞る</div>
           <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {PATTERN_FILTERS.map((filter) => {
               const count = filter.key === "all"
@@ -179,7 +179,7 @@ export default function RecordsTrendChart({
                     setSelectedIndex(null);
                   }}
                   className={[
-                    "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ring-1 transition-all",
+                    "shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ring-1 transition-all",
                     selected ? filter.active : "bg-white text-slate-500 ring-[#DCE8DD]",
                     disabled ? "opacity-35" : "active:scale-[0.98]",
                   ].join(" ")}
@@ -198,17 +198,17 @@ export default function RecordsTrendChart({
           style={{ width: axisWidth }}
           aria-hidden="true"
         >
-          <span className="absolute left-2 top-2 text-[10px] font-black leading-3 text-slate-400">体調<br />ゆらぎ度</span>
+          <span className="absolute left-2 top-2 text-[12px] font-black leading-3 text-slate-400">体調<br />ゆらぎ度</span>
           {[100, 70, 40, 0].map((value) => (
-            <span key={value} className="absolute right-2 text-[10px] font-extrabold text-slate-400" style={{ top: yForForecast(value) - 6 }}>{value}</span>
+            <span key={value} className="absolute right-2 text-[12px] font-extrabold text-slate-400" style={{ top: yForForecast(value) - 6 }}>{value}</span>
           ))}
-          <span className="absolute right-2 text-[10px] font-black text-slate-400" style={{ top: triggerY - 7 }}>主因</span>
+          <span className="absolute right-2 text-[12px] font-black text-slate-400" style={{ top: triggerY - 7 }}>主因</span>
           {[2, 1, 0].map((severity) => (
-            <span key={severity} className="absolute right-2 text-[11px] font-extrabold text-slate-400" style={{ top: yForActual(severity) - 7 }}>
+            <span key={severity} className="absolute right-2 text-[12px] font-extrabold text-slate-400" style={{ top: yForActual(severity) - 7 }}>
               {ACTUAL_META[severity].symbol} {severity === 1 ? "少し" : ACTUAL_META[severity].label}
             </span>
           ))}
-          <span className="absolute right-2 text-[11px] font-extrabold text-slate-400" style={{ top: careY - 6 }}>ケア</span>
+          <span className="absolute right-2 text-[12px] font-extrabold text-slate-400" style={{ top: careY - 6 }}>ケア</span>
         </div>
 
         <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -362,7 +362,7 @@ export default function RecordsTrendChart({
         </div>
       </div>
 
-      <div className="border-t border-[#EEF3EF] px-4 py-2 text-[10px] font-bold leading-4 text-slate-400">
+      <div className="border-t border-[#EEF3EF] px-4 py-2 text-[12px] font-bold leading-4 text-slate-400">
         ケア時刻：先＝天気ストレスのピーク前、後＝つらくなってから。絞り込みは当たり外れではなく、似た条件の日を探すために使います。
       </div>
 
@@ -378,7 +378,7 @@ export default function RecordsTrendChart({
                   ? `体調ゆらぎ度 平均${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_min != null ? `（${formatForecastValue(selectedPoint.forecast_min)}〜${formatForecastValue(selectedPoint.forecast_max)}）` : ""}・${actualSummary(selectedPoint)}`
                   : `体調ゆらぎ度：${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_severity == null ? "" : `（${signalLabel(selectedPoint.forecast_severity)}）`}・実感：${ACTUAL_META[selectedPoint.actual_severity]?.symbol || "－"} ${ACTUAL_META[selectedPoint.actual_severity]?.label || "未記録"}`}
               </div>
-              <div className="mt-1 text-[11px] font-bold leading-4 text-slate-400">
+              <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">
                 主な天気ストレス：{selectedPoint.trigger_label || "記録なし"}
                 {selectedPoint.domains.length ? `・ケア：${selectedPoint.domains.map(domainLabel).join("・")}` : selectedPoint.care_count > 0 ? `・ケア${selectedPoint.care_count}日` : "・ケアなし"}
                 {!selectedPoint.is_aggregate && selectedPoint.care_timing ? `・${careTimingLabel(selectedPoint.care_timing)}` : ""}

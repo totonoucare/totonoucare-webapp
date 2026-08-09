@@ -86,7 +86,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
           <ExpertAvatar className="h-[88px] w-[88px] shrink-0" />
           <div className="relative mb-3 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[11px] font-black tracking-[0.12em] text-[#2F816E]/75">国家資格者へのオンライン相談</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">国家資格者へのオンライン相談</div>
             <div className="mt-1 text-[16px] font-black leading-7 text-slate-900">体質と記録をもとに、専門家と次のケアを考える。</div>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
       </section>
 
       <section className="rounded-[30px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
-        <div className="text-[11px] font-black tracking-[0.12em] text-[#A56C18]">準備中</div>
+        <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">準備中</div>
         <div className="mt-1 text-[17px] font-black text-slate-900">オンライン相談の開始をお知らせします</div>
         <div className="mt-2 text-[14px] font-bold leading-7 text-slate-600">
           人に詳しく相談したい時に利用できるサービスを準備しています。希望する方には、開始時にお知らせします。

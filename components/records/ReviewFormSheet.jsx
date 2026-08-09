@@ -104,7 +104,7 @@ export default function ReviewFormSheet({
 
         {forecast ? (
           <div className="mt-6 rounded-[24px] bg-slate-50 px-5 py-4 ring-1 ring-inset ring-[var(--ring)]">
-            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">
+            <div className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-2">
               その日の予報
             </div>
             <div className="flex flex-wrap items-center gap-2">

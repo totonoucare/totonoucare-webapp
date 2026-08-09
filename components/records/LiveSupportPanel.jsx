@@ -29,7 +29,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   }
   return (
     <div className="rounded-[22px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
-      <div className="text-[11px] font-black tracking-[0.12em] text-[#A56C18]">AI利用前の確認</div>
+      <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">AI利用前の確認</div>
       <div className="mt-1 text-[14px] font-black text-slate-900">今の相談に必要なアプリ内データを使います</div>
       <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
         送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。AIは診断や薬の個別判断を行いません。
@@ -45,7 +45,7 @@ function ConsultationStatusCard({ status, saving, editing, onEdit, onSelect }) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#DCE8DD]">
         <div className="min-w-0">
-          <div className="text-[11px] font-black tracking-[0.1em] text-slate-500">現在の受診・相談状況</div>
+          <div className="text-[12px] font-black tracking-[0.1em] text-slate-500">現在の受診・相談状況</div>
           <div className="mt-1 text-[13px] font-black leading-6 text-slate-700">{label}</div>
         </div>
         <button type="button" disabled={saving} onClick={onEdit} className="shrink-0 rounded-full bg-[#F4FAF7] px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">変更</button>
@@ -127,14 +127,14 @@ function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFee
 
   return (
     <div className="mt-1.5 max-w-[90%] px-1">
-      <div className="flex flex-wrap items-center gap-2 text-[11px] font-black text-slate-500">
+      <div className="flex flex-wrap items-center gap-2 text-[12px] font-black text-slate-500">
         <span>この返事はどうでしたか？</span>
         <button type="button" onClick={() => send(1)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === 1 ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👍 役に立った</button>
         <button type="button" onClick={() => setNegativeReasonFor(requestId)} className={["rounded-full px-2 py-1 ring-1", feedbackByRequest[requestId] === -1 ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]" : "bg-white ring-[#E8F0EB]"].join(" ")}>👎 ちょっと違った</button>
       </div>
       {negativeReasonFor === requestId && !feedbackByRequest[requestId] ? (
         <div className="mt-2 rounded-[16px] bg-[#FFF8EC] p-2.5 ring-1 ring-[#EED8B4]">
-          <div className="text-[11px] font-black text-[#A56C18]">どこが合いませんでしたか？</div>
+          <div className="text-[12px] font-black text-[#A56C18]">どこが合いませんでしたか？</div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {[
               ["too_cold", "少し冷たく感じた"],
@@ -143,7 +143,7 @@ function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFee
               ["felt_unsafe", "内容が不安だった"],
               ["other", "その他"],
             ].map(([reason, label]) => (
-              <button key={reason} type="button" onClick={() => send(-1, reason)} className="rounded-full bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-600 ring-1 ring-[#EED8B4]">{label}</button>
+              <button key={reason} type="button" onClick={() => send(-1, reason)} className="rounded-full bg-white px-2.5 py-1.5 text-[12px] font-black text-slate-600 ring-1 ring-[#EED8B4]">{label}</button>
             ))}
           </div>
         </div>
@@ -395,7 +395,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           <GuideBotAvatar mood={sending ? "thinking" : mood} className="h-[88px] w-[88px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[11px] font-black tracking-[0.12em] text-[#2F816E]/75">ケアナビAI</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">ケアナビAI</div>
             <div className="mt-1 text-[17px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}</div>
             <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">今のつらさや迷いを、一言から一緒に整理します。</div>
           </div>
@@ -449,22 +449,22 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
               {pendingFollowUp ? (
                 <div className="rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                  <div className="text-[11px] font-black tracking-[0.1em] text-[#A56C18]/80">Ekkenから一つ確認</div>
+                  <div className="text-[12px] font-black tracking-[0.1em] text-[#A56C18]/80">Ekkenから一つ確認</div>
                   <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
                       <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>
                     ))}
                   </div>
-                  <button type="button" onClick={detachFollowUp} className="mt-2 text-[11px] font-black text-[#A56C18]/80 underline underline-offset-2">この質問には答えず、別のことを話す</button>
+                  <button type="button" onClick={detachFollowUp} className="mt-2 text-[12px] font-black text-[#A56C18]/80 underline underline-offset-2">この質問には答えず、別のことを話す</button>
                 </div>
               ) : null}
 
               {routinePromptsVisible ? (
                 <div>
                   <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
-                    <span className="text-[11px] font-black tracking-[0.1em] text-[#2F816E]/80">一言から相談</span>
-                    <span className="text-[11px] font-bold text-slate-500">タップすると入力欄に入ります。送る前に編集できます。</span>
+                    <span className="text-[12px] font-black tracking-[0.1em] text-[#2F816E]/80">一言から相談</span>
+                    <span className="text-[12px] font-bold text-slate-500">タップすると入力欄に入ります。送る前に編集できます。</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(suggestions.length ? suggestions : starter?.quick_prompts || []).map((question) => (
@@ -493,7 +493,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 </div>
               </div>
 
-              {remaining != null ? <div className="px-1 text-right text-[11px] font-black text-slate-500">今月あと{remaining}回</div> : null}
+              {remaining != null ? <div className="px-1 text-right text-[12px] font-black text-slate-500">今月あと{remaining}回</div> : null}
             </>
           ) : null}
 

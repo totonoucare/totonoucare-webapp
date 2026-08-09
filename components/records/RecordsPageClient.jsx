@@ -436,7 +436,7 @@ export default function RecordsPageClient({
           <button
             type="button"
             onClick={() => router.push("/radar")}
-            className="rounded-full bg-white px-3 py-2 text-[11px] font-black text-slate-600 ring-1 ring-[#DCE8DD]"
+            className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-slate-600 ring-1 ring-[#DCE8DD]"
           >
             体調予報へ
           </button>
@@ -463,7 +463,7 @@ export default function RecordsPageClient({
         <button
           type="button"
           onClick={() => router.push("/radar")}
-          className="rounded-full bg-white px-3 py-2 text-[11px] font-black text-slate-600 ring-1 ring-[#DCE8DD] shadow-sm"
+          className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-slate-600 ring-1 ring-[#DCE8DD] shadow-sm"
         >
           体調予報へ
         </button>
@@ -527,7 +527,7 @@ export default function RecordsPageClient({
             onClick={() => changeTab("analysis")}
             className="w-full rounded-[24px] bg-[#349B83] px-5 py-4 text-left text-white shadow-[0_16px_30px_-22px_rgba(52,155,131,0.56)]"
           >
-            <div className="text-[11px] font-black tracking-[0.14em] text-white/70">NEXT STEP</div>
+            <div className="text-[12px] font-black tracking-[0.14em] text-white/70">NEXT STEP</div>
             <div className="mt-1 flex items-center justify-between gap-3">
               <div>
                 <div className="text-[15px] font-black">あなたの傾向をグラフで見る</div>
