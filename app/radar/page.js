@@ -166,7 +166,7 @@ function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorde
             </svg>
           )}
         </span>
-        <span className="mt-1 text-[11px] font-black leading-4">
+        <span className="mt-1 text-[12px] font-black leading-4">
           {isToday ? (recorded ? "記録済み ✓" : "今日を記録") : "記録・分析"}
         </span>
       </button>
@@ -186,7 +186,7 @@ function CareSetNaviBridge({
 
   return (
     <div className={["rounded-[20px] px-4 py-4 ring-1 shadow-sm", tone.softSurface, tone.ring].join(" ")}>
-      <div className={["text-[11px] font-black uppercase tracking-widest", tone.inkSoft].join(" ")}>
+      <div className={["text-[12px] font-black uppercase tracking-widest", tone.inkSoft].join(" ")}>
         {eyebrow}
       </div>
       <div className="mt-1.5 text-[14px] font-black tracking-tight text-slate-900">
@@ -213,10 +213,10 @@ function PurchasedCareItemsPanel({ items, renderActionButton }) {
     <div className="rounded-[20px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">手持ちアイテム</div>
+          <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">手持ちアイテム</div>
           <div className="mt-1 text-[13px] font-black text-slate-900">購入済みの商品を使ったら記録</div>
         </div>
-        <span className="rounded-full bg-[#FFF6DF] px-2.5 py-1 text-[10px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">ショップ連携</span>
+        <span className="rounded-full bg-[#FFF6DF] px-2.5 py-1 text-[12px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">ショップ連携</span>
       </div>
       <div className="mt-3 grid gap-2">
         {safeArray(items).slice(0, 6).map((item) => (
@@ -226,7 +226,7 @@ function PurchasedCareItemsPanel({ items, renderActionButton }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="line-clamp-2 text-[12px] font-black leading-4 text-slate-800">{item.label}</div>
-              <div className="mt-1 text-[10px] font-bold text-slate-400">{item.domain === "eat" ? "取り入れた内容として記録" : "使ったケアとして記録"}</div>
+              <div className="mt-1 text-[12px] font-bold text-slate-400">{item.domain === "eat" ? "取り入れた内容として記録" : "使ったケアとして記録"}</div>
             </div>
             {renderActionButton(item, { compact: true, uncheckedLabel: item.domain === "eat" ? "今日取り入れた" : "今日使った" })}
           </div>
@@ -252,7 +252,7 @@ function CareActionButton({ checked, saving, disabled, onClick, compact = false,
     >
       <span className={[
         "grid place-items-center rounded-full",
-        compact ? "h-4 w-4 text-[10px]" : "h-5 w-5 text-[11px]",
+        compact ? "h-4 w-4 text-[12px]" : "h-5 w-5 text-[12px]",
         checked ? "bg-white/20" : "bg-[#EAF7F1]",
       ].join(" ")}>
         {saving ? "…" : checked ? "✓" : "+"}
@@ -1347,7 +1347,7 @@ export default function RadarPage() {
         headerRight={
           <button
             onClick={() => setShowLocationEditor(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
           >
             <IconLocation className="h-4 w-4" /> {locationDisplayLabel}
           </button>
@@ -1414,7 +1414,7 @@ export default function RadarPage() {
       headerRight={
         <button
           onClick={() => setShowLocationEditor(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
         >
           <IconLocation className="h-4 w-4" /> {locationDisplayLabel}
         </button>
@@ -1455,7 +1455,7 @@ export default function RadarPage() {
       <div className="rounded-[20px] bg-white px-4 py-3.5 shadow-sm ring-1 ring-[#D3E1D5]">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
+            <div className="text-[12px] font-black uppercase tracking-[0.18em] text-slate-400">
               今見ている不調
             </div>
             <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">
@@ -1611,7 +1611,7 @@ export default function RadarPage() {
                       <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気ストレス</div>
-                          <div className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
+                          <div className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1 ring-black/5">
                             高・中・低の目安
                           </div>
                         </div>
@@ -1633,7 +1633,7 @@ export default function RadarPage() {
                                 className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
                                 title={`${factorShortLabel} ${factor.detailLabel} ストレス ${factor.loadLevelLabel}`}
                               >
-                                <div className="whitespace-nowrap text-[11px] font-black text-slate-600">
+                                <div className="whitespace-nowrap text-[12px] font-black text-slate-600">
                                   {factorShortLabel}
                                 </div>
 
@@ -1643,7 +1643,7 @@ export default function RadarPage() {
                                     direction={factor.direction}
                                     className="h-[22px] w-[22px] shrink-0"
                                   />
-                                  <span className="whitespace-nowrap text-[10px] font-extrabold text-slate-400">
+                                  <span className="whitespace-nowrap text-[12px] font-extrabold text-slate-400">
                                     {factor.detailLabel}
                                   </span>
                                 </div>
@@ -1707,14 +1707,14 @@ export default function RadarPage() {
                               </svg>
                             </summary>
                             <div className="border-t border-current/10 px-4 pb-3 pt-2.5">
-                              <div className="text-[10px] font-black tracking-[0.08em] opacity-70">
+                              <div className="text-[12px] font-black tracking-[0.08em] opacity-70">
                                 体質別予報とは別の気温注意
                               </div>
                               <div className="mt-1 text-[12px] font-bold leading-5 opacity-85">
                                 {caution.detail}
                               </div>
                               {!caution.officialAlert ? (
-                                <div className="mt-1.5 text-[10px] font-bold opacity-65">
+                                <div className="mt-1.5 text-[12px] font-bold opacity-65">
                                   最高・最低気温による独自の注意です。公的な警戒アラートではありません。
                                 </div>
                               ) : null}
@@ -1728,12 +1728,12 @@ export default function RadarPage() {
                   <div className="mt-4">
                     <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                           {selectedIsToday
                             ? forecast.signal === 0 ? "見ておくポイント" : "出やすいサイン"
                             : forecast.signal === 0 ? "明日見ておくポイント" : "明日出やすいサイン"}
                         </div>
-                        <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-black text-slate-500 ring-1 ring-black/5">
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1 ring-black/5">
                           {forecast.signal === 0 ? "小さな影響" : selectedIsToday ? "体感の目安" : "明日の目安"}
                         </span>
                       </div>
@@ -1814,7 +1814,7 @@ export default function RadarPage() {
               />
               <div className="relative mb-1 min-w-0 flex-1 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
                 <span className="absolute -left-1.5 bottom-5 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-                <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI Ekken</div>
+                <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI Ekken</div>
                 <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
                   {selectedIsToday
                     ? sameDayCareCount > 0
@@ -1848,7 +1848,7 @@ export default function RadarPage() {
                   この日の方針
                 </div>
                 <div className={["rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1", careTone.ring].join(" ")}>
-                  {symptomFocus ? "体質 × 天気 × 不調" : "体質 × 天気"}
+                  体質の土台 × 今日の条件
                 </div>
               </div>
 
@@ -1885,18 +1885,18 @@ export default function RadarPage() {
             {careTab === "loosen" ? (
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between gap-3 px-1">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                     ほぐす
                   </div>
-                  <div className="rounded-full bg-[#F6EFF8] px-2.5 py-1 text-[11px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
+                  <div className="rounded-full bg-[#F6EFF8] px-2.5 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
                     経絡・ツボケア
                   </div>
                 </div>
 
                 {lineCare ? (
                   <div className="rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(123,101,136,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
-                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
-                      今日の一手
+                    <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
+                      {selectedIsToday ? "今日の一手" : "今夜〜明朝の一手"}
                     </div>
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lineCare.title || "体質ラインを軽くゆるめる"}
@@ -1920,7 +1920,7 @@ export default function RadarPage() {
                     className="relative overflow-hidden rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(123,101,136,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)] cursor-pointer transition-all hover:bg-[#FBF8FC]"
                     onClick={() => setSelectedPoint(primaryTsubo)}
                   >
-                    <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7] shadow-[0_10px_20px_-16px_rgba(123,101,136,0.30)]">
+                    <div className="mb-3 inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7] shadow-[0_10px_20px_-16px_rgba(123,101,136,0.30)]">
                       {lineCare ? "ツボなら" : "まずはこれ"}
                     </div>
 
@@ -1959,10 +1959,10 @@ export default function RadarPage() {
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-[#E8DFEB]">
+                      <span className="rounded-full bg-white/80 px-3 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#E8DFEB]">
                         {getTsuboRoleLabel(primaryTsubo, 0)}
                       </span>
-                      <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-[#E8DFEB]">
+                      <span className="rounded-full bg-white/80 px-3 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#E8DFEB]">
                         タップでほぐし方
                       </span>
                     </div>
@@ -1988,7 +1988,7 @@ export default function RadarPage() {
                       className="flex w-full items-center justify-between rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#E2D6E7] text-left shadow-sm transition-all hover:bg-[#F6EFF8]"
                     >
                       <div>
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                           ほかの候補
                         </div>
                         <div className="mt-1 text-[13px] font-black tracking-tight text-slate-900">
@@ -2034,7 +2034,7 @@ export default function RadarPage() {
                                     {p.name_ja || p.code}
                                   </div>
                                   {getPointReading(p) ? (
-                                    <div className="shrink-0 text-[11px] font-black tracking-wider text-slate-400">
+                                    <div className="shrink-0 text-[12px] font-black tracking-wider text-slate-400">
                                       {getPointReading(p)}
                                     </div>
                                   ) : null}
@@ -2172,10 +2172,10 @@ export default function RadarPage() {
                                           {safeArray(itemDetail?.focus_ingredients).length ? (
                                             <>
                                               <div className="text-[12px] font-black text-[#9A6B20]">取り入れたい食材</div>
-                                              <div className="mt-1 text-[16px] font-black leading-6 text-slate-800">
+                                              <div className="mt-0.5 text-[16px] font-black leading-6 text-slate-800">
                                                 {safeArray(itemDetail.focus_ingredients).join("・")}
                                               </div>
-                                              <div className="mt-2 text-[13px] font-bold leading-6 text-slate-500">
+                                              <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-500">
                                                 <span className="mr-1 font-black text-[#9A6B20]">料理案</span>
                                                 {itemDetail?.meal_example || item}
                                               </div>
@@ -2314,10 +2314,10 @@ export default function RadarPage() {
                                                 {safeArray(itemDetail?.focus_ingredients).length ? (
                                                   <>
                                                     <div className="text-[12px] font-black text-[#9A6B20]">取り入れたい食材</div>
-                                                    <div className="mt-1 text-[16px] font-black leading-6 text-slate-800">
+                                                    <div className="mt-0.5 text-[16px] font-black leading-6 text-slate-800">
                                                       {safeArray(itemDetail.focus_ingredients).join("・")}
                                                     </div>
-                                                    <div className="mt-2 text-[13px] font-bold leading-6 text-slate-500">
+                                                    <div className="mt-1.5 text-[13px] font-bold leading-6 text-slate-500">
                                                       <span className="mr-1 font-black text-[#9A6B20]">料理案</span>
                                                       {itemDetail?.meal_example || item}
                                                     </div>
@@ -2411,7 +2411,7 @@ export default function RadarPage() {
                 <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div>
                     <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
-                      {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
+                      {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "今夜〜明朝の一手")}
                     </div>
                     {lifestyleContextChips.length > 0 ? (
                       <div className="mt-2.5 flex flex-wrap gap-2">
@@ -2529,7 +2529,7 @@ export default function RadarPage() {
           <Module className="p-5 bg-[#EEF6F0] ring-1 ring-[#CFE3DA] shadow-[0_18px_42px_-32px_rgba(37,95,79,0.34)]">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
+                <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/60">
                   ベースとなるあなたの体質
                 </div>
 
@@ -2565,7 +2565,7 @@ export default function RadarPage() {
                 <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {symptomLabel ? (
                     <div className="rounded-[16px] bg-white/90 px-4 py-3 ring-1 ring-[#CFE0D3] shadow-sm">
-                      <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                         お困りの不調
                       </div>
                       <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
@@ -2576,7 +2576,7 @@ export default function RadarPage() {
 
                   {primaryLine ? (
                     <div className="rounded-[16px] bg-white/90 px-4 py-3 ring-1 ring-[#CFE0D3] shadow-sm">
-                      <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                         負担が出やすいライン
                       </div>
                       <div className="mt-1 text-[14px] font-black tracking-tight text-slate-900">
