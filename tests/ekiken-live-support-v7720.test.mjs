@@ -15,11 +15,12 @@ test("Ekiken is named consistently as the care navigation AI", async () => {
   assert.match(guide, /Ekiken（エキケン）/);
 });
 
-test("bottom navigation exposes records and consultation as a primary destination", async () => {
+test("bottom navigation opens the records top instead of forcing the consultation tab", async () => {
   const nav = await source("components/nav/BottomTabs.js");
   assert.match(nav, /pathname\.startsWith\("\/records"\)/);
   assert.match(nav, /"記録・相談"/);
-  assert.match(nav, /\/records\?tab=consult/);
+  assert.match(nav, /"記録・相談", IconChat, "\/records"/);
+  assert.doesNotMatch(nav, /"記録・相談", IconChat, "\/records\?tab=consult"/);
 });
 
 test("consultation tab keeps live Ekiken support and professional consultation separate", async () => {
