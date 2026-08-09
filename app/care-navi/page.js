@@ -91,6 +91,39 @@ const SHOP_PURPOSE_OPTIONS = [
   { key: "weather", label: "明日に備える", lead: "明日の天気で使いやすいもの" },
 ];
 
+const FOOD_TCM_FUNCTION_LABELS = {
+  jianpi: "食事の土台を整える",
+  buqi: "消耗時の食事を支える",
+  yangxue: "血を養う食生活を支える",
+  liqi: "香りで食事を切り替える",
+  huoxue: "滞りを残しにくくする",
+  huashi: "重さをためにくくする",
+  lishui: "水分の偏りを見直す",
+  wenzhong: "冷たい食事の連続を切る",
+  qingre: "熱と刺激を重ねない",
+  shengjin: "料理の汁気を保つ",
+  anshen: "夜の刺激を減らす",
+};
+
+const FOOD_NUTRITION_NEED_LABELS = {
+  meal_continuity: "食事を抜かない仕組み",
+  protein_continuity: "たんぱく質を続けやすくする",
+  iron_b_food_support: "鉄・ビタミンB群を含む食生活",
+  digestive_load_management: "食後の重さを増やしにくい備え",
+  fiber_mineral_balance: "穀物・豆・野菜を続けやすくする",
+  hydration_routine: "飲み物と料理の汁気を整える",
+  caffeine_shift: "カフェイン以外の一杯を持つ",
+  warm_meal_routine: "温かい食事へ戻りやすくする",
+};
+
+const FOOD_PRODUCT_ROLE_LABELS = {
+  daily_tea: "毎日の一杯",
+  pantry_food: "食事へ足す常備品",
+  prepared_meal: "用意できない日の備え",
+  meal_subscription: "食事管理を外へ預ける",
+  nutrition_support: "栄養を補助する",
+};
+
 const CARE_NAVI_INITIAL_LIMIT = 12;
 const CARE_NAVI_EXPANDED_LIMIT = 24;
 const CARE_NAVI_TOTAL_LIMIT = 48;
@@ -570,7 +603,7 @@ function mergePolicyKeysWithLife(policyKeys, lifeKeys, baseScores) {
   return selectPolicyKeysFromScores(scores, policyKeys?.length ? policyKeys : ["sasaeru", "yurumeru"]);
 }
 
-function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, purpose = "everyday", lifeKeys = [] } = {}) {
+function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, commercePolicyKeys = [], seasonKey, purpose = "everyday", lifeKeys = [] } = {}) {
   const scores = createPolicyScoreMap();
   const tomorrowKeys = safeArray(forecastCarePolicies?.policies).map((policy) => policy?.key).filter(Boolean);
   const seasonKeys = safeArray(SEASON_POLICY_HINTS[seasonKey]);
@@ -590,6 +623,9 @@ function buildCareShopPolicyKeys({ baseScores, forecastCarePolicies, seasonKey, 
 
   addPolicyKeys(scores, seasonKeys, purposeWeights.season);
   addPolicyKeys(scores, tomorrowKeys, purposeWeights.tomorrow);
+  // 予報ページの「食べる」から来た時は、料理名ではなく体質・不調・余力から
+  // 作った継続ケア方針を加える。明日の天気より重く、体質の土台は上書きしない。
+  addPolicyKeys(scores, commercePolicyKeys, purpose === "weather" ? 0.62 : 1.08);
 
   softenSupportPolicy(scores, {
     hasDirectSupport: tomorrowKeys.includes("sasaeru") || seasonKeys.includes("sasaeru"),
@@ -884,7 +920,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="line-clamp-2 text-[14px] font-black leading-6 text-slate-900">{item.title}</div>
-              <div className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-black text-[#356D68]">
+              <div className="mt-1 inline-flex items-center gap-1.5 text-[12px] font-black text-[#356D68]">
                 <img src={getPolicyIconPath(item.policyKey)} alt="" className="h-5 w-5 shrink-0" loading="lazy" />
                 {contextLabel}
               </div>
@@ -892,7 +928,7 @@ function ResultCard({ item, itemPosition, trackingContext }) {
           </div>
 
           {priceText || item.shopName || reviewText ? (
-            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-black text-slate-500">
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-black text-slate-500">
               {priceText ? <span className="text-[var(--accent-ink)]">{priceText}</span> : null}
               {item.shopName ? <span>{item.shopName}</span> : null}
               {reviewText ? <span>{reviewText}</span> : null}
@@ -905,13 +941,13 @@ function ResultCard({ item, itemPosition, trackingContext }) {
         {reasonPills.map((tag) => {
           const label = tag;
           return (
-            <span key={tag} className="rounded-full border border-[#B6D8CF] bg-[#F5FBF8] px-2.5 py-1 text-[10px] font-black text-[#4B6B67] ring-1 ring-[#C6E1DA]">
+            <span key={tag} className="rounded-full border border-[#B6D8CF] bg-[#F5FBF8] px-2.5 py-1 text-[12px] font-black text-[#4B6B67] ring-1 ring-[#C6E1DA]">
               {label}
             </span>
           );
         })}
         {!isPartner && item.query ? (
-          <span className="rounded-full bg-[#FFF2CC] px-2.5 py-1 text-[10px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">
+          <span className="rounded-full bg-[#FFF2CC] px-2.5 py-1 text-[12px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">
             {item.query}
           </span>
         ) : null}
@@ -957,8 +993,8 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
   return (
     <div className="rounded-[22px] bg-[#EFF8F4] p-3 ring-1 ring-[#CFE7DE]">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-[11px] font-black text-slate-500">予算の目安</div>
-        <div className="text-[10px] font-bold text-slate-400">カテゴリごとに調整</div>
+        <div className="text-[12px] font-black text-slate-500">予算の目安</div>
+        <div className="text-[12px] font-bold text-slate-400">カテゴリごとに調整</div>
       </div>
       <div className="grid grid-cols-4 gap-1.5">
         {PRICE_BAND_OPTIONS.map((option) => {
@@ -979,9 +1015,9 @@ function PriceBandFilter({ value, onChange, categoryKey }) {
                   : "bg-white text-slate-600 ring-[var(--ring)] hover:bg-[#EFF8F4] hover:text-slate-900",
               ].join(" ")}
             >
-              <div className="text-[11px] font-black leading-4">{option.label}</div>
+              <div className="text-[12px] font-black leading-4">{option.label}</div>
               {option.key !== "all" && rangeLabel ? (
-                <div className={["mt-0.5 text-[8px] font-black leading-3", active ? "text-white/80" : "text-slate-400"].join(" ")}>
+                <div className={["mt-0.5 text-[12px] font-black leading-3", active ? "text-white/80" : "text-slate-400"].join(" ")}>
                   {rangeLabel}
                 </div>
               ) : null}
@@ -998,7 +1034,7 @@ function RakutenStatusCard({ error, onRetry, loading }) {
     return (
       <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[14px] font-bold leading-6 text-[#77540B] ring-1 ring-[#E4C56B]/70">
         <div>商品候補の読み込みがうまくいきませんでした。</div>
-        <div className="mt-1 text-[11px] leading-5 text-[#A36E14]">
+        <div className="mt-1 text-[12px] leading-5 text-[#A36E14]">
           通信が混み合っている可能性があります。少し時間をおいて、もう一度検索してください。
         </div>
         <button
@@ -1006,7 +1042,7 @@ function RakutenStatusCard({ error, onRetry, loading }) {
           onClick={onRetry}
           disabled={loading}
           className={[
-            "mt-3 rounded-full px-3 py-2 text-[11px] font-black ring-1 transition-all",
+            "mt-3 rounded-full px-3 py-2 text-[12px] font-black ring-1 transition-all",
             loading
               ? "cursor-not-allowed bg-white/70 text-slate-400 ring-[#E4C56B]/60"
               : "bg-white text-[#77540B] ring-[#E4C56B] hover:bg-[#FFF1CB]",
@@ -2350,7 +2386,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
         <div className="flex items-center gap-3">
           <CoreTypeAvatar coreIconPath={coreIconPath} coreTitle={coreTitle} />
           <div className="min-w-0">
-            <div className="text-[11px] font-black tracking-[0.12em] text-[var(--accent-ink)]">あなたのセレクト</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[var(--accent-ink)]">あなたのセレクト</div>
             <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-500">
               {loading
                 ? "体質トリセツを読み込んでいます"
@@ -2362,7 +2398,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
         </div>
 
         <div className="mt-4 rounded-[26px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE]">
-          <div className="text-[10px] font-black tracking-[0.14em] text-[#2F816E]/70">今のケア方針</div>
+          <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/70">今のケア方針</div>
           <div className="mt-2 flex items-center gap-3">
             <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[20px] bg-white ring-1 ring-[#CFE7DE] shadow-sm">
               <img src={getPolicyIconPath(primaryKey)} alt="" className="h-10 w-10" loading="lazy" />
@@ -2376,7 +2412,7 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
           </div>
           {supportingKeys.length ? (
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#CFE7DE] pt-3">
-              <span className="text-[10px] font-black text-[#5C7A72]">あわせて</span>
+              <span className="text-[12px] font-black text-[#5C7A72]">あわせて</span>
               {supportingKeys.map((key) => <PolicyPill key={key} policyKey={key} />)}
             </div>
           ) : null}
@@ -2388,15 +2424,15 @@ function PersonalCareShopHero({ loading, profile, profileError, coreIconPath, co
 
         <div className="mt-3 flex items-center justify-between gap-3 rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#DCE8DD]">
           <div className="min-w-0">
-            <div className="text-[9px] font-black tracking-[0.12em] text-slate-400">今回の条件</div>
-            <div className="mt-1 line-clamp-2 text-[10px] font-bold leading-4 text-slate-600">
+            <div className="text-[12px] font-black tracking-[0.12em] text-slate-400">今回の条件</div>
+            <div className="mt-1 line-clamp-2 text-[12px] font-bold leading-4 text-slate-600">
               {[...conditionParts, purposeLabel].filter(Boolean).join("・") || "条件を選んで商品を探せます"}
             </div>
           </div>
           <button
             type="button"
             onClick={onToggleConditions}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] shadow-[0_10px_22px_-18px_rgba(36,86,76,0.42)] hover:bg-[#F4F9F6]"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[#BFD8CC] shadow-[0_10px_22px_-18px_rgba(36,86,76,0.42)] hover:bg-[#F4F9F6]"
             aria-expanded={showConditions}
           >
             {showConditions ? "閉じる" : "条件を調整"}
@@ -2418,7 +2454,7 @@ function ShopItemActions({ item, shopEntry, saving, onToggleInterested }) {
         onClick={() => onToggleInterested?.(item)}
         disabled={saving}
         className={[
-          "rounded-full px-2.5 py-1.5 text-[10px] font-black ring-1 transition-colors",
+          "rounded-full px-2.5 py-1.5 text-[12px] font-black ring-1 transition-colors",
           purchased
             ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]"
             : saved
@@ -2460,11 +2496,11 @@ function ShopItemCard({ item, itemPosition, setKey, trackingContext, shopEntry, 
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1.5">
-            <span className={["rounded-full px-2 py-0.5 text-[9px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>{meta.label}</span>
-            <span className="rounded-full bg-[#FFF2CC] px-2 py-0.5 text-[9px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">{roleLabel}</span>
+            <span className={["rounded-full px-2 py-0.5 text-[12px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}>{meta.label}</span>
+            <span className="rounded-full bg-[#FFF2CC] px-2 py-0.5 text-[12px] font-black text-[#8B640C] ring-1 ring-[#E4C56B]">{roleLabel}</span>
           </div>
           <div className={["mt-1 line-clamp-2 font-black text-slate-900", featured ? "text-[14px] leading-5" : "text-[13px] leading-5"].join(" ")}>{item.title}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-slate-500">
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-bold text-slate-500">
             {priceText ? <span className="font-black text-[var(--accent-ink)]">{priceText}</span> : null}
             {item.shopName ? <span>{item.shopName}</span> : null}
           </div>
@@ -2477,7 +2513,7 @@ function ShopItemCard({ item, itemPosition, setKey, trackingContext, shopEntry, 
         target="_blank"
         rel="sponsored nofollow noopener noreferrer"
         onClick={handleClick}
-        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--shop)] px-3 py-2.5 text-[11px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]"
+        className="mt-2 inline-flex w-full items-center justify-center rounded-[16px] bg-[var(--shop)] px-3 py-2.5 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]"
       >
         {buttonText}
       </a>
@@ -2490,17 +2526,17 @@ function FeaturedCareSetCard({ card, trackingContext, shopEntryMap, savingKey, o
   const items = safeArray(card.items).slice(0, 3);
   return (
     <div className="relative overflow-hidden rounded-[30px] bg-white p-4 ring-1 ring-[#D6E5DC] shadow-[0_24px_58px_-38px_rgba(36,86,76,0.34)] sm:p-5">
-      <div className="absolute right-4 top-4 rounded-full bg-[var(--gold-soft)] px-3 py-1 text-[9px] font-black tracking-[0.12em] text-[#80530B] ring-1 ring-[#E4C56B]">未病レーダーセレクト</div>
+      <div className="absolute right-4 top-4 rounded-full bg-[var(--gold-soft)] px-3 py-1 text-[12px] font-black tracking-[0.12em] text-[#80530B] ring-1 ring-[#E4C56B]">未病レーダーセレクト</div>
       <div className="pr-24">
-        <div className="text-[10px] font-black tracking-[0.14em] text-[#8A5C0B]">あなたへのおすすめ3アイテム</div>
+        <div className="text-[12px] font-black tracking-[0.14em] text-[#8A5C0B]">あなたへのおすすめ3アイテム</div>
         <h2 className="mt-1 text-[19px] font-black leading-7 tracking-tight text-slate-900">{card.title}</h2>
         <p className="mt-1.5 text-[14px] font-bold leading-5 text-slate-600">{card.lead}</p>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        <span className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">選んだ理由</span>
+        <span className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">選んだ理由</span>
         {safeArray(card.tags).slice(0, 3).map((tag) => (
-          <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>
+          <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>
         ))}
       </div>
 
@@ -2526,7 +2562,7 @@ function CareSetCard({ card, cardPosition, trackingContext, shopEntryMap, saving
   const includedCategories = unique(card.items.map((item) => item.category)).slice(0, 3);
   return (
     <div className="relative overflow-hidden rounded-[26px] bg-[#FBF8F2] p-4 ring-1 ring-[#E6DED2]">
-      <div className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white text-[10px] font-black text-[#715F52] ring-1 ring-[#E1D7C9]">{String(cardPosition).padStart(2, "0")}</div>
+      <div className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white text-[12px] font-black text-[#715F52] ring-1 ring-[#E1D7C9]">{String(cardPosition).padStart(2, "0")}</div>
       <div className="pr-12">
         <h3 className="text-[16px] font-black leading-6 text-slate-900">{card.title}</h3>
         <p className="mt-1 text-[14px] font-bold leading-5 text-slate-500">{card.lead}</p>
@@ -2535,12 +2571,12 @@ function CareSetCard({ card, cardPosition, trackingContext, shopEntryMap, saving
         {includedCategories.map((categoryKey) => {
           const meta = getCategoryMeta(categoryKey);
           const Icon = meta.icon;
-          return <span key={categoryKey} className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}><Icon className="h-3.5 w-3.5" />{meta.label}</span>;
+          return <span key={categoryKey} className={["inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-black ring-1", meta.surfaceClass, meta.inkClass, meta.ringClass].join(" ")}><Icon className="h-3.5 w-3.5" />{meta.label}</span>;
         })}
-        {safeArray(card.tags).slice(0, 2).map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>)}
+        {safeArray(card.tags).slice(0, 2).map((tag) => <span key={tag} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">{POLICY_META[tag]?.label || tag}</span>)}
       </div>
       <details className="group mt-3 rounded-[18px] bg-white ring-1 ring-[#D9EAE5]">
-        <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-3 text-[11px] font-black text-[#2F816E] [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-3 text-[12px] font-black text-[#2F816E] [&::-webkit-details-marker]:hidden">
           <span>この組み方の商品を見る</span>
           <span>{card.items.length}候補 ＋</span>
         </summary>
@@ -2594,15 +2630,15 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
                   {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" /> : <Icon className="h-5 w-5" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="line-clamp-2 text-[11px] font-black leading-4 text-slate-800">{item.title}</div>
-                  <span className={["mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black ring-1", purchased ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]" : "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]"].join(" ")}>{purchased ? "購入済み" : "気になる"}</span>
+                  <div className="line-clamp-2 text-[12px] font-black leading-4 text-slate-800">{item.title}</div>
+                  <span className={["mt-1 inline-flex rounded-full px-2 py-0.5 text-[12px] font-black ring-1", purchased ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]" : "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]"].join(" ")}>{purchased ? "購入済み" : "気になる"}</span>
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <a href={url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="rounded-[13px] bg-[var(--shop)] px-2 py-2 text-center text-[10px] font-black text-white">商品を見る</a>
-                <button type="button" disabled={saving} onClick={() => purchased ? onMarkInterested?.(entry) : onMarkPurchased?.(entry)} className="rounded-[13px] bg-white px-2 py-2 text-[10px] font-black text-slate-600 ring-1 ring-[#DCE8DD]">{saving ? "更新中…" : purchased ? "購入済みを解除" : "購入済みにする"}</button>
+                <a href={url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="rounded-[13px] bg-[var(--shop)] px-2 py-2 text-center text-[12px] font-black text-white">商品を見る</a>
+                <button type="button" disabled={saving} onClick={() => purchased ? onMarkInterested?.(entry) : onMarkPurchased?.(entry)} className="rounded-[13px] bg-white px-2 py-2 text-[12px] font-black text-slate-600 ring-1 ring-[#DCE8DD]">{saving ? "更新中…" : purchased ? "購入済みを解除" : "購入済みにする"}</button>
               </div>
-              {!purchased ? <button type="button" disabled={saving} onClick={() => onRemove?.(entry)} className="mt-2 w-full text-center text-[9px] font-black text-slate-400 underline underline-offset-2">気になるから削除</button> : null}
+              {!purchased ? <button type="button" disabled={saving} onClick={() => onRemove?.(entry)} className="mt-2 w-full text-center text-[12px] font-black text-slate-400 underline underline-offset-2">気になるから削除</button> : null}
             </div>
           );
         })}
@@ -2615,7 +2651,7 @@ function ViewModeSwitch({ value, onChange }) {
   return (
     <div className="inline-flex rounded-full bg-[#EDF5F0] p-1 ring-1 ring-[#D3E3D9]">
       {[{ key: "sets", label: "セットで見る" }, { key: "single", label: "1つずつ見る" }, { key: "interested", label: "気になる" }].map((option) => (
-        <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[10px] font-black transition-colors", value === option.key ? "bg-white text-[var(--accent-ink)] shadow-sm ring-1 ring-[#C9DED2]" : "text-slate-400"].join(" ")}>{option.label}</button>
+        <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[12px] font-black transition-colors", value === option.key ? "bg-white text-[var(--accent-ink)] shadow-sm ring-1 ring-[#C9DED2]" : "text-slate-400"].join(" ")}>{option.label}</button>
       ))}
     </div>
   );
@@ -2700,7 +2736,7 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
         {CATEGORY_OPTIONS.map((option) => {
           const Icon = option.icon;
           const active = category === option.key;
-          return <button key={option.key} type="button" onClick={() => onCategoryChange(option.key)} className={["inline-flex min-w-fit items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-black ring-1", active ? `${option.surfaceClass} ${option.inkClass} ${option.ringClass}` : "bg-white text-slate-400 ring-[#DED6CA]"].join(" ")}><Icon className="h-4 w-4" />{option.label}<span className="opacity-60">{Math.min(categoryCounts[option.key] || 0, SINGLE_ITEM_EXPANDED_LIMIT)}</span></button>;
+          return <button key={option.key} type="button" onClick={() => onCategoryChange(option.key)} className={["inline-flex min-w-fit items-center gap-1.5 rounded-full px-3 py-2 text-[12px] font-black ring-1", active ? `${option.surfaceClass} ${option.inkClass} ${option.ringClass}` : "bg-white text-slate-400 ring-[#DED6CA]"].join(" ")}><Icon className="h-4 w-4" />{option.label}<span className="opacity-60">{Math.min(categoryCounts[option.key] || 0, SINGLE_ITEM_EXPANDED_LIMIT)}</span></button>;
         })}
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2">
@@ -2728,6 +2764,13 @@ export default function CareNaviPage() {
   const [lifeKeys, setLifeKeys] = useState([]);
   const [lifestyleActionKey, setLifestyleActionKey] = useState("");
   const [lifestyleItemRole, setLifestyleItemRole] = useState("");
+  const [foodCommerceContext, setFoodCommerceContext] = useState({
+    policyKeys: [],
+    functionKeys: [],
+    needKeys: [],
+    productRoleKeys: [],
+    summary: "",
+  });
 
   const [rakutenItemsByCategory, setRakutenItemsByCategory] = useState({ live: [], eat: [], point: [] });
   const [rakutenQueries, setRakutenQueries] = useState([]);
@@ -2873,6 +2916,22 @@ export default function CareNaviPage() {
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
+    const parseAllowedList = (name, allowed) => String(params.get(name) || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter((item) => allowed[item])
+      .slice(0, 5);
+    const nextFoodContext = {
+      policyKeys: String(params.get("eatPolicies") || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => POLICY_META[item])
+        .slice(0, 3),
+      functionKeys: parseAllowedList("eatFunctions", FOOD_TCM_FUNCTION_LABELS),
+      needKeys: parseAllowedList("eatNeeds", FOOD_NUTRITION_NEED_LABELS),
+      productRoleKeys: parseAllowedList("eatRoles", FOOD_PRODUCT_ROLE_LABELS),
+      summary: String(params.get("eatSummary") || "").trim().slice(0, 120),
+    };
 
     if (nextSymptom && SYMPTOM_LABELS[nextSymptom]) {
       setSelectedSymptom(nextSymptom);
@@ -2892,6 +2951,15 @@ export default function CareNaviPage() {
     }
     if (/^[a-z][a-z0-9_]{1,48}$/.test(nextLifestyleItemRole)) {
       setLifestyleItemRole(nextLifestyleItemRole);
+    }
+
+    if (
+      nextFoodContext.policyKeys.length
+      || nextFoodContext.functionKeys.length
+      || nextFoodContext.needKeys.length
+      || nextFoodContext.productRoleKeys.length
+    ) {
+      setFoodCommerceContext(nextFoodContext);
     }
 
   }, []);
@@ -2928,7 +2996,7 @@ export default function CareNaviPage() {
   const seasonKey = getSeasonKey();
   const seasonLabel = SEASON_LABELS[seasonKey] || "季節";
 
-  const policyKeys = useMemo(
+  const basePolicyKeys = useMemo(
     () => buildCareShopPolicyKeys({
       baseScores: karteCarePreferences?.scores || {},
       forecastCarePolicies,
@@ -2938,8 +3006,20 @@ export default function CareNaviPage() {
     }),
     [karteCarePreferences, forecastCarePolicies, seasonKey, shopPurpose, lifeKeys]
   );
+  const policyKeys = useMemo(
+    () => buildCareShopPolicyKeys({
+      baseScores: karteCarePreferences?.scores || {},
+      forecastCarePolicies,
+      commercePolicyKeys: foodCommerceContext.policyKeys,
+      seasonKey,
+      purpose: shopPurpose,
+      lifeKeys,
+    }),
+    [karteCarePreferences, forecastCarePolicies, foodCommerceContext.policyKeys, seasonKey, shopPurpose, lifeKeys]
+  );
 
   const policyKeySignature = policyKeys.join("|");
+  const basePolicyKeySignature = basePolicyKeys.join("|");
   const lifeKeySignature = lifeKeys.join("|");
   useEffect(() => {
     setVisibleLimit(CARE_SET_INITIAL_LIMIT);
@@ -2993,12 +3073,15 @@ export default function CareNaviPage() {
               signal: controller.signal,
               body: JSON.stringify({
                 category: categoryKey,
-                policyKeys,
+                policyKeys: categoryKey === "eat" ? policyKeys : basePolicyKeys,
                 symptomKey,
                 basis,
                 lifeKeys,
                 lifestyleActionKey: categoryKey === "live" ? lifestyleActionKey : "",
                 lifestyleItemRole: categoryKey === "live" ? lifestyleItemRole : "",
+                foodFunctionKeys: categoryKey === "eat" ? foodCommerceContext.functionKeys : [],
+                foodNeedKeys: categoryKey === "eat" ? foodCommerceContext.needKeys : [],
+                foodProductRoleKeys: categoryKey === "eat" ? foodCommerceContext.productRoleKeys : [],
                 priceBand,
                 limit: 24,
                 totalLimit: CARE_NAVI_TOTAL_LIMIT,
@@ -3052,7 +3135,7 @@ export default function CareNaviPage() {
       clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [priceBand, policyKeySignature, symptomKey, basis, lifeKeySignature, lifestyleActionKey, lifestyleItemRole, rakutenRetryNonce]);
+  }, [priceBand, policyKeySignature, basePolicyKeySignature, symptomKey, basis, lifeKeySignature, lifestyleActionKey, lifestyleItemRole, foodCommerceContext, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -3061,7 +3144,7 @@ export default function CareNaviPage() {
           categoryKey,
           scorePartnerOffers({
             category: categoryKey,
-            policyKeys,
+            policyKeys: categoryKey === "eat" ? policyKeys : basePolicyKeys,
             symptomKey,
             symptomLabel,
             profile: profileLike,
@@ -3070,6 +3153,8 @@ export default function CareNaviPage() {
             seasonKey,
             seasonLabel,
             lifeKeys,
+            foodNeedKeys: categoryKey === "eat" ? foodCommerceContext.needKeys : [],
+            foodProductRoleKeys: categoryKey === "eat" ? foodCommerceContext.productRoleKeys : [],
             priceBand,
             // 表示件数ではなく内部候補プール。A8側を先に絞りすぎると、
             // スロット別には合う提携商品がセット組み立て前に落ちるため少し広めに渡す。
@@ -3077,7 +3162,7 @@ export default function CareNaviPage() {
           }),
         ])
       ),
-    [priceBand, policyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys]
+    [priceBand, policyKeys, basePolicyKeys, symptomKey, symptomLabel, profileLike, basis, tomorrowTriggerFactors, seasonKey, seasonLabel, lifeKeys, foodCommerceContext]
   );
 
   const rawCareSetCards = useMemo(
@@ -3152,6 +3237,11 @@ export default function CareNaviPage() {
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
   const selectedLifeLabels = LIFE_OPTIONS.filter((item) => lifeKeys.includes(item.key)).map((item) => item.label);
   const selectedPurposeLabel = SHOP_PURPOSE_OPTIONS.find((item) => item.key === shopPurpose)?.label || "ふだん使う";
+  const foodCommerceLabels = unique([
+    ...foodCommerceContext.needKeys.map((key) => FOOD_NUTRITION_NEED_LABELS[key]),
+    ...foodCommerceContext.functionKeys.map((key) => FOOD_TCM_FUNCTION_LABELS[key]),
+    ...foodCommerceContext.productRoleKeys.map((key) => FOOD_PRODUCT_ROLE_LABELS[key]),
+  ]).filter(Boolean).slice(0, 6);
 
   function toggleLifeKey(key) {
     setLifeKeys((prev) => {
@@ -3255,14 +3345,14 @@ export default function CareNaviPage() {
                   <div>
                     <div className="mt-1 text-[15px] font-black tracking-tight text-slate-900">おすすめ条件を調整</div>
                   </div>
-                  <div className="rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[10px] font-black text-[#527064] ring-1 ring-[#D5E5DB]">任意</div>
+                  <div className="rounded-full bg-[#F4F9F6] px-2.5 py-1 text-[12px] font-black text-[#527064] ring-1 ring-[#D5E5DB]">任意</div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">今気になる不調</div>
-                      <div className="text-[10px] font-bold text-slate-400">ショップだけに反映</div>
+                      <div className="text-[12px] font-black tracking-[0.12em] text-slate-400">今気になる不調</div>
+                      <div className="text-[12px] font-bold text-slate-400">ショップだけに反映</div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {Object.entries(SYMPTOM_LABELS).map(([key, label]) => <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>{label}</Chip>)}
@@ -3272,8 +3362,8 @@ export default function CareNaviPage() {
 
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-black tracking-[0.12em] text-slate-400">最近の生活</div>
-                      <div className="text-[10px] font-bold text-slate-400">任意・最大3つ</div>
+                      <div className="text-[12px] font-black tracking-[0.12em] text-slate-400">最近の生活</div>
+                      <div className="text-[12px] font-bold text-slate-400">任意・最大3つ</div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {LIFE_OPTIONS.map((item) => (
@@ -3288,19 +3378,19 @@ export default function CareNaviPage() {
                       ))}
                     </div>
                     {lifeKeys.length ? (
-                      <button type="button" onClick={() => setLifeKeys([])} className="mt-2 text-[10px] font-black text-[#527064] underline decoration-[#A7CFC1] underline-offset-4">
+                      <button type="button" onClick={() => setLifeKeys([])} className="mt-2 text-[12px] font-black text-[#527064] underline decoration-[#A7CFC1] underline-offset-4">
                         生活状況をクリア
                       </button>
                     ) : null}
                   </div>
 
                   <div>
-                    <div className="mb-2 text-[11px] font-black tracking-[0.12em] text-slate-400">いつ使うものを探す？</div>
+                    <div className="mb-2 text-[12px] font-black tracking-[0.12em] text-slate-400">いつ使うものを探す？</div>
                     <div className="grid gap-2 sm:grid-cols-3">
                       {SHOP_PURPOSE_OPTIONS.map((item) => (
                         <button key={item.key} type="button" onClick={() => setShopPurpose(item.key)} className={["rounded-[18px] p-3 text-left ring-1 transition-colors", shopPurpose === item.key ? "bg-[#EAF7F1] text-[#24564C] ring-[#9CCBB7]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
                           <div className="text-[12px] font-black">{item.label}</div>
-                          <div className="mt-1 text-[9px] font-bold leading-4 opacity-70">{item.lead}</div>
+                          <div className="mt-1 text-[12px] font-bold leading-4 opacity-70">{item.lead}</div>
                         </button>
                       ))}
                     </div>
@@ -3315,6 +3405,23 @@ export default function CareNaviPage() {
           </div>
         </Module>
 
+        {viewMode === "single" && singleCategory === "eat" && foodCommerceLabels.length ? (
+          <Module className="!bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4] shadow-[0_16px_36px_-30px_rgba(165,108,24,0.32)]">
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">食べるケアの継続軸</div>
+            <div className="mt-1 text-[14px] font-black leading-5 text-slate-900">
+              {foodCommerceContext.summary || "同じ傾向の日に備えるものを選びます。"}
+            </div>
+            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
+              今日の料理材料ではなく、数週間使いやすい毎日の一杯・常備品・宅食・栄養補助を比べます。
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {foodCommerceLabels.map((label) => (
+                <span key={label} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-[#8B641E] ring-1 ring-[#EED8B4]">{label}</span>
+              ))}
+            </div>
+          </Module>
+        ) : null}
+
         <Module className="!bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_18px_44px_-34px_rgba(36,86,76,0.26)] sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
@@ -3322,7 +3429,7 @@ export default function CareNaviPage() {
               <div className="min-w-0">
                 <div className="text-[17px] font-black tracking-tight text-slate-900">今のケア方針から選んだ商品</div>
                 <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">3カテゴリのセットで見るか、商品を1つずつ比べられます。</div>
-                <div className="mt-1 text-[10px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
+                <div className="mt-1 text-[12px] font-bold text-slate-400">広告・紹介リンクを含みます</div>
               </div>
             </div>
             <ViewModeSwitch value={viewMode} onChange={setViewMode} />
@@ -3330,8 +3437,8 @@ export default function CareNaviPage() {
 
           <div className="mt-3 grid gap-3">
             <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
-            {shopNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[11px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{shopNotice}</div> : null}
-            {shopError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[11px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{shopError}</div> : null}
+            {shopNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{shopNotice}</div> : null}
+            {shopError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[12px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{shopError}</div> : null}
 
             {viewMode === "interested" ? (
               <InterestedItemsView
@@ -3353,7 +3460,7 @@ export default function CareNaviPage() {
                         <div>
                           <div className="mt-0.5 text-[13px] font-black text-slate-900">別の組み方を見る</div>
                         </div>
-                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{Math.max(0, careSetCards.length - 1)}案</span>
                       </summary>
                       <div className="grid gap-3 border-t border-[#D8E6DD] p-3">
                         {alternativeSets.map((card, index) => <CareSetCard key={`${CARE_SET_MODE}-${card.key}-${index}`} card={card} cardPosition={index + 2} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />)}
@@ -3370,7 +3477,7 @@ export default function CareNaviPage() {
             )}
 
             <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
-              <summary className="cursor-pointer list-none px-3 py-2 text-[10px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">選び方と紹介リンクについて</summary>
+              <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-black text-slate-500 [&::-webkit-details-marker]:hidden">選び方と紹介リンクについて</summary>
               <p className="border-t border-[#D8E6DD] px-3 py-2 text-[12px] font-bold leading-5 text-slate-500">体質と気になる不調を土台に、選んだ用途に応じて季節と近いうちの天気を重ね、商品候補を並べています。リンク先で購入された場合、未病レーダーが紹介料を受け取ることがあります。</p>
             </details>
           </div>
