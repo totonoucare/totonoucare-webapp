@@ -11,7 +11,7 @@ import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 
 function MiniBadge({ children }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[11px] font-black tracking-tight text-[#526070] shadow-[0_8px_16px_-14px_rgba(40,55,48,0.18)] ring-1 ring-inset ring-[var(--ring)]">
+    <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-tight text-[#526070] shadow-[0_8px_16px_-14px_rgba(40,55,48,0.18)] ring-1 ring-inset ring-[var(--ring)]">
       {children}
     </span>
   );
@@ -115,7 +115,7 @@ export default function CheckLandingPage() {
                 <div className="relative z-10">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">LATEST</div>
+                      <div className="text-[12px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">LATEST</div>
                       <div className="mt-2 text-[22px] font-black leading-tight tracking-tight text-slate-950">
                         最新のトリセツ
                       </div>
@@ -125,7 +125,7 @@ export default function CheckLandingPage() {
                       {latestSubs.length ? (
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {latestSubs.slice(0, 3).map((sub) => (
-                            <span key={sub.code} className="rounded-lg bg-[#F4F9F6] px-2.5 py-1 text-[11px] font-extrabold text-[#24564C] ring-1 ring-[#D3E1D5]">
+                            <span key={sub.code} className="rounded-lg bg-[#F4F9F6] px-2.5 py-1 text-[12px] font-extrabold text-[#24564C] ring-1 ring-[#D3E1D5]">
                               {sub.short}
                             </span>
                           ))}
@@ -151,7 +151,7 @@ export default function CheckLandingPage() {
                 </div>
 
                 <div className="min-w-0 pt-0.5">
-                  <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">
+                  <div className="text-[12px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">
                     TYPE GUIDE
                   </div>
                   <h1 className="mt-1 text-[25px] font-black leading-[1.18] tracking-tight text-slate-950">
@@ -165,11 +165,11 @@ export default function CheckLandingPage() {
               <p className="mt-5 text-[14px] font-bold leading-7 text-[#536072]">
                 {latestResult
                   ? "体調や気になる不調が変わったら、再チェックしてトリセツを更新できます。"
-                  : "約3分で、体質のクセを多面的に整理。基本14問と回答に応じた追加質問から、張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。"}
+                  : "約4〜6分で、体質のクセを多面的に整理。基本14問に加え、回答に応じて最大5問を追加します。張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。"}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <MiniBadge>約3分</MiniBadge>
+                <MiniBadge>約4〜6分</MiniBadge>
                 <MiniBadge>途中保存</MiniBadge>
                 <MiniBadge>無料</MiniBadge>
               </div>
@@ -198,7 +198,7 @@ export default function CheckLandingPage() {
                     <div className="text-[16px] font-black tracking-tight text-slate-900">
                       過去のトリセツ
                     </div>
-                    <div className="mt-0.5 text-[11px] font-bold text-slate-500">
+                    <div className="mt-0.5 text-[12px] font-bold text-slate-500">
                       体質トリセツを見返す
                     </div>
                   </div>
@@ -221,7 +221,7 @@ export default function CheckLandingPage() {
 
               {!loadingAuth && !isLoggedIn ? (
                 <div className="mt-4">
-                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[11px] font-extrabold text-slate-500 ring-1 ring-inset ring-slate-200">
+                  <span className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-[12px] font-extrabold text-slate-500 ring-1 ring-inset ring-slate-200">
                     ※ ログイン後に表示されます
                   </span>
                 </div>
