@@ -37,7 +37,7 @@ export default function BottomTabs() {
         >
           <Icon className="h-6 w-6" />
         </span>
-        <span className={`text-[8.5px] tracking-wide sm:text-[9.5px] ${isActive ? "font-black" : "font-extrabold"}`}>
+        <span className={`text-[12px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
         </span>
       </button>
@@ -54,7 +54,7 @@ export default function BottomTabs() {
           {item("home", "ホーム", IconHome, "/")}
           {item("check", "トリセツ", IconKarte, "/check")}
           {item("radar", "体調予報", IconRadar, "/radar")}
-          {item("records", "記録・相談", IconChat, "/records?tab=consult")}
+          {item("records", "記録・相談", IconChat, "/records")}
           {item("care", "ショップ", IconCare, "/care-navi")}
         </div>
       </div>
