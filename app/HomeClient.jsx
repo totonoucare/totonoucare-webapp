@@ -609,7 +609,7 @@ function ForecastBar({ forecast, coreCode = null, coreTitle = "", animationKey =
           <ForecastBarMarker signal={signal} coreCode={coreCode} coreTitle={coreTitle} />
         </div>
       </div>
-      <div className="mt-2 flex justify-between text-[9px] font-black tracking-widest text-slate-400">
+      <div className="mt-2 flex justify-between text-[12px] font-black tracking-widest text-slate-400">
         <span>安定</span>
         <span>いたわり</span>
         <span>守り</span>
@@ -641,9 +641,9 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-[12px] font-black text-slate-900">{label}</div>
-            <div className="mt-0.5 text-[10px] font-extrabold text-slate-500">{dateLabel}</div>
+            <div className="mt-0.5 text-[12px] font-extrabold text-slate-500">{dateLabel}</div>
           </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-500">未設定</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[12px] font-black text-slate-500">未設定</span>
         </div>
         <div className="mt-3 text-[14px] font-bold leading-5 text-slate-600">{message}</div>
       </button>
@@ -666,11 +666,11 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[12px] font-black text-slate-900">{label}</div>
-          <div className="mt-0.5 text-[10px] font-extrabold text-slate-500">{dateLabel}</div>
+          <div className="mt-0.5 text-[12px] font-extrabold text-slate-500">{dateLabel}</div>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <span className={["rounded-full px-2.5 py-1 text-[10px] font-black shadow-sm ring-1", style.chip].join(" ")}>{signalText(signal)}</span>
-          <span className="rounded-full bg-white/68 px-2 py-0.5 text-[10px] font-black text-slate-500 ring-1 ring-white/70">
+          <span className={["rounded-full px-2.5 py-1 text-[12px] font-black shadow-sm ring-1", style.chip].join(" ")}>{signalText(signal)}</span>
+          <span className="rounded-full bg-white/68 px-2 py-0.5 text-[12px] font-black text-slate-500 ring-1 ring-white/70">
             体調ゆらぎ度 {percentLabel}
           </span>
         </div>
@@ -685,7 +685,7 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         {factors.map((factor, index) => (
-          <span key={`${label}-${factor.key}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-black text-slate-700 ring-1 ring-black/5 shadow-sm">
+          <span key={`${label}-${factor.key}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-white/82 px-2.5 py-1 text-[12px] font-black text-slate-700 ring-1 ring-black/5 shadow-sm">
             <WeatherIcon triggerKey={factor.key} direction={factor.direction} className="h-4 w-4" />
             {factor.label}
           </span>
@@ -720,7 +720,7 @@ function ForecastOverviewCard({
           </span>
           <div>
             <div className="text-[18px] font-black tracking-tight text-slate-900">今日と明日の体調予報</div>
-            <div className="mt-0.5 text-[11px] font-extrabold text-slate-600">体質×天気から、今日と明日のゆらぎを確認</div>
+            <div className="mt-0.5 text-[12px] font-extrabold text-slate-600">体質×天気から、今日と明日のゆらぎを確認</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳細へ</Button>
@@ -758,7 +758,7 @@ function ForecastOverviewCard({
           </span>
           <div className="min-w-0">
             <div className="text-[13px] font-black text-slate-900">{todayRecorded ? "今日の記録と傾向を見る" : "今日を振り返る"}</div>
-            <div className="mt-0.5 text-[10px] font-bold text-slate-500">{todayRecorded ? "記録済み ✓・編集やAI分析へ" : "記録・カレンダー・AI分析へ"}</div>
+            <div className="mt-0.5 text-[12px] font-bold text-slate-500">{todayRecorded ? "記録済み ✓・編集やAI分析へ" : "記録・カレンダー・AI分析へ"}</div>
           </div>
         </div>
         <span className="shrink-0 text-[22px] text-[#66B9A3]">›</span>
@@ -785,14 +785,14 @@ function EkkenHomeCard({ signal = 0, onOpen }) {
         <GuideBotAvatar signal={signal} className="h-[82px] w-[82px] shrink-0" />
         <div className="relative mb-1 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
           <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-          <div className="text-[9px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI</div>
+          <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI</div>
           <div className="mt-1 text-[16px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}に相談</div>
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{message}</div>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         {prompts.map((prompt) => (
-          <button key={prompt} type="button" onClick={() => onOpen(prompt)} className="rounded-full bg-white px-3 py-2 text-[10px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
+          <button key={prompt} type="button" onClick={() => onOpen(prompt)} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
             {prompt}
           </button>
         ))}
@@ -840,14 +840,14 @@ function GuestStartCta({ onCheck, onLogin }) {
           <IconCheckCard />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-[10px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5] shadow-sm">
+          <div className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-[12px] font-black tracking-[0.14em] text-[#2F8F79] ring-1 ring-[#D3E1D5] shadow-sm">
             START GUIDE
           </div>
           <h2 className="mt-2 text-[17px] font-black tracking-tight text-[#24564C] leading-[1.35]">
             体質トリセツを作って、体調予報とパーソナルケアショップへ
           </h2>
           <p className="mt-2 text-[14px] font-bold leading-6 text-[#5b6674]">
-            約3分で、体質のクセを多面的に整理。基本14問と回答に応じた追加質問から、張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。
+            約4〜6分で、体質のクセを多面的に整理。基本14問に加え、回答に応じて最大5問を追加します。張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。
           </p>
         </div>
       </div>
@@ -858,8 +858,8 @@ function GuestStartCta({ onCheck, onLogin }) {
             <div className={["mx-auto grid h-10 w-10 place-items-center rounded-[14px] ring-1", step.tone].join(" ")}>
               {step.icon}
             </div>
-            <div className="mt-2 text-[11px] font-black text-slate-900 leading-4">{step.title}</div>
-            <div className="mt-0.5 text-[9.5px] font-bold leading-4 text-slate-500">{step.sub}</div>
+            <div className="mt-2 text-[12px] font-black text-slate-900 leading-4">{step.title}</div>
+            <div className="mt-0.5 text-[12px] font-bold leading-4 text-slate-500">{step.sub}</div>
           </div>
         ))}
       </div>
@@ -888,8 +888,8 @@ function MyCareScopeBadge({ variant = "stack", className = "" }) {
       <div className={["grid grid-cols-3 gap-2", className].join(" ")}>
         {items.map((item) => (
           <div key={item.label} className="rounded-[15px] bg-[#F8FBF9] px-2.5 py-2 text-center ring-1 ring-[#D3E1D5]">
-            <div className={["text-[10px] font-black", item.color].join(" ")}>{item.label}</div>
-            <div className="mt-0.5 text-[9px] font-extrabold text-slate-400">{item.sub}</div>
+            <div className={["text-[12px] font-black", item.color].join(" ")}>{item.label}</div>
+            <div className="mt-0.5 text-[12px] font-extrabold text-slate-400">{item.sub}</div>
           </div>
         ))}
       </div>
@@ -899,7 +899,7 @@ function MyCareScopeBadge({ variant = "stack", className = "" }) {
   return (
     <div className={["shrink-0 rounded-[18px] bg-[#F8FBF9] px-3 py-2 text-center ring-1 ring-[#D3E1D5]", className].join(" ")}>
       {items.map((item) => (
-        <div key={item.label} className={["text-[10px] font-black", item.color].join(" ")}>{item.label}</div>
+        <div key={item.label} className={["text-[12px] font-black", item.color].join(" ")}>{item.label}</div>
       ))}
     </div>
   );
@@ -922,7 +922,7 @@ function MyCareSelectHomeCard({ hasResult, onPrimary, onBrowseSingle }) {
             <AppIcon name="care" className="h-6 w-6" />
           </div>
           <div className="min-w-0">
-            <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[10px] font-black text-[#2F8F79] ring-1 ring-[#D3E1D5]">あなた向けに選ぶショップ</div>
+            <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[12px] font-black text-[#2F8F79] ring-1 ring-[#D3E1D5]">あなた向けに選ぶショップ</div>
             <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
               {title}
             </h2>
@@ -996,7 +996,7 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[var(--gold)] ring-1 ring-[#E9D8A9] shadow-sm">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[12px] font-black tracking-widest text-[var(--gold)] ring-1 ring-[#E9D8A9] shadow-sm">
             TYPE GUIDE
           </div>
           <h2 className="mt-3 text-[24px] font-black tracking-tight text-slate-950 leading-[1.25]">
@@ -1008,13 +1008,13 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
 
           {hasResult ? (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="rounded-lg bg-white/85 px-2.5 py-1 text-[11px] font-black text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm">
+              <span className="rounded-lg bg-white/85 px-2.5 py-1 text-[12px] font-black text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm">
                 {core.title}
               </span>
               {subs.slice(0, 2).map((sub) => (
                 <span
                   key={sub.code}
-                  className="rounded-lg bg-white/70 px-2.5 py-1 text-[11px] font-extrabold text-slate-600 ring-1 ring-[#E3EAE5] shadow-sm"
+                  className="rounded-lg bg-white/70 px-2.5 py-1 text-[12px] font-extrabold text-slate-600 ring-1 ring-[#E3EAE5] shadow-sm"
                 >
                   {sub.short}
                 </span>
@@ -1026,15 +1026,15 @@ function PersonalKarteSpotlight({ core, coreCode, subs = [], onPrimary, onSecond
 
       <div className="relative z-10 mt-5 grid gap-2.5 sm:grid-cols-3">
         <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
-          <div className="text-[11px] font-black text-slate-900">崩れ方のクセ</div>
+          <div className="text-[12px] font-black text-slate-900">崩れ方のクセ</div>
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">いつ・どこに出やすいかを整理</div>
         </div>
         <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
-          <div className="text-[11px] font-black text-slate-900">天気との相性</div>
+          <div className="text-[12px] font-black text-slate-900">天気との相性</div>
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">響きやすい要素を見返せる</div>
         </div>
         <div className="rounded-[18px] bg-white/80 px-4 py-3 ring-1 ring-[#E3EAE5] shadow-sm">
-          <div className="text-[11px] font-black text-slate-900">ケアの使い方</div>
+          <div className="text-[12px] font-black text-slate-900">ケアの使い方</div>
           <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">予報ページとのつなぎ方まで</div>
         </div>
       </div>
@@ -1064,7 +1064,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   let icon = <IconCheckCard />;
   let eyebrow = "TYPE GUIDE";
   let title = "体質トリセツを作る";
-  let body = "約3分で、体質のクセを多面的に整理。基本14問と回答に応じた追加質問から、張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。";
+  let body = "約4〜6分で、体質のクセを多面的に整理。基本14問に加え、回答に応じて最大5問を追加します。張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。";
   let primaryLabel = "無料で体質チェックを始める";
   let secondaryLabel = "使い方を見る";
 
@@ -1105,7 +1105,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[10px] font-black tracking-widest text-[var(--gold)] ring-1 ring-[#E9D8A9] shadow-sm">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1.5 text-[12px] font-black tracking-widest text-[var(--gold)] ring-1 ring-[#E9D8A9] shadow-sm">
             {eyebrow}
           </div>
           <h2 className="mt-3 text-[22px] font-black tracking-tight text-slate-950 leading-[1.25]">
@@ -1120,7 +1120,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
               {subs.slice(0, 3).map((sub) => (
                 <span
                   key={sub.code}
-                  className="rounded-lg bg-white/80 px-2.5 py-1 text-[11px] font-extrabold text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm"
+                  className="rounded-lg bg-white/80 px-2.5 py-1 text-[12px] font-extrabold text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm"
                 >
                   {sub.short}
                 </span>
@@ -1161,7 +1161,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
         <div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-[14px] font-black tracking-tight text-slate-900">{title}</div>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black tracking-wider text-slate-500">未設定</span>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[12px] font-black tracking-wider text-slate-500">未設定</span>
           </div>
           <div className="mt-3 text-[14px] font-bold leading-6 text-slate-600">{message}</div>
         </div>
@@ -1206,13 +1206,13 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div>
           <div className="text-[15px] font-black tracking-tight text-slate-950">{title}</div>
-          <div className="mt-1 flex items-center gap-1 text-[11px] font-extrabold text-slate-600">
+          <div className="mt-1 flex items-center gap-1 text-[12px] font-extrabold text-slate-600">
             <IconPin />
             {getDisplayableLocationName(location, "地域未設定")}
           </div>
         </div>
         <span className={[
-          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-black shadow-sm",
+          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-black shadow-sm",
           signalBadge(forecast.signal),
         ].join(" ")}>
           <span className={["h-2 w-2 rounded-full", signalDotClass(forecast.signal)].join(" ")} />
@@ -1222,7 +1222,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
 
       <div className="relative z-10 mt-5 flex items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">{eyebrow}</div>
+          <div className="text-[12px] font-black uppercase tracking-widest text-slate-500">{eyebrow}</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {triggerFactors.map((factor, index) => (
               <div
@@ -1239,11 +1239,11 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
         </div>
 
         <div className="shrink-0 text-right">
-          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">{scoreLabel}</div>
+          <div className="text-[12px] font-black uppercase tracking-widest text-slate-400 mb-1">{scoreLabel}</div>
           {scoreVariant === "mode" ? (
             <div className="leading-tight">
               <div className={["text-[18px] font-black tracking-tight", signalScoreTextClass(forecast.signal)].join(" ")}>{modeActionLabel(forecast.signal)}</div>
-              <div className="mt-1 text-[10px] font-extrabold text-slate-400">今日の崩れやすさ</div>
+              <div className="mt-1 text-[12px] font-extrabold text-slate-400">今日の崩れやすさ</div>
             </div>
           ) : (
             <div className="flex items-end justify-end gap-1 leading-none">
@@ -1566,7 +1566,7 @@ export default function HomePage() {
           <div className="mb-5 flex items-center justify-between">
             <div>
               <div className="text-[15px] font-black tracking-tight text-slate-900">参考体質で見る体調予報デモ</div>
-              <div className="mt-0.5 text-[10px] font-extrabold leading-4 text-slate-500">
+              <div className="mt-0.5 text-[12px] font-extrabold leading-4 text-slate-500">
                 体質チェック前のため、反応の偏りと余力を中間に置いた仮の体質で試算しています
               </div>
             </div>
