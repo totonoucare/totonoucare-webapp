@@ -28,7 +28,7 @@ function SegmentedTabs({ items, active, onChange }) {
             type="button"
             onClick={() => onChange(item.key)}
             className={[
-              "min-w-0 flex-1 rounded-[16px] px-1.5 py-2.5 text-[10px] font-black leading-4 tracking-tight transition-all duration-200 sm:text-[11px]",
+              "min-w-0 flex-1 rounded-[16px] px-1.5 py-2.5 text-[12px] font-black leading-4 tracking-tight transition-all duration-200 sm:text-[12px]",
               isActive
                 ? "bg-[#EAF7F1] text-[#1F7D67] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.54)] ring-1 ring-[#66B9A3]"
                 : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
@@ -115,7 +115,7 @@ function GuideCard({ title, icon, tone = "mint", compact = false, children }) {
 function MiniNote({ label = "使い方のコツ", children }) {
   return (
     <div className="rounded-[22px] bg-[#EAF7F1] p-4 ring-1 ring-[#CFE7DE] shadow-[inset_0_2px_8px_rgba(47,129,110,0.07),inset_0_-18px_26px_rgba(255,255,255,0.34)]">
-      <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[10px] font-black tracking-widest text-[#2F816E] ring-1 ring-[#CFE7DE]">
+      <div className="mb-2 inline-flex rounded-full bg-white px-2.5 py-1 text-[12px] font-black tracking-widest text-[#2F816E] ring-1 ring-[#CFE7DE]">
         {label}
       </div>
       <div className="text-[14px] font-extrabold leading-6 text-slate-700">{children}</div>
@@ -170,8 +170,8 @@ function ModeGuide() {
         ["守り", "負担を減らして備える", "bg-[#FFF4F0] text-[#B2604C] ring-[#F1CFC5]"],
       ].map(([label, text, className]) => (
         <div key={label} className={["rounded-[16px] p-2.5 text-center ring-1", className].join(" ")}>
-          <div className="text-[11px] font-black">{label}</div>
-          <div className="mt-1 text-[9px] font-bold leading-4 opacity-80">{text}</div>
+          <div className="text-[12px] font-black">{label}</div>
+          <div className="mt-1 text-[12px] font-bold leading-4 opacity-80">{text}</div>
         </div>
       ))}
     </div>
@@ -196,7 +196,7 @@ export default function GuidePage() {
     <button
       type="button"
       onClick={() => router.push("/")}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ← 戻る
     </button>
@@ -213,7 +213,7 @@ export default function GuidePage() {
           <div className="relative z-10">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 shadow-sm ring-1 ring-[#CFE7DE]">
               <IconSpark className="h-4 w-4 text-[#2F816E]" />
-              <span className="text-[10px] font-black tracking-widest text-[#2F816E]">未病レーダーの使い方</span>
+              <span className="text-[12px] font-black tracking-widest text-[#2F816E]">未病レーダーの使い方</span>
             </div>
 
             <div className="mt-5 text-[24px] font-black leading-[1.34] tracking-tight text-slate-900">
@@ -237,10 +237,10 @@ export default function GuidePage() {
                     <div className="grid h-8 w-8 place-items-center rounded-[12px] bg-[#F4FAF7] text-[#2F816E] ring-1 ring-[#CFE7DE]">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <span className="text-[10px] font-black text-[#66B9A3]">{num}</span>
+                    <span className="text-[12px] font-black text-[#66B9A3]">{num}</span>
                   </div>
-                  <div className="mt-2 text-[11px] font-black text-slate-900">{label}</div>
-                  <div className="mt-0.5 text-[9px] font-bold leading-4 text-slate-500">{sub}</div>
+                  <div className="mt-2 text-[12px] font-black text-slate-900">{label}</div>
+                  <div className="mt-0.5 text-[12px] font-bold leading-4 text-slate-500">{sub}</div>
                 </div>
               ))}
             </div>
