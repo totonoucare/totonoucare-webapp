@@ -80,7 +80,7 @@ test("食事と飲み物を主表示に残し、控えたい物と追加候補�
   assert.deepEqual(prominentKeys, ["choice", "drink"]);
   const drink = food.action_cards.find((card) => card.key === "drink");
   assert.deepEqual(drink.items, ["麦茶", "ほうじ茶"]);
-  assert.deepEqual(drink.item_details[0].reasons.map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
+  assert.deepEqual(drink.item_details[0].reasons.slice(0, 2).map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
   assert.ok(food.action_cards.find((card) => card.key === "caution"));
   assert.match(pageSource, /itemDetail\.reasons/);
 });

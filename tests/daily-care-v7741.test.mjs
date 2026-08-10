@@ -46,7 +46,7 @@ test("food main area keeps the concrete meal and drink visible before secondary 
   const prominent = food.action_cards.filter((card) => card.prominent);
   assert.deepEqual(prominent.map((card) => card.key), ["choice", "drink"]);
   assert.equal(prominent[0].items.length, 1);
-  assert.equal(prominent[1].label, "今日の飲み物");
+  assert.equal(prominent[1].label, "今日、食事と合わせる飲み物");
   assert.equal(prominent[1].items.length, 2);
   assert.ok(food.action_cards.find((card) => card.key === "caution"));
 });

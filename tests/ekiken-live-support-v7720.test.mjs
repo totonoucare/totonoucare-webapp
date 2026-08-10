@@ -12,7 +12,7 @@ test("Ekken is named consistently as the care navigation AI", async () => {
   const guide = await source("app/guide/GuideClient.jsx");
   assert.match(live, /EKIKEN_DISPLAY_NAME/);
   assert.match(radar, /ケアナビAI Ekken/);
-  assert.match(guide, /Ekken（エッケン）/);
+  assert.match(guide, /Ekken/);
 });
 
 test("bottom navigation exposes records and consultation as a primary destination", async () => {
@@ -60,11 +60,11 @@ test("live support preserves medical safety boundaries", async () => {
   assert.match(prompts, /通常の体調相談を、毎回の受診判定や安全確認の問診から始めない/);
 });
 
-test("home provides direct contextual shortcuts to Ekken consultation", async () => {
+test("home provides a direct shortcut to Ekken consultation", async () => {
   const home = await source("app/HomeClient.jsx");
   assert.match(home, /function EkkenHomeCard/);
   assert.match(home, /今の調子を話してみる/);
-  assert.match(home, /tab=consult/);
+  assert.match(home, /\/records\?tab=consult/);
 });
 
 

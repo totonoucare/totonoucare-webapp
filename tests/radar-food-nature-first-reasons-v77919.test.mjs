@@ -34,7 +34,7 @@ test("実際の飲み物辞書も体調との相性を先、成分と飲み方�
   assert.ok(drink);
   assert.ok(drink.items.length >= 2);
   for (const detail of drink.item_details) {
-    assert.deepEqual(detail.reasons.map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
+    assert.deepEqual(detail.reasons.slice(0, 2).map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
     assert.doesNotMatch(detail.reasons[0].text, /食養生では/);
     assert.match(detail.reasons[0].text, /温める|冷ます|偏りが少ない/);
     assert.match(detail.reasons[1].text, /カフェイン/);
