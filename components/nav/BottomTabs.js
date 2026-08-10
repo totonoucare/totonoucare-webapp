@@ -37,7 +37,7 @@ export default function BottomTabs() {
         >
           <Icon className="h-6 w-6" />
         </span>
-        <span className={`text-[12px] tracking-wide ${isActive ? "font-black" : "font-extrabold"}`}>
+        <span className={`text-[12px] tracking-wide sm:text-[12px] ${isActive ? "font-black" : "font-extrabold"}`}>
           {label}
         </span>
       </button>
