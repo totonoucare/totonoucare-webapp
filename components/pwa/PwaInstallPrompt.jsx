@@ -158,7 +158,7 @@ export default function PwaInstallPrompt() {
             <p className="text-[13px] font-black leading-snug text-[#101827]">
               ホーム画面に追加できます
             </p>
-            <p className="mt-0.5 text-[11px] font-extrabold leading-snug text-[#5F6D7C]">
+            <p className="mt-0.5 text-[12px] font-extrabold leading-snug text-[#5F6D7C]">
               体調予報をアプリのように開けます。iPhoneの通知設定にも必要です。
             </p>
           </div>
