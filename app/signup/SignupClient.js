@@ -354,7 +354,7 @@ export default function SignupClient() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
           ← 戻る
         </button>
@@ -369,7 +369,7 @@ export default function SignupClient() {
             <div className="text-[18px] font-black tracking-tight text-slate-900">
               ログイン / 登録
             </div>
-            <div className="mt-1 text-[11px] font-extrabold text-slate-500">
+            <div className="mt-1 text-[12px] font-extrabold text-slate-500">
               Google またはメールでログイン
             </div>
           </div>
@@ -386,8 +386,8 @@ export default function SignupClient() {
 
             {params.resultId ? (
               <div className="rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="text-[11px] font-extrabold text-slate-600">引き継ぎ予定のデータ</div>
-                <div className="mt-1 font-mono break-all text-[10px] text-slate-500">
+                <div className="text-[12px] font-extrabold text-slate-600">引き継ぎ予定のデータ</div>
+                <div className="mt-1 font-mono break-all text-[12px] text-slate-500">
                   {params.resultId}
                 </div>
               </div>
@@ -459,14 +459,14 @@ export default function SignupClient() {
 
             <div className="relative py-1">
               <div className="h-px w-full bg-slate-200" />
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-3 text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-3 text-[12px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                 or
               </div>
             </div>
 
             <form onSubmit={handleSendLink} className="space-y-5">
               <div>
-                <label className="mb-2 block text-[11px] font-extrabold text-slate-500">
+                <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
                   メールアドレス
                 </label>
                 <input
