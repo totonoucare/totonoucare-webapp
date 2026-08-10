@@ -92,7 +92,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
         </div>
         <div className="px-4 pb-4">
           <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-7 text-slate-600 ring-1 ring-white">
-            病院に行くほどではないけれど気になる、検査では大きな異常がなくても不調が続く。そんな時に、鍼灸師などの国家資格者へ相談できます。AI分析を使っていなくても相談できます。
+            病院に行くほどではないけれど気になる、検査では大きな異常がなくても不調が続く、セルフケアだけでは追いつかない。そんな時に、鍼灸師などの国家資格者へ相談できます。AI分析を使っていなくても相談できます。
           </div>
         </div>
       </section>
@@ -106,7 +106,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
         <div className="mt-4 text-[12px] font-black tracking-[0.1em] text-slate-500">相談できること</div>
         <div className="mt-3 grid gap-2.5">
           <Feature title="不調と生活の経過を詳しく整理" lead="記録だけでは分からない経過や生活背景を聞き取り、今優先したいことを整理します。" />
-          <Feature title="ツボ・お灸・生活ケアを一緒に確認" lead="必要に応じて舌・姿勢・動作などを参考に確認し、市販灸・円皮鍼・ツボなど自宅で取り入れるケアを画面越しに確かめます。" />
+          <Feature title="ツボ・お灸・生活ケアを一緒に確認" lead="舌・姿勢・動作などを参考に確認し、市販灸・円皮鍼・ツボ・身体の使い方を画面越しに一緒に試します。" />
           <Feature title="相談後のケアプランを持ち帰る" lead="今週優先することや天気が変わる時の備え方を、自分で続けられる形にまとめます。" />
         </div>
         <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-3.5 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#EED8B4]">
@@ -135,7 +135,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
         {error ? <div className="mt-3 text-center text-[12px] font-bold text-[#B75C3E]">{error}</div> : null}
 
         <div className="mt-4 border-t border-[#EED8B4] pt-3 text-[14px] font-bold leading-6 text-slate-500">
-          医療機関での診断・治療に代わるものではありません。強い症状や急な変化がある場合は、医療機関へ相談してください。
+          オンライン相談は、医療機関での診断・治療に代わるものではありません。強い症状や急な変化がある場合は、医療機関へ相談してください。
         </div>
       </section>
     </div>
