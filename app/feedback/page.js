@@ -144,7 +144,7 @@ export default function FeedbackPage() {
     <button
       type="button"
       onClick={() => router.push("/settings")}
-      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+      className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
     >
       ← 設定
     </button>
@@ -157,7 +157,7 @@ export default function FeedbackPage() {
           <div className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-white/80 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-10 h-44 w-44 rounded-full bg-[#8DC7AD]/25 blur-3xl" />
           <div className="relative z-10">
-            <div className="inline-flex items-center rounded-full bg-white/85 px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#24564C] shadow-sm ring-1 ring-[#CFE3DA]/70 backdrop-blur-md">
+            <div className="inline-flex items-center rounded-full bg-white/85 px-3.5 py-1.5 text-[12px] font-black uppercase tracking-widest text-[#24564C] shadow-sm ring-1 ring-[#CFE3DA]/70 backdrop-blur-md">
               feedback
             </div>
             <div className="mt-5 text-[24px] font-black leading-[1.32] tracking-tight text-slate-900">
@@ -221,7 +221,7 @@ export default function FeedbackPage() {
               placeholder="例：体調予報の食べるタブで、文が少し長く感じた / ツボ詳細の説明が分かりにくかった など"
               className="w-full resize-none rounded-[18px] bg-slate-50 px-4 py-3.5 text-sm font-bold leading-6 text-slate-900 outline-none ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
             />
-            <div className="mt-1.5 text-right text-[10px] font-extrabold text-slate-400">
+            <div className="mt-1.5 text-right text-[12px] font-extrabold text-slate-400">
               {message.length}/1200
             </div>
           </div>
