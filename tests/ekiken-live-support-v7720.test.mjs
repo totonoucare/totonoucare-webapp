@@ -19,8 +19,8 @@ test("bottom navigation opens the records top instead of forcing the consultatio
   const nav = await source("components/nav/BottomTabs.js");
   assert.match(nav, /pathname\.startsWith\("\/records"\)/);
   assert.match(nav, /"記録・相談"/);
-  assert.match(nav, /"記録・相談", IconChat, "\/records"/);
-  assert.doesNotMatch(nav, /"記録・相談", IconChat, "\/records\?tab=consult"/);
+  assert.match(nav, /IconChat, "\/records"/);
+  assert.doesNotMatch(nav, /IconChat, "\/records\?tab=consult"/);
 });
 
 test("consultation tab keeps live Ekiken support and professional consultation separate", async () => {

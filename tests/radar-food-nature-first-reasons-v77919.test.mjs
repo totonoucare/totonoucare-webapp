@@ -36,7 +36,6 @@ test("実際の飲み物辞書も体調との相性を先、成分と飲み方�
   for (const detail of drink.item_details) {
     assert.deepEqual(detail.reasons.map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
     assert.doesNotMatch(detail.reasons[0].text, /食養生では/);
-    assert.equal(detail.reasons[0].label, "体調との相性");
     assert.match(detail.reasons[0].text, /温める|冷ます|偏りが少ない/);
     assert.match(detail.reasons[1].text, /カフェイン/);
   }
@@ -58,7 +57,6 @@ test("料理は取り入れたい食材を先に見せ、料理名を料理案�
   assert.ok(meal.meal_example.length > 0);
   assert.deepEqual(meal.reasons.map((reason) => reason.label), ["体調との相性", "栄養面"]);
   assert.doesNotMatch(meal.reasons[0].text, /食養生では/);
-  assert.equal(meal.reasons[0].label, "体調との相性");
   assert.match(pageSource, /取り入れたい食材/);
   assert.match(pageSource, /itemDetail\?\.meal_example/);
 });
