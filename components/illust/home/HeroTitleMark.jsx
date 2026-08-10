@@ -29,7 +29,7 @@ export default function HeroTitleMark({ compact = false, className = "" }) {
         </div>
 
         {!compact && (
-          <p className="mt-1 text-[10px] font-extrabold tracking-[0.18em] uppercase">
+          <p className="mt-1 text-[12px] font-extrabold tracking-[0.18em] uppercase">
             <span className="text-[var(--gold)]">MIBYOU RADAR</span>
             <span className="mx-2 text-[#d8d3c4]">|</span>
             <span className="text-[#959fb0]">PERSONAL FORECAST</span>
