@@ -39,7 +39,7 @@ export default function SubscriptionPaywall({
               <IconLock />
             </div>
             <div>
-              <div className="text-[11px] font-black tracking-[0.14em] text-[#2F816E]/70">プレミアム・{copy.eyebrow}</div>
+              <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/70">プレミアム・{copy.eyebrow}</div>
               <div className="mt-1 text-[18px] font-black leading-7 text-slate-900">{copy.title}</div>
             </div>
           </div>
@@ -59,7 +59,7 @@ export default function SubscriptionPaywall({
           <CheckoutButton returnPath={returnPath} className="mt-4 w-full">
             プレミアムの内容を確認する
           </CheckoutButton>
-          <div className="mt-3 text-center text-[10px] font-bold leading-4 text-slate-400">
+          <div className="mt-3 text-center text-[12px] font-bold leading-4 text-slate-400">
             料金と請求間隔は、申込み前にStripe画面で確認できます。
           </div>
         </div>
