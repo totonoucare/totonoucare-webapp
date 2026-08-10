@@ -966,7 +966,23 @@ export default function RadarPage() {
       symptomFocus,
     });
   }, [carePlan?.care_theme, activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]);
-  const carePolicyEvidence = carePlan?.care_theme?.response_profile?.evidence || {};
+  const careTheme = carePlan?.care_theme || {};
+  const reactionLabel = careTheme?.reaction_direction === "accel"
+    ? "アクセル寄り"
+    : careTheme?.reaction_direction === "brake"
+      ? "ブレーキ寄り"
+      : null;
+  const reserveLabel = careTheme?.reserve_small ? "余力少なめ" : "余力標準〜あり";
+  const careFoundationText = [
+    coreLabel?.title,
+    reactionLabel,
+    reserveLabel,
+    subLabelObjects?.[0]?.title || subLabelObjects?.[0]?.label,
+  ].filter(Boolean).join("・");
+  const careManifestationText = [
+    ...safeArray(careTheme?.trigger_labels),
+    symptomLabel,
+  ].filter(Boolean).join("・");
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
@@ -1846,33 +1862,29 @@ export default function RadarPage() {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className={["text-[12px] font-black uppercase tracking-widest", careTone.inkSoft].join(" ")}>
-                  この日の方針
+                  {selectedIsToday ? "今日のケア方針" : "明日のケア方針"}
                 </div>
                 <div className={["rounded-full bg-white/80 px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1", careTone.ring].join(" ")}>
                   {symptomFocus ? "体質 × 天気 × 不調" : "体質 × 天気"}
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-[16px] bg-white/70 px-3 py-2.5 ring-1 ring-white/80">
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-[16px] bg-white/75 px-3 py-2.5 ring-1 ring-white/80">
                   <div className={["text-[12px] font-black", careTone.inkSoft].join(" ")}>体質の土台</div>
-                  <div className="mt-1 text-[12px] font-extrabold leading-5 text-slate-700">
-                    {carePolicyEvidence.constitution || coreLabel?.short || coreLabel?.title || "体質の反応傾向"}
+                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
+                    {careFoundationText || "体質チェックの結果を反映"}
                   </div>
                 </div>
-                <div className="rounded-[16px] bg-white/70 px-3 py-2.5 ring-1 ring-white/80">
+                <div className="rounded-[16px] bg-white/75 px-3 py-2.5 ring-1 ring-white/80">
                   <div className={["text-[12px] font-black", careTone.inkSoft].join(" ")}>この日の現れ方</div>
-                  <div className="mt-1 text-[12px] font-extrabold leading-5 text-slate-700">
-                    {[carePolicyEvidence.weather, carePolicyEvidence.symptom || symptomLabel].filter(Boolean).join(" × ") || "天気と今の不調"}
+                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
+                    {careManifestationText || "天気と選択中の不調を反映"}
                   </div>
                 </div>
               </div>
 
-              <div className={["mt-3 text-[12px] font-black", careTone.inkSoft].join(" ")}>
-                {selectedIsToday ? "今日のケア方針" : "明日のケア方針"}
-              </div>
-
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {safeArray(carePolicies?.policies).map((policy) => (
                   <span
                     key={policy.key}
@@ -2433,8 +2445,8 @@ export default function RadarPage() {
                     <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                       {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
-                    {lifestylePlan?.forecast_insight || lifestylePlan?.lead ? (
-                      <div className="mt-3 rounded-[16px] bg-white/75 px-3.5 py-3 text-[14px] font-bold leading-6 text-slate-700 ring-1 ring-[#DCEBE5]">
+                    {(lifestylePlan?.forecast_insight || lifestylePlan?.lead) ? (
+                      <div className="mt-3 rounded-[16px] bg-white/85 px-3.5 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#DCEBE5]">
                         {lifestylePlan.forecast_insight || lifestylePlan.lead}
                       </div>
                     ) : null}
