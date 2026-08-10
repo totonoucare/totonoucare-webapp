@@ -22,7 +22,7 @@ function CoreFallback({ className = "h-20 w-32", title }) {
       aria-label={title || "体質イラスト"}
       title={title || "体質イラスト"}
     >
-      <div className="px-3 text-center text-[10px] font-black tracking-wide text-slate-400">
+      <div className="px-3 text-center text-[12px] font-black tracking-wide text-slate-400">
         IMAGE
       </div>
     </div>
