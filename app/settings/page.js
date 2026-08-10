@@ -493,7 +493,7 @@ export default function SettingsPage() {
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-black tracking-[0.12em] text-[#2F816E]/70">利用プラン</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">利用プラン</div>
             <div className="mt-1 text-[17px] font-black text-slate-900">
               {loading
                 ? "確認中…"
@@ -505,7 +505,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <span className={[
-            "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-black ring-1",
+            "shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ring-1",
             premiumActive
               ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]"
               : betaActive
@@ -545,7 +545,7 @@ export default function SettingsPage() {
         ) : null}
         {!premiumActive && betaActive && stripeTestMode ? (
           <div className="mt-4 rounded-[18px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
-            <div className="text-[11px] font-black tracking-[0.12em] text-[#A56C18]">
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">
               STRIPE TEST MODE
             </div>
             <div className="mt-1 text-[12px] font-bold leading-5 text-slate-600">
