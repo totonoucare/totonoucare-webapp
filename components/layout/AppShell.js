@@ -21,7 +21,7 @@ export function AppHeader({ title, left, right, subtitle }) {
               {title}
             </div>
             {subtitle ? (
-              <div className="mt-0.5 text-[11px] font-bold text-slate-500 truncate">
+              <div className="mt-0.5 text-[12px] font-bold text-slate-500 truncate">
                 {subtitle}
               </div>
             ) : null}
