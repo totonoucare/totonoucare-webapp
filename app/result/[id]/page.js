@@ -110,7 +110,7 @@ function MeridianPanelContent({ line, tone = "violet" }) {
       <div className="min-w-0 pt-1">
         {/* 見切れ防止のため truncate は使わず leading-snug で自然に折り返す */}
         <div className="text-[16px] font-black tracking-tight text-slate-900 leading-snug">{line.title}</div>
-        <div className="mt-1 text-[11px] font-extrabold text-slate-500">
+        <div className="mt-1 text-[12px] font-extrabold text-slate-500">
           {line.body_area}（{line.meridians.join("・")}）
         </div>
         <div className="mt-2 text-[13px] font-bold leading-relaxed text-slate-700">{line.organs_hint}</div>
@@ -223,7 +223,7 @@ function CarePolicyCard({ item }) {
           <img src={item.icon} alt={item.label} className="h-full w-full object-contain" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="inline-flex rounded-full bg-white px-3 py-1 text-[11px] font-black tracking-wide text-[var(--accent-ink)] ring-1 ring-inset ring-slate-200 shadow-sm">
+          <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black tracking-wide text-[var(--accent-ink)] ring-1 ring-inset ring-slate-200 shadow-sm">
             {item.rankLabel}
           </div>
           <div className="mt-3 text-[18px] font-black tracking-tight text-slate-900">{item.label}</div>
@@ -656,7 +656,7 @@ function ResultPage({ params }) {
               {/* お困りの不調はバッジ化して邪魔にならないように */}
               <div className="mb-6 flex justify-center">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.86)] px-3.5 py-1.5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-sm backdrop-blur-md">
-                  <span className="text-[10px] font-extrabold text-slate-500">
+                  <span className="text-[12px] font-extrabold text-slate-500">
                     現在の不調：{symptomLabel}{symptomChanged ? `（チェック時：${diagnosisSymptomLabel}）` : ""}
                   </span>
                 </div>
@@ -825,7 +825,7 @@ function ResultPage({ params }) {
                             <div className="min-w-0">
                               {/* 見切れ防止のため truncate なし */}
                               <div className="text-[16px] font-black tracking-tight text-slate-900 leading-snug">{item.label}</div>
-                              <div className="mt-1 text-[11px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{item.rankLabel}</div>
+                              <div className="mt-1 text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{item.rankLabel}</div>
                             </div>
                           </div>
                         </div>
@@ -949,7 +949,7 @@ function ResultPage({ params }) {
             </>
           ) : null}
 
-          <div className="text-center text-[10px] font-black uppercase tracking-widest text-slate-300 pb-4">
+          <div className="text-center text-[12px] font-black uppercase tracking-widest text-slate-300 pb-4">
             Result ID: {id}
           </div>
         </div>
