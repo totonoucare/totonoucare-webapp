@@ -16,10 +16,10 @@ function ProgressBar({ current, total }) {
   return (
     <div className="px-2">
       <div className="mb-2 flex items-end justify-between">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
           Question <span className="text-[14px] text-slate-900">{safeCurrent}</span> / {safeTotal}
         </div>
-        <div className="text-[11px] font-black text-slate-400">{pct}%</div>
+        <div className="text-[12px] font-black text-slate-400">{pct}%</div>
       </div>
 
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-black/5">
@@ -230,7 +230,7 @@ export default function CheckRunPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
           ← 戻る
         </button>
@@ -239,7 +239,7 @@ export default function CheckRunPage() {
         <button
           type="button"
           onClick={() => router.push("/check")}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[11px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
           中断
         </button>
@@ -324,7 +324,7 @@ export default function CheckRunPage() {
             </div>
 
             {isMulti ? (
-              <div className="mt-4 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[11px] font-extrabold text-slate-500 ring-1 ring-inset ring-slate-200/50">
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-[12px] font-extrabold text-slate-500 ring-1 ring-inset ring-slate-200/50">
                 <svg
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -375,7 +375,7 @@ export default function CheckRunPage() {
               )}
             </div>
 
-            <div className="mt-5 text-center text-[10px] font-extrabold text-slate-400">
+            <div className="mt-5 text-center text-[12px] font-extrabold text-slate-400">
               ※ 無理のある動作は避けてOK。違和感が強い場合は中止してください。
             </div>
           </div>
