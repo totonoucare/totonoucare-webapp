@@ -971,18 +971,10 @@ export default function RadarPage() {
     ? "アクセル寄り"
     : careTheme?.reaction_direction === "brake"
       ? "ブレーキ寄り"
-      : null;
-  const reserveLabel = careTheme?.reserve_small ? "余力少なめ" : "余力標準〜あり";
-  const careFoundationText = [
-    coreLabel?.title,
-    reactionLabel,
-    reserveLabel,
-    subLabelObjects?.[0]?.title || subLabelObjects?.[0]?.label,
-  ].filter(Boolean).join("・");
-  const careManifestationText = [
-    ...safeArray(careTheme?.trigger_labels),
-    symptomLabel,
-  ].filter(Boolean).join("・");
+      : "反応の偏りは小さめ";
+  const reserveLabel = careTheme?.reserve_small ? "余力は小さめ" : "余力は保ちやすい";
+  const careFoundationText = `${reactionLabel}で、${reserveLabel}の体質傾向です。`;
+  const careManifestationText = carePolicies?.summary || careStrategyLead;
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
@@ -1815,7 +1807,7 @@ export default function RadarPage() {
                   対策ケア
                 </div>
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
-                  {selectedIsToday ? "今日のケア" : "今夜のケア"}
+                  {selectedIsToday ? "今日のケア" : "今夜の先回りケア"}
                 </div>
                 <div className={["mt-1 text-[14px] font-extrabold leading-6", careTone.ink].join(" ")}>
                   {careStrategyTitle}
@@ -1869,21 +1861,6 @@ export default function RadarPage() {
                 </div>
               </div>
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <div className="rounded-[16px] bg-white/75 px-3 py-2.5 ring-1 ring-white/80">
-                  <div className={["text-[12px] font-black", careTone.inkSoft].join(" ")}>体質の土台</div>
-                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
-                    {careFoundationText || "体質チェックの結果を反映"}
-                  </div>
-                </div>
-                <div className="rounded-[16px] bg-white/75 px-3 py-2.5 ring-1 ring-white/80">
-                  <div className={["text-[12px] font-black", careTone.inkSoft].join(" ")}>この日の現れ方</div>
-                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
-                    {careManifestationText || "天気と選択中の不調を反映"}
-                  </div>
-                </div>
-              </div>
-
               <div className="mt-3 flex flex-wrap gap-2">
                 {safeArray(carePolicies?.policies).map((policy) => (
                   <span
@@ -1899,6 +1876,17 @@ export default function RadarPage() {
 
               <div className="mt-3 text-[14px] font-bold leading-6 text-slate-700">
                 {carePolicies?.summary || careStrategyLead}
+              </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="rounded-[16px] bg-white/80 px-3.5 py-3 ring-1 ring-white/70">
+                  <div className="text-[12px] font-black tracking-wide text-slate-500">体質の土台</div>
+                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{careFoundationText}</div>
+                </div>
+                <div className="rounded-[16px] bg-white/80 px-3.5 py-3 ring-1 ring-white/70">
+                  <div className="text-[12px] font-black tracking-wide text-slate-500">この日の現れ方</div>
+                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{careManifestationText}</div>
+                </div>
               </div>
             </div>
 
@@ -1928,7 +1916,7 @@ export default function RadarPage() {
                 {lineCare ? (
                   <div className="rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(123,101,136,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
-                      {selectedIsToday ? "今日の一手" : "今夜の先回りケア"}
+                      今日の一手
                     </div>
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lineCare.title || "体質ラインを軽くゆるめる"}
@@ -2124,7 +2112,7 @@ export default function RadarPage() {
                   <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                     {food.display_compact
                       ? (selectedIsToday ? "今日の食べる一手" : "今夜〜明朝の食べる一手")
-                      : food.title || sectionLabels.foodTitle || `${getDateModeLabel(bundleDateMode)}の食べるケア`}
+                      : food.title || sectionLabels.foodTitle || `${getDateModeLabel(bundleDateMode)}の食養生`}
                   </div>
 
 
@@ -2445,8 +2433,8 @@ export default function RadarPage() {
                     <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                       {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
-                    {(lifestylePlan?.forecast_insight || lifestylePlan?.lead) ? (
-                      <div className="mt-3 rounded-[16px] bg-white/85 px-3.5 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#DCEBE5]">
+                    {lifestylePlan?.forecast_insight || lifestylePlan?.lead ? (
+                      <div className="mt-2.5 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
                         {lifestylePlan.forecast_insight || lifestylePlan.lead}
                       </div>
                     ) : null}

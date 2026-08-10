@@ -42,7 +42,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
                 ) : null}
               </div>
               <div className={[
-                "mt-1 text-[11px] font-black uppercase tracking-wide",
+                "mt-1 text-[12px] font-black uppercase tracking-wide",
                 active ? "text-[#1F7D67]" : item.locked ? "text-slate-400" : "text-slate-500",
               ].join(" ")}
               >
@@ -59,7 +59,7 @@ export function ForecastDateRail({ tabs, activeDate, onSelect }) {
 function PointReasonLoadingBlock() {
   return (
     <div className="rounded-[18px] bg-[color-mix(in_srgb,var(--mint),white_82%)] p-4 ring-1 ring-[var(--ring)]">
-      <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-black/5">
+      <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-black/5">
         <span className="h-2 w-2 rounded-full bg-[var(--accent-ink)] animate-pulse" />
         AIが理由を整えています…
       </div>
@@ -480,7 +480,7 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
               このツボを選んだ理由
             </div>
             {reasonLoading ? (
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mint),white_55%)] px-2.5 py-1 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mint),white_55%)] px-2.5 py-1 text-[12px] font-black text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-ink)] animate-pulse" />
                 AI生成中
               </div>
