@@ -165,13 +165,13 @@ export default function CheckLandingPage() {
               <p className="mt-5 text-[14px] font-bold leading-7 text-[#536072]">
                 {latestResult
                   ? "体調や気になる不調が変わったら、再チェックしてトリセツを更新できます。"
-                  : "4〜6分を目安に、基本14問、回答に応じた追加質問0〜4問、最後の主訴1問へ答えます。張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで整理し、今日・明日の体調予報とケアへ反映します。"}
+                  : "4〜6分で、体質のクセを多面的に整理。基本14問、回答に応じた追加0〜4問、最後の確認1問から、張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。"}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <MiniBadge>4〜6分</MiniBadge>
                 <MiniBadge>全15〜19問</MiniBadge>
-                <MiniBadge>この端末で途中保存</MiniBadge>
+                <MiniBadge>途中保存</MiniBadge>
                 <MiniBadge>無料</MiniBadge>
               </div>
 
