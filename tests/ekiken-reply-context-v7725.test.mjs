@@ -64,7 +64,7 @@ test("AI conversation receives a natural question-answer context instead of gues
   const message = conversationMessageForAi(row);
   assert.equal(message.reply_to_follow_up.question, row.metadata.reply_to_follow_up.question);
   assert.equal(message.reply_to_follow_up.selected_option, "このまま休む");
-  assert.match(message.natural_context, /Ekikenの確認/);
+  assert.match(message.natural_context, /Ekkenの確認/);
   assert.match(message.natural_context, /このまま休む/);
 });
 
@@ -73,9 +73,9 @@ test("both chat UIs keep the question visible with the user's answer", async () 
   const analysisPanel = await readFile(new URL("../components/records/AiAnalysisPanel.jsx", import.meta.url), "utf8");
   const liveRoute = await readFile(new URL("../app/api/records/live-chat/route.js", import.meta.url), "utf8");
   const chatRoute = await readFile(new URL("../app/api/records/chat/route.js", import.meta.url), "utf8");
-  assert.match(livePanel, /Ekikenからの確認/);
+  assert.match(livePanel, /Ekkenからの確認/);
   assert.match(livePanel, /reply_to_follow_up: replyContext/);
-  assert.match(analysisPanel, /Ekikenからの確認/);
+  assert.match(analysisPanel, /Ekkenからの確認/);
   assert.match(analysisPanel, /reply_to_follow_up: replyContext/);
   assert.match(liveRoute, /replyToFollowUpFromMetadata/);
   assert.match(chatRoute, /conversationMessageForAi/);

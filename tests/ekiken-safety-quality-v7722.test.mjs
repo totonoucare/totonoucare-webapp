@@ -102,8 +102,8 @@ test("consent copy distinguishes account fields from user-entered free text", ()
   assert.match(panelSource, /記録メモや会話欄に自分で入力した内容/);
 });
 
-test("visible live support branding uses Ekiken casing and includes feedback", () => {
-  assert.match(panelSource, /Ekiken/);
+test("visible live support branding uses Ekken casing and includes feedback", () => {
+  assert.match(panelSource, /Ekken/);
   assert.doesNotMatch(panelSource, />EKIKEN</);
   assert.match(panelSource, /役に立った/);
   assert.match(panelSource, /安全確認が多すぎた/);

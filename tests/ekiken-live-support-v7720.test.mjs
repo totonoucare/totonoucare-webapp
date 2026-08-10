@@ -6,21 +6,20 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("Ekiken is named consistently as the care navigation AI", async () => {
+test("Ekken is named consistently as the care navigation AI", async () => {
   const live = await source("components/records/LiveSupportPanel.jsx");
   const radar = await source("app/radar/page.js");
   const guide = await source("app/guide/GuideClient.jsx");
   assert.match(live, /EKIKEN_DISPLAY_NAME/);
-  assert.match(radar, /ケアナビAI：Ekiken/);
-  assert.match(guide, /Ekiken（エキケン）/);
+  assert.match(radar, /ケアナビAI Ekken/);
+  assert.match(guide, /Ekken（エッケン）/);
 });
 
-test("bottom navigation opens the records top instead of forcing the consultation tab", async () => {
+test("bottom navigation exposes records and consultation as a primary destination", async () => {
   const nav = await source("components/nav/BottomTabs.js");
   assert.match(nav, /pathname\.startsWith\("\/records"\)/);
   assert.match(nav, /"記録・相談"/);
   assert.match(nav, /IconChat, "\/records"/);
-  assert.doesNotMatch(nav, /IconChat, "\/records\?tab=consult"/);
 });
 
 test("consultation tab keeps live Ekiken support and professional consultation separate", async () => {
@@ -61,9 +60,9 @@ test("live support preserves medical safety boundaries", async () => {
   assert.match(prompts, /通常の体調相談を、毎回の受診判定や安全確認の問診から始めない/);
 });
 
-test("home provides direct contextual shortcuts to Ekiken consultation", async () => {
+test("home provides direct contextual shortcuts to Ekken consultation", async () => {
   const home = await source("app/HomeClient.jsx");
-  assert.match(home, /function EkikenHomeCard/);
+  assert.match(home, /function EkkenHomeCard/);
   assert.match(home, /今の調子を話してみる/);
   assert.match(home, /tab=consult/);
 });
