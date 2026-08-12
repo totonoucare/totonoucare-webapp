@@ -966,15 +966,6 @@ export default function RadarPage() {
       symptomFocus,
     });
   }, [carePlan?.care_theme, activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]);
-  const careTheme = carePlan?.care_theme || {};
-  const reactionLabel = careTheme?.reaction_direction === "accel"
-    ? "アクセル寄り"
-    : careTheme?.reaction_direction === "brake"
-      ? "ブレーキ寄り"
-      : "反応の偏りは小さめ";
-  const reserveLabel = careTheme?.reserve_small ? "余力は小さめ" : "余力は保ちやすい";
-  const careFoundationText = `${reactionLabel}で、${reserveLabel}の体質傾向です。`;
-  const careManifestationText = carePolicies?.summary || careStrategyLead;
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
   const buildCareNaviUrl = (category) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
@@ -1876,17 +1867,6 @@ export default function RadarPage() {
 
               <div className="mt-3 text-[14px] font-bold leading-6 text-slate-700">
                 {carePolicies?.summary || careStrategyLead}
-              </div>
-
-              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div className="rounded-[16px] bg-white/80 px-3.5 py-3 ring-1 ring-white/70">
-                  <div className="text-[12px] font-black tracking-wide text-slate-500">体質の土台</div>
-                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{careFoundationText}</div>
-                </div>
-                <div className="rounded-[16px] bg-white/80 px-3.5 py-3 ring-1 ring-white/70">
-                  <div className="text-[12px] font-black tracking-wide text-slate-500">この日の現れ方</div>
-                  <div className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{careManifestationText}</div>
-                </div>
               </div>
             </div>
 
