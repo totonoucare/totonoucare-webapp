@@ -1,3 +1,39 @@
+## v7.79.27 自然語コピーの現行契約
+
+- 乾燥×睡眠のサインは`口や喉の乾燥感が寝つきに響きやすい`とし、`乾燥する日は、乾きで〜`の同語反復を戻さない
+- 乾燥×胃腸のサインは`喉の乾きや便の硬さが気になりやすい`とし、`便通の乾き`という不自然な連語を使わない
+- 首肩向け飲み物の理由は、一口飲む動作を手元作業と首肩を休めるきっかけとして説明する。水へ`香り`を付与しない
+- `enhanceFoodContext`は、保存済み構造化理由に残る旧文も表示時に現行文へ更新する
+- 現行ロジック版は`daily_care_v2_25_2026-08-13_natural_copy_polish`
+- ケア選定、食事・飲み物の順位、予報点数、商品接続、DB、環境変数は変更しない
+
+詳細: `docs/RADAR_NATURAL_COPY_POLISH_V77927.md`
+
+## v7.79.26 ケア方針カードの表示契約
+
+- 日次のケア方針カードは`今日／明日のケア方針`、`carePolicies.policies`、`carePolicies.summary`だけを表示する
+- `体質の土台`と`この日の現れ方`を日次カードへ戻さない
+- `reaction_direction`と`reserve_small`は表示用の固定説明ではなく、予報・ケア選定の内部入力として維持する
+- 方針の`summary`を身体反応の現れ方として再利用しない
+- 身体反応は予報カードの`bodySigns`、暮らすの`forecast_insight`、食べる・ほぐすの各文脈で具体化する
+- 専用テスト2件を含む全275件の回帰テストとNext.js本番ビルドを通過
+- 予報点数、ケア選定、商品接続、保存データ、DB、環境変数は変更しない
+
+詳細: `docs/RADAR_CARE_POLICY_CARD_SIMPLIFICATION_V77926.md`
+
+## v7.79.25 予報データ取得の一時障害対策
+
+- `lib/radar_v1/upstreamResilience.js`を、一時的なSupabase・Cloudflare障害の判定、限定再試行、公開エラー変換の正本とする
+- 読み取りの再試行は最大1回。最初の失敗が4秒以内に返った場合だけ350ms後に再試行し、長いタイムアウトを二重化しない
+- `app/api/radar/v1/forecast/route.js`は、例外を`String(error)`で返さず、`toPublicRadarApiError`を通す
+- 一時障害はHTTP 503、`RADAR_DATA_TEMPORARILY_UNAVAILABLE`、`retryable: true`で返す
+- 利用者文へHTML、Supabaseホスト、内部関数名を含めない。サーバーログも一時障害時は構造化した要約だけを残す
+- 対象は認証、主地域、保存済み予報、保存済みケアの読み取り。書き込み処理を自動再試行して重複させない
+- v7.79.24のケアUXと、実際のアップロード版に含まれた機械比喩2件の自然語化を維持する
+- 全273件の回帰テストとNext.js本番ビルドを通過
+
+詳細: `docs/RADAR_UPSTREAM_RESILIENCE_V77925.md`
+
 ## v7.79.24 暮らす・食事・飲み物UXの現行契約
 
 - 現行ロジック版は`daily_care_v2_24_2026-08-10_ux_followup_polish`
