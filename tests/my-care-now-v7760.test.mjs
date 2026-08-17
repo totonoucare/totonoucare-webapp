@@ -21,10 +21,11 @@ test("purchased items move to 対策ケア for actual use recording", () => {
   assert.match(radar, /\/api\/radar\/care-actions/);
 });
 
-test("the three category set is completed before display", () => {
-  assert.match(page, /completeThreeCategorySet/);
-  assert.match(page, /CATEGORY_ORDER\.forEach/);
-  assert.match(page, /card\?\.items\?\.length === 3/);
-  assert.match(page, /あなたへのおすすめ3アイテム/);
+test("care sets keep category variety without forcing an unrelated third item", () => {
+  assert.match(page, /completeCareSetWithMatchingItems/);
+  assert.match(page, /itemMatchesSlot\(candidate, slot\)/);
+  assert.match(page, /safeArray\(card\?\.items\)\.length >= 2/);
+  assert.match(page, /おすすめの組み合わせ・\{items\.length\}点/);
+  assert.doesNotMatch(page, /completeThreeCategorySet|card\?\.items\?\.length === 3|あなたへのおすすめ3アイテム/);
   assert.doesNotMatch(page, /まず1つなら|一緒にそろえるなら/);
 });
