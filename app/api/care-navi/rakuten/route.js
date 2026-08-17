@@ -5,11 +5,54 @@ export const dynamic = "force-dynamic";
 
 const RAKUTEN_ITEM_SEARCH_ENDPOINT =
   "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401";
+const RAKUTEN_FETCH_TIMEOUT_MS = 6500;
+const RAKUTEN_RESULT_CACHE_TTL_MS = 10 * 60 * 1000;
+const RAKUTEN_RESULT_CACHE_LIMIT = 120;
+const RAKUTEN_RESULT_CACHE = new Map();
 
 const NO_STORE_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
 };
+
+function readRakutenResultCache(key) {
+  const cached = RAKUTEN_RESULT_CACHE.get(key);
+  if (!cached) return null;
+  if (Date.now() - cached.savedAt > RAKUTEN_RESULT_CACHE_TTL_MS) {
+    RAKUTEN_RESULT_CACHE.delete(key);
+    return null;
+  }
+  return cached.payload;
+}
+
+function writeRakutenResultCache(key, payload) {
+  if (!key || !payload) return;
+  if (RAKUTEN_RESULT_CACHE.size >= RAKUTEN_RESULT_CACHE_LIMIT) {
+    const oldestKey = RAKUTEN_RESULT_CACHE.keys().next().value;
+    if (oldestKey) RAKUTEN_RESULT_CACHE.delete(oldestKey);
+  }
+  RAKUTEN_RESULT_CACHE.set(key, { savedAt: Date.now(), payload });
+}
+
+async function allSettledWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+
+  async function run() {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      try {
+        results[index] = { status: "fulfilled", value: await worker(items[index], index) };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(Math.max(1, limit), items.length) }, run));
+  return results;
+}
 
 const CATEGORY_LABELS = {
   live: "暮らす",
@@ -1380,8 +1423,9 @@ function buildQueryPlans({
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
   const safePolicyKeys = asArray(policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
   const primaryPolicyKey = safePolicyKeys[0] || "sasaeru";
-  const requestedLimit = clampNumber(limit, 12, 8, 24);
-  const planLimit = Math.min(8, Math.max(5, Math.ceil(requestedLimit / 2) + 2));
+  // 1画面で3カテゴリを同時検索するため、検索語は暮らす・ほぐす3本、
+  // 商品の役割が多い食べるだけ4本までに絞る。
+  const planLimit = safeCategory === "eat" ? 4 : 3;
   const plans = [];
   const seenKeywords = new Set();
   const lifeRows = lifeRowsFor(lifeKeys, safeCategory);
@@ -1868,6 +1912,19 @@ function scoreTrustedCareBrand(item) {
   return 0;
 }
 
+function buildRakutenDisplayTitle(value) {
+  const raw = String(value || "ケア候補").normalize("NFKC");
+  const cleaned = raw
+    .replace(/【[^】]*(?:送料無料|クーポン|ポイント|ランキング|最安|セール|限定|即納|あす楽|お買い物マラソン)[^】]*】/gi, " ")
+    .replace(/\[[^\]]*(?:送料無料|クーポン|ポイント|ランキング|最安|セール|限定|即納|あす楽|PR)[^\]]*\]/gi, " ")
+    .replace(/(?:送料無料|ポイント\d+倍|クーポン配布中|レビュー特典|期間限定|数量限定|即納対応)/gi, " ")
+    .replace(/\s*[|｜]\s*(?:楽天|公式ショップ|正規品|メーカー直販).*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const title = cleaned || raw.trim() || "ケア候補";
+  return title.length > 78 ? `${title.slice(0, 77).trim()}…` : title;
+}
+
 function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
   const reviewCount = Number(item?.reviewCount || 0);
   const reviewAverage = Number(item?.reviewAverage || 0);
@@ -1883,6 +1940,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
 
   return {
     title,
+    displayTitle: buildRakutenDisplayTitle(title),
     reason: polishCareReason(reason),
     itemCaption: item?.itemCaption || item?.catchcopy || "",
     tags,
@@ -2071,13 +2129,28 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
 
   const appOrigin = getAppOrigin();
 
-  const res = await fetch(url.toString(), {
-    cache: "no-store",
-    headers: {
-      Referer: `${appOrigin}/`,
-      Origin: appOrigin,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), RAKUTEN_FETCH_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(url.toString(), {
+      cache: "no-store",
+      signal: controller.signal,
+      headers: {
+        Referer: `${appOrigin}/`,
+        Origin: appOrigin,
+      },
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      const timeoutError = new Error("Rakuten API timeout");
+      timeoutError.status = 504;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
   const json = await res.json().catch(() => ({}));
 
   if (res.status === 404) return [];
@@ -2126,6 +2199,8 @@ export async function POST(req) {
     if (!credentials.applicationId || !credentials.accessKey) {
       return jsonUtf8({
         ok: true,
+        status: "not_configured",
+        retryable: false,
         apiNotConfigured: true,
         category,
         priceBand,
@@ -2134,6 +2209,26 @@ export async function POST(req) {
         queries: [],
         errors: [],
       });
+    }
+
+    const cacheKey = JSON.stringify({
+      category,
+      policyKeys,
+      symptomKey,
+      priceBand,
+      lifeKeys,
+      basis,
+      lifestyleActionKey,
+      lifestyleItemRole,
+      foodFunctionKeys,
+      foodNeedKeys,
+      foodProductRoleKeys,
+      displayLimit,
+      totalLimit,
+    });
+    const cachedResult = readRakutenResultCache(cacheKey);
+    if (cachedResult) {
+      return jsonUtf8({ ...cachedResult, status: "cached", cached: true });
     }
 
     const plans = buildQueryPlans({
@@ -2151,11 +2246,22 @@ export async function POST(req) {
       limit: displayLimit,
     });
     if (!plans.length) {
-      return jsonUtf8({ ok: true, items: [], queries: [], category, priceBand, priceRange });
+      return jsonUtf8({
+        ok: true,
+        status: "empty",
+        retryable: false,
+        items: [],
+        queries: [],
+        category,
+        priceBand,
+        priceRange,
+      });
     }
 
-    const settled = await Promise.allSettled(
-      plans.map((plan, index) => searchRakutenForPlan({ ...plan, category }, index, credentials, priceRange))
+    const settled = await allSettledWithConcurrency(
+      plans,
+      2,
+      (plan, index) => searchRakutenForPlan({ ...plan, category }, index, credentials, priceRange)
     );
 
     const items = [];
@@ -2189,7 +2295,9 @@ export async function POST(req) {
 
     if (!balancedItems.length && errors.length === plans.length) {
       return jsonUtf8({
-        ok: true,
+        ok: false,
+        status: "unavailable",
+        retryable: true,
         category,
         priceBand,
         priceRange,
@@ -2197,20 +2305,32 @@ export async function POST(req) {
         queries: plans.map((plan) => plan.keyword),
         errors,
         warning: "RAKUTEN_SEARCH_UNAVAILABLE",
-      });
+      }, 503);
     }
 
-    return jsonUtf8({
+    const payload = {
       ok: true,
+      status: errors.length ? "partial" : balancedItems.length ? "live" : "empty",
+      retryable: false,
       category,
       priceBand,
       priceRange,
       items: balancedItems,
       queries: plans.map((plan) => plan.keyword),
       errors,
-    });
+    };
+    if (balancedItems.length) writeRakutenResultCache(cacheKey, payload);
+    return jsonUtf8(payload);
   } catch (error) {
     console.error("/api/care-navi/rakuten POST error:", error);
-    return jsonUtf8({ ok: true, items: [], queries: [], errors: [], warning: "RAKUTEN_SEARCH_UNAVAILABLE" });
+    return jsonUtf8({
+      ok: false,
+      status: "unavailable",
+      retryable: true,
+      items: [],
+      queries: [],
+      errors: [],
+      warning: "RAKUTEN_SEARCH_UNAVAILABLE",
+    }, 503);
   }
 }
