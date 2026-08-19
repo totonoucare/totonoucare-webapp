@@ -2,6 +2,7 @@ import { runRadarNotificationCron } from "@/lib/push/runRadarNotificationCron";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 function jsonUtf8(payload, status = 200) {
   return new Response(JSON.stringify(payload, null, 2), {
@@ -26,6 +27,7 @@ export async function GET(req) {
     const result = await runRadarNotificationCron({
       kind: "night",
       limit: searchParams.get("limit") || 25,
+      cursor: searchParams.get("cursor") || null,
       dryRun: searchParams.get("dry_run") === "1",
       userId: searchParams.get("user_id") || null,
     });
