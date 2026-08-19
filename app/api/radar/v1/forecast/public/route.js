@@ -8,6 +8,7 @@ import { buildWeatherStressV2 } from "@/lib/radar_v1/weatherStressV2";
 import { personalizePublicForecastV2 } from "@/lib/radar_v1/personalizeForecastV2";
 import { getTriggerLabel } from "@/lib/radar_v1/copy";
 import { decideTargetDateJST, nowJstParts, toJstISODate } from "@/lib/radar_v1/timeJST";
+import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,13 @@ function jsonUtf8(payload, status = 200) {
 
 export async function GET(req) {
   try {
+    const limited = await enforcePublicApiRateLimit(req, {
+      route: "radar_public_forecast",
+      limit: 60,
+      windowSeconds: 600,
+    });
+    if (limited) return limited;
+
     const { searchParams } = new URL(req.url);
 
     const latParam = searchParams.get("lat");
