@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabaseAdmin";
+import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -87,6 +88,13 @@ async function getAuthenticatedUser(req) {
 
 export async function POST(req) {
   try {
+    const limited = await enforcePublicApiRateLimit(req, {
+      route: "care_navi_click",
+      limit: 120,
+      windowSeconds: 600,
+    });
+    if (limited) return limited;
+
     const body = await req.json().catch(() => ({}));
     const user = await getAuthenticatedUser(req);
     const supabase = createAdminClient();
