@@ -8,14 +8,35 @@ import {
   hashGuestToken,
   setGuestTokenCookie,
 } from "@/lib/diagnosisGuestAccess";
+import { validateDiagnosisAnswers } from "@/lib/diagnosis/v2/validateAnswers";
+import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function POST(req) {
   try {
+    const limited = await enforcePublicApiRateLimit(req, {
+      route: "diagnosis_v2_submit",
+      limit: 20,
+      windowSeconds: 600,
+    });
+    if (limited) return limited;
+
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (Number.isFinite(contentLength) && contentLength > 24_000) {
+      return NextResponse.json({ error: "回答データが大きすぎます" }, { status: 413 });
+    }
+
     const body = await req.json().catch(() => ({}));
-    const answers = body?.answers || {};
+    const validation = validateDiagnosisAnswers(body?.answers);
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: validation.error, code: validation.code },
+        { status: 400 }
+      );
+    }
+    const answers = validation.answers;
 
     const computed = scoreDiagnosis(answers);
 
@@ -60,6 +81,9 @@ export async function POST(req) {
     return res;
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
+    return NextResponse.json(
+      { error: "診断結果の保存に失敗しました。時間をおいて再度お試しください。" },
+      { status: 500 }
+    );
   }
 }
