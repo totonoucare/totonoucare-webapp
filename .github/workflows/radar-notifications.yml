@@ -12,11 +12,18 @@ on:
         description: "night or morning"
         required: false
         default: "night"
+      limit:
+        description: "Users per API page (all pages are processed)"
+        required: false
+        default: "25"
 
 jobs:
   send-radar-notifications:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 45
+    concurrency:
+      group: radar-notifications-${{ github.event.inputs.type || github.event.schedule || 'scheduled' }}
+      cancel-in-progress: false
     steps:
       - name: Decide notification type
         id: vars
@@ -36,12 +43,53 @@ jobs:
           APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           TYPE: ${{ steps.vars.outputs.type }}
+          LIMIT: ${{ github.event.inputs.limit || '25' }}
         shell: bash
         run: |
           test -n "$APP_BASE_URL"
           test -n "$CRON_SECRET"
 
-          curl --fail --show-error --silent \
-            --request GET \
-            --header "Authorization: Bearer ${CRON_SECRET}" \
-            "${APP_BASE_URL}/api/cron/radar-notifications/${TYPE}"
+          cursor=""
+          total_failed=0
+          completed="false"
+
+          for page in $(seq 1 500); do
+            args=(
+              --fail --show-error --silent
+              --request GET
+              --header "Authorization: Bearer ${CRON_SECRET}"
+              --get
+              --data-urlencode "limit=${LIMIT}"
+            )
+            if [ -n "$cursor" ]; then
+              args+=(--data-urlencode "cursor=${cursor}")
+            fi
+
+            response="$(curl "${args[@]}" "${APP_BASE_URL}/api/cron/radar-notifications/${TYPE}")"
+            echo "$response" | jq -e '.ok == true' >/dev/null
+            echo "$response" | jq '{target_count, processed, sent, skipped, failed, has_more, next_cursor}'
+
+            failed="$(echo "$response" | jq -r '.failed // 0')"
+            total_failed=$((total_failed + failed))
+            has_more="$(echo "$response" | jq -r '.has_more // false')"
+            next_cursor="$(echo "$response" | jq -r '.next_cursor // empty')"
+
+            if [ "$has_more" != "true" ]; then
+              completed="true"
+              break
+            fi
+            if [ -z "$next_cursor" ] || [ "$next_cursor" = "$cursor" ]; then
+              echo "Pagination stopped: next_cursor did not advance" >&2
+              exit 1
+            fi
+            cursor="$next_cursor"
+          done
+
+          if [ "$completed" != "true" ]; then
+            echo "Pagination safety limit reached before completion" >&2
+            exit 1
+          fi
+          if [ "$total_failed" -gt 0 ]; then
+            echo "$total_failed notification target(s) failed" >&2
+            exit 1
+          fi
