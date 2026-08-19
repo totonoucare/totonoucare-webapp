@@ -17,6 +17,11 @@ import {
   isVisibleLocationLabel,
   serializeDisplayableRadarLocation,
 } from "@/lib/radar_v1/locationDisplay";
+import {
+  runSupabaseOperationWithFastRetry,
+  summarizeRadarServerError,
+  toPublicRadarApiError,
+} from "@/lib/radar_v1/upstreamResilience";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +63,10 @@ async function getAuthenticatedUser(req) {
   if (!authHeader) return null;
 
   const supabase = getAuthSupabase(authHeader);
-  const { data, error } = await supabase.auth.getUser();
+  const { data, error } = await runSupabaseOperationWithFastRetry(
+    () => supabase.auth.getUser(),
+    { label: "getAuthenticatedUser" }
+  );
 
   if (error) {
     throw new Error(`Auth getUser failed: ${error.message}`);
@@ -229,7 +237,11 @@ export async function GET(req) {
       debug: bundle.debug,
     });
   } catch (error) {
-    console.error("/api/radar/v1/forecast GET error:", error);
-    return jsonUtf8({ ok: false, error: String(error) }, 500);
+    const publicError = toPublicRadarApiError(error);
+    console.error(
+      "/api/radar/v1/forecast GET error:",
+      summarizeRadarServerError(error)
+    );
+    return jsonUtf8(publicError.payload, publicError.status);
   }
 }
