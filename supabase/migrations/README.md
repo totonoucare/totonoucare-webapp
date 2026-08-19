@@ -16,6 +16,15 @@ Supabase SQL Editorで実際に実行するDB変更SQLを置く場所。
 - 失敗した実験SQLは入れない。
 - 秘密情報は絶対に入れない。
 
+## v7.79.29 広告開始前のDB整合性・公開API保護
+
+```text
+20260818_align_symptom_focus_constraints_v77929.sql
+20260818_add_public_api_rate_limits_v77929.sql
+```
+
+上から順にSupabase SQL Editorで実行してからアプリをデプロイする。1本目は、画面に存在する「胃腸の調子」など9種類の不調とDB制約を一致させる。2本目は、公開APIが全サーバーで共有するレート制限を追加する。実行後は `supabase/checks/20260818_check_ad_readiness_v77929.sql` の4項目がすべて `true` になることを確認する。
+
 ## v7.79.0 Stripeサブスク識別子
 
 ```text
