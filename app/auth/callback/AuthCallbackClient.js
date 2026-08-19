@@ -7,11 +7,7 @@ import {
   clearPendingDiagnosisAttach,
   getPendingDiagnosisAttach,
 } from "@/lib/pendingDiagnosisAttach";
-
-function normalizeNextPath(v) {
-  if (!v || typeof v !== "string") return "/radar";
-  return v.startsWith("/") ? v : "/radar";
-}
+import { safeLocalPath } from "@/lib/safeReturnPath";
 
 function decodeMaybe(v) {
   if (!v) return "";
@@ -39,7 +35,7 @@ export default function AuthCallbackClient() {
     const sp = url.searchParams;
     const pending = getPendingDiagnosisAttach();
     const resultId = sp.get("result") || pending?.resultId || "";
-    const nextPath = normalizeNextPath(sp.get("next") || pending?.nextPath || "/radar");
+    const nextPath = safeLocalPath(sp.get("next") || pending?.nextPath, "/radar");
 
     const signupUrl = new URL(`${window.location.origin}/signup`);
     if (resultId) signupUrl.searchParams.set("result", resultId);
@@ -100,9 +96,7 @@ export default function AuthCallbackClient() {
         const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
 
         const pending = getPendingDiagnosisAttach();
-        const nextPath = normalizeNextPath(
-          sp.get("next") || pending?.nextPath || "/radar"
-        );
+        const nextPath = safeLocalPath(sp.get("next") || pending?.nextPath, "/radar");
         const resultId = sp.get("result") || pending?.resultId || "";
 
         const oauthError =
