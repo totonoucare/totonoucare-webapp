@@ -4,18 +4,13 @@ import { requireUser } from "@/lib/requireUser";
 import { getBillingStatus } from "@/lib/billingStatus";
 import { RECORDS_SUBSCRIPTION_PRODUCT } from "@/lib/records/policy";
 import { stripeModeFromSecret } from "@/lib/stripeMode";
+import { safeLocalPath } from "@/lib/safeReturnPath";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getOrigin(req) {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
-}
-
-function safeReturnPath(value, fallback = "/records") {
-  if (typeof value !== "string") return fallback;
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
 }
 
 function checkoutReturnUrls(origin, returnPath) {
@@ -31,7 +26,7 @@ function checkoutReturnUrls(origin, returnPath) {
 }
 
 async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
-  const returnPath = safeReturnPath(body?.returnPath, "/records");
+  const returnPath = safeLocalPath(body?.returnPath, "/records");
   const origin = getOrigin(req);
 
   if (!origin) {
