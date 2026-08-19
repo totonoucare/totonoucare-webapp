@@ -1,4 +1,5 @@
 import { matchesLifestyleProductRole } from "@/lib/care-navi/lifestyleProductFit";
+import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -2172,6 +2173,13 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
 
 export async function POST(req) {
   try {
+    const limited = await enforcePublicApiRateLimit(req, {
+      route: "care_navi_rakuten",
+      limit: 30,
+      windowSeconds: 600,
+    });
+    if (limited) return limited;
+
     const body = await req.json().catch(() => ({}));
     const category = CATEGORY_LABELS[body?.category] ? body.category : "live";
     const policyKeys = asArray(body?.policyKeys).filter((key) => POLICY_LABELS[key]).slice(0, 3);
