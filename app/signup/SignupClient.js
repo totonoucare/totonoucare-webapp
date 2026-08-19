@@ -11,6 +11,7 @@ import {
 } from "@/lib/pendingDiagnosisAttach";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
+import { safeLocalPath } from "@/lib/safeReturnPath";
 
 function IconMail() {
   return (
@@ -75,10 +76,7 @@ export default function SignupClient() {
     const resultId = urlResultId || fallbackPending?.resultId || "";
     const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
     const nextPathSource = urlNextRaw || fallbackPending?.nextPath || "";
-    const nextPath =
-      nextPathSource && nextPathSource.startsWith("/")
-        ? nextPathSource
-        : fallbackNext;
+    const nextPath = safeLocalPath(nextPathSource, fallbackNext);
 
     return { resultId, nextPath };
   }, [sp, fallbackPending]);
