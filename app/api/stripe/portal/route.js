@@ -2,18 +2,13 @@ import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
 import { requireUser } from "@/lib/requireUser";
 import { getPremiumStatus } from "@/lib/premium";
+import { safeLocalPath } from "@/lib/safeReturnPath";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getOrigin(req) {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
-}
-
-function safeReturnPath(value, fallback = "/settings") {
-  if (typeof value !== "string") return fallback;
-  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  return value;
 }
 
 export async function POST(req) {
@@ -24,7 +19,7 @@ export async function POST(req) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const returnPath = safeReturnPath(body?.returnPath, "/settings");
+    const returnPath = safeLocalPath(body?.returnPath, "/settings");
     const origin = getOrigin(req);
     if (!origin) {
       return NextResponse.json({ error: "App URL is not configured" }, { status: 500 });
