@@ -2,6 +2,7 @@ import { runRadarSnapshotCron } from "@/lib/radar_v1/runRadarSnapshotCron";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 function jsonUtf8(payload, status = 200) {
   return new Response(JSON.stringify(payload, null, 2), {
@@ -33,7 +34,8 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const result = await runRadarSnapshotCron({
       dates: searchParams.get("dates") || "today,tomorrow",
-      limit: searchParams.get("limit") || 100,
+      limit: searchParams.get("limit") || 10,
+      cursor: searchParams.get("cursor") || null,
       force: asBool(searchParams.get("force"), true),
       dryRun: searchParams.get("dry_run") === "1",
       userId: searchParams.get("user_id") || null,
