@@ -13,9 +13,9 @@ on:
         required: false
         default: "today,tomorrow"
       limit:
-        description: "Maximum users to process"
+        description: "Users per API page (all pages are processed)"
         required: false
-        default: "100"
+        default: "10"
       force:
         description: "1 to recompute existing snapshots"
         required: false
@@ -24,7 +24,10 @@ on:
 jobs:
   build-radar-forecast-snapshots:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
+    concurrency:
+      group: radar-forecast-snapshots
+      cancel-in-progress: false
     steps:
       - name: Decide snapshot targets
         id: vars
@@ -49,14 +52,57 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           DATES: ${{ steps.vars.outputs.dates }}
           SLOT: ${{ steps.vars.outputs.slot }}
-          LIMIT: ${{ github.event.inputs.limit || '100' }}
+          LIMIT: ${{ github.event.inputs.limit || '10' }}
           FORCE: ${{ github.event.inputs.force || '1' }}
         shell: bash
         run: |
           test -n "$APP_BASE_URL"
           test -n "$CRON_SECRET"
 
-          curl --fail --show-error --silent \
-            --request GET \
-            --header "Authorization: Bearer ${CRON_SECRET}" \
-            "${APP_BASE_URL}/api/cron/radar-forecast-snapshots?dates=${DATES}&limit=${LIMIT}&force=${FORCE}&slot=${SLOT}"
+          cursor=""
+          total_failed=0
+          completed="false"
+
+          for page in $(seq 1 500); do
+            args=(
+              --fail --show-error --silent
+              --request GET
+              --header "Authorization: Bearer ${CRON_SECRET}"
+              --get
+              --data-urlencode "dates=${DATES}"
+              --data-urlencode "limit=${LIMIT}"
+              --data-urlencode "force=${FORCE}"
+              --data-urlencode "slot=${SLOT}"
+            )
+            if [ -n "$cursor" ]; then
+              args+=(--data-urlencode "cursor=${cursor}")
+            fi
+
+            response="$(curl "${args[@]}" "${APP_BASE_URL}/api/cron/radar-forecast-snapshots")"
+            echo "$response" | jq -e '.ok == true' >/dev/null
+            echo "$response" | jq '{user_count, processed, generated, cached, skipped, failed, has_more, next_cursor}'
+
+            failed="$(echo "$response" | jq -r '.failed // 0')"
+            total_failed=$((total_failed + failed))
+            has_more="$(echo "$response" | jq -r '.has_more // false')"
+            next_cursor="$(echo "$response" | jq -r '.next_cursor // empty')"
+
+            if [ "$has_more" != "true" ]; then
+              completed="true"
+              break
+            fi
+            if [ -z "$next_cursor" ] || [ "$next_cursor" = "$cursor" ]; then
+              echo "Pagination stopped: next_cursor did not advance" >&2
+              exit 1
+            fi
+            cursor="$next_cursor"
+          done
+
+          if [ "$completed" != "true" ]; then
+            echo "Pagination safety limit reached before completion" >&2
+            exit 1
+          fi
+          if [ "$total_failed" -gt 0 ]; then
+            echo "$total_failed forecast generation task(s) failed" >&2
+            exit 1
+          fi
