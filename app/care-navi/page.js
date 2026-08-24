@@ -9,6 +9,10 @@ import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/l
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 import { buildApproachTags, scorePartnerOffers } from "@/lib/care-navi/partnerOffers";
 import {
+  normalizeLifestyleShopActionKey,
+  normalizeLifestyleShopItemRole,
+} from "@/lib/care-navi/lifestyleShopContext";
+import {
   deriveCarePolicies,
   getForecastTriggerFactors,
   getJstTodayTomorrow,
@@ -125,13 +129,14 @@ const FOOD_PRODUCT_ROLE_LABELS = {
 
 const CARE_NAVI_INITIAL_LIMIT = 12;
 const CARE_NAVI_EXPANDED_LIMIT = 24;
-const CARE_NAVI_TOTAL_LIMIT = 48;
 const CARE_SET_INITIAL_LIMIT = 4;
 const CARE_SET_EXPANDED_LIMIT = 5;
 const SINGLE_ITEM_INITIAL_LIMIT = 8;
 const SINGLE_ITEM_EXPANDED_LIMIT = 16;
-const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v2";
+const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v3";
 const RAKUTEN_CACHE_TTL_MS = 15 * 60 * 1000;
+const RAKUTEN_CACHE_ENTRY_LIMIT = 8;
+const RAKUTEN_SEARCH_DEBOUNCE_MS = 600;
 
 function emptyCategoryItems() {
   return { live: [], eat: [], point: [] };
@@ -140,8 +145,14 @@ function emptyCategoryItems() {
 function readRakutenResultCache(signature) {
   if (typeof window === "undefined" || !signature) return null;
   try {
-    const cached = JSON.parse(window.sessionStorage.getItem(RAKUTEN_CACHE_STORAGE_KEY) || "null");
-    if (!cached || cached.signature !== signature) return null;
+    const stored = JSON.parse(window.sessionStorage.getItem(RAKUTEN_CACHE_STORAGE_KEY) || "null");
+    const entries = Array.isArray(stored?.entries)
+      ? stored.entries
+      : stored?.signature
+        ? [stored]
+        : [];
+    const cached = entries.find((entry) => entry?.signature === signature);
+    if (!cached) return null;
     if (Date.now() - Number(cached.savedAt || 0) > RAKUTEN_CACHE_TTL_MS) return null;
     const itemsByCategory = cached.itemsByCategory;
     if (!itemsByCategory || !CATEGORY_ORDER.some((key) => safeArray(itemsByCategory[key]).length)) return null;
@@ -157,15 +168,48 @@ function readRakutenResultCache(signature) {
 function writeRakutenResultCache(signature, itemsByCategory, queries) {
   if (typeof window === "undefined" || !signature) return;
   try {
-    window.sessionStorage.setItem(RAKUTEN_CACHE_STORAGE_KEY, JSON.stringify({
+    const stored = JSON.parse(window.sessionStorage.getItem(RAKUTEN_CACHE_STORAGE_KEY) || "null");
+    const previousEntries = Array.isArray(stored?.entries)
+      ? stored.entries
+      : stored?.signature
+        ? [stored]
+        : [];
+    const nextEntry = {
       signature,
       savedAt: Date.now(),
       itemsByCategory,
       queries: safeArray(queries).slice(0, 8),
-    }));
+    };
+    const entries = [
+      nextEntry,
+      ...previousEntries.filter((entry) => entry?.signature && entry.signature !== signature),
+    ]
+      .filter((entry) => Date.now() - Number(entry.savedAt || 0) <= RAKUTEN_CACHE_TTL_MS)
+      .slice(0, RAKUTEN_CACHE_ENTRY_LIMIT);
+    window.sessionStorage.setItem(RAKUTEN_CACHE_STORAGE_KEY, JSON.stringify({ entries }));
   } catch {
     // 保存領域が使えなくても、現在の検索結果はそのまま表示する。
   }
+}
+
+async function mapWithConcurrency(items, limit, worker) {
+  const values = safeArray(items);
+  if (!values.length) return [];
+  const results = new Array(values.length);
+  let nextIndex = 0;
+
+  async function run() {
+    while (nextIndex < values.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await worker(values[index], index);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(Math.max(1, limit), values.length) }, run)
+  );
+  return results;
 }
 
 function waitForRetry(ms, signal) {
@@ -1099,13 +1143,26 @@ function RakutenStatusCard({ error, onRetry, loading }) {
       detail: "自動で一度試し直しました。現在は今の条件に近い登録済み候補を表示しています。",
       retry: true,
     },
+    RAKUTEN_PARTIAL_RESULT: {
+      title: "取得できた候補を先に表示しています。",
+      detail: "一部の検索だけ完了しなかったため、足りない部分は用途が近い登録済み候補で補っています。",
+      retry: true,
+    },
+    RAKUTEN_RATE_LIMITED: {
+      title: "商品検索が一時的に混み合っています。",
+      detail: "短時間の再試行はせず、取得済みまたは登録済みの候補を表示しています。少し時間をおいてお試しください。",
+      retry: false,
+    },
   }[error];
 
   if (content) {
     return (
       <div className="rounded-[22px] bg-[#FFF7E8] p-4 text-[14px] font-bold leading-6 text-[#77540B] ring-1 ring-[#E4C56B]/70">
         <div>{content.title}</div>
-        <div className="mt-1 text-[12px] leading-5 text-[#A36E14]">{content.detail}</div>
+        <details className="mt-1 text-[12px] leading-5 text-[#A36E14]">
+          <summary className="cursor-pointer font-black">状況の詳細</summary>
+          <div className="mt-1">{content.detail}</div>
+        </details>
         {content.retry ? (
           <button
             type="button"
@@ -2596,7 +2653,7 @@ function ShopItemCard({ item, itemPosition, setKey, trackingContext, shopEntry, 
             {priceText ? <span className="font-black text-[var(--accent-ink)]">{priceText}</span> : null}
             {item.shopName ? <span>{item.shopName}</span> : null}
           </div>
-          {isPartner && item.reason ? <p className="mt-2 text-[14px] font-bold leading-5 text-slate-500">{item.reason}</p> : item.useGuide ? <p className="mt-2 text-[14px] font-bold leading-5 text-slate-500">{item.useGuide}</p> : null}
+          {isPartner && item.reason ? <p className="mt-2 line-clamp-2 text-[14px] font-bold leading-5 text-slate-500">{item.reason}</p> : item.useGuide ? <p className="mt-2 line-clamp-2 text-[14px] font-bold leading-5 text-slate-500">{item.useGuide}</p> : null}
         </div>
       </div>
       <ShopItemActions item={item} shopEntry={shopEntry} saving={saving} onToggleInterested={onToggleInterested} />
@@ -2790,28 +2847,37 @@ function buildSingleShelfItems({ rakutenItemsByCategory, partnerItemsByCategory,
         .filter((slot) => slot?.category === category),
     ])
   );
-  const fallback = CATEGORY_ORDER.flatMap((category) =>
-    pickCandidates(policyKeys, category).map((item) => ({
-      ...item,
-      category,
-      source: item.source || "fallback",
-      sourceType: item.sourceType || "policy",
-      productRole: item.productRole || item.intentType || "general",
-      buttonText: item.buttonText || "楽天で候補を見る",
-    }))
-  );
   const candidates = diversifySingleShelfItems([
     ...CATEGORY_ORDER.flatMap((category) => safeArray(partnerItemsByCategory?.[category])),
     ...CATEGORY_ORDER.flatMap((category) => safeArray(rakutenItemsByCategory?.[category])),
     ...fromSets,
-    ...fallback,
   ]);
 
   // 単品棚にもセットと同じ用途・部位条件を通す。
   // カテゴリだけ合う首用器具などを、胃腸・腰向けの棚へ混ぜない。
-  return candidates.filter((item) => {
+  const matched = candidates.filter((item) => {
     const slots = safeArray(slotsByCategory[item?.category]);
     return slots.length ? slots.some((slot) => itemMatchesSlot(item, slot)) : false;
+  });
+
+  // 「食べる」の初期棚は、飲み物2件の間へ食品・常備素材・栄養補助を挟む。
+  // 商品が取れなかった検索語はここへ混ぜず、別の検索リンクとして表示する。
+  return CATEGORY_ORDER.flatMap((category) => {
+    const items = matched.filter((item) => item.category === category);
+    if (category !== "eat") return items;
+    const tea = items.filter((item) => ["tea", "teaBlend"].includes(item.productType)
+      || ["warm_drink", "caffeine_shift"].includes(item.productRole));
+    const other = items.filter((item) => !tea.includes(item));
+    if (!tea.length || !other.length) return items;
+    const result = [];
+    let teaIndex = 0;
+    let otherIndex = 0;
+    while (otherIndex < other.length || teaIndex < tea.length) {
+      if (otherIndex < other.length) result.push(other[otherIndex++]);
+      if (otherIndex < other.length) result.push(other[otherIndex++]);
+      if (teaIndex < tea.length) result.push(tea[teaIndex++]);
+    }
+    return result;
   });
 }
 
@@ -2856,7 +2922,27 @@ function completeCareSetWithMatchingItems(card, candidateItems) {
   };
 }
 
-function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested }) {
+function fallbackSearchQuery(policyKeys, category) {
+  const candidates = pickCandidates(policyKeys, category);
+  if (category === "eat") {
+    return candidates.find((item) => !/(茶|ティー|しょうが湯|生姜湯)/.test(`${item?.title || ""} ${item?.query || ""}`))?.query
+      || "健康食品 サプリ 栄養補助";
+  }
+  return candidates[0]?.query || (category === "point" ? "セルフケア ほぐし グッズ" : "暮らし ケア用品");
+}
+
+function SearchDiscoveryLink({ query, category }) {
+  const meta = getCategoryMeta(category);
+  const Icon = meta.icon;
+  return (
+    <div className="rounded-[20px] bg-[#F4F9F6] p-4 ring-1 ring-[#D5E5DB] sm:col-span-2">
+      <div className="flex items-center gap-2 text-[14px] font-black text-slate-800"><Icon className="h-5 w-5" />個別商品を取得できませんでした</div>
+      <a href={makeRakutenSearchUrl(query)} target="_blank" rel="sponsored nofollow noopener noreferrer" className="mt-3 inline-flex w-full items-center justify-center rounded-[16px] bg-white px-4 py-3 text-[12px] font-black text-[var(--shop-dark)] ring-1 ring-[#E3C982]">楽天市場で候補を検索する</a>
+    </div>
+  );
+}
+
+function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested, policyKeys }) {
   const [visibleCount, setVisibleCount] = useState(SINGLE_ITEM_INITIAL_LIMIT);
   useEffect(() => setVisibleCount(SINGLE_ITEM_INITIAL_LIMIT), [category, items]);
   const categoryCounts = Object.fromEntries(CATEGORY_ORDER.map((key) => [key, safeArray(items).filter((item) => item.category === key).length]));
@@ -2875,7 +2961,7 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
       <div className="grid gap-2.5 sm:grid-cols-2">
         {categoryItems.length ? categoryItems.map((item, index) => (
           <ShopItemCard key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shopEntry={shopEntryMap.get(getSetItemKey(item))} saving={savingKey === getSetItemKey(item)} onToggleInterested={onToggleInterested} />
-        )) : <div className="rounded-[20px] bg-[#F4F9F6] p-4 text-[14px] font-bold leading-5 text-slate-500 ring-1 ring-[#D5E5DB] sm:col-span-2">このカテゴリの候補は、現在の組み合わせでは見つかりませんでした。</div>}
+        )) : <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, category)} category={category} />}
       </div>
       {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[var(--shop)] px-4 py-3 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
     </div>
@@ -3081,12 +3167,10 @@ export default function CareNaviPage() {
       setLifeKeys(nextLifeKeys.filter((key) => LIFE_OPTIONS.some((item) => item.key === key)).slice(0, 3));
     }
 
-    if (/^(?:body|tension)-[a-z0-9-]{1,64}$/.test(nextLifestyleActionKey)) {
-      setLifestyleActionKey(nextLifestyleActionKey);
-    }
-    if (/^[a-z][a-z0-9_]{1,48}$/.test(nextLifestyleItemRole)) {
-      setLifestyleItemRole(nextLifestyleItemRole);
-    }
+    const safeLifestyleActionKey = normalizeLifestyleShopActionKey(nextLifestyleActionKey);
+    const safeLifestyleItemRole = normalizeLifestyleShopItemRole(nextLifestyleItemRole);
+    if (safeLifestyleActionKey) setLifestyleActionKey(safeLifestyleActionKey);
+    if (safeLifestyleItemRole) setLifestyleItemRole(safeLifestyleItemRole);
 
     if (
       nextFoodContext.policyKeys.length
@@ -3162,7 +3246,13 @@ export default function CareNaviPage() {
     ...safeArray(foodCommerceContext.needKeys),
     ...safeArray(foodCommerceContext.productRoleKeys),
   ].join("|");
+  const rakutenCategoryKeys = useMemo(
+    () => (viewMode === "single" ? [singleCategory] : CATEGORY_ORDER),
+    [viewMode, singleCategory]
+  );
+  const rakutenCategorySignature = `${viewMode}:${rakutenCategoryKeys.join("|")}`;
   const rakutenSearchSignature = JSON.stringify({
+    rakutenCategorySignature,
     priceBand,
     policyKeySignature,
     basePolicyKeySignature,
@@ -3251,13 +3341,14 @@ export default function CareNaviPage() {
                 foodNeedKeys: categoryKey === "eat" ? foodCommerceContext.needKeys : [],
                 foodProductRoleKeys: categoryKey === "eat" ? foodCommerceContext.productRoleKeys : [],
                 priceBand,
-                limit: CARE_NAVI_EXPANDED_LIMIT,
-                totalLimit: CARE_NAVI_TOTAL_LIMIT,
+                limit: viewMode === "single" ? SINGLE_ITEM_EXPANDED_LIMIT : CARE_NAVI_INITIAL_LIMIT,
+                totalLimit: CARE_NAVI_EXPANDED_LIMIT,
               }),
             });
 
             const json = await res.json().catch(() => ({}));
-            const retryable = Boolean(json?.retryable) || res.status === 429 || res.status >= 500;
+            const rateLimited = res.status === 429 || json?.code === "RATE_LIMITED";
+            const retryable = !rateLimited && (Boolean(json?.retryable) || res.status >= 500);
             if ((!res.ok || !json?.ok) && retryable && attempt === 0) {
               await waitForRetry(650 + CATEGORY_ORDER.indexOf(categoryKey) * 120, controller.signal);
               return searchCategory(categoryKey, 1);
@@ -3268,9 +3359,9 @@ export default function CareNaviPage() {
                 categoryKey,
                 items: [],
                 queries: [],
-                errors: [{ status: res.status, code: json?.status || "unavailable" }],
+                errors: [{ status: res.status, code: json?.code || json?.status || "unavailable" }],
                 requestFailed: true,
-                status: json?.status || "unavailable",
+                status: rateLimited ? "rate_limited" : json?.status || "unavailable",
               };
             }
 
@@ -3299,8 +3390,12 @@ export default function CareNaviPage() {
           }
         }
 
-        const results = await Promise.all(
-          CATEGORY_ORDER.map((categoryKey) => searchCategory(categoryKey))
+        // セット表示でもカテゴリAPIを3本同時に投げ切らず、上限2本で流す。
+        // 各カテゴリ内の楽天検索も上限2本のため、全体の瞬間並列数を最大4本に抑える。
+        const results = await mapWithConcurrency(
+          rakutenCategoryKeys,
+          2,
+          (categoryKey) => searchCategory(categoryKey)
         );
 
         const nextByCategory = emptyCategoryItems();
@@ -3315,12 +3410,13 @@ export default function CareNaviPage() {
         const normalizedQueries = unique(nextQueries).slice(0, 8);
         const allNotConfigured = results.every((result) => result.status === "not_configured");
         const anyFailed = results.some((result) => result.requestFailed);
+        const anyRateLimited = results.some((result) => result.status === "rate_limited");
 
         if (hasAnyItems) {
           setRakutenItemsByCategory(nextByCategory);
           setRakutenQueries(normalizedQueries);
           setRakutenResultSource("live");
-          setRakutenError("");
+          setRakutenError(anyRateLimited ? "RAKUTEN_RATE_LIMITED" : anyFailed ? "RAKUTEN_PARTIAL_RESULT" : "");
           writeRakutenResultCache(rakutenSearchSignature, nextByCategory, normalizedQueries);
         } else if (cached) {
           setRakutenResultSource("cached");
@@ -3332,6 +3428,8 @@ export default function CareNaviPage() {
           setRakutenError(
             allNotConfigured
               ? "RAKUTEN_NOT_CONFIGURED"
+              : anyRateLimited
+                ? "RAKUTEN_RATE_LIMITED"
               : anyFailed
                 ? "RAKUTEN_RETRYABLE_ERROR"
                 : "RAKUTEN_NO_MATCH"
@@ -3353,7 +3451,7 @@ export default function CareNaviPage() {
       }
     }
 
-    const searchTimer = window.setTimeout(searchRakutenItems, 180);
+    const searchTimer = window.setTimeout(searchRakutenItems, RAKUTEN_SEARCH_DEBOUNCE_MS);
 
     return () => {
       window.clearTimeout(searchTimer);
@@ -3696,10 +3794,10 @@ export default function CareNaviPage() {
                   ) : null}
                 </>
               ) : (
-                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />
+                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} policyKeys={policyKeys} />
               )
             ) : (
-              <div className="rounded-[22px] bg-white p-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[var(--ring)]">条件に合う商品候補を十分に組めませんでした。用途や気になる不調を少し変えてお試しください。</div>
+              <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, singleCategory)} category={singleCategory} />
             )}
 
             <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
