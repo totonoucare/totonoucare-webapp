@@ -44,18 +44,14 @@ export default function SubscriptionPaywall({
             </div>
           </div>
           <div className="mt-4 text-[14px] font-bold leading-6 text-slate-600">{copy.body}</div>
-          <div className="mt-4 grid gap-2">
-            {[
-              "記録カレンダーはこれからも無料",
-              "AI分析とEkken相談をまとめて利用",
-              "申込み・支払い管理はStripeの安全な画面で完結",
-            ].map((item) => (
-              <div key={item} className="flex items-start gap-2 rounded-[16px] bg-white/80 px-3.5 py-3 text-[12px] font-black leading-5 text-slate-600 ring-1 ring-[#DCE8DD]">
-                <span className="mt-0.5 text-[#2F816E]">✓</span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
+          <details className="mt-4 rounded-[16px] bg-white/80 px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCE8DD]">
+            <summary className="cursor-pointer font-black text-[#2F816E]">利用できる内容</summary>
+            <div className="mt-2 space-y-1">
+              <div>・記録カレンダーはこれからも無料</div>
+              <div>・AI分析とEkken相談を利用</div>
+              <div>・支払い管理はStripe画面で完結</div>
+            </div>
+          </details>
           <CheckoutButton returnPath={returnPath} className="mt-4 w-full">
             プレミアムの内容を確認する
           </CheckoutButton>
