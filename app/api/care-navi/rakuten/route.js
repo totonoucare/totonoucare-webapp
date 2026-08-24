@@ -1,4 +1,9 @@
 import { matchesLifestyleProductRole } from "@/lib/care-navi/lifestyleProductFit";
+import {
+  normalizeLifestyleShopActionKey,
+  normalizeLifestyleShopItemRole,
+} from "@/lib/care-navi/lifestyleShopContext";
+import { matchesRakutenKeywordIntent } from "@/lib/care-navi/rakutenSearchIntent";
 import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
 
 export const runtime = "nodejs";
@@ -953,25 +958,25 @@ const LIFE_QUERY_RULES = {
 
 const EAT_POLICY_DIVERSITY_ROWS = {
   shizumeru: [
-    careQueryRow("カモミール ルイボス ティー", "頭が冴えやすい日に、カフェインを避けながら温かく切り替えやすい候補です。", ["お茶", "ノンカフェイン"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    careQueryRow("GABA テアニン 機能性表示食品", "休息習慣に合わせて、表示内容を比べる栄養補助の選択肢です。", ["栄養補助", "機能性表示"], { intentType: "nutrition_support", preferredProductTypes: ["supplement"] }),
   ],
   yurumeru: [
-    careQueryRow("レモンバーム カモミール ティー", "力みが続く日に、甘いものだけで粘らず温かく切り替えやすい候補です。", ["お茶", "リラックス"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    careQueryRow("マグネシウム ビタミンB群 栄養補助 食品", "食生活が乱れた時に、栄養表示を見ながら比べる補助枠です。", ["栄養補助", "食生活"], { intentType: "nutrition_support", preferredProductTypes: ["supplement"] }),
   ],
   meguraseru: [
-    careQueryRow("陳皮 なつめ 茶", "冷えや停滞が気になる日に、香味のある一杯へ切り替えやすい候補です。", ["陳皮", "なつめ"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend", "yakuzenIngredient"] }),
+    careQueryRow("黒ごま なつめ クコ 薬膳 素材", "汁物や日々の食事へ少量足しやすい常備素材です。", ["常備素材", "食事に足す"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
   ],
   nagasu: [
-    careQueryRow("はとむぎ 小豆 茶", "重だるさがある日に、冷たい甘い飲み物へ寄せすぎない候補です。", ["はとむぎ", "小豆"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    careQueryRow("食物繊維 乳酸菌 栄養補助 食品", "食事で続けにくい時に、成分表示を比べる補助枠です。", ["食物繊維", "栄養補助"], { intentType: "nutrition_support", preferredProductTypes: ["supplement"] }),
   ],
   uruosu: [
-    careQueryRow("なつめ クコ ルイボスティー", "乾いた菓子やコーヒーだけに偏らず、温かい一杯へ戻しやすい候補です。", ["なつめ", "クコ"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    careQueryRow("白きくらげ なつめ クコ 薬膳 素材", "汁物やデザートへ少量足しやすい常備素材です。", ["常備素材", "食事に足す"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
   ],
   nukumeru: [
-    careQueryRow("しょうが湯 ノンカフェイン", "冷えが気になる日に、飲み物から温かく切り替えやすい候補です。", ["生姜", "温める"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    careQueryRow("生姜 なつめ 桂皮 薬膳 素材", "温かい汁物や料理へ少量足しやすい常備素材です。", ["常備素材", "温かい食事"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
   ],
   sasaeru: [
-    careQueryRow("なつめ 黒豆 茶", "無理を重ねた日の飲み物を、軽く整える候補です。", ["なつめ", "黒豆"], { intentType: "warm_drink", preferredProductTypes: ["tea", "teaBlend"] }),
+    careQueryRow("ビタミンB群 たんぱく質 栄養補助 食品", "食事だけで続けにくい栄養を補助する別枠です。", ["栄養補助", "食生活"], { intentType: "nutrition_support", preferredProductTypes: ["supplement"] }),
   ],
 };
 
@@ -1208,9 +1213,33 @@ function countPlansByIntent(plans, intentType) {
   return plans.filter((plan) => plan?.intentType === intentType).length;
 }
 
+function inferEatIntent(normalized) {
+  if (!normalized || normalized.intentType) return normalized;
+  const text = `${cleanKeyword(normalized.keyword)} ${uniqueStrings(normalized.tags).join(" ")}`;
+  let intentType = null;
+  let preferredProductTypes = asArray(normalized.preferredProductTypes);
+
+  if (/(サプリ|栄養補助|機能性表示|プロテイン|ビタミン|ミネラル|乳酸菌|酪酸菌|食物繊維|GABA|テアニン|グリシン|マグネシウム|鉄分)/.test(text)) {
+    intentType = "nutrition_support";
+    preferredProductTypes = uniqueStrings([...preferredProductTypes, "supplement"]);
+  } else if (/(味噌汁|みそ汁|スープ|雑炊|おかゆ|惣菜|宅食|ミール)/.test(text)) {
+    intentType = "light_meal";
+    preferredProductTypes = uniqueStrings([...preferredProductTypes, "soupMeal"]);
+  } else if (/(薬膳 素材|なつめ|棗|クコ|枸杞|陳皮|白きくらげ|黒ごま|雑穀|乾燥野菜)/.test(text) && !/(茶|ティー)/.test(text)) {
+    intentType = "ingredient";
+    preferredProductTypes = uniqueStrings([...preferredProductTypes, "yakuzenIngredient"]);
+  } else if (/(茶|ティー|しょうが湯|生姜湯|葛湯|チャイ|ノンカフェイン|カフェインレス)/.test(text)) {
+    intentType = "warm_drink";
+    preferredProductTypes = uniqueStrings([...preferredProductTypes, "tea", "teaBlend"]);
+  }
+
+  return { ...normalized, intentType, preferredProductTypes };
+}
+
 function canAddEatPlan(plans, normalized) {
   const intentType = normalized?.intentType || null;
-  if (intentType === "warm_drink" && countPlansByIntent(plans, "warm_drink") >= 3) return false;
+  // 4本の検索計画が飲み物だけになるのを防ぎ、食品・常備素材・栄養補助を残す。
+  if (intentType === "warm_drink" && countPlansByIntent(plans, "warm_drink") >= 1) return false;
   // 味噌汁・フリーズドライスープ等はECで買う必然性が弱いので、軽食枠は高文脈の商品だけに絞る。
   if (intentType === "light_meal" && isLowValueSupermarketFoodPlan(normalized)) return false;
   if (intentType === "light_meal" && countPlansByIntent(plans, "light_meal") >= 1) return false;
@@ -1437,7 +1466,9 @@ function buildQueryPlans({
   }) : [];
 
   function addPlanFromRow(row, { policyKey, source, sourceKey }) {
-    const normalized = normalizeQueryRow(row);
+    const normalized = safeCategory === "eat"
+      ? inferEatIntent(normalizeQueryRow(row))
+      : normalizeQueryRow(row);
     const keyword = cleanKeyword(normalized?.keyword);
     if (!keyword || seenKeywords.has(keyword)) return false;
 
@@ -1479,12 +1510,8 @@ function buildQueryPlans({
 
   // 予報ページから入った時だけ、表示中の環境調整を先頭へ置く。
   // 身体操作そのものは商品へ変換せず、action idに紐づく許可済みルールだけを使う。
-  const safeLifestyleActionKey = /^(?:tool|env|foundation)-[a-z0-9-]{1,64}$/.test(String(lifestyleActionKey || ""))
-    ? String(lifestyleActionKey)
-    : "";
-  const safeLifestyleItemRole = /^[a-z][a-z0-9_]{1,48}$/.test(String(lifestyleItemRole || ""))
-    ? String(lifestyleItemRole)
-    : "";
+  const safeLifestyleActionKey = normalizeLifestyleShopActionKey(lifestyleActionKey);
+  const safeLifestyleItemRole = normalizeLifestyleShopItemRole(lifestyleItemRole);
   const lifestyleActionRow = safeCategory === "live"
     ? LIFESTYLE_ACTION_ROLE_QUERY_RULES[`${safeLifestyleActionKey}:${safeLifestyleItemRole}`]
       || LIFESTYLE_ACTION_LIVE_QUERY_RULES[safeLifestyleActionKey]
@@ -1706,6 +1733,10 @@ function isAcceptableForPlanProductType(item, plan) {
   return true;
 }
 
+function matchesPlanKeywordIntent(item, plan) {
+  return matchesRakutenKeywordIntent(rakutenItemText(item), plan?.keyword);
+}
+
 function isAcceptableRakutenItem(item, plan) {
   const text = rakutenItemText(item);
   if (!text) return false;
@@ -1723,7 +1754,9 @@ function isAcceptableRakutenItem(item, plan) {
     if (plan?.qualityTeaSearch && BEVERAGE_REJECT_PATTERN.test(text)) return false;
   }
 
-  return isAcceptableBeverageItem(item, plan) && isAcceptableForPlanProductType(item, plan);
+  return matchesPlanKeywordIntent(item, plan)
+    && isAcceptableBeverageItem(item, plan)
+    && isAcceptableForPlanProductType(item, plan);
 }
 
 function scoreKanchaPriority(item, plan) {
@@ -1847,13 +1880,13 @@ function productFamilyKey(item, productType) {
 
 function scoreEatProductType(productType, plan) {
   const base = {
-    soupMeal: -6,
-    teaBlend: 4,
-    tea: 3,
-    yakuzenIngredient: 4,
-    supplement: -2,
+    soupMeal: 0,
+    teaBlend: 1,
+    tea: 0,
+    yakuzenIngredient: 3,
+    supplement: 2,
     drinkware: -3,
-    foodOther: -5,
+    foodOther: -2,
   };
 
   let score = base[productType] || 0;
@@ -2080,6 +2113,44 @@ function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit =
   return balanced.slice(0, totalLimit);
 }
 
+function diversifyEatItems(items, { displayLimit = 8, totalLimit = 24 } = {}) {
+  const ranked = asArray(items).filter(Boolean);
+  const isDrink = (item) => ["tea", "teaBlend"].includes(item?.productType)
+    || ["warm_drink", "caffeine_shift"].includes(item?.productRole);
+  const drinks = ranked.filter(isDrink);
+  const others = ranked.filter((item) => !isDrink(item));
+  if (!drinks.length || !others.length) return ranked.slice(0, totalLimit);
+
+  // 初期表示では飲み物を最大2件にし、食品・素材・栄養補助を先に比べられるようにする。
+  const earlyLimit = Math.min(displayLimit, 8, totalLimit);
+  const early = [];
+  let otherIndex = 0;
+  let drinkIndex = 0;
+  while (early.length < earlyLimit && (otherIndex < others.length || drinkIndex < drinks.length)) {
+    const preferDrink = early.length === 2 || early.length === 5;
+    if (preferDrink && drinkIndex < drinks.length && drinkIndex < 2) {
+      early.push(drinks[drinkIndex]);
+      drinkIndex += 1;
+      continue;
+    }
+    if (otherIndex < others.length) {
+      early.push(others[otherIndex]);
+      otherIndex += 1;
+      continue;
+    }
+    if (drinkIndex < drinks.length && drinkIndex < 2) {
+      early.push(drinks[drinkIndex]);
+      drinkIndex += 1;
+      continue;
+    }
+    break;
+  }
+
+  const used = new Set(early.map((item) => item?.familyKey || item?.itemCode || item?.itemUrl || item?.title));
+  const rest = ranked.filter((item) => !used.has(item?.familyKey || item?.itemCode || item?.itemUrl || item?.title));
+  return [...early, ...rest].slice(0, totalLimit);
+}
+
 async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   const url = new URL(RAKUTEN_ITEM_SEARCH_ENDPOINT);
   url.searchParams.set("applicationId", credentials.applicationId);
@@ -2092,7 +2163,10 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   url.searchParams.set("availability", "1");
   url.searchParams.set("imageFlag", "1");
   url.searchParams.set("carrier", "2");
-  url.searchParams.set("field", "0");
+  // 商品名・説明の広すぎる拾い方を避け、楽天側でも一致範囲を狭める。
+  // orFlagは代替商品を一行で扱う既存辞書との互換のため維持し、複数語一致は
+  // matchesPlanKeywordIntentで必ず再検証する。
+  url.searchParams.set("field", "1");
   url.searchParams.set("orFlag", "1");
   url.searchParams.set("sort", "standard");
 
@@ -2299,7 +2373,10 @@ export async function POST(req) {
       })
       .sort((a, b) => b.score - a.score);
 
-    const balancedItems = selectBalancedItems(deduped, policyKeys, { displayLimit, totalLimit });
+    const selectedItems = selectBalancedItems(deduped, policyKeys, { displayLimit, totalLimit });
+    const balancedItems = category === "eat"
+      ? diversifyEatItems(selectedItems, { displayLimit, totalLimit })
+      : selectedItems;
 
     if (!balancedItems.length && errors.length === plans.length) {
       return jsonUtf8({
