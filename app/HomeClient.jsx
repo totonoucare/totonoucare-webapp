@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
+import { CONSTITUTION_CHECK_INTRO } from "@/lib/diagnosis/v2/uiCopy";
 import {
   HeroTitleMark,
   HomeHeaderMenu,
@@ -847,7 +848,7 @@ function GuestStartCta({ onCheck, onLogin }) {
             体質トリセツを作って、体調予報とパーソナルケアショップへ
           </h2>
           <p className="mt-2 text-[14px] font-bold leading-6 text-[#5b6674]">
-            4〜6分で、体質のクセを多面的に整理。基本14問、回答に応じた追加0〜4問、最後の不調1問から、張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。
+            {CONSTITUTION_CHECK_INTRO}
           </p>
         </div>
       </div>
@@ -1064,7 +1065,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   let icon = <IconCheckCard />;
   let eyebrow = "TYPE GUIDE";
   let title = "体質トリセツを作る";
-  let body = "4〜6分で、体質のクセを多面的に整理。基本14問、回答に応じた追加0〜4問、最後の不調1問から、張りつめやすさ、だるさや冷えの出やすさ、負担を受け止める余力、巡りや潤い、負担が出やすい体のラインまで読み解きます。この結果をもとに、今日・明日の体調予報と、暮らす・食べる・ほぐすのケアをあなた向けに整えます。";
+  let body = CONSTITUTION_CHECK_INTRO;
   let primaryLabel = "無料で体質チェックを始める";
   let secondaryLabel = "使い方を見る";
 
