@@ -118,20 +118,25 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
   }
   if (consent?.active) {
     return (
-      <div className="rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-        AIには、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話を送ります。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。期間の振り返りと今の体調相談の会話は分けて扱います。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
-        <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
-      </div>
+      <details className="rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
+        <summary className="cursor-pointer font-black text-slate-600">AIへのデータ共有：同意済み</summary>
+        <div className="mt-2 text-slate-500">
+          AIには、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話を送ります。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。期間の振り返りと今の体調相談の会話は分けて扱います。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。
+        </div>
+        <button type="button" disabled={saving} onClick={onRevoke} className="mt-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
+      </details>
     );
   }
   return (
     <div className="rounded-[24px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
       <div className="text-[12px] font-black tracking-[0.14em] text-[#A56C18]">AI利用前の確認</div>
-      <div className="mt-1 text-[14px] font-black text-slate-900">記録の一部をAIへ送って分析します</div>
-      <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
-        送信するのは、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話です。期間の振り返りと今の体調相談の会話は分けて扱います。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。
-      </div>
-      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、AI分析を使う"}</Button>
+      <div className="mt-1 text-[14px] font-black text-slate-900">体質トリセツと予報・記録を使って振り返ります</div>
+      <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。</div>
+      <details className="mt-3 rounded-[16px] bg-white/70 px-3 py-2.5 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#EED8B4]">
+        <summary className="cursor-pointer font-black text-[#8F651E]">送信内容とAIの範囲</summary>
+        <div className="mt-2">送信するのは、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話です。入力したメモや会話は送信対象になります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。</div>
+      </details>
+      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "AI分析を使う"}</Button>
     </div>
   );
 }
@@ -543,9 +548,10 @@ export default function AiAnalysisPanel({
         <div className="mt-4">
           {rangeLoading ? <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
         </div>
-        <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-4 text-slate-400 ring-1 ring-[#E8F0EB]">
-          体調ゆらぎ度は、記録に合わせて後から書き換えない予報です。予報・試したケア・実際の体調から、どんな日に何をすると過ごしやすかったかと、次に試すことを整理します。
-        </div>
+        <details className="mt-3 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
+          <summary className="cursor-pointer font-black text-slate-500">グラフの見方</summary>
+          <div className="mt-2">体調ゆらぎ度は、記録に合わせて後から書き換えない予報です。予報・試したケア・実際の体調から、どんな日に何をすると過ごしやすかったかを整理します。</div>
+        </details>
       </section>
 
       <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
@@ -695,7 +701,10 @@ export default function AiAnalysisPanel({
         )}
 
         {error ? <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-        <div className="mt-3 text-[12px] font-bold leading-4 text-slate-400">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
+        <details className="mt-3 text-[12px] font-bold leading-5 text-slate-400">
+          <summary className="cursor-pointer font-black text-slate-500">AI相談の範囲</summary>
+          <div className="mt-2">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
+        </details>
       </section>
     </div>
   );

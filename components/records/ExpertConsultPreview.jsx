@@ -91,35 +91,28 @@ export default function ExpertConsultPreview({ authedFetch }) {
           </div>
         </div>
         <div className="px-4 pb-4">
-          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-7 text-slate-600 ring-1 ring-white">
-            病院に行くほどではないけれど気になる、検査では大きな異常がなくても不調が続く、セルフケアだけでは追いつかない。そんな時に、鍼灸師などの国家資格者へ相談できます。AI分析を使っていなくても相談できます。
-          </div>
+          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-white">記録を引き継ぎ、セルフケアだけでは整理しにくい不調を相談できます。AI分析を使っていなくても相談できます。</div>
         </div>
       </section>
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
-        <div className="text-[12px] font-black tracking-[0.1em] text-[#2F816E]">アプリの記録が相談前の情報になります</div>
-        <div className="mt-2 rounded-[20px] bg-[#F4FAF7] px-4 py-3.5 text-[14px] font-bold leading-7 text-slate-600 ring-1 ring-[#DCE8DD]">
-          体質トリセツ、気になる不調、毎日の予報・実感、試したケアを相談前に確認。一から説明する時間を減らし、今の状態を詳しく見てもらえます。
-        </div>
-
-        <div className="mt-4 text-[12px] font-black tracking-[0.1em] text-slate-500">相談できること</div>
-        <div className="mt-3 grid gap-2.5">
-          <Feature title="不調と生活の経過を詳しく整理" lead="記録だけでは分からない経過や生活背景を聞き取り、今優先したいことを整理します。" />
-          <Feature title="ツボ・お灸・生活ケアを一緒に確認" lead="舌・姿勢・動作などを参考に確認し、市販灸・円皮鍼・ツボ・身体の使い方を画面越しに一緒に試します。" />
-          <Feature title="相談後のケアプランを持ち帰る" lead="今週優先することや天気が変わる時の備え方を、自分で続けられる形にまとめます。" />
-        </div>
-        <div className="mt-3 rounded-[18px] bg-[#FFF8EC] px-3.5 py-3 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#EED8B4]">
-          担当者の資格と対応範囲に応じて、一般用漢方薬を検討する時の考え方や、適切な相談先についても整理します。
-        </div>
+        <div className="text-[15px] font-black text-slate-900">相談前の説明を短くできます</div>
+        <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">アプリの記録が相談前の情報になります。</div>
+        <details className="mt-3 rounded-[20px] bg-[#F4FAF7] px-3.5 py-3 ring-1 ring-[#DCE8DD]">
+          <summary className="cursor-pointer text-[12px] font-black text-[#2F816E]">相談でできること</summary>
+          <div className="mt-3 grid gap-2.5">
+            <Feature title="不調と生活の経過を整理" lead="一から説明する時間を減らし、今優先したいことを整理します。" />
+            <Feature title="舌・姿勢・動作などを参考に確認" lead="市販灸・円皮鍼・ツボなどの取り入れ方を一緒に試します。" />
+            <Feature title="相談後のケアプラン" lead="今週の一手を、自分で続けられる形にまとめます。" />
+          </div>
+          <div className="mt-3 text-[12px] font-bold leading-5 text-slate-500">担当者の資格と対応範囲に応じて、一般用漢方薬を検討する時の考え方や、適切な相談先も整理します。</div>
+        </details>
       </section>
 
       <section className="rounded-[30px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
         <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">準備中</div>
         <div className="mt-1 text-[17px] font-black text-slate-900">オンライン相談の開始をお知らせします</div>
-        <div className="mt-2 text-[14px] font-bold leading-7 text-slate-600">
-          人に詳しく相談したい時に利用できるサービスを準備しています。希望する方には、開始時にお知らせします。
-        </div>
+        <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">登録すると、開始時にお知らせします。</div>
 
         <Button
           variant={interested ? "secondary" : "primary"}
@@ -134,9 +127,10 @@ export default function ExpertConsultPreview({ authedFetch }) {
         </div>
         {error ? <div className="mt-3 text-center text-[12px] font-bold text-[#B75C3E]">{error}</div> : null}
 
-        <div className="mt-4 border-t border-[#EED8B4] pt-3 text-[14px] font-bold leading-6 text-slate-500">
-          オンライン相談は、医療機関での診断・治療に代わるものではありません。強い症状や急な変化がある場合は、医療機関へ相談してください。
-        </div>
+        <details className="mt-4 border-t border-[#EED8B4] pt-3 text-[12px] font-bold leading-5 text-slate-500">
+          <summary className="cursor-pointer font-black">利用上の注意</summary>
+          <div className="mt-2">オンライン相談は、医療機関での診断・治療に代わるものではありません。強い症状や急な変化がある場合は、医療機関へ相談してください。</div>
+        </details>
       </section>
     </div>
   );

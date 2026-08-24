@@ -21,20 +21,23 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   }
   if (consent?.active) {
     return (
-      <div className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[10.5px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
-        Ekkenには、体質トリセツ、今日・明日の予報とケア、最近の実感・記録、任意の受診状況、この会話を送ります。氏名・メール・住所・体質チェックの生回答は自動送信しません。入力したメモや会話は送信対象です。
-        <button type="button" disabled={saving} onClick={onRevoke} className="ml-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
-      </div>
+      <details className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
+        <summary className="cursor-pointer font-black text-slate-600">AIへのデータ共有：同意済み</summary>
+        <div className="mt-2">Ekkenには、体質トリセツ、今日・明日の予報とケア、最近の実感・記録、任意の受診状況、この会話を送ります。氏名・メール・住所・体質チェックの生回答は自動送信しません。記録メモや会話欄に自分で入力した内容は送信対象です。</div>
+        <button type="button" disabled={saving} onClick={onRevoke} className="mt-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
+      </details>
     );
   }
   return (
     <div className="rounded-[22px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
       <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">AI利用前の確認</div>
-      <div className="mt-1 text-[14px] font-black text-slate-900">今の相談に必要なアプリ内データを使います</div>
-      <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
-        送信するのは、解釈済みの体質トリセツ、今日・明日の計算済み予報と表示ケア、直近14日の記録要約、直近3日の詳細、任意で登録した受診・相談状況、この相談の会話です。アカウントに登録された氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。ただし、記録メモや会話欄に自分で入力した内容は、そのまま送信対象になります。AIは診断や薬の個別判断を行いません。
-      </div>
-      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "内容を確認し、Ekkenに相談する"}</Button>
+      <div className="mt-1 text-[14px] font-black text-slate-900">予報と最近の記録を引き継いで相談します</div>
+      <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。</div>
+      <details className="mt-3 rounded-[16px] bg-white/70 px-3 py-2.5 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#EED8B4]">
+        <summary className="cursor-pointer font-black text-[#8F651E]">送信内容とAIの範囲</summary>
+        <div className="mt-2">送信するのは、解釈済み体質トリセツ、今日・明日の予報とケア、直近14日の記録要約、直近3日の詳細、任意の受診・相談状況、この会話です。入力したメモや会話は送信対象になります。AIは診断や薬の個別判断を行いません。</div>
+      </details>
+      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "Ekkenに相談する"}</Button>
     </div>
   );
 }
@@ -55,7 +58,7 @@ function ConsultationStatusCard({ status, saving, editing, onEdit, onSelect }) {
   return (
     <div className="rounded-[20px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
       <div className="text-[12px] font-black text-slate-800">現在の受診・相談状況（任意）</div>
-      <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">一度選ぶと、同じ確認を繰り返しにくくなります。症状によって状況が違う場合は、会話で補足できます。</div>
+      <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">一度選ぶと、次回から同じ確認を省けます。</div>
       <div className="mt-3 flex flex-wrap gap-2">
         {LIVE_SUPPORT_CONSULTATION_STATUS_OPTIONS.map((item) => (
           <button
@@ -498,7 +501,10 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           ) : null}
 
           {error ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-          <div className="text-[12px] font-bold leading-5 text-slate-500">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
+          <details className="text-[12px] font-bold leading-5 text-slate-500">
+            <summary className="cursor-pointer font-black text-slate-600">AI相談の範囲</summary>
+            <div className="mt-2">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
+          </details>
         </div>
       </section>
     </div>
