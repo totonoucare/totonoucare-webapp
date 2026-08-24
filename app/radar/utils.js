@@ -4,7 +4,10 @@ import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
 import { buildDailyCareTheme } from "@/lib/radar_v1/careRules/dailyCareV2";
-import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";
+import {
+  buildGroundedBodySignDetails,
+  selectDistinctBodySigns,
+} from "@/lib/radar_v1/bodySignInsights";
 import {
   getBodyResponseKey,
   getLegacyCareTriggerKey,
@@ -1489,35 +1492,8 @@ const RADAR_NARRATIVE_LEADS = {
   },
 };
 
-const RADAR_NARRATIVE_SIGN_BY_SYMPTOM = {
-  fatigue: ["目は覚めているのに、体の立ち上がりが遅く感じやすい", "少し動いただけで、だるさが戻りやすい", "休んでも体の重さが抜けにくい"],
-  sleep: ["眠いのに、頭だけ休む準備に入りにくい", "夜になっても、頭の働きが静まりにくい", "休んだつもりでも、すっきりしにくい"],
-  digestion: ["胃腸が重いと、体全体の動きも鈍くなりやすい", "食後に“もう少し座っていたい”が出やすい", "食後のもたつきが長引きやすい"],
-  neck_shoulder: ["首肩が“重い服”を着たみたいに感じやすい", "頭を支えるだけで、首すじが疲れやすい", "肩を回しても、すぐ戻る感じが出やすい"],
-  low_back_pain: ["腰まわりが、体の土台として余分に働きやすい", "座りっぱなしの後、立ち上がりが重くなりやすい", "腰腹まわりの動きが小さくなりやすい"],
-  swelling: ["顔や脚に、水分の重さを感じやすい", "足首まわりが、夕方にぼんやり重くなりやすい", "靴下の跡や脚の張りが残りやすい"],
-  headache: ["頭だけでなく、首・耳・目まわりもセットで重くなりやすい", "画面刺激のあと、頭の中が混み合いやすい", "頭の重さと首肩のこわばりが重なりやすい"],
-  dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れやすい", "頭だけ先に動いて、体があとから追いつく感じが出やすい", "動き出しの一拍目に、ふわっとしやすい"],
-  mood: ["気持ちの切り替えに時間がかかりやすい", "疲れているのに、焦りや落ち着かなさが先に出やすい", "いつもなら流せる小さな刺激が気になりやすい"],
-  default: ["いつもより体の小さな違和感に気づきやすい", "天気の負荷が重なると、重さやこわばりが少し出やすい", "無理を重ねず、軽く整える方が合いやすい"],
-};
-
-const RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM = {
-  // 安定の日は断定しすぎず、「少し〜かも」で小さな観察ポイントとして出す。
-  fatigue: ["体の立ち上がりが少しゆっくりになるかも", "少し動いた後に、だるさが戻るかも", "休んだあとも重さが少し残るかも"],
-  sleep: ["頭だけ休む準備に入りにくいかも", "夜になっても、頭の働きが少し静まりにくいかも", "休んだあとも、すっきりしにくいかも"],
-  digestion: ["食後に“もう少し座っていたい”が出るかも", "胃腸の動きが少しゆっくりになるかも", "冷たい・甘い・脂っこいが重なると、少しもたつくかも"],
-  neck_shoulder: ["首肩が“重い服”を着たように少し重く感じるかも", "頭を支えるだけで、首すじが少し疲れるかも", "肩を回しても、すぐ戻るかも"],
-  low_back_pain: ["腰まわりが土台として少し働きすぎるかも", "座りっぱなしの後、立ち上がりが少し重いかも", "足元やお腹の冷えが、腰に少し回るかも"],
-  swelling: ["顔や脚に水分の重さが少し残るかも", "足首まわりが夕方にぼんやり重いかも", "冷たさ・甘さ・塩気が重なると、少し残るかも"],
-  headache: ["頭だけでなく首・耳・目も少し重いかも", "画面を見た後、頭の中が少し混み合うかも", "首肩のこわばりが、頭に少し回るかも"],
-  dizziness: ["立ち上がりや振り向きで、体の向きが一拍遅れるかも", "頭だけ先に動いて、体があとから追いつくかも", "空腹・急な動き・首のこわばりが重なると、少し揺れるかも"],
-  mood: ["気持ちの切り替えに少し時間がかかるかも", "疲れているのに、焦りや落ち着かなさが先に出るかも", "いつもなら流せる小さな刺激が気になるかも"],
-  default: ["いつもより小さな違和感が出るかも", "天気の負荷が重なると、重さが少し残るかも", "無理を重ねず、軽く整える方が合うかも"],
-};
-
 const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
-  damp: "湿気を含んだ服を着たような重さが、少し出るかも",
+  damp: "湿気が多い日は、全身に重だるさが少し出るかも",
   pressure_down: "頭・耳・首まわりに、少しこもるかも",
   pressure_up: "体が知らないうちに、少し前のめりになるかも",
   temp_shift: "寒暖差に合わせるため、体が少しこわばるかも",
@@ -1527,7 +1503,7 @@ const RADAR_NARRATIVE_STABLE_WEATHER_POINT = {
 };
 
 const RADAR_NARRATIVE_WEATHER_SIGN = {
-  damp: "湿気を含んだ服を着たような重さが出やすい",
+  damp: "湿気が多い日は、全身の重だるさが出やすい",
   pressure_down: "頭・耳・首まわりに、こもる重さが出やすい",
   pressure_up: "体が知らないうちに前のめりになりやすい",
   temp_shift: "寒暖差に合わせるため、体がこわばりやすい",
@@ -1701,20 +1677,19 @@ function getNarrativeBodySigns(
   });
 
   if (level === 0) {
-    const symptomPoints = RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_STABLE_SIGN_BY_SYMPTOM.default;
     const weatherPoint = RADAR_NARRATIVE_STABLE_WEATHER_POINT[key];
     return rewriteBodyCopyForPressure(
-      uniqueTake([weatherPoint, ...groundedDetails, ...symptomPoints], 3),
+      selectDistinctBodySigns([...groundedDetails, weatherPoint], 3),
       triggerFactors
     );
   }
 
-  const symptomSigns = RADAR_NARRATIVE_SIGN_BY_SYMPTOM[symptomFocus] || RADAR_NARRATIVE_SIGN_BY_SYMPTOM.default;
   const weatherSign = RADAR_NARRATIVE_WEATHER_SIGN[key];
 
+  // 個別性の高い二つを先に置き、広い天気反応は意味が重ならない時だけ補う。
   // 見出し側で「今日/明日」を出すため、本文はサイン単体として読める形にする。
   return rewriteBodyCopyForPressure(
-    uniqueTake([weatherSign, ...groundedDetails, ...symptomSigns], 3),
+    selectDistinctBodySigns([...groundedDetails, weatherSign], 3),
     triggerFactors
   );
 }
