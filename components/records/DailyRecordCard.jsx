@@ -234,7 +234,7 @@ export default function DailyRecordCard({
     },
     attention_difficult: {
       title: "いたわり・守り予報でつらさがあった",
-      body: "体調ゆらぎ度、天気ストレス、ケアの内容と時刻を一緒に振り返ります。",
+      body: "体調警戒度、天気ストレス、ケアの内容と時刻を一緒に振り返ります。",
     },
     stable_good: {
       title: "安定予報どおり穏やかに過ごせた",

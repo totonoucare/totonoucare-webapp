@@ -144,7 +144,7 @@ export default function RecordsTrendChart({
     <div className="overflow-hidden rounded-[26px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_16px_34px_-30px_rgba(15,23,42,0.34)]">
       <div className="border-b border-[#EEF3EF] px-4 py-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] font-black text-slate-500">
-          <span className="text-slate-700">体調ゆらぎ度 0〜100</span>
+          <span className="text-slate-700">体調警戒度 0〜100</span>
           {FORECAST_BANDS.slice().reverse().map((band) => (
             <span key={band.key} className="inline-flex items-center gap-1">
               <span className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: band.surface, border: `1px solid ${band.ink}` }} />
@@ -155,8 +155,8 @@ export default function RecordsTrendChart({
         </div>
         <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">
           {isWeekly
-            ? "週ごとの体調ゆらぎ度の平均と範囲、実感の日数、ケア日数を重ねています。"
-            : "体調ゆらぎ度と実感は別の尺度です。同じ日付で、予報→ケア→実感の流れを見比べます。"}
+            ? "週ごとの体調警戒度の平均と範囲、実感の日数、ケア日数を重ねています。"
+            : "体調警戒度と実感は別の尺度です。同じ日付で、予報→ケア→実感の流れを見比べます。"}
         </div>
 
         <div className="mt-3">
@@ -217,7 +217,7 @@ export default function RecordsTrendChart({
             className="h-[404px]"
             style={{ width, minWidth: width }}
             role="img"
-            aria-label="体調ゆらぎ度、天気ストレス、実感、ケアを同じ日付で表示した推移"
+            aria-label="体調警戒度、天気ストレス、実感、ケアを同じ日付で表示した推移"
           >
             {FORECAST_BANDS.map((band) => (
               <rect
@@ -375,8 +375,8 @@ export default function RecordsTrendChart({
               </div>
               <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
                 {selectedPoint.is_aggregate
-                  ? `体調ゆらぎ度 平均${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_min != null ? `（${formatForecastValue(selectedPoint.forecast_min)}〜${formatForecastValue(selectedPoint.forecast_max)}）` : ""}・${actualSummary(selectedPoint)}`
-                  : `体調ゆらぎ度：${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_severity == null ? "" : `（${signalLabel(selectedPoint.forecast_severity)}）`}・実感：${ACTUAL_META[selectedPoint.actual_severity]?.symbol || "－"} ${ACTUAL_META[selectedPoint.actual_severity]?.label || "未記録"}`}
+                  ? `体調警戒度 平均${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_min != null ? `（${formatForecastValue(selectedPoint.forecast_min)}〜${formatForecastValue(selectedPoint.forecast_max)}）` : ""}・${actualSummary(selectedPoint)}`
+                  : `体調警戒度：${formatForecastValue(selectedPoint.forecast)}/100${selectedPoint.forecast_severity == null ? "" : `（${signalLabel(selectedPoint.forecast_severity)}）`}・実感：${ACTUAL_META[selectedPoint.actual_severity]?.symbol || "－"} ${ACTUAL_META[selectedPoint.actual_severity]?.label || "未記録"}`}
               </div>
               <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">
                 主な天気ストレス：{selectedPoint.trigger_label || "記録なし"}

@@ -550,7 +550,7 @@ export default function AiAnalysisPanel({
         </div>
         <details className="mt-3 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
           <summary className="cursor-pointer font-black text-slate-500">グラフの見方</summary>
-          <div className="mt-2">体調ゆらぎ度は、記録に合わせて後から書き換えない予報です。予報・試したケア・実際の体調から、どんな日に何をすると過ごしやすかったかを整理します。</div>
+          <div className="mt-2">体調警戒度は、記録に合わせて後から書き換えない予報です。予報・試したケア・実際の体調から、どんな日に何をすると過ごしやすかったかを整理します。</div>
         </details>
       </section>
 
