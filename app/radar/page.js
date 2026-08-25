@@ -917,6 +917,7 @@ export default function RadarPage() {
     ),
     [triggerFactors, forecast?.signal, symptomFocus, displayDateMode, activeTargetDate, riskContext]
   );
+  const showBodySignNumbers = bodySigns.length > 1;
   const weatherLoadGroups = useMemo(
     () => getForecastWeatherLoadGroups(forecast),
     [forecast]
@@ -1744,18 +1745,20 @@ export default function RadarPage() {
                             key={`${sign}-${index}`}
                             className="flex items-start gap-2.5 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]"
                           >
-                            <span
-                              className={[
-                                "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-black text-white shadow-sm",
-                                forecast.signal === 2
-                                  ? "bg-[#E38949]"
-                                  : forecast.signal === 1
-                                  ? "bg-[#E2AE45]"
-                                  : "bg-[#66B9A3]",
-                              ].join(" ")}
-                            >
-                              {index + 1}
-                            </span>
+                            {showBodySignNumbers ? (
+                              <span
+                                className={[
+                                  "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-black text-white shadow-sm",
+                                  forecast.signal === 2
+                                    ? "bg-[#E38949]"
+                                    : forecast.signal === 1
+                                    ? "bg-[#E2AE45]"
+                                    : "bg-[#66B9A3]",
+                                ].join(" ")}
+                              >
+                                {index + 1}
+                              </span>
+                            ) : null}
                             <span className="text-[14px] font-extrabold leading-6 text-slate-800">
                               {sign}
                             </span>
