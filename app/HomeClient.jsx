@@ -309,9 +309,9 @@ function buildLiveGuideText(bundle) {
 
 
 function modeActionLabel(signal) {
-  if (signal === 2) return "守りを固める日";
-  if (signal === 1) return "早めに整える日";
-  return "いつも通りで大丈夫";
+  if (signal === 2) return "無理せず守りたい日";
+  if (signal === 1) return "いたわりたい日";
+  return "安定しやすい日";
 }
 
 const GUEST_SIGN_HINTS = {
@@ -654,7 +654,7 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
   const forecast = bundle.forecast;
   const signal = forecast.signal ?? 0;
   const score = forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? 0;
-  const percentLabel = `${Math.round(scoreToPercent(score))}%`;
+  const indexLabel = `${Math.round(scoreToPercent(score))}/100`;
   const style = modeStyle(signal);
   const factors = getForecastTriggerFactors(forecast);
 
@@ -672,7 +672,7 @@ function ForecastDayStrip({ label, dateLabel, bundle, loading, onClick, coreCode
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className={["rounded-full px-2.5 py-1 text-[12px] font-black shadow-sm ring-1", style.chip].join(" ")}>{signalText(signal)}</span>
           <span className="rounded-full bg-white/68 px-2 py-0.5 text-[12px] font-black text-slate-500 ring-1 ring-white/70">
-            体調ゆらぎ度 {percentLabel}
+            体調警戒度 {indexLabel}
           </span>
         </div>
       </div>
