@@ -272,7 +272,7 @@ export default function GuidePage() {
 
             <div className="pt-1 text-[12px] font-black tracking-[0.12em] text-slate-400">毎日の基本</div>
             <FlowItem num="1" title="今日・明日の体調ゆらぎを見る">
-              体調ゆらぎ度と、安定・いたわり・守りのモードから、その日にどのくらい備えるかを確認します。
+              体調警戒度と、安定・いたわり・守りのモードから、その日にどのくらい備えるかを確認します。
             </FlowItem>
             <FlowItem num="2" title="対策ケアで先回りする" tone="amber">
               暮らす・食べる・ほぐすの中から、無理なくできそうなものを一つ選びます。実際に試したら、その場で「やってみた」を押して記録します。
@@ -305,12 +305,12 @@ export default function GuidePage() {
         <Module className="bg-white p-5 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)] sm:p-6">
           <div className="mb-2 text-[19px] font-black tracking-tight text-slate-900">体調予報と対策ケア</div>
           <div className="mb-5 text-[14px] font-bold leading-6 text-slate-600">
-            体調ゆらぎ度で細かな変化を見て、3つのモードで今日の行動を決めます。そのままケア記録までつなげられます。
+            体調警戒度で細かな変化を見て、3つのモードで今日の行動を決めます。そのままケア記録までつなげられます。
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="amber" title="体調ゆらぎ度と3つのモード" icon={<IconRadar />}>
-              体調ゆらぎ度は、気圧・気温・湿度の変化や極端さに、あなたのベース体質と余力を重ねた0〜100の予報値です。症状が出る確率や、実際のつらさの点数ではありません。
+            <GuideCard tone="amber" title="体調警戒度と3つのモード" icon={<IconRadar />}>
+              体調警戒度は、気圧・気温・湿度の変化や極端さに、あなたのベース体質と余力を重ねた0〜100の予報値です。症状が出る確率や、実際のつらさの点数ではありません。
               <ModeGuide />
             </GuideCard>
 
@@ -382,7 +382,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <GuideCard tone="indigo" title="グラフは3段で見る" icon={<IconAnalysis />}>
-              上段に体調ゆらぎ度、中段に実感○・△・×、下段にケアとタイミングを表示します。体調ゆらぎ度と実感は別の尺度なので、同じ縦軸には重ねません。
+              上段に体調警戒度、中段に実感○・△・×、下段にケアとタイミングを表示します。体調警戒度と実感は別の尺度なので、同じ縦軸には重ねません。
               <CheckList
                 items={[
                   "日をタップすると、天気ストレス・ケア・メモなどを確認できます。",
@@ -401,7 +401,7 @@ export default function GuidePage() {
                 ]}
               />
               <div className="mt-3 rounded-[16px] bg-white/75 px-3 py-2.5 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-white">
-                条件の違いによる勘違いを減らすため、同じ天気ストレスや近い体調ゆらぎ度の日を中心に見比べます。記録が少ない時は、効果を断定せず小さな手がかりとして扱います。
+                条件の違いによる勘違いを減らすため、同じ天気ストレスや近い体調警戒度の日を中心に見比べます。記録が少ない時は、効果を断定せず小さな手がかりとして扱います。
               </div>
             </GuideCard>
 
