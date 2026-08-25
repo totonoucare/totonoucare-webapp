@@ -1231,7 +1231,11 @@ function weatherLoadIconKey(exact, direction) {
 
 function weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load }) {
   const meaningful = Number(weatherStrength || 0) > 0.05 || Number(load || 0) > 0.05;
-  if (!meaningful) return "大きな変化なし";
+  if (!meaningful) {
+    if (group === "temperature") return "気温穏やか";
+    if (group === "moisture") return "湿度穏やか";
+    return "気圧穏やか";
+  }
   if (group === "temperature") {
     if (exact === "cold") return "低温";
     if (exact === "heat") return "高温";
@@ -1240,7 +1244,7 @@ function weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load
     return "寒暖差";
   }
   if (group === "moisture") return exact === "dry" ? "乾燥" : "湿気";
-  if (direction === "mixed") return "上下変動";
+  if (direction === "mixed") return "気圧変動";
   return exact === "pressure_up" || direction === "up" ? "気圧上昇" : "気圧低下";
 }
 
@@ -1295,6 +1299,8 @@ export function getForecastWeatherLoadGroups(forecast) {
     riskContext?.weather_context?.channel_peaks ||
     null;
   const reserveScalar = Number(personalizedMeta?.reserve_scalar || 1);
+  const primaryFactor = getForecastTriggerFactors(forecast)[0] || null;
+  const primaryGroup = weatherLoadGroupFromExact(primaryFactor?.exact || primaryFactor?.key);
 
   return WEATHER_LOAD_GROUP_ORDER.map((group) => {
     const item = byGroup[group] || null;
@@ -1340,6 +1346,7 @@ export function getForecastWeatherLoadGroups(forecast) {
       peakEnd: showPeak ? peakEnd : null,
       attentionDirection: showPeak ? attentionDirection : null,
       personalized: item?.personalized !== false,
+      isPrimary: item?.role === "primary" || group === primaryGroup,
     };
   });
 }

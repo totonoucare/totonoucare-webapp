@@ -84,20 +84,20 @@ function getModeMeta(signal) {
     return {
       label: "守りモード",
       shortLabel: "守り",
-      caption: "無理を重ねない日",
+      caption: "無理せず守りたい日",
     };
   }
   if (level === 1) {
     return {
       label: "いたわりモード",
       shortLabel: "いたわり",
-      caption: "早めに整える日",
+      caption: "いたわりたい日",
     };
   }
   return {
     label: "安定モード",
     shortLabel: "安定",
-    caption: "影響は少なめの日",
+    caption: "安定しやすい日",
   };
 }
 
@@ -193,10 +193,8 @@ export function ForecastGauge({
     gaugeStart + ((gaugeEnd - gaugeStart) * value) / 10;
 
   const valueAngle = scoreToAngle(animatedScore);
-  const animatedPercentValue = Math.max(0, Math.min(100, animatedScore * 10));
-  const animatedPercent = Math.abs(animatedPercentValue - Math.round(animatedPercentValue)) < 0.05
-    ? String(Math.round(animatedPercentValue))
-    : animatedPercentValue.toFixed(1);
+  const animatedIndexValue = Math.max(0, Math.min(100, animatedScore * 10));
+  const animatedIndex = String(Math.round(animatedIndexValue));
 
   const outerRadius = 112;
   const innerRadius = 80;
@@ -219,7 +217,7 @@ export function ForecastGauge({
   const startLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeStart);
   const midLabelPos = polarToCartesian(cx, cy, rangeRadius + 12, scoreToAngle(5));
   const endLabelPos = polarToCartesian(cx, cy, rangeRadius + 10, gaugeEnd);
-  const modePillLabel = settled ? mode.caption : "崩れやすさを確認中";
+  const modePillLabel = settled ? mode.caption : "警戒度を確認中";
 
   return (
     <div className="relative mx-auto w-full max-w-[312px] sm:max-w-[326px]">
@@ -372,20 +370,20 @@ export function ForecastGauge({
             letterSpacing="0.08em"
             fill="rgba(100,116,139,0.72)"
           >
-            体調ゆらぎ度
+            体調警戒度
           </text>
           <text
             x={170}
             y={190}
             textAnchor="middle"
-            fontSize={animatedPercent.length >= 4 ? "34" : "40"}
+            fontSize="30"
             fontWeight="950"
             fill={tone.main}
             stroke="rgba(255,255,255,0.95)"
             strokeWidth="5"
             paintOrder="stroke"
           >
-            {animatedPercent}%
+            {animatedIndex} / 100
           </text>
 
           <text
@@ -469,6 +467,5 @@ export function ForecastGauge({
     </div>
   );
 }
-
 
 

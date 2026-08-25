@@ -48,7 +48,6 @@ import {
   getDateModeLabel,
   getForecastWeatherLoadGroups,
   getForecastEnvironmentalCautions,
-  getForecastBodySigns,
   getForecastModeLabel,
   getForecastModeLead,
   getForecastTriggerFactors,
@@ -71,12 +70,6 @@ import {
 } from "./utils";
 
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
-
-const WEATHER_LOAD_SHORT_LABELS = {
-  temperature: "気温",
-  moisture: "湿度",
-  pressure: "気圧",
-};
 
 function compactClockLabel(value) {
   const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
@@ -906,34 +899,18 @@ export default function RadarPage() {
     () => getForecastModeLead(triggerFactors, forecast?.signal ?? 0, displayDateMode, symptomFocus),
     [triggerFactors, forecast?.signal, displayDateMode, symptomFocus]
   );
-  const bodySigns = useMemo(
-    () => getForecastBodySigns(
-      triggerFactors,
-      forecast?.signal ?? 0,
-      symptomFocus,
-      displayDateMode,
-      activeTargetDate,
-      riskContext
-    ),
-    [triggerFactors, forecast?.signal, symptomFocus, displayDateMode, activeTargetDate, riskContext]
-  );
-  const showBodySignNumbers = bodySigns.length > 1;
   const weatherLoadGroups = useMemo(
-    () => getForecastWeatherLoadGroups(forecast),
-    [forecast]
-  );
-  const weatherLoadPeak = useMemo(
     () =>
-      weatherLoadGroups
-        .filter(
-          (factor) =>
-            factor?.load != null &&
-            factor.load >= 0.34 &&
-            factor.peakStart &&
-            factor.peakEnd
-        )
-        .sort((a, b) => Number(b.load || 0) - Number(a.load || 0))[0] || null,
-    [weatherLoadGroups]
+      getForecastWeatherLoadGroups(forecast)
+        .map((factor, index) => ({ ...factor, fixedOrder: index }))
+        .sort((a, b) => {
+          const aLoad = a?.load != null && Number.isFinite(Number(a.load)) ? Number(a.load) : -1;
+          const bLoad = b?.load != null && Number.isFinite(Number(b.load)) ? Number(b.load) : -1;
+          if (Math.abs(bLoad - aLoad) > 0.000001) return bLoad - aLoad;
+          if (Boolean(a?.isPrimary) !== Boolean(b?.isPrimary)) return a?.isPrimary ? -1 : 1;
+          return Number(a?.fixedOrder || 0) - Number(b?.fixedOrder || 0);
+        }),
+    [forecast]
   );
   const environmentalCautions = useMemo(
     () => getForecastEnvironmentalCautions(forecast),
@@ -1594,11 +1571,7 @@ export default function RadarPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 rounded-[22px] bg-white/72 px-4 py-3 text-[14px] font-extrabold leading-6 text-slate-700 ring-1 ring-black/5 shadow-sm backdrop-blur-sm">
-                  {forecastModeLead}
-                </div>
-
-                <div className="relative mt-5">
+                <div className="relative mt-4">
                   <div className="relative mx-auto max-w-[420px] px-1">
                     <ForecastGauge
                       score={forecast.score_display_0_10 ?? forecast.score_precise_0_10 ?? forecast.score_0_10}
@@ -1619,7 +1592,6 @@ export default function RadarPage() {
 
                         <div className="grid grid-cols-3 gap-2">
                           {weatherLoadGroups.map((factor, index) => {
-                            const factorShortLabel = WEATHER_LOAD_SHORT_LABELS[factor.group] || factor.label;
                             const loadToneClass = factor.loadLevelTone === "high"
                               ? "text-[#B86430]"
                               : factor.loadLevelTone === "middle"
@@ -1627,24 +1599,25 @@ export default function RadarPage() {
                                 : factor.loadLevelTone === "low"
                                   ? "text-[#2F816E]"
                                   : "text-slate-400";
+                            const showFactorPeak =
+                              factor?.load != null &&
+                              factor.load >= 0.34 &&
+                              factor.peakStart &&
+                              factor.peakEnd;
 
                             return (
                               <div
                                 key={`${factor.group}-${index}`}
-                                className="grid min-w-0 content-start gap-1.5 rounded-[18px] bg-white px-2 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
-                                title={`${factorShortLabel} ${factor.detailLabel} ストレス ${factor.loadLevelLabel}`}
+                                className="grid min-w-0 content-start gap-2 rounded-[18px] bg-white px-1.5 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
+                                title={`${factor.detailLabel} ストレス ${factor.loadLevelLabel}`}
                               >
-                                <div className="whitespace-nowrap text-[12px] font-black text-slate-600">
-                                  {factorShortLabel}
-                                </div>
-
-                                <div className="flex min-w-0 items-center justify-center gap-1">
+                                <div className="flex min-h-[24px] min-w-0 items-center justify-center gap-1">
                                   <WeatherIcon
                                     triggerKey={factor.key}
                                     direction={factor.direction}
-                                    className="h-[22px] w-[22px] shrink-0"
+                                    className="h-5 w-5 shrink-0"
                                   />
-                                  <span className="whitespace-nowrap text-[12px] font-extrabold text-slate-400">
+                                  <span className="whitespace-nowrap text-[12px] font-black text-slate-600">
                                     {factor.detailLabel}
                                   </span>
                                 </div>
@@ -1654,26 +1627,19 @@ export default function RadarPage() {
                                     {factor.loadLevelLabel}
                                   </span>
                                 </div>
+
+                                <div className="flex min-h-[22px] items-center justify-center">
+                                  {showFactorPeak ? (
+                                    <span className="inline-flex max-w-full items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#FFF7E6] px-2 py-1 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">
+                                      <IconBolt className="h-3 w-3 shrink-0 text-[#D79A2B]" />
+                                      {compactPeakLabel(factor.peakStart, factor.peakEnd)}
+                                    </span>
+                                  ) : null}
+                                </div>
                               </div>
                             );
                           })}
                         </div>
-
-                        {weatherLoadPeak ? (
-                          <div className="mt-3 flex min-w-0 items-center justify-between gap-2 rounded-full bg-white/80 px-3 py-2 text-[12px] font-black text-slate-500 ring-1 ring-[#E7EEE9] shadow-sm">
-                            <div className="flex shrink-0 items-center gap-1.5">
-                              <IconBolt className="h-3.5 w-3.5 shrink-0 text-[#D79A2B]" />
-                              <span className="whitespace-nowrap">ピーク時間帯</span>
-                            </div>
-                            <span className="min-w-0 truncate text-slate-600">
-                              {WEATHER_LOAD_SHORT_LABELS[weatherLoadPeak.group] || weatherLoadPeak.label}
-                              ・{weatherLoadPeak.detailLabel}
-                            </span>
-                            <span className="shrink-0 whitespace-nowrap text-slate-600">
-                              {compactPeakLabel(weatherLoadPeak.peakStart, weatherLoadPeak.peakEnd)}
-                            </span>
-                          </div>
-                        ) : null}
                       </div>
                     ) : null}
 
@@ -1726,47 +1692,20 @@ export default function RadarPage() {
                     ) : null}
                   </div>
 
-                  <div className="mt-4">
+                  <div className="mx-auto mt-4 max-w-[420px] px-1">
                     <div className="rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
-                          {selectedIsToday
-                            ? forecast.signal === 0 ? "見ておくポイント" : "出やすいサイン"
-                            : forecast.signal === 0 ? "明日見ておくポイント" : "明日出やすいサイン"}
+                          {selectedIsToday ? "今日の見立て" : "明日の見立て"}
                         </div>
                         <span className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1 ring-black/5">
-                          {forecast.signal === 0 ? "小さな影響" : selectedIsToday ? "体感の目安" : "明日の目安"}
+                          体感と整え方
                         </span>
                       </div>
 
-                      <div className="mt-2.5 grid gap-2">
-                        {bodySigns.map((sign, index) => (
-                          <div
-                            key={`${sign}-${index}`}
-                            className="flex items-start gap-2.5 rounded-[18px] bg-white px-3 py-2.5 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]"
-                          >
-                            {showBodySignNumbers ? (
-                              <span
-                                className={[
-                                  "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[12px] font-black text-white shadow-sm",
-                                  forecast.signal === 2
-                                    ? "bg-[#E38949]"
-                                    : forecast.signal === 1
-                                    ? "bg-[#E2AE45]"
-                                    : "bg-[#66B9A3]",
-                                ].join(" ")}
-                              >
-                                {index + 1}
-                              </span>
-                            ) : null}
-                            <span className="text-[14px] font-extrabold leading-6 text-slate-800">
-                              {sign}
-                            </span>
-                          </div>
-                        ))}
+                      <div className="mt-2.5 rounded-[18px] bg-white px-3.5 py-3 text-[14px] font-extrabold leading-6 text-slate-800 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]">
+                        {forecastModeLead}
                       </div>
-
-
                     </div>
                   </div>
                 </div>
