@@ -747,25 +747,30 @@ test("today remains morning-fixed and only tomorrow refreshes in the evening", (
   assert.match(notificationSource, /generationSlot: "notification_fallback"/);
 });
 
-test("forecast UI keeps three weather stresses simple and shows at most one meaningful peak", () => {
+test("forecast UI sorts three weather stresses by load and embeds each meaningful peak", () => {
   assert.match(radarPageSource, />天気ストレス<\/div>/);
   assert.match(radarPageSource, /grid grid-cols-3 gap-2/);
   assert.match(radarPageSource, /高・中・低の目安/);
-  assert.match(radarPageSource, /WEATHER_LOAD_SHORT_LABELS/);
+  assert.match(radarPageSource, /Math\.abs\(bLoad - aLoad\)/);
+  assert.match(radarPageSource, /a\?\.isPrimary/);
+  assert.match(radarPageSource, /factor\.detailLabel/);
   assert.match(radarPageSource, /compactPeakLabel/);
   assert.match(radarPageSource, /IconAttention/);
   assert.doesNotMatch(radarPageSource, />負荷<\/span>/);
-  assert.match(radarPageSource, /ピーク時間帯/);
   assert.match(radarPageSource, /factor\.load >= 0\.34/);
-  assert.match(radarPageSource, /weatherLoadPeak\.detailLabel/);
+  assert.match(radarPageSource, /compactPeakLabel\(factor\.peakStart, factor\.peakEnd\)/);
   assert.match(radarUtilsSource, /temperature: "気温ストレス"/);
   assert.match(radarUtilsSource, /moisture: "湿度ストレス"/);
   assert.match(radarUtilsSource, /pressure: "気圧ストレス"/);
+  assert.match(radarUtilsSource, /return "気圧変動"/);
+  assert.match(radarUtilsSource, /isPrimary: item\?\.role === "primary" \|\| group === primaryGroup/);
   assert.match(radarUtilsSource, /load >= 0\.67 \? "高" : load >= 0\.34 \? "中" : "低"/);
   assert.match(radarPageSource, /factor\.loadLevelLabel/);
-  assert.match(radarPageSource, /<IconBolt className="h-3\.5 w-3\.5 shrink-0 text-\[#D79A2B\]" \/>/);
+  assert.match(radarPageSource, /<IconBolt className="h-3 w-3 shrink-0 text-\[#D79A2B\]" \/>/);
   assert.doesNotMatch(radarPageSource, /WeatherPeakDirectionIcon/);
-  assert.doesNotMatch(radarPageSource, /weatherLoadPeak\.attentionDirection/);
+  assert.doesNotMatch(radarPageSource, /weatherLoadPeak/);
+  assert.doesNotMatch(radarPageSource, /WEATHER_LOAD_SHORT_LABELS/);
+  assert.doesNotMatch(radarPageSource, /ピーク時間帯/);
   assert.doesNotMatch(radarPageSource, /天気負荷と注意時間/);
   assert.doesNotMatch(radarPageSource, /peakPrepItems/);
   assert.doesNotMatch(radarPageSource, /注意時間の前に/);
@@ -791,10 +796,11 @@ test("weather peak language never treats the peak as symptom onset", () => {
   assert.match(forecastReasoningSource, /症状の発生時刻や悪化時刻ではない/);
 });
 
-test("weather peak pill is readable and marks cross-midnight windows explicitly", () => {
+test("weather peak chips are compact and mark cross-midnight windows explicitly", () => {
   assert.match(radarPageSource, /endHour < startHour/);
   assert.match(radarPageSource, /`\$\{startWithUnit\}–翌\$\{endWithUnit\}`/);
-  assert.match(radarPageSource, /rounded-full[\s\S]*?text-\[12px\][\s\S]*?ピーク時間帯/);
+  assert.match(radarPageSource, /showFactorPeak/);
+  assert.match(radarPageSource, /rounded-full bg-\[#FFF7E6\][\s\S]*?compactPeakLabel\(factor\.peakStart, factor\.peakEnd\)/);
 });
 
 test("weather icons separate temperature state direction and mixed changes", () => {

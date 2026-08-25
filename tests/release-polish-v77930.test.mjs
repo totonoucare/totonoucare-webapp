@@ -73,7 +73,6 @@ test("ショップ検索は表示対象だけを遅延実行し、429を即時�
 test("出やすいサインは意味が重なる時だけ1〜2件へまとめる", async () => {
   const signs = await importSource("lib/radar_v1/bodySignInsights.js");
   const radar = await source("app/radar/utils.js");
-  const radarPage = await source("app/radar/page.js");
 
   const similar = signs.selectDistinctBodySigns([
     "湿気の日は、胃腸まわりが重く感じやすい",
@@ -109,6 +108,27 @@ test("出やすいサインは意味が重なる時だけ1〜2件へまとめる
   assert.ok(selected.length >= 1 && selected.length <= 2);
   assert.doesNotMatch(radar, /湿気を含んだ服を着たような重さ/);
   assert.match(radar, /selectDistinctBodySigns\(\[\.\.\.groundedDetails, weatherSign\], 3\)/);
-  assert.match(radarPage, /const showBodySignNumbers = bodySigns\.length > 1/);
-  assert.match(radarPage, /\{showBodySignNumbers \? \(/);
+});
+
+test("予報カードは警戒度を先に示し、リードとサインを一つの見立てへ統合する", async () => {
+  const radarPage = await source("app/radar/page.js");
+  const gauge = await source("app/radar/ForecastGauge.jsx");
+  const home = await source("app/HomeClient.jsx");
+  const guide = await source("app/guide/GuideClient.jsx");
+
+  assert.match(radarPage, /<ForecastGauge/);
+  assert.match(radarPage, /selectedIsToday \? "今日の見立て" : "明日の見立て"/);
+  assert.match(radarPage, />\s*体感と整え方\s*</);
+  assert.match(radarPage, /\{forecastModeLead\}/);
+  assert.doesNotMatch(radarPage, /showBodySignNumbers|bodySigns\.map|出やすいサイン/);
+
+  assert.match(gauge, /体調警戒度/);
+  assert.match(gauge, /\{animatedIndex\} \/ 100/);
+  assert.match(gauge, /caption: "安定しやすい日"/);
+  assert.match(gauge, /caption: "いたわりたい日"/);
+  assert.match(gauge, /caption: "無理せず守りたい日"/);
+  assert.doesNotMatch(gauge, /体調ゆらぎ度|早めに整える日|無理を重ねない日/);
+
+  assert.match(home, /体調警戒度 \{indexLabel\}/);
+  assert.match(guide, /体調警戒度は、気圧・気温・湿度/);
 });

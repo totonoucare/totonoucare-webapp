@@ -19,8 +19,10 @@ test("ケア方針欄は方針ピルと一文だけを表示する", () => {
   assert.doesNotMatch(radarPageSource, /careManifestationText/);
 });
 
-test("体調の現れ方は出やすいサインと各ケアタブで具体化する", () => {
-  assert.match(radarPageSource, /bodySigns\.map/);
+test("体調の現れ方は一つの見立てと各ケアタブで具体化する", () => {
+  assert.match(radarPageSource, /selectedIsToday \? "今日の見立て" : "明日の見立て"/);
+  assert.match(radarPageSource, /\{forecastModeLead\}/);
+  assert.doesNotMatch(radarPageSource, /bodySigns\.map|出やすいサイン/);
   assert.match(
     radarPageSource,
     /lifestylePlan\.forecast_insight \|\| lifestylePlan\.lead/

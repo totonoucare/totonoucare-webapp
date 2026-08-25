@@ -206,10 +206,11 @@ test("mood and neck/shoulder signs do not invent the rejected conditions", () =>
   }
 });
 
-test("radar page passes the current risk context into the sign generator", () => {
-  assert.match(radarPageSource, /getForecastBodySigns\([\s\S]*?activeTargetDate,\s*riskContext\s*\)/);
-  assert.match(radarPageSource, /\[triggerFactors,[^\]]*activeTargetDate,\s*riskContext\]/);
+test("grounded sign generator keeps constitution context while the card uses one outlook", () => {
+  assert.match(radarUtilsSource, /getNarrativeBodySigns\([\s\S]*?targetDate,\s*constitutionContext\s*\)/);
   assert.match(radarUtilsSource, /buildGroundedBodySignDetails/);
+  assert.match(radarPageSource, /selectedIsToday \? "今日の見立て" : "明日の見立て"/);
+  assert.doesNotMatch(radarPageSource, /getForecastBodySigns|bodySigns\.map/);
   assert.doesNotMatch(
     radarUtilsSource,
     /RADAR_NARRATIVE_WEATHER_INSIGHT_CONTEXTS|RADAR_NARRATIVE_SYMPTOM_OBSERVATIONS|SYMPTOM_WEATHER_BODY_SIGN_LABELS/
