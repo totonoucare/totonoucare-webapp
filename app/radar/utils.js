@@ -135,9 +135,9 @@ export function getDateModeLabel(mode) {
 }
 
 export function buildScoreCardTitle(mode, targetDate) {
-  if (mode === "today") return "今日の体調ゆらぎ予報";
-  if (mode === "future") return `${formatTargetDate(targetDate)}の体調ゆらぎ予報`;
-  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の体調ゆらぎ予報`;
+  if (mode === "today") return "今日の体調予報";
+  if (mode === "future") return `${formatTargetDate(targetDate)}の体調予報`;
+  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の体調予報`;
 }
 
 export function getSectionLabels(mode) {
@@ -1897,9 +1897,41 @@ export function getForecastPeakPrepItems(triggerFactors, signal = 0, symptomFocu
   );
 }
 
-export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", symptomFocus = null) {
+function finiteForecastScore(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function addTomorrowComparisonLead(lead, mode, comparison = null) {
+  const text = String(lead || "").trim();
+  if (!text || mode !== "tomorrow") return text;
+
+  const currentScore = finiteForecastScore(comparison?.currentScore);
+  const todayScore = finiteForecastScore(comparison?.todayScore);
+  if (currentScore === null || todayScore === null) return text;
+
+  // 0〜10の内部値で0.5未満（表示上5ポイント未満）は体感上の誤差として扱う。
+  const delta = currentScore - todayScore;
+  const detail = text.replace(/^明日は/, "").trim();
+  const prefix = delta >= 0.5
+    ? "明日は今日より警戒度が高まる見込み。"
+    : delta <= -0.5
+      ? "明日は今日より警戒度が下がる見込み。"
+      : "明日の警戒度は今日とほぼ同じ見込み。";
+
+  return detail ? `${prefix}${detail}` : prefix;
+}
+
+export function getForecastModeLead(
+  triggerFactors,
+  signal = 0,
+  mode = "today",
+  symptomFocus = null,
+  comparison = null
+) {
   const narrative = getNarrativeLeadText(triggerFactors, signal, mode, symptomFocus);
-  if (narrative) return narrative;
+  if (narrative) return addTomorrowComparisonLead(narrative, mode, comparison);
 
   const level = Number(signal ?? 0);
   const factors = getForecastBackgroundFactors(triggerFactors);
@@ -1912,27 +1944,29 @@ export function getForecastModeLead(triggerFactors, signal = 0, mode = "today", 
   const symptomClause = getForecastSymptomLeadClause(symptomFocus, level);
   const symptomWeatherLead = getSymptomWeatherLead(symptomFocus, factorKeys);
 
+  let fallbackLead = "";
+
   if (level >= 2) {
-    return symptomWeatherLead
+    fallbackLead = symptomWeatherLead
       ? `${target}${copyLabel}の影響が強め。${symptomWeatherLead}`
       : symptomClause
         ? `${target}${copyLabel}の影響が強め。${symptomClause}です。`
         : `${target}${copyLabel}の影響が強め。守り気味に過ごしたい日です。`;
-  }
-
-  if (level >= 1) {
-    return symptomWeatherLead
+  } else if (level >= 1) {
+    fallbackLead = symptomWeatherLead
       ? `${target}${copyLabel}が少し響きそう。${symptomWeatherLead}`
       : symptomClause
         ? `${target}${copyLabel}が少し響きそう。${symptomClause}です。`
         : `${target}${copyLabel}が少し響きそう。早めに軽く整えたい日です。`;
+  } else {
+    fallbackLead = symptomWeatherLead
+      ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomWeatherLead}`
+      : symptomClause
+        ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomClause}です。`
+        : `${target}${copyLabel}の影響は少なめ。ただ、注意したい時間だけ軽く見ておきたい日です。`;
   }
 
-  return symptomWeatherLead
-    ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomWeatherLead}`
-    : symptomClause
-      ? `${target}${copyLabel}の影響は少なめ。ただ、${symptomClause}です。`
-      : `${target}${copyLabel}の影響は少なめ。ただ、注意したい時間だけ軽く見ておきたい日です。`;
+  return addTomorrowComparisonLead(fallbackLead, mode, comparison);
 }
 
 export function getMoodHeadline(triggerKey, signal) {

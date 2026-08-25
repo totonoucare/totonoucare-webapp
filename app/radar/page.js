@@ -265,8 +265,8 @@ function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationL
   const title = isLocationRefresh
     ? "地域の予報を更新中"
     : mode === "today"
-      ? "今日の体調ゆらぎ予報を確認中"
-      : "明日の体調ゆらぎ予報を確認中";
+      ? "今日の体調予報を確認中"
+      : "明日の体調予報を確認中";
   const lead = isLocationRefresh
     ? `${locationLabel || "新しい地域"}の天気と、体質への響き方を確認しています。`
     : mode === "today"
@@ -346,6 +346,7 @@ export default function RadarPage() {
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
 
   const [bundle, setBundle] = useState(null);
+  const [todayComparisonBundle, setTodayComparisonBundle] = useState(null);
   const [error, setError] = useState("");
 
   const [needsLocation, setNeedsLocation] = useState(false);
@@ -565,17 +566,21 @@ export default function RadarPage() {
       if (requestSeq !== requestSeqRef.current) return;
 
       let siblingRefreshFailed = false;
-      if (shouldRefreshBothDates) {
+      let siblingJson = null;
+      const needsTodayComparison =
+        targetDate === tomorrow &&
+        (shouldRefreshBothDates || todayComparisonBundle?.target_date !== today);
+      if (shouldRefreshBothDates || needsTodayComparison) {
         const siblingTargetDate = targetDate === today ? tomorrow : today;
         if (siblingTargetDate && siblingTargetDate !== targetDate) {
           try {
-            await requestForecastSnapshot({
+            siblingJson = await requestForecastSnapshot({
               token,
               targetDate: siblingTargetDate,
-              forceSnapshot: true,
+              forceSnapshot: shouldRefreshBothDates,
             });
           } catch (siblingError) {
-            siblingRefreshFailed = true;
+            siblingRefreshFailed = shouldRefreshBothDates;
             console.error("refresh sibling radar forecast failed:", siblingError);
           }
         }
@@ -585,6 +590,11 @@ export default function RadarPage() {
 
       setNeedsLocation(false);
       setBundle(json);
+      if (json?.target_date === today) {
+        setTodayComparisonBundle(json);
+      } else if (siblingJson?.target_date === today) {
+        setTodayComparisonBundle(siblingJson);
+      }
 
       // AI補完ルートは一時停止中。
       // ページ表示・地域変更・欠損時生成のいずれでも、ここからGPT生成は呼ばない。
@@ -891,13 +901,40 @@ export default function RadarPage() {
 
   const triggerFactors = useMemo(() => getForecastTriggerFactors(forecast), [forecast]);
   const triggerKey = triggerFactors[0]?.key || getForecastTriggerKey(forecast);
+  const currentForecastScore =
+    forecast?.score_display_0_10 ?? forecast?.score_precise_0_10 ?? forecast?.score_0_10 ?? null;
+  const todayComparisonForecast =
+    todayComparisonBundle?.target_date === todayTomorrow.today
+      ? todayComparisonBundle?.forecast || null
+      : null;
+  const todayComparisonScore =
+    todayComparisonForecast?.score_display_0_10 ??
+    todayComparisonForecast?.score_precise_0_10 ??
+    todayComparisonForecast?.score_0_10 ??
+    null;
   const forecastModeLabel = useMemo(
     () => getForecastModeLabel(forecast?.signal ?? 0),
     [forecast?.signal]
   );
   const forecastModeLead = useMemo(
-    () => getForecastModeLead(triggerFactors, forecast?.signal ?? 0, displayDateMode, symptomFocus),
-    [triggerFactors, forecast?.signal, displayDateMode, symptomFocus]
+    () => getForecastModeLead(
+      triggerFactors,
+      forecast?.signal ?? 0,
+      displayDateMode,
+      symptomFocus,
+      {
+        currentScore: currentForecastScore,
+        todayScore: todayComparisonScore,
+      }
+    ),
+    [
+      triggerFactors,
+      forecast?.signal,
+      displayDateMode,
+      symptomFocus,
+      currentForecastScore,
+      todayComparisonScore,
+    ]
   );
   const weatherLoadGroups = useMemo(
     () =>
@@ -1223,7 +1260,7 @@ export default function RadarPage() {
               明日の体調予報を表示します。
             </div>
             <div className="relative z-10 mt-3 text-[14px] font-bold leading-6 text-slate-600">
-              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の体調ゆらぎ予報と先回りケアを出します。
+              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の体調予報と先回りケアを出します。
             </div>
           </div>
 
@@ -1267,7 +1304,7 @@ export default function RadarPage() {
                 {RADAR_LOADING_HINTS[loadingHintIndex] || RADAR_LOADING_HINTS[0]}
               </div>
               <div className="mt-3 text-[14px] font-bold leading-6 text-slate-600">
-                体質と気象の重なりを見て、明日の体調ゆらぎ予報と先回りケアを組み立てています。
+                体質と気象の重なりを見て、明日の体調予報と先回りケアを組み立てています。
               </div>
               <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/80 ring-1 ring-black/5">
                 <div className="h-full w-1/3 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-[var(--accent-ink)]/55" />
