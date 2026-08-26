@@ -123,7 +123,8 @@ test("予報カードは警戒度を先に示し、リードとサインを一�
   assert.doesNotMatch(radarPage, /showBodySignNumbers|bodySigns\.map|出やすいサイン/);
 
   assert.match(gauge, /体調警戒度/);
-  assert.match(gauge, /\{animatedIndex\} \/ 100/);
+  assert.match(gauge, /<tspan fontSize="34">\{animatedIndex\}<\/tspan>/);
+  assert.match(gauge, /fontSize="18" fontWeight="900">\/ 100<\/tspan>/);
   assert.match(gauge, /caption: "安定しやすい日"/);
   assert.match(gauge, /caption: "いたわりたい日"/);
   assert.match(gauge, /caption: "無理せず守りたい日"/);
