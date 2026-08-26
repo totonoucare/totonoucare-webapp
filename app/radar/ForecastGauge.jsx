@@ -383,7 +383,8 @@ export function ForecastGauge({
             strokeWidth="5"
             paintOrder="stroke"
           >
-            {animatedIndex} / 100
+            <tspan fontSize="34">{animatedIndex}</tspan>
+            <tspan dx="5" fontSize="18" fontWeight="900">/ 100</tspan>
           </text>
 
           <text
@@ -467,5 +468,4 @@ export function ForecastGauge({
     </div>
   );
 }
-
 

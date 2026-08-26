@@ -137,7 +137,7 @@ export function getDateModeLabel(mode) {
 export function buildScoreCardTitle(mode, targetDate) {
   if (mode === "today") return "今日の体調予報";
   if (mode === "future") return `${formatTargetDate(targetDate)}の体調予報`;
-  return `${getDateModeLabel(mode)}(${formatTargetDate(targetDate)})の体調予報`;
+  return "明日の体調予報";
 }
 
 export function getSectionLabels(mode) {
@@ -1625,11 +1625,17 @@ function adaptNarrativeActionForMode(action, mode = "today") {
   const text = String(action || "").trim();
   if (!text) return "";
   if (mode === "today") return text;
-  return text
+  const adapted = text
     .replace(/^まずは/, "今夜は")
     .replace(/^今日は/, "今夜は")
+    .replace(/^夜のために、/, "今夜は")
     .replace(/^急に立たず、/, "明日に備えて、")
     .replace(/^立つ・振り向く・歩き出す前に、/, "明日に備えて、動き出しの前に");
+
+  if (/^(今夜は|明日に備えて|明日は|寝る前|夕方|夜は)/.test(adapted)) {
+    return adapted;
+  }
+  return `今夜は${adapted}`;
 }
 
 function getNarrativePrimaryKey(triggerFactors) {
@@ -1903,6 +1909,116 @@ function finiteForecastScore(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function comparisonLoadRank(factor) {
+  const load = finiteForecastScore(factor?.load);
+  if (load === null) return -1;
+  if (load >= 0.67) return 2;
+  if (load >= 0.34) return 1;
+  return 0;
+}
+
+function normalizedComparisonWeatherGroups(groups) {
+  return safeArray(groups)
+    .map((factor) => ({
+      ...factor,
+      load: finiteForecastScore(factor?.load),
+    }))
+    .filter((factor) => factor?.group && factor.load !== null);
+}
+
+function getTomorrowWeatherComparison(currentGroups, todayGroups) {
+  const current = normalizedComparisonWeatherGroups(currentGroups);
+  const today = normalizedComparisonWeatherGroups(todayGroups);
+  if (!current.length || !today.length) return "";
+
+  const byLoad = (a, b) => Number(b.load || 0) - Number(a.load || 0);
+  const currentTop = [...current].sort(byLoad)[0];
+  const todayTop = [...today].sort(byLoad)[0];
+  if (!currentTop || !todayTop) return "";
+
+  const currentTopLabel = currentTop.detailLabel || currentTop.label || "天気変化";
+  const todayTopLabel = todayTop.detailLabel || todayTop.label || "天気変化";
+
+  if (Number(currentTop.load || 0) < 0.15) {
+    return "天気ストレスは全体に小さめの見込みです。";
+  }
+
+  if (
+    currentTop.group !== todayTop.group ||
+    currentTopLabel !== todayTopLabel
+  ) {
+    return `主な天気ストレスは${todayTopLabel}から${currentTopLabel}へ移る見込みです。`;
+  }
+
+  const todayByGroup = new Map(today.map((factor) => [factor.group, factor]));
+  const changes = current
+    .map((factor) => {
+      const todayFactor = todayByGroup.get(factor.group);
+      if (!todayFactor) return null;
+      const delta = Number(factor.load || 0) - Number(todayFactor.load || 0);
+      const rankDelta = comparisonLoadRank(factor) - comparisonLoadRank(todayFactor);
+      return { factor, todayFactor, delta, rankDelta };
+    })
+    .filter(Boolean);
+
+  const secondaryChange = changes
+    .filter((change) => change.factor.group !== currentTop.group)
+    .filter((change) => change.rankDelta !== 0 || Math.abs(change.delta) >= 0.08)
+    .sort((a, b) => {
+      if (Math.abs(b.rankDelta) !== Math.abs(a.rankDelta)) {
+        return Math.abs(b.rankDelta) - Math.abs(a.rankDelta);
+      }
+      return Math.abs(b.delta) - Math.abs(a.delta);
+    })[0];
+
+  if (secondaryChange) {
+    const currentSecondaryLabel = secondaryChange.factor.detailLabel || "";
+    const todaySecondaryLabel = secondaryChange.todayFactor.detailLabel || "";
+    const genericSecondaryLabel = secondaryChange.factor.group === "temperature"
+      ? "気温ストレス"
+      : secondaryChange.factor.group === "moisture"
+        ? "湿度ストレス"
+        : "気圧変動";
+    const secondaryLabel =
+      currentSecondaryLabel && currentSecondaryLabel === todaySecondaryLabel
+        ? currentSecondaryLabel
+        : genericSecondaryLabel ||
+      secondaryChange.factor.label ||
+      "別の天気変化";
+    if (secondaryChange.rankDelta < 0 || secondaryChange.delta <= -0.08) {
+      return `${currentTopLabel}の負担は続きますが、${secondaryLabel}は弱まる見込みです。`;
+    }
+    return `${currentTopLabel}の負担が続き、${secondaryLabel}は今日より強まる見込みです。`;
+  }
+
+  const topChange = changes.find((change) => change.factor.group === currentTop.group);
+  if (topChange?.rankDelta > 0 || Number(topChange?.delta || 0) >= 0.08) {
+    return `${currentTopLabel}の負担が今日より強まる見込みです。`;
+  }
+  if (topChange?.rankDelta < 0 || Number(topChange?.delta || 0) <= -0.08) {
+    return Number(currentTop.load || 0) >= 0.34
+      ? `${currentTopLabel}の負担は今日より弱まりますが、まだ注意したい状態です。`
+      : `${currentTopLabel}の負担は今日より弱まる見込みです。`;
+  }
+
+  return `${currentTopLabel}の負担は明日も続く見込みです。`;
+}
+
+function splitNarrativeLead(lead) {
+  const detail = String(lead || "").trim().replace(/^明日は/, "");
+  const sentences = detail.split("。").map((sentence) => sentence.trim()).filter(Boolean);
+  return {
+    state: sentences[0] || "",
+    action: sentences.slice(1).join("。"),
+  };
+}
+
+function withJapanesePeriod(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  return /[。！？]$/.test(text) ? text : `${text}。`;
+}
+
 function addTomorrowComparisonLead(lead, mode, comparison = null) {
   const text = String(lead || "").trim();
   if (!text || mode !== "tomorrow") return text;
@@ -1913,13 +2029,23 @@ function addTomorrowComparisonLead(lead, mode, comparison = null) {
 
   // 0〜10の内部値で0.5未満（表示上5ポイント未満）は体感上の誤差として扱う。
   const delta = currentScore - todayScore;
-  const detail = text.replace(/^明日は/, "").trim();
   const prefix = delta >= 0.5
     ? "明日は今日より警戒度が高まる見込み。"
     : delta <= -0.5
       ? "明日は今日より警戒度が下がる見込み。"
-      : "明日の警戒度は今日とほぼ同じ見込み。";
+      : "明日の警戒度は今日とほぼ同じ。";
 
+  const weatherComparison = getTomorrowWeatherComparison(
+    comparison?.currentWeatherGroups,
+    comparison?.todayWeatherGroups
+  );
+  const { state, action } = splitNarrativeLead(text);
+
+  if (weatherComparison) {
+    return `${prefix}${weatherComparison}${withJapanesePeriod(action || state)}`;
+  }
+
+  const detail = text.replace(/^明日は/, "").trim();
   return detail ? `${prefix}${detail}` : prefix;
 }
 

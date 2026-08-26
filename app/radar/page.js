@@ -912,6 +912,14 @@ export default function RadarPage() {
     todayComparisonForecast?.score_precise_0_10 ??
     todayComparisonForecast?.score_0_10 ??
     null;
+  const currentWeatherLoadGroups = useMemo(
+    () => getForecastWeatherLoadGroups(forecast),
+    [forecast]
+  );
+  const todayComparisonWeatherLoadGroups = useMemo(
+    () => getForecastWeatherLoadGroups(todayComparisonForecast),
+    [todayComparisonForecast]
+  );
   const forecastModeLabel = useMemo(
     () => getForecastModeLabel(forecast?.signal ?? 0),
     [forecast?.signal]
@@ -925,6 +933,8 @@ export default function RadarPage() {
       {
         currentScore: currentForecastScore,
         todayScore: todayComparisonScore,
+        currentWeatherGroups: currentWeatherLoadGroups,
+        todayWeatherGroups: todayComparisonWeatherLoadGroups,
       }
     ),
     [
@@ -934,11 +944,13 @@ export default function RadarPage() {
       symptomFocus,
       currentForecastScore,
       todayComparisonScore,
+      currentWeatherLoadGroups,
+      todayComparisonWeatherLoadGroups,
     ]
   );
   const weatherLoadGroups = useMemo(
     () =>
-      getForecastWeatherLoadGroups(forecast)
+      currentWeatherLoadGroups
         .map((factor, index) => ({ ...factor, fixedOrder: index }))
         .sort((a, b) => {
           const aLoad = a?.load != null && Number.isFinite(Number(a.load)) ? Number(a.load) : -1;
@@ -947,7 +959,7 @@ export default function RadarPage() {
           if (Boolean(a?.isPrimary) !== Boolean(b?.isPrimary)) return a?.isPrimary ? -1 : 1;
           return Number(a?.fixedOrder || 0) - Number(b?.fixedOrder || 0);
         }),
-    [forecast]
+    [currentWeatherLoadGroups]
   );
   const environmentalCautions = useMemo(
     () => getForecastEnvironmentalCautions(forecast),
