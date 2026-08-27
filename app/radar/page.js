@@ -1887,7 +1887,7 @@ export default function RadarPage() {
                 {lineCare ? (
                   <div className="rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(123,101,136,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
-                      今日の一手
+                      {lineCare.timing_label || (selectedIsToday ? "今日の一手" : "今夜〜明朝の一手")}
                     </div>
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lineCare.title || "体質ラインを軽くゆるめる"}
@@ -1897,7 +1897,9 @@ export default function RadarPage() {
                     </div>
                     {lineCare.reason ? (
                       <div className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
-                        {lineCare.reason} 強さは{lineCare.intensity || "やさしく短く"}で十分です。
+                        {[lineCare.reason, lineCare.guidance_note]
+                          .filter(Boolean)
+                          .join(" ")}
                       </div>
                     ) : null}
                     <div className="mt-3 flex justify-end">
