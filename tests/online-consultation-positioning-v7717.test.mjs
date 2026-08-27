@@ -6,7 +6,7 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("ガイドはAI分析の価値を自分に合う整え方として伝える", async () => {
+test("ガイドは振り返りの価値を自分に合う整え方として伝える", async () => {
   const guide = await source("app/guide/GuideClient.jsx");
   const page = await source("app/guide/page.js");
   assert.match(guide, /自分に合う整え方が見えてくる/);
@@ -16,16 +16,16 @@ test("ガイドはAI分析の価値を自分に合う整え方として伝える
   assert.doesNotMatch(guide, /title="AIは似た予報条件を比べる"/);
 });
 
-test("オンライン相談はAI分析の延長ではなく国家資格者の別サービスとして表示する", async () => {
+test("オンライン相談はAIによる振り返りの延長ではなく国家資格者の別サービスとして表示する", async () => {
   const guide = await source("app/guide/GuideClient.jsx");
   const expert = await source("components/records/ExpertConsultPreview.jsx");
   const records = await source("components/records/RecordsPageClient.jsx");
   assert.match(guide, /国家資格者によるオンライン相談/);
-  assert.match(guide, /AI分析の続きではありません/);
+  assert.match(guide, /AIによる振り返りの続きではありません/);
   assert.match(expert, /セルフケアだけでは足りない不調を、オンラインで相談/);
-  assert.match(expert, /AI分析を使っていなくても相談できます/);
+  assert.match(expert, /AIによる振り返りを使っていなくても相談できます/);
   assert.match(records, /key: "consult", label: "相談", short: "相談"/);
-  assert.doesNotMatch(records, /AI分析・相談/);
+  assert.doesNotMatch(records, /AI分析|AI分析・相談/);
   assert.doesNotMatch(records, /専門家相談/);
 });
 
