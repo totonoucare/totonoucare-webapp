@@ -53,6 +53,25 @@ function build(date) {
   });
 }
 
+function buildLineCare({ meridianCode, date, triggerKey = "damp", mode = "today" }) {
+  const lineRiskContext = {
+    constitution_context: {
+      core_code: "brake_batt_small",
+      sub_labels: [],
+      primary_meridian: meridianCode,
+      secondary_meridian: null,
+    },
+  };
+  const theme = daily.buildDailyCareTheme({
+    triggerKey,
+    signal: 1,
+    riskContext: lineRiskContext,
+    mode,
+    targetDate: date,
+  });
+  return daily.buildMeridianLineCare({ theme, riskContext: lineRiskContext });
+}
+
 test("Daily Care v2 uses one shared theme for lifestyle, food and loosen care", () => {
   const plan = build("2026-07-18");
   assert.equal(plan.version, daily.DAILY_CARE_LOGIC_VERSION);
@@ -75,8 +94,56 @@ test("same conditions stay stable on reload and do not force a daily lifestyle s
 
   assert.equal(day1a.lifestyle_plan.primary_action.id, day1b.lifestyle_plan.primary_action.id);
   assert.equal(day1a.tomorrow_food_context.primary_action.id, day1b.tomorrow_food_context.primary_action.id);
+  assert.equal(day1a.night_tsubo_set.line_care.id, day1b.night_tsubo_set.line_care.id);
   assert.ok(day2.lifestyle_plan.primary_action.id);
   assert.notEqual(day1a.tomorrow_food_context.primary_action.id, day2.tomorrow_food_context.primary_action.id);
+  assert.notEqual(day1a.night_tsubo_set.line_care.id, day2.night_tsubo_set.line_care.id);
+});
+
+test("all six meridian lines rotate through three single-action care options", () => {
+  const meridianCodes = ["lung_li", "heart_si", "kidney_bl", "liver_gb", "spleen_st", "pc_sj"];
+  const dates = ["2026-08-26", "2026-08-27", "2026-08-28"];
+  const allCare = meridianCodes.flatMap((meridianCode) =>
+    dates.map((date) => buildLineCare({ meridianCode, date }))
+  );
+
+  assert.equal(allCare.length, 18);
+  assert.equal(new Set(allCare.map((care) => care.id)).size, 18);
+  for (const meridianCode of meridianCodes) {
+    const lineIds = dates.map((date) => buildLineCare({ meridianCode, date }).id);
+    assert.equal(new Set(lineIds).size, 3);
+  }
+  for (const care of allCare) {
+    assert.ok(care.title);
+    assert.ok(care.action);
+    assert.ok(care.reason);
+    assert.doesNotMatch(care.action, /したあと|足裏を床へ預け/);
+  }
+});
+
+test("tomorrow keeps the same target-date action and uses a preparation timing label", () => {
+  const today = buildLineCare({ meridianCode: "spleen_st", date: "2026-08-27", mode: "today" });
+  const tomorrow = buildLineCare({ meridianCode: "spleen_st", date: "2026-08-27", mode: "tomorrow" });
+
+  assert.equal(today.id, tomorrow.id);
+  assert.equal(today.timing_label, "今日の一手");
+  assert.equal(tomorrow.timing_label, "今夜〜明朝の一手");
+  assert.match(tomorrow.guidance_note, /^今夜は/);
+  assert.match(pageSource, /lineCare\.timing_label/);
+});
+
+test("weather changes selection context and guidance without appending another action", () => {
+  const triggers = ["cold", "heat", "damp", "pressure_down", "dry", "pressure_up", "temp_shift", "default"];
+  const careByTrigger = triggers.map((triggerKey) =>
+    buildLineCare({ meridianCode: "spleen_st", date: "2026-08-26", triggerKey })
+  );
+
+  assert.ok(new Set(careByTrigger.map((care) => care.id)).size >= 2);
+  assert.ok(new Set(careByTrigger.map((care) => care.guidance_note)).size >= 6);
+  for (const care of careByTrigger) {
+    assert.doesNotMatch(care.label, /足裏を床へ預け|最後に/);
+    assert.doesNotMatch(care.guidance_note, /足裏を床へ預け|最後に/);
+  }
 });
 
 test("the main display is concise and presents the second care as a numbered card", () => {
@@ -116,7 +183,8 @@ test("reserve and forecast mode change the permitted stimulus instead of changin
 test("meridian line care is a first-class recordable Daily Care item", () => {
   const plan = build("2026-07-18");
   assert.equal(plan.night_tsubo_set.line_care.meridian_code, "lung_li");
-  assert.match(plan.night_tsubo_set.line_care.label, /鎖骨/);
+  assert.ok(plan.night_tsubo_set.line_care.title);
+  assert.ok(plan.night_tsubo_set.line_care.label);
   const displayed = actions.buildDisplayedCareItems({
     sourceMode: "today",
     lifestylePlan: plan.lifestyle_plan,
@@ -127,6 +195,7 @@ test("meridian line care is a first-class recordable Daily Care item", () => {
   const line = displayed.find((item) => item.kind === "tsubo_line_care");
   assert.ok(line);
   assert.equal(line.meta.meridian_code, "lung_li");
+  assert.equal(line.meta.line_group_id, "line-lung-li");
   assert.match(line.item_key, /^v3:loosen:line_care:/);
 });
 
