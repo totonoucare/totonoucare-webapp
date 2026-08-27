@@ -518,10 +518,10 @@ export default function SettingsPage() {
 
         <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">
           {premiumActive
-            ? "AI分析とEkken相談を利用できます。記録カレンダーは契約状態にかかわらず無料です。"
+            ? "振り返りとEkken相談を利用できます。記録カレンダーは契約状態にかかわらず無料です。"
             : betaActive
-              ? "2026年8月31日まで、AI分析とEkken相談を無料で体験できます。9月1日以降も記録カレンダーは無料です。"
-              : "記録カレンダーは無料です。AI分析とEkken相談はプレミアムで利用できます。"}
+              ? "2026年8月31日まで、振り返りとEkken相談を無料で体験できます。9月1日以降も記録カレンダーは無料です。"
+              : "記録カレンダーは無料です。振り返りとEkken相談はプレミアムで利用できます。"}
         </div>
 
         {billingError ? (
