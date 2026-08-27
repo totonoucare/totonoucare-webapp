@@ -166,6 +166,7 @@ export default function DailyRecordCard({
   const [timing, setTiming] = useState("");
   const [sameDayTiming, setSameDayTiming] = useState("same_day_unknown");
   const [factors, setFactors] = useState([]);
+  const [factorsOpen, setFactorsOpen] = useState(false);
   const [note, setNote] = useState("");
   const [editing, setEditing] = useState(editable && !review);
 
@@ -180,6 +181,7 @@ export default function DailyRecordCard({
       : (careActionSummary.count > 0 ? [] : reviewCareDomains(review)));
     setTiming(review?.manual_care_timing || (careActionSummary.count > 0 ? "" : reviewCareTiming(review)) || "");
     setFactors(reviewFactors(review));
+    setFactorsOpen(reviewFactors(review).length > 0);
     setNote(review?.note || "");
     setEditing(editable && !review);
   }, [date, review?.id, review?.updated_at, review?.created_at, editable]);
@@ -227,6 +229,9 @@ export default function DailyRecordCard({
   const classification = classifyRecord(previewRow);
   const reflectionPattern = forecastPatternKey(previewRow);
   const shouldAskFactors = reflectionPattern === "stable_difficult";
+  useEffect(() => {
+    if (shouldAskFactors) setFactorsOpen(true);
+  }, [shouldAskFactors]);
   const reflectionMeta = {
     attention_good: {
       title: "いたわり・守り予報でも穏やかに過ごせた",
@@ -273,7 +278,7 @@ export default function DailyRecordCard({
 
   async function submit() {
     if (condition == null || care == null) return;
-    const savedFactors = shouldAskFactors ? factors : [];
+    const savedFactors = factors;
     await onSave?.({
       date,
       condition_level: condition,
@@ -509,15 +514,44 @@ export default function DailyRecordCard({
             </>
           )}
 
-          {condition != null && care != null && shouldAskFactors ? (
-            <div className="mt-3 rounded-[22px] bg-[#FFF8EC] p-3.5 ring-1 ring-[#EED8B4]">
-              <div className="text-[12px] font-black text-[#A56C18]">天気以外で重なったことはある？</div>
-              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">安定予報でもつらさがあった日の生活条件として残します。予報ロジックには混ぜません。</div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {RECORD_FACTOR_OPTIONS.map((item) => (
-                  <TogglePill key={item.value} active={factors.includes(item.value)} onClick={() => toggleFactor(item.value)}>{item.label}</TogglePill>
-                ))}
-              </div>
+          {condition != null && care != null ? (
+            <div className={[
+              "mt-3 overflow-hidden rounded-[22px] ring-1",
+              shouldAskFactors ? "bg-[#FFF8EC] ring-[#EED8B4]" : "bg-[#F7FAF8] ring-[#DCE8DD]",
+            ].join(" ")}>
+              <button
+                type="button"
+                aria-expanded={factorsOpen}
+                onClick={() => setFactorsOpen((current) => !current)}
+                className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
+              >
+                <span>
+                  <span className={[
+                    "block text-[12px] font-black",
+                    shouldAskFactors ? "text-[#A56C18]" : "text-slate-600",
+                  ].join(" ")}>天気以外に気になったこと <span className="text-slate-400">（任意）</span></span>
+                  {factors.length ? <span className="mt-1 block text-[12px] font-bold leading-5 text-slate-500">{factors.map(factorLabel).join("・")}</span> : null}
+                </span>
+                <span className={[
+                  "shrink-0 text-[18px] font-black transition-transform",
+                  factorsOpen ? "rotate-90" : "",
+                  shouldAskFactors ? "text-[#A56C18]" : "text-slate-400",
+                ].join(" ")}>›</span>
+              </button>
+              {factorsOpen ? (
+                <div className="border-t border-black/5 px-3.5 pb-3.5 pt-3">
+                  <div className="text-[12px] font-bold leading-5 text-slate-500">
+                    {shouldAskFactors
+                      ? "安定予報でもつらさがあった日の補足として残します。予報ロジックには混ぜません。"
+                      : "思い当たるものだけ残せます。選ばなくても記録できます。"}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {RECORD_FACTOR_OPTIONS.map((item) => (
+                      <TogglePill key={item.value} active={factors.includes(item.value)} onClick={() => toggleFactor(item.value)}>{item.label}</TogglePill>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

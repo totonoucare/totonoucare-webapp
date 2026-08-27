@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
+import CheckoutButton from "@/components/billing/CheckoutButton";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import {
   EKIKEN_DISPLAY_NAME,
@@ -155,7 +156,7 @@ function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFee
   );
 }
 
-export default function LiveSupportPanel({ active, authedFetch, initialPrompt = "", onConsumePrompt }) {
+export default function LiveSupportPanel({ active, authedFetch, initialPrompt = "", onConsumePrompt, onAccessChange }) {
   const [loading, setLoading] = useState(true);
   const [access, setAccess] = useState(null);
   const [consent, setConsent] = useState(null);
@@ -182,7 +183,11 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   const urgentMessage = useMemo(() => activeUrgentMessage(messages), [messages]);
   const pendingFollowUp = !urgentMessage && Boolean(followUp?.kind && followUp.kind !== "none" && followUp.question);
   const routinePromptsVisible = showRoutinePrompts(messages, sending) && !pendingFollowUp;
-  const remaining = useMemo(() => usage?.chat ? Math.max(0, usage.chat.limit - usage.chat.used) : null, [usage]);
+  const remaining = useMemo(() => {
+    if (access?.consult_access_mode === "trial") return Number(access?.consult_trial?.remaining || 0);
+    return usage?.chat ? Math.max(0, usage.chat.limit - usage.chat.used) : null;
+  }, [access, usage]);
+  const historyOnly = Boolean(access?.consult_history_enabled && !access?.consult_enabled);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -190,6 +195,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
     try {
       const data = await authedFetch("/api/records/live-chat");
       setAccess(data.access || null);
+      onAccessChange?.(data.access || null);
       setConsent(data.consent || { active: false });
       setStarter(data.starter || null);
       setThreadId(data.thread?.id || "");
@@ -209,7 +215,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
     } finally {
       setLoading(false);
     }
-  }, [authedFetch]);
+  }, [authedFetch, onAccessChange]);
 
   useEffect(() => {
     if (!active) return;
@@ -358,6 +364,10 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
         : null);
       setSuggestions(data.suggested_questions || []);
       setUsage(data.usage || usage);
+      if (data.access) {
+        setAccess(data.access);
+        onAccessChange?.(data.access);
+      }
     } catch (sendError) {
       setError(sendError?.message || "Ekkenへ送信できませんでした");
       setMessages((current) => current.filter((item) => item.id !== localId));
@@ -398,27 +408,50 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           <GuideBotAvatar mood={sending ? "thinking" : mood} className="h-[88px] w-[88px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">ケアナビAI</div>
+            <div className="flex flex-wrap items-center gap-2 text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">
+              <span>ケアナビAI</span>
+              {access?.consult_access_mode === "trial" ? <span className="rounded-full bg-[#FFF8EC] px-2 py-0.5 tracking-normal text-[#A56C18] ring-1 ring-[#EED8B4]">無料体験 残り{access?.consult_trial?.remaining || 0}回</span> : null}
+              {access?.consult_access_mode === "paid" ? <span className="rounded-full bg-[#EAF7F1] px-2 py-0.5 tracking-normal text-[#2F816E] ring-1 ring-[#CFE7DE]">プレミアム</span> : null}
+            </div>
             <div className="mt-1 text-[17px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}</div>
-            <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">今のつらさや迷いを、一言から一緒に整理します。</div>
+            <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">あなたの体質・今日の予報・最近の記録を踏まえて相談できます。</div>
           </div>
         </div>
 
         <div className="space-y-3 px-4 pb-4">
-          <AiConsent access={access} consent={consent} saving={consentSaving} onAccept={acceptConsent} onRevoke={revokeConsent} />
+          <div className="rounded-[20px] bg-white/85 px-4 py-3 ring-1 ring-white">
+            <div className="text-[12px] font-black tracking-[0.1em] text-slate-500">今回Ekkenが把握していること</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {["体質トリセツ", "今日・明日の予報", "直近14日の記録", "取り組んだケア"].map((item) => <span key={item} className="rounded-full bg-[#F4FAF7] px-2.5 py-1.5 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{item}</span>)}
+            </div>
+            <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">毎回、体質や最近の調子を最初から説明する必要はありません。</div>
+          </div>
+
+          {!loading && !historyOnly ? <AiConsent access={access} consent={consent} saving={consentSaving} onAccept={acceptConsent} onRevoke={revokeConsent} /> : null}
 
           {consent?.active && access?.consult_enabled ? (
-            <ConsultationStatusCard
-              status={consultationStatus}
-              saving={consultationStatusSaving}
-              editing={consultationStatusEditing}
-              onEdit={() => setConsultationStatusEditing(true)}
-              onSelect={saveConsultationStatus}
-            />
+            <details className="rounded-[18px] bg-white/70 px-3.5 py-3 ring-1 ring-[#DCE8DD]">
+              <summary className="cursor-pointer text-[12px] font-black text-slate-600">受診・相談状況などを確認・変更</summary>
+              <div className="mt-3"><ConsultationStatusCard status={consultationStatus} saving={consultationStatusSaving} editing={consultationStatusEditing} onEdit={() => setConsultationStatusEditing(true)} onSelect={saveConsultationStatus} /></div>
+            </details>
           ) : null}
 
           {loading ? (
             <div className="h-44 animate-pulse rounded-[22px] bg-white/70 ring-1 ring-[#E8F0EB]" />
+          ) : historyOnly ? (
+            <>
+              <div className="rounded-[20px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
+                <div className="text-[12px] font-black tracking-[0.1em] text-[#A56C18]">無料相談を2回体験しました</div>
+                <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">プレミアムでは、この続きを相談できます</div>
+                <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">これまでの回答は下でいつでも見返せます。</div>
+                <CheckoutButton returnPath="/records?tab=consult" className="mt-3 w-full">プレミアムの内容・料金を確認する</CheckoutButton>
+              </div>
+              {messages.length ? (
+                <div className="max-h-[500px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
+                  {messages.map((message, index) => <Bubble key={message.id || `${message.role}-${index}`} message={message} />)}
+                </div>
+              ) : null}
+            </>
           ) : consent?.active && access?.consult_enabled ? (
             <>
               <div ref={chatScrollRef} className="max-h-[500px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
@@ -496,7 +529,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 </div>
               </div>
 
-              {remaining != null ? <div className="px-1 text-right text-[12px] font-black text-slate-500">今月あと{remaining}回</div> : null}
+              {remaining != null ? <div className="px-1 text-right text-[12px] font-black text-slate-500">{access?.consult_access_mode === "trial" ? `無料体験 あと${remaining}回` : `今月あと${remaining}回`}</div> : null}
             </>
           ) : null}
 

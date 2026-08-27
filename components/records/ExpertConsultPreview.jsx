@@ -91,7 +91,7 @@ export default function ExpertConsultPreview({ authedFetch }) {
           </div>
         </div>
         <div className="px-4 pb-4">
-          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-white">記録を引き継ぎ、セルフケアだけでは整理しにくい不調を相談できます。AI分析を使っていなくても相談できます。</div>
+          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-white">記録を引き継ぎ、セルフケアだけでは整理しにくい不調を相談できます。AIによる振り返りを使っていなくても相談できます。</div>
         </div>
       </section>
 

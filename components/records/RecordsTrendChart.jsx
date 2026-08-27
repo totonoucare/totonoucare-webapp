@@ -198,7 +198,7 @@ export default function RecordsTrendChart({
           style={{ width: axisWidth }}
           aria-hidden="true"
         >
-          <span className="absolute left-2 top-2 text-[12px] font-black leading-3 text-slate-400">体調<br />ゆらぎ度</span>
+          <span className="absolute left-2 top-2 text-[12px] font-black leading-3 text-slate-400">体調<br />警戒度</span>
           {[100, 70, 40, 0].map((value) => (
             <span key={value} className="absolute right-2 text-[12px] font-extrabold text-slate-400" style={{ top: yForForecast(value) - 6 }}>{value}</span>
           ))}

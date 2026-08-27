@@ -16,7 +16,7 @@ import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 
 const TAB_OPTIONS = [
   { key: "record", label: "記録カレンダー", short: "記録" },
-  { key: "analysis", label: "AI分析", short: "AI分析" },
+  { key: "analysis", label: "振り返り", short: "振り返り" },
   { key: "consult", label: "相談", short: "相談" },
 ];
 
@@ -340,7 +340,10 @@ export default function RecordsPageClient({
     setTab(normalized);
     router.replace(`/records?tab=${normalized}`, { scroll: false });
     if (normalized === "analysis") sendEvent("analysis_opened");
-    if (normalized === "consult") sendEvent("live_support_opened");
+    if (normalized === "consult") {
+      sendEvent("live_support_opened");
+      loadFeatureAccess();
+    }
   }
 
   function selectCalendarDate(date, row) {
@@ -369,6 +372,7 @@ export default function RecordsPageClient({
         const without = current.filter((row) => row.date !== payload.date);
         return [...without, nextRow].sort((a, b) => a.date.localeCompare(b.date));
       });
+      loadFeatureAccess();
       return nextRow;
     } catch (error) {
       setRecordError(error?.message || "記録を保存できませんでした");
@@ -527,12 +531,16 @@ export default function RecordsPageClient({
             onClick={() => changeTab("analysis")}
             className="w-full rounded-[24px] bg-[#349B83] px-5 py-4 text-left text-white shadow-[0_16px_30px_-22px_rgba(52,155,131,0.56)]"
           >
-            <div className="text-[12px] font-black tracking-[0.14em] text-white/70">NEXT STEP</div>
-            <div className="mt-1 flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[15px] font-black">あなたの傾向をグラフで見る</div>
-                <div className="mt-1 text-[12px] font-bold text-white/80">予報・実感・ケアをAIと振り返る</div>
-              </div>
+                <div className="text-[12px] font-black tracking-[0.14em] text-white/70">記録を次につなげる</div>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[15px] font-black">
+                      {monthRows.filter((row) => row?.review?.condition_level != null).length
+                        ? `今月${monthRows.filter((row) => row?.review?.condition_level != null).length}日分を振り返れます`
+                        : "記録が増えると、自分の傾向が見えてきます"}
+                    </div>
+                    <div className="mt-1 text-[12px] font-bold text-white/80">体調予報・実感・ケアを同じ日で見比べる</div>
+                  </div>
               <span className="text-[24px]">›</span>
             </div>
           </button>
@@ -553,7 +561,7 @@ export default function RecordsPageClient({
             onTrackEvent={sendEvent}
           />
         ) : (
-          <SubscriptionPaywall feature="analysis" returnPath="/records?tab=analysis" />
+          <SubscriptionPaywall feature="analysis" returnPath="/records?tab=analysis" access={featureAccess} />
         )
       ) : null}
 
@@ -561,15 +569,16 @@ export default function RecordsPageClient({
         <div className="space-y-5">
           {accessLoading ? (
             <div className="h-56 animate-pulse rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE]" />
-          ) : featureAccess?.consult_enabled ? (
+          ) : featureAccess?.consult_enabled || featureAccess?.consult_history_enabled ? (
             <LiveSupportPanel
               active
               authedFetch={authedFetch}
               initialPrompt={livePrompt}
               onConsumePrompt={() => setLivePrompt("")}
+              onAccessChange={setFeatureAccess}
             />
           ) : (
-            <SubscriptionPaywall feature="consult" returnPath="/records?tab=consult" />
+            <SubscriptionPaywall feature="consult" returnPath="/records?tab=consult" access={featureAccess} />
           )}
           <ExpertConsultPreview authedFetch={authedFetch} />
         </div>

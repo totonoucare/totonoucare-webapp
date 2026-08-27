@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import RecordsTrendChart from "@/components/records/RecordsTrendChart";
+import RecordsSimpleTrendChart from "@/components/records/RecordsSimpleTrendChart";
 import {
   PERIOD_OPTIONS,
   buildRecordsSummary,
@@ -111,7 +112,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
   if (!access?.analysis_enabled) {
     return (
       <div className="rounded-[24px] bg-[#F7FAF8] p-4 ring-1 ring-[#DCE8DD]">
-        <div className="text-[13px] font-black text-slate-900">AI分析は現在プレビュー表示です</div>
+        <div className="text-[13px] font-black text-slate-900">振り返りは現在プレビュー表示です</div>
         <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">グラフと記録の振り返りは利用できます。対象期間または対象プランになると、AIによる個別の振り返りと会話が開きます。</div>
       </div>
     );
@@ -136,7 +137,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
         <summary className="cursor-pointer font-black text-[#8F651E]">送信内容とAIの範囲</summary>
         <div className="mt-2">送信するのは、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話です。入力したメモや会話は送信対象になります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。</div>
       </details>
-      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "AI分析を使う"}</Button>
+      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "振り返りを使う"}</Button>
     </div>
   );
 }
@@ -175,6 +176,7 @@ export default function AiAnalysisPanel({
   const [followUp, setFollowUp] = useState(null);
   const [replyToFollowUp, setReplyToFollowUp] = useState(null);
   const [chatUsage, setChatUsage] = useState(null);
+  const [periodChatOpen, setPeriodChatOpen] = useState(false);
   const [feedbackByRequest, setFeedbackByRequest] = useState({});
   const [negativeReasonFor, setNegativeReasonFor] = useState("");
   const chatScrollRef = useRef(null);
@@ -265,9 +267,9 @@ export default function AiAnalysisPanel({
       if (data.usage) setChatUsage(data.usage);
     } catch (loadError) {
       if (loadError?.code === "daily_analysis_limit") {
-        setAnalysisNotice(loadError?.message || "本日のAI分析更新上限に達しました。保存済みの分析は引き続き確認できます。");
+        setAnalysisNotice(loadError?.message || "本日の振り返り更新上限に達しました。保存済みの内容は引き続き確認できます。");
       } else {
-        setAnalysisError(loadError?.message || "AI分析を読み込めませんでした");
+        setAnalysisError(loadError?.message || "振り返りを読み込めませんでした");
       }
     } finally {
       if (generate) setAnalysisLoading(false);
@@ -319,6 +321,7 @@ export default function AiAnalysisPanel({
 
   useEffect(() => {
     if (!active || !initialPrompt) return;
+    setPeriodChatOpen(true);
     setInput(initialPrompt);
     setReplyToFollowUp(null);
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -496,216 +499,153 @@ export default function AiAnalysisPanel({
   return (
     <div className="space-y-5">
       <div className={[
-        "rounded-[24px] px-4 py-3.5 ring-1",
-        betaActive
-          ? "bg-[#FFF8EC] ring-[#EED8B4]"
-          : "bg-[#F4FAF7] ring-[#CFE7DE]",
+        "rounded-[22px] px-4 py-3 ring-1",
+        betaActive ? "bg-[#FFF8EC] ring-[#EED8B4]" : "bg-[#F4FAF7] ring-[#CFE7DE]",
       ].join(" ")}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className={[
-              "text-[12px] font-black tracking-[0.14em]",
-              betaActive ? "text-[#A56C18]" : "text-[#2F816E]",
-            ].join(" ")}>
-              {betaActive ? "AI分析 先行体験中" : "プレミアム・AI分析"}
+            <div className={["text-[12px] font-black tracking-[0.14em]", betaActive ? "text-[#A56C18]" : "text-[#2F816E]"].join(" ")}>
+              {betaActive ? "振り返り・先行体験中" : "プレミアム・振り返り"}
             </div>
-            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
-              {betaActive
-                ? `${formatBetaEnd(access.beta_ends_at)}、品質向上のため無料公開中です。`
-                : "期間別グラフと記録をもとに、体調とケアの傾向を振り返れます。"}
+            <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
+              {betaActive ? `${formatBetaEnd(access.beta_ends_at)}無料公開中です。` : "記録から分かったことを、次の整え方につなげます。"}
             </div>
           </div>
-          <span className={[
-            "shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-black ring-1",
-            betaActive
-              ? "text-[#A56C18] ring-[#EED8B4]"
-              : "text-[#2F816E] ring-[#CFE7DE]",
-          ].join(" ")}>
-            {betaActive ? "先行体験中" : "契約中"}
+          <span className={["shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-black ring-1", betaActive ? "text-[#A56C18] ring-[#EED8B4]" : "text-[#2F816E] ring-[#CFE7DE]"].join(" ")}>
+            {betaActive ? "先行体験" : "契約中"}
           </span>
         </div>
       </div>
 
-      <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
+      <section className="rounded-[28px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">振り返る期間</div>
-            <div className="mt-1 text-[17px] font-black text-slate-900">どの期間を振り返る？</div>
+            <div className="mt-1 text-[16px] font-black text-slate-900">どの期間を見る？</div>
           </div>
           <div className="text-[12px] font-black text-slate-400">{formatRange(range.start, range.end)}</div>
         </div>
-        <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {PERIOD_OPTIONS.map((option) => (
-            <button key={option.key} type="button" onClick={() => choosePeriod(option.key)} className={["shrink-0 rounded-full px-4 py-2 text-[12px] font-black ring-1 transition-all", periodKey === option.key ? "bg-[#349B83] text-white ring-[#349B83]" : "bg-white text-slate-600 ring-[#DCE8DD] hover:bg-[#F4FAF7]"].join(" ")}>{option.label}</button>
+            <button key={option.key} type="button" onClick={() => choosePeriod(option.key)} className={["shrink-0 rounded-full px-4 py-2 text-[12px] font-black ring-1 transition-all", periodKey === option.key ? "bg-[#349B83] text-white ring-[#349B83]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>{option.label}</button>
           ))}
         </div>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <SummaryTile value={`${summary.recorded_days || 0}日`} label="記録できた日" />
-          <SummaryTile value={`${summary.good_days || 0}日`} label="穏やかだった日" />
-          <SummaryTile value={`${summary.difficult_days || 0}日`} label="つらさがあった日" tone="rose" />
-          <SummaryTile value={`${summary.care_days || 0}日`} label="ケアをした日" tone="amber" />
-        </div>
-        <div className="mt-4">
-          {rangeLoading ? <div className="h-[280px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
-        </div>
-        <details className="mt-3 rounded-[18px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-400 ring-1 ring-[#E8F0EB]">
-          <summary className="cursor-pointer font-black text-slate-500">グラフの見方</summary>
-          <div className="mt-2">体調警戒度は、記録に合わせて後から書き換えない予報です。予報・試したケア・実際の体調から、どんな日に何をすると過ごしやすかったかを整理します。</div>
-        </details>
       </section>
-
-      <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
 
       <section className="overflow-hidden rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="flex items-end gap-3 px-4 pt-4">
           <GuideBotAvatar mood={analysisLoading || analysisLookupLoading ? "thinking" : displayedAnalysis.mood} className="h-[78px] w-[78px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/65">{analysisMeta?.source === "ai" ? "AIからの振り返り" : "記録から分かったこと"}</div>
-            <div className="mt-1 text-[14px] font-black leading-6 text-slate-900">{analysisLoading ? "記録を見比べています…" : analysisLookupLoading ? "保存済みの振り返りを確認しています…" : displayedAnalysis.headline}</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">この期間で分かったこと</div>
+            <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">{analysisLoading ? "記録を見比べています…" : analysisLookupLoading ? "保存済みの振り返りを確認しています…" : displayedAnalysis.headline}</div>
           </div>
         </div>
         <div className="space-y-2.5 px-4 pb-4">
           {analysisLoading || analysisLookupLoading ? (
             <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
-              {analysisLoading ? "少し待ってください。予報・実感・ケアを順番に確認しています。" : "この期間の保存済み分析があるか確認しています。"}
+              {analysisLoading ? "予報・実感・ケアを順番に確認しています。" : "この期間の保存済み分析を確認しています。"}
             </div>
           ) : (
             <>
-              <CompactAnalysisSummary analysis={displayedAnalysis} />
+              <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
+                <div className="text-[14px] font-bold leading-6 text-slate-700">{displayedAnalysis.observed || displayedAnalysis.empathy}</div>
+              </div>
               <div className="rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
-                <div className="text-[12px] font-black tracking-[0.14em] text-[#A56C18]/75">次に一つだけ</div>
+                <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]/80">次に一つだけ</div>
                 <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{displayedAnalysis.next_step}</div>
               </div>
-              <div className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[14px] font-black leading-6 text-[#2F816E] ring-1 ring-[#CFE7DE]">{displayedAnalysis.question}</div>
-              {displayedAnalysis.evidence?.length ? (
-                <details className="rounded-[16px] bg-white/65 px-3.5 py-2.5 text-[12px] font-bold text-slate-500 ring-1 ring-[#E8F0EB]">
-                  <summary className="cursor-pointer font-black text-slate-500">根拠を確認</summary>
-                  <div className="mt-2 space-y-1 leading-5">
-                    {displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}
-                  </div>
-                </details>
-              ) : null}
             </>
           )}
+
           {!analysisLoading && !analysisLookupLoading && analysisMeta?.generation_required && analysisMeta?.can_generate && consent?.active && access?.analysis_enabled ? (
             <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#CFE7DE]">
-              <div className="text-[12px] font-black leading-5 text-slate-700">
-                {analysisMeta.stale
-                  ? "記録が更新されています。今は以前の保存済み分析を表示しています。"
-                  : "この期間のAI分析は、まだ作成していません。"}
-              </div>
-              <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">タブを開くだけでは回数を使いません。必要なときに、現在の記録でEkkenへ依頼できます。</div>
-              <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>
-                {analysisMeta.stale ? "現在の記録で分析を更新" : "Ekkenに聞く"}
-              </Button>
+              <div className="text-[12px] font-black leading-5 text-slate-700">{analysisMeta.stale ? "記録が更新されています。現在は以前の振り返りです。" : "この期間はまだEkkenで振り返っていません。"}</div>
+              <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">必要なときだけ更新します。タブを開くだけでは回数を使いません。</div>
+              <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>{analysisMeta.stale ? "現在の記録で更新" : "Ekkenに振り返ってもらう"}</Button>
             </div>
           ) : null}
+
           {analysisMeta?.source ? (
-            <div className="px-1 text-[12px] font-bold text-slate-400">
-              {analysisMeta.source === "ai" ? "AIと集計ロジックによる分析" : "記録数・利用状態に応じた基本分析"}
-              {analysisMeta.cached ? "・保存済み分析を表示" : ""}
-              {analysisMeta.stale ? "・現在の記録より前の内容" : ""}
-            </div>
+            <div className="px-1 text-[12px] font-bold text-slate-400">{analysisMeta.source === "ai" ? "AIと集計ロジックによる振り返り" : "記録数に応じた基本の振り返り"}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・記録更新前" : ""}</div>
           ) : null}
           {analysisMeta?.source === "ai" && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
-          {analysisError ? (
-            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
-              {analysisError}
-            </div>
-          ) : null}
-          {analysisNotice ? (
-            <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
-              {analysisNotice}
-            </div>
-          ) : null}
+          {analysisError ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{analysisError}</div> : null}
+          {analysisNotice ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{analysisNotice}</div> : null}
         </div>
+      </section>
+
+      <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
+
+      <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
+        <div className="mb-3 flex flex-wrap gap-2">
+          <span className="rounded-full bg-[#EFF8F4] px-3 py-1.5 text-[12px] font-black text-[#2F816E]">記録 {summary.recorded_days || 0}日</span>
+          <span className="rounded-full bg-[#F7FAF8] px-3 py-1.5 text-[12px] font-black text-slate-600">○ {summary.good_days || 0}日</span>
+          <span className="rounded-full bg-[#FFF0EC] px-3 py-1.5 text-[12px] font-black text-[#B75C3E]">△・× {summary.difficult_days || 0}日</span>
+          <span className="rounded-full bg-[#FFF8EC] px-3 py-1.5 text-[12px] font-black text-[#A56C18]">ケア {summary.care_days || 0}日</span>
+        </div>
+        {rangeLoading ? <div className="h-[300px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsSimpleTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
+
+        <details className="mt-4 rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#E8F0EB]">
+          <summary className="cursor-pointer text-[13px] font-black text-slate-600">詳しい根拠を見る</summary>
+          <div className="mt-3 space-y-3">
+            {displayedAnalysis.hypotheses ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#7B6588]">考えられること：</span>{displayedAnalysis.hypotheses}</div> : null}
+            {displayedAnalysis.evidence?.length ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">{displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}</div> : null}
+            {!rangeLoading ? <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} /> : null}
+            <div className="text-[12px] font-bold leading-5 text-slate-400">体調警戒度は、実感に合わせて後から書き換えない予報です。詳しいグラフでは、天気ストレスや似た条件の日も確認できます。</div>
+          </div>
+        </details>
       </section>
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-10 w-10" /></div>
+        <button type="button" aria-expanded={periodChatOpen} onClick={() => setPeriodChatOpen((current) => !current)} className="flex w-full items-center gap-3 text-left">
+          <div className="grid h-11 w-11 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-11 w-11" /></div>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-black text-slate-900">この振り返りについてEkkenに聞く</div>
-            <div className="mt-0.5 text-[12px] font-bold text-slate-400">選択した期間の記録と分析だけを引き継ぎます</div>
+            <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-400">選択期間の記録と分析を引き継ぎます</div>
           </div>
-          {chatUsage?.chat ? <div className="shrink-0 rounded-full bg-[#F4FAF7] px-2.5 py-1 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
-        </div>
+          <span className={["text-[22px] font-black text-[#2F816E] transition-transform", periodChatOpen ? "rotate-90" : ""].join(" ")}>›</span>
+        </button>
 
-        {!consent?.active || !access?.analysis_enabled ? (
-          <div className="mt-4 rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">上のAI利用確認を完了すると、選択期間の記録を引き継いだ会話を始められます。</div>
-        ) : (
-          <>
-            <div ref={chatScrollRef} className="mt-4 max-h-[440px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
-              {threadLoading ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#E8F0EB]">会話を読み込んでいます…</div> : null}
-              {!threadLoading && messages.length === 0 ? <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">気になった日や、ケアの種類・タイミングについて聞いてください。分からないことは断定せず、一緒に整理します。</div> : null}
-              {messages.map((message, index) => (
-                <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
-                  <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[14px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
-                    {message.role === "user" && message.reply_to_follow_up?.question ? (
-                      <div className="mb-2 border-b border-white/25 pb-2 text-[12px] font-bold leading-4 text-white/80">
-                        <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div>
-                        <div>{message.reply_to_follow_up.question}</div>
+        {periodChatOpen ? (
+          <div className="mt-4 border-t border-[#EEF3EF] pt-4">
+            {chatUsage?.chat ? <div className="mb-3 text-right text-[12px] font-black text-slate-400">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
+            {!consent?.active || !access?.analysis_enabled ? (
+              <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">AI利用確認を完了すると、この期間について質問できます。</div>
+            ) : (
+              <>
+                <div ref={chatScrollRef} className="max-h-[440px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
+                  {threadLoading ? <div className="rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#E8F0EB]">会話を読み込んでいます…</div> : null}
+                  {!threadLoading && messages.length === 0 ? <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">気になった日や、ケアの種類・タイミングについて聞けます。</div> : null}
+                  {messages.map((message, index) => (
+                    <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
+                      <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[14px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
+                        {message.role === "user" && message.reply_to_follow_up?.question ? <div className="mb-2 border-b border-white/25 pb-2 text-[12px] font-bold leading-4 text-white/80"><div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div><div>{message.reply_to_follow_up.question}</div></div> : null}
+                        {message.content}
                       </div>
-                    ) : null}
-                    {message.content}
-                  </div>
-                  {message.role === "assistant" && message.request_id ? <FeedbackButtons requestId={message.request_id} surface="chat" {...feedbackProps} /> : null}
-                </div>
-              ))}
-              {sending ? <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">記録を確認しながら考えています…</div> : null}
-            </div>
-
-            {hasPendingFollowUp ? (
-              <div className="mt-3 rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]/75">AIからの確認</div>
-                <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{followUp.question}</div>
-                <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">タップすると入力欄に入ります。必要なら補足してから送れます。</div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}
-                </div>
-                <button type="button" onClick={detachFollowUp} className="mt-2 text-[12px] font-black text-[#A56C18]/70 underline underline-offset-2">この質問には答えず、別のことを話す</button>
-              </div>
-            ) : null}
-
-            {!hasPendingFollowUp && !sending ? (
-              <div className="mt-3">
-                <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1">
-                  <span className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">Ekkenに聞く候補</span>
-                  <span className="text-[12px] font-bold text-slate-400">タップすると入力欄に入ります。送信前に編集できます。</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {(chatSuggestions.length ? chatSuggestions : displayedAnalysis.suggested_questions || []).map((question) => <button key={question} type="button" onClick={() => fillInput(question)} className="rounded-full bg-[#F4FAF7] px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>)}
-                </div>
-              </div>
-            ) : null}
-            <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
-              {replyToFollowUp?.question ? (
-                <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[12px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-black tracking-[0.08em] text-[#A56C18]/75">この確認への回答として送ります</div>
-                      <div className="mt-0.5">{replyToFollowUp.question}</div>
+                      {message.role === "assistant" && message.request_id ? <FeedbackButtons requestId={message.request_id} surface="chat" {...feedbackProps} /> : null}
                     </div>
-                    <button type="button" onClick={detachFollowUp} className="shrink-0 font-black text-[#A56C18] underline underline-offset-2">外す</button>
-                  </div>
+                  ))}
+                  {sending ? <div className="max-w-[90%] rounded-[18px] bg-white px-4 py-3 text-[12px] font-bold text-slate-400 ring-1 ring-[#DCE8DD]">記録を確認しながら考えています…</div> : null}
                 </div>
-              ) : null}
-              <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[14px] font-bold leading-6 text-slate-700 outline-none" />
-              <div className="flex items-center justify-between gap-3 px-1 pb-1">
-                <button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-400">会話を削除</button>
-                <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに聞く"}</Button>
-              </div>
-            </div>
-          </>
-        )}
 
-        {error ? <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
-        <details className="mt-3 text-[12px] font-bold leading-5 text-slate-400">
-          <summary className="cursor-pointer font-black text-slate-500">AI相談の範囲</summary>
-          <div className="mt-2">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。強い症状や急な変化がある場合は、医療機関などへ相談してください。</div>
-        </details>
+                {hasPendingFollowUp ? <div className="mt-3 rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]"><div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]/75">AIからの確認</div><div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{followUp.question}</div><div className="mt-2 flex flex-wrap gap-2">{(followUp.options || []).map((option) => <button key={option} type="button" onClick={() => fillFollowUpOption(option)} className="rounded-full bg-white px-3 py-2 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">{option}</button>)}</div><button type="button" onClick={detachFollowUp} className="mt-2 text-[12px] font-black text-[#A56C18]/70 underline underline-offset-2">この確認には答えない</button></div> : null}
+
+                {!hasPendingFollowUp && !sending ? <div className="mt-3 flex flex-wrap gap-2">{(chatSuggestions.length ? chatSuggestions : displayedAnalysis.suggested_questions || []).map((question) => <button key={question} type="button" onClick={() => fillInput(question)} className="rounded-full bg-[#F4FAF7] px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{question}</button>)}</div> : null}
+
+                <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
+                  {replyToFollowUp?.question ? <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[12px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">{replyToFollowUp.question}</div> : null}
+                  <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[14px] font-bold leading-6 text-slate-700 outline-none" />
+                  <div className="flex items-center justify-between gap-3 px-1 pb-1"><button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-400">会話を削除</button><Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに聞く"}</Button></div>
+                </div>
+              </>
+            )}
+            <details className="mt-3 text-[12px] font-bold leading-5 text-slate-400"><summary className="cursor-pointer font-black text-slate-500">AI相談の範囲</summary><div className="mt-2">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や薬の個別判断は行いません。</div></details>
+          </div>
+        ) : null}
       </section>
+
+      {error ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
     </div>
   );
 }
