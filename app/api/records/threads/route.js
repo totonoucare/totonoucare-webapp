@@ -32,7 +32,7 @@ export async function GET(req) {
     const access = await getRecordsAccess(user.id);
     if (!access.analysis_enabled) {
       return NextResponse.json(
-        { error: "AI分析はプレミアム機能です", code: "analysis_access_required" },
+        { error: "振り返りはプレミアム機能です", code: "analysis_access_required" },
         { status: 403 }
       );
     }
@@ -86,7 +86,7 @@ export async function DELETE(req) {
     const access = await getRecordsAccess(user.id);
     if (!access.analysis_enabled) {
       return NextResponse.json(
-        { error: "AI分析はプレミアム機能です", code: "analysis_access_required" },
+        { error: "振り返りはプレミアム機能です", code: "analysis_access_required" },
         { status: 403 }
       );
     }
