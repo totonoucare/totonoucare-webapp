@@ -252,6 +252,25 @@ export async function GET(req) {
     const today = jstDateString(new Date());
     const access = await getRecordsAccess(user.id);
     if (!access.consult_enabled) {
+      if (access.consult_history_enabled) {
+        const [consent, usage, thread] = await Promise.all([
+          hasActiveAiConsent(user.id),
+          getAiUsage(user.id),
+          findLiveThread(user.id),
+        ]);
+        const messages = thread ? await loadLatestMessages(thread.id, user.id, { limit: 100 }) : [];
+        return NextResponse.json({
+          data: {
+            access,
+            consent: { active: consent },
+            starter: null,
+            usage,
+            thread,
+            consultation_status: consultationStatusFromThread(thread),
+            messages: messages.map(publicMessage),
+          },
+        });
+      }
       return NextResponse.json({
         data: {
           access,
@@ -314,10 +333,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "AI利用への同意が必要です", code: "ai_consent_required" }, { status: 403 });
     }
 
+    const freeTrial = access.consult_access_mode === "trial";
     const safetySignal = classifySafetyText(message);
     const urgentMessage = safetySignal.should_route;
     if (!urgentMessage) {
-      assertQuota(usageBefore, "chat");
+      if (!freeTrial) assertQuota(usageBefore, "chat");
       if (!process.env.OPENAI_API_KEY) {
         const configError = new Error("Ekken相談の接続設定が完了していません");
         configError.status = 503;
@@ -476,17 +496,30 @@ export async function POST(req) {
       model: result.model || MODEL,
       metadata: { source: "ai", surface: "live_support", response_id: result.response_id, prompt_version: PROMPT_VERSION },
     });
+    const responseEventType = output.safety_level === "urgent"
+      ? "safety_response"
+      : freeTrial
+        ? "free_chat_response"
+        : "chat_response";
     await logRecordsAiEvent({
       userId: user.id,
-      eventType: output.safety_level === "urgent" ? "safety_response" : "chat_response",
+      eventType: responseEventType,
       requestId,
       periodKey: LIVE_SUPPORT_PERIOD_KEY,
       source: "ai",
       model: result.model || MODEL,
       responseId: result.response_id,
       usage: result.usage,
-      metadata: { thread_id: thread.id, prompt_version: PROMPT_VERSION, surface: "live_support" },
+      metadata: {
+        thread_id: thread.id,
+        prompt_version: PROMPT_VERSION,
+        surface: "live_support",
+        access_mode: freeTrial ? "free_trial" : access.consult_access_mode,
+      },
     });
+    const accessAfter = freeTrial && responseEventType === "free_chat_response"
+      ? await getRecordsAccess(user.id)
+      : access;
 
     return NextResponse.json({
       data: {
@@ -498,9 +531,11 @@ export async function POST(req) {
         model: result.model || MODEL,
         usage: {
           ...usageBefore,
-          chat: { ...usageBefore.chat, used: usageBefore.chat.used + 1 },
+          chat: freeTrial
+            ? usageBefore.chat
+            : { ...usageBefore.chat, used: usageBefore.chat.used + 1 },
         },
-        access,
+        access: accessAfter,
       },
     });
   } catch (error) {
