@@ -44,7 +44,7 @@ export async function GET(req) {
       return NextResponse.json({ error: "invalid start/end" }, { status: 400 });
     }
 
-    const { data: threads, error: threadError } = await supabaseServer
+    const { data: exactThreads, error: exactThreadError } = await supabaseServer
       .from("records_ai_threads")
       .select("id,period_key,range_start,range_end,title,status,created_at,updated_at")
       .eq("user_id", user.id)
@@ -55,8 +55,24 @@ export async function GET(req) {
       .eq("status", "active")
       .order("updated_at", { ascending: false })
       .limit(1);
-    if (threadError) throw threadError;
-    const thread = threads?.[0] || null;
+    if (exactThreadError) throw exactThreadError;
+
+    let thread = exactThreads?.[0] || null;
+    let carriedOver = false;
+    if (!thread) {
+      const { data: previousThreads, error: previousThreadError } = await supabaseServer
+        .from("records_ai_threads")
+        .select("id,period_key,range_start,range_end,title,status,created_at,updated_at")
+        .eq("user_id", user.id)
+        .eq("thread_kind", "period_review")
+        .eq("period_key", periodKey)
+        .eq("status", "active")
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      if (previousThreadError) throw previousThreadError;
+      thread = previousThreads?.[0] || null;
+      carriedOver = Boolean(thread);
+    }
     if (!thread) return NextResponse.json({ data: { thread: null, messages: [] } });
 
     const { data: messages, error: messageError } = await supabaseServer
@@ -68,7 +84,10 @@ export async function GET(req) {
       .limit(100);
     if (messageError) throw messageError;
     return NextResponse.json({
-      data: { thread, messages: chronologicalFromNewest(messages || [], 100).map(publicMessage) },
+      data: {
+        thread: { ...thread, carried_over: carriedOver },
+        messages: chronologicalFromNewest(messages || [], 100).map(publicMessage),
+      },
     });
   } catch (error) {
     console.error("/api/records/threads GET error:", error);
