@@ -84,7 +84,7 @@ function summaryForAi(summary) {
 async function findCache(userId, key, start, end, hash) {
   const { data, error } = await supabaseServer
     .from("records_ai_analyses")
-    .select("id,analysis_json,source_hash,model,request_id,response_id,input_tokens,output_tokens,total_tokens,generated_at")
+    .select("id,analysis_json,source_hash,model,request_id,response_id,input_tokens,output_tokens,total_tokens,range_start,range_end,generated_at")
     .eq("user_id", userId)
     .eq("period_key", key)
     .eq("range_start", start)
@@ -96,14 +96,12 @@ async function findCache(userId, key, start, end, hash) {
   return data?.[0] || null;
 }
 
-async function findLatestAnalysis(userId, key, start, end) {
+async function findLatestAnalysis(userId, key) {
   const { data, error } = await supabaseServer
     .from("records_ai_analyses")
-    .select("id,analysis_json,source_hash,model,request_id,response_id,input_tokens,output_tokens,total_tokens,generated_at")
+    .select("id,analysis_json,source_hash,model,request_id,response_id,input_tokens,output_tokens,total_tokens,range_start,range_end,generated_at")
     .eq("user_id", userId)
     .eq("period_key", key)
-    .eq("range_start", start)
-    .eq("range_end", end)
     .order("generated_at", { ascending: false })
     .limit(1);
   if (error) throw error;
@@ -132,6 +130,8 @@ function algorithmResponse({
       generation_required: generationRequired,
       consent_required: consentRequired,
       algorithm_reason: reason,
+      analysis_range: null,
+      generated_at: null,
       access,
     },
   });
@@ -154,7 +154,7 @@ export async function POST(req) {
     const access = await getRecordsAccess(user.id);
     if (!access.analysis_enabled) {
       return NextResponse.json(
-        { error: "AI分析はプレミアム機能です", code: "analysis_access_required" },
+        { error: "振り返りはプレミアム機能です", code: "analysis_access_required" },
         { status: 403 }
       );
     }
@@ -207,14 +207,17 @@ export async function POST(req) {
           can_generate: true,
           generation_required: false,
           consent_required: false,
+          analysis_range: { start: cache.range_start, end: cache.range_end },
+          generated_at: cache.generated_at || null,
           access,
         },
       });
     }
 
     if (!generate) {
-      const latest = await findLatestAnalysis(user.id, key, start, end);
+      const latest = await findLatestAnalysis(user.id, key);
       if (latest?.analysis_json) {
+        const periodAdvanced = String(latest.range_start) !== start || String(latest.range_end) !== end;
         return NextResponse.json({
           data: {
             analysis: cleanAnalysis(latest.analysis_json, fallback),
@@ -227,7 +230,11 @@ export async function POST(req) {
             can_generate: true,
             generation_required: true,
             consent_required: false,
-            algorithm_reason: "records_changed_since_saved_analysis",
+            algorithm_reason: periodAdvanced
+              ? "period_advanced_since_saved_analysis"
+              : "records_changed_since_saved_analysis",
+            analysis_range: { start: latest.range_start, end: latest.range_end },
+            generated_at: latest.generated_at || null,
             access,
           },
         });
@@ -303,6 +310,8 @@ export async function POST(req) {
         can_generate: true,
         generation_required: false,
         consent_required: false,
+        analysis_range: { start, end },
+        generated_at: now,
         usage: {
           analysis: { ...usageBefore.analysis, used: usageBefore.analysis.used + 1 },
           chat: usageBefore.chat,
@@ -314,7 +323,7 @@ export async function POST(req) {
     console.error("/api/records/analysis POST error:", error);
     const status = Number(error?.status || (error?.code === "records_ai_schema_required" ? 503 : 500));
     return NextResponse.json(
-      { error: error?.message || "AI分析に失敗しました", code: error?.code || "analysis_failed" },
+      { error: error?.message || "振り返りに失敗しました", code: error?.code || "analysis_failed" },
       { status }
     );
   }
