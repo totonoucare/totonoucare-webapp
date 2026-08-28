@@ -66,10 +66,10 @@ async function resolveThread({ userId, threadId, periodKey, start, end, firstMes
       notFound.code = "thread_not_found";
       throw notFound;
     }
-    if (String(data.range_start) !== start || String(data.range_end) !== end) {
-      const mismatch = new Error("選択期間が変わりました。新しい会話を始めてください。");
+    if (String(data.period_key) !== periodKey) {
+      const mismatch = new Error("選択期間が変わりました。表示中の期間で会話を開き直してください。");
       mismatch.status = 409;
-      mismatch.code = "thread_range_mismatch";
+      mismatch.code = "thread_period_mismatch";
       throw mismatch;
     }
     return data;
@@ -88,6 +88,18 @@ async function resolveThread({ userId, threadId, periodKey, start, end, firstMes
     .limit(1);
   if (findError) throw findError;
   if (existing?.[0]) return existing[0];
+
+  const { data: previous, error: previousError } = await supabaseServer
+    .from("records_ai_threads")
+    .select("id,period_key,range_start,range_end,status")
+    .eq("user_id", userId)
+    .eq("thread_kind", "period_review")
+    .eq("period_key", periodKey)
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(1);
+  if (previousError) throw previousError;
+  if (previous?.[0]) return previous[0];
 
   const { data, error } = await supabaseServer
     .from("records_ai_threads")
