@@ -119,13 +119,43 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
   assert.match(records, /key: "analysis", label: "振り返り"/);
   assert.match(records, /normalized === "consult"[\s\S]*loadFeatureAccess\(\)/);
   assert.match(records, /setMonthRows[\s\S]*loadFeatureAccess\(\)[\s\S]*return nextRow/);
-  assert.match(analysis, /この期間で分かったこと[\s\S]*次に一つだけ[\s\S]*RecordsSimpleTrendChart[\s\S]*詳しい根拠を見る/);
+  assert.match(analysis, /ケアナビAI Ekken[\s\S]*AIでこの期間を振り返る[\s\S]*次に一つだけ[\s\S]*AIを使わない基本集計[\s\S]*RecordsSimpleTrendChart/);
+  assert.match(analysis, /hasAiAnalysis \? "AI振り返りの根拠と内訳" : "基本集計の内訳を見る"/);
   assert.match(paywall, /自分を把握したEkkenへ相談/);
   assert.match(live, /今回Ekkenが把握していること[\s\S]*今日・明日の予報[\s\S]*直近14日の記録/);
   assert.match(daily, /天気以外に気になったこと[\s\S]*（任意）/);
   assert.match(route, /free_chat_response/);
   assert.match(route, /if \(!freeTrial\) assertQuota\(usageBefore, "chat"\)/);
   assert.match(route, /consult_history_enabled/);
+});
+
+test("AI未実行時と保存済みAI結果を分け、期間が進んでも前回結果と会話を引き継ぐ", async () => {
+  const [panel, analysisRoute, threadsRoute, chatRoute] = await Promise.all([
+    source("components/records/AiAnalysisPanel.jsx"),
+    source("app/api/records/analysis/route.js"),
+    source("app/api/records/threads/route.js"),
+    source("app/api/records/chat/route.js"),
+  ]);
+
+  assert.match(panel, /const hasAiAnalysis = Boolean/);
+  assert.match(panel, /ボタンを押したときだけAIを使います。タブを開くだけでは回数を使いません/);
+  assert.match(panel, /結果は自動で消えません。新しい記録を含めたいときだけ更新してください/);
+  assert.match(panel, /hasAiAnalysis && displayedAnalysis\.hypotheses/);
+  assert.match(panel, /この見立ての理由：/);
+
+  const latestLookup = analysisRoute.slice(
+    analysisRoute.indexOf("async function findLatestAnalysis"),
+    analysisRoute.indexOf("function algorithmResponse")
+  );
+  assert.match(latestLookup, /\.eq\("period_key", key\)/);
+  assert.doesNotMatch(latestLookup, /\.eq\("range_start"|\.eq\("range_end"/);
+  assert.match(analysisRoute, /period_advanced_since_saved_analysis/);
+  assert.match(analysisRoute, /analysis_range: \{ start: latest\.range_start, end: latest\.range_end \}/);
+
+  assert.match(threadsRoute, /previousThreads[\s\S]*\.eq\("period_key", periodKey\)[\s\S]*carried_over/);
+  assert.match(chatRoute, /previous[\s\S]*\.eq\("period_key", periodKey\)[\s\S]*if \(previous\?\.\[0\]\) return previous\[0\]/);
+  assert.match(chatRoute, /thread_period_mismatch/);
+  assert.doesNotMatch(chatRoute, /thread_range_mismatch/);
 });
 
 test("機能名を体調予報・体調警戒度・振り返りへ統一する", async () => {

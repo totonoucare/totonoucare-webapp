@@ -32,6 +32,7 @@ test("AI analysis lookup is automatic but generation is manual", async () => {
   assert.match(route, /const generate = body\?\.generate === true/);
   assert.match(route, /if \(!generate\)/);
   assert.match(route, /records_changed_since_saved_analysis/);
+  assert.match(route, /period_advanced_since_saved_analysis/);
 });
 
 test("live support stores consultation status without consuming a chat message", async () => {
