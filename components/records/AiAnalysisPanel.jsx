@@ -137,7 +137,7 @@ function ConsentCard({ consent, access, loading, saving, onConsent, onRevoke }) 
         <summary className="cursor-pointer font-black text-[#8F651E]">送信内容とAIの範囲</summary>
         <div className="mt-2">送信するのは、解釈済み体質トリセツ、利用する画面に必要な予報・対策ケア・実行ケア・体調記録・メモ・任意の受診・相談状況・会話です。入力したメモや会話は送信対象になります。OpenAIの応答保存機能は無効化しますが、不正利用監視ログ等は提供元の方針に従います。AIは診断や薬の個別判断を行いません。</div>
       </details>
-      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "振り返りを使う"}</Button>
+      <Button disabled={saving} onClick={onConsent} className="mt-3 w-full">{saving ? "保存中…" : "AI利用に同意して進む"}</Button>
     </div>
   );
 }
@@ -186,6 +186,13 @@ export default function AiAnalysisPanel({
   const summary = useMemo(() => bundle?.summary || buildRecordsSummary(bundle?.rows || []), [bundle]);
   const fallbackAnalysis = useMemo(() => deterministicAnalysis(summary), [summary]);
   const displayedAnalysis = analysis || fallbackAnalysis;
+  const hasAiAnalysis = Boolean(analysis && analysisMeta?.source === "ai");
+  const savedAnalysisRange = analysisMeta?.analysis_range;
+  const savedRangeLabel = savedAnalysisRange?.start && savedAnalysisRange?.end
+    ? formatRange(savedAnalysisRange.start, savedAnalysisRange.end)
+    : "";
+  const currentRangeLabel = formatRange(range.start, range.end);
+  const recordsNeededForAi = Math.max(0, 3 - Number(summary.recorded_days || 0));
   const hasPendingFollowUp = Boolean(
     followUp?.kind && followUp.kind !== "none" && followUp.question
   );
@@ -261,6 +268,8 @@ export default function AiAnalysisPanel({
         request_id: data.request_id,
         consent_required: data.consent_required,
         reason: data.algorithm_reason,
+        analysis_range: data.analysis_range || null,
+        generated_at: data.generated_at || null,
       });
       setChatSuggestions(data.analysis?.suggested_questions || []);
       setChatMood(data.analysis?.mood || "normal");
@@ -534,19 +543,27 @@ export default function AiAnalysisPanel({
 
       <section className="overflow-hidden rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="flex items-end gap-3 px-4 pt-4">
-          <GuideBotAvatar mood={analysisLoading || analysisLookupLoading ? "thinking" : displayedAnalysis.mood} className="h-[78px] w-[78px] shrink-0" />
+          <GuideBotAvatar mood={analysisLoading || analysisLookupLoading ? "thinking" : hasAiAnalysis ? displayedAnalysis.mood : "normal"} className="h-[78px] w-[78px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">この期間で分かったこと</div>
-            <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">{analysisLoading ? "記録を見比べています…" : analysisLookupLoading ? "保存済みの振り返りを確認しています…" : displayedAnalysis.headline}</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">ケアナビAI Ekken</div>
+            <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">
+              {analysisLoading
+                ? "記録を見比べています…"
+                : analysisLookupLoading
+                  ? "保存済みのAI振り返りを確認しています…"
+                  : hasAiAnalysis
+                    ? displayedAnalysis.headline
+                    : "AIでこの期間を振り返る"}
+            </div>
           </div>
         </div>
         <div className="space-y-2.5 px-4 pb-4">
           {analysisLoading || analysisLookupLoading ? (
             <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
-              {analysisLoading ? "予報・実感・ケアを順番に確認しています。" : "この期間の保存済み分析を確認しています。"}
+              {analysisLoading ? "予報・実感・ケアを順番に確認しています。" : "この期間枠に保存されたAI振り返りを確認しています。"}
             </div>
-          ) : (
+          ) : hasAiAnalysis ? (
             <>
               <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
                 <div className="text-[14px] font-bold leading-6 text-slate-700">{displayedAnalysis.observed || displayedAnalysis.empathy}</div>
@@ -556,20 +573,42 @@ export default function AiAnalysisPanel({
                 <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{displayedAnalysis.next_step}</div>
               </div>
             </>
+          ) : (
+            <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
+              <div className="text-[14px] font-bold leading-6 text-slate-600">ケアナビAI Ekkenが、この期間の体調予報・実感・ケアを見比べます。分かった傾向と、次に試す一手を整理します。</div>
+              {analysisMeta?.reason === "insufficient_records" ? (
+                <div className="mt-3 rounded-[14px] bg-[#FFF8EC] px-3 py-2.5 text-[12px] font-black leading-5 text-[#A56C18]">AI振り返りには3日分の記録が必要です。あと{recordsNeededForAi}日記録すると使えます。</div>
+              ) : analysisMeta?.reason === "openai_not_configured" ? (
+                <div className="mt-3 text-[12px] font-black leading-5 text-slate-400">AI振り返りは現在準備中です。</div>
+              ) : !access?.analysis_enabled ? (
+                <div className="mt-3 text-[12px] font-black leading-5 text-slate-400">AIによる個別の振り返りは、対象期間または対象プランで利用できます。</div>
+              ) : !consent?.active ? (
+                <div className="mt-3 text-[12px] font-black leading-5 text-slate-400">下の「AI利用前の確認」を完了すると実行できます。</div>
+              ) : analysisMeta?.can_generate ? (
+                <>
+                  <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>AIでこの期間を振り返る</Button>
+                  <div className="mt-2 text-[12px] font-bold leading-4 text-slate-400">ボタンを押したときだけAIを使います。タブを開くだけでは回数を使いません。</div>
+                </>
+              ) : null}
+            </div>
           )}
 
-          {!analysisLoading && !analysisLookupLoading && analysisMeta?.generation_required && analysisMeta?.can_generate && consent?.active && access?.analysis_enabled ? (
+          {!analysisLoading && !analysisLookupLoading && hasAiAnalysis && analysisMeta?.generation_required && analysisMeta?.can_generate && consent?.active && access?.analysis_enabled ? (
             <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#CFE7DE]">
-              <div className="text-[12px] font-black leading-5 text-slate-700">{analysisMeta.stale ? "記録が更新されています。現在は以前の振り返りです。" : "この期間はまだEkkenで振り返っていません。"}</div>
-              <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">必要なときだけ更新します。タブを開くだけでは回数を使いません。</div>
-              <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>{analysisMeta.stale ? "現在の記録で更新" : "Ekkenに振り返ってもらう"}</Button>
+              <div className="text-[12px] font-black leading-5 text-slate-700">
+                {analysisMeta.reason === "period_advanced_since_saved_analysis" && savedRangeLabel
+                  ? `${savedRangeLabel}の保存済みAI振り返りを表示しています。`
+                  : "記録更新前の保存済みAI振り返りを表示しています。"}
+              </div>
+              <div className="mt-1 text-[12px] font-bold leading-4 text-slate-400">結果は自動で消えません。新しい記録を含めたいときだけ更新してください。</div>
+              <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>現在の{currentRangeLabel}でAI振り返りを更新</Button>
             </div>
           ) : null}
 
-          {analysisMeta?.source ? (
-            <div className="px-1 text-[12px] font-bold text-slate-400">{analysisMeta.source === "ai" ? "AIと集計ロジックによる振り返り" : "記録数に応じた基本の振り返り"}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・記録更新前" : ""}</div>
+          {hasAiAnalysis ? (
+            <div className="px-1 text-[12px] font-bold text-slate-400">ケアナビAI Ekkenと基本集計による振り返り{savedRangeLabel ? `・${savedRangeLabel}` : ""}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・更新前" : ""}</div>
           ) : null}
-          {analysisMeta?.source === "ai" && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
+          {hasAiAnalysis && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
           {analysisError ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{analysisError}</div> : null}
           {analysisNotice ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{analysisNotice}</div> : null}
         </div>
@@ -578,6 +617,11 @@ export default function AiAnalysisPanel({
       <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
+        <div className="mb-3">
+          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">AIを使わない基本集計</div>
+          <div className="mt-1 text-[15px] font-black text-slate-900">記録した日と体調の流れ</div>
+          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-400">記録件数とグラフは、AIを実行しなくても確認できます。</div>
+        </div>
         <div className="mb-3 flex flex-wrap gap-2">
           <span className="rounded-full bg-[#EFF8F4] px-3 py-1.5 text-[12px] font-black text-[#2F816E]">記録 {summary.recorded_days || 0}日</span>
           <span className="rounded-full bg-[#F7FAF8] px-3 py-1.5 text-[12px] font-black text-slate-600">○ {summary.good_days || 0}日</span>
@@ -587,10 +631,10 @@ export default function AiAnalysisPanel({
         {rangeLoading ? <div className="h-[300px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsSimpleTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
 
         <details className="mt-4 rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#E8F0EB]">
-          <summary className="cursor-pointer text-[13px] font-black text-slate-600">詳しい根拠を見る</summary>
+          <summary className="cursor-pointer text-[13px] font-black text-slate-600">{hasAiAnalysis ? "AI振り返りの根拠と内訳" : "基本集計の内訳を見る"}</summary>
           <div className="mt-3 space-y-3">
-            {displayedAnalysis.hypotheses ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#7B6588]">考えられること：</span>{displayedAnalysis.hypotheses}</div> : null}
-            {displayedAnalysis.evidence?.length ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">{displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}</div> : null}
+            {hasAiAnalysis && displayedAnalysis.hypotheses ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#7B6588]">この見立ての理由：</span>{displayedAnalysis.hypotheses}</div> : null}
+            {hasAiAnalysis && displayedAnalysis.evidence?.length ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]"><div className="mb-1 font-black text-slate-600">記録で確認したこと</div>{displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}</div> : null}
             {!rangeLoading ? <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} /> : null}
             <div className="text-[12px] font-bold leading-5 text-slate-400">体調警戒度は、実感に合わせて後から書き換えない予報です。詳しいグラフでは、天気ストレスや似た条件の日も確認できます。</div>
           </div>
@@ -601,7 +645,7 @@ export default function AiAnalysisPanel({
         <button type="button" aria-expanded={periodChatOpen} onClick={() => setPeriodChatOpen((current) => !current)} className="flex w-full items-center gap-3 text-left">
           <div className="grid h-11 w-11 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-11 w-11" /></div>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-black text-slate-900">この振り返りについてEkkenに聞く</div>
+            <div className="text-[15px] font-black text-slate-900">ケアナビAI Ekkenに聞く</div>
             <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-400">選択期間の記録と分析を引き継ぎます</div>
           </div>
           <span className={["text-[22px] font-black text-[#2F816E] transition-transform", periodChatOpen ? "rotate-90" : ""].join(" ")}>›</span>
