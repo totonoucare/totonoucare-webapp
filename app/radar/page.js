@@ -1094,11 +1094,15 @@ export default function RadarPage() {
     const groups = { live: [], eat: [], point: [] };
     safeArray(purchasedShopItems).forEach((row) => {
       const shopItem = row?.item_snapshot && typeof row.item_snapshot === "object" ? row.item_snapshot : {};
+      const ingestible = ["supplement", "kampo", "otc"].includes(shopItem.regulatoryCategory);
+      // 飲むものは「買った」だけでは毎日のケア候補へ出さない。
+      // ショップで明示的に使用中へ切り替えた時だけ、記録候補として扱う。
+      if (ingestible && shopItem.activeUse !== true) return;
       const category = ["live", "eat", "point"].includes(row?.category) ? row.category : shopItem.category;
       if (!groups[category]) return;
       const domain = category === "point" ? "loosen" : category;
       const label = String(row?.title || shopItem.title || "購入済みのケアアイテム").slice(0, 160);
-      const detail = String(shopItem.useGuide || shopItem.reason || (domain === "eat" ? "購入済みの商品を取り入れた" : "購入済みの商品を使った")).slice(0, 240);
+      const detail = String(shopItem.useGuide || shopItem.reason || (ingestible ? "使用中の商品を取り入れた" : domain === "eat" ? "購入済みの商品を取り入れた" : "購入済みの商品を使った")).slice(0, 240);
       const canonicalKey = buildCareActionKey({
         domain,
         kind: "owned_care_item",
