@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
-import Button from "@/components/ui/Button";
+import GuidedCareSearch from "@/components/care-shop/GuidedCareSearch";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
@@ -2460,6 +2459,12 @@ function compactShelfItem(item) {
     useGuide: item?.useGuide || "",
     reason: item?.reason || "",
     productRole: item?.productRole || item?.role || "",
+    regulatoryCategory: item?.regulatoryCategory || "",
+    ingredientIds: safeArray(item?.ingredientIds).map((value) => String(value).slice(0, 80)).slice(0, 20),
+    dataConfidence: item?.dataConfidence || "",
+    candidateId: item?.candidateId || "",
+    sourceKey: item?.sourceKey || "",
+    activeUse: Boolean(item?.activeUse),
   };
 }
 
@@ -2747,7 +2752,7 @@ function CareSetCard({ card, cardPosition, trackingContext, shopEntryMap, saving
   );
 }
 
-function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkInterested, onRemove }) {
+function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkInterested, onToggleActive, onRemove }) {
   const visible = safeArray(entries);
   if (!visible.length) {
     return (
@@ -2770,6 +2775,8 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
           const Icon = meta.icon;
           const url = item.itemUrl || item.clickUrl || makeRakutenSearchUrl(item.query);
           const purchased = entry.status === "purchased";
+          const ingestible = ["supplement", "kampo", "otc"].includes(item.regulatoryCategory);
+          const activeUse = Boolean(item.activeUse);
           const saving = savingKey === entry.key;
           return (
             <div key={entry.key} className="rounded-[18px] bg-white p-3 ring-1 ring-[#E8E2D6]">
@@ -2780,12 +2787,14 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
                 <div className="min-w-0 flex-1">
                   <div className="line-clamp-2 text-[12px] font-black leading-4 text-slate-800">{item.title}</div>
                   <span className={["mt-1 inline-flex rounded-full px-2 py-0.5 text-[12px] font-black ring-1", purchased ? "bg-[#FFF6DF] text-[#8B640C] ring-[#E4C56B]" : "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]"].join(" ")}>{purchased ? "購入済み" : "気になる"}</span>
+                  {purchased && ingestible ? <span className={["ml-1 mt-1 inline-flex rounded-full px-2 py-0.5 text-[12px] font-black ring-1", activeUse ? "bg-[#EAF7F1] text-[#2F816E] ring-[#A7D4CB]" : "bg-white text-slate-400 ring-[#DCE8DD]"].join(" ")}>{activeUse ? "使用中" : "保管中"}</span> : null}
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <a href={url} target="_blank" rel="sponsored nofollow noopener noreferrer" className="rounded-[13px] bg-[var(--shop)] px-2 py-2 text-center text-[12px] font-black text-white">商品を見る</a>
                 <button type="button" disabled={saving} onClick={() => purchased ? onMarkInterested?.(entry) : onMarkPurchased?.(entry)} className="rounded-[13px] bg-white px-2 py-2 text-[12px] font-black text-slate-600 ring-1 ring-[#DCE8DD]">{saving ? "更新中…" : purchased ? "購入済みを解除" : "購入済みにする"}</button>
               </div>
+              {purchased && ingestible ? <button type="button" disabled={saving} onClick={() => onToggleActive?.(entry)} className="mt-2 w-full rounded-[13px] bg-[#F4F9F6] px-2 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{activeUse ? "使用中を解除" : "使用中にする"}</button> : null}
               {!purchased ? <button type="button" disabled={saving} onClick={() => onRemove?.(entry)} className="mt-2 w-full text-center text-[12px] font-black text-slate-400 underline underline-offset-2">気になるから削除</button> : null}
             </div>
           );
@@ -2798,10 +2807,32 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
 function ViewModeSwitch({ value, onChange }) {
   return (
     <div className="inline-flex rounded-full bg-[#EDF5F0] p-1 ring-1 ring-[#D3E3D9]">
-      {[{ key: "sets", label: "セットで見る" }, { key: "single", label: "1つずつ見る" }, { key: "interested", label: "気になる" }].map((option) => (
+      {[{ key: "sets", label: "組み合わせ" }, { key: "single", label: "1つずつ" }].map((option) => (
         <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-full px-3 py-1.5 text-[12px] font-black transition-colors", value === option.key ? "bg-white text-[var(--accent-ink)] shadow-sm ring-1 ring-[#C9DED2]" : "text-slate-400"].join(" ")}>{option.label}</button>
       ))}
     </div>
+  );
+}
+
+function ShopPrimaryTabs({ value, onChange }) {
+  return (
+    <div className="grid grid-cols-2 rounded-[24px] bg-[#ECF3EF] p-1.5 ring-1 ring-[#D4E1D9] shadow-[0_12px_28px_-24px_rgba(36,86,76,0.28)]" aria-label="ショップの探し方">
+      {[{ key: "recommend", label: "おすすめ", note: "いつものケア" }, { key: "guided", label: "悩みから探す", note: "今の状態を整理" }].map((option) => (
+        <button key={option.key} type="button" onClick={() => onChange(option.key)} className={["rounded-[19px] px-3 py-2.5 text-center transition-colors", value === option.key ? "bg-white text-[#24564C] ring-1 ring-[#BED7CB] shadow-sm" : "text-slate-500"].join(" ")}>
+          <span className="block text-[14px] font-black">{option.label}</span>
+          <span className="mt-0.5 block text-[12px] font-bold opacity-65">{option.note}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SavedShopButton({ count, active, onClick }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={`保存した候補 ${count}件`} aria-pressed={active} className={["relative grid h-11 w-11 place-items-center rounded-full text-[20px] ring-1 shadow-sm", active ? "bg-[#EAF7F1] text-[#2F816E] ring-[#9CCBB7]" : "bg-white text-[#527064] ring-[#D5E2DA]"].join(" ")}>
+      <span aria-hidden="true">♥</span>
+      {count ? <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[#D39422] px-1 text-[10px] font-black text-white">{Math.min(99, count)}</span> : null}
+    </button>
   );
 }
 
@@ -2969,8 +3000,6 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
 }
 
 export default function CareNaviPage() {
-  const router = useRouter();
-
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [profileError, setProfileError] = useState("");
@@ -3000,6 +3029,8 @@ export default function CareNaviPage() {
   const [rakutenRetryNonce, setRakutenRetryNonce] = useState(0);
   const [visibleLimit, setVisibleLimit] = useState(CARE_SET_INITIAL_LIMIT);
   const [showConditions, setShowConditions] = useState(false);
+  const [primaryTab, setPrimaryTab] = useState("recommend");
+  const [showSaved, setShowSaved] = useState(false);
   const [viewMode, setViewMode] = useState("sets");
   const [singleCategory, setSingleCategory] = useState("live");
   const [shopEntries, setShopEntries] = useState([]);
@@ -3598,7 +3629,12 @@ export default function CareNaviPage() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json?.error || "保存できませんでした。");
       setShopEntries(safeArray(json?.data?.items).map(shopEntryFromRow).filter(Boolean));
-      setShopNotice(status === "purchased" ? "購入済みにしました。体調予報の対策ケアに表示されます。" : "「気になる」に保存しました。");
+      const ingestible = ["supplement", "kampo", "otc"].includes(nextEntry.item.regulatoryCategory);
+      setShopNotice(status === "purchased"
+        ? ingestible
+          ? "購入済みにしました。実際に使い始めたら「使用中」にすると、成分の重複確認へ反映されます。"
+          : "購入済みにしました。体調予報の対策ケアに表示されます。"
+        : "「気になる」に保存しました。");
     } catch (error) {
       setShopError(error?.message || "保存できませんでした。");
     } finally {
@@ -3636,16 +3672,59 @@ export default function CareNaviPage() {
     const current = shopEntryMap.get(getSetItemKey(item));
     if (current?.status === "interested") removeShopEntry(current);
     else if (!current) syncShopEntry(item, "interested");
-    else setViewMode("interested");
+    else setShowSaved(true);
+  }
+
+  function toggleActiveShopEntry(entry) {
+    if (!entry?.item) return;
+    syncShopEntry({ ...entry.item, activeUse: !entry.item.activeUse }, entry.status);
+  }
+
+  function selectPrimaryTab(tab) {
+    setPrimaryTab(tab);
+    setShowSaved(false);
+    setShopNotice("");
+    setShopError("");
   }
 
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
         title="パーソナルケアショップ"
-        subtitle="暮らす・食べる・ほぐすのケアアイテム"
-        headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/settings")}>設定</Button>}
+        subtitle="体質と今の状態から、選び方を絞る"
+        headerRight={<SavedShopButton count={shopEntries.length} active={showSaved} onClick={() => setShowSaved((value) => !value)} />}
       >
+        <ShopPrimaryTabs value={primaryTab} onChange={selectPrimaryTab} />
+
+        {shopNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{shopNotice}</div> : null}
+        {shopError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[12px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{shopError}</div> : null}
+
+        {showSaved ? (
+          <Module className="!bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_18px_44px_-34px_rgba(36,86,76,0.26)] sm:p-5">
+            <div className="mb-4">
+              <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]">保存した候補</div>
+              <h2 className="mt-1 text-[19px] font-black text-slate-900">気になる・購入済み</h2>
+              <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">飲むものは「購入済み」と「使用中」を分けて、重複確認に使います。</p>
+            </div>
+            <InterestedItemsView
+              entries={shopEntries}
+              savingKey={shopSavingKey}
+              onMarkPurchased={(entry) => syncShopEntry(entry.item, "purchased")}
+              onMarkInterested={(entry) => syncShopEntry({ ...entry.item, activeUse: false }, "interested")}
+              onToggleActive={toggleActiveShopEntry}
+              onRemove={removeShopEntry}
+            />
+          </Module>
+        ) : primaryTab === "guided" ? (
+          <GuidedCareSearch
+            profile={profile}
+            registeredSymptomKey={registeredSymptomKey}
+            entries={shopEntries}
+            savingKey={shopSavingKey}
+            onSave={(item) => syncShopEntry(item, "interested")}
+          />
+        ) : (
+          <>
         <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
           <div className="relative z-10">
             <PersonalCareShopHero
@@ -3761,18 +3840,7 @@ export default function CareNaviPage() {
 
           <div className="mt-3 grid gap-3">
             <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
-            {shopNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{shopNotice}</div> : null}
-            {shopError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[12px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{shopError}</div> : null}
-
-            {viewMode === "interested" ? (
-              <InterestedItemsView
-                entries={shopEntries}
-                savingKey={shopSavingKey}
-                onMarkPurchased={(entry) => syncShopEntry(entry.item, "purchased")}
-                onMarkInterested={(entry) => syncShopEntry(entry.item, "interested")}
-                onRemove={removeShopEntry}
-              />
-            ) : rakutenLoading && !["cached", "live"].includes(rakutenResultSource) ? (
+            {rakutenLoading && !["cached", "live"].includes(rakutenResultSource) ? (
               <RakutenLoadingCards />
             ) : careSetCards.length ? (
               viewMode === "sets" ? (
@@ -3806,6 +3874,8 @@ export default function CareNaviPage() {
             </details>
           </div>
         </Module>
+          </>
+        )}
       </AppShell>
     </div>
   );
