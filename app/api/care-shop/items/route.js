@@ -41,6 +41,12 @@ function cleanUrl(value) {
   return /^https?:\/\//i.test(url) ? url : null;
 }
 
+function cleanStringList(value, limit = 20, itemLimit = 80) {
+  return Array.isArray(value)
+    ? [...new Set(value.map((item) => compact(item, itemLimit)).filter(Boolean))].slice(0, limit)
+    : [];
+}
+
 function cleanItem(input) {
   const item = input && typeof input === "object" && !Array.isArray(input) ? input : {};
   const category = CATEGORY_VALUES.has(item.category) ? item.category : "live";
@@ -60,6 +66,12 @@ function cleanItem(input) {
     useGuide: compact(item.useGuide, 300),
     reason: compact(item.reason, 300),
     productRole: compact(item.productRole || item.role, 100),
+    regulatoryCategory: compact(item.regulatoryCategory, 40),
+    ingredientIds: cleanStringList(item.ingredientIds),
+    dataConfidence: compact(item.dataConfidence, 80),
+    candidateId: compact(item.candidateId, 100),
+    sourceKey: compact(item.sourceKey, 100),
+    activeUse: Boolean(item.activeUse),
   };
 }
 
