@@ -1,3 +1,20 @@
+## v7.79.37 パーソナルケアショップの現行契約
+
+- `/care-navi`の上位導線は`おすすめ / 悩みから探す`。保存一覧は上位タブへ混ぜず、ヘッダーのハートから開く
+- `おすすめ`は従来の体質・不調・生活・季節・天気と楽天/A8接続を維持する
+- `悩みから探す`の純粋ロジック正本は`lib/care-shop/guidedEngine.js`、比較候補正本は`lib/care-shop/guidedCatalog.js`
+- 現在状態は症状、寒熱、重さ・乾き、余力、胃腸、楽になる条件を主にし、体質のcore/subは弱い事前傾向として加算する。体質だけで内服候補を決めない
+- 候補選定順は、レッドフラッグ停止 → 専門家確認 → 症状一致 → 現在状態一致 → 矛盾除外 → 体質による補助。AIはこの順位へ関与しない
+- 漢方薬は処方名、一般用医薬品は有効成分または薬効群、サプリ・健康食品は成分・原材料を表示単位にする
+- 同じ生薬由来素材でも食品、健康食品、生薬、漢方処方を同一商品として扱わず、`ingredientIds`で重複・関連だけを示す
+- `stop`は商品候補を非表示、`consult`は候補を整理しても内服系外部リンクを止め、`compare`だけ通常比較へ進む
+- レッドフラッグ判定は`normalizeConcernText`と選択項目による決定論。AI出力で弱めたり解除したりしない
+- `/api/care-shop/interpret`はユーザーが`AIで入力内容を整理（任意）`を押した時だけ呼ぶ。`gpt-5.6-luna`、低reasoning、strict JSON、`store:false`。診断・重症度・受診・商品推薦は禁止
+- AI整理失敗時は`normalizeConcernText`へ戻り、選択式探索そのものは継続できる
+- 保存テーブルの既存statusとcategoryを保ち、新しい`regulatoryCategory / ingredientIds / dataConfidence / candidateId / activeUse`は`item_snapshot`へ保存する。DB migrationなし
+- supplement/kampo/otcは`purchased`だけでは予報の手持ちケアへ出さず、`item_snapshot.activeUse === true`の時だけ表示・記録候補にする
+- 既存312件と新規6件の計318件の回帰テスト、Next.js本番ビルドを通過
+
 ## v7.79.36 AI振り返り表示・保存の現行契約
 
 - AI未実行時は`deterministicAnalysis`の文をEkkenの回答として表示しない。`ケアナビAI Ekken`の役割説明と手動実行導線を表示する
