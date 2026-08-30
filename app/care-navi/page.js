@@ -2775,7 +2775,7 @@ function InterestedItemsView({ entries, savingKey, onMarkPurchased, onMarkIntere
           const Icon = meta.icon;
           const url = item.itemUrl || item.clickUrl || makeRakutenSearchUrl(item.query);
           const purchased = entry.status === "purchased";
-          const ingestible = ["supplement", "kampo", "otc"].includes(item.regulatoryCategory);
+          const ingestible = ["health", "supplement", "kampo", "otc"].includes(item.regulatoryCategory);
           const activeUse = Boolean(item.activeUse);
           const saving = savingKey === entry.key;
           return (
@@ -3629,7 +3629,7 @@ export default function CareNaviPage() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json?.error || "保存できませんでした。");
       setShopEntries(safeArray(json?.data?.items).map(shopEntryFromRow).filter(Boolean));
-      const ingestible = ["supplement", "kampo", "otc"].includes(nextEntry.item.regulatoryCategory);
+      const ingestible = ["health", "supplement", "kampo", "otc"].includes(nextEntry.item.regulatoryCategory);
       setShopNotice(status === "purchased"
         ? ingestible
           ? "購入済みにしました。実際に使い始めたら「使用中」にすると、成分の重複確認へ反映されます。"
