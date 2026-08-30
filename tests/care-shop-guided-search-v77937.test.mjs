@@ -30,7 +30,7 @@ const safeOralInput = {
   redFlags: [],
 };
 
-test("状態判定は体質を土台にしつつ今の症状・寒熱・余力を優先する", () => {
+test("体質チェックと今日の状態を混ぜずに候補を絞る", () => {
   const result = buildGuidedSearchResult(safeOralInput, {
     core_code: "brake_batt_large",
     sub_labels: ["fluid_damp"],
@@ -41,7 +41,9 @@ test("状態判定は体質を土台にしつつ今の症状・寒熱・余力�
   assert.ok(result.groups.some((group) => group.type === "kampo"));
   const kampo = result.groups.find((group) => group.type === "kampo").candidates;
   assert.ok(kampo.some((item) => item.title === "補中益気湯"));
-  assert.ok(kampo.every((item) => item.trust === "添付文書確認"));
+  assert.ok(kampo.every((item) => item.productClass === "第2類医薬品"));
+  assert.match(kampo[0].matchReason, /選んだ/);
+  assert.ok(kampo.every((item) => item.compare));
 });
 
 test("レッドフラッグはAIを通さず商品表示を止める", () => {
@@ -95,5 +97,6 @@ test("内服系は購入済みだけでは予報へ出ず、使用中だけ記�
   assert.match(itemsRoute, /activeUse: Boolean\(item\.activeUse\)/);
   assert.match(page, /使用中にする/);
   assert.match(page, /使用中を解除/);
+  assert.match(radar, /"health", "supplement", "kampo", "otc"/);
   assert.match(radar, /if \(ingestible && shopItem\.activeUse !== true\) return/);
 });
