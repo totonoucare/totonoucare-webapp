@@ -5,7 +5,6 @@ import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { supabase } from "@/lib/supabaseClient";
 import { GUIDED_SCOPE_META, GUIDED_SCOPE_OPTIONS } from "@/lib/care-shop/guidedCatalog";
 import {
-  buildBaselineFromProfile,
   buildGuidedSearchResult,
   ingredientConnections,
   normalizeConcernText,
@@ -32,8 +31,8 @@ const OPTION_SETS = {
     { key: "mixed", label: "両方ある" }, { key: "neutral", label: "特にない" },
   ],
   reserve: [
-    { key: "low", label: "休んでも余力が少ない" }, { key: "standard", label: "普段どおり" },
-    { key: "high", label: "動けるが張りやすい" },
+    { key: "low", label: "少し動くだけで疲れそう" }, { key: "standard", label: "普段とあまり変わらない" },
+    { key: "high", label: "動けるが、力が抜けにくい" },
   ],
   digestion: [
     { key: "appetite_low", label: "食欲が落ちた" }, { key: "postmeal_heavy", label: "食後に重い" },
@@ -109,7 +108,7 @@ function safetyTone(level) {
 }
 
 function candidateItem(candidate) {
-  const category = candidate.type === "selfcare" ? "point" : candidate.type === "food" ? "eat" : "eat";
+  const category = candidate.type === "selfcare" ? "point" : "eat";
   return {
     title: candidate.title,
     category,
@@ -119,11 +118,10 @@ function candidateItem(candidate) {
     sourceType: "guided_candidate",
     buttonText: "楽天で比較",
     useGuide: candidate.direction,
-    reason: candidate.reason,
-    productRole: GUIDED_SCOPE_META[candidate.type]?.label || "比較候補",
+    reason: candidate.matchReason,
+    productRole: candidate.productClass || GUIDED_SCOPE_META[candidate.type]?.label || "比較候補",
     regulatoryCategory: candidate.type,
     ingredientIds: candidate.ingredientIds,
-    dataConfidence: candidate.trust,
     candidateId: candidate.id,
     sourceKey: candidate.id,
     activeUse: false,
@@ -132,7 +130,7 @@ function candidateItem(candidate) {
 
 function CandidateCard({ candidate, safety, saved, saving, onSave }) {
   const meta = GUIDED_SCOPE_META[candidate.type];
-  const oral = ["supplement", "kampo", "otc"].includes(candidate.type);
+  const oral = ["health", "kampo"].includes(candidate.type);
   const linkBlocked = oral && safety.level === "consult";
   const connections = ingredientConnections(candidate).slice(0, 3);
   return (
@@ -142,11 +140,15 @@ function CandidateCard({ candidate, safety, saved, saving, onSave }) {
           <div className="text-[12px] font-black tracking-[0.1em] text-[#608077]">{meta?.eyebrow}</div>
           <h4 className="mt-1 text-[16px] font-black leading-6 text-slate-900">{candidate.title}</h4>
         </div>
-        <span className="shrink-0 rounded-full bg-[#F4F7F5] px-2 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#DCE7E0]">{candidate.trust}</span>
+        <span className="shrink-0 rounded-full bg-[#F4F7F5] px-2 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#DCE7E0]">{candidate.productClass || meta?.label}</span>
       </div>
       <div className="mt-3 rounded-[16px] bg-[#F4F9F6] px-3 py-2.5">
-        <div className="text-[12px] font-black text-[#2F816E]">見るポイント</div>
-        <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.reason}</p>
+        <div className="text-[12px] font-black text-[#2F816E]">候補に入った理由</div>
+        <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.matchReason}</p>
+      </div>
+      <div className="mt-2 rounded-[16px] bg-[#FFFAF0] px-3 py-2.5 ring-1 ring-[#F0E1C3]">
+        <div className="text-[12px] font-black text-[#9A6A20]">選ぶときの確認</div>
+        <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.compare}</p>
       </div>
       {candidate.duplicateIngredients.length ? (
         <div className="mt-2 rounded-[14px] bg-[#FFF1EE] px-3 py-2 text-[12px] font-black leading-5 text-[#9A4435] ring-1 ring-[#F0C0B6]">
@@ -161,7 +163,12 @@ function CandidateCard({ candidate, safety, saved, saving, onSave }) {
           </div>
         </details>
       ) : null}
-      {candidate.caution ? <p className="mt-2 text-[12px] font-bold leading-5 text-slate-500">確認：{candidate.caution}</p> : null}
+      {candidate.caution ? (
+        <details className="mt-2 rounded-[14px] bg-[#FAFBFA] ring-1 ring-[#E2E9E4]">
+          <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-black text-slate-600 [&::-webkit-details-marker]:hidden">購入前に確認 ＋</summary>
+          <p className="border-t border-[#E2E9E4] px-3 py-2 text-[12px] font-bold leading-5 text-slate-500">{candidate.caution}</p>
+        </details>
+      ) : null}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button type="button" disabled={saving || saved} onClick={() => onSave?.(candidateItem(candidate))} className="rounded-[15px] bg-white px-3 py-2.5 text-[12px] font-black text-[#2F816E] ring-1 ring-[#BFD8CC] disabled:text-slate-400 disabled:ring-[#DCE7E0]">
           {saving ? "保存中…" : saved ? "♥ 保存済み" : "♡ 気になる"}
@@ -194,14 +201,18 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
       ) : (
         <>
           <section className="rounded-[24px] bg-[#EDF7F2] p-4 ring-1 ring-[#CFE4D8]">
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]">今の状態の整理</div>
-            <h3 className="mt-1 text-[18px] font-black leading-7 text-slate-900">{result.currentState.summary}</h3>
-            {result.directions.length ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {result.directions.map((direction) => <span key={direction} className="rounded-full bg-white px-3 py-1.5 text-[12px] font-black text-[#376F62] ring-1 ring-[#CFE4D8]">{direction}</span>)}
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]">体質と今日の状態を分けて確認</div>
+            <div className="mt-3 grid gap-2">
+              <div className="rounded-[15px] bg-white px-3 py-2.5 ring-1 ring-[#D5E7DD]">
+                <div className="text-[11px] font-black text-slate-400">もともとの傾向</div>
+                <p className="mt-0.5 text-[13px] font-black leading-5 text-slate-700">{result.currentState.baseline.summary}</p>
               </div>
-            ) : null}
-            <p className="mt-3 text-[12px] font-bold leading-5 text-slate-500">体質は土台として使い、今選んだ症状と状態を優先して並べています。診断結果ではありません。</p>
+              <div className="rounded-[15px] bg-white px-3 py-2.5 ring-1 ring-[#A9D4C7]">
+                <div className="text-[11px] font-black text-[#2F816E]">今日の回答</div>
+                <p className="mt-0.5 text-[14px] font-black leading-5 text-slate-900">{result.currentState.summary}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-[12px] font-bold leading-5 text-slate-500">今日だけ違う状態があっても、体質チェックの結果は上書きしません。</p>
           </section>
 
           {result.groups.length ? result.groups.map((group) => (
@@ -226,7 +237,7 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
             </div>
           )}
           <button type="button" onClick={onReset} className="w-full rounded-[18px] bg-white px-4 py-3 text-[12px] font-black text-[#2F816E] ring-1 ring-[#BFD8CC]">条件を見直す</button>
-          <p className="text-[12px] font-bold leading-5 text-slate-400">医薬品・健康食品は、商品名ではなく処方名・有効成分・原材料から比較します。購入前に必ず最新の添付文書・商品表示を確認してください。</p>
+          <p className="text-[12px] font-bold leading-5 text-slate-400">健康食品・サプリは商品表示を、漢方薬は最新の添付文書を確認してください。症状を一時的に抑える一般用医薬品は、このショップでは扱いません。</p>
         </>
       )}
     </div>
@@ -234,7 +245,6 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
 }
 
 export default function GuidedCareSearch({ profile, registeredSymptomKey = "", entries = [], savingKey = "", onSave }) {
-  const baseline = useMemo(() => buildBaselineFromProfile(profile), [profile]);
   const [step, setStep] = useState(1);
   const [subject, setSubject] = useState("self");
   const [concerns, setConcerns] = useState([]);
@@ -253,13 +263,8 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
   useEffect(() => {
     if (profileApplied) return;
     if (registeredSymptomKey) setConcerns([registeredSymptomKey]);
-    setAnswers((prev) => ({
-      ...prev,
-      reserve: baseline.reserve || prev.reserve,
-      thermal: baseline.thermal === "cold" || baseline.thermal === "heat" ? baseline.thermal : prev.thermal,
-    }));
     if (profile || registeredSymptomKey) setProfileApplied(true);
-  }, [baseline, profile, profileApplied, registeredSymptomKey]);
+  }, [profile, profileApplied, registeredSymptomKey]);
 
   function setAnswer(key, value) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
@@ -303,7 +308,7 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
     }
   }
 
-  const oralSelected = answers.scope === "all" || ["supplement", "kampo", "otc"].includes(answers.scope);
+  const oralSelected = answers.scope === "all" || ["health", "kampo"].includes(answers.scope);
   const canNextFromOne = concerns.length > 0 || freeText.trim().length > 1;
 
   function runSearch() {
@@ -351,11 +356,12 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
 
       {step === 2 ? (
         <div className="mt-5 grid gap-5">
+          {profile ? <p className="rounded-[15px] bg-[#F3F8F5] px-3 py-2 text-[12px] font-bold leading-5 text-[#4F746B] ring-1 ring-[#D7E7DE]">体質チェックは別枠で参照します。ここでは今日の状態を選んでください。</p> : null}
           <ChoiceField label="いつから？" name="duration" value={answers.duration} options={OPTION_SETS.duration} onChange={setAnswer} />
           <ChoiceField label="今のつらさは？" name="intensity" value={answers.intensity} options={OPTION_SETS.intensity} onChange={setAnswer} />
-          <ChoiceField label="冷え・熱感は？" name="thermal" value={answers.thermal} options={OPTION_SETS.thermal} onChange={setAnswer} note={baseline.thermal !== "neutral" ? "体質チェックの傾向を先に入れています。今の状態が違えば変更してください。" : ""} />
-          <ChoiceField label="重さ・乾きは？" name="moisture" value={answers.moisture} options={OPTION_SETS.moisture} onChange={setAnswer} />
-          <ChoiceField label="今の余力は？" name="reserve" value={answers.reserve} options={OPTION_SETS.reserve} onChange={setAnswer} note={profile ? "体質チェックの傾向を先に入れています。今の状態を優先してください。" : ""} />
+          <ChoiceField label="今日は、冷え・熱感がありますか？" name="thermal" value={answers.thermal} options={OPTION_SETS.thermal} onChange={setAnswer} />
+          <ChoiceField label="今日は、むくみ・重さ・乾きを感じますか？" name="moisture" value={answers.moisture} options={OPTION_SETS.moisture} onChange={setAnswer} />
+          <ChoiceField label="今の体力に近いのは？" name="reserve" value={answers.reserve} options={OPTION_SETS.reserve} onChange={setAnswer} />
           {(concerns.some((key) => ["fatigue", "digestion", "swelling", "dizziness"].includes(key)) || freeText.includes("胃") || freeText.includes("食")) ? <ChoiceField label="食事・胃腸は？" name="digestion" value={answers.digestion} options={OPTION_SETS.digestion} onChange={setAnswer} /> : null}
           <ChoiceField label="何をすると少し楽？" name="response" value={answers.response} options={OPTION_SETS.response} onChange={setAnswer} />
           <div className="grid grid-cols-[auto_1fr] gap-2">
