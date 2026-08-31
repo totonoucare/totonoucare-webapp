@@ -113,7 +113,7 @@ async function resolveLiveThread(userId, firstMessage, today) {
   if (existing) {
     await supabaseServer
       .from("records_ai_threads")
-      .update({ last_context_date: today, updated_at: new Date().toISOString() })
+      .update({ title: "今の調子をミモルに相談", last_context_date: today, updated_at: new Date().toISOString() })
       .eq("id", existing.id)
       .eq("user_id", userId);
     return existing;
@@ -129,7 +129,7 @@ async function resolveLiveThread(userId, firstMessage, today) {
       range_end: today,
       last_context_date: today,
       context_summary: {},
-      title: String(firstMessage || "今の調子をEkkenに相談").slice(0, 60),
+      title: String(firstMessage || "今の調子をミモルに相談").slice(0, 60),
       status: "active",
     })
     .select("id,thread_kind,period_key,range_start,range_end,title,status,context_summary,last_context_date,created_at,updated_at")
@@ -305,7 +305,7 @@ export async function GET(req) {
     console.error("/api/records/live-chat GET error:", error);
     const status = schemaError(error) ? 503 : 500;
     return NextResponse.json({
-      error: status === 503 ? "Ekken相談のデータ準備が完了していません" : "Ekkenとの会話を読み込めませんでした",
+      error: status === 503 ? "ミモル相談のデータ準備が完了していません" : "ミモルとの会話を読み込めませんでした",
       code: status === 503 ? "live_support_schema_required" : "live_support_load_failed",
     }, { status });
   }
@@ -327,7 +327,7 @@ export async function POST(req) {
       getAiUsage(user.id),
     ]);
     if (!access.consult_enabled) {
-      return NextResponse.json({ error: "Ekken相談は現在利用できません", code: "ai_access_required" }, { status: 403 });
+      return NextResponse.json({ error: "ミモル相談は現在利用できません", code: "ai_access_required" }, { status: 403 });
     }
     if (!consent) {
       return NextResponse.json({ error: "AI利用への同意が必要です", code: "ai_consent_required" }, { status: 403 });
@@ -339,7 +339,7 @@ export async function POST(req) {
     if (!urgentMessage) {
       if (!freeTrial) assertQuota(usageBefore, "chat");
       if (!process.env.OPENAI_API_KEY) {
-        const configError = new Error("Ekken相談の接続設定が完了していません");
+        const configError = new Error("ミモル相談の接続設定が完了していません");
         configError.status = 503;
         configError.code = "openai_not_configured";
         throw configError;
@@ -424,7 +424,7 @@ export async function POST(req) {
 
     const context = {
       mode: "live_health_support",
-      assistant: { name: "Ekken", reading: "エッケン", role: "ケアナビAI" },
+      assistant: { name: "ミモル", reading: "ミモル", role: "ケアナビAI" },
       product_context: RECORDS_AI_PRODUCT_CONTEXT,
       constitution: buildInterpretedProfileContext(profile),
       current_context: {
@@ -451,7 +451,7 @@ export async function POST(req) {
       data_boundaries: {
         app_facts: "アプリが計算・保存した体質、予報、表示ケア、実行ケア、記録",
         user_facts: "ユーザーが会話または記録で伝えた内容",
-        ai_hypotheses: "Ekkenが可能性として述べる解釈。事実や診断ではない",
+        ai_hypotheses: "ミモルが可能性として述べる解釈。事実や診断ではない",
       },
     };
 
@@ -542,7 +542,7 @@ export async function POST(req) {
     console.error("/api/records/live-chat POST error:", error);
     const status = Number(error?.status || (schemaError(error) ? 503 : 500));
     return NextResponse.json({
-      error: error?.message || "Ekkenへの相談に失敗しました",
+      error: error?.message || "ミモルへの相談に失敗しました",
       code: error?.code || (status === 503 ? "live_support_schema_required" : "live_support_failed"),
     }, { status });
   }
@@ -558,7 +558,7 @@ export async function PATCH(req) {
       return NextResponse.json({ error: "invalid consultation_status" }, { status: 400 });
     }
     const today = jstDateString(new Date());
-    const thread = await resolveLiveThread(user.id, "今の調子をEkkenに相談", today);
+    const thread = await resolveLiveThread(user.id, "今の調子をミモルに相談", today);
     const contextSummary = mergeThreadContext(thread, {
       consultation_status: statusKey,
       consultation_status_updated_at: new Date().toISOString(),
@@ -608,7 +608,7 @@ export async function DELETE(req) {
     const { error: threadUpdateError } = await supabaseServer
       .from("records_ai_threads")
       .update({
-        title: "今の調子をEkkenに相談",
+        title: "今の調子をミモルに相談",
         context_summary: preserved,
         updated_at: new Date().toISOString(),
       })
