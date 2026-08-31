@@ -1,3 +1,24 @@
+## v7.79.40 体質チェックv2の現行契約
+
+- 正本は`lib/diagnosis/v2`。`v3`を作らず、旧回答キーとの互換変換も行わない。旧結果は`retake_required`として再チェックへ案内する
+- 固定14問は、気虚2問、気滞2問、痰湿2問、血瘀1問、血虚2問、津液不足2問、冷え1問、ほてり1問、環境感受性1問。主訴は採点外の別質問
+- 基本回答値は`never / rare / sometimes / often / almost_always`を`0 / .25 / .5 / .75 / 1`へ対応させる
+- 分岐は`movement_response / blood_deficiency_clues / blood_stasis_clues / fluid_deficiency_clues / env_vectors / reaction_tiebreak`。表示された質問は必須、multiの`none`は単独選択
+- `material_scores`と`split_scores`の6素材は各0〜100。`score_scale`と`split_scores.scale`は`0_100`
+- 代表`sub_labels`は35点以上から最大2件。60点以上は強い傾向、35〜59点は補助傾向として解釈し、35点未満は代表にしない
+- `axes.reaction_score`は-1〜1の連続値。正がアクセル、負がブレーキ。UIは中間型を作らず符号で二分し、近接時だけ`reaction_tiebreak`を小さく加える
+- アクセル証拠は気滞を主に、熱、津液不足×熱、動くと楽を補助。ブレーキ証拠は痰湿を主に、冷え、気虚×冷え、血虚×冷え、動くと疲れる／変わらないを補助。血瘀は方向へ直接加点しない
+- `axes.reserve_score`は疲れやすさ、回復遅延、血虚、津液不足を各一度だけ使う。環境感受性は余力へ入れない
+- `axes.obstruction_score`は気滞34%、血瘀33%、痰湿33%。平方根等の飽和変換を挟まない
+- 寒熱は`cold_score / heat_score / thermal_direction / thermal_mixed / thermo_answer`。冷えと熱が同時に高ければ`mixed`のまま保持する
+- 既存下流名`yin_yang_score / drive_score / yin_yang_label / drive_label`は同じ新連続値を指す内部別名。新規実装は`reaction_* / reserve_*`を優先する
+- `symptom_focus`と`env`は体質6素材の外。予報・ショップ・Ekkenで現在の表れ方や気象相性へ使うが、ベース体質を上書きしない
+- `body_line_primary / body_line_secondary`は結果後の任意回答。コア・6素材・寒熱・余力の採点へ使わず、主・副経絡へ写してほぐすケアへ使う
+- 予報の正規化は`score_scale === 0_100`なら単純に100で割る。古い生点用の飽和関数を新しいスコアへ適用しない。反応方向は連続値の符号で読み、中間型を作らない
+- ケア方針、ショップの体質土台、Ekkenコンテキストは全6素材・連続反応・余力・独立寒熱を受け取る。coreまたは代表2要素だけで漢方・健康食品・ケア方針を決めない
+- Ekkenのproduct contextと3プロンプトはconstitution rebuild版へ更新し、保存済みの旧解釈を再利用しない
+- DB列追加・マイグレーションなし。JSONの`answers / computed`内へ新しい内部値を保存する
+
 ## v7.79.39 専門候補へ深掘りしたケアショップの現行契約
 
 - `/care-navi`のヘッダーは`ケアショップ / 体質と今の状態から選ぶ`。上位導線は`おすすめ / 悩みから探す`、保存一覧はヘッダーのハートを維持する
