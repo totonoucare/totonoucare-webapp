@@ -1082,7 +1082,7 @@ function ResultPage({ params }) {
                   <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-5">
                     <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">この先につながること</div>
                     <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">
-                      7つの整え方は、日々の対策ケア、パーソナルケアショップの商品選び、Ekkenへの相談で共通して使う目印です。
+                      7つの整え方は、日々の対策ケア、パーソナルケアショップの商品選び、ミモルへの相談で共通して使う目印です。
                     </div>
                   </div>
 
