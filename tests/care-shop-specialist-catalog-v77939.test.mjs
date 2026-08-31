@@ -45,13 +45,13 @@ test("一般的なノンカフェイン健康茶をショップ候補から外�
   assert.ok(GUIDED_CANDIDATES.filter((item) => item.type === "selfcare").every((item) => !/用品$|サポート$/.test(item.title)));
 });
 
-test("今回の回答には実際に選んだ内容だけを表示する", () => {
+test("結果上部は選んだ内容の要点だけを短く表示する", () => {
   const result = buildGuidedSearchResult(safeInput);
   assert.match(result.currentState.summary, /首肩のつらさ/);
   assert.match(result.currentState.summary, /冷えと熱感の両方/);
   assert.match(result.currentState.summary, /乾き/);
-  assert.match(result.currentState.summary, /体力は普段とあまり変わらない/);
   assert.match(result.currentState.summary, /動くと少し楽/);
+  assert.doesNotMatch(result.currentState.summary, /体力は普段とあまり変わらない/);
   assert.doesNotMatch(result.currentState.summary, /こわばり・滞り|力が抜けにくい/);
   result.groups.flatMap((group) => group.candidates).forEach((candidate) => assert.doesNotMatch(candidate.matchReason, /力が抜けにくい/));
 });
