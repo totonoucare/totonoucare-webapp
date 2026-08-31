@@ -6,12 +6,12 @@ const FEATURE_COPY = {
   analysis: {
     eyebrow: "振り返り",
     title: "記録から、自分の傾向を知る",
-    body: "体調予報・実感・ケアを見比べ、分かったことと次に試す一手をEkkenが整理します。",
+    body: "体調予報・実感・ケアを見比べ、分かったことと次に試す一手をミモルが整理します。",
   },
   consult: {
-    eyebrow: "Ekken相談",
+    eyebrow: "ミモル相談",
     title: "毎回、最初から説明しなくていい",
-    body: "あなたの体質、今日・明日の体調予報、最近の記録とケアを把握したEkkenへ相談できます。",
+    body: "あなたの体質、今日・明日の体調予報、最近の記録とケアを把握したミモルへ相談できます。",
   },
 };
 
@@ -55,9 +55,9 @@ export default function SubscriptionPaywall({
               <div className="mt-1 text-[15px] font-black text-slate-900">体調記録 {recordedDays}日</div>
               <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
                 {trialExhausted
-                  ? "Ekkenの無料相談を2回体験しました。過去の回答は相談タブから見返せます。"
+                  ? "ミモルの無料相談を2回体験しました。過去の回答は相談タブから見返せます。"
                   : recordsNeeded > 0
-                    ? `あと${recordsNeeded}日記録すると、Ekken相談を2回試せます。`
+                    ? `あと${recordsNeeded}日記録すると、ミモル相談を2回試せます。`
                     : "予報・実感・ケアを見比べる準備ができています。"}
               </div>
             </div>
@@ -67,7 +67,7 @@ export default function SubscriptionPaywall({
             {[
               ["自分の傾向を振り返る", "予報と実感、ケアの記録を同じ条件で見比べます。"],
               ["次に試すことを一つ決める", "情報を並べるだけでなく、次の行動まで整理します。"],
-              ["自分を把握したEkkenへ相談", "体質や最近の調子を、毎回最初から説明する必要がありません。"],
+              ["自分を把握したミモルへ相談", "体質や最近の調子を、毎回最初から説明する必要がありません。"],
             ].map(([title, lead]) => (
               <div key={title} className="rounded-[18px] bg-white/85 px-4 py-3 ring-1 ring-white">
                 <div className="text-[13px] font-black text-slate-900">{title}</div>
@@ -81,7 +81,7 @@ export default function SubscriptionPaywall({
             <div className="mt-2 space-y-1">
               <div>・体調予報と対策ケア</div>
               <div>・記録カレンダーはこれからも無料</div>
-              <div>・記録が3日たまった後のEkken相談2回</div>
+              <div>・記録が3日たまった後のミモル相談2回</div>
             </div>
           </details>
           <CheckoutButton returnPath={returnPath} className="mt-4 w-full">
