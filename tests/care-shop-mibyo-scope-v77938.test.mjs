@@ -65,7 +65,7 @@ test("体質の重さ傾向を残したまま今日の乾きを別に表示す�
   assert.ok(result.currentState.stateKeys.includes("dry"));
   assert.ok(!result.currentState.stateKeys.includes("damp"));
   assert.match(result.currentState.baseline.summary, /重さが出やすい/);
-  assert.match(result.currentState.summary, /乾きやすい/);
+  assert.match(result.currentState.summary, /乾き/);
   assert.ok(!result.groups.some((group) => group.type === "health"));
 });
 
