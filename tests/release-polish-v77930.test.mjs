@@ -17,7 +17,7 @@ test("体質チェックの説明は約5分の共通コピーへ統一する", a
   const check = await source("app/check/page.js");
 
   assert.equal(copy.CONSTITUTION_CHECK_DURATION_LABEL, "約5分");
-  assert.match(copy.CONSTITUTION_CHECK_INTRO, /約5分の質問から/);
+  assert.match(copy.CONSTITUTION_CHECK_INTRO, /ここ3か月ほどの普段の傾向を約5分/);
   assert.match(copy.CONSTITUTION_CHECK_INTRO, /暮らす・食べる・ほぐす/);
   assert.doesNotMatch(`${home}\n${check}`, /4〜6分|全15〜19問|基本14問/);
   assert.match(check, /途中保存OK/);

@@ -18,20 +18,24 @@ const analysisRoute = await readFile(new URL("../app/api/records/analysis/route.
 
 const cheetahAnswers = {
   symptom_focus: "mood",
-  fatigue_easy: "6_9",
-  carryover: "6_9",
-  qi_stuck: "10p",
-  tension_residue: "10p",
-  fluid_heavy: "0",
-  postmeal_heavy: "0",
-  startup_heavy: "0",
-  vision_blur: "0",
-  dryness_general: "0",
-  stool_dry: "0",
-  env_sensitivity: 3,
-  thermo: "heat",
-  meridian_primary: "E",
-  meridian_secondary: "C",
+  fatigue_easy: "almost_always",
+  recovery_lag: "almost_always",
+  qi_obstruction: "almost_always",
+  stress_variability: "almost_always",
+  body_heaviness: "never",
+  postmeal_burden: "never",
+  movement_response: "more_tired",
+  fixed_discomfort: "never",
+  visual_depletion: "never",
+  orthostatic_unsteadiness: "never",
+  general_dryness: "never",
+  dry_stool: "never",
+  cold_pattern: "never",
+  heat_pattern: "almost_always",
+  env_sensitivity: "almost_always",
+  env_vectors: ["temp_swing"],
+  body_line_primary: "E",
+  body_line_secondary: "C",
 };
 
 test("the scoring engine produces the integrated cheetah profile before AI interpretation", () => {
@@ -84,15 +88,16 @@ test("the AI context includes all six patterns and Japanese meridian names", () 
 });
 
 test("live support knows the constitution hierarchy without forcing a fixed reasoning script", () => {
-  assert.match(promptSource, /コアタイプは、アクセル／ブレーキ、余力、気血津液の量と巡り/);
-  assert.match(promptSource, /気虚・気滞などの全6要素、経絡、不調フォーカス/);
+  assert.match(promptSource, /コアタイプは、アクセル／ブレーキと余力を組み合わせた最上位結果/);
+  assert.match(promptSource, /全6要素と寒熱の連続値/);
+  assert.match(promptSource, /環境感受性、不調フォーカス、任意の体のラインは採点へ混ぜず/);
   assert.match(promptSource, /全項目を順番に説明したり、チェックリストを埋めたりする必要はない/);
   assert.match(promptSource, /日本語の会話へ不要な英単語を混ぜない/);
   assert.doesNotMatch(promptSource, /漢方、食養生、暮らす、ほぐすの回答では、候補やケアを出す前に/);
 });
 
 test("prompt versions change so saved outputs do not reuse the old constitution interpretation", () => {
-  assert.match(liveRoute, /records_live_support_v15_care_terminology_2026-07-25/);
-  assert.match(periodRoute, /records_chat_v15_care_terminology_2026-07-25/);
-  assert.match(analysisRoute, /records_analysis_v14_care_terminology_2026-07-25/);
+  assert.match(liveRoute, /records_live_support_v16_constitution_rebuild_2026-08-31/);
+  assert.match(periodRoute, /records_chat_v16_constitution_rebuild_2026-08-31/);
+  assert.match(analysisRoute, /records_analysis_v15_constitution_rebuild_2026-08-31/);
 });
