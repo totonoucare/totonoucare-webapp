@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { buildConstitutionProfilePayload, scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
+import { validateDiagnosisAnswers } from "@/lib/diagnosis/v2/validateAnswers";
 import {
   clearGuestTokenCookie,
   hasValidGuestToken,
@@ -83,7 +84,21 @@ export async function POST(req, { params }) {
       );
     }
 
-    const answers = ev.answers || {};
+    const validation = validateDiagnosisAnswers(ev.answers || {});
+    if (!validation.ok) {
+      return NextResponse.json(
+        { error: "判定ロジックが更新されました。現在の質問でもう一度チェックしてください。", code: "RETAKE_REQUIRED" },
+        { status: 409 }
+      );
+    }
+    const answers = { ...validation.answers };
+    const bodyLineValues = new Set(["A", "B", "C", "D", "E", "F", "none"]);
+    if (bodyLineValues.has(ev.answers?.body_line_primary)) {
+      answers.body_line_primary = ev.answers.body_line_primary;
+    }
+    if (bodyLineValues.has(ev.answers?.body_line_secondary)) {
+      answers.body_line_secondary = ev.answers.body_line_secondary;
+    }
     const computed = scoreDiagnosis(answers);
 
     // --- Upsert constitution_events by source_event_id
@@ -203,4 +218,3 @@ export async function POST(req, { params }) {
     return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
   }
 }
-
