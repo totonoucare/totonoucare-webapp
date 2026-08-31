@@ -32,7 +32,7 @@ function ProgressBar({ current, total }) {
   );
 }
 
-const PENDING_KEY = "pending_diagnosis_v2_answers";
+const PENDING_KEY = "pending_diagnosis_v2_rebuilt_answers";
 
 export default function CheckRunPage() {
   const router = useRouter();
@@ -138,8 +138,8 @@ export default function CheckRunPage() {
         next[ansKey] = value;
       }
 
-      // env_sensitivity が 0 なら env_vectors を自動で空に寄せる
-      if (ansKey === "env_sensitivity" && (value === "0" || value === 0)) {
+      // 環境感受性が「ほとんどない」なら、環境トリガーは保存しない。
+      if (ansKey === "env_sensitivity" && value === "never") {
         next.env_vectors = undefined;
       }
 
@@ -249,6 +249,12 @@ export default function CheckRunPage() {
         <div className="space-y-6 px-5 pb-6 pt-6">
           <ProgressBar current={step + 1} total={total} />
 
+          {step === 0 ? (
+            <div className="rounded-[22px] bg-[color-mix(in_srgb,var(--mint),white_68%)] px-5 py-4 text-[13px] font-bold leading-6 text-slate-650 ring-1 ring-[color-mix(in_srgb,var(--accent),white_78%)]">
+              ここ3か月ほどの普段の傾向で答えてください。一時的な病気・けが・特別に忙しかった時期は除いて考えます。
+            </div>
+          ) : null}
+
           <div className="rounded-[32px] bg-white p-6 shadow-[0_12px_24px_-12px_rgba(0,0,0,0.05)] ring-1 ring-[var(--ring)]">
             <div className="whitespace-pre-wrap text-[17px] font-black leading-[1.6] tracking-tight text-slate-900">
               {q.title}
@@ -336,7 +342,7 @@ export default function CheckRunPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                最大{q.max || 2}つまで（「特にない / よくわからない」は単独）
+                最大{q.max || 2}つまで（「特にない・わからない」は単独）
               </div>
             ) : null}
 
@@ -376,7 +382,7 @@ export default function CheckRunPage() {
             </div>
 
             <div className="mt-5 text-center text-[12px] font-extrabold text-slate-400">
-              ※ 無理のある動作は避けてOK。違和感が強い場合は中止してください。
+              迷ったときは、より普段に近い方を選んでください。
             </div>
           </div>
         </div>
