@@ -118,7 +118,7 @@ function candidateItem(candidate) {
     sourceType: "guided_candidate",
     buttonText: "楽天で比較",
     useGuide: candidate.direction,
-    reason: candidate.matchReason,
+    reason: [`合っている条件：${candidate.matchSummary}`, candidate.matchReason].filter(Boolean).join(" "),
     productRole: candidate.productClass || GUIDED_SCOPE_META[candidate.type]?.label || "比較候補",
     regulatoryCategory: candidate.type,
     ingredientIds: candidate.ingredientIds,
@@ -142,33 +142,46 @@ function CandidateCard({ candidate, safety, saved, saving, onSave }) {
         </div>
         <span className="shrink-0 rounded-full bg-[#F4F7F5] px-2 py-1 text-[12px] font-black text-slate-500 ring-1 ring-[#DCE7E0]">{candidate.productClass || meta?.label}</span>
       </div>
-      <div className="mt-3 rounded-[16px] bg-[#F4F9F6] px-3 py-2.5">
-        <div className="text-[12px] font-black text-[#2F816E]">候補に入った理由</div>
-        <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.matchReason}</p>
-      </div>
-      <div className="mt-2 rounded-[16px] bg-[#FFFAF0] px-3 py-2.5 ring-1 ring-[#F0E1C3]">
-        <div className="text-[12px] font-black text-[#9A6A20]">選ぶときの確認</div>
-        <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.compare}</p>
+      <div className="mt-3 rounded-[14px] bg-[#F4F9F6] px-3 py-2.5">
+        <div className="text-[11px] font-black text-[#2F816E]">合っている条件</div>
+        <p className="mt-0.5 text-[13px] font-black leading-5 text-slate-700">{candidate.matchSummary}</p>
       </div>
       {candidate.duplicateIngredients.length ? (
         <div className="mt-2 rounded-[14px] bg-[#FFF1EE] px-3 py-2 text-[12px] font-black leading-5 text-[#9A4435] ring-1 ring-[#F0C0B6]">
           使用中として保存した候補と同じ成分があります。重複を確認してください。
         </div>
       ) : null}
-      {connections.length ? (
-        <details className="mt-2 rounded-[14px] bg-[#FAFBFA] ring-1 ring-[#E2E9E4]">
-          <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-black text-slate-600 [&::-webkit-details-marker]:hidden">同じ素材を含む区分を見る ＋</summary>
-          <div className="border-t border-[#E2E9E4] px-3 py-2">
-            {connections.map((item) => <p key={item.id} className="text-[12px] font-bold leading-5 text-slate-500"><span className="font-black text-slate-700">{item.label}：</span>{item.note}</p>)}
+      <details className="group mt-2 rounded-[14px] bg-[#FAFBFA] ring-1 ring-[#E2E9E4]">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-[12px] font-black text-slate-600 [&::-webkit-details-marker]:hidden">
+          <span>理由と選び方を見る</span>
+          <span className="group-open:hidden" aria-hidden="true">＋</span>
+          <span className="hidden group-open:inline" aria-hidden="true">−</span>
+        </summary>
+        <div className="grid gap-3 border-t border-[#E2E9E4] px-3 py-3">
+          <div>
+            <div className="text-[12px] font-black text-[#2F816E]">候補に入った理由</div>
+            <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.matchReason}</p>
           </div>
-        </details>
-      ) : null}
-      {candidate.caution ? (
-        <details className="mt-2 rounded-[14px] bg-[#FAFBFA] ring-1 ring-[#E2E9E4]">
-          <summary className="cursor-pointer list-none px-3 py-2 text-[12px] font-black text-slate-600 [&::-webkit-details-marker]:hidden">購入前に確認 ＋</summary>
-          <p className="border-t border-[#E2E9E4] px-3 py-2 text-[12px] font-bold leading-5 text-slate-500">{candidate.caution}</p>
-        </details>
-      ) : null}
+          <div>
+            <div className="text-[12px] font-black text-[#9A6A20]">選ぶときの確認</div>
+            <p className="mt-1 text-[13px] font-bold leading-5 text-slate-700">{candidate.compare}</p>
+          </div>
+          {connections.length ? (
+            <div>
+              <div className="text-[12px] font-black text-slate-600">同じ素材を含む区分</div>
+              <div className="mt-1">
+                {connections.map((item) => <p key={item.id} className="text-[12px] font-bold leading-5 text-slate-500"><span className="font-black text-slate-700">{item.label}：</span>{item.note}</p>)}
+              </div>
+            </div>
+          ) : null}
+          {candidate.caution ? (
+            <div>
+              <div className="text-[12px] font-black text-slate-600">購入前に確認</div>
+              <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">{candidate.caution}</p>
+            </div>
+          ) : null}
+        </div>
+      </details>
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button type="button" disabled={saving || saved} onClick={() => onSave?.(candidateItem(candidate))} className="rounded-[15px] bg-white px-3 py-2.5 text-[12px] font-black text-[#2F816E] ring-1 ring-[#BFD8CC] disabled:text-slate-400 disabled:ring-[#DCE7E0]">
           {saving ? "保存中…" : saved ? "♥ 保存済み" : "♡ 気になる"}
@@ -187,18 +200,13 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
   const savedIds = useMemo(() => new Set(entries.map((entry) => entry?.item?.candidateId).filter(Boolean)), [entries]);
   return (
     <div className="grid gap-4">
-      {result.safety.level === "compare" ? (
-        <div className={["flex items-center gap-2 rounded-[16px] px-3 py-2.5 text-[12px] font-black ring-1", safetyTone(result.safety.level)].join(" ")}>
-          <span aria-hidden="true">✓</span>
-          <span>{result.safety.reasons.join("・")}</span>
-        </div>
-      ) : (
+      {result.safety.level !== "compare" ? (
         <div className={["rounded-[22px] p-4 ring-1", safetyTone(result.safety.level)].join(" ")}>
           <div className="text-[12px] font-black tracking-[0.12em] opacity-70">安全確認</div>
           <div className="mt-1 text-[16px] font-black leading-6">{result.safety.label}</div>
           <p className="mt-1 text-[12px] font-bold leading-5 opacity-80">{result.safety.reasons.join("・")}</p>
         </div>
-      )}
+      ) : null}
 
       {result.safety.level === "stop" ? (
         <div className="rounded-[22px] bg-white p-5 text-center ring-1 ring-[#E4DDD8]">
