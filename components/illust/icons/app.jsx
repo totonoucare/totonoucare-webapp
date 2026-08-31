@@ -173,6 +173,15 @@ export function IconAnalysis({ className = "h-6 w-6", ...props }) {
   );
 }
 
+export function IconSearch({ className = "h-6 w-6", ...props }) {
+  return (
+    <IconShell className={className} {...props}>
+      <circle cx="10.5" cy="10.5" r="5.6" />
+      <path d="m14.7 14.7 4.8 4.8" />
+    </IconShell>
+  );
+}
+
 export function IconLocation({ className = "h-6 w-6", ...props }) {
   return (
     <IconShell className={className} {...props}>
@@ -279,6 +288,7 @@ export function AppIcon({ name, className = "h-6 w-6", ...props }) {
     analysis: IconAnalysis,
     chat: IconChat,
     consultation: IconChat,
+    search: IconSearch,
     location: IconLocation,
     history: IconHistory,
     settings: IconSettings,
