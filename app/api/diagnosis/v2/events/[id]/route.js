@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
+import { validateDiagnosisAnswers } from "@/lib/diagnosis/v2/validateAnswers";
 import { hasValidGuestToken } from "@/lib/diagnosisGuestAccess";
 
 export const dynamic = "force-dynamic";
@@ -97,7 +98,26 @@ export async function GET(req, { params }) {
     }
 
     const answers = data.answers || {};
-    const computed = scoreDiagnosis(answers); // always recompute from answers
+    const validation = validateDiagnosisAnswers(answers);
+    if (!validation.ok) {
+      return NextResponse.json({
+        data: {
+          id: data.id,
+          created_at: data.created_at,
+          version: data.version || "v2",
+          is_attached: !!data.user_id,
+          retake_required: true,
+        },
+      });
+    }
+    const scoringAnswers = { ...validation.answers };
+    if (BODY_LINE_VALUES.has(answers.body_line_primary)) {
+      scoringAnswers.body_line_primary = answers.body_line_primary;
+    }
+    if (BODY_LINE_VALUES.has(answers.body_line_secondary)) {
+      scoringAnswers.body_line_secondary = answers.body_line_secondary;
+    }
+    const computed = scoreDiagnosis(scoringAnswers); // always recompute from current v2 answers
     const diagnosisSymptomFocus = computed.symptom_focus || data.symptom_focus || "fatigue";
     const activeSymptomFocus = data.user_id
       ? await getActiveSymptomForUser(data.user_id) || diagnosisSymptomFocus
@@ -109,7 +129,7 @@ export async function GET(req, { params }) {
       symptom_focus: diagnosisSymptomFocus,
       diagnosis_symptom_focus: diagnosisSymptomFocus,
       active_symptom_focus: activeSymptomFocus,
-      answers,
+      answers: scoringAnswers,
       computed,
       version: data.version || "v2",
       is_attached: !!data.user_id,
@@ -126,3 +146,89 @@ export async function GET(req, { params }) {
   }
 }
 
+const BODY_LINE_VALUES = new Set(["A", "B", "C", "D", "E", "F", "none"]);
+
+export async function PATCH(req, { params }) {
+  try {
+    const id = params?.id;
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+    const body = await req.json().catch(() => ({}));
+    const primary = String(body?.body_line_primary || "none");
+    let secondary = String(body?.body_line_secondary || "none");
+    if (!BODY_LINE_VALUES.has(primary) || !BODY_LINE_VALUES.has(secondary)) {
+      return NextResponse.json({ error: "体のラインの回答が正しくありません" }, { status: 400 });
+    }
+    if (primary === "none" || primary === secondary) secondary = "none";
+
+    const { data: current, error: loadError } = await supabaseServer
+      .from("diagnosis_events")
+      .select("id,user_id,answers")
+      .eq("id", id)
+      .single();
+    if (loadError) throw loadError;
+    if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const authedUser = await getAuthedUser(req);
+    if (current.user_id) {
+      if (!authedUser || authedUser.id !== current.user_id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const guestOk = await hasValidGuestToken({ req, supabase: supabaseServer, eventId: id });
+      if (!guestOk) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const currentValidation = validateDiagnosisAnswers(current.answers || {});
+    if (!currentValidation.ok) {
+      return NextResponse.json(
+        { error: "新しい質問で体質チェックをやり直してください。", code: "RETAKE_REQUIRED" },
+        { status: 409 }
+      );
+    }
+    const answers = {
+      ...currentValidation.answers,
+      body_line_primary: primary,
+      body_line_secondary: secondary,
+    };
+    const computed = scoreDiagnosis(answers);
+
+    const { error: updateError } = await supabaseServer
+      .from("diagnosis_events")
+      .update({ answers, computed })
+      .eq("id", id);
+    if (updateError) throw updateError;
+
+    if (current.user_id) {
+      const { error: profileError } = await supabaseServer
+        .from("constitution_profiles")
+        .update({
+          answers,
+          computed,
+          primary_meridian: computed.primary_meridian,
+          secondary_meridian: computed.secondary_meridian,
+        })
+        .eq("user_id", current.user_id);
+      if (profileError) throw profileError;
+
+      const { error: eventError } = await supabaseServer
+        .from("constitution_events")
+        .update({
+          answers,
+          primary_meridian: computed.primary_meridian,
+          secondary_meridian: computed.secondary_meridian,
+        })
+        .eq("source_event_id", id)
+        .eq("user_id", current.user_id);
+      if (eventError) throw eventError;
+    }
+
+    return NextResponse.json({ data: { answers, computed } });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "体のラインを保存できませんでした。時間をおいてもう一度お試しください。" },
+      { status: 500 }
+    );
+  }
+}
