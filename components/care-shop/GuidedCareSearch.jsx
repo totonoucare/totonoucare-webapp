@@ -32,7 +32,7 @@ const OPTION_SETS = {
   ],
   reserve: [
     { key: "low", label: "少し動くだけで疲れそう" }, { key: "standard", label: "普段とあまり変わらない" },
-    { key: "high", label: "動けるが、力が抜けにくい" },
+    { key: "high", label: "普段より動けそう" },
   ],
   digestion: [
     { key: "appetite_low", label: "食欲が落ちた" }, { key: "postmeal_heavy", label: "食後に重い" },
@@ -187,11 +187,18 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
   const savedIds = useMemo(() => new Set(entries.map((entry) => entry?.item?.candidateId).filter(Boolean)), [entries]);
   return (
     <div className="grid gap-4">
-      <div className={["rounded-[22px] p-4 ring-1", safetyTone(result.safety.level)].join(" ")}>
-        <div className="text-[12px] font-black tracking-[0.12em] opacity-70">安全確認</div>
-        <div className="mt-1 text-[16px] font-black leading-6">{result.safety.label}</div>
-        <p className="mt-1 text-[12px] font-bold leading-5 opacity-80">{result.safety.reasons.join("・")}</p>
-      </div>
+      {result.safety.level === "compare" ? (
+        <div className={["flex items-center gap-2 rounded-[16px] px-3 py-2.5 text-[12px] font-black ring-1", safetyTone(result.safety.level)].join(" ")}>
+          <span aria-hidden="true">✓</span>
+          <span>{result.safety.reasons.join("・")}</span>
+        </div>
+      ) : (
+        <div className={["rounded-[22px] p-4 ring-1", safetyTone(result.safety.level)].join(" ")}>
+          <div className="text-[12px] font-black tracking-[0.12em] opacity-70">安全確認</div>
+          <div className="mt-1 text-[16px] font-black leading-6">{result.safety.label}</div>
+          <p className="mt-1 text-[12px] font-bold leading-5 opacity-80">{result.safety.reasons.join("・")}</p>
+        </div>
+      )}
 
       {result.safety.level === "stop" ? (
         <div className="rounded-[22px] bg-white p-5 text-center ring-1 ring-[#E4DDD8]">
@@ -200,18 +207,9 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
         </div>
       ) : (
         <>
-          <section className="rounded-[24px] bg-[#EDF7F2] p-4 ring-1 ring-[#CFE4D8]">
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]">体質と今回の回答を分けて確認</div>
-            <div className="mt-3 grid gap-2">
-              <div className="rounded-[15px] bg-white px-3 py-2.5 ring-1 ring-[#D5E7DD]">
-                <div className="text-[11px] font-black text-slate-400">もともとの傾向</div>
-                <p className="mt-0.5 text-[13px] font-black leading-5 text-slate-700">{result.currentState.baseline.summary}</p>
-              </div>
-              <div className="rounded-[15px] bg-white px-3 py-2.5 ring-1 ring-[#A9D4C7]">
-                <div className="text-[11px] font-black text-[#2F816E]">今回の回答</div>
-                <p className="mt-0.5 text-[14px] font-black leading-5 text-slate-900">{result.currentState.summary}</p>
-              </div>
-            </div>
+          <section className="rounded-[22px] bg-[#EDF7F2] px-4 py-3.5 ring-1 ring-[#CFE4D8]">
+            <div className="text-[12px] font-black tracking-[0.08em] text-[#2F816E]">この条件で選びました</div>
+            <p className="mt-1.5 text-[13px] font-black leading-6 text-slate-800">{result.currentState.summary}</p>
           </section>
 
           {result.groups.length ? result.groups.map((group) => (
@@ -379,7 +377,7 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
 
       {step === 2 ? (
         <div className="mt-5 grid gap-5">
-          {profile ? <p className="rounded-[15px] bg-[#F3F8F5] px-3 py-2 text-[12px] font-bold leading-5 text-[#4F746B] ring-1 ring-[#D7E7DE]">体質チェックは別枠で参照します。ここでは今日の状態を選んでください。</p> : null}
+          {profile ? <p className="rounded-[15px] bg-[#F3F8F5] px-3 py-2 text-[12px] font-bold leading-5 text-[#4F746B] ring-1 ring-[#D7E7DE]">体質チェックは候補選びに反映します。ここでは今の状態を選んでください。</p> : null}
           <ChoiceField label="いつから？" name="duration" value={answers.duration} options={OPTION_SETS.duration} onChange={setAnswer} />
           <ChoiceField label="今のつらさは？" name="intensity" value={answers.intensity} options={OPTION_SETS.intensity} onChange={setAnswer} />
           <ChoiceField label="今日は、冷え・熱感がありますか？" name="thermal" value={answers.thermal} options={OPTION_SETS.thermal} onChange={setAnswer} />
