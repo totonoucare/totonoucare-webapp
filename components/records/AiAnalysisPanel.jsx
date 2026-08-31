@@ -546,7 +546,7 @@ export default function AiAnalysisPanel({
           <GuideBotAvatar mood={analysisLoading || analysisLookupLoading ? "thinking" : hasAiAnalysis ? displayedAnalysis.mood : "normal"} className="h-[78px] w-[78px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">ケアナビAI Ekken</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">ケアナビAI ミモル</div>
             <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">
               {analysisLoading
                 ? "記録を見比べています…"
@@ -575,7 +575,7 @@ export default function AiAnalysisPanel({
             </>
           ) : (
             <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
-              <div className="text-[14px] font-bold leading-6 text-slate-600">ケアナビAI Ekkenが、この期間の体調予報・実感・ケアを見比べます。分かった傾向と、次に試す一手を整理します。</div>
+              <div className="text-[14px] font-bold leading-6 text-slate-600">ケアナビAI ミモルが、この期間の体調予報・実感・ケアを見比べます。分かった傾向と、次に試す一手を整理します。</div>
               {analysisMeta?.reason === "insufficient_records" ? (
                 <div className="mt-3 rounded-[14px] bg-[#FFF8EC] px-3 py-2.5 text-[12px] font-black leading-5 text-[#A56C18]">AI振り返りには3日分の記録が必要です。あと{recordsNeededForAi}日記録すると使えます。</div>
               ) : analysisMeta?.reason === "openai_not_configured" ? (
@@ -606,7 +606,7 @@ export default function AiAnalysisPanel({
           ) : null}
 
           {hasAiAnalysis ? (
-            <div className="px-1 text-[12px] font-bold text-slate-400">ケアナビAI Ekkenと基本集計による振り返り{savedRangeLabel ? `・${savedRangeLabel}` : ""}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・更新前" : ""}</div>
+            <div className="px-1 text-[12px] font-bold text-slate-400">ケアナビAI ミモルと基本集計による振り返り{savedRangeLabel ? `・${savedRangeLabel}` : ""}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・更新前" : ""}</div>
           ) : null}
           {hasAiAnalysis && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
           {analysisError ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{analysisError}</div> : null}
@@ -645,7 +645,7 @@ export default function AiAnalysisPanel({
         <button type="button" aria-expanded={periodChatOpen} onClick={() => setPeriodChatOpen((current) => !current)} className="flex w-full items-center gap-3 text-left">
           <div className="grid h-11 w-11 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-11 w-11" /></div>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-black text-slate-900">ケアナビAI Ekkenに聞く</div>
+            <div className="text-[15px] font-black text-slate-900">ケアナビAI ミモルに聞く</div>
             <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-400">選択期間の記録と分析を引き継ぎます</div>
           </div>
           <span className={["text-[22px] font-black text-[#2F816E] transition-transform", periodChatOpen ? "rotate-90" : ""].join(" ")}>›</span>
@@ -664,7 +664,7 @@ export default function AiAnalysisPanel({
                   {messages.map((message, index) => (
                     <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
                       <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[14px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : message.safety_level === "urgent" ? "bg-[#FFF0EC] text-[#8F3E2A] ring-[#F1C8BA]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>
-                        {message.role === "user" && message.reply_to_follow_up?.question ? <div className="mb-2 border-b border-white/25 pb-2 text-[12px] font-bold leading-4 text-white/80"><div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div><div>{message.reply_to_follow_up.question}</div></div> : null}
+                        {message.role === "user" && message.reply_to_follow_up?.question ? <div className="mb-2 border-b border-white/25 pb-2 text-[12px] font-bold leading-4 text-white/80"><div className="mb-0.5 font-black tracking-[0.08em] text-white/65">ミモルからの確認</div><div>{message.reply_to_follow_up.question}</div></div> : null}
                         {message.content}
                       </div>
                       {message.role === "assistant" && message.request_id ? <FeedbackButtons requestId={message.request_id} surface="chat" {...feedbackProps} /> : null}
@@ -680,11 +680,11 @@ export default function AiAnalysisPanel({
                 <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
                   {replyToFollowUp?.question ? <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[12px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">{replyToFollowUp.question}</div> : null}
                   <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[14px] font-bold leading-6 text-slate-700 outline-none" />
-                  <div className="flex items-center justify-between gap-3 px-1 pb-1"><button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-400">会話を削除</button><Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに聞く"}</Button></div>
+                  <div className="flex items-center justify-between gap-3 px-1 pb-1"><button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-400">会話を削除</button><Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "ミモルに聞く"}</Button></div>
                 </div>
               </>
             )}
-            <details className="mt-3 text-[12px] font-bold leading-5 text-slate-400"><summary className="cursor-pointer font-black text-slate-500">AI相談の範囲</summary><div className="mt-2">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や薬の個別判断は行いません。</div></details>
+            <details className="mt-3 text-[12px] font-bold leading-5 text-slate-400"><summary className="cursor-pointer font-black text-slate-500">AI相談の範囲</summary><div className="mt-2">ミモルは一般的な違い・選び方・確認点を整理できます。診断や薬の個別判断は行いません。</div></details>
           </div>
         ) : null}
       </section>

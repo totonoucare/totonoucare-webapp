@@ -16,7 +16,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.consult_enabled) {
     return (
       <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
-        Ekken相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
+        ミモル相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
       </div>
     );
   }
@@ -24,7 +24,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
     return (
       <details className="rounded-[16px] bg-[#F7FAF8] px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
         <summary className="cursor-pointer font-black text-slate-600">AIへのデータ共有：同意済み</summary>
-        <div className="mt-2">Ekkenには、体質トリセツ、今日・明日の予報とケア、最近の実感・記録、任意の受診状況、この会話を送ります。氏名・メール・住所・体質チェックの生回答は自動送信しません。記録メモや会話欄に自分で入力した内容は送信対象です。</div>
+        <div className="mt-2">ミモルには、体質トリセツ、今日・明日の予報とケア、最近の実感・記録、任意の受診状況、この会話を送ります。氏名・メール・住所・体質チェックの生回答は自動送信しません。記録メモや会話欄に自分で入力した内容は送信対象です。</div>
         <button type="button" disabled={saving} onClick={onRevoke} className="mt-2 font-black text-slate-500 underline underline-offset-2">同意を取り消す</button>
       </details>
     );
@@ -38,7 +38,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
         <summary className="cursor-pointer font-black text-[#8F651E]">送信内容とAIの範囲</summary>
         <div className="mt-2">送信するのは、解釈済み体質トリセツ、今日・明日の予報とケア、直近14日の記録要約、直近3日の詳細、任意の受診・相談状況、この会話です。入力したメモや会話は送信対象になります。AIは診断や薬の個別判断を行いません。</div>
       </details>
-      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "Ekkenに相談する"}</Button>
+      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "ミモルに相談する"}</Button>
     </div>
   );
 }
@@ -98,7 +98,7 @@ function Bubble({ message }) {
       ].join(" ")}>
         {replyContext?.question ? (
           <div className="mb-2 border-b border-white/25 pb-2 text-[12px] font-bold leading-5 text-white/80">
-            <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">Ekkenからの確認</div>
+            <div className="mb-0.5 font-black tracking-[0.08em] text-white/65">ミモルからの確認</div>
             <div>{replyContext.question}</div>
           </div>
         ) : null}
@@ -211,7 +211,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
       setReplyToFollowUp(null);
       setSuggestions(lastAssistant?.suggested_questions || data.starter?.quick_prompts || []);
     } catch (loadError) {
-      setError(loadError?.message || "Ekkenとの会話を読み込めませんでした");
+      setError(loadError?.message || "ミモルとの会話を読み込めませんでした");
     } finally {
       setLoading(false);
     }
@@ -369,7 +369,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
         onAccessChange?.(data.access);
       }
     } catch (sendError) {
-      setError(sendError?.message || "Ekkenへ送信できませんでした");
+      setError(sendError?.message || "ミモルへ送信できませんでした");
       setMessages((current) => current.filter((item) => item.id !== localId));
       setInput(content);
       setReplyToFollowUp(replyContext);
@@ -420,7 +420,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
         <div className="space-y-3 px-4 pb-4">
           <div className="rounded-[20px] bg-white/85 px-4 py-3 ring-1 ring-white">
-            <div className="text-[12px] font-black tracking-[0.1em] text-slate-500">今回Ekkenが把握していること</div>
+            <div className="text-[12px] font-black tracking-[0.1em] text-slate-500">今回ミモルが把握していること</div>
             <div className="mt-2 flex flex-wrap gap-2">
               {["体質トリセツ", "今日・明日の予報", "直近14日の記録", "取り組んだケア"].map((item) => <span key={item} className="rounded-full bg-[#F4FAF7] px-2.5 py-1.5 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">{item}</span>)}
             </div>
@@ -485,7 +485,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
 
               {pendingFollowUp ? (
                 <div className="rounded-[20px] bg-[#FFF8EC] p-3 ring-1 ring-[#EED8B4]">
-                  <div className="text-[12px] font-black tracking-[0.1em] text-[#A56C18]/80">Ekkenから一つ確認</div>
+                  <div className="text-[12px] font-black tracking-[0.1em] text-[#A56C18]/80">ミモルから一つ確認</div>
                   <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{followUp.question}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(followUp.options || []).map((option) => (
@@ -525,7 +525,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder={urgentMessage ? "例）近くの人に連絡しました。今は一人ではありません" : "例）急に頭が重くなって、少しイライラします"} className="w-full resize-none bg-transparent px-2 py-2 text-[14px] font-bold leading-6 text-slate-700 outline-none" />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-500">会話を削除</button>
-                  <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "Ekkenに話す"}</Button>
+                  <Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "ミモルに話す"}</Button>
                 </div>
               </div>
 
@@ -536,7 +536,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           {error ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{error}</div> : null}
           <details className="text-[12px] font-bold leading-5 text-slate-500">
             <summary className="cursor-pointer font-black text-slate-600">AI相談の範囲</summary>
-            <div className="mt-2">Ekkenは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
+            <div className="mt-2">ミモルは一般的な違い・選び方・確認点を整理できます。診断や、薬・漢方・サプリの開始・中止・用量・併用可否の最終判断は行いません。突然の強い症状や緊急性がある場合は、AI相談より医療機関への連絡を優先してください。</div>
           </details>
         </div>
       </section>
