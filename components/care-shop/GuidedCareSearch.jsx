@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { supabase } from "@/lib/supabaseClient";
-import { GUIDED_SCOPE_META, GUIDED_SCOPE_OPTIONS } from "@/lib/care-shop/guidedCatalog";
+import { GUIDED_CLUE_OPTIONS, GUIDED_SCOPE_META, GUIDED_SCOPE_OPTIONS } from "@/lib/care-shop/guidedCatalog";
 import {
   buildGuidedSearchResult,
   ingredientConnections,
@@ -201,18 +201,17 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
       ) : (
         <>
           <section className="rounded-[24px] bg-[#EDF7F2] p-4 ring-1 ring-[#CFE4D8]">
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]">体質と今日の状態を分けて確認</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]">体質と今回の回答を分けて確認</div>
             <div className="mt-3 grid gap-2">
               <div className="rounded-[15px] bg-white px-3 py-2.5 ring-1 ring-[#D5E7DD]">
                 <div className="text-[11px] font-black text-slate-400">もともとの傾向</div>
                 <p className="mt-0.5 text-[13px] font-black leading-5 text-slate-700">{result.currentState.baseline.summary}</p>
               </div>
               <div className="rounded-[15px] bg-white px-3 py-2.5 ring-1 ring-[#A9D4C7]">
-                <div className="text-[11px] font-black text-[#2F816E]">今日の回答</div>
+                <div className="text-[11px] font-black text-[#2F816E]">今回の回答</div>
                 <p className="mt-0.5 text-[14px] font-black leading-5 text-slate-900">{result.currentState.summary}</p>
               </div>
             </div>
-            <p className="mt-3 text-[12px] font-bold leading-5 text-slate-500">今日だけ違う状態があっても、体質チェックの結果は上書きしません。</p>
           </section>
 
           {result.groups.length ? result.groups.map((group) => (
@@ -245,6 +244,7 @@ function GuidedResult({ result, entries, savingKey, onSave, onReset }) {
 }
 
 export default function GuidedCareSearch({ profile, registeredSymptomKey = "", entries = [], savingKey = "", onSave }) {
+  const flowTopRef = useRef(null);
   const [step, setStep] = useState(1);
   const [subject, setSubject] = useState("self");
   const [concerns, setConcerns] = useState([]);
@@ -255,7 +255,7 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
   const [answers, setAnswers] = useState({
     duration: "days", intensity: "moderate", thermal: "neutral", moisture: "neutral",
     reserve: "standard", digestion: "none", response: "none", scope: "all",
-    ageBand: "adult", pregnancy: "no", medication: "no", allergy: "no", redFlags: [],
+    ageBand: "adult", pregnancy: "no", medication: "no", allergy: "no", redFlags: [], clues: [],
   });
   const [profileApplied, setProfileApplied] = useState(false);
   const [result, setResult] = useState(null);
@@ -276,6 +276,22 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
 
   function toggleRedFlag(key) {
     setAnswers((prev) => ({ ...prev, redFlags: prev.redFlags.includes(key) ? prev.redFlags.filter((item) => item !== key) : [...prev.redFlags, key] }));
+  }
+
+  function toggleClue(key) {
+    setAnswers((prev) => ({ ...prev, clues: prev.clues.includes(key) ? prev.clues.filter((item) => item !== key) : [...prev.clues, key].slice(0, 3) }));
+  }
+
+  function scrollToFlowTop() {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      flowTopRef.current?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    }));
+  }
+
+  function moveToStep(nextStep) {
+    setStep(nextStep);
+    scrollToFlowTop();
   }
 
   async function organizeWithAi() {
@@ -310,17 +326,24 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
 
   const oralSelected = answers.scope === "all" || ["health", "kampo"].includes(answers.scope);
   const canNextFromOne = concerns.length > 0 || freeText.trim().length > 1;
+  const activeConcernKeys = useMemo(() => [...new Set([...concerns, ...(aiResult?.symptom_keys || [])])], [aiResult?.symptom_keys, concerns]);
+  const visibleClues = useMemo(() => GUIDED_CLUE_OPTIONS
+    .filter((item) => item.concerns.some((key) => activeConcernKeys.includes(key)))
+    .sort((a, b) => Math.min(...a.concerns.map((key) => activeConcernKeys.indexOf(key)).filter((index) => index >= 0)) - Math.min(...b.concerns.map((key) => activeConcernKeys.indexOf(key)).filter((index) => index >= 0)))
+    .slice(0, 8), [activeConcernKeys]);
 
   function runSearch() {
     const mergedConcerns = [...new Set([...concerns, ...(aiResult?.symptom_keys || [])])];
-    const input = { subject, concerns: mergedConcerns.length ? mergedConcerns : ["other"], freeText, ...answers };
+    const visibleClueKeys = new Set(visibleClues.map((item) => item.key));
+    const input = { subject, concerns: mergedConcerns.length ? mergedConcerns : ["other"], freeText, ...answers, clues: answers.clues.filter((key) => visibleClueKeys.has(key)) };
     setResult(buildGuidedSearchResult(input, profile, entries));
+    scrollToFlowTop();
   }
 
-  if (result) return <GuidedResult result={result} entries={entries} savingKey={savingKey} onSave={onSave} onReset={() => { setResult(null); setStep(1); }} />;
+  if (result) return <div ref={flowTopRef} className="scroll-mt-28"><GuidedResult result={result} entries={entries} savingKey={savingKey} onSave={onSave} onReset={() => { setResult(null); setStep(1); scrollToFlowTop(); }} /></div>;
 
   return (
-    <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_20px_48px_-36px_rgba(36,86,76,0.3)] sm:p-5">
+    <section ref={flowTopRef} className="scroll-mt-28 rounded-[30px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_20px_48px_-36px_rgba(36,86,76,0.3)] sm:p-5">
       <div className="flex items-start gap-3">
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#EAF7F1] text-[20px] ring-1 ring-[#CFE7DE]">⌕</div>
         <div>
@@ -350,7 +373,7 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
             {aiResult?.summary ? <div className="mt-2 rounded-[14px] bg-[#F1F8F4] px-3 py-2 text-[12px] font-bold leading-5 text-[#3F7467] ring-1 ring-[#D1E5DA]">整理結果：{aiResult.summary}</div> : null}
             {aiError ? <p className="mt-2 text-[12px] font-bold leading-5 text-[#9A5A31]">{aiError}</p> : null}
           </div>
-          <button type="button" disabled={!canNextFromOne} onClick={() => setStep(2)} className="w-full rounded-[18px] bg-[#349B83] px-4 py-3.5 text-[14px] font-black text-white disabled:bg-slate-300">今の状態を確認する</button>
+          <button type="button" disabled={!canNextFromOne} onClick={() => moveToStep(2)} className="w-full rounded-[18px] bg-[#349B83] px-4 py-3.5 text-[14px] font-black text-white disabled:bg-slate-300">今の状態を確認する</button>
         </div>
       ) : null}
 
@@ -365,8 +388,8 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
           {(concerns.some((key) => ["fatigue", "digestion", "swelling", "dizziness"].includes(key)) || freeText.includes("胃") || freeText.includes("食")) ? <ChoiceField label="食事・胃腸は？" name="digestion" value={answers.digestion} options={OPTION_SETS.digestion} onChange={setAnswer} /> : null}
           <ChoiceField label="何をすると少し楽？" name="response" value={answers.response} options={OPTION_SETS.response} onChange={setAnswer} />
           <div className="grid grid-cols-[auto_1fr] gap-2">
-            <button type="button" onClick={() => setStep(1)} className="rounded-[18px] bg-white px-4 py-3 text-[13px] font-black text-slate-500 ring-1 ring-[#D5E2DA]">戻る</button>
-            <button type="button" onClick={() => setStep(3)} className="rounded-[18px] bg-[#349B83] px-4 py-3 text-[13px] font-black text-white">探す範囲を選ぶ</button>
+            <button type="button" onClick={() => moveToStep(1)} className="rounded-[18px] bg-white px-4 py-3 text-[13px] font-black text-slate-500 ring-1 ring-[#D5E2DA]">戻る</button>
+            <button type="button" onClick={() => moveToStep(3)} className="rounded-[18px] bg-[#349B83] px-4 py-3 text-[13px] font-black text-white">探す範囲を選ぶ</button>
           </div>
         </div>
       ) : null}
@@ -383,6 +406,16 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
               ))}
             </div>
           </fieldset>
+
+          {oralSelected && visibleClues.length ? (
+            <fieldset className="rounded-[22px] bg-[#F7F3FA] p-4 ring-1 ring-[#E3D9EB]">
+              <legend className="px-1 text-[13px] font-black text-[#765D83]">飲む候補をもう少し絞る <span className="text-slate-400">（任意）</span></legend>
+              <p className="mt-1 text-[12px] font-bold leading-5 text-slate-500">当てはまるものを最大3つ。選ばなくてもケア用品などは探せます。</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {visibleClues.map((item) => <ToggleChip key={item.key} active={answers.clues.includes(item.key)} disabled={!answers.clues.includes(item.key) && answers.clues.length >= 3} onClick={() => toggleClue(item.key)}>{item.label}</ToggleChip>)}
+              </div>
+            </fieldset>
+          ) : null}
 
           {oralSelected ? (
             <div className="grid gap-5 rounded-[22px] bg-[#FFF9EC] p-4 ring-1 ring-[#EBD8AD]">
@@ -411,7 +444,7 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
           </fieldset>
 
           <div className="grid grid-cols-[auto_1fr] gap-2">
-            <button type="button" onClick={() => setStep(2)} className="rounded-[18px] bg-white px-4 py-3 text-[13px] font-black text-slate-500 ring-1 ring-[#D5E2DA]">戻る</button>
+            <button type="button" onClick={() => moveToStep(2)} className="rounded-[18px] bg-white px-4 py-3 text-[13px] font-black text-slate-500 ring-1 ring-[#D5E2DA]">戻る</button>
             <button type="button" onClick={runSearch} className="rounded-[18px] bg-[#349B83] px-4 py-3 text-[13px] font-black text-white">状態を整理して候補を見る</button>
           </div>
         </div>
