@@ -32,6 +32,15 @@ import {
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 
+const BODY_LINE_OPTIONS = [
+  { value: "A", label: "前屈する" },
+  { value: "B", label: "上体を反らす" },
+  { value: "C", label: "体をひねる・横へ倒す" },
+  { value: "D", label: "首をうつむける" },
+  { value: "E", label: "首を反らす・横を向く" },
+  { value: "F", label: "腕を横から上げる" },
+];
+
 export default function ResultPageWrapper({ params }) {
   return (
     <Suspense
@@ -239,7 +248,6 @@ function CarePolicyCard({ item }) {
  * Weather compatibility Logic
  * ---------------------------- */
 function buildForecastConstitution({ answers, computed }) {
-  const answerThermo = Array.isArray(answers?.thermo) ? answers.thermo[0] : answers?.thermo;
   const answerVectors = Array.isArray(answers?.env_vectors)
     ? answers.env_vectors.filter((value) => value && value !== "none")
     : [];
@@ -247,11 +255,13 @@ function buildForecastConstitution({ answers, computed }) {
     core_code: computed?.core_code || "",
     axes: {
       ...(computed?.axes || {}),
-      thermo_answer: computed?.axes?.thermo_answer || answerThermo || "neutral",
+      thermo_answer: computed?.axes?.thermo_answer || "neutral",
     },
     split_scores: computed?.split_scores || {},
+    material_scores: computed?.material_scores || {},
+    score_scale: computed?.score_scale || computed?.split_scores?.scale || null,
     env: {
-      sensitivity: Number(answers?.env_sensitivity ?? computed?.env?.sensitivity ?? 0),
+      sensitivity: Number(computed?.env?.sensitivity ?? 0),
       vectors: answerVectors.length ? answerVectors : (computed?.env?.vectors || []),
     },
   };
@@ -271,7 +281,7 @@ function buildWeatherCompatibility({ answers, computed, symptomKey, core, subLab
     constitution: buildForecastConstitution({ answers, computed }),
   });
   const reactionAxis = Number(affinityProfile?.normalized_constitution?.axes?.yin_yang_score || 0);
-  const pressureResponseDirection = reactionAxis > 0.18 ? "accel" : reactionAxis < -0.18 ? "brake" : "balanced";
+  const pressureResponseDirection = reactionAxis >= 0 ? "accel" : "brake";
 
   const items = rankConstitutionWeatherAffinityV2(affinityProfile.weights)
     .slice(0, 3)
@@ -422,6 +432,10 @@ function ResultPage({ params }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [attaching, setAttaching] = useState(false);
+  const [bodyLineOpen, setBodyLineOpen] = useState(false);
+  const [bodyLinePrimary, setBodyLinePrimary] = useState("none");
+  const [bodyLineSecondary, setBodyLineSecondary] = useState("none");
+  const [bodyLineSaving, setBodyLineSaving] = useState(false);
   const [toast, setToast] = useState("");
 
   const attachAfterLogin = searchParams?.get("attach") === "1";
@@ -480,6 +494,12 @@ function ResultPage({ params }) {
   }, [id, loadingAuth, session?.access_token]);
 
   useEffect(() => {
+    if (!event?.answers) return;
+    setBodyLinePrimary(event.answers.body_line_primary || "none");
+    setBodyLineSecondary(event.answers.body_line_secondary || "none");
+  }, [event?.id, event?.answers?.body_line_primary, event?.answers?.body_line_secondary]);
+
+  useEffect(() => {
     if (!attachAfterLogin || loadingAuth || !session || !event || event?.notFound || autoAttachRan.current) return;
     autoAttachRan.current = true;
     attachToAccount(true);
@@ -533,6 +553,41 @@ function ResultPage({ params }) {
       setTimeout(() => setToast(""), 2500);
     } finally {
       setAttaching(false);
+    }
+  }
+
+  async function saveBodyLines() {
+    if (bodyLineSaving) return;
+    setBodyLineSaving(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          body_line_primary: bodyLinePrimary,
+          body_line_secondary: bodyLinePrimary === "none" ? "none" : bodyLineSecondary,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json?.data) throw new Error(json?.error || "保存に失敗しました");
+      setEvent((current) => ({
+        ...current,
+        answers: json.data.answers,
+        computed: json.data.computed,
+      }));
+      setBodyLineOpen(false);
+      setToast("体のラインを保存しました");
+      setTimeout(() => setToast(""), 2500);
+    } catch (error) {
+      setToast(error?.message || String(error));
+      setTimeout(() => setToast(""), 2500);
+    } finally {
+      setBodyLineSaving(false);
     }
   }
 
@@ -592,6 +647,24 @@ function ResultPage({ params }) {
               </div>
             </div>
             <Button onClick={() => router.push("/check")} className="w-full shadow-md py-4">体質トリセツを作り直す</Button>
+          </div>
+        </Module>
+      </AppShell>
+    );
+  }
+
+  if (event?.retake_required) {
+    return (
+      <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+        <Module>
+          <ModuleHeader icon={<IconResult />} title="体質チェックが新しくなりました" sub="新しい質問でトリセツを作り直せます" />
+          <div className="space-y-5 px-5 pb-6 pt-4">
+            <div className="rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_62%)] p-6 text-center ring-1 ring-[color-mix(in_srgb,var(--accent),white_74%)]">
+              <div className="text-[15px] font-bold leading-7 text-slate-700">
+                以前のテスト結果は、新しい採点へ置き換えずに終了しました。今の質問へ答え直すと、6つの傾向と冷え・ほてりを分けた新しい結果が保存されます。
+              </div>
+            </div>
+            <Button onClick={() => router.push("/check/run")} className="w-full py-4 shadow-md">新しい体質チェックを始める</Button>
           </div>
         </Module>
       </AppShell>
@@ -750,17 +823,22 @@ function ResultPage({ params }) {
 
                   <div className="h-px w-full bg-slate-100" />
 
-                  {/* セクション2：経絡（主・副を一つのカード空間に統合） */}
+                  {/* 体のラインは体質判定と分離し、結果後に任意登録する。 */}
                   <div>
                     <div className="flex items-center gap-2.5 mb-4">
                       <IconBody className="h-5 w-5 text-violet-600" />
-                      <h3 className="text-[16px] font-black text-slate-900">負担がかかりやすい場所（経絡）</h3>
+                      <h3 className="text-[16px] font-black text-slate-900">負担が出やすい体のライン</h3>
                     </div>
                     <div className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5 space-y-5">
                       {meridianPrimary ? (
                         <MeridianPanelContent line={{ ...meridianPrimary, code: computed?.primary_meridian }} tone="violet" />
                       ) : (
-                        <div className="text-[13px] font-bold text-slate-500">今回は強い偏りなし</div>
+                        <div>
+                          <div className="text-[14px] font-black text-slate-800">体のラインはまだ確認していません</div>
+                          <div className="mt-2 text-[13px] font-bold leading-6 text-slate-500">
+                            体質判定とは別の任意項目です。負担が出やすい動きを選ぶと、ほぐすケアの場所選びに使います。
+                          </div>
+                        </div>
                       )}
                       
                       {meridianSecondary && (
@@ -768,6 +846,83 @@ function ResultPage({ params }) {
                           <div className="h-px w-full bg-slate-200/60" />
                           <MeridianPanelContent line={{ ...meridianSecondary, code: computed?.secondary_meridian }} tone="teal" />
                         </>
+                      )}
+
+                      {!bodyLineOpen ? (
+                        <button
+                          type="button"
+                          onClick={() => setBodyLineOpen(true)}
+                          className="w-full rounded-[18px] bg-white px-4 py-3 text-[13px] font-black text-[var(--accent-ink)] ring-1 ring-[color-mix(in_srgb,var(--accent),white_72%)]"
+                        >
+                          {meridianPrimary ? "体のラインを変更する" : "体のラインも確認する"}
+                        </button>
+                      ) : (
+                        <div className="space-y-5 rounded-[20px] bg-white p-4 ring-1 ring-slate-200">
+                          <div>
+                            <div className="text-[13px] font-black text-slate-800">一番、張りや違和感が出やすい動き</div>
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              {[...BODY_LINE_OPTIONS, { value: "none", label: "特にない" }].map((option) => (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setBodyLinePrimary(option.value);
+                                    if (option.value === "none" || option.value === bodyLineSecondary) setBodyLineSecondary("none");
+                                  }}
+                                  className={[
+                                    "rounded-[15px] px-3 py-3 text-left text-[12px] font-extrabold ring-1",
+                                    bodyLinePrimary === option.value
+                                      ? "bg-[color-mix(in_srgb,var(--mint),white_66%)] text-[var(--accent-ink)] ring-[var(--accent)]"
+                                      : "bg-white text-slate-650 ring-slate-200",
+                                  ].join(" ")}
+                                >
+                                  {option.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {bodyLinePrimary !== "none" ? (
+                            <div>
+                              <div className="text-[13px] font-black text-slate-800">次に気になる動き（任意）</div>
+                              <div className="mt-3 grid grid-cols-2 gap-2">
+                                {[...BODY_LINE_OPTIONS.filter((option) => option.value !== bodyLinePrimary), { value: "none", label: "選ばない" }].map((option) => (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => setBodyLineSecondary(option.value)}
+                                    className={[
+                                      "rounded-[15px] px-3 py-3 text-left text-[12px] font-extrabold ring-1",
+                                      bodyLineSecondary === option.value
+                                        ? "bg-[color-mix(in_srgb,var(--mint),white_66%)] text-[var(--accent-ink)] ring-[var(--accent)]"
+                                        : "bg-white text-slate-650 ring-slate-200",
+                                    ].join(" ")}
+                                  >
+                                    {option.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setBodyLineOpen(false)}
+                              className="flex-1 rounded-[16px] bg-slate-100 px-3 py-3 text-[12px] font-black text-slate-600"
+                            >
+                              閉じる
+                            </button>
+                            <button
+                              type="button"
+                              onClick={saveBodyLines}
+                              disabled={bodyLineSaving}
+                              className="flex-[1.5] rounded-[16px] bg-[var(--accent)] px-3 py-3 text-[12px] font-black text-white disabled:opacity-50"
+                            >
+                              {bodyLineSaving ? "保存中…" : "このラインを使う"}
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
