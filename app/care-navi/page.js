@@ -3690,8 +3690,8 @@ export default function CareNaviPage() {
   return (
     <div style={CARE_NAVI_THEME}>
       <AppShell
-        title="パーソナルケアショップ"
-        subtitle="体質と今の状態から、選び方を絞る"
+        title="ケアショップ"
+        subtitle="体質と今の状態から選ぶ"
         headerRight={<SavedShopButton count={shopEntries.length} active={showSaved} onClick={() => setShowSaved((value) => !value)} />}
       >
         <ShopPrimaryTabs value={primaryTab} onChange={selectPrimaryTab} />
