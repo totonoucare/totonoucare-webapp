@@ -867,7 +867,7 @@ test("constitution care tab states the seven care goals in plain current languag
   assert.equal(constitutionCare.getCarePolicyDefinition("meguraseru").guide, "滞りをほどき、巡りを保つ");
   assert.equal(constitutionCare.getCarePolicyDefinition("sasaeru").guide, "胃腸をいたわり、疲れを増やさない");
   assert.match(resultPageSource, /この整え方が合いやすい理由/);
-  assert.match(resultPageSource, /パーソナルケアショップの商品選び、Ekkenへの相談/);
+  assert.match(resultPageSource, /パーソナルケアショップの商品選び、ミモルへの相談/);
   assert.doesNotMatch(constitutionCareSource, /巡りの逃げ道|回復しやすい余白|まず合いやすい/);
   assert.doesNotMatch(resultPageSource, /今後の整うアイテム検索|見立ての補足/);
 });

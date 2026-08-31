@@ -81,6 +81,8 @@ test("ショップUIはおすすめ・悩み・保存を分け、AIは明示ボ�
   assert.match(page, /SavedShopButton[\s\S]*保存した候補/);
   assert.doesNotMatch(page, /key: "interested", label: "気になる"/);
   assert.match(guided, /AIで入力内容を整理（任意）[\s\S]*このボタンを押した時だけAIを使います/);
+  assert.match(guided, /IconSearch/);
+  assert.doesNotMatch(guided, /⌕/);
   const aiFunction = guided.slice(guided.indexOf("async function organizeWithAi"), guided.indexOf("const oralSelected"));
   assert.match(aiFunction, /fetch\("\/api\/care-shop\/interpret"/);
   assert.doesNotMatch(guided.slice(0, guided.indexOf("async function organizeWithAi")), /\/api\/care-shop\/interpret/);

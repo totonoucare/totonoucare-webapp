@@ -51,7 +51,7 @@ const lockedAccess = {
   consult_requires_subscription: true,
 };
 
-test("無料Ekken相談は3日記録後に生涯2回答だけ開く", () => {
+test("無料ミモル相談は3日記録後に生涯2回答だけ開く", () => {
   const before = applyFreeConsultTrialAccess(lockedAccess, { used: 0, recordedDays: 2 });
   assert.equal(before.consult_enabled, false);
   assert.equal(before.consult_access_mode, "trial_locked");
@@ -119,10 +119,10 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
   assert.match(records, /key: "analysis", label: "振り返り"/);
   assert.match(records, /normalized === "consult"[\s\S]*loadFeatureAccess\(\)/);
   assert.match(records, /setMonthRows[\s\S]*loadFeatureAccess\(\)[\s\S]*return nextRow/);
-  assert.match(analysis, /ケアナビAI Ekken[\s\S]*AIでこの期間を振り返る[\s\S]*次に一つだけ[\s\S]*AIを使わない基本集計[\s\S]*RecordsSimpleTrendChart/);
+  assert.match(analysis, /ケアナビAI ミモル[\s\S]*AIでこの期間を振り返る[\s\S]*次に一つだけ[\s\S]*AIを使わない基本集計[\s\S]*RecordsSimpleTrendChart/);
   assert.match(analysis, /hasAiAnalysis \? "AI振り返りの根拠と内訳" : "基本集計の内訳を見る"/);
-  assert.match(paywall, /自分を把握したEkkenへ相談/);
-  assert.match(live, /今回Ekkenが把握していること[\s\S]*今日・明日の予報[\s\S]*直近14日の記録/);
+  assert.match(paywall, /自分を把握したミモルへ相談/);
+  assert.match(live, /今回ミモルが把握していること[\s\S]*今日・明日の予報[\s\S]*直近14日の記録/);
   assert.match(daily, /天気以外に気になったこと[\s\S]*（任意）/);
   assert.match(route, /free_chat_response/);
   assert.match(route, /if \(!freeTrial\) assertQuota\(usageBefore, "chat"\)/);

@@ -14,7 +14,7 @@ const liveRoute = await readFile(new URL("../app/api/records/live-chat/route.js"
 const periodRoute = await readFile(new URL("../app/api/records/chat/route.js", import.meta.url), "utf8");
 const livePanel = await readFile(new URL("../components/records/LiveSupportPanel.jsx", import.meta.url), "utf8");
 
-test("Ekken can expand displayed care with broad TCM freedom", () => {
+test("ミモル can expand displayed care with broad TCM freedom", () => {
   assert.match(promptSource, /displayed_care以外の低リスクな応用案も提案してよい/);
   assert.match(promptSource, /食性・五味・五臓・寒熱燥湿・調理法/);
   assert.match(promptSource, /陰陽・季節・時刻・環境・休息と活動/);
@@ -51,7 +51,7 @@ test("final medication actions still receive deterministic professional confirma
   ]) {
     assert.equal(prompts.isProfessionalText(message), true, message);
   }
-  assert.match(prompts.PROFESSIONAL_MESSAGE, /一般的な違い、選び方、確認ポイントまではEkkenと整理できます/);
+  assert.match(prompts.PROFESSIONAL_MESSAGE, /一般的な違い、選び方、確認ポイントまではミモルと整理できます/);
   assert.match(prompts.PROFESSIONAL_MESSAGE, /最終判断だけ/);
 });
 

@@ -164,10 +164,10 @@ test("missing pressure response keeps legacy up/down care while explicit balance
 
 test("pressure physical direction and body response remain separate through UI, care, points, shop, and Ekken", () => {
   const cases = [
-    { physical: "down", response: "accel", weather: "気圧低下", body: /張り・力み|前のめり/ },
-    { physical: "down", response: "brake", weather: "気圧低下", body: /重だるさ|こもる重さ|こもり|動き出し/ },
-    { physical: "up", response: "accel", weather: "気圧上昇", body: /張り・力み|前のめり/ },
-    { physical: "up", response: "brake", weather: "気圧上昇", body: /重だるさ|こもる重さ|こもり|動き出し/ },
+    { physical: "down", response: "accel", weather: "気圧低下", body: /張り|力み|前のめり/ },
+    { physical: "down", response: "brake", weather: "気圧低下", body: /重だるさ|重さ|こもり|動き出し/ },
+    { physical: "up", response: "accel", weather: "気圧上昇", body: /張り|力み|前のめり/ },
+    { physical: "up", response: "brake", weather: "気圧上昇", body: /重だるさ|重さ|こもり|動き出し/ },
   ];
   const results = [];
 

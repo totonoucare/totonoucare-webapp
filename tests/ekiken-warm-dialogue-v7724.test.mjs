@@ -21,6 +21,6 @@ test("live support prompt version is bumped for the prompt reset", () => {
 test("follow-up option chips place only the natural answer in the input", () => {
   assert.match(livePanel, /onClick=\{\(\) => fillFollowUpOption\(option\)\}/);
   assert.match(analysisPanel, /onClick=\{\(\) => fillFollowUpOption\(option\)\}/);
-  assert.doesNotMatch(livePanel, /Ekkenからの確認への回答：/);
+  assert.doesNotMatch(livePanel, /ミモルからの確認への回答：/);
   assert.doesNotMatch(analysisPanel, /AIからの確認への回答：/);
 });

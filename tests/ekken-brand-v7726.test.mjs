@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("visible care navigation AI branding uses Ekken", async () => {
+test("visible care navigation AI branding uses ミモル while legacy internal exports stay compatible", async () => {
   const [support, prompts, context, guide, radar] = await Promise.all([
     read("lib/records/liveSupport.js"),
     read("lib/records/aiPrompts.js"),
@@ -13,11 +13,11 @@ test("visible care navigation AI branding uses Ekken", async () => {
     read("app/radar/page.js"),
   ]);
   const joined = [support, prompts, context, guide, radar].join("\n");
-  assert.match(support, /Ekken/);
-  assert.match(support, /エッケン/);
-  assert.match(prompts, /ケアナビAI Ekken（エッケン）/);
-  assert.match(context, /name: "Ekken"/);
-  assert.match(guide, /Ekken（エッケン）/);
-  assert.match(radar, /ケアナビAI Ekken/);
+  assert.match(support, /EKIKEN_NAME = "ミモル"/);
+  assert.match(support, /EKIKEN_DISPLAY_NAME = EKIKEN_NAME/);
+  assert.match(prompts, /ケアナビAI ミモル/);
+  assert.match(context, /name: "ミモル"/);
+  assert.match(guide, /ケアナビAI ミモル/);
+  assert.match(radar, /ケアナビAI ミモル/);
   assert.doesNotMatch(joined, /Ekiken|エキケン/);
 });

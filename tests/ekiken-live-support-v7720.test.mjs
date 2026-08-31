@@ -6,13 +6,13 @@ async function source(path) {
   return readFile(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("Ekken is named consistently as the care navigation AI", async () => {
+test("ミモル is named consistently as the care navigation AI", async () => {
   const live = await source("components/records/LiveSupportPanel.jsx");
   const radar = await source("app/radar/page.js");
   const guide = await source("app/guide/GuideClient.jsx");
   assert.match(live, /EKIKEN_DISPLAY_NAME/);
-  assert.match(radar, /ケアナビAI Ekken/);
-  assert.match(guide, /Ekken/);
+  assert.match(radar, /ケアナビAI ミモル/);
+  assert.match(guide, /ミモル/);
 });
 
 test("bottom navigation exposes records and consultation as a primary destination", async () => {
@@ -60,7 +60,7 @@ test("live support preserves medical safety boundaries", async () => {
   assert.match(prompts, /通常の体調相談を、毎回の受診判定や安全確認の問診から始めない/);
 });
 
-test("home provides a direct shortcut to Ekken consultation", async () => {
+test("home provides a direct shortcut to ミモル consultation", async () => {
   const home = await source("app/HomeClient.jsx");
   assert.match(home, /function EkkenHomeCard/);
   assert.match(home, /今の調子を話してみる/);
