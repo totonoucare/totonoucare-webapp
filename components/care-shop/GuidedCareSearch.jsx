@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { IconSearch } from "@/components/illust/icons/app";
 import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { supabase } from "@/lib/supabaseClient";
 import { GUIDED_CLUE_OPTIONS, GUIDED_SCOPE_META, GUIDED_SCOPE_OPTIONS } from "@/lib/care-shop/guidedCatalog";
@@ -351,7 +352,7 @@ export default function GuidedCareSearch({ profile, registeredSymptomKey = "", e
   return (
     <section ref={flowTopRef} className="scroll-mt-28 rounded-[30px] bg-white p-4 ring-1 ring-[#D5E5DB] shadow-[0_20px_48px_-36px_rgba(36,86,76,0.3)] sm:p-5">
       <div className="flex items-start gap-3">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#EAF7F1] text-[20px] ring-1 ring-[#CFE7DE]">⌕</div>
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[18px] bg-[#EAF7F1] text-slate-900 ring-1 ring-[#CFE7DE]"><IconSearch className="h-5 w-5" /></div>
         <div>
           <h2 className="text-[19px] font-black tracking-tight text-slate-900">今の状態から探す</h2>
           <p className="mt-1 text-[13px] font-bold leading-5 text-slate-500">商品名を当てるのではなく、状態を整理して「何を比較するか」まで絞ります。</p>
