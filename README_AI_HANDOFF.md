@@ -1,3 +1,13 @@
+## v7.79.43 ミモル表示名・検索アイコンの現行契約
+
+- ユーザー向け正式名称は `ケアナビAI ミモル`。画面文言、AI prompt/context、APIのユーザー向けエラー、live support titleへ旧 `Ekken / エッケン` を新規追加しない
+- 互換性のため内部名は改名しない。`EKIKEN_NAME / EKIKEN_READING / EKIKEN_DISPLAY_NAME`、`EkkenHomeCard`、`live_support`、`ekken/ekiken`を含む過去migration・テスト・資料ファイル名はlegacy identifierとして維持してよい
+- `lib/records/liveSupport.js` のlegacy export名は残すが、公開値は `ミモル`。`EKIKEN_DISPLAY_NAME` は括弧読みを付けず `ミモル` だけを返す
+- 既存live support threadの `title` は識別子ではなく表示metadataなので、次回アクセス時に `今の調子をミモルに相談` へlazy updateする。`thread_kind = live_support` は絶対に変更しない
+- `/care-navi` の探索見出しアイコンは文字記号を使わない。`components/illust/icons/app.jsx` の `IconSearch` を使い、既存のSVG線幅・線端・色継承ルールへ合わせる
+- 歴史的README/docsに残るEkken表記は当時のリリース履歴として残してよい。現行仕様判断ではこのv7.79.43節を優先する
+- 回帰テスト349件通過。配布ZIPはnode_modulesを含まないため、この作業環境で本番buildは未実行
+
 ## v7.79.42 ケアショップ候補カードの現行契約
 
 - `safety.level === compare`では安全確認カードも成功文も表示しない。`consult / stop`だけ理由付きの安全表示を維持する

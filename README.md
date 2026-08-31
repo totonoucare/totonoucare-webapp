@@ -11,6 +11,18 @@
 
 ---
 
+# v7.79.43 ケアナビAI「ミモル」への表示名変更・ショップ検索アイコン統一
+
+- ユーザー向けのケアナビAI名称を `Ekken（エッケン）` から `ミモル` へ変更。ホーム、体調予報、記録・振り返り・相談、使い方、設定、プレミアム案内、APIエラー文を統一
+- AIへ渡すsystem prompt、product context、assistant metadata、確認質問コンテキストも `ケアナビAI ミモル` へ変更し、AI自身が旧名を名乗らないよう統一
+- 既存の内部識別子・互換契約は変更しない。`EKIKEN_*` export名、`EkkenHomeCard`、`live_support`、既存migration/ファイル名はそのまま維持
+- 既存live support threadは次回アクセス時に表示用titleだけ `今の調子をミモルに相談` へ更新。thread kindやDBキーは変更しない
+- `/care-navi` の「今の状態から探す」で文字記号 `⌕` を廃止し、共通SVG基盤 `components/illust/icons/app.jsx` に `IconSearch` を追加して使用
+- `IconSearch` は既存アイコンと同じ `24x24 / currentColor / strokeWidth 2.15 / round cap / round join` の契約を使用
+- 回帰テストは349件すべて通過。配布ZIPにはnode_modulesが含まれないため、この作業環境ではNext.js本番ビルドは未実行
+
+---
+
 # v7.79.42 ケアショップ候補カードの情報整理
 
 - 通常の比較結果から`選択した安全確認では大きな該当なし`を削除。安全上の該当がない場合は何も表示せず、服薬中・妊娠授乳中等の専門家確認とレッドフラッグ停止だけを表示
