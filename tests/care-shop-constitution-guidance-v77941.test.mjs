@@ -53,8 +53,9 @@ test("六つの体質素材スコアと今回の状態を合わせて候補を�
   const ids = result.groups.flatMap((group) => group.candidates.map((candidate) => candidate.id));
   assert.ok(ids.includes("kampo-keishikajutsubuto"));
   const formula = result.groups.flatMap((group) => group.candidates).find((candidate) => candidate.id === "kampo-keishikajutsubuto");
-  assert.match(formula.matchReason, /今回選んだ/);
-  assert.match(formula.matchReason, /体質チェック/);
+  assert.match(formula.matchSummary, /腰のつらさ/);
+  assert.match(formula.matchSummary, /体質：/);
+  assert.doesNotMatch(formula.matchReason, /今回選んだ|体質チェックの/);
 });
 
 test("痛み方と排尿変化がそろう場合は足腰向け方剤を区別する", () => {
@@ -96,7 +97,7 @@ test("普段より動けそうという回答だけで緊張扱いにしない",
 test("結果UIは通常の安全表示と選定根拠をコンパクトにする", async () => {
   const guided = await source("components/care-shop/GuidedCareSearch.jsx");
   assert.match(guided, /この条件で選びました/);
-  assert.match(guided, /result\.safety\.level === "compare"/);
+  assert.match(guided, /result\.safety\.level !== "compare"/);
   assert.doesNotMatch(guided, /体質と今回の回答を分けて確認|もともとの傾向/);
   assert.doesNotMatch(guided, /動けるが、力が抜けにくい/);
 });

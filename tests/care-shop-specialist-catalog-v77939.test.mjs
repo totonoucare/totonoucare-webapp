@@ -63,7 +63,7 @@ test("補助回答がある場合だけ近い漢方方剤を追加する", () =>
   const withClue = buildGuidedSearchResult({ ...safeInput, scope: "kampo", clues: ["shoulder_arm_pain"] });
   const candidates = withClue.groups.flatMap((group) => group.candidates);
   assert.ok(candidates.some((item) => item.id === "kampo-nijutsuto"));
-  assert.match(candidates.find((item) => item.id === "kampo-nijutsuto").matchReason, /肩から腕にかけて痛む/);
+  assert.match(candidates.find((item) => item.id === "kampo-nijutsuto").matchSummary, /肩から腕にかけて痛む/);
 });
 
 test("睡眠の追加回答から成分候補と方剤候補を分けて表示する", () => {

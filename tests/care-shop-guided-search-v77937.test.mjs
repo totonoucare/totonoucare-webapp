@@ -42,7 +42,8 @@ test("体質チェックと今日の状態を混ぜずに候補を絞る", () =>
   const kampo = result.groups.find((group) => group.type === "kampo").candidates;
   assert.ok(kampo.some((item) => item.title === "補中益気湯"));
   assert.ok(kampo.every((item) => item.productClass === "第2類医薬品"));
-  assert.match(kampo[0].matchReason, /選んだ/);
+  assert.match(kampo[0].matchSummary, /疲れ・だるさ/);
+  assert.match(kampo[0].matchReason, /疲れやすさ/);
   assert.ok(kampo.every((item) => item.compare));
 });
 
