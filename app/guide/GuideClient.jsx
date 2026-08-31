@@ -261,7 +261,7 @@ export default function GuidePage() {
 
           <div className="space-y-4">
             <GuideCard tone="indigo" title="初回：体質トリセツを作る" icon={<IconConstitution />}>
-              質問から、ベース体質、気・血・水の傾向、天気との相性、負担が出やすい体のラインを整理します。この結果が体調予報の土台になります。
+              質問から、ベース体質、気・血・水の6つの傾向、冷え・ほてり、天気との相性を整理します。体のラインは結果後に任意で追加でき、この結果が体調予報の土台になります。
               <CheckList
                 items={[
                   "予報に使う地域を設定します。",
