@@ -13,7 +13,7 @@ test("an active subscription outranks the free beta in the shared access mode", 
     beta: getBetaWindow(Date.parse("2026-07-27T16:30:00+09:00"), {
       enabled: true,
       startsAt: "2026-07-15",
-      endsAt: "2026-08-31",
+      endsAt: "2026-09-30",
     }),
     entitlement: {
       product: "radar_subscription",

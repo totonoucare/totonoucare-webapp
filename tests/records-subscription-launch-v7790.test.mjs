@@ -15,12 +15,12 @@ const source = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8"
 const BETA = {
   enabled: true,
   startsAt: "2026-07-15",
-  endsAt: "2026-08-31",
+  endsAt: "2026-09-30",
 };
 
-test("free AI beta ends exactly at 2026-09-01 00:00 JST", () => {
-  const before = getBetaWindow(Date.parse("2026-08-31T14:59:59.999Z"), BETA);
-  const boundary = getBetaWindow(Date.parse("2026-08-31T15:00:00.000Z"), BETA);
+test("free AI beta ends exactly at 2026-10-01 00:00 JST", () => {
+  const before = getBetaWindow(Date.parse("2026-09-30T14:59:59.999Z"), BETA);
+  const boundary = getBetaWindow(Date.parse("2026-09-30T15:00:00.000Z"), BETA);
 
   assert.equal(before.active, true);
   assert.equal(before.expired, false);
@@ -30,7 +30,7 @@ test("free AI beta ends exactly at 2026-09-01 00:00 JST", () => {
 
 test("record calendar stays free while analysis and consult require a subscription after beta", () => {
   const access = resolveRecordsAccess({
-    beta: getBetaWindow(Date.parse("2026-09-01T00:00:00+09:00"), BETA),
+    beta: getBetaWindow(Date.parse("2026-10-01T00:00:00+09:00"), BETA),
     entitlement: null,
   });
 
@@ -42,9 +42,18 @@ test("record calendar stays free while analysis and consult require a subscripti
   assert.equal(access.consult_requires_subscription, true);
 });
 
+test("settings and live checkout copy use the extended beta boundary", async () => {
+  const settings = await source("app/settings/page.js");
+  const checkout = await source("app/api/stripe/checkout/route.js");
+
+  assert.match(settings, /2026年9月30日まで/);
+  assert.match(settings, /10月1日以降も記録カレンダーは無料/);
+  assert.match(checkout, /プレミアムの申込みは2026年10月1日から開始します/);
+});
+
 test("beta and active subscription each unlock both paid surfaces", () => {
   const betaAccess = resolveRecordsAccess({
-    beta: getBetaWindow(Date.parse("2026-08-31T23:59:00+09:00"), BETA),
+    beta: getBetaWindow(Date.parse("2026-09-30T23:59:00+09:00"), BETA),
     entitlement: null,
   });
   assert.equal(betaAccess.mode, "beta");
@@ -52,7 +61,7 @@ test("beta and active subscription each unlock both paid surfaces", () => {
   assert.equal(betaAccess.consult_enabled, true);
 
   const paidAccess = resolveRecordsAccess({
-    beta: getBetaWindow(Date.parse("2026-09-01T00:00:00+09:00"), BETA),
+    beta: getBetaWindow(Date.parse("2026-10-01T00:00:00+09:00"), BETA),
     entitlement: {
       product: "radar_subscription",
       status: "active",
@@ -116,6 +125,7 @@ test("Stripe subscription flow includes test-safe launch, portal and webhook lif
 
   assert.match(checkout, /mode: "subscription"/);
   assert.match(checkout, /billing_not_started/);
+  assert.match(checkout, /2026年10月1日から開始/);
   assert.match(checkout, /stripeModeFromSecret\(\) === "test"/);
   assert.match(checkout, /CHECKOUT_SESSION_ID/);
   assert.match(portal, /billingPortal\.sessions\.create/);

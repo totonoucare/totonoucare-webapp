@@ -51,7 +51,7 @@ test("v7.72.7 operational values are centralized with the intended launch policy
   assert.deepEqual(RECORDS_AI_BETA, {
     enabled: true,
     startsAt: "2026-07-15",
-    endsAt: "2026-08-31",
+    endsAt: "2026-09-30",
   });
   assert.equal(RECORDS_EDIT_LOOKBACK_DAYS, 7);
   assert.equal(RECORDS_AI_MONTHLY_CHAT_LIMIT, 100);
