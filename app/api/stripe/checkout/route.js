@@ -99,7 +99,7 @@ export async function POST(req) {
     if (billing.access?.beta_enabled && !stripeTestMode) {
       return NextResponse.json(
         {
-          error: "プレミアムの申込みは2026年9月1日から開始します",
+          error: "プレミアムの申込みは2026年10月1日から開始します",
           code: "billing_not_started",
         },
         { status: 409 }
