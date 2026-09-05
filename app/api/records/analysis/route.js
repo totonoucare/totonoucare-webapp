@@ -39,7 +39,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_ANALYSIS_MODEL;
-const PROMPT_VERSION = "records_analysis_v18_care_provenance_2026-09-04";
+const PROMPT_VERSION = "records_analysis_v19_care_provenance_complete_2026-09-05";
 
 function periodKey(value) {
   return String(value || "custom").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "custom";
