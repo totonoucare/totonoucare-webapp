@@ -3,6 +3,7 @@ import {
   getNotificationSettings,
   upsertNotificationSettings,
 } from "@/lib/push/pushRepo";
+import { getRecordsAccess } from "@/lib/records/access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +42,10 @@ export async function POST(req) {
     if (!user?.id) return jsonUtf8({ ok: false, error: error || "Unauthorized" }, 401);
 
     const body = await req.json().catch(() => ({}));
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.notifications_enabled && body?.enabled !== false) {
+      return jsonUtf8({ ok: false, error: "体調予報の通知にはプレミアム登録が必要です", code: "notifications_access_required", access }, 403);
+    }
     const settings = await upsertNotificationSettings({
       userId: user.id,
       enabled: typeof body.enabled === "boolean" ? body.enabled : undefined,
