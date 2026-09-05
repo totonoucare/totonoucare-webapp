@@ -10,7 +10,15 @@ import {
   forecastPatternKey,
   snapshotFromForecast,
 } from "@/lib/records/analysis";
-import { isMissingRecordsSchemaError, loadCareActionsForDate } from "@/lib/records/server";
+import {
+  isMissingRecordsSchemaError,
+  loadCareActionsForDate,
+  loadRecordsProfile,
+} from "@/lib/records/server";
+import { getRecordsAccess } from "@/lib/records/access";
+import { resolveDisplayedCarePlan } from "@/app/radar/utils";
+import { buildDisplayedCareSnapshot } from "@/lib/radar_v1/displayedCareSnapshot";
+import { shouldCaptureDisplayedCareAtRecordSave } from "@/lib/records/careReconstruction";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -113,6 +121,30 @@ async function findForecast(userId, targetDate) {
     .limit(1);
   if (error) throw error;
   return data?.[0] || null;
+}
+
+function buildSavedDisplayedCare(forecast, profile, targetDate) {
+  const riskContext = forecast?.computed?.radar_plan_meta?.risk_context || null;
+  if (!forecast || !riskContext) return null;
+  try {
+    const symptomFocus = profile?.symptom_focus || riskContext?.constitution_context?.symptom_focus || null;
+    const carePlan = resolveDisplayedCarePlan({
+      forecast,
+      riskContext,
+      mode: "today",
+      targetDate,
+      symptomFocus,
+    });
+    return buildDisplayedCareSnapshot({
+      carePlan,
+      mode: "today",
+      targetDate,
+      source: "reconstructed_at_first_record_save",
+    });
+  } catch (error) {
+    console.warn("displayed care snapshot skipped:", error?.message || String(error));
+    return null;
+  }
 }
 
 function responseReview(row, actions = []) {
@@ -221,6 +253,13 @@ export async function POST(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.records_write_enabled) {
+      return NextResponse.json(
+        { error: "新しい体調記録にはプレミアム登録が必要です", code: "records_write_access_required", access },
+        { status: 403 }
+      );
+    }
 
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.date);
@@ -262,10 +301,14 @@ export async function POST(req) {
 
     const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : "";
     if (sameDayTiming) await updateSameDayActionTiming(user.id, targetDate, sameDayTiming);
-    const [existingResult, currentForecast, careActionResult] = await Promise.all([
+    const [existingResult, currentForecast, careActionResult, profile] = await Promise.all([
       findLatestReview(user.id, targetDate),
       findForecast(user.id, targetDate),
       loadCareActionsForDate(user.id, targetDate),
+      loadRecordsProfile(user.id).catch((profileError) => {
+        console.warn("record profile snapshot skipped:", profileError?.message || String(profileError));
+        return null;
+      }),
     ]);
     if (!existingResult.integrityReady) {
       return NextResponse.json(
@@ -286,8 +329,20 @@ export async function POST(req) {
       ? combineCareTiming(manualTiming, actionTiming, manualPreventLevel)
       : "";
 
-    const snapshot = existingResult.row?.forecast_snapshot
+    const existingSnapshot = existingResult.row?.forecast_snapshot || null;
+    const shouldCaptureDisplayedCare = shouldCaptureDisplayedCareAtRecordSave({
+      existingReview: existingResult.row,
+    });
+    const baseSnapshot = existingSnapshot
       || (currentForecast ? snapshotFromForecast(currentForecast, "record_save") : null);
+    const savedDisplayedCare = existingSnapshot?.displayed_care
+      || (shouldCaptureDisplayedCare
+        ? buildSavedDisplayedCare(currentForecast, profile, targetDate)
+        : null);
+    const snapshot = baseSnapshot && savedDisplayedCare
+      ? { ...baseSnapshot, displayed_care: savedDisplayedCare }
+      : baseSnapshot;
+    const shouldPersistSnapshot = Boolean(snapshot && shouldCaptureDisplayedCare);
     const preview = classifyRecord({
       date: targetDate,
       forecast: snapshot,
@@ -317,7 +372,7 @@ export async function POST(req) {
       context_factors: contextFactors,
       note: note || null,
       record_version: 4,
-      ...(existingResult.row?.forecast_snapshot || !snapshot ? {} : { forecast_snapshot: snapshot }),
+      ...(shouldPersistSnapshot ? { forecast_snapshot: snapshot } : {}),
     };
 
     async function write(payload) {
