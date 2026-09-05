@@ -27,7 +27,7 @@ export async function GET(req) {
 
     const [bundle, access] = await Promise.all([
       loadRecordsRange(user.id, start, end),
-      getRecordsAccess(user.id),
+      getRecordsAccess(user.id, { userCreatedAt: user.created_at }),
     ]);
     return NextResponse.json({
       data: {
