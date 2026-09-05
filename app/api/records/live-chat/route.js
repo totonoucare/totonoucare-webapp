@@ -57,7 +57,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v16_constitution_rebuild_2026-08-31";
+const PROMPT_VERSION = "records_live_support_v19_care_provenance_2026-09-04";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -250,7 +250,7 @@ export async function GET(req) {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const today = jstDateString(new Date());
-    const access = await getRecordsAccess(user.id);
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     if (!access.consult_enabled) {
       if (access.consult_history_enabled) {
         const [consent, usage, thread] = await Promise.all([
@@ -322,7 +322,7 @@ export async function POST(req) {
     if (!message) return NextResponse.json({ error: "message is required" }, { status: 400 });
 
     const [access, consent, usageBefore] = await Promise.all([
-      getRecordsAccess(user.id),
+      getRecordsAccess(user.id, { userCreatedAt: user.created_at }),
       hasActiveAiConsent(user.id),
       getAiUsage(user.id),
     ]);
@@ -333,11 +333,10 @@ export async function POST(req) {
       return NextResponse.json({ error: "AI利用への同意が必要です", code: "ai_consent_required" }, { status: 403 });
     }
 
-    const freeTrial = access.consult_access_mode === "trial";
     const safetySignal = classifySafetyText(message);
     const urgentMessage = safetySignal.should_route;
     if (!urgentMessage) {
-      if (!freeTrial) assertQuota(usageBefore, "chat");
+      assertQuota(usageBefore, "chat");
       if (!process.env.OPENAI_API_KEY) {
         const configError = new Error("ミモル相談の接続設定が完了していません");
         configError.status = 503;
@@ -420,7 +419,7 @@ export async function POST(req) {
     const recentRows = bundle.rows.filter((row) => row.date <= today);
     const todayRow = bundle.rows.find((row) => row.date === today) || null;
     const tomorrowRow = bundle.rows.find((row) => row.date === tomorrow) || null;
-    const recentDetails = selectLiveDetailRows(recentRows, today).map((row) => buildAiRecordContext(row, profile));
+    const recentDetails = selectLiveDetailRows(recentRows, today).map((row) => buildAiRecordContext(row, profile, { mode: "today" }));
 
     const context = {
       mode: "live_health_support",
@@ -429,8 +428,8 @@ export async function POST(req) {
       constitution: buildInterpretedProfileContext(profile),
       current_context: {
         local_datetime_jst: jstDateTime(),
-        today: todayRow ? buildAiRecordContext(todayRow, profile) : null,
-        tomorrow: tomorrowRow ? buildAiRecordContext(tomorrowRow, profile) : null,
+        today: todayRow ? buildAiRecordContext(todayRow, profile, { mode: "today" }) : null,
+        tomorrow: tomorrowRow ? buildAiRecordContext(tomorrowRow, profile, { mode: "tomorrow" }) : null,
       },
       recent_state: {
         last_3_days: recentDetails,
@@ -498,9 +497,7 @@ export async function POST(req) {
     });
     const responseEventType = output.safety_level === "urgent"
       ? "safety_response"
-      : freeTrial
-        ? "free_chat_response"
-        : "chat_response";
+      : "chat_response";
     await logRecordsAiEvent({
       userId: user.id,
       eventType: responseEventType,
@@ -514,12 +511,10 @@ export async function POST(req) {
         thread_id: thread.id,
         prompt_version: PROMPT_VERSION,
         surface: "live_support",
-        access_mode: freeTrial ? "free_trial" : access.consult_access_mode,
+        access_mode: access.consult_access_mode,
       },
     });
-    const accessAfter = freeTrial && responseEventType === "free_chat_response"
-      ? await getRecordsAccess(user.id)
-      : access;
+    const accessAfter = access;
 
     return NextResponse.json({
       data: {
@@ -531,9 +526,7 @@ export async function POST(req) {
         model: result.model || MODEL,
         usage: {
           ...usageBefore,
-          chat: freeTrial
-            ? usageBefore.chat
-            : { ...usageBefore.chat, used: usageBefore.chat.used + 1 },
+          chat: { ...usageBefore.chat, used: usageBefore.chat.used + 1 },
         },
         access: accessAfter,
       },
