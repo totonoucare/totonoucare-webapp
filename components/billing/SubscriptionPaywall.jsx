@@ -3,6 +3,11 @@
 import CheckoutButton from "@/components/billing/CheckoutButton";
 
 const FEATURE_COPY = {
+  forecast: {
+    eyebrow: "体調予報・対策ケア",
+    title: "あなた向けの予報を続ける",
+    body: "体質と天気を重ねた今日・明日の体調予報と、暮らす・食べる・ほぐすの対策ケアを利用できます。",
+  },
   analysis: {
     eyebrow: "振り返り",
     title: "記録から、自分の傾向を知る",
@@ -31,10 +36,6 @@ export default function SubscriptionPaywall({
   access = null,
 }) {
   const copy = FEATURE_COPY[feature] || FEATURE_COPY.analysis;
-  const trial = access?.consult_trial || null;
-  const recordedDays = Number(trial?.recorded_days || 0);
-  const recordsNeeded = Number(trial?.records_needed || 0);
-  const trialExhausted = access?.consult_access_mode === "trial_exhausted";
   return (
     <div className="space-y-4">
       <section className="overflow-hidden rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
@@ -49,17 +50,10 @@ export default function SubscriptionPaywall({
             </div>
           </div>
           <div className="mt-4 text-[14px] font-bold leading-6 text-slate-600">{copy.body}</div>
-          {trial ? (
+          {access?.trial_expired ? (
             <div className="mt-4 rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#DCE8DD]">
-              <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">あなたの記録</div>
-              <div className="mt-1 text-[15px] font-black text-slate-900">体調記録 {recordedDays}日</div>
-              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">
-                {trialExhausted
-                  ? "ミモルの無料相談を2回体験しました。過去の回答は相談タブから見返せます。"
-                  : recordsNeeded > 0
-                    ? `あと${recordsNeeded}日記録すると、ミモル相談を2回試せます。`
-                    : "予報・実感・ケアを見比べる準備ができています。"}
-              </div>
+              <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">14日間の体験は終了しました</div>
+              <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">体質結果、ケアショップ、これまでの記録とAI回答は引き続き見返せます。</div>
             </div>
           ) : null}
 
@@ -80,12 +74,14 @@ export default function SubscriptionPaywall({
             <summary className="cursor-pointer font-black text-[#2F816E]">利用できる内容</summary>
             <div className="mt-2 space-y-1">
               <div>・体調予報と対策ケア</div>
-              <div>・記録カレンダーはこれからも無料</div>
-              <div>・記録が3日たまった後のミモル相談2回</div>
+              <div>・新しい体調・ケア記録</div>
+              <div>・AI振り返りとミモル相談</div>
+              <div>・体調予報のプッシュ通知</div>
+              <div>・過去の記録とAI回答は契約後もそのまま継続</div>
             </div>
           </details>
           <CheckoutButton returnPath={returnPath} className="mt-4 w-full">
-            プレミアムの内容・料金を確認する
+            月額580円の内容を確認する
           </CheckoutButton>
           <div className="mt-3 text-center text-[12px] font-bold leading-4 text-slate-400">
             料金と請求間隔は、申込み前にStripe画面で確認できます。
