@@ -23,7 +23,7 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => ({}));
     await syncStripeCheckoutSessionById(body?.session_id, user.id);
-    const billing = await getBillingStatus(user.id);
+    const billing = await getBillingStatus(user.id, { userCreatedAt: user.created_at });
 
     if (!billing.isPremium && !billing.access?.entitled) {
       return NextResponse.json(
