@@ -1,3 +1,70 @@
+## v7.79.49 ケア出自の全AI経路統一
+
+- `displayed_care`は、保存値・現在予報からの再構成値とも`normalizeDisplayedCareForAi`を通し、sourceに応じた`usage_note`をAI入力時に付与する
+- `reconstructed_at_first_record_save`と旧`saved_at_record_from_radar_rules`は、初回記録時に再構成した参考ケア。本人が当時閲覧・実行した事実とは扱わない
+- `reconstructed_from_complete_risk_context`は現在の体調予報画面と同じ計算による提案だが、本人の閲覧・実行事実とは扱わない
+- 未知のsourceも由来未確認の参考ケアとして扱い、閲覧・実行事実を推測しない
+- 分析、期間振り返り、ライブ相談の全promptで同じ出自契約を使用する
+- current versions: product context=`records_product_context_v15_care_provenance_complete_2026-09-05`、analysis=`records_analysis_v19_care_provenance_complete_2026-09-05`、period chat=`records_chat_v20_care_provenance_complete_2026-09-05`、live support=`records_live_support_v20_care_provenance_complete_2026-09-05`
+- DB migration、予報・ケア選定、記録UI、料金・14日体験の変更はない
+
+## v7.79.48 初回記録時に再構成したケアの出自
+
+- 新規review保存時のcare sourceは`reconstructed_at_first_record_save`。同時点のforecast・risk context・profileから同一ルールで再構成した参考ケアであり、本人がその日に予報画面を閲覧した証拠ではない
+- promptでは`reconstructed_at_first_record_save`と旧`saved_at_record_from_radar_rules`を、当時の実表示・実行ではなく初回記録時の参考ケアとして扱う
+- `reconstructed_from_complete_risk_context`は現在の体調予報画面と同じ計算による提案だが、本人が閲覧・実行したとは断定しない
+- 実行事実の正本は`performed_care_items`およびcare actionのitem snapshot。ミモルの追加案は従来どおり`ミモルの応用案`として区別する
+- current versions: product context=`records_product_context_v14_care_provenance_2026-09-04`、analysis=`records_analysis_v18_care_provenance_2026-09-04`、period chat=`records_chat_v19_care_provenance_2026-09-04`、live support=`records_live_support_v19_care_provenance_2026-09-04`
+
+## v7.79.47 過去記録の表示ケア完全性
+
+- `displayed_care`は新規記録を初めて保存する時だけ、同時点のforecast・risk context・profileから生成して`forecast_snapshot`へ保存する
+- 既存reviewの編集では、保存済み`displayed_care`を維持し、欠損していても現在のforecastから補完しない
+- `radar_forecasts`は`user_id,target_date` upsertにより内容更新後も同じIDを保つ可能性があるため、forecast ID一致は当時の内容一致を保証しない
+- AI再構成はreviewが存在しない現在・未来の予報だけに許可する。保存済みreviewでは`displayed_care`がなければnullとし、同じ日付・同じID・ID欠損のいずれでも推測しない
+- DB migration、prompt version更新、既存データの書き換えは不要
+
+## v7.79.46 体調予報・ミモル間の表示ケア同一性
+
+- 予報画面とAI contextは、ともに`app/radar/utils.js`の`resolveDisplayedCarePlan`を最終ケア生成の正本として使う
+- `loadRecordsRange(..., { includeCarePlans: true })`の時だけ、DB forecastの`computed.radar_plan_meta.risk_context`を`care_reconstruction_context`としてサーバー内部のAI入力へ渡す。通常の記録閲覧APIには出さない
+- 完全なrisk contextには、反応方向、余力、6体質スコア、主・副経絡、ケア方針が含まれる。これが欠ける時は画面表示ケアを「同じルールで再構成した」と扱わない
+- 記録保存時は、`forecast_snapshot.displayed_care`へ`source=saved_at_record_from_radar_rules`、`display_mode`、`target_date`、`care_logic_version`、`exact_visible_items`を保存する。DB migrationは不要
+- AI contextは保存済みdisplayed careを最優先し、未保存時だけ同じforecast idの完全risk contextから再構成する。別forecastのrisk contextは流用しない
+- 過去日にどちらもない場合は`displayed_care=null`とし、promptで画面内容の推測を禁止する
+- current versions: product context=`records_product_context_v13_exact_displayed_care_2026-09-03`、analysis=`records_analysis_v17_exact_displayed_care_2026-09-03`、period chat=`records_chat_v18_exact_displayed_care_2026-09-03`、live support=`records_live_support_v18_exact_displayed_care_2026-09-03`
+
+## v7.79.45 14日体験・体験後アクセスの現行契約
+
+- `2026-09-30 23:59:59.999 JST`までは`beta`として全機能を無料開放する
+- `2026-10-01 00:00 JST`以降の14日体験はカード登録不要。9月以前の登録者は10月1日、10月以降の登録者は`auth.users.created_at`を開始時刻とし、終了時刻は開始から14日後の同時刻（exclusive）
+- access modeは`paid > beta > trial > free`。権限計算の正本は`lib/records/accessPolicy.js`、期間設定の正本は`lib/records/policy.js`
+- `free`でも、体質チェック・結果、ケアショップ、過去の記録・保存済みAI振り返り・相談履歴、公開地域を使う参考予報は閲覧可能
+- `personalized_forecast_enabled / care_enabled / records_write_enabled / notifications_enabled / analysis_enabled / consult_enabled`は`beta / trial / paid`だけtrue
+- 体験終了後は、個人予報API、日次記録の新規・更新、care action更新、AI生成・相談送信、push登録をサーバー側でも拒否する。既存記録、保存済みAI結果、スレッド履歴のGETは許可する
+- 旧`記録3日以上＋生涯2 assistant回答`の無料相談体験は廃止する。プレミアムの月次・分単位上限は維持する
+- 本番Stripe Checkoutの受付開始は`2026-10-01 00:00 JST`。価格は既存Price IDの月額580円を正本とし、コードへ別価格を持ち込まない
+- 期間変更にDB migration、環境変数、cron、終了日当日の再デプロイを要求しない
+
+## v7.79.45 今日・明日のケアとミモル文脈の現行契約
+
+- 暮らすケアはtodayを日中の実行案、tomorrowを今夜〜明朝の準備案から選び、主提案を重複させない
+- 食べるケアは既存のtoday/tomorrow選定を維持する
+- ほぐすケアは同じ利用者・症状・予報条件でも、明日は前日のtodayと異なる一手を選ぶ。時制はtoday=`今日の一手`、tomorrow=`今夜〜明朝の一手`
+- 現行ケアロジック版は`daily_care_v2_27_2026-09-03_today_tomorrow_separation`
+- ミモルのcontextは、保存途中の`care_plan`をそのまま渡さず、予報ページと同じ`enhanceDailyCarePlan`・`buildDisplayedCareItems`経路で最終表示内容を再構成する
+- `exact_visible_items`へ表示モード、対象日、暮らす・食べる・ほぐすの名称・説明・タイミングを渡す。ミモルは画面の提案を正確に説明し、追加案は`ミモルの応用案`として区別する
+- current prompt versionsはanalysis=`records_analysis_v16_displayed_care_2026-09-03`、period chat=`records_chat_v17_displayed_care_2026-09-03`、live support=`records_live_support_v17_displayed_care_2026-09-03`
+
+## v7.79.44 AI先行体験期間の旧契約
+
+- 振り返りとミモル相談の無料先行体験は、日本時間 `2026-07-15 00:00` から `2026-09-30 23:59:59.999` まで
+- `lib/records/policy.js` の `RECORDS_POLICY.ai.beta` が公開期間の正本。期間変更に環境変数、DB migration、cron、終了日当日の再デプロイを追加しない
+- `2026-10-01 00:00` 以降は、有効なentitlementがある利用者だけ振り返りとミモル相談を利用可能。記録カレンダーは無料を維持
+- 本番Stripe Checkoutは無料期間中に作成させず、APIのユーザー向け開始日も `2026年10月1日` にそろえる。`sk_test_` 環境のテスト決済は従来どおり許可
+- AIモデル、利用上限、無料会員の相談2回答、体調予報・ケア・記録・ショップのロジックは変更しない
+- 過去バージョンのREADME・docsにある8月31日／9月1日は当時の履歴として残してよい。現行判断ではこのv7.79.44節を優先する
+
 ## v7.79.43 ミモル表示名・検索アイコンの現行契約
 
 - ユーザー向け正式名称は `ケアナビAI ミモル`。画面文言、AI prompt/context、APIのユーザー向けエラー、live support titleへ旧 `Ekken / エッケン` を新規追加しない
