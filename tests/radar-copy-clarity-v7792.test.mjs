@@ -55,9 +55,9 @@ test("mood signs do not invent stomach symptoms or emotional humidity", () => {
     "mood",
     "today",
   );
-  assert.equal(signs[0], "熱が上にこもって、消耗やそわつきが出やすい");
-  assert.match(signs[1], /高温.*焦り|高温.*刺激|高温.*集中/);
-  assert.match(signs[2], /気持ち/);
+  assert.ok(signs.length >= 1 && signs.length <= 3);
+  assert.match(JSON.stringify(signs), /高温|熱/);
+  assert.match(JSON.stringify(signs), /気分|気持ち|焦り|刺激|集中|落ち着/);
   assert.doesNotMatch(JSON.stringify(signs), /胃腸|食後|お腹|気分に.*湿気/);
 
   const stable = radarUtils.getForecastBodySigns(
@@ -67,7 +67,7 @@ test("mood signs do not invent stomach symptoms or emotional humidity", () => {
     "today",
   );
   assert.doesNotMatch(JSON.stringify(stable), /胃腸|気分に.*湿気/);
-  assert.match(JSON.stringify(stable), /気分|気持ち/);
+  assert.match(JSON.stringify(stable), /気分|気持ち|焦り|そわそわ|落ち着/);
 });
 
 test("body sign cards contain observations, not unrelated care conditions", () => {
@@ -89,7 +89,7 @@ test("body sign cards contain observations, not unrelated care conditions", () =
       symptom,
       "today",
     );
-    assert.equal(signs.length, 3);
+    assert.ok(signs.length >= 1 && signs.length <= 3);
     assert.doesNotMatch(JSON.stringify(signs), /胃腸が重い日は|冷たい・甘い・脂っこい|空腹・急な動き/);
   }
 

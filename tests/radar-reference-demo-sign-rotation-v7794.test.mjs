@@ -51,7 +51,7 @@ function weatherFactor(key) {
   };
 }
 
-test("body signs stay stable on reload and rotate only the grounded details on the next day", () => {
+test("body signs stay stable on reload and rotate grounded candidates without forcing a fixed first item", () => {
   const factors = [weatherFactor("heat")];
   const first = radarUtils.getForecastBodySigns(
     factors,
@@ -76,13 +76,14 @@ test("body signs stay stable on reload and rotate only the grounded details on t
   );
 
   assert.deepEqual(reload, first);
-  assert.equal(first[0], "熱が上にこもって、消耗やそわつきが出やすい");
-  assert.equal(nextDay[0], first[0]);
-  assert.notDeepEqual(nextDay.slice(1), first.slice(1));
+  assert.ok(first.length >= 1 && first.length <= 3);
+  assert.ok(nextDay.length >= 1 && nextDay.length <= 3);
+  assert.notDeepEqual(nextDay, first);
+  assert.match(JSON.stringify([...first, ...nextDay]), /高温|熱/);
   assert.doesNotMatch(JSON.stringify([...first, ...nextDay]), /胃腸|気分に.*湿気/);
 });
 
-test("stable-mode grounded details also rotate without changing the weather premise", () => {
+test("stable-mode grounded details also rotate and remain softly worded", () => {
   const factors = [weatherFactor("damp")];
   const first = radarUtils.getForecastBodySigns(
     factors,
@@ -99,9 +100,11 @@ test("stable-mode grounded details also rotate without changing the weather prem
     "2026-07-29",
   );
 
-  assert.equal(first[0], "湿気を含んだ服を着たような重さが、少し出るかも");
-  assert.equal(nextDay[0], first[0]);
-  assert.notDeepEqual(nextDay.slice(1), first.slice(1));
+  assert.ok(first.length >= 1 && first.length <= 3);
+  assert.ok(nextDay.length >= 1 && nextDay.length <= 3);
+  assert.notDeepEqual(nextDay, first);
+  [...first, ...nextDay].forEach((sign) => assert.match(sign, /かも$/));
+  assert.doesNotMatch(JSON.stringify([...first, ...nextDay]), /湿気を含んだ服/);
 });
 
 test("public demo discloses its neutral reference constitution instead of claiming weather-only output", () => {

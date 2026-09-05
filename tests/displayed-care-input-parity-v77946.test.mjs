@@ -146,11 +146,12 @@ test("スナップショットのない旧記録にも現在予報を後付け�
 });
 
 test("予報画面とAIは同じ最終ケア解決関数を使用し、記録時に表示スナップショットを保存する", async () => {
-  const [page, aiContext, reviewRoute, snapshot] = await Promise.all([
+  const [page, aiContext, reviewRoute, snapshot, provenance] = await Promise.all([
     source("app/radar/page.js"),
     source("lib/records/aiContext.js"),
     source("app/api/radar/review/route.js"),
     source("lib/radar_v1/displayedCareSnapshot.js"),
+    source("lib/records/displayedCareProvenance.js"),
   ]);
   assert.match(page, /resolveDisplayedCarePlan\(\{/);
   assert.match(aiContext, /resolveDisplayedCarePlan\(\{/);
@@ -161,5 +162,6 @@ test("予報画面とAIは同じ最終ケア解決関数を使用し、記録時
   assert.match(snapshot, /care_logic_version/);
   assert.match(snapshot, /target_date/);
   assert.match(snapshot, /exact_visible_items/);
-  assert.match(snapshot, /本人が当時閲覧・実行した事実とは扱わない/);
+  assert.match(snapshot, /displayedCareUsageNote\(source\)/);
+  assert.match(provenance, /本人が当時閲覧・実行した事実とは扱わない/);
 });

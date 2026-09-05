@@ -173,7 +173,8 @@ test("環境調整の許可済みaction idだけをショップ検索へ接続�
   ]) {
     assert.match(rakutenRouteSource, new RegExp(`"${id}":\\s*careQueryRow`));
   }
-  assert.match(rakutenRouteSource, /\(\?:tool\|env\|foundation\)/);
+  assert.match(rakutenRouteSource, /normalizeLifestyleShopActionKey\(lifestyleActionKey\)/);
+  assert.match(careNaviPageSource, /normalizeLifestyleShopActionKey\(nextLifestyleActionKey\)/);
   assert.match(rakutenRouteSource, /const LIFESTYLE_ACTION_ROLE_QUERY_RULES/);
   assert.match(rakutenRouteSource, /source:\s*"lifestyle_action"/);
   assert.doesNotMatch(rakutenRouteSource, /BODY_MECHANICS_LIVE_QUERY_RULES/);

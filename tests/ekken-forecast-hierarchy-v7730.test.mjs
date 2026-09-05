@@ -145,7 +145,7 @@ test("Ekken uses the computed forecast model without a rigid narration script", 
 });
 
 test("prompt versions invalidate older saved AI interpretations", () => {
-  assert.match(liveRoute, /records_live_support_v19_care_provenance_2026-09-04/);
-  assert.match(periodRoute, /records_chat_v19_care_provenance_2026-09-04/);
-  assert.match(analysisRoute, /records_analysis_v18_care_provenance_2026-09-04/);
+  assert.match(liveRoute, /records_live_support_v20_care_provenance_complete_2026-09-05/);
+  assert.match(periodRoute, /records_chat_v20_care_provenance_complete_2026-09-05/);
+  assert.match(analysisRoute, /records_analysis_v19_care_provenance_complete_2026-09-05/);
 });

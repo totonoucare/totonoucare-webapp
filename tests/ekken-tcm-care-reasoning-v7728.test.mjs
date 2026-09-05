@@ -27,7 +27,7 @@ test("product context carries separate reasoning axes for eat live and loosen", 
   assert.match(contextSource, /酸苦甘辛鹹の五味/);
   assert.match(contextSource, /季節と時刻/);
   assert.match(contextSource, /押す・さする・動かす・呼吸/);
-  assert.match(contextSource, /表示済みケアは土台だが提案可能範囲の上限ではない/);
+  assert.match(contextSource, /sourceごとの出自を守って土台として使う。ただし提案可能範囲の上限ではない/);
 });
 
 test("general OTC kampo and supplement guidance is not deterministically blocked", () => {
@@ -56,8 +56,8 @@ test("final medication actions still receive deterministic professional confirma
 });
 
 test("live and period chat use the richer prompt versions and medium reasoning", () => {
-  assert.match(liveRoute, /records_live_support_v19_care_provenance_2026-09-04/);
-  assert.match(periodRoute, /records_chat_v19_care_provenance_2026-09-04/);
+  assert.match(liveRoute, /records_live_support_v20_care_provenance_complete_2026-09-05/);
+  assert.match(periodRoute, /records_chat_v20_care_provenance_complete_2026-09-05/);
   assert.match(liveRoute, /max_output_tokens: 1800/);
   assert.match(periodRoute, /max_output_tokens: 1700/);
   assert.match(liveRoute, /reasoning: \{ effort: "medium" \}/);
