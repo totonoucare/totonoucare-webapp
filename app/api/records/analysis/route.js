@@ -39,7 +39,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_ANALYSIS_MODEL;
-const PROMPT_VERSION = "records_analysis_v15_constitution_rebuild_2026-08-31";
+const PROMPT_VERSION = "records_analysis_v18_care_provenance_2026-09-04";
 
 function periodKey(value) {
   return String(value || "custom").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "custom";
@@ -151,19 +151,50 @@ export async function POST(req) {
       return NextResponse.json({ error: "invalid start/end" }, { status: 400 });
     }
 
-    const access = await getRecordsAccess(user.id);
-    if (!access.analysis_enabled) {
-      return NextResponse.json(
-        { error: "振り返りはプレミアム機能です", code: "analysis_access_required" },
-        { status: 403 }
-      );
-    }
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     const [bundle, profile] = await Promise.all([
       loadRecordsRange(user.id, start, end, { includeCarePlans: true }),
       loadRecordsProfile(user.id),
     ]);
     const summary = buildRecordsSummary(bundle.rows);
     const fallback = deterministicAnalysis(summary);
+
+    if (!access.analysis_enabled) {
+      if (generate) {
+        return NextResponse.json(
+          { error: "新しいAI振り返りにはプレミアム登録が必要です", code: "analysis_access_required", access },
+          { status: 403 }
+        );
+      }
+      const latest = await findLatestAnalysis(user.id, key);
+      if (latest?.analysis_json) {
+        return NextResponse.json({
+          data: {
+            analysis: cleanAnalysis(latest.analysis_json, fallback),
+            summary: summaryForAi(summary),
+            source: "ai",
+            model: latest.model || MODEL,
+            request_id: latest.request_id || null,
+            cached: true,
+            stale: true,
+            can_generate: false,
+            generation_required: false,
+            consent_required: false,
+            algorithm_reason: "subscription_required_for_update",
+            analysis_range: { start: latest.range_start, end: latest.range_end },
+            generated_at: latest.generated_at || null,
+            access,
+          },
+        });
+      }
+      return algorithmResponse({
+        fallback,
+        summary,
+        access,
+        reason: "subscription_required",
+        canGenerate: false,
+      });
+    }
 
     if (summary.recorded_days < 3) {
       return algorithmResponse({ fallback, summary, access, reason: "insufficient_records", canGenerate: false });
