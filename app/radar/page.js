@@ -26,7 +26,7 @@ import {
 } from "@/lib/diagnosis/v2/labels";
 import { ForecastGauge } from "./ForecastGauge";
 import { buildCareActionKey, buildDisplayedCareItems } from "@/lib/radar_v1/careActionItems";
-import { enhanceDailyCarePlan } from "@/lib/radar_v1/careRules/dailyCareV2";
+import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 import {
   ForecastDateRail,
   LocationEditor,
@@ -39,7 +39,6 @@ import {
   RADAR_LOADING_HINTS,
   buildRadarDateTabs,
   buildScoreCardTitle,
-  buildTodayCarePlan,
   formatTargetDate,
   deriveCarePolicies,
   getCareItemHint,
@@ -64,6 +63,7 @@ import {
   getTsuboRoleLabel,
   inferModeFromSelectedDate,
   inferModeFromTargetDate,
+  resolveDisplayedCarePlan,
   safeArray,
   signalBadgeClass,
   signalDotClass,
@@ -337,6 +337,8 @@ export default function RadarPage() {
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
+  const [featureAccess, setFeatureAccess] = useState(null);
+  const [loadingAccess, setLoadingAccess] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
@@ -392,6 +394,32 @@ export default function RadarPage() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (loadingAuth) return undefined;
+    if (!session) {
+      setFeatureAccess(null);
+      setLoadingAccess(false);
+      return undefined;
+    }
+
+    setLoadingAccess(true);
+    authedFetch("/api/records/access")
+      .then((response) => {
+        if (!cancelled) setFeatureAccess(response?.data?.access || response?.access || null);
+      })
+      .catch(() => {
+        if (!cancelled) setFeatureAccess(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAccess(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token, loadingAuth]);
 
   useEffect(() => {
     return () => {
@@ -634,12 +662,18 @@ export default function RadarPage() {
   }
 
   useEffect(() => {
-    if (!session || loadingAuth) return;
+    if (!session || loadingAuth || loadingAccess) return;
+    if (featureAccess?.personalized_forecast_enabled === false) {
+      setLoading(false);
+      setBundle(null);
+      setTodayComparisonBundle(null);
+      return;
+    }
     const { today } = getJstTodayTomorrow();
     const firstTargetDate = normalizeRadarTargetDate(initialDateParam || today);
     fetchForecast({ targetDate: firstTargetDate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, loadingAuth, initialDateParam]);
+  }, [session, loadingAuth, loadingAccess, featureAccess?.personalized_forecast_enabled, initialDateParam]);
 
 
   async function useCurrentLocation() {
@@ -841,21 +875,16 @@ export default function RadarPage() {
   const riskContext = getRiskContext(bundle);
   const savedSymptomFocus = riskContext?.constitution_context?.symptom_focus || null;
   const symptomFocus = selectedSymptomKey || savedSymptomFocus || null;
-  const todayCarePlan = useMemo(
-    () => (selectedIsToday ? buildTodayCarePlan({ forecast, riskContext, symptomFocus }) : null),
-    [selectedIsToday, forecast, riskContext, symptomFocus],
-  );
-  const baseCarePlan = selectedIsToday ? todayCarePlan : bundle?.care_plan || null;
   const carePlan = useMemo(
-    () => enhanceDailyCarePlan({
-      baseCarePlan,
+    () => resolveDisplayedCarePlan({
       forecast,
+      storedCarePlan: bundle?.care_plan || null,
       riskContext,
       mode: selectedIsToday ? "today" : "tomorrow",
       targetDate: activeTargetDate,
       symptomFocus,
     }),
-    [baseCarePlan, forecast, riskContext, selectedIsToday, activeTargetDate, symptomFocus],
+    [forecast, bundle?.care_plan, riskContext, selectedIsToday, activeTargetDate, symptomFocus],
   );
   const activeCareForecast = forecast;
   const tsuboSet = carePlan?.night_tsubo_set || {};
@@ -1307,7 +1336,23 @@ export default function RadarPage() {
     );
   }
 
-  if (loadingAuth || loading) {
+  if (!loadingAuth && !loadingAccess && session && featureAccess?.personalized_forecast_enabled === false) {
+    return (
+      <AppShell title="体調予報" subtitle="14日間の体験は終了しました">
+        <Module className="rounded-[28px] bg-white p-5 ring-1 ring-[#D3E1D5]">
+          <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/70">あなた向けの体調予報</div>
+          <div className="mt-2 text-[20px] font-black leading-8 text-slate-900">体質を重ねた今日・明日の予報はプレミアムで続けられます</div>
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">無料では、ホームの参考予報、体質トリセツ、ケアショップ、これまでの記録とAI回答を引き続き利用できます。</div>
+          <Button variant="secondary" onClick={() => router.push("/")} className="mt-4 w-full bg-white">参考予報をホームで見る</Button>
+        </Module>
+        <div className="mt-6">
+          <SubscriptionPaywall feature="forecast" returnPath="/radar" access={featureAccess} />
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (loadingAuth || loadingAccess || loading) {
     return (
       <AppShell title="体調予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
         <div className="space-y-6 pt-4">

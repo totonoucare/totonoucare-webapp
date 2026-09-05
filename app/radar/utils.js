@@ -3,7 +3,7 @@
 import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";
 import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";
 import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";
-import { buildDailyCareTheme } from "@/lib/radar_v1/careRules/dailyCareV2";
+import { buildDailyCareTheme, enhanceDailyCarePlan } from "@/lib/radar_v1/careRules/dailyCareV2";
 import {
   buildGroundedBodySignDetails,
   selectDistinctBodySigns,
@@ -2408,6 +2408,37 @@ export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explic
     riskContext,
   });
   return rewritePressureBodyCopyDeep(plan, riskContext || triggerFactors[0] || null);
+}
+
+export function resolveDisplayedCarePlan({
+  forecast,
+  storedCarePlan = null,
+  riskContext = null,
+  mode = "today",
+  targetDate = null,
+  symptomFocus = null,
+} = {}) {
+  if (!forecast) return null;
+  const displayMode = mode === "tomorrow" ? "tomorrow" : "today";
+  const completeRiskContext = riskContext || getRiskContext({ forecast });
+  const resolvedSymptomFocus =
+    symptomFocus || completeRiskContext?.constitution_context?.symptom_focus || null;
+  const baseCarePlan = displayMode === "today"
+    ? buildTodayCarePlan({
+        forecast,
+        riskContext: completeRiskContext,
+        symptomFocus: resolvedSymptomFocus,
+      })
+    : storedCarePlan;
+
+  return enhanceDailyCarePlan({
+    baseCarePlan,
+    forecast,
+    riskContext: completeRiskContext,
+    mode: displayMode,
+    targetDate: targetDate || forecast?.target_date || null,
+    symptomFocus: resolvedSymptomFocus,
+  });
 }
 
 
