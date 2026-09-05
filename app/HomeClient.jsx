@@ -19,8 +19,17 @@ import { CoreIllust } from "@/components/illust/core";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { getDisplayableLocationName } from "@/lib/radar_v1/locationDisplay";
 import { EKIKEN_DISPLAY_NAME } from "@/lib/records/liveSupport";
+import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 
 const SESSION_TIMEOUT_MS = 5000;
+const PUBLIC_FORECAST_PRESETS = [
+  { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
+  { key: "sendai", label: "仙台", lat: 38.26889, lon: 140.87194 },
+  { key: "tokyo", label: "東京", lat: 35.68944, lon: 139.69167 },
+  { key: "nagoya", label: "名古屋", lat: 35.18028, lon: 136.90667 },
+  { key: "osaka", label: "大阪", lat: 34.68639, lon: 135.52 },
+  { key: "fukuoka", label: "福岡", lat: 33.60639, lon: 130.41806 },
+];
 
 // ★ 共通コンポーネント化された背景モチーフ
 function HeroBgArt() {
@@ -759,7 +768,7 @@ function ForecastOverviewCard({
           </span>
           <div className="min-w-0">
             <div className="text-[13px] font-black text-slate-900">{todayRecorded ? "今日の記録と傾向を見る" : "今日を振り返る"}</div>
-            <div className="mt-0.5 text-[12px] font-bold text-slate-500">{todayRecorded ? "記録済み ✓・編集やAI分析へ" : "記録・カレンダー・AI分析へ"}</div>
+            <div className="mt-0.5 text-[12px] font-bold text-slate-500">{todayRecorded ? "記録済み ✓・編集や振り返りへ" : "記録・カレンダー・振り返りへ"}</div>
           </div>
         </div>
         <span className="shrink-0 text-[22px] text-[#66B9A3]">›</span>
@@ -1281,6 +1290,8 @@ export default function HomePage() {
 
   const [loadingSession, setLoadingSession] = useState(true);
   const [session, setSession] = useState(null);
+  const [featureAccess, setFeatureAccess] = useState(null);
+  const [accessLoading, setAccessLoading] = useState(true);
 
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [todayLoading, setTodayLoading] = useState(false);
@@ -1360,6 +1371,7 @@ export default function HomePage() {
 
     (async () => {
       if (!session) {
+        setFeatureAccess(null);
         setTodayBundle(null);
         setTomorrowBundle(null);
         setTodayReview(null);
@@ -1372,11 +1384,19 @@ export default function HomePage() {
         return;
       }
 
+      setAccessLoading(true);
+      const accessResponse = await authedFetch("/api/records/access").catch(() => null);
+      const access = accessResponse?.data?.access || accessResponse?.access || null;
+      if (cancelled) return;
+      setFeatureAccess(access);
+      setAccessLoading(false);
+
       const today = getJstDateString(0);
       const tomorrow = getJstDateString(1);
 
-      setTodayLoading(true);
-      setTomorrowLoading(true);
+      const personalForecastEnabled = access?.personalized_forecast_enabled !== false;
+      setTodayLoading(personalForecastEnabled);
+      setTomorrowLoading(personalForecastEnabled);
 
       async function loadFixedForecastCard(targetDate, setter, setLoading, label) {
         try {
@@ -1407,15 +1427,23 @@ export default function HomePage() {
         }
       }
 
-      loadFixedForecastCard(today, setTodayBundle, setTodayLoading, "今日");
-      loadFixedForecastCard(tomorrow, setTomorrowBundle, setTomorrowLoading, "明日");
-      authedFetch(`/api/radar/review?date=${today}`)
-        .then((response) => {
-          if (!cancelled) setTodayReview(response?.data?.review || null);
-        })
-        .catch(() => {
-          if (!cancelled) setTodayReview(null);
-        });
+      if (personalForecastEnabled) {
+        loadFixedForecastCard(today, setTodayBundle, setTodayLoading, "今日");
+        loadFixedForecastCard(tomorrow, setTomorrowBundle, setTomorrowLoading, "明日");
+        authedFetch(`/api/radar/review?date=${today}`)
+          .then((response) => {
+            if (!cancelled) setTodayReview(response?.data?.review || null);
+          })
+          .catch(() => {
+            if (!cancelled) setTodayReview(null);
+          });
+      } else {
+        setTodayBundle(null);
+        setTomorrowBundle(null);
+        setTodayReview(null);
+        setTodayLoading(false);
+        setTomorrowLoading(false);
+      }
       try {
         setDashboardLoading(true);
         const historyRes = await authedFetch(`/api/diagnosis/v2/events/list?limit=1`).catch(() => null);
@@ -1453,7 +1481,8 @@ export default function HomePage() {
   const [publicLocation, setPublicLocation] = useState({ key: "tokyo", label: "東京", lat: 35.68944, lon: 139.69167 });
 
   useEffect(() => {
-    if (isLoggedIn) return;
+    const needsPublicForecast = !isLoggedIn || featureAccess?.personalized_forecast_enabled === false;
+    if (!needsPublicForecast) return;
     let cancelled = false;
     setPublicForecastLoading(true);
 
@@ -1475,7 +1504,7 @@ export default function HomePage() {
     })();
 
     return () => { cancelled = true; };
-  }, [isLoggedIn, publicLocation.key]);
+  }, [isLoggedIn, featureAccess?.personalized_forecast_enabled, publicLocation.key]);
 
   // ===== ===== =====
 
@@ -1488,7 +1517,7 @@ export default function HomePage() {
   const core = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
   const subs = getSubLabels(latestResult?.sub_labels || []);
 
-  if (loadingSession) {
+  if (loadingSession || (isLoggedIn && accessLoading)) {
     return (
       <AppShell title="ホーム" subtitle="読み込み中…" headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/guide")}>使い方</Button>}>
         <div className="h-64 animate-pulse rounded-[32px] bg-slate-200" />
@@ -1515,15 +1544,6 @@ export default function HomePage() {
     const guestSignHints = pf
       ? buildGuestSignHints(pf, pf?.target_date || getJstDateString(0))
       : [];
-
-    const QUICK_PRESETS = [
-      { key: "sapporo", label: "札幌", lat: 43.06417, lon: 141.34694 },
-      { key: "sendai",  label: "仙台", lat: 38.26889, lon: 140.87194 },
-      { key: "tokyo",   label: "東京", lat: 35.68944, lon: 139.69167 },
-      { key: "nagoya",  label: "名古屋", lat: 35.18028, lon: 136.90667 },
-      { key: "osaka",   label: "大阪", lat: 34.68639, lon: 135.52 },
-      { key: "fukuoka", label: "福岡", lat: 33.60639, lon: 130.41806 },
-    ];
 
     return (
       <AppShell
@@ -1576,12 +1596,12 @@ export default function HomePage() {
               <select
                 value={publicLocation.key}
                 onChange={(e) => {
-                  const preset = QUICK_PRESETS.find((p) => p.key === e.target.value);
+                  const preset = PUBLIC_FORECAST_PRESETS.find((p) => p.key === e.target.value);
                   if (preset) setPublicLocation(preset);
                 }}
                 className="appearance-none bg-transparent text-[13px] font-black tracking-tight text-[#24564C] outline-none pr-5 cursor-pointer relative z-10"
               >
-                {QUICK_PRESETS.map((p) => (
+                {PUBLIC_FORECAST_PRESETS.map((p) => (
                   <option key={p.key} value={p.key}>{p.label}</option>
                 ))}
               </select>
@@ -1629,11 +1649,74 @@ export default function HomePage() {
               <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 6L9 17l-5-5" />
               </svg>
-              体質チェック・ログイン後の体調予報は
-              <span className="font-extrabold text-slate-700">ずっと無料</span>
+              登録後14日間、体調予報・記録・AI相談まで
+              <span className="font-extrabold text-slate-700">無料体験</span>
             </li>
           </ul>
         </Module>
+      </AppShell>
+    );
+  }
+
+  if (featureAccess?.personalized_forecast_enabled === false) {
+    return (
+      <AppShell
+        title="ホーム"
+        subtitle="体質・予報・ケアをつなぐ"
+        headerRight={
+          <HomeHeaderMenu
+            onGuide={() => router.push("/guide")}
+            onSettings={() => router.push("/settings")}
+            onLogout={handleLogout}
+          />
+        }
+      >
+        <Module className="rounded-[30px] bg-[#F4FAF7] p-5 ring-1 ring-[#CFE7DE]">
+          <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/70">無料で引き続き使えるもの</div>
+          <div className="mt-2 text-[19px] font-black leading-7 text-slate-900">体質トリセツと、これまでの記録は残っています</div>
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">今日の参考予報は確認できます。あなたの体質を重ねた予報とケアは、プレミアムで続けられます。</div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <Button size="sm" variant="secondary" onClick={() => router.push(latestResultHref || "/history")}>体質結果</Button>
+            <Button size="sm" variant="secondary" onClick={() => router.push("/records")}>記録</Button>
+            <Button size="sm" variant="secondary" onClick={() => router.push("/care-navi")}>ショップ</Button>
+          </div>
+        </Module>
+
+        <Module className="mt-6 px-6 py-6 sm:max-w-[400px] sm:mx-auto">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[15px] font-black tracking-tight text-slate-900">参考体質で見る今日の予報</div>
+              <div className="mt-0.5 text-[12px] font-extrabold leading-4 text-slate-500">あなたの体質は反映していない一般的な目安です</div>
+            </div>
+            <div className="relative z-20 flex items-center gap-1.5 rounded-xl bg-white px-3 py-1.5 ring-1 ring-[#D3E1D5] shadow-sm">
+              <IconPin className="h-3.5 w-3.5 text-[#24564C]" />
+              <select
+                value={publicLocation.key}
+                onChange={(event) => {
+                  const preset = PUBLIC_FORECAST_PRESETS.find((item) => item.key === event.target.value);
+                  if (preset) setPublicLocation(preset);
+                }}
+                className="appearance-none bg-transparent pr-5 text-[13px] font-black text-[#24564C] outline-none"
+              >
+                {PUBLIC_FORECAST_PRESETS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+              <IconChevron className="pointer-events-none absolute right-2 h-3.5 w-3.5 rotate-90 text-slate-400" />
+            </div>
+          </div>
+          <ForecastMiniCard
+            title={`今日 ${formatYmdJP(getJstDateString(0))}`}
+            loading={publicForecastLoading}
+            bundle={{ ok: true, forecast: publicForecast, location: { display_name: publicLocation.label } }}
+            eyebrow="気になりやすい天気変化"
+            scoreLabel="今日のモード"
+            scoreVariant="mode"
+            memo="参考体質での試算です。個人の体質・登録中の不調は反映していません。"
+          />
+        </Module>
+
+        <div className="mt-6">
+          <SubscriptionPaywall feature="forecast" returnPath="/" access={featureAccess} />
+        </div>
       </AppShell>
     );
   }
