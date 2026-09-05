@@ -35,7 +35,7 @@ export async function GET(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const [consent, access] = await Promise.all([
       loadConsent(user.id),
-      getRecordsAccess(user.id),
+      getRecordsAccess(user.id, { userCreatedAt: user.created_at }),
     ]);
     return NextResponse.json({ data: { consent: publicConsent(consent), access } });
   } catch (error) {
