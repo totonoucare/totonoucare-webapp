@@ -43,7 +43,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_CHAT_MODEL;
-const PROMPT_VERSION = "records_chat_v16_constitution_rebuild_2026-08-31";
+const PROMPT_VERSION = "records_chat_v19_care_provenance_2026-09-04";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
@@ -273,7 +273,7 @@ export async function POST(req) {
     }
 
     const [access, consent] = await Promise.all([
-      getRecordsAccess(user.id),
+      getRecordsAccess(user.id, { userCreatedAt: user.created_at }),
       hasActiveAiConsent(user.id),
     ]);
     if (!access.analysis_enabled) {
