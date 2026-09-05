@@ -10,7 +10,7 @@ export async function GET(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
-    const access = await getRecordsAccess(user.id);
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     return NextResponse.json({ data: { access } });
   } catch (error) {
     console.error("/api/records/access GET error:", error);
