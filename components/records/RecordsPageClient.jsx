@@ -495,13 +495,19 @@ export default function RecordsPageClient({
 
       {tab === "record" ? (
         <div className="space-y-5">
+          {!accessLoading && featureAccess && !featureAccess.records_write_enabled ? (
+            <div className="rounded-[22px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
+              <div className="text-[13px] font-black text-[#A56C18]">14日間の体験は終了しました</div>
+              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">これまでの記録は見返せます。新しい記録はプレミアムで続けられます。</div>
+            </div>
+          ) : null}
           <DailyRecordCard
             date={selectedDate}
             isToday={selectedDate === today}
             row={selectedRow}
             saving={recordSaving}
             justSaved={recentlySavedDate === selectedDate}
-            editable={selectedDate >= earliestEditableDate && selectedDate <= today}
+            editable={Boolean(featureAccess?.records_write_enabled && selectedDate >= earliestEditableDate && selectedDate <= today)}
             editWindowLabel="今日を含む直近7日"
             onSave={saveRecord}
             onGoAnalysis={goToAnalysis}
@@ -550,18 +556,19 @@ export default function RecordsPageClient({
       {tab === "analysis" ? (
         accessLoading ? (
           <div className="h-56 animate-pulse rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE]" />
-        ) : featureAccess?.analysis_enabled ? (
-          <AiAnalysisPanel
-            active
-            today={today}
-            authedFetch={authedFetch}
-            initialPrompt={analysisPrompt}
-            onConsumePrompt={() => setAnalysisPrompt("")}
-            onSelectDate={openDateFromAnalysis}
-            onTrackEvent={sendEvent}
-          />
         ) : (
-          <SubscriptionPaywall feature="analysis" returnPath="/records?tab=analysis" access={featureAccess} />
+          <div className="space-y-5">
+            <AiAnalysisPanel
+              active
+              today={today}
+              authedFetch={authedFetch}
+              initialPrompt={analysisPrompt}
+              onConsumePrompt={() => setAnalysisPrompt("")}
+              onSelectDate={openDateFromAnalysis}
+              onTrackEvent={sendEvent}
+            />
+            {!featureAccess?.analysis_enabled ? <SubscriptionPaywall feature="analysis" returnPath="/records?tab=analysis" access={featureAccess} /> : null}
+          </div>
         )
       ) : null}
 

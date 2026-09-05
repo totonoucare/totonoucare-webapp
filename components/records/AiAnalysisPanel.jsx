@@ -198,6 +198,8 @@ export default function AiAnalysisPanel({
   );
   const premiumActive = Boolean(access?.entitled);
   const betaActive = Boolean(access?.beta_enabled && !premiumActive);
+  const trialActive = Boolean(access?.trial_enabled && !premiumActive && !betaActive);
+  const historyOnly = Boolean(access?.analysis_history_enabled && !access?.analysis_enabled);
 
   const loadConsent = useCallback(async () => {
     setConsentLoading(true);
@@ -292,7 +294,7 @@ export default function AiAnalysisPanel({
   }, [active, bundle, consentLoading, consent?.active, access?.analysis_enabled, loadAnalysis]);
 
   useEffect(() => {
-    if (!active || !consent?.active || !access?.analysis_enabled) {
+    if (!active || (!access?.analysis_enabled && !access?.analysis_history_enabled)) {
       setThreadId("");
       setMessages([]);
       setReplyToFollowUp(null);
@@ -326,7 +328,7 @@ export default function AiAnalysisPanel({
       }
     })();
     return () => { cancelled = true; };
-  }, [active, consent?.active, access?.analysis_enabled, authedFetch, periodKey, range.start, range.end]);
+  }, [active, access?.analysis_enabled, access?.analysis_history_enabled, authedFetch, periodKey, range.start, range.end]);
 
   useEffect(() => {
     if (!active || !initialPrompt) return;
@@ -509,19 +511,25 @@ export default function AiAnalysisPanel({
     <div className="space-y-5">
       <div className={[
         "rounded-[22px] px-4 py-3 ring-1",
-        betaActive ? "bg-[#FFF8EC] ring-[#EED8B4]" : "bg-[#F4FAF7] ring-[#CFE7DE]",
+        betaActive || trialActive ? "bg-[#FFF8EC] ring-[#EED8B4]" : "bg-[#F4FAF7] ring-[#CFE7DE]",
       ].join(" ")}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className={["text-[12px] font-black tracking-[0.14em]", betaActive ? "text-[#A56C18]" : "text-[#2F816E]"].join(" ")}>
-              {betaActive ? "振り返り・先行体験中" : "プレミアム・振り返り"}
+            <div className={["text-[12px] font-black tracking-[0.14em]", betaActive || trialActive ? "text-[#A56C18]" : "text-[#2F816E]"].join(" ")}>
+              {betaActive ? "振り返り・先行無料公開中" : trialActive ? "振り返り・14日体験中" : premiumActive ? "プレミアム・振り返り" : "保存済みの振り返り"}
             </div>
             <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
-              {betaActive ? `${formatBetaEnd(access.beta_ends_at)}無料公開中です。` : "記録から分かったことを、次の整え方につなげます。"}
+              {betaActive
+                ? `${formatBetaEnd(access.beta_ends_at)}全機能を無料公開中です。`
+                : trialActive
+                  ? `体験は残り${access?.trial_days_remaining || 0}日です。`
+                  : premiumActive
+                    ? "記録から分かったことを、次の整え方につなげます。"
+                    : "これまでに保存したAI振り返りは引き続き見返せます。"}
             </div>
           </div>
-          <span className={["shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-black ring-1", betaActive ? "text-[#A56C18] ring-[#EED8B4]" : "text-[#2F816E] ring-[#CFE7DE]"].join(" ")}>
-            {betaActive ? "先行体験" : "契約中"}
+          <span className={["shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-black ring-1", betaActive || trialActive ? "text-[#A56C18] ring-[#EED8B4]" : "text-[#2F816E] ring-[#CFE7DE]"].join(" ")}>
+            {betaActive ? "無料公開" : trialActive ? "体験中" : premiumActive ? "契約中" : "閲覧のみ"}
           </span>
         </div>
       </div>
@@ -654,7 +662,23 @@ export default function AiAnalysisPanel({
         {periodChatOpen ? (
           <div className="mt-4 border-t border-[#EEF3EF] pt-4">
             {chatUsage?.chat ? <div className="mb-3 text-right text-[12px] font-black text-slate-400">今月あと{Math.max(0, chatUsage.chat.limit - chatUsage.chat.used)}回</div> : null}
-            {!consent?.active || !access?.analysis_enabled ? (
+            {historyOnly ? (
+              <>
+                <div className="rounded-[20px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
+                  <div className="text-[13px] font-black text-[#A56C18]">過去の会話を表示しています</div>
+                  <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">新しく質問するにはプレミアム登録が必要です。</div>
+                </div>
+                {messages.length ? (
+                  <div ref={chatScrollRef} className="mt-3 max-h-[440px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
+                    {messages.map((message, index) => (
+                      <div key={message.id || `${message.role}-${index}`} className={message.role === "user" ? "ml-auto max-w-[90%]" : "max-w-[90%]"}>
+                        <div className={["whitespace-pre-wrap rounded-[18px] px-4 py-3 text-[14px] font-bold leading-6 ring-1", message.role === "user" ? "bg-[#349B83] text-white ring-[#349B83]" : "bg-white text-slate-600 ring-[#DCE8DD]"].join(" ")}>{message.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : <div className="mt-3 text-[12px] font-bold text-slate-400">この期間に保存された会話はありません。</div>}
+              </>
+            ) : !consent?.active ? (
               <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">AI利用確認を完了すると、この期間について質問できます。</div>
             ) : (
               <>

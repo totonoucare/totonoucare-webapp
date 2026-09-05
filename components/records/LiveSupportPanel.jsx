@@ -184,7 +184,6 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
   const pendingFollowUp = !urgentMessage && Boolean(followUp?.kind && followUp.kind !== "none" && followUp.question);
   const routinePromptsVisible = showRoutinePrompts(messages, sending) && !pendingFollowUp;
   const remaining = useMemo(() => {
-    if (access?.consult_access_mode === "trial") return Number(access?.consult_trial?.remaining || 0);
     return usage?.chat ? Math.max(0, usage.chat.limit - usage.chat.used) : null;
   }, [access, usage]);
   const historyOnly = Boolean(access?.consult_history_enabled && !access?.consult_enabled);
@@ -410,7 +409,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
             <div className="flex flex-wrap items-center gap-2 text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">
               <span>ケアナビAI</span>
-              {access?.consult_access_mode === "trial" ? <span className="rounded-full bg-[#FFF8EC] px-2 py-0.5 tracking-normal text-[#A56C18] ring-1 ring-[#EED8B4]">無料体験 残り{access?.consult_trial?.remaining || 0}回</span> : null}
+              {access?.consult_access_mode === "trial" ? <span className="rounded-full bg-[#FFF8EC] px-2 py-0.5 tracking-normal text-[#A56C18] ring-1 ring-[#EED8B4]">14日体験 残り{access?.trial_days_remaining || 0}日</span> : null}
               {access?.consult_access_mode === "paid" ? <span className="rounded-full bg-[#EAF7F1] px-2 py-0.5 tracking-normal text-[#2F816E] ring-1 ring-[#CFE7DE]">プレミアム</span> : null}
             </div>
             <div className="mt-1 text-[17px] font-black text-slate-900">{EKIKEN_DISPLAY_NAME}</div>
@@ -441,10 +440,10 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
           ) : historyOnly ? (
             <>
               <div className="rounded-[20px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
-                <div className="text-[12px] font-black tracking-[0.1em] text-[#A56C18]">無料相談を2回体験しました</div>
-                <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">プレミアムでは、この続きを相談できます</div>
+                <div className="text-[12px] font-black tracking-[0.1em] text-[#A56C18]">14日間の体験は終了しました</div>
+                <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">プレミアムでは、この続きをミモルに相談できます</div>
                 <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">これまでの回答は下でいつでも見返せます。</div>
-                <CheckoutButton returnPath="/records?tab=consult" className="mt-3 w-full">プレミアムの内容・料金を確認する</CheckoutButton>
+                <CheckoutButton returnPath="/records?tab=consult" className="mt-3 w-full">月額580円の内容を確認する</CheckoutButton>
               </div>
               {messages.length ? (
                 <div className="max-h-[500px] space-y-3 overflow-y-auto rounded-[22px] bg-[#F7FAF8] p-3 ring-1 ring-[#E8F0EB]">
@@ -529,7 +528,7 @@ export default function LiveSupportPanel({ active, authedFetch, initialPrompt = 
                 </div>
               </div>
 
-              {remaining != null ? <div className="px-1 text-right text-[12px] font-black text-slate-500">{access?.consult_access_mode === "trial" ? `無料体験 あと${remaining}回` : `今月あと${remaining}回`}</div> : null}
+              {remaining != null ? <div className="px-1 text-right text-[12px] font-black text-slate-500">今月あと{remaining}回</div> : null}
             </>
           ) : null}
 
