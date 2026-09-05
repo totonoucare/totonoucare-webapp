@@ -65,6 +65,15 @@ async function getAccessToken() {
   return data?.session?.access_token || null;
 }
 
+async function fetchNotificationAccess(token) {
+  const res = await fetch("/api/records/access", {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  const json = await res.json().catch(() => ({}));
+  return Boolean(res.ok && json?.data?.access?.notifications_enabled);
+}
+
 async function fetchVapidPublicKey() {
   const res = await fetch("/api/push/register", { cache: "no-store" });
   const json = await res.json().catch(() => ({}));
@@ -144,6 +153,7 @@ export default function PushNotificationPrompt() {
 
       const token = await getAccessToken();
       if (!token) return;
+      if (!(await fetchNotificationAccess(token))) return;
 
       try {
         const registration = await navigator.serviceWorker.ready;
@@ -182,6 +192,9 @@ export default function PushNotificationPrompt() {
 
       const token = await getAccessToken();
       if (!token) throw new Error("ログイン後に通知を設定できます");
+      if (!(await fetchNotificationAccess(token))) {
+        throw new Error("体調予報の通知にはプレミアム登録が必要です");
+      }
 
       const permission = await window.Notification.requestPermission();
       if (permission !== "granted") {
@@ -259,5 +272,4 @@ export default function PushNotificationPrompt() {
     </div>
   );
 }
-
 
