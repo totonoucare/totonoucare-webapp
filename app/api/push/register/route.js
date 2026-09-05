@@ -4,6 +4,7 @@ import {
   upsertPushSubscription,
 } from "@/lib/push/pushRepo";
 import { getVapidPublicKey } from "@/lib/push/webPush";
+import { getRecordsAccess } from "@/lib/records/access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,10 @@ export async function POST(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user?.id) return jsonUtf8({ ok: false, error: error || "Unauthorized" }, 401);
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.notifications_enabled) {
+      return jsonUtf8({ ok: false, error: "体調予報の通知にはプレミアム登録が必要です", code: "notifications_access_required", access }, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const subscription = body?.subscription || body;
