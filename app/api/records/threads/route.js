@@ -29,13 +29,7 @@ export async function GET(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
-    const access = await getRecordsAccess(user.id);
-    if (!access.analysis_enabled) {
-      return NextResponse.json(
-        { error: "振り返りはプレミアム機能です", code: "analysis_access_required" },
-        { status: 403 }
-      );
-    }
+    await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     const url = new URL(req.url);
     const periodKey = String(url.searchParams.get("period_key") || "30d").slice(0, 30);
     const start = String(url.searchParams.get("start") || "");
@@ -102,13 +96,7 @@ export async function DELETE(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
-    const access = await getRecordsAccess(user.id);
-    if (!access.analysis_enabled) {
-      return NextResponse.json(
-        { error: "振り返りはプレミアム機能です", code: "analysis_access_required" },
-        { status: 403 }
-      );
-    }
+    await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     const body = await req.json().catch(() => ({}));
     const threadId = String(body?.thread_id || "");
     if (!threadId) return NextResponse.json({ error: "thread_id is required" }, { status: 400 });
