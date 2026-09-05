@@ -10,6 +10,7 @@ import {
   canonicalCareActionKey,
   normalizeCareAction,
 } from "@/lib/radar_v1/careActionItems";
+import { getRecordsAccess } from "@/lib/records/access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -253,6 +254,10 @@ export async function POST(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.records_write_enabled) {
+      return NextResponse.json({ error: "ケア記録にはプレミアム登録が必要です", code: "records_write_access_required", access }, { status: 403 });
+    }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);
     const sourceMode = SOURCE_MODE_VALUES.has(body?.source_mode) ? body.source_mode : "";
@@ -360,6 +365,10 @@ export async function PATCH(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.records_write_enabled) {
+      return NextResponse.json({ error: "ケア記録の変更にはプレミアム登録が必要です", code: "records_write_access_required", access }, { status: 403 });
+    }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);
     const timingRelation = SAME_DAY_TIMING_VALUES.has(body?.timing_relation)
@@ -402,6 +411,10 @@ export async function DELETE(req) {
   try {
     const { user, error } = await requireUser(req);
     if (!user) return NextResponse.json({ error }, { status: 401 });
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.records_write_enabled) {
+      return NextResponse.json({ error: "ケア記録の変更にはプレミアム登録が必要です", code: "records_write_access_required", access }, { status: 403 });
+    }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);
     const actionId = compact(body?.id, 80);
