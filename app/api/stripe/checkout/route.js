@@ -84,7 +84,7 @@ export async function POST(req) {
 
     const stripe = getStripeServer();
     const body = await req.json().catch(() => ({}));
-    const billing = await getBillingStatus(user.id);
+    const billing = await getBillingStatus(user.id, { userCreatedAt: user.created_at });
     if (billing.isPremium || billing.access?.entitled) {
       return NextResponse.json(
         {
