@@ -22,6 +22,7 @@ import {
   summarizeRadarServerError,
   toPublicRadarApiError,
 } from "@/lib/radar_v1/upstreamResilience";
+import { getRecordsAccess } from "@/lib/records/access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,6 +140,16 @@ export async function GET(req) {
 
     if (!user?.id) {
       return jsonUtf8({ ok: false, error: "Unauthorized" }, 401);
+    }
+
+    const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+    if (!access.personalized_forecast_enabled) {
+      return jsonUtf8({
+        ok: false,
+        error: "パーソナル体調予報の体験期間が終了しました",
+        code: "personalized_forecast_access_required",
+        access,
+      }, 403);
     }
 
     const { searchParams } = new URL(req.url);
