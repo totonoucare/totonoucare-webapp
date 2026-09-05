@@ -416,6 +416,10 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="rounded-[20px] bg-[#F4FAF7] px-4 py-3 ring-1 ring-[#CFE7DE]">
+              <div className="text-[13px] font-black text-[#2F816E]">登録から14日間、全機能を無料体験</div>
+              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">カード登録は不要です。体調予報・記録・AI相談まで試してから、続けるか選べます。</div>
+            </div>
             <div className="mb-6 text-[14px] font-bold leading-6 text-slate-600">
               Google アカウントですぐ始めるか、メールアドレスに届くログインリンクでも登録できます。
             </div>
