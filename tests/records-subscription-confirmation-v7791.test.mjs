@@ -33,7 +33,7 @@ test("checkout return confirms the authenticated user's Stripe session", async (
 
   assert.match(confirmRoute, /requireUser\(req\)/);
   assert.match(confirmRoute, /syncStripeCheckoutSessionById\(body\?\.session_id, user\.id\)/);
-  assert.match(confirmRoute, /getBillingStatus\(user\.id\)/);
+  assert.match(confirmRoute, /getBillingStatus\(user\.id, \{ userCreatedAt: user\.created_at \}\)/);
   assert.match(subscription, /stripe_user_mismatch/);
   assert.match(subscription, /stripe_mode_mismatch/);
   assert.match(subscription, /stripe_price_mismatch/);
@@ -73,8 +73,8 @@ test("premium status and duplicate checkout checks share one canonical billing r
   const checkoutRoute = await source("app/api/stripe/checkout/route.js");
   const billingStatus = await source("lib/billingStatus.js");
 
-  assert.match(statusRoute, /getBillingStatus\(user\.id\)/);
-  assert.match(checkoutRoute, /getBillingStatus\(user\.id\)/);
+  assert.match(statusRoute, /getBillingStatus\(user\.id, \{ userCreatedAt: user\.created_at \}\)/);
+  assert.match(checkoutRoute, /getBillingStatus\(user\.id, \{ userCreatedAt: user\.created_at \}\)/);
   assert.match(billingStatus, /getPremiumStatus\(userId\)/);
-  assert.match(billingStatus, /getRecordsAccess\(userId\)/);
+  assert.match(billingStatus, /getRecordsAccess\(userId, \{ userCreatedAt \}\)/);
 });

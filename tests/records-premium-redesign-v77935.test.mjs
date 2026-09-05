@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { applyFreeConsultTrialAccess } from "../lib/records/accessPolicy.js";
+import {
+  getRegistrationTrialWindow,
+  resolveRecordsAccess,
+} from "../lib/records/accessPolicy.js";
 
 async function source(relativePath) {
   return readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
@@ -43,52 +46,54 @@ function chartRow(date, index = 0) {
   };
 }
 
-const lockedAccess = {
-  mode: "free",
-  entitled: false,
-  beta_enabled: false,
-  consult_enabled: false,
-  consult_requires_subscription: true,
-};
+test("9月登録者は10月1日から14日間、新規登録者は登録時刻から14日間体験する", () => {
+  const config = { enabled: true, startsAt: "2026-10-01T00:00:00+09:00", days: 14 };
+  const septemberUser = getRegistrationTrialWindow(
+    Date.parse("2026-10-01T00:00:01+09:00"),
+    { userCreatedAt: "2026-09-12T03:00:00Z", config },
+  );
+  assert.equal(septemberUser.active, true);
+  assert.equal(septemberUser.days_remaining, 14);
+  assert.match(septemberUser.starts_at, /^2026-09-30T15:00:00\.000Z$/);
 
-test("無料ミモル相談は3日記録後に生涯2回答だけ開く", () => {
-  const before = applyFreeConsultTrialAccess(lockedAccess, { used: 0, recordedDays: 2 });
-  assert.equal(before.consult_enabled, false);
-  assert.equal(before.consult_access_mode, "trial_locked");
-  assert.equal(before.consult_trial.records_needed, 1);
+  const octoberUser = getRegistrationTrialWindow(
+    Date.parse("2026-10-10T12:00:01+09:00"),
+    { userCreatedAt: "2026-10-10T03:00:00Z", config },
+  );
+  assert.equal(octoberUser.active, true);
+  assert.match(octoberUser.starts_at, /^2026-10-10T03:00:00\.000Z$/);
 
-  const ready = applyFreeConsultTrialAccess(lockedAccess, { used: 1, recordedDays: 3 });
-  assert.equal(ready.consult_enabled, true);
-  assert.equal(ready.consult_access_mode, "trial");
-  assert.equal(ready.consult_trial.remaining, 1);
-
-  const exhausted = applyFreeConsultTrialAccess(lockedAccess, { used: 2, recordedDays: 8 });
-  assert.equal(exhausted.consult_enabled, false);
-  assert.equal(exhausted.consult_access_mode, "trial_exhausted");
-  assert.equal(exhausted.consult_history_enabled, true);
+  const expired = getRegistrationTrialWindow(
+    Date.parse("2026-10-15T00:00:00+09:00"),
+    { userCreatedAt: "2026-09-12T03:00:00Z", config },
+  );
+  assert.equal(expired.active, false);
+  assert.equal(expired.expired, true);
 });
 
-test("有料・先行体験の相談回数は無料体験ルールで変えない", () => {
-  const paid = applyFreeConsultTrialAccess({
-    ...lockedAccess,
-    mode: "paid",
-    entitled: true,
-    consult_enabled: true,
-    consult_requires_subscription: false,
-  }, { used: 2, recordedDays: 0 });
-  assert.equal(paid.consult_enabled, true);
-  assert.equal(paid.consult_access_mode, "paid");
-  assert.equal(paid.consult_trial, null);
+test("14日体験中は全機能、終了後は体質・ショップ・履歴だけ残す", () => {
+  const active = resolveRecordsAccess({
+    beta: { active: false },
+    trial: { active: true, eligible: true, days: 14, days_remaining: 7 },
+    entitlement: null,
+  });
+  assert.equal(active.mode, "trial");
+  assert.equal(active.personalized_forecast_enabled, true);
+  assert.equal(active.records_write_enabled, true);
+  assert.equal(active.consult_enabled, true);
 
-  const beta = applyFreeConsultTrialAccess({
-    ...lockedAccess,
-    mode: "beta",
-    beta_enabled: true,
-    consult_enabled: true,
-    consult_requires_subscription: false,
-  }, { used: 2, recordedDays: 0 });
-  assert.equal(beta.consult_access_mode, "beta");
-  assert.equal(beta.consult_trial, null);
+  const expired = resolveRecordsAccess({
+    beta: { active: false, expired: true },
+    trial: { active: false, eligible: true, expired: true, days: 14, days_remaining: 0 },
+    entitlement: null,
+  });
+  assert.equal(expired.mode, "free");
+  assert.equal(expired.personalized_forecast_enabled, false);
+  assert.equal(expired.records_write_enabled, false);
+  assert.equal(expired.analysis_enabled, false);
+  assert.equal(expired.records_history_enabled, true);
+  assert.equal(expired.analysis_history_enabled, true);
+  assert.equal(expired.consult_history_enabled, true);
 });
 
 test("直感グラフは7日を日別、30日を週区切り、長期を月別にまとめる", () => {
@@ -124,8 +129,8 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
   assert.match(paywall, /自分を把握したミモルへ相談/);
   assert.match(live, /今回ミモルが把握していること[\s\S]*今日・明日の予報[\s\S]*直近14日の記録/);
   assert.match(daily, /天気以外に気になったこと[\s\S]*（任意）/);
-  assert.match(route, /free_chat_response/);
-  assert.match(route, /if \(!freeTrial\) assertQuota\(usageBefore, "chat"\)/);
+  assert.doesNotMatch(route, /free_chat_response|freeTrial/);
+  assert.match(route, /assertQuota\(usageBefore, "chat"\)/);
   assert.match(route, /consult_history_enabled/);
 });
 

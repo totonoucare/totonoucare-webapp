@@ -28,13 +28,15 @@ test("free AI beta ends exactly at 2026-10-01 00:00 JST", () => {
   assert.equal(boundary.expired, true);
 });
 
-test("record calendar stays free while analysis and consult require a subscription after beta", () => {
+test("history stays free while new records, analysis generation and consult require access after trial", () => {
   const access = resolveRecordsAccess({
     beta: getBetaWindow(Date.parse("2026-10-01T00:00:00+09:00"), BETA),
     entitlement: null,
   });
 
   assert.equal(access.records_enabled, true);
+  assert.equal(access.records_history_enabled, true);
+  assert.equal(access.records_write_enabled, false);
   assert.equal(access.mode, "free");
   assert.equal(access.analysis_enabled, false);
   assert.equal(access.consult_enabled, false);
@@ -42,12 +44,13 @@ test("record calendar stays free while analysis and consult require a subscripti
   assert.equal(access.consult_requires_subscription, true);
 });
 
-test("settings and live checkout copy use the extended beta boundary", async () => {
+test("settings and live checkout copy use the beta and registration-trial boundary", async () => {
   const settings = await source("app/settings/page.js");
   const checkout = await source("app/api/stripe/checkout/route.js");
 
   assert.match(settings, /2026年9月30日まで/);
-  assert.match(settings, /10月1日以降も記録カレンダーは無料/);
+  assert.match(settings, /10月1日からさらに14日間体験/);
+  assert.match(settings, /体質トリセツ、ケアショップ、過去の記録・AI回答は無料で見返せます/);
   assert.match(checkout, /プレミアムの申込みは2026年10月1日から開始します/);
 });
 
@@ -100,7 +103,7 @@ test("records UI gates the whole analysis and consult tabs while leaving expert 
   assert.match(page, /<SubscriptionPaywall feature="analysis"/);
   assert.match(page, /<SubscriptionPaywall feature="consult"/);
   assert.match(page, /<ExpertConsultPreview/);
-  assert.match(paywall, /記録カレンダーはこれからも無料/);
+  assert.match(paywall, /これまでの記録とAI回答は引き続き見返せます/);
 });
 
 test("paid APIs enforce analysis and consultation entitlements independently", async () => {

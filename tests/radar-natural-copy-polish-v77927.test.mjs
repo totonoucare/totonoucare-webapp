@@ -111,7 +111,7 @@ test("保存済みケアに残った旧い水の理由も表示時に自然語�
   const drink = plan.tomorrow_food_context.action_cards.find((card) => card.key === "drink");
   const copy = drink.item_details[0].reasons.map((reason) => reason.text).join(" ");
 
-  assert.equal(plan.version, "daily_care_v2_26_2026-08-26_loosen_care_rotation");
+  assert.equal(plan.version, "daily_care_v2_27_2026-09-03_today_tomorrow_separation");
   assert.match(copy, /一口飲むたびに手元作業をいったん止め、首肩の力を抜くきっかけ/);
   assert.doesNotMatch(copy, /香りや温度で、手元作業の区切り/);
 });

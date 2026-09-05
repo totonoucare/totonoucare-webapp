@@ -15,7 +15,7 @@ test("live support prompt prioritizes natural conversation over repetitive discl
 });
 
 test("live support prompt version is bumped for the prompt reset", () => {
-  assert.match(liveRoute, /records_live_support_v16_constitution_rebuild_2026-08-31/);
+  assert.match(liveRoute, /records_live_support_v19_care_provenance_2026-09-04/);
 });
 
 test("follow-up option chips place only the natural answer in the input", () => {

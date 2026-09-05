@@ -121,11 +121,11 @@ test("all six meridian lines rotate through three single-action care options", (
   }
 });
 
-test("tomorrow keeps the same target-date action and uses a preparation timing label", () => {
-  const today = buildLineCare({ meridianCode: "spleen_st", date: "2026-08-27", mode: "today" });
+test("tomorrow uses a different preparation action from the preceding today card", () => {
+  const today = buildLineCare({ meridianCode: "spleen_st", date: "2026-08-26", mode: "today" });
   const tomorrow = buildLineCare({ meridianCode: "spleen_st", date: "2026-08-27", mode: "tomorrow" });
 
-  assert.equal(today.id, tomorrow.id);
+  assert.notEqual(today.id, tomorrow.id);
   assert.equal(today.timing_label, "今日の一手");
   assert.equal(tomorrow.timing_label, "今夜〜明朝の一手");
   assert.match(tomorrow.guidance_note, /^今夜は/);
