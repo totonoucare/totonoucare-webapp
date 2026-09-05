@@ -22,7 +22,7 @@ export async function GET(req) {
       );
     }
 
-    const billing = await getBillingStatus(user.id);
+    const billing = await getBillingStatus(user.id, { userCreatedAt: user.created_at });
     return NextResponse.json(billing, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error("[premium.status]", error);
