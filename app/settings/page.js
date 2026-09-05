@@ -444,6 +444,8 @@ export default function SettingsPage() {
   }, [location]);
   const premiumActive = Boolean(billingStatus?.isPremium || billingStatus?.access?.entitled);
   const betaActive = Boolean(billingStatus?.access?.beta_enabled);
+  const trialActive = Boolean(billingStatus?.access?.trial_enabled && !premiumActive && !betaActive);
+  const notificationsAvailable = Boolean(billingStatus?.access?.notifications_enabled);
   const stripeTestMode = billingStatus?.stripe_mode === "test";
 
   return (
@@ -500,7 +502,9 @@ export default function SettingsPage() {
                 : premiumActive
                   ? "プレミアム利用中"
                   : betaActive
-                    ? "AI先行体験中"
+                    ? "全機能無料公開中"
+                    : trialActive
+                      ? "14日間体験中"
                     : "無料プラン"}
             </div>
           </div>
@@ -510,18 +514,22 @@ export default function SettingsPage() {
               ? "bg-[#EAF7F1] text-[#2F816E] ring-[#CFE7DE]"
               : betaActive
                 ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
+                : trialActive
+                  ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
                 : "bg-[#F7FAF8] text-slate-500 ring-[#DCE8DD]",
           ].join(" ")}>
-            {premiumActive ? "契約中" : betaActive ? "無料公開中" : "無料"}
+            {premiumActive ? "契約中" : betaActive ? "無料公開中" : trialActive ? `残り${billingStatus?.access?.trial_days_remaining || 0}日` : "無料"}
           </span>
         </div>
 
         <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">
           {premiumActive
-            ? "振り返りとミモル相談を利用できます。記録カレンダーは契約状態にかかわらず無料です。"
+            ? "パーソナル体調予報、対策ケア、記録、通知、AI振り返り、ミモル相談を利用できます。"
             : betaActive
-              ? "2026年9月30日まで、振り返りとミモル相談を無料で体験できます。10月1日以降も記録カレンダーは無料です。"
-              : "記録カレンダーは無料です。振り返りとミモル相談はプレミアムで利用できます。"}
+              ? "2026年9月30日まで全機能を無料公開中です。9月中の登録者は、10月1日からさらに14日間体験できます。"
+              : trialActive
+                ? `パーソナル体調予報からミモル相談まで、全機能をあと${billingStatus?.access?.trial_days_remaining || 0}日体験できます。カード登録は不要です。`
+                : "体質トリセツ、ケアショップ、過去の記録・AI回答は無料で見返せます。パーソナル体調予報から先は月額580円です。"}
         </div>
 
         {billingError ? (
@@ -560,13 +568,13 @@ export default function SettingsPage() {
             </CheckoutButton>
           </div>
         ) : null}
-        {!premiumActive && !betaActive ? (
+        {!premiumActive && !betaActive && !trialActive ? (
           <CheckoutButton
             returnPath="/settings"
             className="mt-4 w-full"
             onAlreadySubscribed={handleAlreadySubscribed}
           >
-            プレミアムの内容を確認する
+            月額580円の内容を確認する
           </CheckoutButton>
         ) : null}
       </Module>
@@ -577,6 +585,9 @@ export default function SettingsPage() {
           <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
             天気の影響が強めの日を、前日夜・当日朝に短くお知らせします。
           </div>
+          {!loading && !notificationsAvailable ? (
+            <div className="mt-3 rounded-[16px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">通知は14日体験中またはプレミアム利用中に使えます。</div>
+          ) : null}
           <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[14px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
             iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。
             <button
@@ -592,14 +603,14 @@ export default function SettingsPage() {
           label="通知を受け取る"
           description={notificationEnabled ? "オン：影響が強めの日だけ通知します" : "オフ：通知は送信されません"}
           checked={notificationEnabled}
-          disabled={!user || savingNotifications || loading}
+          disabled={!user || savingNotifications || loading || !notificationsAvailable}
           onChange={handleToggleNotifications}
         />
         <ToggleRow
           label="前日夜の通知"
           description="明日に備えたい日の先回り通知"
           checked={notificationSettings?.night_enabled ?? true}
-          disabled={!user || savingNotifications || !notificationEnabled}
+          disabled={!user || savingNotifications || !notificationEnabled || !notificationsAvailable}
           onChange={(value) => saveNotificationSettings({
             enabled: notificationEnabled,
             night_enabled: value,
@@ -611,7 +622,7 @@ export default function SettingsPage() {
           label="当日朝の通知"
           description="今日の注意点を朝に確認"
           checked={notificationSettings?.morning_enabled ?? true}
-          disabled={!user || savingNotifications || !notificationEnabled}
+          disabled={!user || savingNotifications || !notificationEnabled || !notificationsAvailable}
           onChange={(value) => saveNotificationSettings({
             enabled: notificationEnabled,
             night_enabled: notificationSettings?.night_enabled ?? true,
