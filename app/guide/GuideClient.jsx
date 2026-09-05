@@ -260,6 +260,15 @@ export default function GuidePage() {
           </div>
 
           <div className="space-y-4">
+            <GuideCard tone="mint" title="登録後14日間は、全部試せます" icon={<IconSpark />} compact>
+              カード登録なしで、あなた向けの今日・明日の体調予報、対策ケア、記録、AI振り返り・ミモル相談、通知を14日間使えます。終了後は月額580円で継続できます。
+              <CheckList
+                items={[
+                  "無料で残る：体質トリセツ、ケアショップ、これまでの記録とAI回答、ホームの参考予報。",
+                  "プレミアム：あなた向けの予報とケア、新しい記録、AI、通知。",
+                ]}
+              />
+            </GuideCard>
             <GuideCard tone="indigo" title="初回：体質トリセツを作る" icon={<IconConstitution />}>
               質問から、ベース体質、気・血・水の6つの傾向、冷え・ほてり、天気との相性を整理します。体のラインは結果後に任意で追加でき、この結果が体調予報の土台になります。
               <CheckList
