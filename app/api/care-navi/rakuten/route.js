@@ -120,6 +120,7 @@ const POLICY_QUERY_RULES = {
     uruosu: [
       ["卓上 加湿器 寝室", "乾燥で喉・目・肌が疲れやすい日に備える候補です。", ["乾燥", "寝室"]],
       ["就寝用 保湿 マスク", "寝ている間の口元や喉の乾きを守る候補です。", ["喉", "保湿"]],
+      ["ボディミルク 無香料 敏感肌 ポンプ 全身", "入浴後の肌の乾きを、腕・脚・体幹へ広く保湿して残しにくくする候補です。", ["肌", "全身保湿"]],
     ],
     nukumeru: [
       ["腹巻き 薄手 温活", "お腹や腰腹まわりの冷えを守りやすい候補です。", ["お腹", "温活"]],
@@ -275,6 +276,7 @@ const CATEGORY_ANCHOR_QUERY_RULES = {
       ],
       uruosu: [
         ["卓上 加湿器 寝室", "乾燥しやすい日の寝室環境を整える候補です。", ["乾燥", "寝室"]],
+        ["ボディミルク 無香料 敏感肌 ポンプ 全身", "入浴後の肌の乾きを広く保湿して残しにくくする候補です。", ["肌", "全身保湿"]],
       ],
       nukumeru: [
         ["腹巻き 薄手 温活", "お腹や腰腹まわりを冷やしにくくする候補です。", ["温活", "お腹"]],
@@ -814,6 +816,8 @@ const TOOL_LAYOUT_LIVE_QUERY_RULES = {
   "tool-side-sleep-support": careQueryRow("膝枕 横向き クッション", "横向きで上側の脚を支え、腰のねじれを小さくしやすくします。", ["横向き", "膝の間"], { productRole: "sleep_environment" }),
   "tool-facing-layout": careQueryRow("デスク オーガナイザー スマホ スタンド", "よく見る物を身体の正面へ集め、頭を動かす回数を減らしやすくします。", ["正面へ集める", "見る位置"], { productRole: "visual_layout" }),
   "tool-sound-zone": careQueryRow("耳栓 遮音 やわらかい", "周囲の音が重なる場面で、耳へ入る刺激を減らしやすくします。", ["音を減らす", "刺激を絞る"], { productRole: "reduce_sound" }),
+  "tool-bath-or-footbath": careQueryRow("入浴剤 無香料 炭酸 温浴", "入浴の時間を取りやすい日に、無理なく温まる選択肢を増やします。", ["入浴", "温浴"], { productRole: "bath_shift" }),
+  "prep-evening-bath-or-footbath": careQueryRow("足湯 バケツ 保温 深型", "全身浴が負担な時も、足元を温める準備をしやすくします。", ["足湯", "温める"], { productRole: "bath_shift" }),
 };
 
 const LIFESTYLE_ACTION_ROLE_QUERY_RULES = {
@@ -1314,6 +1318,7 @@ const PRODUCT_ROLE_META = {
   bath_shift: { label: "入浴で切り替える" },
   humidity_control: { label: "湿気をためない" },
   moisture_air: { label: "乾燥を守る" },
+  body_moisture: { label: "肌のうるおいを守る" },
   cooling_support: { label: "暑さから退避する" },
   heat_shielding: { label: "窓からの熱を減らす" },
   heat_moisture_control: { label: "暑さと湿気を整える" },
@@ -1416,6 +1421,7 @@ function inferProductRole({ category, normalized, policyKey }) {
     if (/(風よけ|風向板|サーキュレーター)/.test(text)) return "airflow_redirect";
     if (/(寝具 除湿シート|敷布団 除湿|ベッド 除湿)/.test(text)) return "bedding_moisture";
     if (/(除湿|湿気|防湿|ドライ)/.test(text)) return "humidity_control";
+    if (/(ボディミルク|ボディクリーム|ボディローション|全身.*保湿|保湿.*全身|スキンケア)/.test(text)) return "body_moisture";
     if (/(加湿|保湿|マスク|乾燥)/.test(text)) return "moisture_air";
     if (/(温湿度計|室内|環境)/.test(text)) return "sleep_environment";
     return "general";
