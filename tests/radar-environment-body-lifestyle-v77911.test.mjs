@@ -106,6 +106,7 @@ test("環境調整は人間工学と回復環境を扱い、冷房・除湿の�
   assert.deepEqual(ids, [
     "tool-arm-support",
     "tool-back-support",
+    "tool-bath-or-footbath",
     "tool-carry-distribution",
     "tool-facing-layout",
     "tool-foot-support",
