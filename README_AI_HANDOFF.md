@@ -1,3 +1,14 @@
+## v7.79.50 入浴・足湯ケアと全身保湿検索
+
+- 暮らすケアに、冷え・寒暖差かつ`fatigue / sleep / digestion / neck_shoulder / low_back_pain / swelling / mood`の時だけ候補になる入浴・足湯を追加
+- todayは`tool-bath-or-footbath`、tomorrowは`prep-evening-bath-or-footbath`。全身浴が負担なら足湯へ切り替えられる同一方針だが、表示時制とaction idを分ける
+- `headache / dizziness / heat`では自動選定しない。商品なしで完結するケア本文を正本とし、`shop_context`は`bath_shift`用品を別途探す補助導線
+- `悩みから探す`のselfcareは17件。`moisture=dry / mixed`またはボディミルク等の明示入力時に、全身用保湿ケアを候補化する
+- `おすすめ`でも`body_moisture`を`moisture_air`と分離し、ボディミルク／クリーム／ローションを肌保湿用途として判定する
+- current care logic version=`daily_care_v2_28_2026-09-07_bath_footbath`
+- DB migration、AI prompt/context version、予報点数、料金・14日体験の変更はない
+- 全370件の回帰テスト通過。配布ZIPはnode_modulesを含まないため、この作業環境で本番buildは未実行
+
 ## v7.79.49 ケア出自の全AI経路統一
 
 - `displayed_care`は、保存値・現在予報からの再構成値とも`normalizeDisplayedCareForAi`を通し、sourceに応じた`usage_note`をAI入力時に付与する
