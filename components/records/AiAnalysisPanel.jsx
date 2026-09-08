@@ -7,39 +7,26 @@ import RecordsTrendChart from "@/components/records/RecordsTrendChart";
 import RecordsSimpleTrendChart from "@/components/records/RecordsSimpleTrendChart";
 import {
   PERIOD_OPTIONS,
+  buildReflectionBenefit,
   buildRecordsSummary,
   deterministicAnalysis,
   getPeriodRange,
 } from "@/lib/records/analysis";
 import { replyContextForAssistantMessage } from "@/lib/records/replyContext";
 
-function SummaryTile({ value, label, tone = "mint" }) {
-  const toneClass = tone === "amber"
-    ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
-    : tone === "violet"
-      ? "bg-[#F8F4FA] text-[#7B6588] ring-[#E2D6E7]"
-      : tone === "rose"
-        ? "bg-[#FFF0EC] text-[#B75C3E] ring-[#F1C8BA]"
-        : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]";
+function BenefitFlow({ items = [] }) {
+  if (!items.length) return null;
   return (
-    <div className={["rounded-[20px] p-3.5 ring-1", toneClass].join(" ")}>
-      <div className="text-[21px] font-black tracking-tight">{value}</div>
-      <div className="mt-1 text-[12px] font-black leading-4 opacity-75">{label}</div>
-    </div>
-  );
-}
-
-function CompactAnalysisSummary({ analysis }) {
-  return (
-    <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
-      <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">この期間の要点</div>
-      <div className="mt-1.5 text-[14px] font-bold leading-6 text-slate-700">{analysis.empathy}</div>
-      <div className="mt-1 text-[14px] font-bold leading-6 text-slate-600">{analysis.observed}</div>
-      {analysis.hypotheses ? (
-        <div className="mt-2 border-t border-[#EEF3EF] pt-2 text-[14px] font-bold leading-5 text-slate-500">
-          <span className="font-black text-[#7B6588]">考えられること：</span>{analysis.hypotheses}
+    <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-stretch gap-1.5">
+      {items.map((item, index) => (
+        <div key={item.key} className="contents">
+          <div className="grid min-w-0 place-items-center rounded-[16px] bg-white px-1.5 py-2.5 text-center ring-1 ring-[#DCE8DD]">
+            <div className="text-[20px] font-black tracking-tight text-[#2F816E]">{item.value}日</div>
+            <div className="mt-0.5 text-[10px] font-black leading-4 text-slate-500 sm:text-[11px]">{item.label}</div>
+          </div>
+          {index < items.length - 1 ? <div className="grid place-items-center text-[18px] font-black text-[#66B9A3]">›</div> : null}
         </div>
-      ) : null}
+      ))}
     </div>
   );
 }
@@ -185,8 +172,10 @@ export default function AiAnalysisPanel({
   const range = useMemo(() => getPeriodRange(today, periodKey), [today, periodKey]);
   const summary = useMemo(() => bundle?.summary || buildRecordsSummary(bundle?.rows || []), [bundle]);
   const fallbackAnalysis = useMemo(() => deterministicAnalysis(summary), [summary]);
+  const benefit = useMemo(() => buildReflectionBenefit(summary), [summary]);
   const displayedAnalysis = analysis || fallbackAnalysis;
   const hasAiAnalysis = Boolean(analysis && analysisMeta?.source === "ai");
+  const currentNextStep = analysisMeta?.stale ? fallbackAnalysis.next_step : displayedAnalysis.next_step;
   const savedAnalysisRange = analysisMeta?.analysis_range;
   const savedRangeLabel = savedAnalysisRange?.start && savedAnalysisRange?.end
     ? formatRange(savedAnalysisRange.start, savedAnalysisRange.end)
@@ -200,6 +189,13 @@ export default function AiAnalysisPanel({
   const betaActive = Boolean(access?.beta_enabled && !premiumActive);
   const trialActive = Boolean(access?.trial_enabled && !premiumActive && !betaActive);
   const historyOnly = Boolean(access?.analysis_history_enabled && !access?.analysis_enabled);
+  const accessBadge = betaActive
+    ? "先行無料"
+    : trialActive
+      ? `体験 残り${access?.trial_days_remaining || 0}日`
+      : premiumActive
+        ? "プレミアム"
+        : "閲覧のみ";
 
   const loadConsent = useCallback(async () => {
     setConsentLoading(true);
@@ -509,38 +505,23 @@ export default function AiAnalysisPanel({
 
   return (
     <div className="space-y-5">
-      <div className={[
-        "rounded-[22px] px-4 py-3 ring-1",
-        betaActive || trialActive ? "bg-[#FFF8EC] ring-[#EED8B4]" : "bg-[#F4FAF7] ring-[#CFE7DE]",
-      ].join(" ")}>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className={["text-[12px] font-black tracking-[0.14em]", betaActive || trialActive ? "text-[#A56C18]" : "text-[#2F816E]"].join(" ")}>
-              {betaActive ? "振り返り・先行無料公開中" : trialActive ? "振り返り・14日体験中" : premiumActive ? "プレミアム・振り返り" : "保存済みの振り返り"}
-            </div>
-            <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
-              {betaActive
-                ? `${formatBetaEnd(access.beta_ends_at)}全機能を無料公開中です。`
-                : trialActive
-                  ? `体験は残り${access?.trial_days_remaining || 0}日です。`
-                  : premiumActive
-                    ? "記録から分かったことを、次の整え方につなげます。"
-                    : "これまでに保存したAI振り返りは引き続き見返せます。"}
-            </div>
-          </div>
-          <span className={["shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-black ring-1", betaActive || trialActive ? "text-[#A56C18] ring-[#EED8B4]" : "text-[#2F816E] ring-[#CFE7DE]"].join(" ")}>
-            {betaActive ? "無料公開" : trialActive ? "体験中" : premiumActive ? "契約中" : "閲覧のみ"}
-          </span>
-        </div>
-      </div>
-
       <section className="rounded-[28px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <div>
             <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">振り返る期間</div>
             <div className="mt-1 text-[16px] font-black text-slate-900">どの期間を見る？</div>
           </div>
-          <div className="text-[12px] font-black text-slate-400">{formatRange(range.start, range.end)}</div>
+          <div className="text-right">
+            <span className={[
+              "inline-flex rounded-full px-2.5 py-1 text-[11px] font-black ring-1",
+              betaActive || trialActive
+                ? "bg-[#FFF8EC] text-[#A56C18] ring-[#EED8B4]"
+                : "bg-[#EFF8F4] text-[#2F816E] ring-[#CFE7DE]",
+            ].join(" ")} title={betaActive ? `${formatBetaEnd(access?.beta_ends_at)}全機能を無料公開中` : undefined}>
+              {accessBadge}
+            </span>
+            <div className="mt-1 text-[11px] font-black text-slate-400">{formatRange(range.start, range.end)}</div>
+          </div>
         </div>
         <div className="-mx-1 mt-3 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {PERIOD_OPTIONS.map((option) => (
@@ -554,52 +535,49 @@ export default function AiAnalysisPanel({
           <GuideBotAvatar mood={analysisLoading || analysisLookupLoading ? "thinking" : hasAiAnalysis ? displayedAnalysis.mood : "normal"} className="h-[78px] w-[78px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">ケアナビAI ミモル</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">この期間の手がかり</div>
             <div className="mt-1 text-[15px] font-black leading-6 text-slate-900">
-              {analysisLoading
+              {rangeLoading
+                ? "記録を読み込んでいます…"
+                : analysisLoading
                 ? "記録を見比べています…"
-                : analysisLookupLoading
-                  ? "保存済みのAI振り返りを確認しています…"
-                  : hasAiAnalysis
-                    ? displayedAnalysis.headline
-                    : "AIでこの期間を振り返る"}
+                : benefit.headline}
             </div>
           </div>
         </div>
         <div className="space-y-2.5 px-4 pb-4">
+          {!rangeLoading ? <BenefitFlow items={benefit.flow} /> : null}
+          {!rangeLoading && !benefit.flow.length ? (
+            <div className="rounded-[18px] bg-white px-4 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]">{benefit.detail}</div>
+          ) : null}
+
+          {!rangeLoading ? (
+            <div className="rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
+              <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]/80">次に一つだけ</div>
+              <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{currentNextStep}</div>
+            </div>
+          ) : null}
+
           {analysisLoading || analysisLookupLoading ? (
-            <div className="rounded-[18px] bg-white px-4 py-3 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#E8F0EB]">
-              {analysisLoading ? "予報・実感・ケアを順番に確認しています。" : "この期間枠に保存されたAI振り返りを確認しています。"}
+            <div className="px-1 text-[12px] font-bold leading-5 text-slate-400">
+              {analysisLoading ? "ミモルが予報・実感・ケアを順番に確認しています。" : "保存済みのAI振り返りを確認しています。"}
             </div>
-          ) : hasAiAnalysis ? (
-            <>
-              <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
-                <div className="text-[14px] font-bold leading-6 text-slate-700">{displayedAnalysis.observed || displayedAnalysis.empathy}</div>
-              </div>
-              <div className="rounded-[18px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
-                <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]/80">次に一つだけ</div>
-                <div className="mt-1 text-[14px] font-black leading-6 text-slate-700">{displayedAnalysis.next_step}</div>
-              </div>
-            </>
-          ) : (
-            <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#E8F0EB]">
-              <div className="text-[14px] font-bold leading-6 text-slate-600">ケアナビAI ミモルが、この期間の体調予報・実感・ケアを見比べます。分かった傾向と、次に試す一手を整理します。</div>
-              {analysisMeta?.reason === "insufficient_records" ? (
-                <div className="mt-3 rounded-[14px] bg-[#FFF8EC] px-3 py-2.5 text-[12px] font-black leading-5 text-[#A56C18]">AI振り返りには3日分の記録が必要です。あと{recordsNeededForAi}日記録すると使えます。</div>
-              ) : analysisMeta?.reason === "openai_not_configured" ? (
-                <div className="mt-3 text-[12px] font-black leading-5 text-slate-400">AI振り返りは現在準備中です。</div>
-              ) : !access?.analysis_enabled ? (
-                <div className="mt-3 text-[12px] font-black leading-5 text-slate-400">AIによる個別の振り返りは、対象期間または対象プランで利用できます。</div>
-              ) : !consent?.active ? (
-                <div className="mt-3 text-[12px] font-black leading-5 text-slate-400">下の「AI利用前の確認」を完了すると実行できます。</div>
-              ) : analysisMeta?.can_generate ? (
-                <>
-                  <Button className="mt-3 w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>AIでこの期間を振り返る</Button>
-                  <div className="mt-2 text-[12px] font-bold leading-4 text-slate-400">ボタンを押したときだけAIを使います。タブを開くだけでは回数を使いません。</div>
-                </>
-              ) : null}
-            </div>
-          )}
+          ) : !hasAiAnalysis ? (
+            analysisMeta?.reason === "insufficient_records" ? (
+              <div className="rounded-[14px] bg-white px-3 py-2.5 text-[12px] font-black leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">ミモルの個別振り返りには3日分の記録が必要です。あと{recordsNeededForAi}日です。</div>
+            ) : analysisMeta?.reason === "openai_not_configured" ? (
+              <div className="px-1 text-[12px] font-black leading-5 text-slate-400">ミモルの個別振り返りは現在準備中です。</div>
+            ) : !access?.analysis_enabled ? (
+              <div className="px-1 text-[12px] font-black leading-5 text-slate-400">ミモルの個別振り返りは、対象期間または対象プランで利用できます。</div>
+            ) : !consent?.active ? (
+              <div className="px-1 text-[12px] font-black leading-5 text-slate-400">下の「AI利用前の確認」を完了すると、ミモルが詳しく振り返ります。</div>
+            ) : analysisMeta?.can_generate ? (
+              <>
+                <Button className="w-full" disabled={analysisLoading} onClick={() => loadAnalysis({ generate: true })}>ミモルと詳しく振り返る</Button>
+                <div className="px-1 text-[12px] font-bold leading-4 text-slate-400">ボタンを押したときだけAIを使います。タブを開くだけでは回数を使いません。</div>
+              </>
+            ) : null
+          ) : null}
 
           {!analysisLoading && !analysisLookupLoading && hasAiAnalysis && analysisMeta?.generation_required && analysisMeta?.can_generate && consent?.active && access?.analysis_enabled ? (
             <div className="rounded-[18px] bg-white px-4 py-3.5 ring-1 ring-[#CFE7DE]">
@@ -614,7 +592,7 @@ export default function AiAnalysisPanel({
           ) : null}
 
           {hasAiAnalysis ? (
-            <div className="px-1 text-[12px] font-bold text-slate-400">ケアナビAI ミモルと基本集計による振り返り{savedRangeLabel ? `・${savedRangeLabel}` : ""}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・更新前" : ""}</div>
+            <div className="px-1 text-[12px] font-bold text-slate-400">ケアナビAI ミモルによる個別振り返り{savedRangeLabel ? `・${savedRangeLabel}` : ""}{analysisMeta.cached ? "・保存済み" : ""}{analysisMeta.stale ? "・更新前" : ""}</div>
           ) : null}
           {hasAiAnalysis && analysisMeta.request_id ? <FeedbackButtons requestId={analysisMeta.request_id} surface="analysis" {...feedbackProps} /> : null}
           {analysisError ? <div className="rounded-[16px] bg-[#FFF0EC] px-3.5 py-3 text-[14px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">{analysisError}</div> : null}
@@ -624,23 +602,13 @@ export default function AiAnalysisPanel({
 
       <ConsentCard consent={consent} access={access} loading={consentLoading} saving={consentSaving} onConsent={acceptConsent} onRevoke={revokeConsent} />
 
-      <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
-        <div className="mb-3">
-          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">AIを使わない基本集計</div>
-          <div className="mt-1 text-[15px] font-black text-slate-900">記録した日と体調の流れ</div>
-          <div className="mt-1 text-[12px] font-bold leading-5 text-slate-400">記録件数とグラフは、AIを実行しなくても確認できます。</div>
-        </div>
-        <div className="mb-3 flex flex-wrap gap-2">
-          <span className="rounded-full bg-[#EFF8F4] px-3 py-1.5 text-[12px] font-black text-[#2F816E]">記録 {summary.recorded_days || 0}日</span>
-          <span className="rounded-full bg-[#F7FAF8] px-3 py-1.5 text-[12px] font-black text-slate-600">○ {summary.good_days || 0}日</span>
-          <span className="rounded-full bg-[#FFF0EC] px-3 py-1.5 text-[12px] font-black text-[#B75C3E]">△・× {summary.difficult_days || 0}日</span>
-          <span className="rounded-full bg-[#FFF8EC] px-3 py-1.5 text-[12px] font-black text-[#A56C18]">ケア {summary.care_days || 0}日</span>
-        </div>
+      <section className="space-y-3">
         {rangeLoading ? <div className="h-[300px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsSimpleTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
 
-        <details className="mt-4 rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#E8F0EB]">
-          <summary className="cursor-pointer text-[13px] font-black text-slate-600">{hasAiAnalysis ? "AI振り返りの根拠と内訳" : "基本集計の内訳を見る"}</summary>
+        <details className="rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#E8F0EB]">
+          <summary className="cursor-pointer text-[13px] font-black text-slate-600">詳しい根拠を見る</summary>
           <div className="mt-3 space-y-3">
+            {hasAiAnalysis && displayedAnalysis.observed ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#2F816E]">記録で確認したこと：</span>{displayedAnalysis.observed}</div> : null}
             {hasAiAnalysis && displayedAnalysis.hypotheses ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#7B6588]">この見立ての理由：</span>{displayedAnalysis.hypotheses}</div> : null}
             {hasAiAnalysis && displayedAnalysis.evidence?.length ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]"><div className="mb-1 font-black text-slate-600">記録で確認したこと</div>{displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}</div> : null}
             {!rangeLoading ? <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} /> : null}
