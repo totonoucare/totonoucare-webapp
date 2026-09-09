@@ -1229,13 +1229,7 @@ function weatherLoadIconKey(exact, direction) {
   return toWeatherIconKey(exact);
 }
 
-function weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load }) {
-  const meaningful = Number(weatherStrength || 0) > 0.05 || Number(load || 0) > 0.05;
-  if (!meaningful) {
-    if (group === "temperature") return "気温穏やか";
-    if (group === "moisture") return "湿度穏やか";
-    return "気圧穏やか";
-  }
+function weatherLoadDetailLabel({ group, exact, direction }) {
   if (group === "temperature") {
     if (exact === "cold") return "低温";
     if (exact === "heat") return "高温";
@@ -1336,7 +1330,11 @@ export function getForecastWeatherLoadGroups(forecast) {
       exact,
       direction,
       label: WEATHER_LOAD_GROUP_LABELS[group],
-      detailLabel: weatherLoadDetailLabel({ group, exact, direction, weatherStrength, load }),
+      // 要素名は現象を示し、負荷の大小は loadLevelLabel 側で示す。
+      // 低負荷の日も「気温低下・低」のように読み、現象名を状態語へ置き換えない。
+      detailLabel: item
+        ? weatherLoadDetailLabel({ group, exact, direction })
+        : WEATHER_LOAD_GROUP_LABELS[group],
       load,
       loadPercent: load == null ? null : Math.round(load * 100),
       loadLevelLabel,

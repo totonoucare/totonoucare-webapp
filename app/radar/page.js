@@ -1688,7 +1688,7 @@ export default function RadarPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-1.5 min-[430px]:gap-2">
                           {weatherLoadGroups.map((factor, index) => {
                             const loadToneClass = factor.loadLevelTone === "high"
                               ? "text-[#B86430]"
@@ -1706,16 +1706,16 @@ export default function RadarPage() {
                             return (
                               <div
                                 key={`${factor.group}-${index}`}
-                                className="grid min-w-0 content-start gap-2 rounded-[18px] bg-white px-1.5 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)]"
+                                className="grid min-w-0 content-start gap-2 rounded-[18px] bg-white px-1 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)] min-[430px]:px-1.5"
                                 title={`${factor.detailLabel} ストレス ${factor.loadLevelLabel}`}
                               >
-                                <div className="flex min-h-[24px] min-w-0 items-center justify-center gap-1">
+                                <div className="grid min-h-[40px] min-w-0 content-center place-items-center gap-1 min-[430px]:flex min-[430px]:min-h-[24px]">
                                   <WeatherIcon
                                     triggerKey={factor.key}
                                     direction={factor.direction}
-                                    className="h-5 w-5 shrink-0"
+                                    className="h-[18px] w-[18px] shrink-0 min-[430px]:h-5 min-[430px]:w-5"
                                   />
-                                  <span className="whitespace-nowrap text-[12px] font-black text-slate-600">
+                                  <span className="max-w-full whitespace-nowrap text-[11px] font-black leading-none text-slate-600 min-[430px]:text-[12px]">
                                     {factor.detailLabel}
                                   </span>
                                 </div>
