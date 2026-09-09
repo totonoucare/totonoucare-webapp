@@ -1,3 +1,12 @@
+## v7.79.53 振り返り画面の結論・確認内容・表情契約
+
+- AI分析の`headline`は、振り返り上部の「ミモルの見立て」として表示する
+- その見立てに対応する`observed`、`hypotheses`、`evidence`を、詳細欄で「記録で確認できたこと」「そこから考えられること」「見立てに使った記録」に分ける
+- 詳細欄の要約には対象となる`headline`を表示し、何についての説明かを明示する
+- `analysisMeta.stale=true`の保存済みAI分析は現在期間の見立てに使わず、`fallbackAnalysis`を現在表示の正本とする。保存済み結果自体は従来どおり保持し、更新案内を表示する
+- `attention_difficult / proactive_difficult / stable_difficult`では、AIのmoodより振り返り内容を優先し、ミモルへ`signal=1`のいたわり表情を渡す
+- 集計、AI schema・prompt、予報、ケア選定、DB、料金・14日体験の変更はない
+
 ## v7.79.52 天気ストレスカードの表示契約
 
 - `app/radar/utils.js`の天気ストレス要素名は、その日の現象を示す。例: `気温低下`、`湿気`、`気圧上昇`
