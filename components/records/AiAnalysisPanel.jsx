@@ -8,6 +8,7 @@ import RecordsSimpleTrendChart from "@/components/records/RecordsSimpleTrendChar
 import {
   PERIOD_OPTIONS,
   buildReflectionBenefit,
+  buildReflectionEvidenceDetails,
   buildRecordsSummary,
   deterministicAnalysis,
   getPeriodRange,
@@ -189,6 +190,10 @@ export default function AiAnalysisPanel({
   const hasAiAnalysis = Boolean(analysis && analysisMeta?.source === "ai");
   const hasCurrentAiAnalysis = Boolean(hasAiAnalysis && !analysisMeta?.stale);
   const currentReflectionAnalysis = hasCurrentAiAnalysis ? displayedAnalysis : fallbackAnalysis;
+  const reflectionEvidence = useMemo(
+    () => buildReflectionEvidenceDetails(summary, currentReflectionAnalysis.evidence),
+    [summary, currentReflectionAnalysis.evidence],
+  );
   const currentNextStep = currentReflectionAnalysis.next_step;
   const reflectionAvatar = getReflectionAvatarState({
     loading: rangeLoading || analysisLoading || analysisLookupLoading,
@@ -658,10 +663,29 @@ export default function AiAnalysisPanel({
                 <div>{currentReflectionAnalysis.hypotheses}</div>
               </div>
             ) : null}
-            {currentReflectionAnalysis.evidence?.length ? (
+            {reflectionEvidence.comparisons.length || reflectionEvidence.notes.length ? (
               <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
-                <div className="mb-1 font-black text-slate-600">見立てに使った記録</div>
-                {currentReflectionAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}
+                <div className="font-black text-slate-600">この見立てのもとになった記録</div>
+                {reflectionEvidence.comparisons.map((comparison) => (
+                  <div key={comparison.key} className="mt-2 rounded-[14px] bg-[#F7FAF8] px-3 py-2.5 ring-1 ring-[#E8F0EB]">
+                    <div className="font-black text-slate-700">比べた条件</div>
+                    <div className="mt-0.5 leading-5 text-slate-500">{comparison.condition}：{comparison.total_days}日</div>
+                    <div className="mt-2 space-y-1.5">
+                      {comparison.groups.map((group) => (
+                        <div key={group.key} className="grid grid-cols-[100px_1fr] gap-2 rounded-[10px] bg-white px-2.5 py-2 ring-1 ring-[#EDF2EF]">
+                          <div className="font-black text-slate-600">{group.label}（{group.days}日）</div>
+                          <div className="text-slate-500">{group.outcome}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {reflectionEvidence.notes.length ? (
+                  <div className={reflectionEvidence.comparisons.length ? "mt-2" : "mt-1"}>
+                    {reflectionEvidence.comparisons.length ? <div className="mb-0.5 font-black text-slate-600">個別に確認した記録</div> : null}
+                    {reflectionEvidence.notes.map((item) => <div key={item}>・{item}</div>)}
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {!rangeLoading ? <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} /> : null}
