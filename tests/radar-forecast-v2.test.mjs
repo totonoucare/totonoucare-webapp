@@ -749,7 +749,7 @@ test("today remains morning-fixed and only tomorrow refreshes in the evening", (
 
 test("forecast UI sorts three weather stresses by load and embeds each meaningful peak", () => {
   assert.match(radarPageSource, />天気ストレス<\/div>/);
-  assert.match(radarPageSource, /grid grid-cols-3 gap-2/);
+  assert.match(radarPageSource, /grid grid-cols-3 gap-1\.5 min-\[430px\]:gap-2/);
   assert.match(radarPageSource, /高・中・低の目安/);
   assert.match(radarPageSource, /Math\.abs\(bLoad - aLoad\)/);
   assert.match(radarPageSource, /a\?\.isPrimary/);
@@ -776,6 +776,15 @@ test("forecast UI sorts three weather stresses by load and embeds each meaningfu
   assert.doesNotMatch(radarPageSource, /注意時間の前に/);
   assert.doesNotMatch(radarPageSource, /factor\.loadPercent/);
   assert.doesNotMatch(radarPageSource, /天気ストレスと注意時間/);
+});
+
+test("weather stress cards keep phenomenon labels at low load and fit narrow screens", () => {
+  assert.doesNotMatch(radarUtilsSource, /気温穏やか|湿度穏やか|気圧穏やか/);
+  assert.match(radarUtilsSource, /detailLabel: item/);
+  assert.match(radarUtilsSource, /weatherLoadDetailLabel\(\{ group, exact, direction \}\)/);
+  assert.match(radarPageSource, /grid grid-cols-3 gap-1\.5 min-\[430px\]:gap-2/);
+  assert.match(radarPageSource, /min-\[430px\]:flex min-\[430px\]:min-h-\[24px\]/);
+  assert.match(radarPageSource, /max-w-full whitespace-nowrap text-\[11px\]/);
 });
 
 test("absolute temperature cautions sit below weather stresses and stay collapsed by default", () => {
