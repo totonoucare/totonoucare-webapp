@@ -31,6 +31,18 @@ function BenefitFlow({ items = [] }) {
   );
 }
 
+const CONCERN_REFLECTION_STATES = new Set([
+  "attention_difficult",
+  "proactive_difficult",
+  "stable_difficult",
+]);
+
+function getReflectionAvatarState({ loading = false, benefitState = "", aiMood = "" } = {}) {
+  if (loading) return { signal: 0, mood: "thinking" };
+  if (CONCERN_REFLECTION_STATES.has(benefitState)) return { signal: 1, mood: "" };
+  return { signal: 0, mood: aiMood || "normal" };
+}
+
 function formatRange(start, end) {
   const short = (value) => {
     const [, month, day] = String(value || "").split("-");
@@ -175,7 +187,14 @@ export default function AiAnalysisPanel({
   const benefit = useMemo(() => buildReflectionBenefit(summary), [summary]);
   const displayedAnalysis = analysis || fallbackAnalysis;
   const hasAiAnalysis = Boolean(analysis && analysisMeta?.source === "ai");
-  const currentNextStep = analysisMeta?.stale ? fallbackAnalysis.next_step : displayedAnalysis.next_step;
+  const hasCurrentAiAnalysis = Boolean(hasAiAnalysis && !analysisMeta?.stale);
+  const currentReflectionAnalysis = hasCurrentAiAnalysis ? displayedAnalysis : fallbackAnalysis;
+  const currentNextStep = currentReflectionAnalysis.next_step;
+  const reflectionAvatar = getReflectionAvatarState({
+    loading: rangeLoading || analysisLoading || analysisLookupLoading,
+    benefitState: benefit.state,
+    aiMood: hasCurrentAiAnalysis ? currentReflectionAnalysis.mood : "",
+  });
   const savedAnalysisRange = analysisMeta?.analysis_range;
   const savedRangeLabel = savedAnalysisRange?.start && savedAnalysisRange?.end
     ? formatRange(savedAnalysisRange.start, savedAnalysisRange.end)
@@ -532,7 +551,7 @@ export default function AiAnalysisPanel({
 
       <section className="overflow-hidden rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
         <div className="flex items-end gap-3 px-4 pt-4">
-          <GuideBotAvatar mood={analysisLoading || analysisLookupLoading ? "thinking" : hasAiAnalysis ? displayedAnalysis.mood : "normal"} className="h-[78px] w-[78px] shrink-0" />
+          <GuideBotAvatar signal={reflectionAvatar.signal} mood={reflectionAvatar.mood} className="h-[78px] w-[78px] shrink-0" />
           <div className="relative mb-2 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
             <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/70">この期間の手がかり</div>
@@ -547,8 +566,15 @@ export default function AiAnalysisPanel({
         </div>
         <div className="space-y-2.5 px-4 pb-4">
           {!rangeLoading ? <BenefitFlow items={benefit.flow} /> : null}
-          {!rangeLoading && !benefit.flow.length ? (
-            <div className="rounded-[18px] bg-white px-4 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]">{benefit.detail}</div>
+          {!rangeLoading ? (
+            <div className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#E8F0EB]">
+              <div className="text-[12px] font-black tracking-[0.1em] text-[#7B6588]">
+                {hasCurrentAiAnalysis ? "ミモルの見立て" : "この手がかりの見方"}
+              </div>
+              <div className="mt-1 text-[13px] font-bold leading-5 text-slate-600">
+                {hasCurrentAiAnalysis ? currentReflectionAnalysis.headline : benefit.detail}
+              </div>
+            </div>
           ) : null}
 
           {!rangeLoading ? (
@@ -605,12 +631,39 @@ export default function AiAnalysisPanel({
       <section className="space-y-3">
         {rangeLoading ? <div className="h-[300px] animate-pulse rounded-[26px] bg-[#F7FAF8] ring-1 ring-[#DCE8DD]" /> : <RecordsSimpleTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} />}
 
-        <details className="rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#E8F0EB]">
-          <summary className="cursor-pointer text-[13px] font-black text-slate-600">詳しい根拠を見る</summary>
+        <details className="group rounded-[20px] bg-[#F7FAF8] px-3.5 py-3 ring-1 ring-[#E8F0EB]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+            <span className="min-w-0">
+              <span className="block text-[13px] font-black text-slate-700">
+                {hasCurrentAiAnalysis ? "ミモルの見立てを詳しく見る" : "この手がかりを詳しく見る"}
+              </span>
+              <span className="mt-0.5 block text-[11px] font-bold leading-4 text-slate-400">
+                {hasCurrentAiAnalysis
+                  ? `「${currentReflectionAnalysis.headline}」を、記録と考えられることに分けて確認`
+                  : "期間内の予報・実感・ケアを日ごとに確認"}
+              </span>
+            </span>
+            <span className="shrink-0 text-[20px] font-black text-[#2F816E] transition-transform group-open:rotate-90">›</span>
+          </summary>
           <div className="mt-3 space-y-3">
-            {hasAiAnalysis && displayedAnalysis.observed ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#2F816E]">記録で確認したこと：</span>{displayedAnalysis.observed}</div> : null}
-            {hasAiAnalysis && displayedAnalysis.hypotheses ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]"><span className="font-black text-[#7B6588]">この見立ての理由：</span>{displayedAnalysis.hypotheses}</div> : null}
-            {hasAiAnalysis && displayedAnalysis.evidence?.length ? <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]"><div className="mb-1 font-black text-slate-600">記録で確認したこと</div>{displayedAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}</div> : null}
+            {currentReflectionAnalysis.observed ? (
+              <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]">
+                <div className="mb-1 font-black text-[#2F816E]">記録で確認できたこと</div>
+                <div>{currentReflectionAnalysis.observed}</div>
+              </div>
+            ) : null}
+            {currentReflectionAnalysis.hypotheses ? (
+              <div className="rounded-[16px] bg-white px-3.5 py-3 text-[13px] font-bold leading-5 text-slate-600 ring-1 ring-[#E8F0EB]">
+                <div className="mb-1 font-black text-[#7B6588]">そこから考えられること</div>
+                <div>{currentReflectionAnalysis.hypotheses}</div>
+              </div>
+            ) : null}
+            {currentReflectionAnalysis.evidence?.length ? (
+              <div className="rounded-[16px] bg-white px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#E8F0EB]">
+                <div className="mb-1 font-black text-slate-600">見立てに使った記録</div>
+                {currentReflectionAnalysis.evidence.map((item) => <div key={item}>・{item}</div>)}
+              </div>
+            ) : null}
             {!rangeLoading ? <RecordsTrendChart rows={bundle?.rows || []} periodDays={range.days} onSelectDate={onSelectDate} /> : null}
             <div className="text-[12px] font-bold leading-5 text-slate-400">体調警戒度は、実感に合わせて後から書き換えない予報です。詳しいグラフでは、天気ストレスや似た条件の日も確認できます。</div>
           </div>
