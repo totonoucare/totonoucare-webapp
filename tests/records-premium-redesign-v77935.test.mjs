@@ -126,7 +126,9 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
   assert.match(records, /setMonthRows[\s\S]*loadFeatureAccess\(\)[\s\S]*return nextRow/);
   assert.match(analysis, /この期間の手がかり[\s\S]*ミモルの見立て[\s\S]*次に一つだけ[\s\S]*ミモルと詳しく振り返る[\s\S]*RecordsSimpleTrendChart/);
   assert.match(analysis, /ミモルの見立てを詳しく見る/);
-  assert.match(analysis, /記録で確認できたこと[\s\S]*そこから考えられること[\s\S]*見立てに使った記録/);
+  assert.match(analysis, /記録で確認できたこと[\s\S]*そこから考えられること[\s\S]*この見立てのもとになった記録/);
+  assert.match(analysis, /比べた条件[\s\S]*個別に確認した記録/);
+  assert.match(analysisSource, /label: "ケアあり"[\s\S]*label: "ケアなし"/);
   assert.doesNotMatch(analysis, /詳しい根拠を見る/);
   assert.doesNotMatch(analysis, /AIを使わない基本集計/);
   assert.match(paywall, /自分を把握したミモルへ相談/);

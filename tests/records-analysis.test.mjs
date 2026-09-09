@@ -11,6 +11,8 @@ const {
   buildActionTags,
   buildChartPoints,
   buildForecastPatternGroups,
+  buildReflectionBenefit,
+  buildReflectionEvidenceDetails,
   buildRecordsSummary,
   classifyRecord,
   reviewCareDomains,
@@ -120,6 +122,42 @@ test("summary counts comparison, care, timing, and missing forecast separately",
   assert.deepEqual(summary.factor_counts, { sleep_short: 1 });
 });
 
+test("reflection benefit links attention forecasts, proactive care, and calm outcomes", () => {
+  const summary = buildRecordsSummary([
+    row({ date: "2026-07-01", signal: 2, condition: 2, prevent: 2, domains: ["live"], timing: "before_peak" }),
+    row({ date: "2026-07-02", signal: 1, condition: 2, prevent: 2, domains: ["loosen"], timing: "before_peak" }),
+    row({ date: "2026-07-03", signal: 1, condition: 1, prevent: 1, domains: ["eat"], timing: "after_symptom" }),
+    row({ date: "2026-07-04", signal: 0, condition: 2, prevent: 0 }),
+  ]);
+
+  const benefit = buildReflectionBenefit(summary);
+  assert.equal(benefit.state, "proactive_good");
+  assert.match(benefit.headline, /2日/);
+  assert.deepEqual(benefit.flow.map((item) => item.value), [3, 2, 2]);
+});
+
+test("reflection benefit does not count care after symptoms as proactive care", () => {
+  const summary = buildRecordsSummary([
+    row({ date: "2026-07-01", signal: 2, condition: 2, prevent: 2, domains: ["live"], timing: "after_symptom" }),
+    row({ date: "2026-07-02", signal: 1, condition: 1, prevent: 0 }),
+  ]);
+
+  const benefit = buildReflectionBenefit(summary);
+  assert.equal(benefit.state, "attention_difficult");
+  assert.deepEqual(benefit.flow, []);
+});
+
+test("reflection benefit keeps stable-forecast difficult days visible", () => {
+  const summary = buildRecordsSummary([
+    row({ date: "2026-07-01", signal: 0, condition: 1, prevent: 0, factors: ["sleep_short"] }),
+    row({ date: "2026-07-02", signal: 0, condition: 2, prevent: 0 }),
+  ]);
+
+  const benefit = buildReflectionBenefit(summary);
+  assert.equal(benefit.state, "stable_difficult");
+  assert.match(benefit.headline, /1日/);
+});
+
 test("long periods aggregate by ISO week without pretending one day represents the week", () => {
   const rows = [
     row({ date: "2026-07-06", signal: 1, condition: 2 }),
@@ -201,6 +239,38 @@ test("matched forecast comparisons keep similar trigger and score conditions tog
   assert.deepEqual(comparison.timing_outcomes.before_peak.actual_counts, { good: 1, mild: 0, hard: 0 });
   assert.deepEqual(comparison.timing_outcomes.after_symptom.actual_counts, { good: 0, mild: 1, hard: 0 });
   assert.equal(comparison.evidence_level, "small_clue");
+});
+
+test("reflection evidence separates comparison condition, group sizes, and outcomes", () => {
+  const summary = buildRecordsSummary([
+    row({ date: "2026-09-03", signal: 0, score: 2.4, condition: 2, prevent: 2, domains: ["loosen"] }),
+    row({ date: "2026-09-04", signal: 0, score: 2.2, condition: 1, prevent: 1, domains: ["eat"] }),
+    row({ date: "2026-09-05", signal: 0, score: 2.5, condition: 2, prevent: 0 }),
+  ]);
+  const details = buildReflectionEvidenceDetails(summary, [
+    "湿気・安定の近い条件では、ケアあり2日が穏やか1日・軽い不調1日、ケアなし1日は穏やかでした。",
+    "9月5日は湿気・安定で、穏やかな記録でした。",
+  ]);
+
+  assert.equal(details.comparisons.length, 1);
+  assert.equal(details.comparisons[0].condition, "湿気が主・体調警戒度20〜29（安定）");
+  assert.equal(details.comparisons[0].total_days, 3);
+  assert.deepEqual(details.comparisons[0].groups, [
+    { key: "care", label: "ケアあり", days: 2, outcome: "穏やか 1日／軽い不調 1日" },
+    { key: "no_care", label: "ケアなし", days: 1, outcome: "穏やか 1日" },
+  ]);
+  assert.deepEqual(details.notes, ["9月5日は湿気・安定で、穏やかな記録でした。"]);
+});
+
+test("reflection evidence does not present a one-sided record set as a comparison", () => {
+  const summary = buildRecordsSummary([
+    row({ date: "2026-09-03", signal: 0, score: 2.4, condition: 2, prevent: 2, domains: ["loosen"] }),
+  ]);
+  const evidence = ["湿気・安定の日にケアあり1日は穏やかでした。"];
+  const details = buildReflectionEvidenceDetails(summary, evidence);
+
+  assert.deepEqual(details.comparisons, []);
+  assert.deepEqual(details.notes, evidence);
 });
 
 test("concrete care actions are counted by target day and keep previous-night provenance", () => {
