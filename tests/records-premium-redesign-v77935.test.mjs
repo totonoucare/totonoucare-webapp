@@ -15,7 +15,7 @@ const analysisSource = await source("lib/records/analysis.js");
 const analysisModule = await import(
   `data:text/javascript;base64,${Buffer.from(analysisSource).toString("base64")}`
 );
-const { buildActionTags, buildCompactChartPoints } = analysisModule;
+const { buildActionTags, buildCompactChartPoints, buildRecordsSummary, buildReflectionBenefit } = analysisModule;
 
 function ymd(year, month, day) {
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -124,14 +124,29 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
   assert.match(records, /key: "analysis", label: "振り返り"/);
   assert.match(records, /normalized === "consult"[\s\S]*loadFeatureAccess\(\)/);
   assert.match(records, /setMonthRows[\s\S]*loadFeatureAccess\(\)[\s\S]*return nextRow/);
-  assert.match(analysis, /ケアナビAI ミモル[\s\S]*AIでこの期間を振り返る[\s\S]*次に一つだけ[\s\S]*AIを使わない基本集計[\s\S]*RecordsSimpleTrendChart/);
-  assert.match(analysis, /hasAiAnalysis \? "AI振り返りの根拠と内訳" : "基本集計の内訳を見る"/);
+  assert.match(analysis, /この期間の手がかり[\s\S]*ミモルの見立て[\s\S]*次に一つだけ[\s\S]*ミモルと詳しく振り返る[\s\S]*RecordsSimpleTrendChart/);
+  assert.match(analysis, /ミモルの見立てを詳しく見る/);
+  assert.match(analysis, /記録で確認できたこと[\s\S]*そこから考えられること[\s\S]*見立てに使った記録/);
+  assert.doesNotMatch(analysis, /詳しい根拠を見る/);
+  assert.doesNotMatch(analysis, /AIを使わない基本集計/);
   assert.match(paywall, /自分を把握したミモルへ相談/);
   assert.match(live, /今回ミモルが把握していること[\s\S]*今日・明日の予報[\s\S]*直近14日の記録/);
   assert.match(daily, /天気以外に気になったこと[\s\S]*（任意）/);
   assert.doesNotMatch(route, /free_chat_response|freeTrial/);
   assert.match(route, /assertQuota\(usageBefore, "chat"\)/);
   assert.match(route, /consult_history_enabled/);
+});
+
+test("振り返り上部は独立した総数より予報・先回りケア・実感のつながりを示す", () => {
+  const summary = buildRecordsSummary([
+    chartRow("2026-08-01", 1),
+    chartRow("2026-08-02", 2),
+  ]);
+  const benefit = buildReflectionBenefit(summary);
+
+  assert.equal(benefit.flow[0].label, "いたわり・守り");
+  assert.equal(benefit.flow[1].label, "先回りケア");
+  assert.equal(benefit.flow[2].label, "そのうち体調○");
 });
 
 test("AI未実行時と保存済みAI結果を分け、期間が進んでも前回結果と会話を引き継ぐ", async () => {
@@ -145,8 +160,10 @@ test("AI未実行時と保存済みAI結果を分け、期間が進んでも前�
   assert.match(panel, /const hasAiAnalysis = Boolean/);
   assert.match(panel, /ボタンを押したときだけAIを使います。タブを開くだけでは回数を使いません/);
   assert.match(panel, /結果は自動で消えません。新しい記録を含めたいときだけ更新してください/);
-  assert.match(panel, /hasAiAnalysis && displayedAnalysis\.hypotheses/);
-  assert.match(panel, /この見立ての理由：/);
+  assert.match(panel, /const hasCurrentAiAnalysis = Boolean\(hasAiAnalysis && !analysisMeta\?\.stale\)/);
+  assert.match(panel, /const currentReflectionAnalysis = hasCurrentAiAnalysis \? displayedAnalysis : fallbackAnalysis/);
+  assert.match(panel, /currentReflectionAnalysis\.hypotheses/);
+  assert.match(panel, /そこから考えられること/);
 
   const latestLookup = analysisRoute.slice(
     analysisRoute.indexOf("async function findLatestAnalysis"),
@@ -161,6 +178,15 @@ test("AI未実行時と保存済みAI結果を分け、期間が進んでも前�
   assert.match(chatRoute, /previous[\s\S]*\.eq\("period_key", periodKey\)[\s\S]*if \(previous\?\.\[0\]\) return previous\[0\]/);
   assert.match(chatRoute, /thread_period_mismatch/);
   assert.doesNotMatch(chatRoute, /thread_range_mismatch/);
+});
+
+test("つらさを含む振り返りではミモルの笑顔を抑え、見立てと確認内容を接続する", async () => {
+  const panel = await source("components/records/AiAnalysisPanel.jsx");
+
+  assert.match(panel, /CONCERN_REFLECTION_STATES[\s\S]*attention_difficult[\s\S]*proactive_difficult[\s\S]*stable_difficult/);
+  assert.match(panel, /CONCERN_REFLECTION_STATES\.has\(benefitState\)[\s\S]*signal: 1, mood: ""/);
+  assert.match(panel, /GuideBotAvatar signal=\{reflectionAvatar\.signal\} mood=\{reflectionAvatar\.mood\}/);
+  assert.match(panel, /currentReflectionAnalysis\.headline[\s\S]*記録と考えられることに分けて確認/);
 });
 
 test("機能名を体調予報・体調警戒度・振り返りへ統一する", async () => {
