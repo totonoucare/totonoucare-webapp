@@ -97,7 +97,7 @@ function getModeMeta(signal) {
   return {
     label: "安定モード",
     shortLabel: "安定",
-    caption: "安定しやすい日",
+    caption: "気象負担は小さめ",
   };
 }
 

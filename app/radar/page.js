@@ -961,6 +961,7 @@ export default function RadarPage() {
       symptomFocus,
       {
         currentScore: currentForecastScore,
+        environmentalCautions: getForecastEnvironmentalCautions(forecast),
         todayScore: todayComparisonScore,
         currentWeatherGroups: currentWeatherLoadGroups,
         todayWeatherGroups: todayComparisonWeatherLoadGroups,
@@ -969,6 +970,7 @@ export default function RadarPage() {
     [
       triggerFactors,
       forecast?.signal,
+      forecast,
       displayDateMode,
       symptomFocus,
       currentForecastScore,

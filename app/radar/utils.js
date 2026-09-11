@@ -604,6 +604,7 @@ export function getForecastTriggerFactors(forecast) {
 
   const snapshot = getForecastSnapshot(forecast);
   const riskSummary = getRiskSummaryFromForecast(forecast);
+  if ([forecast?.personal_main_trigger_exact, snapshot?.personal_main_trigger_exact, riskSummary?.main_trigger_exact].includes("none")) return [];
   const raw =
     (Array.isArray(forecast.trigger_factors) && forecast.trigger_factors.length ? forecast.trigger_factors : null) ||
     (Array.isArray(snapshot?.trigger_factors) && snapshot.trigger_factors.length ? snapshot.trigger_factors : null) ||
@@ -1413,12 +1414,12 @@ function strengthenPeakPrepItem(text) {
 const RADAR_NARRATIVE_LEADS = {
   fatigue: {
     default: ["体の立ち上がりが、いつもよりゆっくりになりやすい日", "だるさは気合い不足というより、体が休息を求めているサインかもしれません", "まずは動く量を増やすより、重さを増やさない一手から始めましょう"],
-    damp: ["体が湿気を吸った布団みたいに重くなりやすい日", "胃腸まわりがもたつくと、だるさまで長引きやすくなります", "まずは空気・食べ方・足もとを整えて、動き始めやすくしましょう"],
-    pressure_down: ["頭と体の立ち上がりが、少しスローモーションになりやすい日", "気圧低下でこもり感が出ると、休んでも抜けにくいだるさに感じやすくなります", "目・首・呼吸を短く切り替えて、ぼんやりをため込まないようにしましょう"],
-    pressure_up: ["体が知らないうちに前のめりになりやすい日", "張りつめたまま進むと、あとからどっと疲れとして出やすくなります", "用事を急いで全部進めるより、肩の力を一度抜いてから動きましょう"],
+    damp: ["湿気が重なり、普段のだるさや体の重さに気を配りたい日", "食後の重さが気になるときは、食事の量や速さも確認してみましょう", "蒸し暑い場所では除湿や冷房を使い、休憩を取りましょう"],
+    pressure_down: ["普段疲れやすい体質では、頭の重さや動き始めのだるさに気を配りたい日", "予定を詰めすぎず、休憩を取れる時間を作っておきましょう", "目を休め、首肩を楽にして呼吸を整えましょう"],
+    pressure_up: ["普段力が入りやすい体質では、首肩の張りや疲れの持ち越しに気を配りたい日", "集中する時間が続くときは、力が入ったままになっていないか確認しましょう", "用事の合間に肩の力を抜き、短く休憩しましょう"],
     cold: ["冷えで、体が動き始めにくい日", "足元やお腹が冷えると、だるさが“動き出せなさ”として出やすくなります", "まずは一か所だけ温めて、動き始めやすい状態を作りましょう"],
     heat: ["暑さで体力を消耗しやすい日", "熱がこもると、動く前から消耗しているように感じやすくなります", "がんばる前に涼しさと水分を入れて、消耗を増やさないようにしましょう"],
-    dry: ["体のうるおいが少し削られやすい日", "目やのどの乾きが続くと、疲れがカサついた感じで残りやすくなります", "水分・目の休憩・深い息を先に入れて、消耗を増やさないようにしましょう"],
+    dry: ["乾燥が重なり、目や喉の乾きと疲れに気を配りたい日", "目や喉が乾くときは、暖冷房の風が直接当たっていないか確認しましょう", "水分を少しずつ取り、画面を見る合間に目を休めましょう"],
   },
   sleep: {
     default: ["夜の休み方まで、日中の過ごし方が残りやすい日", "体は疲れているのに、頭の働きだけ静まりにくいことがあります", "夕方以降は光・胃腸の重さ・考えごとを少しずつ減らしましょう"],
@@ -1613,10 +1614,45 @@ const RADAR_STABLE_SYMPTOM_LEAD_TAIL = {
 function getStableNarrativeLead(triggerFactors, mode = "today", symptomFocus = null) {
   const key = getNarrativePrimaryKey(triggerFactors);
   const target = mode === "today" ? "今日は" : "明日は";
-  const weatherPrefix = RADAR_STABLE_WEATHER_LEAD_PREFIX[key] || "天気の変化を感じる時間だけ";
-  const symptomTail = RADAR_STABLE_SYMPTOM_LEAD_TAIL[symptomFocus] || RADAR_STABLE_SYMPTOM_LEAD_TAIL.default;
-  const base = mode === "today" ? "大きく崩れにくい日" : "大きく崩れにくそうな日";
-  return `${target}${base}。${weatherPrefix}、${symptomTail}。`;
+  const opening = key === "none" ? "目立った気象負担はありません" : "気象による負担は小さめです";
+  return `${target}${opening}。${getConcreteWeatherAction(key, mode, symptomFocus)}`;
+}
+
+function getConcreteWeatherAction(key, mode, symptomFocus) {
+  if (mode === "tomorrow") {
+    const preparations = {
+      heat: "今夜は飲み物を用意し、明日の外出では涼しく休める場所を確認しておきましょう。",
+      damp: "今夜は寝室の冷房や除湿を調整し、蒸し暑さがこもらないようにしましょう。",
+      cold: "今夜は明日使う上着や靴下を用意し、足元を冷やさず休みましょう。",
+      dry: "今夜は顔に直接風が当たらないよう調整し、飲み物を手元に置いておきましょう。",
+      temp_shift: "今夜は明日の室内外の温度差に備えて、脱ぎ着できる上着を用意しましょう。",
+      pressure_down: "今夜は画面を見る時間を区切り、首肩を楽にして休む準備をしましょう。",
+      pressure_up: "今夜は作業を早めに区切り、息をゆっくり吐いて肩の力を抜いてみましょう。",
+    };
+    if (preparations[key]) return preparations[key];
+  }
+  const actions = {
+    heat: "涼しい場所で休憩し、水分を少しずつ取りましょう。",
+    damp: "蒸し暑い場所では冷房や除湿を使い、過ごしやすい室内へ。",
+    cold: "足首やお腹が冷えるときは、靴下や上着を一枚足しましょう。",
+    dry: "目や喉が乾くときは、顔に当たる風を避け、水分を少しずつ取りましょう。",
+    temp_shift: "外出時は脱ぎ着できる上着で、室内外の温度差に備えましょう。",
+    pressure_down: "画面から目を離し、息を吐きながら肩の力を抜いてみましょう。",
+    pressure_up: "作業をいったん止め、息をゆっくり吐いて肩の力を抜いてみましょう。",
+  };
+  const baseActions = {
+    fatigue: "普段の疲れやすさに合わせ、座るときは背もたれに体を預けてみましょう。",
+    sleep: "寝る前は画面の明るさを落とし、休む準備をしましょう。",
+    digestion: "食事の合間に箸を置き、急がず食べてみましょう。",
+    neck_shoulder: "画面から目を離し、息を吐いて肩の力を抜いてみましょう。",
+    low_back_pain: "同じ姿勢が続くときは、楽な姿勢へこまめに変えてみましょう。",
+    swelling: "座っている間に、足首をゆっくり動かしてみましょう。",
+    headache: "画面がまぶしく感じたら、明るさを下げて目を休めましょう。",
+    dizziness: "立ち上がるときは、支えにつかまりゆっくり動きましょう。",
+    mood: "予定の合間に手を止め、息をゆっくり吐いてみましょう。",
+  };
+  const action = actions[key] || baseActions[symptomFocus] || "普段気になる不調に合わせて、下のケアを一つ選んでみましょう。";
+  return mode === "tomorrow" ? `今夜は、${action}` : action;
 }
 
 function adaptNarrativeActionForMode(action, mode = "today") {
@@ -1638,6 +1674,7 @@ function adaptNarrativeActionForMode(action, mode = "today") {
 
 function getNarrativePrimaryKey(triggerFactors) {
   const first = safeArray(triggerFactors)[0];
+  if (!first || first.exact === "none" || first.key === "none") return "none";
   return normalizeWeatherContextKey(
     first?.careKey || getLegacyCareTriggerKey(first?.key || first?.exact, first)
   );
@@ -2055,7 +2092,22 @@ export function getForecastModeLead(
   comparison = null
 ) {
   const narrative = getNarrativeLeadText(triggerFactors, signal, mode, symptomFocus);
-  if (narrative) return addTomorrowComparisonLead(narrative, mode, comparison);
+  if (narrative) {
+    const cautions = safeArray(comparison?.environmentalCautions);
+    const heatCaution = cautions.find((c) => /heat/.test(c.key));
+    if (heatCaution) return addTomorrowComparisonLead(`${mode === "today" ? "今日は" : "明日は"}${heatCaution.key === "humid_heat" ? "蒸し暑くなる時間があります" : "強い暑さへの備えが必要です"}。${getConcreteWeatherAction("heat", mode, symptomFocus)}`, mode, comparison);
+    const primary = triggerFactors?.[0];
+    const magnitude = Number(primary?.weatherStrength ?? primary?.weather_strength ?? 0);
+    const level = magnitude >= 0.85 ? "大きな" : magnitude >= 0.55 ? "やや大きな" : "";
+    const physical = primary?.exact || primary?.key;
+    const label = physical === "pressure_up" ? "気圧上昇" : physical === "pressure_down" ? "気圧低下" : null;
+    const eventLead = Number(signal) > 0 && label ? `${mode === "today" ? "今日は" : "明日は"}${level}${label}が見込まれます。` : "";
+    const body = (eventLead ? narrative.replace(/^(今日は|明日は)/, "") : narrative).split("。")[0] + "。";
+    const text = Number(signal) > 0
+      ? `${eventLead}${body}${getConcreteWeatherAction(getNarrativePrimaryKey(triggerFactors), mode, symptomFocus)}`
+      : narrative;
+    return addTomorrowComparisonLead(text, mode, comparison);
+  }
 
   const level = Number(signal ?? 0);
   const factors = getForecastBackgroundFactors(triggerFactors);
