@@ -1,1 +1,33 @@
+v7.79.54 → v7.79.55
 
+README.md
+RELEASE-v7.79.55.md
+app/HomeClient.jsx
+app/api/records/analysis/route.js
+app/radar/ForecastGauge.jsx
+app/radar/page.js
+app/radar/utils.js
+lib/radar_v1/careRules/dailyCareV2.js
+lib/radar_v1/careRules/todayCarePlan.js
+lib/radar_v1/careRules/todayTsuboRules.js
+lib/radar_v1/ensureForecastBundle.js
+lib/radar_v1/personalizeForecastV2.js
+lib/radar_v1/weatherStressV2.js
+lib/records/aiContext.js
+lib/records/aiPrompts.js
+lib/records/analysis.js
+lib/records/forecastReasoning.js
+scripts/check-forecast-scenarios.mjs
+tests/displayed-care-provenance-v77949.test.mjs
+tests/ekken-constitution-hierarchy-v7729.test.mjs
+tests/ekken-forecast-hierarchy-v7730.test.mjs
+tests/forecast-load-anchors-v77955.test.mjs
+tests/forecast-model-cache-v77955.test.mjs
+tests/helpers/forecast-scenarios.mjs
+tests/radar-natural-copy-polish-v77927.test.mjs
+tests/records-analysis.test.mjs
+tests/release-polish-v77930.test.mjs
+verification/changed-files.txt
+verification/forecast-scenarios.json
+verification/forecast-scenarios.md
+verification/test-summary.txt

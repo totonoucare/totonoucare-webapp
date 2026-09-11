@@ -1,0 +1,15 @@
+v7.79.55 検証結果
+
+既存378件＋追加11件＝389件 全件成功
+仮想気象22条件×体質4種類＝88通り
+本番ビルド成功（Supabaseはテスト用仮設定）
+実際のOpenAI生成・本番接続・実機表示は未検証
+
+ℹ tests 389
+ℹ suites 0
+ℹ pass 389
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63856.840242
