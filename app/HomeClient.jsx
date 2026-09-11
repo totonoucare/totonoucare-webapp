@@ -320,7 +320,7 @@ function buildLiveGuideText(bundle) {
 function modeActionLabel(signal) {
   if (signal === 2) return "無理せず守りたい日";
   if (signal === 1) return "いたわりたい日";
-  return "安定しやすい日";
+  return "気象負担は小さめ";
 }
 
 const GUEST_SIGN_HINTS = {
