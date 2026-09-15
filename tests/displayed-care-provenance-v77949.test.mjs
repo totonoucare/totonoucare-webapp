@@ -66,7 +66,7 @@ test("共通知識・全AI経路・スナップショットがv49の出自契約
   assert.doesNotMatch(context, /表示済みケアは土台/);
   assert.doesNotMatch(context, /アプリが表示したケアとミモルの応用案/);
   assert.match(snapshot, /displayedCareUsageNote\(source\)/);
-  assert.match(analysisRoute, /records_analysis_v19_care_provenance_complete_2026-09-05/);
+  assert.match(analysisRoute, /records_analysis_v20_forecast_coherence_2026-09-11/);
   assert.match(chatRoute, /records_chat_v20_care_provenance_complete_2026-09-05/);
   assert.match(liveRoute, /records_live_support_v20_care_provenance_complete_2026-09-05/);
 });

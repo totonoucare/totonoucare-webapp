@@ -55,8 +55,8 @@ const sampleForecast = {
 
 test("forecast common knowledge follows the actual forecast hierarchy", () => {
   const model = forecastReasoning.RECORDS_FORECAST_MODEL_CONTEXT;
-  assert.equal(model.personalization.universal_weather_share, 0.38);
-  assert.equal(model.personalization.personal_affinity_share, 0.62);
+  assert.equal(model.personalization.universal_weather_share, 0.50);
+  assert.equal(model.personalization.personal_affinity_share, 0.50);
   assert.match(model.personalization.direction_modifier, /0\.06/);
   assert.match(model.weather_events.overlap_rule, /一つの温熱環境/);
   assert.match(model.score_construction.overlap, /大きい方/);
@@ -147,5 +147,5 @@ test("Ekken uses the computed forecast model without a rigid narration script", 
 test("prompt versions invalidate older saved AI interpretations", () => {
   assert.match(liveRoute, /records_live_support_v20_care_provenance_complete_2026-09-05/);
   assert.match(periodRoute, /records_chat_v20_care_provenance_complete_2026-09-05/);
-  assert.match(analysisRoute, /records_analysis_v19_care_provenance_complete_2026-09-05/);
+  assert.match(analysisRoute, /records_analysis_v20_forecast_coherence_2026-09-11/);
 });

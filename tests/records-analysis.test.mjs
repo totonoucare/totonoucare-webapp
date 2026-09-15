@@ -46,6 +46,18 @@ function row({ date = "2026-07-01", signal, score = null, condition = 2, prevent
   };
 }
 
+test("different forecast model versions are kept in separate matched comparisons", () => {
+  const a = row({date:"2026-09-10",signal:1,score:5.1,condition:2,prevent:2,domains:["eat"]});
+  const b = row({date:"2026-09-11",signal:1,score:5.1,condition:1,prevent:0});
+  a.forecast.reason_trace = {forecast_model_version:"old_version"};
+  b.forecast.reason_trace = {forecast_model_version:"new_version"};
+  const summary = buildRecordsSummary([a,b]);
+  assert.equal(summary.matched_forecast_comparisons.length, 2);
+  assert.ok(summary.matched_forecast_comparisons.every(group => group.total_days === 1));
+  assert.equal(a.forecast.score_precise_0_10,5.1);
+  assert.equal(b.forecast.score_precise_0_10,5.1);
+});
+
 test("missing forecast is not silently classified as stable", () => {
   const result = classifyRecord(row({ signal: undefined, condition: 2 }));
   assert.equal(result.comparison, "no_forecast");
