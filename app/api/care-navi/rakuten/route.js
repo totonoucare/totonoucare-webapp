@@ -1,4 +1,5 @@
 import { matchesLifestyleProductRole } from "@/lib/care-navi/lifestyleProductFit";
+import { normalizePointToolContext, pointToolQueryRows, pointToolKind, pointToolScreeningText } from "@/lib/care-navi/pointTools";
 import {
   normalizeLifestyleShopActionKey,
   normalizeLifestyleShopItemRole,
@@ -1454,6 +1455,7 @@ function buildQueryPlans({
   foodFunctionKeys = [],
   foodNeedKeys = [],
   foodProductRoleKeys = [],
+  pointContext = null,
   limit,
 }) {
   const safeCategory = CATEGORY_LABELS[category] ? category : "live";
@@ -1477,6 +1479,7 @@ function buildQueryPlans({
       : normalizeQueryRow(row);
     const keyword = cleanKeyword(normalized?.keyword);
     if (!keyword || seenKeywords.has(keyword)) return false;
+    if (safeCategory === "point" && pointToolKind({query:keyword}) && source !== "point_care") return false;
 
     if (safeCategory === "eat" && isLowValueSupermarketFoodPlan(normalized)) return false;
     if (safeCategory === "eat" && !canAddEatPlan(plans, normalized)) return false;
@@ -1493,6 +1496,7 @@ function buildQueryPlans({
 
     plans.push({
       keyword,
+      pointToolKind: source === "point_care" ? pointToolKind({query:keyword}) : null,
       reason: normalized.reason,
       tags,
       policyKey: resolvedPolicyKey,
@@ -1514,6 +1518,13 @@ function buildQueryPlans({
     return true;
   }
 
+  if (safeCategory === "point") {
+    const context = normalizePointToolContext(pointContext || {warming:safePolicyKeys.includes("nukumeru")});
+    for (const row of pointToolQueryRows(context)) {
+      if (plans.length >= planLimit) break;
+      addPlanFromRow(row, {policyKey:primaryPolicyKey,source:"point_care",sourceKey:"point_care"});
+    }
+  }
   // 予報ページから入った時だけ、表示中の環境調整を先頭へ置く。
   // 身体操作そのものは商品へ変換せず、action idに紐づく許可済みルールだけを使う。
   const safeLifestyleActionKey = normalizeLifestyleShopActionKey(lifestyleActionKey);
@@ -1538,7 +1549,7 @@ function buildQueryPlans({
 
   // 1本目: 生活サインは「方針別検索の材料」ではなく、生活サイン自身の文脈で1本だけ先に立てる。
   // これで味噌汁・スープのような中立アイテムが、たまたま別方針のラベルを背負う事故を減らす。
-  if (lifeRows.length) {
+  if (lifeRows.length && plans.length < planLimit) {
     addPlanFromRow(lifeRows[0], { policyKey: primaryPolicyKey, source: "life", sourceKey: "life" });
   }
 
@@ -1704,6 +1715,7 @@ function isAcceptableBeverageItem(item, plan) {
 
   const text = rakutenItemText(item);
   if (!text) return false;
+
   if (BEVERAGE_REJECT_PATTERN.test(text)) return false;
   if (HEALTH_CLAIM_REJECT_PATTERN.test(text)) return false;
   if (!BEVERAGE_REQUIRED_PATTERN.test(text)) return false;
@@ -1748,9 +1760,14 @@ function isAcceptableRakutenItem(item, plan) {
   if (!text) return false;
 
   if (GIFT_REJECT_PATTERN.test(text)) return false;
+  if (plan?.pointToolKind) {
+    const actualKind = pointToolKind({title:item.itemName});
+    if (actualKind !== plan.pointToolKind) return false;
+    if (actualKind === "seal" && (!/家庭用/.test(text) || /医家向け|医療従事者専用/.test(text))) return false;
+  } else if (plan?.category === "point" && pointToolKind({title:item.itemName}) === "seal") return false;
   // 救急処置・傷ケア系はMYケアセレクトの目的から外れるため、楽天取得段階でも除外。
-  if (FIRST_AID_REJECT_PATTERN.test(text)) return false;
-  if (MEDICAL_SUPPORT_REJECT_PATTERN.test(text)) return false;
+  if (FIRST_AID_REJECT_PATTERN.test(plan?.pointToolKind ? pointToolScreeningText(item, text) : text)) return false;
+  if (MEDICAL_SUPPORT_REJECT_PATTERN.test(plan?.pointToolKind ? pointToolScreeningText(item, text) : text)) return false;
   if (PET_PRODUCT_REJECT_PATTERN.test(text)) return false;
   if (plan?.category === "eat" && LOW_CONTEXT_OLIGO_REJECT_PATTERN.test(text)) return false;
   if (plan?.category === "point" && POINT_BEAUTY_REJECT_PATTERN.test(text)) return false;
@@ -1991,6 +2008,7 @@ function normalizeRakutenItem(item, plan, planIndex, itemIndex) {
     intentType: plan.intentType || null,
     productRole: plan.productRole || null,
     productRoleLabel: plan.productRoleLabel || PRODUCT_ROLE_META[plan.productRole]?.label || null,
+    pointToolKind: plan.pointToolKind || null,
     familyKey: productFamilyKey({ title, shopName: item?.shopName || "", query: plan.keyword }, productType),
     imageUrl: firstImageUrl(item),
     itemUrl: url,
@@ -2090,6 +2108,7 @@ function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit =
   }
 
   const quotas = buildDisplayQuotas(policyKeys);
+  addFromGroup("point_care", Math.min(4, displayLimit));
   quotas
     .filter((quota) => quota.key !== "__remaining__")
     .forEach((quota) => addFromGroup(quota.key, quota.count));
@@ -2271,6 +2290,7 @@ export async function POST(req) {
     const totalLimit = Math.max(displayLimit, clampNumber(body?.totalLimit, 32, displayLimit, 48));
     const lifeKeys = uniqueStrings(body?.lifeKeys).slice(0, 4);
     const basis = String(body?.basis || "");
+    const pointContext = body?.pointContext ? normalizePointToolContext(body.pointContext) : null;
     const lifestyleActionKey = String(body?.lifestyleActionKey || "");
     const lifestyleItemRole = String(body?.lifestyleItemRole || "");
     const foodFunctionKeys = uniqueStrings(body?.foodFunctionKeys)
@@ -2301,6 +2321,7 @@ export async function POST(req) {
 
     const cacheKey = JSON.stringify({
       category,
+      pointContext,
       policyKeys,
       symptomKey,
       priceBand,
@@ -2321,6 +2342,7 @@ export async function POST(req) {
 
     const plans = buildQueryPlans({
       category,
+      pointContext,
       policyKeys,
       symptomKey,
       priceBand,
