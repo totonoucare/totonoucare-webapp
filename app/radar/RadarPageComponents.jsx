@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { pointToolGuides } from "@/lib/care-navi/pointTools";
 import { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { RADAR_LOCATION_PRESETS } from "@/lib/radar_v1/locationPresets";
@@ -412,10 +413,11 @@ export function LocationEditor({
   );
 }
 
-export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
+export function PointDetailSheet({ point, onClose, reasonLoading = false, warming = false, onTools }) {
   if (!point) return null;
 
   const cautions = getPointCautions(point);
+  const toolGuides = pointToolGuides(point, warming);
 
   return (
     <div
@@ -508,6 +510,13 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false }) {
           </div>
         </div>
 
+        {toolGuides.length > 0 ? (
+          <div className="mt-4 rounded-[20px] bg-[#F4F9F6] px-5 py-4 ring-1 ring-[var(--ring)]">
+            <div className="text-[14px] font-black text-[var(--accent-ink)]">道具がある方へ</div>
+            {toolGuides.map(guide => <div key={guide.kind} className="mt-3 text-[14px] leading-6 text-slate-700"><span className="font-black">{guide.label}</span><p className="mt-1 font-bold">{guide.text}</p></div>)}
+            {onTools ? <button type="button" onClick={onTools} className="mt-4 w-full rounded-xl bg-white px-3 py-3 text-[14px] font-black text-[var(--accent-ink)] ring-1 ring-[var(--ring)]">このツボに合う道具を見る</button> : null}
+          </div>
+        ) : null}
         {cautions.length > 0 ? (
           <div className="mt-4 rounded-[20px] bg-white px-5 py-4 ring-1 ring-slate-200 shadow-sm">
             <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">

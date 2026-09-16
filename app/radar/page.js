@@ -34,6 +34,7 @@ import {
   SegmentedTabs,
 } from "./RadarPageComponents";
 import TsuboRegionIcon, { getTsuboRegionIconLabel } from "./TsuboRegionIcon";
+import { pointToolContext } from "@/lib/care-navi/pointTools";
 import {
   FLAT_PRESETS,
   RADAR_LOADING_HINTS,
@@ -1025,8 +1026,14 @@ export default function RadarPage() {
     });
   }, [carePlan?.care_theme, activeCareForecast, careTriggerFactors, riskContext, selectedIsToday, symptomFocus]);
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
-  const buildCareNaviUrl = (category) => {
+  const pointWarming = carePolicies.policies.some(policy => (policy.key || policy.id || policy) === "nukumeru") && !careTriggerFactors.some(factor => ["heat", "temp_up"].includes(factor.key));
+  const buildCareNaviUrl = (category, selectedToolPoint = null) => {
     const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
+    if (category === "point") {
+      const context = pointToolContext(selectedToolPoint ? [selectedToolPoint] : tsuboPoints, pointWarming);
+      const params = new URLSearchParams({ pointCodes:context.codes.join(","), pointLines:context.lineCodes.join(","), pointWarming:context.warming ? "1" : "0" });
+      return `${base}&${params}`;
+    }
     if (category === "eat") {
       const commerce = food?.commerce_context || null;
       const params = new URLSearchParams();
@@ -2107,9 +2114,7 @@ export default function RadarPage() {
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.point} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
                   title={selectedIsToday ? "このツボケアに合う道具を見る" : "明日に使うほぐし道具を見ておく"}
-                  lead={selectedIsToday
-                    ? loosenItemHint || "表示中のツボや部位ケアに合わせて、お灸・ツボ押し棒・温熱/ほぐし道具の候補を見られます。"
-                    : loosenItemHint || "明日の予報に合わせて、使いやすい温熱・ほぐし系アイテムの候補を見ておけます。"}
+                  lead="ツボの部位とケア方針に合わせて、ツボ押し棒・お灸などを選べます。ラインケアの対象ツボには、家庭用シール鍼も案内します。"
                   buttonLabel={selectedIsToday ? "ツボケアに合う候補を見る" : "明日のほぐし候補を見る"}
                   toneKey="loosen"
                   onClick={() => router.push(buildCareNaviUrl("point"))}
@@ -2648,6 +2653,8 @@ export default function RadarPage() {
       {selectedPoint ? (
         <PointDetailSheet
           point={selectedPoint}
+          warming={pointWarming}
+          onTools={() => router.push(buildCareNaviUrl("point", selectedPoint))}
           reasonLoading={pointReasonLoading}
           onClose={() => setSelectedPoint(null)}
         />
