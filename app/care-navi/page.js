@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import GuidedCareSearch from "@/components/care-shop/GuidedCareSearch";
+import { normalizePointToolContext, pointToolQueryRows, pointToolKinds, pointToolKind, pointToolName, pointToolScreeningText } from "@/lib/care-navi/pointTools";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
@@ -132,7 +133,7 @@ const CARE_SET_INITIAL_LIMIT = 4;
 const CARE_SET_EXPANDED_LIMIT = 5;
 const SINGLE_ITEM_INITIAL_LIMIT = 8;
 const SINGLE_ITEM_EXPANDED_LIMIT = 16;
-const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v3";
+const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v4-point-tools";
 const RAKUTEN_CACHE_TTL_MS = 15 * 60 * 1000;
 const RAKUTEN_CACHE_ENTRY_LIMIT = 8;
 const RAKUTEN_SEARCH_DEBOUNCE_MS = 600;
@@ -1314,11 +1315,11 @@ function isPointBeautyItem(item) {
 }
 
 function isFirstAidItem(item) {
-  return FIRST_AID_REJECT_PATTERN.test(itemEvidenceText(item));
+  return FIRST_AID_REJECT_PATTERN.test(pointToolScreeningText(item, itemEvidenceText(item)));
 }
 
 function isMedicalSupportItem(item) {
-  return MEDICAL_SUPPORT_REJECT_PATTERN.test(itemEvidenceText(item));
+  return MEDICAL_SUPPORT_REJECT_PATTERN.test(pointToolScreeningText(item, itemEvidenceText(item)));
 }
 
 function isPetProductItem(item) {
@@ -1847,7 +1848,10 @@ function slotsForPolicySet(policyKey, titleSuffix, context, variantIndex) {
 
   const live = applyContextSlotProfiles(liveSlotFor(policyKey, context), context);
   const eat = applyContextSlotProfiles(eatSlotFor(policyKey, context, titleSuffix), context);
-  const point = applyContextSlotProfiles(pointSlotFor(policyKey, { ...context, titleSuffix }), context);
+  const point = {
+    ...applyContextSlotProfiles(pointSlotFor(policyKey, { ...context, titleSuffix }), context),
+    pointToolContext: normalizePointToolContext(context.pointContext || {warming:context.policyKeys?.includes("nukumeru")}),
+  };
 
   if (/食事|食べすぎ|胃腸|忙しい/.test(suffix)) {
     slots.push(eat, live, point);
@@ -1892,12 +1896,12 @@ function reorderPolicyKeysForCard(mainPolicyKey, policyKeys = []) {
   return unique([mainPolicyKey, ...rest]).filter((key) => POLICY_META[key]);
 }
 
-function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike }) {
+function buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike, pointContext = null }) {
   const keys = safeArray(policyKeys).filter((key) => POLICY_META[key]);
   const primary = keys[0] || "yurumeru";
   const secondary = keys.find((key) => key !== primary) || "meguraseru";
   const tertiary = keys.find((key) => key !== primary && key !== secondary) || null;
-  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), profileLike };
+  const context = { mode, policyKeys: keys, symptomKey, lifeKeys: safeArray(lifeKeys), triggerFactors: safeArray(triggerFactors), profileLike, pointContext };
   const plan = [];
 
   function push(policyKey, variantIndex, weight = "main") {
@@ -1988,6 +1992,11 @@ function itemMatchesSlot(item, slot) {
   if (isFirstAidItem(item) || isMedicalSupportItem(item) || isPetProductItem(item) || isLowContextOligoItem(item)) return false;
   if (item.category === "point" && BEDDING_ITEM_PATTERN.test(itemEvidenceText(item))) return false;
   if (isPointBeautyItem(item)) return false;
+  if (slot.category === "point" && pointToolKind(item)) {
+    const kind = pointToolKind(item);
+    if (kind === "seal" && (!/家庭用/.test(itemEvidenceText(item)) || /医家向け|医療従事者専用/.test(itemEvidenceText(item)))) return false;
+    return pointToolKinds(slot.pointToolContext || {}).includes(kind);
+  }
   if (hasAnyText(item, slot.avoidKeywords)) return false;
 
   if (slot.category === "live" && !liveItemHasSlotMeaning(item, slot)) return false;
@@ -2077,6 +2086,7 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   const contextKeywordMatched = hasAnyText(item, slot.contextBoostKeywords);
 
   let score = 0;
+  if (slot.category === "point" && pointToolKind(item)) score += 45;
   if (item.category === slot.category) score += 20;
   if (roleMatched) score += 14;
   if (safeArray(slot.productTypes).includes(item.productType)) score += 6;
@@ -2274,11 +2284,14 @@ function buildTsuboToolUseGuide(item, preferredArea) {
 
   if (isOkyu) return `体調予報ページのツボカードに合わせる枠。${label}まわりのツボケアに。`;
   if (isTsuboStick) return `体調予報ページのツボカードや、${label}まわりのポイントケアに。`;
-  if (isMassageGun) return `体調予報ページのツボカードや、${label}まわりのケアに。`;
+  if (isMassageGun) return `${label}の筋肉を広くほぐす時の候補です。使用できる部位は製品の説明書を確認してください。`;
   return "";
 }
 
 function buildPointUseGuide(item, slot, card) {
+  if (pointToolKind(item)) {
+    return pointToolQueryRows(slot?.pointToolContext || {}).find(row => row.pointToolKind === pointToolKind(item))?.reason || "";
+  }
   const text = itemEvidenceText(item);
   const areas = inferPointAreas(item);
   const required = safeArray(slot?.requiredAreas);
@@ -2396,6 +2409,7 @@ function buildCareSetCards({
   symptomKey,
   lifeKeys,
   lifestyleItemRole = "",
+  pointContext = null,
   triggerFactors,
   symptomLabel,
   approachTags,
@@ -2419,7 +2433,7 @@ function buildCareSetCards({
     symptomLabel,
     profileLike,
   };
-  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike });
+  const definitions = buildPolicySetDefinitions({ mode, policyKeys, symptomKey, lifeKeys, triggerFactors, profileLike, pointContext });
 
   const strictCards = assembleCareSetCards({ definitions, byCategory, mode, policyKeys, approachTags, fallbackLevel: 0 });
   if (strictCards.length) return strictCards;
@@ -2899,6 +2913,7 @@ function buildSingleShelfItems({ rakutenItemsByCategory, partnerItemsByCategory,
   // 商品が取れなかった検索語はここへ混ぜず、別の検索リンクとして表示する。
   return CATEGORY_ORDER.flatMap((category) => {
     const items = matched.filter((item) => item.category === category);
+    if (category === "point") return items.sort((a,b) => Number(!!pointToolKind(b)) - Number(!!pointToolKind(a)));
     if (category !== "eat") return items;
     const tea = items.filter((item) => ["tea", "teaBlend"].includes(item.productType)
       || ["warm_drink", "caffeine_shift"].includes(item.productRole));
@@ -2958,6 +2973,7 @@ function completeCareSetWithMatchingItems(card, candidateItems) {
 }
 
 function fallbackSearchQuery(policyKeys, category) {
+  if (category === "point") return "ツボ押し棒 先端 丸い";
   const candidates = pickCandidates(policyKeys, category);
   if (category === "eat") {
     return candidates.find((item) => !/(茶|ティー|しょうが湯|生姜湯)/.test(`${item?.title || ""} ${item?.query || ""}`))?.query
@@ -3016,6 +3032,7 @@ export default function CareNaviPage() {
   const [shopPurpose, setShopPurpose] = useState("everyday");
   const [lifeKeys, setLifeKeys] = useState([]);
   const [lifestyleActionKey, setLifestyleActionKey] = useState("");
+  const [pointContext, setPointContext] = useState(null);
   const [lifestyleItemRole, setLifestyleItemRole] = useState("");
   const [foodCommerceContext, setFoodCommerceContext] = useState({
     policyKeys: [],
@@ -3165,6 +3182,7 @@ export default function CareNaviPage() {
 
     const params = new URLSearchParams(window.location.search);
     const nextCategory = params.get("category");
+    setPointContext(params.has("pointCodes") ? normalizePointToolContext({codes:params.get("pointCodes"),lineCodes:params.get("pointLines"),warming:params.get("pointWarming")}) : null);
     const nextSymptom = params.get("symptom");
     const nextLifestyleActionKey = String(params.get("liveAction") || "").trim();
     const nextLifestyleItemRole = String(params.get("liveRole") || "").trim();
@@ -3287,6 +3305,7 @@ export default function CareNaviPage() {
   );
   const rakutenCategorySignature = `${viewMode}:${rakutenCategoryKeys.join("|")}`;
   const rakutenSearchSignature = JSON.stringify({
+    pointContext,
     rakutenCategorySignature,
     priceBand,
     policyKeySignature,
@@ -3371,6 +3390,7 @@ export default function CareNaviPage() {
                 basis,
                 lifeKeys,
                 lifestyleActionKey: categoryKey === "live" ? lifestyleActionKey : "",
+                pointContext: categoryKey === "point" ? pointContext : null,
                 lifestyleItemRole: categoryKey === "live" ? lifestyleItemRole : "",
                 foodFunctionKeys: categoryKey === "eat" ? foodCommerceContext.functionKeys : [],
                 foodNeedKeys: categoryKey === "eat" ? foodCommerceContext.needKeys : [],
@@ -3532,12 +3552,13 @@ export default function CareNaviPage() {
         symptomKey,
         lifeKeys,
         lifestyleItemRole,
+        pointContext,
         triggerFactors: tomorrowTriggerFactors,
         symptomLabel,
         approachTags,
         profileLike,
       }),
-    [rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, lifestyleItemRole, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
+    [rakutenItemsByCategory, partnerItemsByCategory, policyKeys, symptomKey, lifeKeys, lifestyleItemRole, pointContext, tomorrowTriggerFactors, symptomLabel, approachTags, profileLike]
   );
 
   const setCandidateItems = useMemo(
@@ -3762,8 +3783,8 @@ export default function CareNaviPage() {
                       <div className="text-[12px] font-bold text-slate-400">ショップだけに反映</div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {Object.entries(SYMPTOM_LABELS).map(([key, label]) => <Chip key={key} active={symptomKey === key} onClick={() => setSelectedSymptom(key)}>{label}</Chip>)}
-                      {registeredSymptomKey && symptomChanged ? <Chip active={false} onClick={() => setSelectedSymptom(registeredSymptomKey)}>登録中に戻す</Chip> : null}
+                      {Object.entries(SYMPTOM_LABELS).map(([key, label]) => <Chip key={key} active={symptomKey === key} onClick={() => { setSelectedSymptom(key); setPointContext(null); }}>{label}</Chip>)}
+                      {registeredSymptomKey && symptomChanged ? <Chip active={false} onClick={() => { setSelectedSymptom(registeredSymptomKey); setPointContext(null); }}>登録中に戻す</Chip> : null}
                     </div>
                   </div>
 
@@ -3812,6 +3833,19 @@ export default function CareNaviPage() {
           </div>
         </Module>
 
+        {viewMode === "single" && singleCategory === "point" && pointToolQueryRows(pointContext || {warming:basePolicyKeys.includes("nukumeru")}).length > 0 ? (
+          <section className="rounded-[24px] bg-[#F4F9F6] p-5 ring-1 ring-[#D5E5DB]">
+            <h2 className="text-[16px] font-black text-[#24564C]">{pointContext?.codes.length ? "ケアで案内したツボに使う道具" : "ツボケアに使いやすい道具"}</h2>
+            {pointContext?.codes.length ? <p className="mt-1 text-[13px] font-bold text-slate-600">{pointContext.codes.map(pointToolName).filter(Boolean).join("・")}</p> : null}
+            <div className="mt-3 space-y-3">
+              {pointToolQueryRows(pointContext || {warming:basePolicyKeys.includes("nukumeru")}).map(row => <div key={row.pointToolKind} className="rounded-2xl bg-white p-4">
+                <p className="text-[14px] font-black text-slate-800">{{stick:"ツボ押し棒",seal:"家庭用シール鍼",moxa:"お灸"}[row.pointToolKind]}</p>
+                <p className="mt-1 text-[13px] font-bold leading-6 text-slate-600">{row.reason}</p>
+                <a href={makeRakutenSearchUrl(row.keyword)} target="_blank" rel="sponsored nofollow noopener noreferrer" className="mt-2 inline-block text-[13px] font-black text-[#2F816E] underline">楽天市場で比較する</a>
+              </div>)}
+            </div>
+          </section>
+        ) : null}
         {viewMode === "single" && singleCategory === "eat" && foodCommerceLabels.length ? (
           <Module className="!bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4] shadow-[0_16px_36px_-30px_rgba(165,108,24,0.32)]">
             <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">食べるケアの継続軸</div>
