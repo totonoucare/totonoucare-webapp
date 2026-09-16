@@ -66,7 +66,7 @@ test("ショップ検索は表示対象だけを遅延実行し、429を即時�
   assert.match(page, /const retryable = !rateLimited/);
   assert.match(page, /RAKUTEN_RATE_LIMITED/);
   assert.doesNotMatch(page, /Promise\.all\(\s*CATEGORY_ORDER\.map\(\(categoryKey\) => searchCategory/);
-  assert.match(page, /mibyo-care-navi-rakuten-cache-v3/);
+  assert.match(page, /mibyo-care-navi-rakuten-cache-v4-point-tools/);
   assert.match(page, /RAKUTEN_CACHE_ENTRY_LIMIT = 8/);
 });
 
