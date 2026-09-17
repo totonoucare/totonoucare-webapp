@@ -133,7 +133,7 @@ const CARE_SET_INITIAL_LIMIT = 4;
 const CARE_SET_EXPANDED_LIMIT = 5;
 const SINGLE_ITEM_INITIAL_LIMIT = 8;
 const SINGLE_ITEM_EXPANDED_LIMIT = 16;
-const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v4-point-tools";
+const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v5-moxa-first";
 const RAKUTEN_CACHE_TTL_MS = 15 * 60 * 1000;
 const RAKUTEN_CACHE_ENTRY_LIMIT = 8;
 const RAKUTEN_SEARCH_DEBOUNCE_MS = 600;
@@ -2086,7 +2086,7 @@ function scoreKitCandidate(item, slot, { mode, policyKeys = [] } = {}) {
   const contextKeywordMatched = hasAnyText(item, slot.contextBoostKeywords);
 
   let score = 0;
-  if (slot.category === "point" && pointToolKind(item)) score += 45;
+  if (slot.category === "point" && pointToolKind(item)) score += pointToolKind(item) === "moxa" ? 145 : 45;
   if (item.category === slot.category) score += 20;
   if (roleMatched) score += 14;
   if (safeArray(slot.productTypes).includes(item.productType)) score += 6;
@@ -2913,7 +2913,7 @@ function buildSingleShelfItems({ rakutenItemsByCategory, partnerItemsByCategory,
   // 商品が取れなかった検索語はここへ混ぜず、別の検索リンクとして表示する。
   return CATEGORY_ORDER.flatMap((category) => {
     const items = matched.filter((item) => item.category === category);
-    if (category === "point") return items.sort((a,b) => Number(!!pointToolKind(b)) - Number(!!pointToolKind(a)));
+    if (category === "point") return items.sort((a,b) => ({moxa:3,stick:2,seal:1}[pointToolKind(b)] || 0) - ({moxa:3,stick:2,seal:1}[pointToolKind(a)] || 0));
     if (category !== "eat") return items;
     const tea = items.filter((item) => ["tea", "teaBlend"].includes(item.productType)
       || ["warm_drink", "caffeine_shift"].includes(item.productRole));
@@ -2973,7 +2973,7 @@ function completeCareSetWithMatchingItems(card, candidateItems) {
 }
 
 function fallbackSearchQuery(policyKeys, category) {
-  if (category === "point") return "ツボ押し棒 先端 丸い";
+  if (category === "point") return "お灸 ソフト 低温";
   const candidates = pickCandidates(policyKeys, category);
   if (category === "eat") {
     return candidates.find((item) => !/(茶|ティー|しょうが湯|生姜湯)/.test(`${item?.title || ""} ${item?.query || ""}`))?.query
