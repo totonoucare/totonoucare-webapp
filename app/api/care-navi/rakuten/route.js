@@ -2080,7 +2080,7 @@ function buildDisplayQuotas(policyKeys) {
 function selectBalancedItems(items, policyKeys, { displayLimit = 8, totalLimit = 24 } = {}) {
   const sorted = asArray(items)
     .filter(Boolean)
-    .sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+    .sort((a, b) => Number(b.sourceKey === "point_care" && b.pointToolKind === "moxa") - Number(a.sourceKey === "point_care" && a.pointToolKind === "moxa") || Number(b.score || 0) - Number(a.score || 0));
 
   const used = new Set();
   const displayItems = [];
