@@ -19,7 +19,7 @@ const plan=(pointContext,policyKeys=['nukumeru'])=>route.buildQueryPlans({catego
 // Exercise the actual JSX page's selection functions, without a browser/login.
 const {transform}=createRequire(import.meta.url)('next/dist/build/swc');
 const pageSource=await fs.readFile(new URL('../app/care-navi/page.js',import.meta.url),'utf8');
-const compiled=await transform(pageSource.replace(/^import\s+[\s\S]*?from\s+["'][^"']+["'];/gm,'')+'\nexport {buildPolicySetDefinitions,itemMatchesSlot,scoreKitCandidate,buildPointUseGuide};',{filename:'shop.jsx',jsc:{parser:{syntax:'ecmascript',jsx:true}},module:{type:'commonjs'}});
+const compiled=await transform(pageSource.replace(/^import\s+[\s\S]*?from\s+["'][^"']+["'];/gm,'')+'\nexport {buildPolicySetDefinitions,itemMatchesSlot,scoreKitCandidate,buildPointUseGuide,fallbackSearchQuery};',{filename:'shop.jsx',jsc:{parser:{syntax:'ecmascript',jsx:true}},module:{type:'commonjs'}});
 const labels=await load('lib/diagnosis/v2/labels.js');
 const pageDeps={...dependencies,...labels,IconCare:()=>null,IconFood:()=>null,IconKarte:()=>null,IconLifestyle:()=>null,IconTsubo:()=>null};
 const shop={};
@@ -32,7 +32,7 @@ test('ラインケアの対象ツボだけにシール鍼を案内する',()=>{
   assert.deepEqual(tools.normalizePointToolContext({codes:['LI4'],lineCodes:['ST36','LI4']}).lineCodes,[]);
 });
 test('頭頸部・未知のツボ・小さな指先には道具案内を追加しない',()=>{
-  for(const code of ['GB20','BL2','GV20','UNKNOWN1','HT9']) assert.deepEqual(tools.pointToolGuides({code,source:'mtest'},true),[]);
+  for(const code of ['GB20','BL2','GV20','UNKNOWN1','HT9','PC9','ST45','BL67']) assert.deepEqual(tools.pointToolGuides({code,source:'mtest'},true),[]);
 });
 test('温める方針の有無にかかわらずお灸を最初に案内する',()=>{
   assert.equal(tools.pointToolGuides({code:'ST36',source:'tcm'},false)[0].kind,'moxa');
@@ -109,4 +109,18 @@ test('APIの商品件数を絞るときもお灸を残す',()=>{
  const items=[{title:'お灸',itemCode:'m',sourceKey:'point_care',pointToolKind:'moxa',score:1}, ...Array.from({length:25},(_,i)=>({title:'棒'+i,itemCode:'s'+i,sourceKey:'point_care',pointToolKind:'stick',score:100}))];
  const selected=route.selectBalancedItems(items,[],{displayLimit:8,totalLimit:24});
  assert.equal(selected[0].pointToolKind,'moxa');
+});
+
+test('道具対象外のツボへ商品取得失敗時のお灸検索を出さない',()=>{
+ assert.equal(shop.fallbackSearchQuery([], 'point', {codes:['GB20']}),'');
+ assert.match(shop.fallbackSearchQuery([], 'point', {codes:['CV12']}),/お灸/);
+ assert.match(shop.fallbackSearchQuery([], 'point'),/お灸/);
+});
+test('手足と頭のツボが混在しても道具の対象名を区別する',()=>{
+ const context={codes:['GB20','CV12','LI11','ST45'],lineCodes:['LI11','ST45']};
+ assert.deepEqual(tools.pointToolTargetNames(context),['中脘','曲池']);
+ const rows=tools.pointToolQueryRows(context);
+ assert.ok(rows.every(row=>!row.reason.includes('風池')&&!row.reason.includes('厲兌')));
+ assert.ok(rows.find(row=>row.pointToolKind==='moxa').reason.includes('中脘'));
+ assert.ok(!rows.find(row=>row.pointToolKind==='stick').reason.includes('中脘'));
 });
