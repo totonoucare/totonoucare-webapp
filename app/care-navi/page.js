@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import GuidedCareSearch from "@/components/care-shop/GuidedCareSearch";
-import { normalizePointToolContext, pointToolQueryRows, pointToolKinds, pointToolKind, pointToolName, pointToolScreeningText } from "@/lib/care-navi/pointTools";
+import { normalizePointToolContext, pointToolQueryRows, pointToolKinds, pointToolKind, pointToolName, pointToolTargetNames, pointToolScreeningText } from "@/lib/care-navi/pointTools";
 import { supabase } from "@/lib/supabaseClient";
 import { getCoreLabel, getSubLabels, SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
@@ -133,7 +133,7 @@ const CARE_SET_INITIAL_LIMIT = 4;
 const CARE_SET_EXPANDED_LIMIT = 5;
 const SINGLE_ITEM_INITIAL_LIMIT = 8;
 const SINGLE_ITEM_EXPANDED_LIMIT = 16;
-const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v5-moxa-first";
+const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v6-care-tools";
 const RAKUTEN_CACHE_TTL_MS = 15 * 60 * 1000;
 const RAKUTEN_CACHE_ENTRY_LIMIT = 8;
 const RAKUTEN_SEARCH_DEBOUNCE_MS = 600;
@@ -2282,7 +2282,7 @@ function buildTsuboToolUseGuide(item, preferredArea) {
   const isTsuboStick = /ツボ|つぼ|指圧|押し棒|ポイントきゅう|突起/.test(text);
   const isMassageGun = /マッサージガン|筋膜ガン|ハンディガン|リカバリーガン/.test(text);
 
-  if (isOkyu) return `体調予報ページのツボカードに合わせる枠。${label}まわりのツボケアに。`;
+  if (isOkyu) return `${label}まわりのツボケアに。体調予報ページの使い方も確認できます。`;
   if (isTsuboStick) return `体調予報ページのツボカードや、${label}まわりのポイントケアに。`;
   if (isMassageGun) return `${label}の筋肉を広くほぐす時の候補です。使用できる部位は製品の説明書を確認してください。`;
   return "";
@@ -2308,24 +2308,24 @@ function buildPointUseGuide(item, slot, card) {
   if (tsuboToolGuide) return tsuboToolGuide;
 
   if (WARMING_PAD_PATTERN.test(text)) {
-    if (has("eye_head")) return "目元・こめかみ周辺を温める枠。休む前や画面作業後に。";
-    if (has("neck_shoulder")) return "首肩まわりを温める枠。作業後や休む前に。";
-    if (has("low_back")) return "腰・背中まわりを温める枠。休む前や冷えが気になる日に。";
-    if (has("foot_leg")) return "足元を温める枠。冷えやすい日に。";
-    return required.length ? "" : "気になる部位を温める枠として。";
+    if (has("eye_head")) return "目元・こめかみ周辺を温めるケアに。休む前や画面作業後に。";
+    if (has("neck_shoulder")) return "首肩まわりを温めるケアに。作業後や休む前に。";
+    if (has("low_back")) return "腰・背中まわりを温めるケアに。休む前や冷えが気になる日に。";
+    if (has("foot_leg")) return "足元を温めるケアに。冷えやすい日に。";
+    return required.length ? "" : "気になる部位を温めるケアに。";
   }
 
   if (/ローラー|ボール|マッサージ|ブラシ/.test(text)) {
-    if (has("eye_head")) return "目元・こめかみ・頭皮まわりの切り替え枠。軽めに。";
-    if (has("neck_shoulder")) return "首肩まわりを動かす枠。作業後や休む前に。";
-    if (has("low_back")) return "腰・背中まわりを動かす枠。短時間で軽く。";
-    if (has("foot_leg")) return "足裏やふくらはぎを動かす枠。座りっぱなしの日に。";
+    if (has("eye_head")) return "製品が指定する部位を、軽い力でケアしましょう。";
+    if (has("neck_shoulder")) return "首肩まわりをほぐすケアに。作業後や休む前に。";
+    if (has("low_back")) return "腰・背中まわりをほぐすケアに。短時間で軽く。";
+    if (has("foot_leg")) return "足裏やふくらはぎをほぐすケアに。座りっぱなしの日に。";
   }
 
   if (/ストレッチ|伸ばす|フォームローラー|ストレッチポール|ヨガマット/.test(text)) {
-    if (has("neck_shoulder")) return "首肩まわりをゆっくり伸ばす枠。作業後の切り替えに。";
-    if (has("low_back")) return "腰・背中まわりをゆっくり伸ばす枠。休む前の切り替えに。";
-    if (has("foot_leg")) return "足まわりをゆっくり伸ばす枠。座りっぱなしの日に。";
+    if (has("neck_shoulder")) return "首肩まわりをゆっくり伸ばすケアに。作業後の切り替えに。";
+    if (has("low_back")) return "腰・背中まわりをゆっくり伸ばすケアに。休む前の切り替えに。";
+    if (has("foot_leg")) return "足まわりをゆっくり伸ばすケアに。座りっぱなしの日に。";
   }
 
   // 商品から部位が読めず、ツボ・お灸・マッサージガンでもないものは、
@@ -2972,8 +2972,8 @@ function completeCareSetWithMatchingItems(card, candidateItems) {
   };
 }
 
-function fallbackSearchQuery(policyKeys, category) {
-  if (category === "point") return "お灸 ソフト 低温";
+function fallbackSearchQuery(policyKeys, category, pointContext = null) {
+  if (category === "point") return pointToolQueryRows(pointContext || {})[0]?.keyword || "";
   const candidates = pickCandidates(policyKeys, category);
   if (category === "eat") {
     return candidates.find((item) => !/(茶|ティー|しょうが湯|生姜湯)/.test(`${item?.title || ""} ${item?.query || ""}`))?.query
@@ -2983,6 +2983,7 @@ function fallbackSearchQuery(policyKeys, category) {
 }
 
 function SearchDiscoveryLink({ query, category }) {
+  if (!query) return <p className="rounded-[20px] bg-[#F4F9F6] p-4 text-[14px] font-bold text-slate-600">このツボは、ケア画面の手で行う方法を参考にしてください。</p>;
   const meta = getCategoryMeta(category);
   const Icon = meta.icon;
   return (
@@ -2993,7 +2994,7 @@ function SearchDiscoveryLink({ query, category }) {
   );
 }
 
-function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested, policyKeys }) {
+function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested, policyKeys, pointContext = null }) {
   const [visibleCount, setVisibleCount] = useState(SINGLE_ITEM_INITIAL_LIMIT);
   useEffect(() => setVisibleCount(SINGLE_ITEM_INITIAL_LIMIT), [category, items]);
   const categoryCounts = Object.fromEntries(CATEGORY_ORDER.map((key) => [key, safeArray(items).filter((item) => item.category === key).length]));
@@ -3012,7 +3013,7 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
       <div className="grid gap-2.5 sm:grid-cols-2">
         {categoryItems.length ? categoryItems.map((item, index) => (
           <ShopItemCard key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shopEntry={shopEntryMap.get(getSetItemKey(item))} saving={savingKey === getSetItemKey(item)} onToggleInterested={onToggleInterested} />
-        )) : <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, category)} category={category} />}
+        )) : <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, category, pointContext)} category={category} />}
       </div>
       {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[var(--shop)] px-4 py-3 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
     </div>
@@ -3836,7 +3837,7 @@ export default function CareNaviPage() {
         {viewMode === "single" && singleCategory === "point" && pointToolQueryRows(pointContext || {warming:basePolicyKeys.includes("nukumeru")}).length > 0 ? (
           <section className="rounded-[24px] bg-[#F4F9F6] p-5 ring-1 ring-[#D5E5DB]">
             <h2 className="text-[16px] font-black text-[#24564C]">{pointContext?.codes.length ? "ケアで案内したツボに使う道具" : "ツボケアに使いやすい道具"}</h2>
-            {pointContext?.codes.length ? <p className="mt-1 text-[13px] font-bold text-slate-600">{pointContext.codes.map(pointToolName).filter(Boolean).join("・")}</p> : null}
+            {pointContext?.codes.length ? <p className="mt-1 text-[13px] font-bold text-slate-600">{pointToolTargetNames(pointContext).join("・")}</p> : null}
             <div className="mt-3 space-y-3">
               {pointToolQueryRows(pointContext || {warming:basePolicyKeys.includes("nukumeru")}).map(row => <div key={row.pointToolKind} className="rounded-2xl bg-white p-4">
                 <p className="text-[14px] font-black text-slate-800">{{stick:"ツボ押し棒",seal:"家庭用シール鍼",moxa:"お灸"}[row.pointToolKind]}</p>
@@ -3900,10 +3901,10 @@ export default function CareNaviPage() {
                   ) : null}
                 </>
               ) : (
-                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} policyKeys={policyKeys} />
+                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} policyKeys={policyKeys} pointContext={pointContext} />
               )
             ) : (
-              <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, singleCategory)} category={singleCategory} />
+              <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, singleCategory, pointContext)} category={singleCategory} />
             )}
 
             <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
