@@ -145,13 +145,14 @@ test("今日と明日の主提案重複を、関連候補内の日付ローテ�
   assert.ok(same / total <= 0.25, `${same}/${total}`);
 });
 
-test("一般向け身体操作文は、自然なスマホ操作と二手UIへ更新する", () => {
+test("一般向け身体操作文は自然なスマホ操作を保ち、別案を折りたたむ", () => {
   const publicBlock = dailySource.match(/const PUBLIC_ACTION_COPY_BY_ID = \{(.*?)\n\};\n\nconst BODY_CARE_NEEDS/s)?.[1] || "";
   assert.match(publicBlock, /スマホは片手で持ち続けず、反対の手でも下から支える/);
   assert.match(publicBlock, /親指の先だけで操作せず、ひじを小さく動かして手全体の位置も変えてみる/);
   assert.doesNotMatch(publicBlock, /手のひらを端末へ|指先を追いかけ/);
   assert.doesNotMatch(radarPageSource, /ほかの一手・しっくりこない時|>しっくりこない時</);
   assert.match(radarPageSource, /lifestyleSecondaryAction/);
-  assert.match(radarPageSource, /care_kind === "environment" \? "合っている目安"/);
+  assert.match(radarPageSource, /<CareStepCard action=\{lifestylePrimaryAction\}/);
+  assert.match(radarPageSource, /別のケアを選ぶ/);
   assert.match(radarPageSource, /lifestyleContextChips/);
 });
