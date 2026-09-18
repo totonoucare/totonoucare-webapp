@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { jstDateString } from "@/lib/dateJST";
 import { addDaysYmd, buildActionTags } from "@/lib/records/analysis";
-import { isMissingRecordsSchemaError } from "@/lib/records/server";
+import { isMissingRecordsSchemaError, loadRecentCompletedCare } from "@/lib/records/server";
 import {
   buildCareActionKey,
   canonicalCareActionKey,
@@ -242,8 +242,11 @@ export async function GET(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const targetDate = normalizeDate(new URL(req.url).searchParams.get("date"));
     if (!targetDate) return NextResponse.json({ error: "date invalid" }, { status: 400 });
-    const result = await listActions(user.id, targetDate);
-    return NextResponse.json({ data: { date: targetDate, actions: result.actions, schema_ready: result.schemaReady } });
+    const [result, completedCare] = await Promise.all([
+      listActions(user.id, targetDate),
+      new URL(req.url).searchParams.get("history") === "1" ? loadRecentCompletedCare(user.id, targetDate) : Promise.resolve([]),
+    ]);
+    return NextResponse.json({ data: { date: targetDate, actions: result.actions, completed_care: completedCare, schema_ready: result.schemaReady } });
   } catch (error) {
     console.error("/api/radar/care-actions GET error:", error);
     return NextResponse.json({ error: error?.message || String(error) }, { status: 500 });
