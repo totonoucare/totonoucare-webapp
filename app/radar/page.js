@@ -9,7 +9,6 @@ import AppShell, { Module } from "@/components/layout/AppShell";
 import { CoreIllust } from "@/components/illust/core";
 import Button from "@/components/ui/Button";
 import { WeatherIcon } from "@/components/illust/icons/weather";
-import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import {
   IconAttention,
   IconBolt,
@@ -44,8 +43,6 @@ import {
   formatTargetDate,
   deriveCarePolicies,
   getCareItemHint,
-  getCareStrategyLead,
-  getCareStrategyTitle,
   getDateModeLabel,
   getForecastWeatherLoadGroups,
   getForecastEnvironmentalCautions,
@@ -364,7 +361,7 @@ export default function RadarPage() {
   const [savingSymptom, setSavingSymptom] = useState(false);
 
   const [tab, setTab] = useState("forecast");
-  const [careTab, setCareTab] = useState("live");
+  const [careTab, setCareTab] = useState("eat");
   const [dateMode, setDateMode] = useState("today");
   const [selectedTargetDate, setSelectedTargetDate] = useState("");
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
@@ -1009,14 +1006,6 @@ export default function RadarPage() {
   const careTriggerFactors = useMemo(() => getForecastTriggerFactors(activeCareForecast), [activeCareForecast]);
   const careTriggerKey = careTriggerFactors[0]?.careKey || careTriggerFactors[0]?.key || getForecastTriggerKey(activeCareForecast);
   const secondaryCareTriggerKey = careTriggerFactors[1]?.careKey || careTriggerFactors[1]?.key || null;
-  const careStrategyTitle = useMemo(
-    () => getCareStrategyTitle(careTriggerKey, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow"),
-    [careTriggerKey, activeCareForecast?.signal, selectedIsToday]
-  );
-  const careStrategyLead = useMemo(
-    () => getCareStrategyLead(careTriggerFactors, activeCareForecast?.signal ?? 0, selectedIsToday ? "today" : "tomorrow", symptomFocus),
-    [careTriggerFactors, activeCareForecast?.signal, selectedIsToday, symptomFocus]
-  );
   const carePolicies = useMemo(() => {
     const theme = carePlan?.care_theme;
     if (safeArray(theme?.policies).length) {
@@ -1091,12 +1080,10 @@ export default function RadarPage() {
   const primaryFoodCards = foodActionCards.filter((card) => card?.primary || card?.prominent);
   const visiblePrimaryFoodCards = primaryFoodCards.length ? primaryFoodCards : [primaryFoodCard].filter(Boolean);
   const secondaryFoodCards = foodActionCards.filter((card) => !visiblePrimaryFoodCards.includes(card));
-  const foodContextChips = safeArray(food.context_chips);
   const hasFoodActionCards = foodActionCards.length > 0;
   const lifestylePrimaryAction = lifestylePlan?.primary_action || null;
   const lifestyleAlternatives = safeArray(lifestylePlan?.alternatives);
   const lifestyleSecondaryAction = lifestyleAlternatives[0] || null;
-  const lifestyleContextChips = safeArray(lifestylePrimaryAction?.context_chips);
   const lifestyleShopContext = lifestylePlan?.shop_context || null;
   const lineCare = tsuboSet?.line_care || null;
   const hasFoodDetails = hasFoodActionCards
@@ -1177,11 +1164,7 @@ export default function RadarPage() {
     });
     return groups;
   }, [purchasedShopItems]);
-  const previousNightCareCount = safeArray(careActions).filter((item) => item?.source_mode === "tomorrow").length;
-  const sameDayCareCount = safeArray(careActions).filter((item) => item?.source_mode === "today").length;
-  const checkedCareCount = selectedIsToday
-    ? previousNightCareCount + sameDayCareCount
-    : previousNightCareCount;
+
 
   async function toggleCareAction(item) {
     const actionKey = item?.canonical_key || item?.item_key;
@@ -1858,32 +1841,6 @@ export default function RadarPage() {
                 <div className="mt-1 text-[21px] font-black tracking-tight text-slate-900">
                   {selectedIsToday ? "今日のケア" : "今夜の先回りケア"}
                 </div>
-                <div className={["mt-1 text-[14px] font-extrabold leading-6", careTone.ink].join(" ")}>
-                  {careStrategyTitle}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-end gap-3 rounded-[24px] bg-[#F4FAF7] px-3.5 py-3 ring-1 ring-[#CFE7DE]">
-              <GuideBotAvatar
-                signal={forecast?.signal ?? 0}
-                mood={checkedCareCount > 0 ? "complete" : "normal"}
-                className="h-[72px] w-[72px] shrink-0"
-              />
-              <div className="relative mb-1 min-w-0 flex-1 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
-                <span className="absolute -left-1.5 bottom-5 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-                <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/65">ケアナビAI ミモル</div>
-                <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">
-                  {selectedIsToday
-                    ? sameDayCareCount > 0
-                      ? `${checkedCareCount}件を今日に向けたケアとして記録しています（昨晩${previousNightCareCount}件・今日${sameDayCareCount}件）。全部やらなくても大丈夫です。`
-                      : previousNightCareCount > 0
-                        ? `昨晩のケア${previousNightCareCount}件は、今日への先回りとして記録済みです。今日できたものも「やってみた」で追加できます。`
-                        : "実際に試したケアだけ「やってみた」を押すと、今夜の振り返りに残せます。"
-                    : checkedCareCount > 0
-                      ? `${checkedCareCount}件を明日に向けた先回りケアとして記録しました。全部やらなくても大丈夫です。`
-                      : "今夜できたケアを押すと、明日に向けた先回りケアとして記録できます。"}
-                </div>
               </div>
             </div>
 
@@ -1924,35 +1881,25 @@ export default function RadarPage() {
               </div>
 
               <div className="mt-3 text-[14px] font-bold leading-6 text-slate-700">
-                {carePolicies?.summary || careStrategyLead}
+                {completedCareReady ? carePlan?.care_theme?.selection_reason : "ケア方針を確認しています…"}
               </div>
             </div>
 
             <div className="mt-4">
               <SegmentedTabs
                 tabs={[
-                  { key: "live", label: "暮らす", icon: IconLifestyle },
                   { key: "eat", label: "食べる", icon: IconBowl },
                   { key: "loosen", label: "ほぐす", icon: IconRipple },
+                  { key: "live", label: "暮らす", icon: IconLifestyle },
                 ]}
                 value={careTab}
                 onChange={setCareTab}
               />
-              <p className="mt-3 text-[13px] font-bold leading-5 text-slate-500">できそうなケアを一つ選んで試しましょう。</p>
               {!completedCareReady ? <p className="mt-3 text-sm text-slate-500" role="status">ケアを準備しています…</p> : null}
             </div>
 
             {completedCareReady && careTab === "loosen" ? (
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between gap-3 px-1">
-                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
-                    ほぐす
-                  </div>
-                  <div className="rounded-full bg-[#F6EFF8] px-2.5 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
-                    経絡・ツボケア
-                  </div>
-                </div>
-
                 {lineCare ? (
                   <div className="rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(123,101,136,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
@@ -1965,11 +1912,12 @@ export default function RadarPage() {
                       {lineCare.label || lineCare.action}
                     </div>
                     {lineCare.reason ? (
-                      <div className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
+                      <details className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
+                        <summary className="cursor-pointer">選んだ理由と加減</summary>
                         {[lineCare.reason, lineCare.guidance_note]
                           .filter(Boolean)
                           .join(" ")}
-                      </div>
+                      </details>
                     ) : null}
                     <div className="mt-3 flex justify-end">
                       {actionButtonFor(careItemsByKind.get("tsubo_line_care")?.[0], { compact: true })}
@@ -2136,49 +2084,9 @@ export default function RadarPage() {
               </div>
             ) : null}
 
-            {careTab === "eat" ? (
+            {completedCareReady && careTab === "eat" ? (
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between gap-3 px-1">
-                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
-                    食べる
-                  </div>
-                  <div className="rounded-full bg-[#FFF5E6] px-2.5 py-1 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">
-                    食べるケア
-                  </div>
-                </div>
-
                 <div className="rounded-[24px] bg-[#FFF5E6] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(165,108,24,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
-                  <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#A56C18] ring-1 ring-[#EED8B4] shadow-[0_10px_20px_-16px_rgba(165,108,24,0.30)]">
-                    {food.badge || "まずはこれ"}
-                  </div>
-
-                  <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
-                    {food.display_compact
-                      ? (selectedIsToday ? "今日の食べる一手" : "今夜〜明朝の食べる一手")
-                      : food.title || sectionLabels.foodTitle || `${getDateModeLabel(bundleDateMode)}の食養生`}
-                  </div>
-
-
-                  {foodContextChips.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {foodContextChips.map((chip, idx) => (
-                        <span
-                          key={`${chip}-${idx}`}
-                          className="rounded-full bg-white/90 px-2.5 py-1 text-[12px] font-black text-[#A56C18]/80 ring-1 ring-[#EED8B4]"
-                        >
-                          {chip}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {food.practical_tip ? <div className="mt-3 rounded-2xl bg-white p-3 text-[14px] font-bold leading-6 text-[#865919]">{food.practical_tip}</div> : null}
-                  {food.recommendation || food.focus ? (
-                    <div className="mt-3 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
-                      <details><summary className="cursor-pointer">この食べ方を選んだ理由</summary><p className="mt-2">{food.recommendation || food.focus}</p></details>
-                    </div>
-                  ) : null}
-
                   {hasFoodActionCards ? (
                     <div className="mt-4 space-y-2.5">
                       {visiblePrimaryFoodCards.map((card, idx) => {
@@ -2220,7 +2128,7 @@ export default function RadarPage() {
                             </div>
 
                             {safeArray(card.items).length > 0 ? (
-                              <div className="mt-3 space-y-2 pl-11">
+                              <div className="mt-3 space-y-2">
                                 {safeArray(card.items).map((item, itemIdx) => {
                                   const itemDetail = safeArray(card.item_details)?.[itemIdx] || null;
                                   const itemAction = card.key === "caution"
@@ -2250,6 +2158,7 @@ export default function RadarPage() {
                                         </div>
                                         {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
                                       </div>
+                                      {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
                                       {safeArray(itemDetail?.reasons).length ? (
                                         <details className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                           <summary className="cursor-pointer text-[#9A6B20]">{itemDetail.preparation ? "作り方と選んだ理由" : "選んだ理由"}</summary>
@@ -2268,7 +2177,7 @@ export default function RadarPage() {
                               </div>
                             ) : null}
                             {card.body ? (
-                              <div className={["mt-3 text-[12px] font-bold leading-5 text-slate-500", safeArray(card.items).length ? "pl-11" : ""].join(" ")}>
+                              <div className="mt-3 text-[12px] font-bold leading-5 text-slate-500">
                                 {card.body}
                               </div>
                             ) : null}
@@ -2396,7 +2305,8 @@ export default function RadarPage() {
                                                 ? actionButtonFor(careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIndex], { compact: true })
                                                 : null}
                                             </div>
-                                            {safeArray(itemDetail?.reasons).length ? (
+                                            {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
+                                      {safeArray(itemDetail?.reasons).length ? (
                                               <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                                 {safeArray(itemDetail.reasons).map((reason, reasonIndex) => (
                                                   <div key={`${reason?.label || "reason"}-${reasonIndex}`} className="text-[12px] font-bold leading-5 text-slate-500">
@@ -2465,37 +2375,11 @@ export default function RadarPage() {
 
             {completedCareReady && careTab === "live" ? (
               <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between gap-3 px-1">
-                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
-                    暮らす
-                  </div>
-                  <div className="rounded-full bg-[#EAF7F1] px-2.5 py-1 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE]">
-                    生活ケア
-                  </div>
-                </div>
-
                 <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div>
                     <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                       {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
-                    {lifestylePlan?.forecast_insight || lifestylePlan?.lead ? (
-                      <div className="mt-2.5 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
-                        {lifestylePlan.forecast_insight || lifestylePlan.lead}
-                      </div>
-                    ) : null}
-                    {lifestyleContextChips.length > 0 ? (
-                      <div className="mt-2.5 flex flex-wrap gap-2">
-                        {lifestyleContextChips.map((chip) => (
-                          <span
-                            key={chip}
-                            className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-[#496D63] ring-1 ring-[#DCEBE5]"
-                          >
-                            {chip}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
                     {lifestylePrimaryAction ? (
                       <CareStepCard action={lifestylePrimaryAction} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[0], { compact: true })} />
                     ) : (
