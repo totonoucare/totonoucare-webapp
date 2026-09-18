@@ -1,3 +1,4 @@
+import { loadRecentCompletedCare } from "@/lib/records/server";
 import { NextResponse } from "next/server";
 import { RECORDS_EDIT_LOOKBACK_DAYS } from "@/lib/records/policy";
 import { supabaseServer } from "@/lib/supabaseServer";
@@ -123,12 +124,13 @@ async function findForecast(userId, targetDate) {
   return data?.[0] || null;
 }
 
-function buildSavedDisplayedCare(forecast, profile, targetDate) {
+function buildSavedDisplayedCare(forecast, profile, targetDate, completedCare) {
   const riskContext = forecast?.computed?.radar_plan_meta?.risk_context || null;
   if (!forecast || !riskContext) return null;
   try {
     const symptomFocus = profile?.symptom_focus || riskContext?.constitution_context?.symptom_focus || null;
     const carePlan = resolveDisplayedCarePlan({
+      completedCare,
       forecast,
       riskContext,
       mode: "today",
@@ -301,7 +303,7 @@ export async function POST(req) {
 
     const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : "";
     if (sameDayTiming) await updateSameDayActionTiming(user.id, targetDate, sameDayTiming);
-    const [existingResult, currentForecast, careActionResult, profile] = await Promise.all([
+    const [existingResult, currentForecast, careActionResult, profile, completedCare] = await Promise.all([
       findLatestReview(user.id, targetDate),
       findForecast(user.id, targetDate),
       loadCareActionsForDate(user.id, targetDate),
@@ -309,6 +311,7 @@ export async function POST(req) {
         console.warn("record profile snapshot skipped:", profileError?.message || String(profileError));
         return null;
       }),
+      loadRecentCompletedCare(user.id, targetDate),
     ]);
     if (!existingResult.integrityReady) {
       return NextResponse.json(
@@ -337,7 +340,7 @@ export async function POST(req) {
       || (currentForecast ? snapshotFromForecast(currentForecast, "record_save") : null);
     const savedDisplayedCare = existingSnapshot?.displayed_care
       || (shouldCaptureDisplayedCare
-        ? buildSavedDisplayedCare(currentForecast, profile, targetDate)
+        ? buildSavedDisplayedCare(currentForecast, profile, targetDate, completedCare)
         : null);
     const snapshot = baseSnapshot && savedDisplayedCare
       ? { ...baseSnapshot, displayed_care: savedDisplayedCare }
