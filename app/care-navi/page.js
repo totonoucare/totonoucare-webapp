@@ -44,16 +44,6 @@ const CARE_NAVI_THEME = {
 
 const CATEGORY_OPTIONS = [
   {
-    key: "live",
-    label: "暮らす",
-    icon: IconLifestyle,
-    lead: "睡眠・入浴・空気・温度湿度まわり",
-    surfaceClass: "bg-[#EFF8F4]",
-    inkClass: "text-[#2F816E]",
-    ringClass: "ring-[#CFE7DE]",
-    railClass: "bg-[#66B9A3]",
-  },
-  {
     key: "eat",
     label: "食べる",
     icon: IconFood,
@@ -73,11 +63,21 @@ const CATEGORY_OPTIONS = [
     ringClass: "ring-[#E2D6E7]",
     railClass: "bg-[#A78BB3]",
   },
+  {
+    key: "live",
+    label: "暮らす",
+    icon: IconLifestyle,
+    lead: "睡眠・入浴・空気・温度湿度まわり",
+    surfaceClass: "bg-[#EFF8F4]",
+    inkClass: "text-[#2F816E]",
+    ringClass: "ring-[#CFE7DE]",
+    railClass: "bg-[#66B9A3]",
+  },
 ];
 
 const CATEGORY_ORDER = CATEGORY_OPTIONS.map((item) => item.key);
 
-// セット表示は「暮らす・食べる・ほぐす」を基本にするが、
+// セット表示は「食べる・ほぐす・暮らす」を基本にするが、
 // 用途・部位が合う商品を確保できない時は無理に3点へ補充しない。
 const CARE_SET_MODE = "steady";
 
@@ -3053,8 +3053,8 @@ export default function CareNaviPage() {
   const [showConditions, setShowConditions] = useState(false);
   const [primaryTab, setPrimaryTab] = useState("recommend");
   const [showSaved, setShowSaved] = useState(false);
-  const [viewMode, setViewMode] = useState("sets");
-  const [singleCategory, setSingleCategory] = useState("live");
+  const [viewMode, setViewMode] = useState("single");
+  const [singleCategory, setSingleCategory] = useState("eat");
   const [shopEntries, setShopEntries] = useState([]);
   const [shopReady, setShopReady] = useState(false);
   const [shopSchemaReady, setShopSchemaReady] = useState(false);
