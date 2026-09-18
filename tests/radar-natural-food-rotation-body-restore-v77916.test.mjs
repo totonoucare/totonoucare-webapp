@@ -63,25 +63,10 @@ const profiles = [
   ["accel_batt_large", "accel"],
 ];
 
-test("身体の使い方5件は、抽象トレーニング化する前の実用動作へ戻す", () => {
-  const publicBlock = dailySource.match(/const PUBLIC_ACTION_COPY_BY_ID = \{(.*?)\n\};\n\nconst BODY_CARE_NEEDS/s)?.[1] || "";
-  const action = (id) => publicBlock.match(new RegExp(`"${id}": \\{(.*?)\\n  \\},`, "s"))?.[1] || "";
-
-  assert.match(action("tension-screen-head-up"), /後頭部を1cm上へ運ぶ/);
-  assert.doesNotMatch(action("tension-screen-head-up"), /頭全体を真上/);
-
-  assert.match(action("tension-head-sky-line"), /椅子か足を動かして胸もそちらへ向ける/);
-  assert.doesNotMatch(action("tension-head-sky-line"), /頭全体を上へ伸ば/);
-
-  assert.match(action("tension-wall-axis"), /前腕のひじ寄りを安定した台へ/);
-  assert.doesNotMatch(action("tension-wall-axis"), /壁を押/);
-
-  assert.match(action("tension-supported-one-leg"), /片足を半歩前へ/);
-  assert.match(action("tension-supported-one-leg"), /前後の足を入れ替える/);
-  assert.doesNotMatch(action("tension-supported-one-leg"), /片足で10秒/);
-
-  assert.match(action("tension-seated-foot-head"), /お尻を左右へ小さく揺らし/);
-  assert.doesNotMatch(action("tension-seated-foot-head"), /足裏は下へ|頭は上へ/);
+test("身体の使い方5件は、抽象トレーニング化する前の実用動作へ戻す（v7.79.62仕様）", () => {
+assert.match(dailySource,/かかとの少し前あたりに体重を乗せ/);
+assert.match(dailySource,/両足裏を床につけ、お尻を左右に小さく動かし/);
+assert.doesNotMatch(dailySource,/後頭部を1cm|tension-walk-center-first|tension-screen-head-up/);
 });
 
 test("ユーザー向け文言へ、意味の曖昧なAI比喩を戻さない", () => {

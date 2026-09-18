@@ -56,8 +56,8 @@ test("7天気×9不調で、主提案の根拠から選択中の不調を落と�
 
 test("胃腸とめまいへ、別の不調用の身体操作を流用しない", () => {
   const digestion = build({ trigger: "damp", symptomFocus: "digestion" }).primary_action;
-  assert.equal(digestion.id, "tool-work-height");
-  assert.match(`${digestion.scene} ${digestion.label} ${digestion.reason}`, /胃腸|お腹/);
+  assert.ok(["tool-screen-height", "tool-foot-support", "tool-back-support"].includes(digestion.id));
+  assert.match(`${digestion.scene} ${digestion.label} ${digestion.reason}`, /胃腸|お腹|足裏/);
   assert.doesNotMatch(`${digestion.scene} ${digestion.label}`, /段差|荷物|床の物/);
 
   const dizziness = build({ trigger: "damp", symptomFocus: "dizziness" }).primary_action;

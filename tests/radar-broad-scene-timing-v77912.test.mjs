@@ -6,17 +6,7 @@ const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV
 const daily = await import(`data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`);
 const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
 
-const BROAD_SCENES = new Set([
-  "物を持つ・運ぶ時は",
-  "物を押す・引く・回す時は",
-  "手を伸ばして物を取る時は",
-  "かがむ・高さを変える時は",
-  "立つ・座る・起き上がる時は",
-  "歩く・段差を移動する時は",
-  "手作業や画面操作が続く時は",
-  "同じ姿勢で待つ・作業する時は",
-  "横になる・寝返る時は",
-]);
+const BROAD_SCENES = new Set(["軽いコップなどを持つ時", "荷物を両手で持つ時", "スマホを操作する時", "立っている時", "座り直す時", "椅子から立つ時", "あお向けから寝返る時"]);
 
 function build({
   date = "2026-08-02",
@@ -55,7 +45,7 @@ function shown(plan) {
   return [plan?.primary_action, ...(plan?.alternatives || [])].filter(Boolean);
 }
 
-test("身体操作の表示場面は九つの基本動作だけを正本にする", () => {
+test("身体操作は動きを想像できる具体的な場面を示す", () => {
   const seen = new Set();
   for (const trigger of ["damp", "heat", "dry", "cold", "pressure_down", "pressure_up", "temp_shift"]) {
     for (const symptomFocus of ["fatigue", "sleep", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness"]) {
@@ -68,7 +58,7 @@ test("身体操作の表示場面は九つの基本動作だけを正本にす�
         for (const item of shown(plan).filter((action) => action.care_kind === "body")) {
           seen.add(item.scene);
           assert.equal(BROAD_SCENES.has(item.scene), true, `${item.id}: ${item.scene}`);
-          assert.doesNotMatch(item.scene, /まな板|器|モップ|掃除機|洗濯|買い物袋|スマホ|扉|引き出し|キーボード|マウス/);
+          assert.doesNotMatch(item.scene, /まな板|器|モップ|掃除機|洗濯|買い物袋|扉|引き出し|キーボード|マウス/);
         }
       }
     }
@@ -76,13 +66,9 @@ test("身体操作の表示場面は九つの基本動作だけを正本にす�
   assert.ok(seen.size >= 6, [...seen].join(" / "));
 });
 
-test("具体策は個別家事名へ固定せず、広い場面の中で使える文章にする", () => {
-  const publicBlock = dailySource.match(/const PUBLIC_ACTION_COPY_BY_ID = \{(.*?)\n\};\n\nconst BODY_MECHANICS/s)?.[1] || "";
-  assert.doesNotMatch(publicBlock, /\n\s+scene:/);
-  assert.doesNotMatch(publicBlock, /まな板|モップ|掃除機|洗濯かご|買い物袋|重い扉|引き出し|キーボード|マウス/);
-  assert.match(publicBlock, /スマホは片手で持ち続けず、反対の手でも下から支える/);
-  assert.match(publicBlock, /手元で使う物を、こぶし一つぶん手前へ寄せる/);
-  assert.match(publicBlock, /押す・引く物へ近づいて軽く持つ/);
+test("再現しやすいスマホ操作を残し、感覚の共有が必要な操作を外す", () => {
+  assert.match(dailySource, /反対の手でもスマホを下から支える/);
+  assert.doesNotMatch(dailySource, /後頭部を1cm|みぞおちの少し下を先へ運ぶ|明朝最初に使う物/);
 });
 
 test("明日タブは身体操作と環境調整を、今夜〜明朝の一手としてそろえる", () => {

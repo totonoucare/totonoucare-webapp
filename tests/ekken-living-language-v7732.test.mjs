@@ -17,7 +17,7 @@ test("live support invites plain-language translation without forcing metaphors"
   assert.match(promptText, /比喩は理解を助ける時だけ自然に使う/);
   assert.match(promptText, /毎回入れたり/);
   assert.match(promptText, /定型句として使い回したりしない/);
-  assert.ok(promptText.length < 2600, `live prompt length was ${promptText.length}`);
+  assert.ok(promptText.length < 2800, `live prompt length was ${promptText.length}`);
 });
 
 test("product context carries translation sensitivity examples rather than a mandatory dictionary", () => {

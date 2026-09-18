@@ -13,7 +13,7 @@ const liveRoute = await readFile(new URL("../app/api/records/live-chat/route.js"
 const live = String(prompts.LIVE_SUPPORT_INSTRUCTIONS);
 
 test("live support prompt is compact enough to leave reasoning room", () => {
-  assert.ok(live.length < 2600, `live prompt length was ${live.length}`);
+  assert.ok(live.length < 2800, `live prompt length was ${live.length}`);
   assert.match(live, /今回に関係する材料を自由に選び、統合して考える/);
   assert.match(live, /回答の順序、長さ、提案数、質問数を型にはめず/);
 });

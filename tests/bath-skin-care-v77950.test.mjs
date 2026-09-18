@@ -59,14 +59,13 @@ const safeGuidedInput = {
   redFlags: [],
 };
 
-test("冷え・寒暖差の暮らすケアは今日の入浴と明日の準備を分ける", () => {
-  const today = buildLifestyle({ mode: "today", date: "2026-09-05" });
-  const tomorrow = buildLifestyle({ mode: "tomorrow", date: "2026-09-02" });
-  assert.ok(shownIds(today).includes("tool-bath-or-footbath"));
-  assert.ok(shownIds(tomorrow).includes("prep-evening-bath-or-footbath"));
-  assert.match([today.primary_action, ...today.alternatives].find((item) => item?.id === "tool-bath-or-footbath")?.label || "", /ぬるめの湯/);
-  assert.match([tomorrow.primary_action, ...tomorrow.alternatives].find((item) => item?.id === "prep-evening-bath-or-footbath")?.label || "", /今夜/);
-  assert.notEqual(today.shop_context?.action_id, tomorrow.shop_context?.action_id);
+test("冷え・寒暖差の暮らすケアは今日の入浴と明日の準備を分ける（v7.79.62仕様）", () => {
+for(const mode of ["today","tomorrow"]) {
+const plans=Array.from({length:28},(_,i)=>buildLifestyle({mode,date:`2026-09-${String(i+1).padStart(2,"0")}`}));
+const bath=plans.flatMap(p=>[p.primary_action,...p.alternatives]).find(x=>x?.id==="tool-bath-or-footbath");
+assert.ok(bath);assert.match(bath.scene,/今夜、冷えが気になる時/);assert.match(bath.label,/ぬるめのお湯/);
+assert.ok(!plans.some(p=>shownIds(p).some(id=>id.startsWith("prep-"))));
+}
 });
 
 test("入浴・足湯は冷え系条件だけに出し、頭痛・めまいへ自動提案しない", () => {

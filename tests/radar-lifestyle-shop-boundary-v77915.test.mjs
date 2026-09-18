@@ -46,17 +46,10 @@ function shown(plan) {
   return [plan?.primary_action, ...(plan?.alternatives || [])].filter(Boolean);
 }
 
-test("持ち方の身体操作は、手根側を近づけて手のひら中央へ空間を残す", () => {
-  const publicCopyBlock = dailySource.match(/const PUBLIC_ACTION_COPY_BY_ID = \{(.*?)\n\};\n\nconst BODY_CARE_NEEDS/s)?.[1] || "";
-  const palmCarry = publicCopyBlock.match(/"tension-open-palm-carry": \{(.*?)\n  \},/s)?.[1] || "";
-  const littleFinger = publicCopyBlock.match(/"tension-little-finger-thumb-line": \{(.*?)\n  \},/s)?.[1] || "";
-  assert.match(palmCarry, /指先を物へ添えた位置は残し/);
-  assert.match(palmCarry, /手首に近い手のひらの付け根を物へ近づける/);
-  assert.match(palmCarry, /手のひらの中央に浅いくぼみを残し/);
-  assert.match(littleFinger, /手のひらの付け根を物へ近づけ/);
-  assert.match(littleFinger, /小指側から包/);
-  assert.doesNotMatch(publicCopyBlock, /細い持ち手|指先に掛けず/);
-  assert.doesNotMatch(dailySource, /片手の袋を二つに分ける/);
+test("握り方は日常語で一つにまとめ、確認ポイントを添える", () => {
+  assert.match(dailySource, /手のひらで包むように持ち、指に力を入れすぎない/);
+  assert.match(dailySource, /指や手首に余計な力が入っていないか/);
+  assert.doesNotMatch(dailySource, /tension-little-finger-thumb-line|手のひらの中央に浅いくぼみ/);
 });
 
 test("身体の使い方は全条件で商品へ直結せず、ショップ文脈は環境調整から作る", () => {
@@ -90,15 +83,11 @@ test("身体の使い方は全条件で商品へ直結せず、ショップ文�
 });
 
 test("胃腸の前かがみケアは、商品検索でも画面・読み物用スタンドへ限定する", () => {
-  const plan = build({
-    date: "2026-08-04",
-    symptomFocus: "digestion",
-    trigger: "damp",
-    coreCode: "brake_batt_small",
-  }).lifestyle_plan;
-  assert.equal(plan.primary_action.id, "tool-work-height");
-  assert.equal(plan.shop_context.item_role, "screen_height");
-  assert.match(rakutenRouteSource, /"tool-work-height:screen_height"/);
+  const plans = Array.from({length:28}, (_,i) => build({date:`2026-08-${String(i+1).padStart(2,"0")}`,symptomFocus:"digestion",trigger:"damp",coreCode:"brake_batt_small"}).lifestyle_plan);
+  const stand = plans.flatMap(shown).find(x => x.id === "tool-screen-height");
+  assert.ok(stand);
+  assert.equal(stand.item_role, "screen_height");
+  assert.match(stand.label, /お腹/);
   assert.match(rakutenRouteSource, /タブレット 書見台 スタンド 高さ調整/);
 });
 

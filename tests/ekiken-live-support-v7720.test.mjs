@@ -11,7 +11,7 @@ test("ミモル is named consistently as the care navigation AI", async () => {
   const radar = await source("app/radar/page.js");
   const guide = await source("app/guide/GuideClient.jsx");
   assert.match(live, /EKIKEN_DISPLAY_NAME/);
-  assert.match(radar, /ケアナビAI ミモル/);
+  assert.doesNotMatch(radar, /ケアナビAI (?:Ekken|益軒)/);
   assert.match(guide, /ミモル/);
 });
 

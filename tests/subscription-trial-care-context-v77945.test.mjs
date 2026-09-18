@@ -29,7 +29,7 @@ function plan({ date, mode, trigger, symptom = "fatigue", meridian = "spleen_st"
   });
 }
 
-test("今日の暮らす・ほぐすと、翌日の準備ケアは同じ主案を再掲しない", () => {
+test("今日と今夜に実行できる暮らすケアを選び、ほぐすの巡回を維持する", () => {
   const triggers = ["pressure_down", "pressure_up", "damp", "dry", "cold", "heat", "temp_shift"];
   const symptoms = ["fatigue", "sleep", "digestion", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness", "mood"];
   for (const trigger of triggers) {
@@ -38,7 +38,9 @@ test("今日の暮らす・ほぐすと、翌日の準備ケアは同じ主案�
       const tomorrow = plan({ date: "2026-10-04", mode: "tomorrow", trigger, symptom });
       assert.ok(today.lifestyle_plan.primary_action?.id, `${trigger}/${symptom}: today lifestyle`);
       assert.ok(tomorrow.lifestyle_plan.primary_action?.id, `${trigger}/${symptom}: tomorrow lifestyle`);
-      assert.notEqual(today.lifestyle_plan.primary_action.id, tomorrow.lifestyle_plan.primary_action.id);
+      assert.ok(today.lifestyle_plan.primary_action.felt_sense);
+assert.ok(tomorrow.lifestyle_plan.primary_action.felt_sense);
+assert.doesNotMatch(tomorrow.lifestyle_plan.primary_action.id,/^prep-morning/);
       assert.notEqual(today.night_tsubo_set.line_care.id, tomorrow.night_tsubo_set.line_care.id);
       assert.match(tomorrow.lifestyle_plan.timing_label, /今夜|明朝/);
       assert.match(tomorrow.night_tsubo_set.line_care.timing_label, /今夜|明朝/);

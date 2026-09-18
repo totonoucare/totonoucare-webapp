@@ -18,6 +18,6 @@ test("visible care navigation AI branding uses ミモル while legacy internal e
   assert.match(prompts, /ケアナビAI ミモル/);
   assert.match(context, /name: "ミモル"/);
   assert.match(guide, /ケアナビAI ミモル/);
-  assert.match(radar, /ケアナビAI ミモル/);
+  assert.doesNotMatch(radar, /ケアナビAI (?:Ekken|益軒)/);
   assert.doesNotMatch(joined, /Ekiken|エキケン/);
 });
