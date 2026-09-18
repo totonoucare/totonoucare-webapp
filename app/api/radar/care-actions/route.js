@@ -87,6 +87,9 @@ function cleanSnapshot(value, fallback) {
     meta: {
       plan_title: compact(meta.plan_title, 100) || null,
       card_key: compact(meta.card_key, 40) || null,
+      record_semantics: meta.record_semantics === "ingredients_or_eating_pattern" ? meta.record_semantics : null,
+      suggested_ingredients: (Array.isArray(meta.suggested_ingredients) ? meta.suggested_ingredients : []).map((item) => compact(item, 60)).filter(Boolean).slice(0, 8),
+      meal_example: compact(meta.meal_example, 120) || null,
       card_label: compact(meta.card_label, 120) || null,
       point_code: compact(meta.point_code, 30) || null,
       point_name: compact(meta.point_name, 80) || null,
