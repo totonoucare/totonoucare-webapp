@@ -15,6 +15,7 @@ const rakutenSource = await readFile(new URL("../app/api/care-navi/rakuten/route
 
 function buildLifestyle({ mode, date, symptomFocus = "fatigue", trigger = "cold" }) {
   return daily.enhanceDailyCarePlan({
+    lifestyleScene: "sleep",
     baseCarePlan: {},
     forecast: {
       target_date: date,
@@ -59,7 +60,7 @@ const safeGuidedInput = {
   redFlags: [],
 };
 
-test("冷え・寒暖差の暮らすケアは今日の入浴と明日の準備を分ける（v7.79.62仕様）", () => {
+test("寝る前の場面を選ぶと、今日・今夜とも冷えに合う入浴ケアを選べる", () => {
 for(const mode of ["today","tomorrow"]) {
 const plans=Array.from({length:28},(_,i)=>buildLifestyle({mode,date:`2026-09-${String(i+1).padStart(2,"0")}`}));
 const bath=plans.flatMap(p=>[p.primary_action,...p.alternatives]).find(x=>x?.id==="tool-bath-or-footbath");

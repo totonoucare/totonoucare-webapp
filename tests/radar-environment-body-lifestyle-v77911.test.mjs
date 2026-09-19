@@ -54,6 +54,7 @@ test("暮らすは身体の使い方と環境調整だけを、根拠付きで�
     for (const symptomFocus of ["fatigue", "sleep", "digestion", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness", "mood"]) {
       const plan = build({ trigger, symptomFocus }).lifestyle_plan;
       const items = shown(plan);
+      if (!items.length) { assert.equal(plan.no_suggestion, true); continue; }
       assert.ok(items.length >= 1 && items.length <= 2, `${trigger}/${symptomFocus}/${items.length}`);
       assert.equal(
         items[0].selected_because.some((reason) => reason.axis === "symptom" && reason.key === symptomFocus),
@@ -62,7 +63,7 @@ test("暮らすは身体の使い方と環境調整だけを、根拠付きで�
       );
       for (const action of items) {
         assert.ok(["body", "environment"].includes(action.care_kind));
-        assert.ok(["身体の使い方", "環境調整"].includes(action.kind_label));
+        assert.ok(["道具なしの一手", "道具を使う一手"].includes(action.kind_label));
         assert.ok(action.scene.length > 0);
         assert.ok(action.label.length > 0);
         assert.ok(action.reason.length > 0);

@@ -128,11 +128,14 @@ assert.ok(item.lifestyleToday.care_theme.selection_reason);
 }
 });
 
-test("胃腸を含む全ペルソナで、四季の暮らす主提案が一種類へ固定されない（v7.79.62仕様）", () => {
+test("四季を通じて場面に合う候補だけを表示し、件数のために場面を広げない", () => {
 for(const persona of PERSONAS) {
 const plans=Object.values(SEASONS).flatMap(season=>Array.from({length:14},(_,i)=>buildLifestyle(persona,season,"today",`2026-08-${String(i+1).padStart(2,"0")}`)));
-for(const plan of plans) assert.ok(plan.primary_action.selected_because.some(r=>r.axis==="symptom"&&r.key===persona.symptom));
-assert.ok(new Set(plans.map(p=>p.primary_action.id)).size>=2,persona.id);
+for(const plan of plans) {
+ if (!plan.primary_action) { assert.equal(plan.no_suggestion,true); continue; }
+ assert.ok(plan.primary_action.selected_because.some(r=>r.axis==="symptom"&&r.key===persona.symptom));
+ assert.doesNotMatch(plan.primary_action.id,/screen-height|facing-layout|foot-support|phone-thumb/);
+}
 }
 });
 

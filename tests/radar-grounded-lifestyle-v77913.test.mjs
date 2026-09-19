@@ -6,8 +6,9 @@ const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV
 const daily = await import(`data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`);
 const careNaviSource = await readFile(new URL("../app/care-navi/page.js", import.meta.url), "utf8");
 
-function build({ trigger, symptomFocus, date = "2026-08-04", mode = "today" }) {
+function build({ trigger, symptomFocus, date = "2026-08-04", mode = "today", lifestyleScene = "general" }) {
   return daily.enhanceDailyCarePlan({
+    lifestyleScene,
     baseCarePlan: {},
     forecast: {
       target_date: date,
@@ -41,7 +42,7 @@ test("7天気×9不調で、主提案の根拠から選択中の不調を落と�
   const symptoms = ["fatigue", "sleep", "digestion", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness", "mood"];
   for (const trigger of triggers) {
     for (const symptomFocus of symptoms) {
-      const primary = build({ trigger, symptomFocus }).primary_action;
+      const primary = build({ trigger, symptomFocus, lifestyleScene: symptomFocus === "dizziness" ? "screen" : "general" }).primary_action;
       assert.ok(primary, `${trigger}/${symptomFocus}`);
       assert.equal(
         primary.selected_because.some((item) => item.axis === "symptom" && item.key === symptomFocus),
@@ -56,13 +57,13 @@ test("7天気×9不調で、主提案の根拠から選択中の不調を落と�
 
 test("胃腸とめまいへ、別の不調用の身体操作を流用しない", () => {
   const digestion = build({ trigger: "damp", symptomFocus: "digestion" }).primary_action;
-  assert.ok(["tool-screen-height", "tool-foot-support", "tool-back-support"].includes(digestion.id));
-  assert.match(`${digestion.scene} ${digestion.label} ${digestion.reason}`, /胃腸|お腹|足裏/);
+  assert.ok(["tension-seated-foot-head", "tension-inner-ankle-stand"].includes(digestion.id));
+  assert.match(`${digestion.scene} ${digestion.label} ${digestion.reason}`, /胃腸|お腹|足裏|足指/);
   assert.doesNotMatch(`${digestion.scene} ${digestion.label}`, /段差|荷物|床の物/);
 
-  const dizziness = build({ trigger: "damp", symptomFocus: "dizziness" }).primary_action;
+  const dizziness = build({ trigger: "damp", symptomFocus: "dizziness", lifestyleScene: "screen" }).primary_action;
   assert.ok(["tool-facing-layout", "tool-screen-height"].includes(dizziness.id));
-  assert.match(`${dizziness.label} ${dizziness.reason}`, /画面|頭|見る物/);
+  assert.match(`${dizziness.label} ${dizziness.reason}`, /画面|頭|見る物|スマホ|本/);
   assert.doesNotMatch(`${dizziness.scene} ${dizziness.label}`, /歩く|段差|片足/);
 });
 

@@ -304,7 +304,7 @@ test("concrete care actions are counted by target day and keep previous-night pr
   assert.equal(summary.concrete_care_days, 1);
   assert.equal(summary.concrete_care_action_count, 1);
   assert.equal(summary.previous_night_care_days, 1);
-  assert.equal(summary.before_peak_care_days, 1);
+  assert.equal(summary.before_peak_care_days, 0);
   assert.equal(summary.specific_care_patterns[0].label, "内関のツボケア");
   assert.equal(summary.specific_care_patterns[0].previous_night_days, 1);
   assert.deepEqual(summary.specific_care_patterns[0].actual_counts, { good: 1, mild: 0, hard: 0 });
@@ -339,6 +339,7 @@ test("the same concrete care keeps both previous-night and same-day timing outco
       kind: "tsubo_point",
       label: "内関のツボケア",
       timing_relation: "previous_night",
+      item_snapshot: {meta:{timing_source:"individual",symptom_timing:"before_peak"}},
     },
     {
       source_mode: "today",
@@ -348,6 +349,7 @@ test("the same concrete care keeps both previous-night and same-day timing outco
       kind: "tsubo_point",
       label: "内関のツボケア",
       timing_relation: "same_day_after",
+      item_snapshot: {meta:{timing_source:"individual",symptom_timing:"after_symptom"}},
     },
   ];
   const summary = buildRecordsSummary([

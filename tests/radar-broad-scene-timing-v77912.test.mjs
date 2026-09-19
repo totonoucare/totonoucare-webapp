@@ -16,9 +16,11 @@ function build({
   symptomFocus = "neck_shoulder",
   coreCode = "brake_batt_small",
   baseCarePlan = {},
+  avoidLifestyleIds = [],
 } = {}) {
   return daily.enhanceDailyCarePlan({
     baseCarePlan,
+    avoidLifestyleIds,
     forecast: {
       target_date: date,
       signal: 1,
@@ -63,7 +65,7 @@ test("身体操作は動きを想像できる具体的な場面を示す", () =>
       }
     }
   }
-  assert.ok(seen.size >= 6, [...seen].join(" / "));
+  assert.ok(seen.size >= 4, [...seen].join(" / "));
 });
 
 test("再現しやすいスマホ操作を残し、感覚の共有が必要な操作を外す", () => {
@@ -90,8 +92,8 @@ test("明日タブは身体操作と環境調整を、今夜〜明朝の一手�
 
 test("今日と明日は適合度を落とさず、近い候補だけを巡回する", () => {
   const today = build({ date: "2026-08-02", mode: "today" }).lifestyle_plan;
-  const tomorrow = build({ date: "2026-08-03", mode: "tomorrow" }).lifestyle_plan;
-  assert.notEqual(today.primary_action?.id, tomorrow.primary_action?.id);
+  const tomorrow = build({ date: "2026-08-03", mode: "tomorrow", avoidLifestyleIds: today.step_ids }).lifestyle_plan;
+  for (const action of shown(tomorrow)) if (today.step_ids.includes(action.id)) assert.match(action.continuity_note, /今日と共通/);
   assert.ok(["body", "environment"].includes(today.primary_action?.care_kind));
   assert.ok(["body", "environment"].includes(tomorrow.primary_action?.care_kind));
   assert.ok(today.selection_basis.primary_candidate_score >= 18);

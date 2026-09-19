@@ -157,7 +157,7 @@ test("the main display is concise and presents the second care as a numbered car
   assert.ok(plan.lifestyle_plan.primary_action.label.length > 0);
   assert.match(pageSource, /primaryFoodCard/);
   assert.match(pageSource, /lifestylePrimaryAction/);
-  assert.match(pageSource, /lifestyleSecondaryAction/);
+  assert.match(pageSource, /lifestyleAlternatives.map/);
   assert.doesNotMatch(pageSource, /ほかの一手・しっくりこない時/);
 });
 

@@ -801,7 +801,8 @@ test("weather peak language never treats the peak as symptom onset", () => {
   assert.match(radarRepoSource, /天気ストレスが強まる時間帯/);
   assert.match(radarRepoSource, /症状が出る時刻を示すものではありません/);
   assert.match(recordsAnalysisSource, /label: "天気ストレスのピーク前"/);
-  assert.match(recordsTrendSource, /先＝天気ストレスのピーク前/);
+  assert.match(recordsTrendSource, /先＝前もって行ったケア/);
+  assert.match(recordsAnalysisSource, /timing_source === "individual"/);
   assert.match(forecastReasoningSource, /症状の発生時刻や悪化時刻ではない/);
 });
 

@@ -81,7 +81,7 @@ test("出やすいサインの個人反応を、同じ7方針と暮らすケア�
   assert.equal(plan.lifestyle_plan.alternatives.some((item) => item.care_kind === "environment"), true);
 });
 
-test("湿気×ブレーキ×胃腸×低余力は、ながす・ささえるから環境調整を主役にする", () => {
+test("湿気×ブレーキ×胃腸×低余力でも方針を保ち、道具なしを先に表示する", () => {
   const plan = build({
     trigger: "damp",
     symptomFocus: "digestion",
@@ -90,10 +90,10 @@ test("湿気×ブレーキ×胃腸×低余力は、ながす・ささえるか�
   });
   assert.deepEqual(plan.care_theme.policies.map((policy) => policy.key), ["nagasu", "sasaeru"]);
   assert.equal(plan.care_theme.response_profile.reserve_level, "small");
-  assert.equal(plan.lifestyle_plan.primary_action.care_kind, "environment");
-  assert.ok(["tool-screen-height", "tool-foot-support", "tool-back-support"].includes(plan.lifestyle_plan.primary_action.id));
-  assert.match(plan.lifestyle_plan.primary_action.label, /お腹|足裏/);
-  assert.equal(plan.lifestyle_plan.alternatives.some((item) => item.care_kind === "body"), true);
+  assert.equal(plan.lifestyle_plan.primary_action.equipment, null);
+  assert.ok(["tension-seated-foot-head", "tension-inner-ankle-stand"].includes(plan.lifestyle_plan.primary_action.id));
+  assert.match(plan.lifestyle_plan.primary_action.label, /お腹|足裏|足指/);
+  assert.ok(plan.lifestyle_plan.alternatives.every((item) => item.equipment));
 });
 
 test("明示的balancedをコア体質のアクセル軸で上書きしない", () => {
@@ -145,10 +145,10 @@ test("今日と明日の主提案重複を、関連候補内の日付ローテ�
   assert.ok(same < total, `${same}/${total}`); // 適合候補の再登場は許容。実行履歴の重複調整はcontinuityテストで検証。
 });
 
-test("一般向け身体操作文は自然なスマホ操作を保ち、別案を折りたたむ（v7.79.62仕様）", () => {
+test("一般向け身体操作文は自然なスマホ操作を保ち、場面が限られる案を折りたたむ", () => {
 assert.match(dailySource,/反対の手でもスマホを下から支える/);
 assert.match(dailySource,/親指を遠くへ伸ばす時は、持つ位置を変える/);
 assert.match(radarPageSource,/<CareStepCard action=\{lifestylePrimaryAction\}/);
-assert.match(radarPageSource,/別のケアを選ぶ/);
+assert.match(radarPageSource,/action.restricted/);
 assert.doesNotMatch(radarPageSource,/lifestyleContextChips|foodContextChips/);
 });

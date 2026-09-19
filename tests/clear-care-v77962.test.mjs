@@ -21,7 +21,7 @@ test('curated catalog has concrete actions and checks; withdrawn instructions ne
 test('both date modes cover all symptom focuses with relevant, reproducible care',()=>{
  const symptoms=['fatigue','sleep','digestion','neck_shoulder','low_back_pain','swelling','headache','dizziness','mood'];
  for(const mode of ['today','tomorrow'])for(const symptomFocus of symptoms)for(const trigger of ['none','damp','heat','dry','cold','pressure_down','pressure_up','temp_shift']){
-  const input={mode,targetDate:'2026-09-19',symptomFocus,triggerKey:trigger,forecast:{signal:1},riskContext:{constitution_context:{core_code:'brake_batt_small',sub_labels:['fluid_damp','qi_deficiency']}}};
+  const input={mode,lifestyleScene:symptomFocus === "dizziness" ? "screen" : "general",targetDate:'2026-09-19',symptomFocus,triggerKey:trigger,forecast:{signal:1},riskContext:{constitution_context:{core_code:'brake_batt_small',sub_labels:['fluid_damp','qi_deficiency']}}};
   const p=daily.enhanceDailyCarePlan(input),a=p.lifestyle_plan.primary_action;
   assert.ok(a,`${mode}/${symptomFocus}/${trigger}`);
   assert.ok(a.selected_because.some(x=>x.axis==='symptom'&&x.key===symptomFocus));

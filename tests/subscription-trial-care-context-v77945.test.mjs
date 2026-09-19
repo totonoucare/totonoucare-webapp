@@ -36,11 +36,14 @@ test("今日と今夜に実行できる暮らすケアを選び、ほぐすの�
     for (const symptom of symptoms) {
       const today = plan({ date: "2026-10-03", mode: "today", trigger, symptom });
       const tomorrow = plan({ date: "2026-10-04", mode: "tomorrow", trigger, symptom });
+      if (symptom === "dizziness") { assert.equal(today.lifestyle_plan.no_suggestion, true); assert.equal(tomorrow.lifestyle_plan.no_suggestion, true); }
+      else {
       assert.ok(today.lifestyle_plan.primary_action?.id, `${trigger}/${symptom}: today lifestyle`);
       assert.ok(tomorrow.lifestyle_plan.primary_action?.id, `${trigger}/${symptom}: tomorrow lifestyle`);
       assert.ok(today.lifestyle_plan.primary_action.felt_sense);
 assert.ok(tomorrow.lifestyle_plan.primary_action.felt_sense);
 assert.doesNotMatch(tomorrow.lifestyle_plan.primary_action.id,/^prep-morning/);
+      }
       assert.notEqual(today.night_tsubo_set.line_care.id, tomorrow.night_tsubo_set.line_care.id);
       assert.match(tomorrow.lifestyle_plan.timing_label, /今夜|明朝/);
       assert.match(tomorrow.night_tsubo_set.line_care.timing_label, /今夜|明朝/);

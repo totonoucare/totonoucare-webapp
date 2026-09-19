@@ -16,8 +16,10 @@ function build({
   trigger = "damp",
   coreCode = "brake_batt_small",
   mode = "today",
+  lifestyleScene = "general",
 } = {}) {
   return daily.enhanceDailyCarePlan({
+    lifestyleScene,
     baseCarePlan: {},
     forecast: {
       target_date: date,
@@ -64,7 +66,7 @@ test("身体の使い方は全条件で商品へ直結せず、ショップ文�
         assert.match(plan.shop_context.action_id, /^tool-/);
         assert.ok(plan.shop_context.item_role);
       }
-      const displayedEnvironment = shown(plan).find((item) => item.care_kind === "environment");
+      const displayedEnvironment = shown(plan).find((item) => item.equipment && item.shop_eligible);
       if (displayedEnvironment) {
         assert.equal(plan.shop_context?.action_id, displayedEnvironment.id, `${trigger}/${symptomFocus}/shop-context`);
       }
@@ -83,7 +85,7 @@ test("身体の使い方は全条件で商品へ直結せず、ショップ文�
 });
 
 test("胃腸の前かがみケアは、商品検索でも画面・読み物用スタンドへ限定する", () => {
-  const plans = Array.from({length:28}, (_,i) => build({date:`2026-08-${String(i+1).padStart(2,"0")}`,symptomFocus:"digestion",trigger:"damp",coreCode:"brake_batt_small"}).lifestyle_plan);
+  const plans = Array.from({length:28}, (_,i) => build({date:`2026-08-${String(i+1).padStart(2,"0")}`,lifestyleScene:"screen",symptomFocus:"digestion",trigger:"damp",coreCode:"brake_batt_small"}).lifestyle_plan);
   const stand = plans.flatMap(shown).find(x => x.id === "tool-screen-height");
   assert.ok(stand);
   assert.equal(stand.item_role, "screen_height");
