@@ -2,6 +2,7 @@
 "use client";
 
 import CareStepCard from "./CareStepCard";
+import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { LIFESTYLE_SCENES } from "@/lib/radar_v1/careRules/dailyCareV2";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -1124,6 +1125,7 @@ export default function RadarPage() {
       .map((item) => item?.canonical_key || item?.item_key)
       .filter(Boolean)
   ), [careActions, careSourceMode]);
+  const checkedCareCount = currentCareActionKeys.size;
   const careItemsByKind = useMemo(() => {
     const map = new Map();
     displayedCareItems.forEach((item) => {
