@@ -2,6 +2,7 @@
 "use client";
 
 import CareStepCard from "./CareStepCard";
+import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { LIFESTYLE_SCENES } from "@/lib/radar_v1/careRules/dailyCareV2";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1125,7 +1126,9 @@ export default function RadarPage() {
       .map((item) => item?.canonical_key || item?.item_key)
       .filter(Boolean)
   ), [careActions, careSourceMode]);
-  const checkedCareCount = currentCareActionKeys.size;
+  const checkedCareCount = selectedIsToday
+    ? new Set(safeArray(careActions).map((item) => `${item.source_mode}:${item.canonical_key || item.item_key}`)).size
+    : currentCareActionKeys.size;
   const careItemsByKind = useMemo(() => {
     const map = new Map();
     displayedCareItems.forEach((item) => {
@@ -1931,7 +1934,7 @@ export default function RadarPage() {
                     <div className="mt-2 text-[14px] font-extrabold leading-6 text-slate-700">
                       {lineCare.label || lineCare.action}
                     </div>
-                    <img src={`/care-movements/${lineCare.id}.svg`} alt={`${lineCare.title}の動作図。${lineCare.label || lineCare.action}`} width="480" height="300" className="mt-3 h-auto w-full rounded-[18px]" loading="lazy" />
+                    <img {...getCareMovementImage(lineCare.id)} alt={`${lineCare.title}の動作図。${lineCare.label || lineCare.action}`} className="mt-3 h-auto w-full rounded-[18px]" loading="lazy" />
                     {lineCare.reason ? (
                       <details className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
                         <summary className="cursor-pointer">選んだ理由と加減</summary>
