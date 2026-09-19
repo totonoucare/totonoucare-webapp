@@ -2462,6 +2462,8 @@ export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explic
 
 export function resolveDisplayedCarePlan({
   completedCare = [],
+  lifestyleScene = "general",
+  avoidLifestyleIds = [],
   forecast,
   storedCarePlan = null,
   riskContext = null,
@@ -2484,6 +2486,8 @@ export function resolveDisplayedCarePlan({
 
   return enhanceDailyCarePlan({
     completedCare,
+    lifestyleScene,
+    avoidLifestyleIds,
     baseCarePlan,
     forecast,
     riskContext: completeRiskContext,

@@ -2,6 +2,7 @@
 "use client";
 
 import CareStepCard from "./CareStepCard";
+import { LIFESTYLE_SCENES } from "@/lib/radar_v1/careRules/dailyCareV2";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -347,6 +348,7 @@ export default function RadarPage() {
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
 
   const [bundle, setBundle] = useState(null);
+  const [lifestyleScene, setLifestyleScene] = useState("general");
   const [todayComparisonBundle, setTodayComparisonBundle] = useState(null);
   const [error, setError] = useState("");
 
@@ -881,8 +883,15 @@ export default function RadarPage() {
   const completedCareKey = `${session?.user?.id}|${activeTargetDate}`;
   const completedCareReady = !session?.access_token || completedCareState?.key === completedCareKey;
   const completedCare = completedCareState?.key === completedCareKey ? completedCareState.actions : null;
+  const comparisonCare = useMemo(() => !selectedIsToday && todayComparisonBundle?.target_date === todayTomorrow.today && todayComparisonBundle?.forecast
+    ? resolveDisplayedCarePlan({ forecast: todayComparisonBundle.forecast,
+        riskContext: getRiskContext(todayComparisonBundle), mode: "today", targetDate: todayTomorrow.today,
+        symptomFocus, completedCare: completedCare || [], lifestyleScene }) : null,
+    [selectedIsToday, todayComparisonBundle, todayTomorrow.today, symptomFocus, completedCare, lifestyleScene]);
   const carePlan = useMemo(
     () => resolveDisplayedCarePlan({
+      lifestyleScene,
+      avoidLifestyleIds: comparisonCare?.lifestyle_plan?.step_ids || [],
       completedCare: completedCare || [],
       forecast,
       storedCarePlan: bundle?.care_plan || null,
@@ -891,7 +900,7 @@ export default function RadarPage() {
       targetDate: activeTargetDate,
       symptomFocus,
     }),
-    [forecast, bundle?.care_plan, riskContext, selectedIsToday, activeTargetDate, symptomFocus, completedCare],
+    [forecast, bundle?.care_plan, riskContext, selectedIsToday, activeTargetDate, symptomFocus, completedCare, lifestyleScene, comparisonCare],
   );
   const activeCareForecast = forecast;
   const tsuboSet = carePlan?.night_tsubo_set || {};
@@ -1083,7 +1092,6 @@ export default function RadarPage() {
   const hasFoodActionCards = foodActionCards.length > 0;
   const lifestylePrimaryAction = lifestylePlan?.primary_action || null;
   const lifestyleAlternatives = safeArray(lifestylePlan?.alternatives);
-  const lifestyleSecondaryAction = lifestyleAlternatives[0] || null;
   const lifestyleShopContext = lifestylePlan?.shop_context || null;
   const lineCare = tsuboSet?.line_care || null;
   const hasFoodDetails = hasFoodActionCards
@@ -1844,6 +1852,16 @@ export default function RadarPage() {
               </div>
             </div>
 
+            <div className="mt-3 flex items-center gap-2 rounded-[18px] bg-[#F4FAF7] p-3" role="status">
+              <GuideBotAvatar mood={checkedCareCount > 0 ? "complete" : "normal"} className="h-12 w-12 shrink-0" />
+              <div className="text-[13px] font-bold leading-5 text-slate-600">
+                <span className="text-[#2F816E]">ミモル　</span>
+                {checkedCareCount > 0 ? `${selectedIsToday ? "今日に向けた" : "明日に向けた"}ケアを${checkedCareCount}件記録しました。`
+                  : selectedIsToday ? "実際に取り入れたケアは「やってみた」で記録できます。"
+                  : "今夜取り入れたケアを、明日に向けた記録として残せます。"}
+              </div>
+            </div>
+
             {careActionError ? (
               <div className="mt-3 rounded-[16px] bg-[#FFF0EC] px-4 py-3 text-[12px] font-bold leading-5 text-[#B75C3E] ring-1 ring-[#F1C8BA]">
                 {careActionError}
@@ -1911,6 +1929,7 @@ export default function RadarPage() {
                     <div className="mt-2 text-[14px] font-extrabold leading-6 text-slate-700">
                       {lineCare.label || lineCare.action}
                     </div>
+                    <img src={`/care-movements/${lineCare.id}.svg`} alt={`${lineCare.title}の動作図。${lineCare.label || lineCare.action}`} width="480" height="300" className="mt-3 h-auto w-full rounded-[18px]" loading="lazy" />
                     {lineCare.reason ? (
                       <details className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
                         <summary className="cursor-pointer">選んだ理由と加減</summary>
@@ -2375,13 +2394,22 @@ export default function RadarPage() {
 
             {completedCareReady && careTab === "live" ? (
               <div className="mt-4 space-y-3">
+                <label className="flex items-center justify-between gap-3 text-[13px] font-bold text-slate-600">
+                  場面に合わせる
+                  <select className="min-w-0 rounded-xl bg-white px-3 py-2 ring-1 ring-[#DCE8DD]" value={lifestyleScene} onChange={(event) => setLifestyleScene(event.target.value)}>
+                    {LIFESTYLE_SCENES.map((scene) => <option key={scene.key} value={scene.key}>{scene.label}</option>)}
+                  </select>
+                </label>
                 <div className="overflow-hidden rounded-[24px] bg-[#F4FAF7] px-4 py-4 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(37,95,79,0.06),inset_0_-18px_28px_rgba(255,255,255,0.35)]">
                   <div>
                     <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">
                       {lifestylePlan?.timing_label || (selectedIsToday ? "今日の一手" : "明日の一手")}
                     </div>
                     {lifestylePrimaryAction ? (
-                      <CareStepCard action={lifestylePrimaryAction} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[0], { compact: true })} />
+                      lifestylePrimaryAction.restricted ? <details className="mt-3 rounded-[17px] bg-white p-4 ring-1 ring-[#E1E6E1]">
+                        <summary className="cursor-pointer text-[14px] font-black text-[#2F816E]">{lifestylePrimaryAction.scene}</summary>
+                        <CareStepCard action={lifestylePrimaryAction} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[0], { compact: true })} />
+                      </details> : <CareStepCard action={lifestylePrimaryAction} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[0], { compact: true })} />
                     ) : (
                       <div className="mt-3 rounded-[17px] bg-white px-4 py-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1E6E1]">
                         {lifestylePlan.no_suggestion_text || (selectedIsToday
@@ -2390,12 +2418,12 @@ export default function RadarPage() {
                       </div>
                     )}
 
-                    {lifestyleSecondaryAction ? (
-                      <details className="mt-3 rounded-[17px] bg-white p-4 ring-1 ring-[#E1E6E1]">
-                        <summary className="cursor-pointer text-[14px] font-black text-[#2F816E]">別のケアを選ぶ</summary>
-                        <CareStepCard action={lifestyleSecondaryAction} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[1], { compact: true })} />
+                    {lifestyleAlternatives.map((action, index) => action.restricted ? (
+                      <details key={action.id} className="mt-3 rounded-[17px] bg-white p-4 ring-1 ring-[#E1E6E1]">
+                        <summary className="cursor-pointer text-[14px] font-black text-[#2F816E]">{action.scene}</summary>
+                        <CareStepCard action={action} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[index + 1], { compact: true })} />
                       </details>
-                    ) : null}
+                    ) : <CareStepCard key={action.id} action={action} actionButton={actionButtonFor(careItemsByKind.get("lifestyle_step")?.[index + 1], { compact: true })} />)}
                   </div>
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.live} renderActionButton={actionButtonFor} /> : null}
