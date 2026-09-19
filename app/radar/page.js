@@ -1935,6 +1935,7 @@ export default function RadarPage() {
                       {lineCare.label || lineCare.action}
                     </div>
                     <img {...getCareMovementImage(lineCare.id)} alt={`${lineCare.title}の動作図。${lineCare.label || lineCare.action}`} className="mt-3 h-auto w-full rounded-[18px]" loading="lazy" />
+                    {lineCare.selection_reason ? <p className="mt-2 text-[13px] font-bold leading-6 text-[#7B6588]">{lineCare.selection_reason}</p> : null}
                     {lineCare.reason ? (
                       <details className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
                         <summary className="cursor-pointer">選んだ理由と加減</summary>
