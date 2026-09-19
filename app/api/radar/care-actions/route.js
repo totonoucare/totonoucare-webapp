@@ -1,3 +1,4 @@
+import { aggregateActionTiming, ACTION_SYMPTOM_TIMINGS } from "@/lib/records/analysis";
 import { NextResponse } from "next/server";
 import { RECORDS_EDIT_LOOKBACK_DAYS } from "@/lib/records/policy";
 import { requireUser } from "@/lib/requireUser";
@@ -145,22 +146,7 @@ async function listActions(userId, targetDate) {
   };
 }
 
-function structuredTiming(actions) {
-  const items = Array.isArray(actions) ? actions : [];
-  if (!items.length) return "";
-  const hasPreviousNight = items.some((item) => item.source_mode === "tomorrow");
-  const sameDay = items.filter((item) => item.source_mode === "today");
-  if (!sameDay.length) return hasPreviousNight ? "before_peak" : "";
-  const relations = new Set(sameDay.map((item) => item.timing_relation || "same_day_unknown"));
-  if (relations.has("same_day_unknown")) return "unknown";
-  if (relations.has("same_day_mixed")) return "mixed";
-  const hasBefore = hasPreviousNight || relations.has("same_day_before");
-  const hasAfter = relations.has("same_day_after");
-  if (hasBefore && hasAfter) return "mixed";
-  if (hasAfter) return "after_symptom";
-  if (hasBefore) return "before_peak";
-  return "unknown";
-}
+function structuredTiming(actions) { return aggregateActionTiming(actions); }
 
 function combineTiming(manualTiming, actionTiming, manualLevel) {
   const manual = manualLevel > 0 && RECORD_TIMING_VALUES.has(manualTiming) ? manualTiming : "";
@@ -322,6 +308,9 @@ export async function POST(req) {
         entryOrigin,
       });
 
+      snapshot.meta.timing_source = "unanswered";
+      snapshot.meta.symptom_timing = "unknown";
+
       // v7.71の表示順入り旧キーが残っていても、同じ意味のケアは1行へ統合する。
       const removed = await deleteCanonicalMatches(user.id, targetDate, sourceMode, canonicalKey);
       if (!removed.schemaReady) {
@@ -377,25 +366,23 @@ export async function PATCH(req) {
     }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);
-    const timingRelation = SAME_DAY_TIMING_VALUES.has(body?.timing_relation)
-      ? body.timing_relation
-      : "";
-    if (!targetDate || !timingRelation || !withinEditWindow(targetDate)) {
+    const id = typeof body?.id === "string" ? body.id : "";
+    const symptomTiming = body?.symptom_timing;
+    if (!targetDate || !id || !ACTION_SYMPTOM_TIMINGS.includes(symptomTiming) || !withinEditWindow(targetDate)) {
       return NextResponse.json({ error: "timing invalid" }, { status: 400 });
     }
-
-    const updated = await supabaseServer
-      .from("radar_care_actions")
-      .update({ timing_relation: timingRelation })
-      .eq("user_id", user.id)
-      .eq("target_date", targetDate)
-      .eq("source_mode", "today");
-    if (updated.error) {
-      if (isMissingRecordsSchemaError(updated.error)) {
-        return NextResponse.json({ error: "ケア記録用DBが未適用です", code: "care_actions_schema_required" }, { status: 503 });
-      }
-      throw updated.error;
-    }
+    const found = await supabaseServer.from("radar_care_actions").select(SELECT)
+      .eq("user_id", user.id).eq("target_date", targetDate).eq("id", id).maybeSingle();
+    if (found.error) throw found.error;
+    if (!found.data) return NextResponse.json({ error: "care action not found" }, { status: 404 });
+    const original = found.data.item_snapshot || {};
+    const updated = await supabaseServer.from("radar_care_actions").update({
+      item_snapshot: { ...original, meta: { ...(original.meta || {}), symptom_timing: symptomTiming, timing_source: "individual" } },
+      timing_relation: found.data.source_mode === "tomorrow" ? "previous_night"
+        : { before_peak: "same_day_before", after_symptom: "same_day_after", mixed: "same_day_mixed", unknown: "same_day_unknown" }[symptomTiming],
+    }).eq("user_id", user.id).eq("target_date", targetDate).eq("id", id).select("id");
+    if (updated.error) throw updated.error;
+    if (!updated.data?.length) return NextResponse.json({ error: "care action not found" }, { status: 404 });
 
     const result = await listActions(user.id, targetDate);
     const sync = await syncReviewCareAggregate(user.id, targetDate, result.actions);
