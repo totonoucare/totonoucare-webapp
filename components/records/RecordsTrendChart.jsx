@@ -363,7 +363,7 @@ export default function RecordsTrendChart({
       </div>
 
       <div className="border-t border-[#EEF3EF] px-4 py-2 text-[12px] font-bold leading-4 text-slate-400">
-        ケア時刻：先＝天気ストレスのピーク前、後＝つらくなってから。絞り込みは当たり外れではなく、似た条件の日を探すために使います。
+        ケア時刻：先＝前もって行ったケア、後＝つらくなってから。絞り込みは当たり外れではなく、似た条件の日を探すために使います。
       </div>
 
       {selectedPoint ? (

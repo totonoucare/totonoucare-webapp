@@ -3,8 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
-import { actionTimingLabel, summarizeCareActions } from "@/lib/radar_v1/careActionItems";
+import { summarizeCareActions } from "@/lib/radar_v1/careActionItems";
 import {
+  recordCareTiming,
+  actionSymptomTiming,
+  actionSymptomTimingLabel,
   RECORD_CARE_OPTIONS,
   RECORD_CONDITION_OPTIONS,
   RECORD_DOMAIN_OPTIONS,
@@ -41,6 +44,7 @@ function ChoiceButton({ active, label, sub, onClick, tone = "mint" }) {
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={Boolean(active)}
       className={[
         "rounded-[18px] px-2 py-3 text-center transition-all ring-1",
         active
@@ -59,6 +63,7 @@ function TogglePill({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={Boolean(active)}
       className={[
         "rounded-full px-3 py-2 text-[12px] font-black ring-1 transition-all",
         active ? "bg-[#66B9A3] text-white ring-[#66B9A3]" : "bg-white text-slate-600 ring-[#DCE8DD]",
@@ -74,6 +79,7 @@ function CareActionsSummary({
   onOpenRadar,
   editable = false,
   onRemoveAction,
+  onTimingChange,
   removingActionId = "",
 }) {
   const groups = [
@@ -109,7 +115,7 @@ function CareActionsSummary({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[12px] font-black leading-5 text-slate-700">{item.label}</div>
-                      <div className="mt-0.5 text-[12px] font-bold text-slate-400">{actionTimingLabel(item.timing_relation)}</div>
+                      <div className="mt-0.5 text-[12px] font-bold text-slate-400">{actionSymptomTimingLabel(item)}</div>
                     </div>
                     {editable && onRemoveAction && item.id ? (
                       <button
@@ -122,6 +128,17 @@ function CareActionsSummary({
                       </button>
                     ) : null}
                   </div>
+                  {editable && onTimingChange && item.id ? (
+                    <fieldset className="mt-3" disabled={Boolean(removingActionId)}>
+                      <legend className="text-[12px] font-bold text-slate-500">このケアは、つらさを感じる前にできた？（任意）</legend>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {[ ["before_peak", "つらくなる前"], ["after_symptom", "つらくなってから"], ["mixed", "前後どちらも"], ["unknown", "覚えていない"] ].map(([value, label]) => (
+                          <TogglePill key={value} active={item.item_snapshot?.meta?.timing_source === "individual" && actionSymptomTiming(item) === value} onClick={() => onTimingChange(item, value)}>{label}</TogglePill>
+                        ))}
+                      </div>
+                      {removingActionId === item.id ? <p role="status" className="mt-1 text-xs text-slate-500">保存中…</p> : null}
+                    </fieldset>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -144,12 +161,14 @@ export default function DailyRecordCard({
   onGoAnalysis,
   onOpenRadar,
   onRemoveCareAction,
+  onCareTimingChange,
   careActionSaving = "",
 }) {
   const review = row?.review || null;
   const forecast = row?.forecast || null;
   const careActionSummary = useMemo(() => summarizeCareActions(row?.care_actions), [row?.care_actions]);
   const recordedCareActions = careActionSummary.actions;
+  const displayedCareTiming = recordCareTiming(row);
   const manualCareLevel = review
     ? Number(review.manual_prevent_level ?? review.prevent_level ?? 0)
     : 0;
@@ -164,7 +183,6 @@ export default function DailyRecordCard({
   const [care, setCare] = useState(null);
   const [domains, setDomains] = useState([]);
   const [timing, setTiming] = useState("");
-  const [sameDayTiming, setSameDayTiming] = useState("same_day_unknown");
   const [factors, setFactors] = useState([]);
   const [factorsOpen, setFactorsOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -187,21 +205,6 @@ export default function DailyRecordCard({
   }, [date, review?.id, review?.updated_at, review?.created_at, editable]);
 
   useEffect(() => {
-    const sameDayRelations = new Set(
-      recordedCareActions
-        .filter((item) => item.source_mode === "today")
-        .map((item) => item.timing_relation)
-    );
-    const initialSameDayTiming = sameDayRelations.has("same_day_mixed")
-      ? "same_day_mixed"
-      : sameDayRelations.has("same_day_after") && sameDayRelations.has("same_day_before")
-        ? "same_day_mixed"
-        : sameDayRelations.has("same_day_after")
-          ? "same_day_after"
-          : sameDayRelations.has("same_day_before")
-            ? "same_day_before"
-            : "same_day_unknown";
-    setSameDayTiming(initialSameDayTiming);
     if (careActionSummary.count > 0) setCare((current) => current == null ? 0 : current);
   }, [careActionSummary.count, recordedCareActions.map((item) => `${item.canonical_key || item.item_key}:${item.timing_relation}`).join("|")]);
 
@@ -218,13 +221,13 @@ export default function DailyRecordCard({
           manual_prevent_level: Number(care || 0),
           care_domains: Array.from(new Set([...careActionSummary.domains, ...domains])),
           manual_care_domains: domains,
-          care_timing: reviewCareTiming(review),
+          care_timing: displayedCareTiming,
           manual_care_timing: timing,
           context_factors: factors,
           action_tags: buildActionTags({ domains, timing, factors, existing: review?.action_tags }),
           note,
         },
-  }), [date, forecast, review, recordedCareActions, condition, care, domains, timing, factors, note]);
+  }), [date, forecast, review, recordedCareActions, condition, care, domains, timing, factors, note, displayedCareTiming]);
 
   const classification = classifyRecord(previewRow);
   const reflectionPattern = forecastPatternKey(previewRow);
@@ -268,14 +271,6 @@ export default function DailyRecordCard({
     });
   }
 
-  function chooseSameDayTiming(value) {
-    setSameDayTiming(value);
-    if (value === "same_day_before") setTiming("before_peak");
-    else if (value === "same_day_after") setTiming(careActionSummary.has_previous_night ? "mixed" : "after_symptom");
-    else if (value === "same_day_mixed") setTiming("mixed");
-    else setTiming("unknown");
-  }
-
   async function submit() {
     if (condition == null || care == null) return;
     const savedFactors = factors;
@@ -288,7 +283,6 @@ export default function DailyRecordCard({
       manual_care_domains: care > 0 ? domains : [],
       care_timing: care > 0 ? timing : "",
       manual_care_timing: care > 0 ? timing : "",
-      same_day_timing: careActionSummary.has_same_day ? sameDayTiming : "",
       context_factors: savedFactors,
       action_tags: buildActionTags({
         domains: care > 0 ? domains : [],
@@ -366,9 +360,9 @@ export default function DailyRecordCard({
                   </span>
                 );
               })}
-              {reviewCareTiming(review) ? (
+              {displayedCareTiming ? (
                 <span className="rounded-full bg-[#F7FAF8] px-3 py-1.5 text-[12px] font-black text-slate-500 ring-1 ring-[#DCE8DD]">
-                  {careTimingLabel(reviewCareTiming(review))}
+                  {careTimingLabel(displayedCareTiming)}
                 </span>
               ) : null}
             </div>
@@ -381,6 +375,7 @@ export default function DailyRecordCard({
                 editable={editable}
                 onOpenRadar={isToday ? onOpenRadar : null}
                 onRemoveAction={onRemoveCareAction}
+                onTimingChange={onCareTimingChange}
                 removingActionId={careActionSaving}
               />
             </div>
@@ -444,30 +439,10 @@ export default function DailyRecordCard({
                 editable
                 onOpenRadar={isToday ? onOpenRadar : null}
                 onRemoveAction={onRemoveCareAction}
+                onTimingChange={onCareTimingChange}
                 removingActionId={careActionSaving}
               />
-              {careActionSummary.has_same_day ? (
-                <div className="rounded-[22px] bg-[#F7FAF8] p-3.5 ring-1 ring-[#DCE8DD]">
-                  <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">今日当日のケアは、つらさを感じる前にできた？</div>
-                  {careActionSummary.has_previous_night ? (
-                    <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">昨晩のケアは先回りとして記録済みです。ここでは今日行った分だけ教えてください。</div>
-                  ) : null}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {[
-                      { value: "same_day_before", label: "だいたい前にできた" },
-                      { value: "same_day_after", label: "つらくなってから" },
-                      { value: "same_day_mixed", label: "前後どちらも" },
-                      { value: "same_day_unknown", label: "覚えていない" },
-                    ].map((item) => (
-                      <TogglePill key={item.value} active={sameDayTiming === item.value} onClick={() => chooseSameDayTiming(item.value)}>{item.label}</TogglePill>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-[18px] bg-[#EFF8F4] px-4 py-3 text-[14px] font-bold leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
-                  昨晩の「明日に向けたケア」なので、先回りケアとして記録します。
-                </div>
-              )}
+
             </div>
           ) : (
             <>

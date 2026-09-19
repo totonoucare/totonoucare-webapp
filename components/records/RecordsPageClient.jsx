@@ -382,6 +382,25 @@ export default function RecordsPageClient({
     }
   }
 
+  async function updateCareTiming(action, symptomTiming) {
+    if (!action?.id || careActionSaving) return;
+    const date = selectedDate;
+    setCareActionSaving(action.id);
+    setRecordError("");
+    try {
+      const data = await authedFetch("/api/radar/care-actions", {
+        method: "PATCH",
+        body: JSON.stringify({ id: action.id, target_date: date, symptom_timing: symptomTiming }),
+      });
+      // Keep unsaved condition/note inputs intact; update only the actions here.
+      const apply = (row) => row?.date === date ? { ...row, care_actions: data.actions } : row;
+      setSelectedRow(apply);
+      setMonthRows((rows) => rows.map(apply));
+    } catch (error) {
+      setRecordError(error?.message || "ケアの時間を保存できませんでした");
+    } finally { setCareActionSaving(""); }
+  }
+
   async function removeCareAction(action) {
     if (!action?.id || careActionSaving) return;
     setCareActionSaving(action.id);
@@ -513,6 +532,7 @@ export default function RecordsPageClient({
             onGoAnalysis={goToAnalysis}
             onOpenRadar={selectedDate === today ? () => router.push(`/radar?date=${encodeURIComponent(selectedDate)}`) : null}
             onRemoveCareAction={removeCareAction}
+            onCareTimingChange={updateCareTiming}
             careActionSaving={careActionSaving}
           />
 
