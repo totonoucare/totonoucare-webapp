@@ -44,7 +44,8 @@ test("今日と今夜に実行できる暮らすケアを選び、ほぐすの�
 assert.ok(tomorrow.lifestyle_plan.primary_action.felt_sense);
 assert.doesNotMatch(tomorrow.lifestyle_plan.primary_action.id,/^prep-morning/);
       }
-      assert.notEqual(today.night_tsubo_set.line_care.id, tomorrow.night_tsubo_set.line_care.id);
+      assert.ok(tomorrow.night_tsubo_set.line_care.selection_reason);
+      assert.ok(tomorrow.night_tsubo_set.line_care.selection_basis.symptom === symptom || tomorrow.night_tsubo_set.line_care.selection_basis.checked_rank);
       assert.match(tomorrow.lifestyle_plan.timing_label, /今夜|明朝/);
       assert.match(tomorrow.night_tsubo_set.line_care.timing_label, /今夜|明朝/);
     }

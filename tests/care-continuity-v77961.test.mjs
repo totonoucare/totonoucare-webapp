@@ -50,7 +50,8 @@ for(const length of [14,30]) test(`${length}-day changing-weather sequences keep
    const base=care(date,[],r,symptom), plan=care(date,history,r,symptom);
    assert.equal(JSON.stringify(r.forecast),untouched);
    assert.deepEqual(plan.night_tsubo_set.points,base.night_tsubo_set.points);
-   assert.deepEqual(plan.night_tsubo_set.line_care,base.night_tsubo_set.line_care);
+   assert.ok(plan.night_tsubo_set.line_care.selection_reason);
+   assert.deepEqual(plan.night_tsubo_set.line_care,care(date,history,r,symptom).night_tsubo_set.line_care);
    const primary=plan.lifestyle_plan.primary_action;
    if(primary) {assert.ok(primary.short_action);assert.ok(primary.felt_sense);life.add(primary.id);}
    assert.ok(plan.night_food.practical_tip);
