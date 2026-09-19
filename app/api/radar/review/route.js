@@ -1,3 +1,4 @@
+import { aggregateActionTiming } from "@/lib/records/analysis";
 import { loadRecentCompletedCare } from "@/lib/records/server";
 import { NextResponse } from "next/server";
 import { RECORDS_EDIT_LOOKBACK_DAYS } from "@/lib/records/policy";
@@ -182,22 +183,7 @@ function actionDomains(actions) {
   return Array.from(new Set((actions || []).map((item) => item?.domain).filter((item) => DOMAIN_VALUES.has(item))));
 }
 
-function deriveActionTiming(actions) {
-  const items = Array.isArray(actions) ? actions : [];
-  if (!items.length) return "";
-  const hasPreviousNight = items.some((item) => item?.source_mode === "tomorrow");
-  const sameDay = items.filter((item) => item?.source_mode === "today");
-  if (!sameDay.length) return hasPreviousNight ? "before_peak" : "";
-  const relations = new Set(sameDay.map((item) => item?.timing_relation || "same_day_unknown"));
-  if (relations.has("same_day_unknown")) return "unknown";
-  if (relations.has("same_day_mixed")) return "mixed";
-  const hasBefore = relations.has("same_day_before") || hasPreviousNight;
-  const hasAfter = relations.has("same_day_after");
-  if (hasBefore && hasAfter) return "mixed";
-  if (hasAfter) return "after_symptom";
-  if (hasBefore) return "before_peak";
-  return "unknown";
-}
+function deriveActionTiming(actions) { return aggregateActionTiming(actions); }
 
 function combineCareTiming(manualTiming, actionTiming, manualLevel) {
   const manual = manualLevel > 0 && TIMING_VALUES.has(manualTiming) ? manualTiming : "";
@@ -209,16 +195,7 @@ function combineCareTiming(manualTiming, actionTiming, manualLevel) {
   return "mixed";
 }
 
-async function updateSameDayActionTiming(userId, targetDate, timingRelation) {
-  if (!SAME_DAY_TIMING_VALUES.has(timingRelation)) return;
-  const result = await supabaseServer
-    .from("radar_care_actions")
-    .update({ timing_relation: timingRelation })
-    .eq("user_id", userId)
-    .eq("target_date", targetDate)
-    .eq("source_mode", "today");
-  if (result.error && !isMissingRecordsSchemaError(result.error)) throw result.error;
-}
+
 
 export async function GET(req) {
   try {
@@ -302,7 +279,8 @@ export async function POST(req) {
     }
 
     const note = typeof body?.note === "string" ? body.note.trim().slice(0, 500) : "";
-    if (sameDayTiming) await updateSameDayActionTiming(user.id, targetDate, sameDayTiming);
+    // Legacy clients must not overwrite all actions through a daily review.
+    if (sameDayTiming) return NextResponse.json({ error: "ケアごとの時間を記録できるよう、画面を更新してください", code: "individual_timing_required" }, { status: 409 });
     const [existingResult, currentForecast, careActionResult, profile, completedCare] = await Promise.all([
       findLatestReview(user.id, targetDate),
       findForecast(user.id, targetDate),
