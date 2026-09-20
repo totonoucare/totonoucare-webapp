@@ -96,6 +96,17 @@ function cleanSnapshot(value, fallback) {
       point_name: compact(meta.point_name, 80) || null,
       reading: compact(meta.reading, 50) || null,
       rule_id: compact(meta.rule_id, 80) || null,
+      meridian_code: ["lung_li", "heart_si", "kidney_bl", "liver_gb", "spleen_st", "pc_sj"].includes(meta.meridian_code) ? meta.meridian_code : null,
+      line_group_id: compact(meta.line_group_id, 80) || null,
+      selection_source: ["check", "daily", "combined"].includes(meta.selection_source) ? meta.selection_source : null,
+      selection_reason: compact(meta.selection_reason, 240) || null,
+      selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? {
+        checked_rank: [1, 2].includes(meta.selection_basis.checked_rank) ? meta.selection_basis.checked_rank : null,
+        symptom: compact(meta.selection_basis.symptom, 40) || null,
+        weather: compact(meta.selection_basis.weather, 40) || null,
+        constitution: meta.selection_basis.constitution === true,
+        rule_version: compact(meta.selection_basis.rule_version, 80) || null,
+      } : null,
       order: Number.isFinite(Number(meta.order)) ? Number(meta.order) : null,
       items: (Array.isArray(meta.items) ? meta.items : [])
         .map((item) => compact(item, 120))
