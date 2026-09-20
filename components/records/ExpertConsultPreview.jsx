@@ -86,24 +86,24 @@ export default function ExpertConsultPreview({ authedFetch }) {
           <ExpertAvatar className="h-[88px] w-[88px] shrink-0" />
           <div className="relative mb-3 min-w-0 flex-1 rounded-[20px] bg-white px-4 py-3 ring-1 ring-[#CFE7DE] shadow-sm">
             <span className="absolute -left-1.5 bottom-6 h-3 w-3 rotate-45 border-b border-l border-[#CFE7DE] bg-white" />
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">国家資格者へのオンライン相談</div>
-            <div className="mt-1 text-[16px] font-black leading-7 text-slate-900">セルフケアだけでは足りない不調を、オンラインで相談</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#2F816E]/75">鍼灸師（国家資格者）へのオンライン相談</div>
+            <div className="mt-1 text-[16px] font-black leading-7 text-slate-900">自分に合うケアを、鍼灸師と一緒に</div>
           </div>
         </div>
         <div className="px-4 pb-4">
-          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-white">記録を引き継ぎ、セルフケアだけでは整理しにくい不調を相談できます。AIによる振り返りを使っていなくても相談できます。</div>
+          <div className="rounded-[22px] bg-white/85 p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-white">体質チェックや記録をもとに不調を整理し、画面越しにツボの探し方やお灸・ストレッチを確かめる相談を準備しています。</div>
         </div>
       </section>
 
       <section className="rounded-[30px] bg-white p-4 ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.34)]">
-        <div className="text-[15px] font-black text-slate-900">相談前の説明を短くできます</div>
-        <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">アプリの記録が相談前の情報になります。</div>
+        <div className="text-[15px] font-black text-slate-900">いつものデータから、具体的なケアへ</div>
+        <div className="mt-1 text-[14px] font-bold leading-6 text-slate-500">共有したい記録やAIの振り返りを使い、説明を繰り返す負担を軽くします。</div>
         <details className="mt-3 rounded-[20px] bg-[#F4FAF7] px-3.5 py-3 ring-1 ring-[#DCE8DD]">
           <summary className="cursor-pointer text-[12px] font-black text-[#2F816E]">相談でできること</summary>
           <div className="mt-3 grid gap-2.5">
-            <Feature title="不調と生活の経過を整理" lead="一から説明する時間を減らし、今優先したいことを整理します。" />
-            <Feature title="舌・姿勢・動作などを参考に確認" lead="市販灸・円皮鍼・ツボなどの取り入れ方を一緒に試します。" />
-            <Feature title="相談後のケアプラン" lead="今週の一手を、自分で続けられる形にまとめます。" />
+            <Feature title="体質と記録を一緒に整理" lead="体質チェック・記録・AIの振り返りから、気になる不調と試したケアを整理します。" />
+            <Feature title="ツボや道具の使い方を確認" lead="ツボの位置と触れ方、お灸やシール鍼の使い方を画面越しに確認します。" />
+            <Feature title="動きを見ながらケアを調整" lead="ラインのストレッチなどを一緒に確かめ、日々続けられるケアに整えます。" />
           </div>
           <div className="mt-3 text-[12px] font-bold leading-5 text-slate-500">担当者の資格と対応範囲に応じて、一般用漢方薬を検討する時の考え方や、適切な相談先も整理します。</div>
         </details>
