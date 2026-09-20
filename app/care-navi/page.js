@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AppShell, { Module } from "@/components/layout/AppShell";
+import { lifestyleShopQuery } from "@/lib/care-navi/lifestyleShopQueries";
 import GuidedCareSearch from "@/components/care-shop/GuidedCareSearch";
 import { normalizePointToolContext, pointToolQueryRows, pointToolKinds, pointToolKind, pointToolName, pointToolTargetNames, pointToolScreeningText } from "@/lib/care-navi/pointTools";
 import { supabase } from "@/lib/supabaseClient";
@@ -2972,7 +2973,16 @@ function completeCareSetWithMatchingItems(card, candidateItems) {
   };
 }
 
-function fallbackSearchQuery(policyKeys, category, pointContext = null) {
+function fallbackSearchQuery(policyKeys, category, pointContext = null, lifestyleActionKey = "", lifestyleItemRole = "", foodCommerceContext = null) {
+  if (category === "live") {
+    const linked = lifestyleShopQuery(lifestyleActionKey, lifestyleItemRole);
+    if (linked) return linked.keyword;
+  }
+  if (category === "eat") {
+    const roleQuery = {daily_tea:"ノンカフェイン お茶", pantry_food:"雑穀 豆 食品", prepared_meal:"冷凍 弁当", meal_subscription:"宅食 弁当", nutrition_support:"栄養補助 食品"};
+    const query = safeArray(foodCommerceContext?.productRoleKeys).map(key => roleQuery[key]).find(Boolean);
+    if (query) return query;
+  }
   if (category === "point") return pointToolQueryRows(pointContext || {})[0]?.keyword || "";
   const candidates = pickCandidates(policyKeys, category);
   if (category === "eat") {
@@ -2994,7 +3004,7 @@ function SearchDiscoveryLink({ query, category }) {
   );
 }
 
-function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested, policyKeys, pointContext = null }) {
+function SingleItemBrowser({ items, category, onCategoryChange, trackingContext, shopEntryMap, savingKey, onToggleInterested, policyKeys, pointContext = null, lifestyleActionKey = "", lifestyleItemRole = "", foodCommerceContext = null }) {
   const [visibleCount, setVisibleCount] = useState(SINGLE_ITEM_INITIAL_LIMIT);
   useEffect(() => setVisibleCount(SINGLE_ITEM_INITIAL_LIMIT), [category, items]);
   const categoryCounts = Object.fromEntries(CATEGORY_ORDER.map((key) => [key, safeArray(items).filter((item) => item.category === key).length]));
@@ -3013,7 +3023,7 @@ function SingleItemBrowser({ items, category, onCategoryChange, trackingContext,
       <div className="grid gap-2.5 sm:grid-cols-2">
         {categoryItems.length ? categoryItems.map((item, index) => (
           <ShopItemCard key={`${category}-${getSetItemKey(item)}-${index}`} item={item} itemPosition={index + 1} setKey={`single-${category}`} trackingContext={{ ...trackingContext, category }} shopEntry={shopEntryMap.get(getSetItemKey(item))} saving={savingKey === getSetItemKey(item)} onToggleInterested={onToggleInterested} />
-        )) : <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, category, pointContext)} category={category} />}
+        )) : <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, category, pointContext, lifestyleActionKey, lifestyleItemRole, foodCommerceContext)} category={category} />}
       </div>
       {canShowMore ? <button type="button" onClick={() => setVisibleCount((count) => Math.min(SINGLE_ITEM_EXPANDED_LIMIT, count + 8))} className="mt-3 w-full rounded-[18px] bg-[var(--shop)] px-4 py-3 text-[12px] font-black text-white shadow-[0_12px_24px_-18px_rgba(185,120,18,0.56)] hover:bg-[var(--shop-dark)]">もっと見る（あと{allCategoryItems.length - categoryItems.length}件）</button> : null}
     </div>
@@ -3618,6 +3628,7 @@ export default function CareNaviPage() {
   const subText = subLabels.map((s) => s.short || s.title).filter(Boolean).join("・");
   const selectedLifeLabels = LIFE_OPTIONS.filter((item) => lifeKeys.includes(item.key)).map((item) => item.label);
   const selectedPurposeLabel = SHOP_PURPOSE_OPTIONS.find((item) => item.key === shopPurpose)?.label || "ふだん使う";
+  const linkedLifestyle = lifestyleShopQuery(lifestyleActionKey, lifestyleItemRole);
   const foodCommerceLabels = unique([
     ...foodCommerceContext.needKeys.map((key) => FOOD_NUTRITION_NEED_LABELS[key]),
     ...foodCommerceContext.functionKeys.map((key) => FOOD_TCM_FUNCTION_LABELS[key]),
@@ -3834,8 +3845,18 @@ export default function CareNaviPage() {
           </div>
         </Module>
 
+        {viewMode === "single" && singleCategory === "live" && linkedLifestyle ? (
+          <Module className="!bg-[#F4F9F6] p-4 ring-1 ring-[#D5E5DB]">
+            <div className="text-[12px] font-black text-[#2F816E]">暮らすケアから引き継いだ条件</div>
+            <p className="mt-2 text-[14px] font-bold text-slate-700">{linkedLifestyle.reason}</p>
+            <div className="mt-2 flex flex-wrap gap-2">{linkedLifestyle.tags.map(tag => <span key={tag} className="rounded-full bg-white px-3 py-1 text-[12px] font-bold text-[#24564C]">{tag}</span>)}</div>
+            <p className="mt-2 text-[12px] text-slate-500">この用途に合う道具を優先して探します。</p>
+            <a href={makeRakutenSearchUrl(linkedLifestyle.keyword)} target="_blank" rel="sponsored nofollow noopener noreferrer" className="mt-2 inline-block text-[13px] font-bold text-[#2F816E] underline">楽天市場でも比較する</a>
+          </Module>
+        ) : null}
         {viewMode === "single" && singleCategory === "point" && pointToolQueryRows(pointContext || {warming:basePolicyKeys.includes("nukumeru")}).length > 0 ? (
           <section className="rounded-[24px] bg-[#F4F9F6] p-5 ring-1 ring-[#D5E5DB]">
+            <div className="text-[12px] font-black text-[#2F816E]">{pointContext ? "ほぐすケアから引き継いだ条件" : "ツボケアの道具選び"}</div>
             <h2 className="text-[16px] font-black text-[#24564C]">{pointContext?.codes.length ? "ケアで案内したツボに使う道具" : "ツボケアに使いやすい道具"}</h2>
             {pointContext?.codes.length ? <p className="mt-1 text-[13px] font-bold text-slate-600">{pointToolTargetNames(pointContext).join("・")}</p> : null}
             <div className="mt-3 space-y-3">
@@ -3849,12 +3870,12 @@ export default function CareNaviPage() {
         ) : null}
         {viewMode === "single" && singleCategory === "eat" && foodCommerceLabels.length ? (
           <Module className="!bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4] shadow-[0_16px_36px_-30px_rgba(165,108,24,0.32)]">
-            <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">食べるケアの継続軸</div>
+            <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">食べるケアから引き継いだ条件</div>
             <div className="mt-1 text-[14px] font-black leading-5 text-slate-900">
               {foodCommerceContext.summary || "同じ傾向の日に備えるものを選びます。"}
             </div>
             <div className="mt-2 text-[12px] font-bold leading-5 text-slate-500">
-              今日の料理材料ではなく、数週間使いやすい毎日の一杯・常備品・宅食・栄養補助を比べます。
+              ケアの方針に合わせ、毎日の一杯・常備品・宅食・栄養補助を探します。
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {foodCommerceLabels.map((label) => (
@@ -3901,10 +3922,10 @@ export default function CareNaviPage() {
                   ) : null}
                 </>
               ) : (
-                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} policyKeys={policyKeys} pointContext={pointContext} />
+                <SingleItemBrowser items={singleItems} category={singleCategory} onCategoryChange={setSingleCategory} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} policyKeys={policyKeys} pointContext={pointContext} lifestyleActionKey={lifestyleActionKey} lifestyleItemRole={lifestyleItemRole} foodCommerceContext={foodCommerceContext} />
               )
             ) : (
-              <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, singleCategory, pointContext)} category={singleCategory} />
+              <SearchDiscoveryLink query={fallbackSearchQuery(policyKeys, singleCategory, pointContext, lifestyleActionKey, lifestyleItemRole, foodCommerceContext)} category={singleCategory} />
             )}
 
             <details className="rounded-[16px] bg-[#F4F8F5] ring-1 ring-[#D8E6DD]">
