@@ -16,26 +16,14 @@ test("ガイドは振り返りの価値を自分に合う整え方として伝�
   assert.doesNotMatch(guide, /title="AIは似た予報条件を比べる"/);
 });
 
-test("オンライン相談はAIによる振り返りの延長ではなく国家資格者の別サービスとして表示する", async () => {
+test("鍼灸師との実践相談は準備中で、予約・料金を発生させない", async () => {
   const guide = await source("app/guide/GuideClient.jsx");
   const expert = await source("components/records/ExpertConsultPreview.jsx");
-  const records = await source("components/records/RecordsPageClient.jsx");
-  assert.match(guide, /国家資格者によるオンライン相談/);
-  assert.match(guide, /AIによる振り返りの続きではありません/);
-  assert.match(expert, /セルフケアだけでは足りない不調を、オンラインで相談/);
-  assert.match(expert, /AIによる振り返りを使っていなくても相談できます/);
-  assert.match(records, /key: "consult", label: "相談", short: "相談"/);
-  assert.doesNotMatch(records, /AI分析|AI分析・相談/);
-  assert.doesNotMatch(records, /専門家相談/);
-});
-
-test("オンライン相談はアプリ記録を事前情報として使い実践支援を説明する", async () => {
-  const expert = await source("components/records/ExpertConsultPreview.jsx");
-  assert.match(expert, /アプリの記録が相談前の情報になります/);
-  assert.match(expert, /舌・姿勢・動作などを参考に確認/);
-  assert.match(expert, /市販灸・円皮鍼・ツボ/);
-  assert.match(expert, /相談後のケアプラン/);
-  assert.match(expert, /医療機関での診断・治療に代わるものではありません/);
+  assert.match(guide, /鍼灸師（国家資格者）/);
+  assert.match(expert, /準備中/);
+  assert.match(expert, /予約や料金は発生しません/);
+  assert.match(expert, /expert-interest/);
+  assert.match(expert, /共有したい記録/);
 });
 
 test("オンライン相談の関心イベントは独立サービスとして保存する", async () => {
