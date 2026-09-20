@@ -8,7 +8,7 @@ const productFitSource = await readFile(new URL("../lib/care-navi/lifestyleProdu
 const productFit = await import(`data:text/javascript;base64,${Buffer.from(productFitSource).toString("base64")}`);
 const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
 const careNaviPageSource = await readFile(new URL("../app/care-navi/page.js", import.meta.url), "utf8");
-const rakutenRouteSource = await readFile(new URL("../app/api/care-navi/rakuten/route.js", import.meta.url), "utf8");
+const rakutenRouteSource = (await readFile(new URL("../app/api/care-navi/rakuten/route.js", import.meta.url), "utf8")) + (await readFile(new URL("../lib/care-navi/lifestyleShopQueries.js", import.meta.url), "utf8"));
 
 function build({
   date = "2026-08-04",

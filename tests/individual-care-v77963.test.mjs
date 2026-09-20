@@ -71,3 +71,22 @@ test('all 18 movement IDs have local accessible diagrams',async()=>{
  const moves=Object.values(catalog.MERIDIAN_LINE_CARE).flat();assert.equal(moves.length,18);assert.equal(new Set(moves.map(x=>x.id)).size,18);
  for(const move of moves){const svg=await fs.readFile(new URL('../public/care-movements/'+move.id+'.svg',import.meta.url),'utf8');assert.match(svg,/<svg[^>]*viewBox="0 0 480 300"/);assert.match(svg,/<title id="title">.+<\/title>/);assert.match(svg,/aria-labelledby="title desc"/);assert.doesNotMatch(svg,/<script/);}
 });
+
+test('no-symptoms answer survives actual PATCH and review synchronization for both today and preparation care',async()=>{
+ for(const mode of ['today','tomorrow']){
+  const rows=[action('clear',mode)],reviews=[{user_id:'u1',target_date:'2026-09-19',id:'review',manual_prevent_level:0}];
+  const patch=await handler(rows,reviews);
+  assert.equal((await patch(request({id:'clear',target_date:'2026-09-19',symptom_timing:'no_symptoms'}))).status,200);
+  assert.equal(a.actionSymptomTiming(rows[0]),'no_symptoms');
+  assert.equal(reviews[0].care_timing,'no_symptoms');
+  const row={date:'2026-09-19',care_actions:rows,forecast:{signal:1},review:{...reviews[0],condition_level:2,prevent_level:1}};
+  const summary=a.buildRecordsSummary([row]);
+  assert.equal(summary.before_peak_care_days,0);assert.equal(summary.after_symptom_care_days,0);
+  assert.equal(summary.no_symptoms_care_days,1);assert.equal(summary.unknown_timing_care_days,0);
+  assert.equal(summary.care_timing_outcomes.no_symptoms.days,1);
+  assert.match(JSON.stringify(a.trimRecordForAi(row)),/"symptom_timing":"no_symptoms"/);
+  assert.equal(a.aggregateActionTiming([rows[0],action('after',mode,'after_symptom')]),'unknown');
+  assert.equal((await patch(request({id:'clear',target_date:'2026-09-19',symptom_timing:'after_symptom'}))).status,200);
+  assert.equal(reviews[0].care_timing,'after_symptom');
+ }
+});

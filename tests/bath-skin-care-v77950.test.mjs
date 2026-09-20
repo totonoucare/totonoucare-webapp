@@ -11,7 +11,7 @@ import {
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const daily = await import(`data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`);
 const careNaviSource = await readFile(new URL("../app/care-navi/page.js", import.meta.url), "utf8");
-const rakutenSource = await readFile(new URL("../app/api/care-navi/rakuten/route.js", import.meta.url), "utf8");
+const rakutenSource = (await readFile(new URL("../app/api/care-navi/rakuten/route.js", import.meta.url), "utf8")) + (await readFile(new URL("../lib/care-navi/lifestyleShopQueries.js", import.meta.url), "utf8"));
 
 function buildLifestyle({ mode, date, symptomFocus = "fatigue", trigger = "cold" }) {
   return daily.enhanceDailyCarePlan({

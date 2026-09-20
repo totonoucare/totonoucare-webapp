@@ -26,7 +26,7 @@ test("体質チェックの説明は約5分の共通コピーへ統一する", a
 test("予報とショップは同じ環境調整Action ID許可リストを使う", async () => {
   const context = await importSource("lib/care-navi/lifestyleShopContext.js");
   const page = await source("app/care-navi/page.js");
-  const route = await source("app/api/care-navi/rakuten/route.js");
+  const route = (await source("app/api/care-navi/rakuten/route.js")) + (await source("lib/care-navi/lifestyleShopQueries.js"));
 
   assert.equal(context.normalizeLifestyleShopActionKey("tool-work-height"), "tool-work-height");
   assert.equal(context.normalizeLifestyleShopActionKey("tension-screen-head-up"), "");
@@ -40,7 +40,7 @@ test("予報とショップは同じ環境調整Action ID許可リストを使�
 
 test("楽天候補は一語一致を通さず、代替商品を残した複数語一致にする", async () => {
   const intent = await importSource("lib/care-navi/rakutenSearchIntent.js");
-  const route = await source("app/api/care-navi/rakuten/route.js");
+  const route = (await source("app/api/care-navi/rakuten/route.js")) + (await source("lib/care-navi/lifestyleShopQueries.js"));
 
   assert.equal(
     intent.matchesRakutenKeywordIntent("高さ調整できるタブレット用スタンド", "スマホ タブレット 書見台 スタンド 高さ調整"),
