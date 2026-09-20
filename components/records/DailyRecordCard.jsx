@@ -130,9 +130,9 @@ function CareActionsSummary({
                   </div>
                   {editable && onTimingChange && item.id ? (
                     <fieldset className="mt-3" disabled={Boolean(removingActionId)}>
-                      <legend className="text-[12px] font-bold text-slate-500">このケアは、つらさを感じる前にできた？（任意）</legend>
+                      <legend className="text-[12px] font-bold text-slate-500">ケアをしたタイミングは？（任意）</legend>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {[ ["before_peak", "つらくなる前"], ["after_symptom", "つらくなってから"], ["mixed", "前後どちらも"], ["unknown", "覚えていない"] ].map(([value, label]) => (
+                        {[ ["before_peak", "つらくなる前"], ["after_symptom", "つらくなってから"], ["mixed", "前後どちらも"], ["no_symptoms", "つらさは出なかった"], ["unknown", "覚えていない"] ].map(([value, label]) => (
                           <TogglePill key={value} active={item.item_snapshot?.meta?.timing_source === "individual" && actionSymptomTiming(item) === value} onClick={() => onTimingChange(item, value)}>{label}</TogglePill>
                         ))}
                       </div>
