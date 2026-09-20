@@ -190,6 +190,7 @@ function combineCareTiming(manualTiming, actionTiming, manualLevel) {
   if (!manual) return actionTiming || "";
   if (!actionTiming) return manual;
   if (manual === actionTiming) return manual;
+  if (manual === "no_symptoms" || actionTiming === "no_symptoms") return "unknown";
   if (manual === "unknown" || actionTiming === "unknown") return "unknown";
   if (manual === "mixed" || actionTiming === "mixed") return "mixed";
   return "mixed";
