@@ -1,5 +1,7 @@
-// app/radar/page.js
 "use client";
+// app/radar/page.js
+import {experienceSignal} from '@/lib/experience/client';
+
 
 import CareStepCard from "./CareStepCard";
 import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
@@ -805,6 +807,19 @@ export default function RadarPage() {
   const forecast = bundleMatchesActiveTarget ? bundle?.forecast || null : null;
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
+  useEffect(() => {
+    if (!session?.access_token || !forecast || loading || contentLoading || needsLocation) return;
+    experienceSignal('forecast');
+    const node = document.getElementById('daily-care-section');
+    if (!node || !window.IntersectionObserver) return;
+    let timer;
+    const observer = new window.IntersectionObserver(entries => {
+      clearTimeout(timer);
+      if(entries.some(entry => entry.isIntersecting)) timer=setTimeout(() => experienceSignal('care'), 1800);
+    });
+    observer.observe(node);
+    return () => {clearTimeout(timer);observer.disconnect();};
+  }, [session?.access_token, forecast, loading, contentLoading, needsLocation]);
 
   useEffect(() => {
     if (!session?.access_token || !activeTargetDate || !selectedIsToday) {
@@ -1203,6 +1218,7 @@ export default function RadarPage() {
       });
       const nextActions = json?.data?.actions || json?.actions || [];
       setCareActions(Array.isArray(nextActions) ? nextActions : []);
+      if (!checked) experienceSignal('care_recorded', {mode: careSourceMode});
       setCareActionsSchemaReady(json?.data?.schema_ready !== false && json?.schema_ready !== false);
     } catch (actionError) {
       setCareActionError(actionError?.message || "ケアを記録できませんでした。");
@@ -1569,7 +1585,7 @@ export default function RadarPage() {
       </div>
 
       {showSymptomEditor ? (
-        <div className="fixed inset-0 z-[95] grid place-items-end bg-[#101827]/40 px-4 pb-4 backdrop-blur-[2px]">
+        <div data-experience-block className="fixed inset-0 z-[95] grid place-items-end bg-[#101827]/40 px-4 pb-4 backdrop-blur-[2px]">
           <div className="w-full max-w-[430px] rounded-[28px] border border-[#DCE7DE] bg-white p-5 shadow-[0_24px_72px_rgba(15,23,42,0.24)]">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1824,6 +1840,7 @@ export default function RadarPage() {
               </div>
             </div>
           </Module>
+          <div id="daily-care-section" className="h-px scroll-mt-24" />
           <Module
             className={[
               "p-5 bg-white ring-1 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.24)]",
