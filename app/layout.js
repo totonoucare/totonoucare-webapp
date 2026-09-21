@@ -1,4 +1,5 @@
 // app/layout.js
+import ExperienceProvider from '@/components/experience/ExperienceProvider';
 import "./globals.css";
 import { Zen_Kaku_Gothic_New } from "next/font/google";
 import RegisterServiceWorker from "@/components/pwa/RegisterServiceWorker";
@@ -89,9 +90,11 @@ export default function RootLayout({ children }) {
     <html lang="ja" className={zen.variable}>
       <body className="min-h-screen bg-app text-slate-900 font-app antialiased">
         <RegisterServiceWorker />
+        <ExperienceProvider>
         {children}
         <PwaInstallPrompt />
         <PushNotificationPrompt />
+        </ExperienceProvider>
       </body>
     </html>
   );
