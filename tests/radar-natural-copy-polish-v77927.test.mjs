@@ -75,7 +75,7 @@ test("水の理由へ香りを持ち込まず水分補給として説明する",
   assert.doesNotMatch(copy, /香りや温度で、手元作業の区切り/);
 });
 
-test("保存済みケアに残った旧い水の理由も表示時に自然語へ更新する", () => {
+test("保存済み飲み物も現在の主訴と対象日の天気で再選定する", () => {
   const riskContext = buildRisk();
   const plan = daily.enhanceDailyCarePlan({
     baseCarePlan: {
@@ -111,6 +111,13 @@ test("保存済みケアに残った旧い水の理由も表示時に自然語�
   const copy = drink.item_details[0].reasons.map((reason) => reason.text).join(" ");
 
   assert.equal(plan.version, daily.DAILY_CARE_LOGIC_VERSION);
-  assert.match(copy, /一口飲むたびに手元作業をいったん止め、首肩の力を抜くきっかけ/);
+  assert.equal(drink.items.length, 2);
+  assert.equal(drink.items[0], 'デカフェコーヒー');
+  for (const detail of drink.item_details) {
+    assert.equal(detail.selection_basis.symptom_focus, 'neck_shoulder');
+    assert.equal(detail.selection_basis.target_date, '2026-04-15');
+    assert.equal(detail.selection_basis.trigger_key, plan.care_theme.trigger_key);
+  }
+  assert.match(copy, /香り/);
   assert.doesNotMatch(copy, /香りや温度で、手元作業の区切り/);
 });

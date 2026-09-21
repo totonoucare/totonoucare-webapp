@@ -15,7 +15,8 @@ test('all 14 drinks have an explicit reviewed contract; modern tea is not a seda
   assert.ok(d.inferredTags.every(t=>d.tags.includes(t)));
  }
  assert.ok(!byName('ルイボスティー').tags.includes('calm'));
- assert.ok(!byName('とうもろこし茶').tags.includes('drain_damp'));
+ assert.ok(byName('とうもろこし茶').tags.includes('drain_damp'));
+ assert.equal(byName('とうもろこし茶').tagStrengths.drain_damp,'weak');
  assert.ok(byName('とうもろこし茶').inferredTags.includes('support_spleen'));
  assert.equal(byName('白湯').nature,'平');assert.equal(byName('生姜湯').nature,'温');
  assert.equal(byName('葛湯').nature,null);assert.ok(byName('葛湯').tags.includes('snack'));

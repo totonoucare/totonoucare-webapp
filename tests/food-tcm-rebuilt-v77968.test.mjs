@@ -53,7 +53,8 @@ test('water serving temperature and starch drink are not medicinal herb natures'
  assert.equal(byName('葛湯').nature,null);assert.equal(byName('葛湯').servedWarm,true);
  for(const name of ['コーヒー','デカフェコーヒー','ルイボスティー'])assert.equal(byName(name).nature,null);
  for(const name of ['はとむぎ茶','小豆茶','黒豆茶']){assert.ok(byName(name).inferredTags.length);assert.ok(byName(name).inference_basis);}
- assert.ok(!byName('とうもろこし茶').tags.includes('drain_damp'));
+ assert.ok(byName('とうもろこし茶').tags.includes('drain_damp'));
+ assert.equal(byName('とうもろこし茶').tagStrengths.drain_damp,'weak');
 });
 test('pressure rise alone never creates a hot-weather explanation for drinks',()=>{
  const p=food('today',{triggerKey:'pressure_up',secondaryKey:null,subLabels:[],symptomFocus:'fatigue'});
@@ -147,6 +148,6 @@ test('compatibility ingredient suggestions match the actual TCM cards',()=>{
   const p=food(mode);
   assert.deepEqual(p.ingredient_suggestions,p.selected_foods.map(x=>x.name));
   assert.equal(p.ingredient_count,81);
-  assert.equal(p.drink_model_version,'v7.79.70-drink-audit');
+  assert.equal(p.drink_model_version,'v7.79.71-drink-personality');
  }
 });
