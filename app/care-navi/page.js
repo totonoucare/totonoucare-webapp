@@ -121,6 +121,7 @@ const FOOD_NUTRITION_NEED_LABELS = {
 };
 
 const FOOD_PRODUCT_ROLE_LABELS = {
+  food_therapy: "食養生系の健康食品",
   daily_tea: "毎日の一杯",
   pantry_food: "食事へ足す常備品",
   prepared_meal: "用意できない日の備え",
@@ -134,7 +135,7 @@ const CARE_SET_INITIAL_LIMIT = 4;
 const CARE_SET_EXPANDED_LIMIT = 5;
 const SINGLE_ITEM_INITIAL_LIMIT = 8;
 const SINGLE_ITEM_EXPANDED_LIMIT = 16;
-const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v6-care-tools";
+const RAKUTEN_CACHE_STORAGE_KEY = "mibyo-care-navi-rakuten-cache-v7-food-therapy";
 const RAKUTEN_CACHE_TTL_MS = 15 * 60 * 1000;
 const RAKUTEN_CACHE_ENTRY_LIMIT = 8;
 const RAKUTEN_SEARCH_DEBOUNCE_MS = 600;
@@ -2979,7 +2980,7 @@ function fallbackSearchQuery(policyKeys, category, pointContext = null, lifestyl
     if (linked) return linked.keyword;
   }
   if (category === "eat") {
-    const roleQuery = {daily_tea:"ノンカフェイン お茶", pantry_food:"雑穀 豆 食品", prepared_meal:"冷凍 弁当", meal_subscription:"宅食 弁当", nutrition_support:"栄養補助 食品"};
+    const roleQuery = {daily_tea:"薬膳茶 和漢茶", food_therapy:"薬膳 健康食品", pantry_food:"雑穀 豆 食品", prepared_meal:"冷凍 弁当", meal_subscription:"宅食 弁当", nutrition_support:"栄養補助 食品"};
     const query = safeArray(foodCommerceContext?.productRoleKeys).map(key => roleQuery[key]).find(Boolean);
     if (query) return query;
   }
