@@ -1,5 +1,7 @@
 "use client";
 
+import {useExperienceSlot} from '@/components/experience/ExperienceProvider';
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -175,10 +177,12 @@ export default function PushNotificationPrompt() {
     };
   }, [pathname, supported]);
 
+  const {allowed,finish} = useExperienceSlot("push",visible,10);
   const handleDismiss = useCallback(() => {
+    finish?.();
     dismissForNow();
     setVisible(false);
-  }, []);
+  }, [finish]);
 
   const handleEnable = useCallback(async () => {
     try {
@@ -230,7 +234,7 @@ export default function PushNotificationPrompt() {
     }
   }, [supported]);
 
-  if (!visible) return null;
+  if (!visible || !allowed) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-24 z-50 px-4 sm:bottom-6">

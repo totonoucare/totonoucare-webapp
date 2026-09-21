@@ -1,5 +1,7 @@
 "use client";
 
+import {useExperienceSlot} from '@/components/experience/ExperienceProvider';
+
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
@@ -70,6 +72,7 @@ export default function PwaInstallPrompt() {
   const [isIosSafari, setIsIosSafari] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const {allowed,finish} = useExperienceSlot("pwa",isVisible && (canPrompt || isIosSafari),20);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -110,6 +113,7 @@ export default function PwaInstallPrompt() {
   }, [pathname]);
 
   const hideBanner = () => {
+    finish?.();
     dismissForDays(DISMISS_DAYS);
     setIsVisible(false);
     setIsGuideOpen(false);
@@ -141,7 +145,7 @@ export default function PwaInstallPrompt() {
     }
   };
 
-  if (!isVisible || (!canPrompt && !isIosSafari)) return null;
+  if (!allowed || !isVisible || (!canPrompt && !isIosSafari)) return null;
 
   return (
     <>
@@ -183,7 +187,7 @@ export default function PwaInstallPrompt() {
       </div>
 
       {isGuideOpen && (
-        <div className="fixed inset-0 z-[90] grid place-items-end bg-[#101827]/38 px-4 pb-4 backdrop-blur-[2px]">
+        <div data-experience role="dialog" aria-modal="true" aria-label="ホーム画面に追加する手順" className="fixed inset-0 z-[90] grid place-items-end bg-[#101827]/38 px-4 pb-4 backdrop-blur-[2px]">
           <div className="w-full max-w-[430px] rounded-[28px] border border-[#DCE7DE] bg-[linear-gradient(145deg,#FFFFFF_0%,#FAFBF7_62%,#F1F6EF_100%)] p-5 shadow-[0_24px_72px_rgba(15,23,42,0.24)]">
             <div className="flex items-start justify-between gap-4">
               <div>
