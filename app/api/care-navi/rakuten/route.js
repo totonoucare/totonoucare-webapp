@@ -990,6 +990,7 @@ const FOOD_COMMERCE_QUERY_ROWS = {
     warm_meal_routine: careQueryRow("生姜 薬膳 スープ 食事 セット", "冷たい食事が続いた時に、温かい食事へ戻るための常備候補です。", ["温かい食事", "常備"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient", "soupMeal"] }),
   },
   byRole: {
+    food_therapy: careQueryRow("薬膳 食養生 なつめ 黒ごま 食品", "食養生の方針に合わせ、原材料を確認して選ぶ食品候補です。", ["食養生", "原材料"], {intentType:"ingredient",preferredProductTypes:["yakuzenIngredient"]}),
     daily_tea: careQueryRow("和漢 薬膳茶 ノンカフェイン ブレンド", "体質と食事傾向に合わせて、毎日の一杯を選ぶための候補です。", ["毎日の一杯", "和漢茶"], { intentType: "warm_drink", preferredProductTypes: ["teaBlend", "tea"] }),
     pantry_food: careQueryRow("薬膳 素材 なつめ クコ 陳皮 黒豆", "汁物・お茶・日々の食事へ少量足しやすい常備素材です。", ["常備品", "薬膳素材"], { intentType: "ingredient", preferredProductTypes: ["yakuzenIngredient"] }),
     prepared_meal: careQueryRow("野菜 冷凍 惣菜 食事 セット", "用意する余力が少ない日に、一食を外へ預けるための候補です。", ["冷凍惣菜", "食事負担"], { intentType: "light_meal", preferredProductTypes: ["soupMeal"] }),
@@ -1459,6 +1460,7 @@ function buildQueryPlans({
     if (!keyword || seenKeywords.has(keyword)) return false;
     if (safeCategory === "point" && pointToolKind({query:keyword}) && source !== "point_care") return false;
 
+    if (safeCategory === "eat" && foodProductRoleKeys.includes("food_therapy") && !["warm_drink","ingredient"].includes(normalized?.intentType)) return false;
     if (safeCategory === "eat" && isLowValueSupermarketFoodPlan(normalized)) return false;
     if (safeCategory === "eat" && !canAddEatPlan(plans, normalized)) return false;
 
