@@ -1,5 +1,7 @@
-// app/result/[id]/page.js
 "use client";
+// app/result/[id]/page.js
+import {ResultFeedback} from '@/components/experience/ExperienceProvider';
+
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1104,6 +1106,7 @@ function ResultPage({ params }) {
             </>
           ) : null}
 
+          <ResultFeedback />
           <div className="text-center text-[12px] font-black uppercase tracking-widest text-slate-300 pb-4">
             Result ID: {id}
           </div>
