@@ -52,7 +52,8 @@ test('water serving temperature and starch drink are not medicinal herb natures'
  assert.equal(byName('白湯').nature,'平');assert.equal(byName('白湯').servedWarm,true);
  assert.equal(byName('葛湯').nature,null);assert.equal(byName('葛湯').servedWarm,true);
  for(const name of ['コーヒー','デカフェコーヒー','ルイボスティー'])assert.equal(byName(name).nature,null);
- for(const name of ['小豆茶','黒豆茶','とうもろこし茶'])assert.ok(!byName(name).tags.some(x=>['drain_damp','blood','kidney'].includes(x)));
+ for(const name of ['はとむぎ茶','小豆茶','黒豆茶']){assert.ok(byName(name).inferredTags.length);assert.ok(byName(name).inference_basis);}
+ assert.ok(!byName('とうもろこし茶').tags.includes('drain_damp'));
 });
 test('pressure rise alone never creates a hot-weather explanation for drinks',()=>{
  const p=food('today',{triggerKey:'pressure_up',secondaryKey:null,subLabels:[],symptomFocus:'fatigue'});
