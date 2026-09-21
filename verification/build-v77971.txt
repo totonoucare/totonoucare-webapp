@@ -1,0 +1,81 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> totonoucare-webapp@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/17) ...
+   Generating static pages (4/17) 
+   Generating static pages (8/17) 
+   Generating static pages (12/17) 
+ ✓ Generating static pages (17/17)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                Size     First Load JS
+┌ ○ /                                      15.8 kB         192 kB
+├ ○ /_not-found                            873 B          88.2 kB
+├ ƒ /api/care-navi/click                   0 B                0 B
+├ ƒ /api/care-navi/context                 0 B                0 B
+├ ƒ /api/care-navi/rakuten                 0 B                0 B
+├ ƒ /api/care-shop/interpret               0 B                0 B
+├ ƒ /api/care-shop/items                   0 B                0 B
+├ ƒ /api/cron/radar-forecast-snapshots     0 B                0 B
+├ ƒ /api/cron/radar-notifications/morning  0 B                0 B
+├ ƒ /api/cron/radar-notifications/night    0 B                0 B
+├ ƒ /api/diagnosis/v2/events/[id]          0 B                0 B
+├ ƒ /api/diagnosis/v2/events/[id]/attach   0 B                0 B
+├ ƒ /api/diagnosis/v2/events/list          0 B                0 B
+├ ƒ /api/diagnosis/v2/submit               0 B                0 B
+├ ƒ /api/premium/status                    0 B                0 B
+├ ƒ /api/profile/active-symptom-focus      0 B                0 B
+├ ƒ /api/push/register                     0 B                0 B
+├ ƒ /api/push/settings                     0 B                0 B
+├ ƒ /api/push/test                         0 B                0 B
+├ ƒ /api/radar/care-actions                0 B                0 B
+├ ƒ /api/radar/location                    0 B                0 B
+├ ƒ /api/radar/review                      0 B                0 B
+├ ƒ /api/radar/v1/forecast                 0 B                0 B
+├ ƒ /api/radar/v1/forecast/public          0 B                0 B
+├ ƒ /api/records/access                    0 B                0 B
+├ ƒ /api/records/analysis                  0 B                0 B
+├ ƒ /api/records/chat                      0 B                0 B
+├ ƒ /api/records/consent                   0 B                0 B
+├ ƒ /api/records/events                    0 B                0 B
+├ ƒ /api/records/expert-interest           0 B                0 B
+├ ƒ /api/records/feedback                  0 B                0 B
+├ ƒ /api/records/live-chat                 0 B                0 B
+├ ƒ /api/records/range                     0 B                0 B
+├ ƒ /api/records/threads                   0 B                0 B
+├ ƒ /api/stripe/checkout                   0 B                0 B
+├ ƒ /api/stripe/checkout/confirm           0 B                0 B
+├ ƒ /api/stripe/portal                     0 B                0 B
+├ ƒ /api/stripe/webhook                    0 B                0 B
+├ ○ /auth/callback                         2.53 kB         152 kB
+├ ○ /care-navi                             76.6 kB         316 kB
+├ ○ /check                                 6.32 kB         159 kB
+├ ○ /check/run                             6.6 kB         97.7 kB
+├ ○ /feedback                              3.87 kB         157 kB
+├ ○ /guide                                 8.29 kB        99.4 kB
+├ ○ /history                               6.21 kB         159 kB
+├ ○ /radar                                 27.2 kB         282 kB
+├ ƒ /records                               30.5 kB         203 kB
+├ ƒ /result/[id]                           17.6 kB         178 kB
+├ ○ /robots.txt                            0 B                0 B
+├ ○ /settings                              12.5 kB         165 kB
+├ ○ /signup                                5.46 kB         158 kB
+└ ○ /sitemap.xml                           0 B                0 B
++ First Load JS shared by all              87.3 kB
+  ├ chunks/117-ad5ebdf4d38da52c.js         31.7 kB
+  ├ chunks/fd9d1056-b6f716b34aaf6ca0.js    53.6 kB
+  └ other shared chunks (total)            1.96 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
