@@ -88,7 +88,10 @@ function cleanSnapshot(value, fallback) {
     meta: {
       plan_title: compact(meta.plan_title, 100) || null,
       card_key: compact(meta.card_key, 40) || null,
-      record_semantics: meta.record_semantics === "ingredients_or_eating_pattern" ? meta.record_semantics : null,
+      record_semantics: ["ingredients_or_eating_pattern","ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? meta.record_semantics : null,
+      consumed_id: compact(meta.consumed_id,80)||null,
+      consumed_name: compact(meta.consumed_name,60)||null,
+      consumption_slot: ["today","tonight","breakfast"].includes(meta.consumption_slot)?meta.consumption_slot:null,
       suggested_ingredients: (Array.isArray(meta.suggested_ingredients) ? meta.suggested_ingredients : []).map((item) => compact(item, 60)).filter(Boolean).slice(0, 8),
       meal_example: compact(meta.meal_example, 120) || null,
       card_label: compact(meta.card_label, 120) || null,
@@ -101,6 +104,16 @@ function cleanSnapshot(value, fallback) {
       selection_source: ["check", "daily", "combined"].includes(meta.selection_source) ? meta.selection_source : null,
       selection_reason: compact(meta.selection_reason, 240) || null,
       selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? {
+        ...(["ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? {
+        version:compact(meta.selection_basis.version,60)||null,
+        nature:compact(meta.selection_basis.nature,10)||null,
+        functions:(Array.isArray(meta.selection_basis.functions)?meta.selection_basis.functions:[]).map(x=>compact(x,20)).slice(0,8),
+        matched_functions:(Array.isArray(meta.selection_basis.matched_functions)?meta.selection_basis.matched_functions:[]).map(x=>compact(x,20)).slice(0,8),
+        matched_context:compact(meta.selection_basis.matched_context,60)||null,
+        review:compact(meta.selection_basis.review,30)||null,
+        thermal:compact(meta.selection_basis.thermal,20)||null,
+        served_warm:meta.selection_basis.served_warm===true,
+        }:{}),
         checked_rank: [1, 2].includes(meta.selection_basis.checked_rank) ? meta.selection_basis.checked_rank : null,
         symptom: compact(meta.selection_basis.symptom, 40) || null,
         weather: compact(meta.selection_basis.weather, 40) || null,
@@ -270,6 +283,9 @@ export async function POST(req) {
     const label = compact(body?.label, 160);
     const detail = compact(body?.detail, 240);
     const checked = body?.checked !== false;
+    if (checked && sourceMode === "tomorrow" && body?.item_snapshot?.meta?.consumption_slot === "breakfast") {
+      return NextResponse.json({error:"明日の朝の飲食は、実際に取り入れてから当日のカードで記録できます"},{status:400});
+    }
     const entryOrigin = body?.entry_origin === "record_page" ? "record_page" : "daily_care_card";
     const isRecordPageEntry = entryOrigin === "record_page";
 
