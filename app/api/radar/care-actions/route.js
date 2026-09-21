@@ -1,3 +1,4 @@
+import { cleanDrinkSelectionBasis } from "@/lib/radar_v1/drinkSelectionSnapshot";
 import { aggregateActionTiming, ACTION_SYMPTOM_TIMINGS } from "@/lib/records/analysis";
 import { NextResponse } from "next/server";
 import { RECORDS_EDIT_LOOKBACK_DAYS } from "@/lib/records/policy";
@@ -103,7 +104,7 @@ function cleanSnapshot(value, fallback) {
       line_group_id: compact(meta.line_group_id, 80) || null,
       selection_source: ["check", "daily", "combined"].includes(meta.selection_source) ? meta.selection_source : null,
       selection_reason: compact(meta.selection_reason, 240) || null,
-      selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? {
+      selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? meta.record_semantics === "drink_consumed" ? cleanDrinkSelectionBasis(meta.selection_basis) : {
         ...(["ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? {
         version:compact(meta.selection_basis.version,60)||null,
         nature:compact(meta.selection_basis.nature,10)||null,
