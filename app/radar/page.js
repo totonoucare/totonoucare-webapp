@@ -1219,7 +1219,7 @@ export default function RadarPage() {
         saving={careActionSavingKey === (item.canonical_key || item.item_key)}
         disabled={!careActionsSchemaReady || !completedCareReady}
         compact={compact}
-        uncheckedLabel={uncheckedLabel || (item.kind === "food_caution" ? "意識した" : "やってみた")}
+        uncheckedLabel={uncheckedLabel || (item.meta?.record_semantics === "ingredient_consumed" ? "食べた" : item.meta?.record_semantics === "drink_consumed" ? "飲んだ" : item.kind === "food_caution" ? "意識した" : "やってみた")}
         onClick={(event) => {
           if (stopPropagation) event?.stopPropagation?.();
           toggleCareAction(item);
@@ -2183,12 +2183,13 @@ export default function RadarPage() {
                                         </div>
                                         {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
                                       </div>
+                                      {itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.public_reason}</p> : null}
                                       {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
-                                      {safeArray(itemDetail?.reasons).length ? (
+                                      {safeArray(itemDetail?.reasons).filter(r => r.text !== itemDetail?.public_reason).length ? (
                                         <details className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                           <summary className="cursor-pointer text-[#9A6B20]">{itemDetail.preparation ? "作り方と選んだ理由" : "選んだ理由"}</summary>
                                           {itemDetail.preparation ? <p className="mt-2 font-bold leading-6">{itemDetail.preparation}</p> : null}
-                                          {safeArray(itemDetail.reasons).map((reason, reasonIdx) => (
+                                          {safeArray(itemDetail.reasons).filter(r => r.text !== itemDetail.public_reason).map((reason, reasonIdx) => (
                                             <div key={`${reason?.label || "reason"}-${reasonIdx}`} className="text-[12px] font-bold leading-5 text-slate-500">
                                               <span className="mr-1 font-black text-[#9A6B20]">{reason?.label}</span>
                                               {reason?.text}
@@ -2297,6 +2298,7 @@ export default function RadarPage() {
                             </div>
                           ) : null}
 
+                          {!selectedIsToday ? <p className="text-[12px] leading-6 text-slate-500">今夜食べたものは、この画面で記録できます。明日の朝の飲食は、明日の「今日」タブから記録できます。</p> : null}
                           {secondaryFoodCards.length > 0 ? (
                             <div className="space-y-2.5">
                               {secondaryFoodCards.map((card, cardIndex) => (
@@ -2330,10 +2332,11 @@ export default function RadarPage() {
                                                 ? actionButtonFor(careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIndex], { compact: true })
                                                 : null}
                                             </div>
-                                            {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
-                                      {safeArray(itemDetail?.reasons).length ? (
+                                            {itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.public_reason}</p> : null}
+                                      {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
+                                      {safeArray(itemDetail?.reasons).filter(r => r.text !== itemDetail?.public_reason).length ? (
                                               <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
-                                                {safeArray(itemDetail.reasons).map((reason, reasonIndex) => (
+                                                {safeArray(itemDetail.reasons).filter(r => r.text !== itemDetail.public_reason).map((reason, reasonIndex) => (
                                                   <div key={`${reason?.label || "reason"}-${reasonIndex}`} className="text-[12px] font-bold leading-5 text-slate-500">
                                                     <span className="mr-1 font-black text-[#9A6B20]">{reason?.label}</span>
                                                     {reason?.text}
@@ -2383,15 +2386,11 @@ export default function RadarPage() {
                 </div>
                 {selectedIsToday ? <PurchasedCareItemsPanel items={purchasedCareItemsByCategory.eat} renderActionButton={actionButtonFor} /> : null}
                 <CareSetNaviBridge
-                  title="この傾向の日に備えるものを見る"
-                  lead={selectedIsToday
-                    ? food?.commerce_context?.summary
-                      ? `${food.commerce_context.summary}を続けやすくする、毎日の一杯・常備品・宅食などを見られます。今日の料理材料を探す導線ではありません。`
-                      : "今日の料理材料ではなく、同じ傾向の日に使い続けやすい飲み物・常備品・宅食などを見られます。"
-                    : food?.commerce_context?.summary
-                      ? `${food.commerce_context.summary}を続けやすくする、毎日の一杯・常備品・宅食などを先に見ておけます。`
-                      : "明日の一食そのものではなく、似た傾向の日に備える飲み物・常備品・宅食などを見られます。"}
-                  buttonLabel="食べるケアを続ける候補を見る"
+                  title="食養生を続けるお茶・健康食品を見る"
+                  lead={food?.commerce_context?.summary
+                    ? `${food.commerce_context.summary}という方針に合う薬膳茶や食養生系の健康食品を探せます。`
+                    : "体質とケア方針に合う薬膳茶や食養生系の健康食品を探せます。"}
+                  buttonLabel="食養生の候補を見る"
                   toneKey="eat"
                   onClick={() => router.push(buildCareNaviUrl("eat"))}
                 />
