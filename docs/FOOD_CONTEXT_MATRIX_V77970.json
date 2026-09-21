@@ -1,0 +1,179 @@
+{
+  "contexts": 28500,
+  "profiles": 25,
+  "exposure": {
+    "水": 1932,
+    "白湯": 8188,
+    "麦茶": 3336,
+    "ほうじ茶": 7256,
+    "緑茶": 6246,
+    "コーヒー": 3556,
+    "デカフェコーヒー": 2524,
+    "ルイボスティー": 4828,
+    "はとむぎ茶": 3244,
+    "とうもろこし茶": 6502,
+    "小豆茶": 1100,
+    "黒豆茶": 4734,
+    "生姜湯": 3138,
+    "葛湯": 416
+  },
+  "maxPublic": 64,
+  "maxBody": 61,
+  "violations": [],
+  "samples": {
+    "水": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "毎日の水分補給に。喉の渇きに合わせて飲みます。",
+      "component": "カフェインを含みません。"
+    },
+    "麦茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "香ばしく、甘くない水分補給の候補です。",
+      "component": "カフェインを含みません。"
+    },
+    "緑茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "heat",
+        "mode": "today"
+      },
+      "public_reason": "今日の暑さへの備えに選びました。食養生では熱を落ち着ける方向の一杯です。",
+      "component": "カフェインを含みます。朝〜昼に、濃さと量を調整して飲みます。"
+    },
+    "白湯": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "今日の冷えに備え、温かい飲み物を選びました。熱すぎない温度で、少しずつ飲みます。",
+      "component": "カフェインを含みません。"
+    },
+    "生姜湯": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "今日の冷えに備える一杯です。食養生で温める方向に使う生姜を、薄めで取り入れます。",
+      "component": "カフェインを含みません。生姜の量と甘さを控えめにして飲みます。"
+    },
+    "はとむぎ茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "damp",
+        "mode": "today"
+      },
+      "public_reason": "今日の湿気への備えに選びました。食養生では、水分の偏りと消化・吸収の両方に着目するお茶です。",
+      "component": "カフェインを含みません。"
+    },
+    "とうもろこし茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "damp",
+        "mode": "today"
+      },
+      "public_reason": "今日の湿気による重だるさへの備えに、消化・吸収を支える食養生も取り入れます。香ばしい穀物のお茶を、甘くせず取り入れます。",
+      "component": "カフェインを含みません。"
+    },
+    "ルイボスティー": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "dry",
+        "mode": "today"
+      },
+      "public_reason": "今日の乾燥に備え、水分補給に取り入れる一杯です。ノンカフェインで、食事にも休憩にも合わせやすいお茶です。",
+      "component": "カフェインを含みません。"
+    },
+    "ほうじ茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "heat",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "冷えと暑さの両方に配慮した一杯です。焙煎した茶葉の、香ばしい風味を楽しめます。",
+      "component": "カフェインを含みます。朝〜昼に、濃さと量を調整して飲みます。"
+    },
+    "葛湯": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "cold",
+        "secondaryKey": "heat",
+        "mode": "today"
+      },
+      "public_reason": "小腹が空いたときだけ、少量の補食に。温かいとろみを、甘さ控えめで取り入れます。",
+      "component": "カフェインを含みません。でんぷんや糖分を含むため、小腹が空いたときに少量を。"
+    },
+    "コーヒー": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": "fatigue",
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "疲れが気になるときの休憩に添える一杯です。苦味と香りを楽しむ朝〜昼の一杯に。",
+      "component": "カフェインを含みます。朝〜昼に、濃さと量を調整して飲みます。"
+    },
+    "黒豆茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": "fatigue",
+        "triggerKey": "heat",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "冷えと暑さの両方に配慮した一杯です。食養生で体を養う方向に使う黒豆を、お茶から取り入れます。",
+      "component": "カフェインを含みません。"
+    },
+    "小豆茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": "swelling",
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "むくみが気になるときの食養生に添える候補です。食養生では水分の偏りに着目し、甘くせず取り入れるお茶です。",
+      "component": "カフェインを含みません。"
+    },
+    "デカフェコーヒー": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": "headache",
+        "triggerKey": "default",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "頭痛が気になる日の、水分補給に添える候補です。コーヒーの香りを楽しみながら、カフェインを控えたいときに。",
+      "component": "カフェインを減らした飲み物です。含有量は製品によって異なります。"
+    }
+  }
+}
