@@ -147,6 +147,6 @@ test('compatibility ingredient suggestions match the actual TCM cards',()=>{
   const p=food(mode);
   assert.deepEqual(p.ingredient_suggestions,p.selected_foods.map(x=>x.name));
   assert.equal(p.ingredient_count,81);
-  assert.equal(p.drink_model_version,'v7.79.68-drink-audit');
+  assert.equal(p.drink_model_version,'v7.79.70-drink-audit');
  }
 });

@@ -43,7 +43,7 @@ test("実際の飲み物辞書も体調との相性を先、成分と飲み方�
 });
 
 test("高温日の麦茶には冷ます食性とカフェインなしの理由が出る", () => {
-  const food = buildHeatContext();
+  const food = foodRules.buildIngredientFoodContext({mode:"today", triggerKey:"heat", symptomFocus:"headache", targetDate:"2026-09-22"});
   const drink = food.action_cards.find((card) => card.key === "drink");
   const index = drink.items.indexOf("麦茶");
   assert.ok(index >= 0, drink.items.join(" / "));
