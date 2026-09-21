@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const foodRulesSource = await readFile(new URL("../lib/radar_v1/careRules/foodIngredientRules.js", import.meta.url), "utf8");
@@ -130,7 +130,7 @@ test("似た天気が続いても、主献立は隣接日で重ならず6日間�
   }
 });
 
-test("献立ローテーションは再読込で安定し、天気名ではなく身体反応別の監修候補を使う", () => {
+test("献立ローテーションは再読込で安定し、既存食材の安定IDを使う", () => {
   for (const trigger of triggers) {
     const args = {
       trigger,
@@ -142,7 +142,7 @@ test("献立ローテーションは再読込で安定し、天気名ではな�
     const first = build(args).night_food.primary_action.id;
     const second = build(args).night_food.primary_action.id;
     assert.equal(first, second, trigger);
-    assert.match(first, /^(calm|relax|move|light|moist|warm|support)-/, `${trigger}/${first}`);
+    assert.match(first, /^food-\d{3}$/, `${trigger}/${first}`);
     assert.doesNotMatch(first, /^(damp|heat|dry|cold|pd|pu|base)-/, `${trigger}/${first}`);
   }
 });

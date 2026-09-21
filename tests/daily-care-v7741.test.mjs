@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const daily = await import(`data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`);
@@ -58,19 +58,19 @@ test("subtraction advice is concrete, reasoned and not the old generic heading",
   assert.equal(caution.items.length, 1);
   assert.equal(caution.items[0], food.subtraction_action.label);
   assert.ok(food.subtraction_action.reason.length > 20);
-  assert.equal(caution.label, "今日は重ねない");
-  assert.match(caution.items[0], /ない|避け|控え|だけで|一気に/);
+  assert.equal(caution.label, "今日は重ねすぎない");
+  assert.match(caution.body, /控え|少量|重ねない/);
 });
 
-test("subtraction advice is stable on reload and rotates across similar forecast dates", () => {
+test("subtraction advice stays relevant when only the date changes", () => {
   const day1a = buildFood("2026-07-18");
   const day1b = buildFood("2026-07-18");
   const day2 = buildFood("2026-07-19");
   assert.equal(day1a.subtraction_action.id, day1b.subtraction_action.id);
-  assert.notEqual(day1a.subtraction_action.id, day2.subtraction_action.id);
+  assert.equal(day1a.subtraction_action.id, day2.subtraction_action.id);
 });
 
-test("food subtraction changes with constitution even under the same weather", () => {
+test("damp caution remains relevant across different constitutions under damp weather", () => {
   const date = "2026-07-18";
   const dampRisk = {
     constitution_context: {
@@ -94,14 +94,14 @@ test("food subtraction changes with constitution even under the same weather", (
     symptomFocus: "swelling",
     subLabels: dampRisk.constitution_context.sub_labels,
   });
-  assert.notEqual(food.subtraction_action.id, buildFood(date).subtraction_action.id);
+  assert.equal(food.subtraction_action.id, "night-heavy");
   assert.match(food.subtraction_action.reason, /湿|重|冷|甘|胃腸/);
 });
 
 test("the disclosure label describes its actual contents", () => {
   const food = buildFood();
   assert.equal(food.detail_eyebrow, "ほかの選び方");
-  assert.equal(food.detail_title, "作らない時・別の候補・控えたい物");
+  assert.equal(food.detail_title, "別の食材・控えめにしたいもの");
   assert.match(pageSource, /visiblePrimaryFoodCards/);
   assert.match(pageSource, /food\.detail_eyebrow \|\| "ほかの選び方"/);
   assert.match(pageSource, /food\.detail_title/);

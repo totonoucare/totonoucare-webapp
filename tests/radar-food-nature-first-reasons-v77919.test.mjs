@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const dailyUrl = `data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`;
@@ -35,8 +35,9 @@ test("実際の飲み物辞書も体調との相性を先、成分と飲み方�
   assert.ok(drink.items.length >= 2);
   for (const detail of drink.item_details) {
     assert.deepEqual(detail.reasons.slice(0, 2).map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
-    assert.doesNotMatch(detail.reasons[0].text, /食養生では/);
-    assert.match(detail.reasons[0].text, /温める|冷ます|偏りが少ない/);
+    assert.ok(detail.public_reason.length > 15);
+    assert.equal(detail.record_semantics,"drink_consumed");
+    assert.equal(detail.consumed_name,detail.label);
     assert.match(detail.reasons[1].text, /カフェイン/);
   }
 });
@@ -46,17 +47,18 @@ test("高温日の麦茶には冷ます食性とカフェインなしの理由�
   const drink = food.action_cards.find((card) => card.key === "drink");
   const index = drink.items.indexOf("麦茶");
   assert.ok(index >= 0, drink.items.join(" / "));
-  assert.match(drink.item_details[index].reasons[0].text, /熱を冷ます方向/);
+  assert.match(drink.item_details[index].reasons[0].text, /熱を落ち着ける方向/);
   assert.match(drink.item_details[index].reasons[1].text, /カフェインを含みません/);
 });
 
 test("料理は取り入れたい食材を先に見せ、料理名を料理案へ下げる", () => {
   const food = buildHeatContext();
   const meal = food.action_cards.find((card) => card.key === "choice")?.item_details?.[0];
-  assert.ok(meal.focus_ingredients.length >= 2, JSON.stringify(meal));
+  assert.ok(meal.focus_ingredients.length === 1, JSON.stringify(meal));
   assert.ok(meal.meal_example.length > 0);
-  assert.deepEqual(meal.reasons.map((reason) => reason.label), ["体調との相性", "栄養面"]);
-  assert.doesNotMatch(meal.reasons[0].text, /食養生では/);
+  assert.deepEqual(meal.reasons.map((reason) => reason.label), ["選んだ理由"]);
+  assert.match(meal.reasons[0].text, /食養生では/);
+  assert.equal(meal.consumed_name,meal.focus_ingredients[0]);
   assert.match(pageSource, /取り入れたい食材/);
   assert.match(pageSource, /itemDetail\?\.meal_example/);
 });

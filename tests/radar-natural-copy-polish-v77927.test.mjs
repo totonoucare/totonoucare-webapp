@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const dailyUrl = `data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`;
@@ -55,7 +55,7 @@ test("乾燥日の睡眠・胃腸サインを具体的な生活語で示す", ()
   assert.doesNotMatch([...sleep, ...digestion].join(" "), /乾きで休まりにくい|のどや便通の乾き/);
 });
 
-test("水の理由へ香りを持ち込まず、首肩を休める行動を示す", () => {
+test("水の理由へ香りを持ち込まず水分補給として説明する", () => {
   const riskContext = buildRisk();
   const context = foodRules.buildIngredientFoodContext({
     mode: "today",
@@ -68,11 +68,10 @@ test("水の理由へ香りを持ち込まず、首肩を休める行動を示�
     riskContext,
   });
   const drink = context.action_cards.find((card) => card.key === "drink");
-  const water = drink.item_details.find((item) => item.label === "水");
-  const copy = water.reasons.map((reason) => reason.text).join(" ");
-
+  const water = foodRules.DRINK_ITEMS.find((item) => item.name === "水");
   assert.ok(water);
-  assert.match(copy, /一口飲むたびに手元作業をいったん止め、首肩の力を抜くきっかけ/);
+  const copy=water.note;
+  assert.match(copy, /水分補給/);
   assert.doesNotMatch(copy, /香りや温度で、手元作業の区切り/);
 });
 

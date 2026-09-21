@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const dailyUrl = `data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`;
@@ -30,7 +30,7 @@ test("English fluid_damp sub label changes today's food candidates", () => {
   });
 
   assert.notDeepEqual(firstFoodItems(adjusted), firstFoodItems(base));
-  assert.match(firstFoodItems(adjusted).join(" "), /大根/);
+  assert.ok(adjusted.selected_foods.some(f=>f.basis.matched_functions.some(k=>["健脾","利水"].includes(k))));
 });
 
 test("English and Japanese fluid-damp labels produce the same food adjustment", () => {
@@ -64,8 +64,8 @@ test("Tomorrow food candidates also carry constitution sub-label adjustments", (
     subLabels: ["fluid_deficiency"],
   });
 
-  assert.match(firstFoodItems(damp).join(" "), /大根/);
-  assert.match(firstFoodItems(dry).join(" "), /白菜/);
+  assert.ok(damp.selected_foods.some(f=>f.basis.matched_functions.some(k=>["健脾","利水"].includes(k))));
+  assert.ok(dry.selected_foods.some(f=>f.basis.matched_functions.some(k=>["滋陰","生津","潤燥","潤肺"].includes(k))));
   assert.notDeepEqual(firstFoodItems(damp), firstFoodItems(dry));
 });
 

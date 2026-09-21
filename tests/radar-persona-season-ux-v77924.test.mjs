@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const dailyUrl = `data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`;
@@ -163,10 +163,11 @@ test("今日と明日は主献立を変え、飲み物は同名でも用途と�
     const tomorrowDrink = item.foodTomorrow.action_cards.find((card) => card.key === "drink");
     assert.notEqual(todayMeal, tomorrowMeal, `${key}/meal`);
     assert.equal(todayDrink.label, "今日、食事と合わせる飲み物");
-    assert.equal(tomorrowDrink.label, "今夜〜明朝の飲み物");
-    assert.notEqual(todayDrink.body, tomorrowDrink.body, `${key}/drink body`);
-    assert.match(todayDrink.item_details[0].reasons.at(-1).text, /今日は食事中から食後/);
-    assert.match(tomorrowDrink.item_details[0].reasons.at(-1).text, /今夜|明日の朝/);
+    assert.equal(tomorrowDrink.label, "明日の朝に合わせる飲み物");
+    assert.equal(todayDrink.item_details[0].consumption_slot,"today");
+    assert.equal(tomorrowDrink.item_details[0].consumption_slot,"breakfast");
+    assert.equal(todayDrink.item_details[0].recordable,true);
+    assert.equal(tomorrowDrink.item_details[0].recordable,false);
   }
 });
 

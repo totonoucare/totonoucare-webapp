@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
+import fs from './helpers/rule-read.mjs';
 const text=await fs.readFile(new URL('../lib/radar_v1/careMovementImages.js',import.meta.url),'utf8');
 const {getCareMovementImage}=await import('data:text/javascript;base64,'+Buffer.from(text).toString('base64'));
 test('all eighteen care movements resolve to valid WebP assets with dimensions',async()=>{

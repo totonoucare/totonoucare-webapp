@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 import { buildGuidedSearchResult } from "../lib/care-shop/guidedEngine.js";
 import { matchesLifestyleProductRole } from "../lib/care-navi/lifestyleProductFit.js";

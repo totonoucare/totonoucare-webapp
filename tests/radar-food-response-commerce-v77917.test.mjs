@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
@@ -63,32 +63,29 @@ test("完成料理・買い合わせ・外食・朝食・夜食を別カタロ�
   assert.ok((nightBlock.match(/mealCandidate\("/g) || []).length >= 21);
 });
 
-test("今日の一食と作らずに食べる案は具体名で、一般名一語へ戻さない", () => {
-  const triggers = ["damp", "heat", "dry", "cold", "pressure_down", "pressure_up", "temp_shift"];
-  const symptoms = ["fatigue", "sleep", "digestion", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness", "mood"];
-  for (const trigger of triggers) {
-    for (const symptomFocus of symptoms) {
-      const food = build({ trigger, symptomFocus });
-      const noCook = food.action_cards.find((card) => card.key === "no_cook");
-      assert.equal(noCook?.items?.length, 2, `${trigger}/${symptomFocus}`);
-      assert.match(noCook.items[0], /^コンビニ・スーパー｜.+＋.+/);
-      assert.match(noCook.items[1], /^外食｜.{12,}/);
-      assert.doesNotMatch(noCook.items[0], /｜(?:おにぎり|パン|サンド|スープ|弁当|麺|サラダ)$/);
-      assert.equal(noCook.item_details?.length, 2);
-      assert.ok(food.scene_options.home && food.scene_options.buy && food.scene_options.eat_out);
-    }
-  }
+test("今日の食材には実名・個別の料理例・選定根拠がある", () => {
+ for(const trigger of ["damp","heat","dry","cold","pressure_down","pressure_up","temp_shift"])
+ for(const symptomFocus of ["fatigue","sleep","digestion","neck_shoulder","low_back_pain","swelling","headache","dizziness","mood"]){
+  const food=build({trigger,symptomFocus});
+  const main=food.action_cards.find(c=>c.key==="choice").item_details[0];
+  assert.ok(main.consumed_id);assert.ok(main.meal_example.includes(main.label));
+  assert.ok(main.selection_basis.matched_functions.length,`${trigger}/${symptomFocus}/${main.label}`);
+  assert.equal(main.recordable,true);
+ }
 });
 
-test("明日は完成夕食を流用せず、朝食・空腹時の夜食・今夜の準備を書き分ける", () => {
-  const today = build({ mode: "today" });
-  const tomorrow = build({ mode: "tomorrow" });
-  assert.notEqual(today.primary_action.id, tomorrow.primary_action.id);
-  assert.match(tomorrow.action_cards[0].label, /明日の朝/);
-  assert.ok(tomorrow.action_cards.find((card) => card.key === "night")?.items?.[0]);
-  assert.ok(tomorrow.action_cards.find((card) => card.key === "prep")?.items?.[0]);
-  assert.doesNotMatch(tomorrow.action_cards.find((card) => card.key === "night").items[0], /^小腹が空いたら、/);
-  assert.match(tomorrow.recommendation, /^明日は/);
+test("明日は控えたいものを先頭に置き、任意の夜食と翌朝の食材を区別する", () => {
+ const tomorrow=build({mode:"tomorrow"});
+ assert.equal(tomorrow.action_cards[0].key,"caution");
+ assert.equal(tomorrow.action_cards[0].primary,true);
+ const night=tomorrow.action_cards.find(c=>c.key==="night");
+ assert.match(night.label,/小腹が空いたときだけ/);
+ assert.equal(night.item_details[0].consumption_slot,"tonight");
+ assert.equal(night.item_details[0].recordable,true);
+ const breakfast=tomorrow.action_cards.find(c=>c.key==="choice");
+ assert.match(breakfast.label,/明日の朝/);
+ assert.equal(breakfast.item_details[0].recordable,false);
+ assert.equal(tomorrow.recommendation,null);
 });
 
 test("料理選定は同じ天気でも身体反応・不調で変わる", () => {
@@ -106,7 +103,7 @@ test("料理選定は同じ天気でも身体反応・不調で変わる", () =>
     reactionDirection: "accel",
     subLabels: ["qi_stagnation", "fluid_deficiency"],
   });
-  assert.notEqual(heavy.primary_action.id, tense.primary_action.id);
+  assert.notDeepEqual(heavy.selected_foods.map(x=>x.basis), tense.selected_foods.map(x=>x.basis));
   assert.notEqual(heavy.food_care_profile.response_key, tense.food_care_profile.response_key);
   assert.notDeepEqual(heavy.food_care_profile.context_chips, tense.food_care_profile.context_chips);
 });
@@ -114,12 +111,13 @@ test("料理選定は同じ天気でも身体反応・不調で変わる", () =>
 test("ショップ用プロファイルは料理名や単日の天気ではなく、体質・不調・余力から作る", () => {
   const damp = build({ trigger: "damp" }).commerce_context;
   const heat = build({ trigger: "heat" }).commerce_context;
-  assert.equal(damp.version, "food_commerce_context_v1");
+  assert.equal(damp.version, "food_commerce_context_v2_tcm");
   assert.equal(damp.horizon, "habit");
   assert.deepEqual(damp.policy_keys, heat.policy_keys);
   assert.deepEqual(damp.tcm_function_keys, heat.tcm_function_keys);
   assert.deepEqual(damp.nutrition_need_keys, heat.nutrition_need_keys);
-  assert.ok(damp.product_role_keys.includes("daily_tea"));
+  assert.deepEqual(damp.product_role_keys,["daily_tea","food_therapy"]);
+  assert.deepEqual(damp.nutrition_need_keys,[]);
   assert.doesNotMatch(JSON.stringify(damp), /meal_id|recipe_id|鶏むね|おにぎり|フォー/);
 });
 

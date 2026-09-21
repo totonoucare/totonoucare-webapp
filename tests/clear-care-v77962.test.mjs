@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
+import fs from './helpers/rule-read.mjs';
 import {createScenarioRunner,scenarios} from './helpers/forecast-scenarios.mjs';
 const {load,run}=await createScenarioRunner();
 const daily=await load('lib/radar_v1/careRules/dailyCareV2.js');
@@ -36,22 +36,23 @@ test('both date modes cover all symptom focuses with relevant, reproducible care
 test('food adoption records preserve their meaning through API cleaning, identity, and snapshots',async()=>{
  const p=run(scenarios[2][1],1,'fatigue').care;
  const item=actions.buildDisplayedCareItems({food:p.night_food}).find(x=>x.kind==='food_choice_item');
- assert.match(item.label,/食事に取り入れる/);
- assert.equal(item.meta.record_semantics,'ingredients_or_eating_pattern');
- assert.ok(item.meta.meal_example);assert.ok(item.meta.suggested_ingredients.length);
+ assert.match(item.label,/を食べた$/);
+ assert.equal(item.meta.record_semantics,'ingredient_consumed');
+ assert.ok(item.meta.meal_example);assert.ok(item.meta.consumed_id);assert.equal(item.meta.consumed_name+"を食べた",item.label);
  const api=await fs.readFile(new URL('../app/api/radar/care-actions/route.js',import.meta.url),'utf8');
  const block=api.slice(api.indexOf('function cleanSnapshot('),api.indexOf('\nasync function ',api.indexOf('function cleanSnapshot(')));
  const clean=new Function('compact',block+';return cleanSnapshot;')((v,n)=>String(v||'').trim().slice(0,n));
  const saved=clean(item,{canonicalKey:item.canonical_key,label:item.label,detail:item.detail,kind:item.kind,domain:item.domain,sourceMode:'today',entryOrigin:'daily_care_card'});
  assert.equal(saved.meta.record_semantics,item.meta.record_semantics);
- assert.deepEqual(saved.meta.suggested_ingredients,item.meta.suggested_ingredients);
+ assert.equal(saved.meta.consumed_name,item.meta.consumed_name);
+ assert.deepEqual(saved.meta.selection_basis.functions,item.meta.selection_basis.functions);
  const row={...item,canonical_key:undefined,item_snapshot:{...saved,canonical_key:undefined}};
  assert.equal(actions.canonicalCareActionKey(row),item.canonical_key);
  const legacy={domain:'eat',kind:'food_choice_item',label:item.meta.meal_example,meta:{card_key:'choice'}};
  assert.notEqual(actions.canonicalCareActionKey(legacy),item.canonical_key);
  assert.equal(actions.normalizeCareAction({...legacy,source_mode:'today'}).label,item.meta.meal_example);
  const visible=snapshot.buildDisplayedCareSnapshot({carePlan:p}).exact_visible_items.find(x=>x.kind==='food_choice_item');
- assert.equal(visible.label,item.label);assert.equal(visible.canonical_key,item.canonical_key);
+ assert.equal(visible.label,`${item.meta.consumed_name}の提案`);assert.equal(visible.canonical_key,item.canonical_key);
 });
 
 test('tabs start with food; category deep links and date switches keep user intent',()=>{

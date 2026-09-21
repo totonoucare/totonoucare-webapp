@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {readFile,access} from 'node:fs/promises';
+import {readFile,access} from './helpers/rule-read.mjs';
 import {createScenarioRunner,scenarios} from './helpers/forecast-scenarios.mjs';
 const {load,run}=await createScenarioRunner();
 const daily=await load('lib/radar_v1/careRules/dailyCareV2.js'),ui=await load('app/radar/utils.js'),items=await load('lib/radar_v1/careActionItems.js'),images=await load('lib/radar_v1/careMovementImages.js');

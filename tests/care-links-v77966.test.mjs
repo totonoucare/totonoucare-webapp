@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {readFile} from './helpers/rule-read.mjs';
 import {createScenarioRunner} from './helpers/forecast-scenarios.mjs';
 const {load}=await createScenarioRunner();
 const daily=await load('lib/radar_v1/careRules/dailyCareV2.js');

@@ -16,7 +16,7 @@ test('all approved lifestyle contexts keep the same query when products cannot b
 });
 test('food fallback follows the passed product role and point fallback keeps point-tool screening',()=>{
  assert.equal(fallback([],'eat',null,'','',{productRoleKeys:['prepared_meal']}),'冷凍 弁当');
- assert.equal(fallback([],'eat',null,'','',{productRoleKeys:['daily_tea']}),'ノンカフェイン お茶');
+ assert.equal(fallback([],'eat',null,'','',{productRoleKeys:['daily_tea']}),'薬膳茶 和漢茶');
  const p=point.normalizePointToolContext({codes:'LI4',lineCodes:'',warming:false});
  assert.equal(fallback([],'point',p),point.pointToolQueryRows(p)[0]?.keyword||'');
 });

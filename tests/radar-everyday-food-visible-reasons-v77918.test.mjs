@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/rule-read.mjs";
 
 const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV2.js", import.meta.url), "utf8");
 const pageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
@@ -60,18 +60,15 @@ function build({
   }).tomorrow_food_context;
 }
 
-test("導入文は否定比較から入らず、天気・反応・不調・食べ方を直接示す", () => {
-  const heat = build({ trigger: "heat" });
-  const dry = build({ trigger: "dry" });
-  assert.match(heat.recommendation, /高温の予報/);
-  assert.match(heat.recommendation, /アクセル寄りの反応/);
-  assert.match(heat.recommendation, /首肩のつらさ/);
-  assert.doesNotMatch(heat.recommendation, /より|ではなく|栄養を足し続ける|小さく区切る/);
-  assert.match(dry.recommendation, /乾燥の予報/);
-  assert.notEqual(heat.recommendation, dry.recommendation);
-  assert.notEqual(heat.primary_action.id, dry.primary_action.id);
-  assert.ok(heat.context_chips.includes("高温"));
-  assert.ok(dry.context_chips.includes("乾燥"));
+test("前置きを省き、食材ごとに今日選んだ理由を表示する", () => {
+  for (const trigger of ["heat","dry"]) {
+    const food=build({trigger});
+    assert.equal(food.recommendation,null);
+    const item=food.action_cards.find(c=>c.key==="choice").item_details[0];
+    assert.ok(item.public_reason.includes(item.label));
+    assert.ok(item.selection_basis.matched_functions.length);
+    assert.ok(food.context_chips.includes(WEATHER_LABELS[trigger]));
+  }
 });
 
 test("食事と飲み物を主表示に残し、控えたい物と追加候補は詳細へ送る", () => {
@@ -85,21 +82,21 @@ test("食事と飲み物を主表示に残し、控えたい物と追加候補�
   assert.match(pageSource, /itemDetail\.reasons/);
 });
 
-test("買う・外食は一つの作らない選択へまとめ、入手場面だけ明示する", () => {
-  const food = build();
-  assert.equal(food.action_cards.some((card) => card.key === "buy" || card.key === "eat_out"), false);
-  const noCook = food.action_cards.find((card) => card.key === "no_cook");
-  assert.equal(noCook.items.length, 2);
-  assert.match(noCook.items[0], /^コンビニ・スーパー｜/);
-  assert.match(noCook.items[1], /^外食｜/);
-  assert.equal(noCook.item_details.length, 2);
+test("食材と料理例を対応させ、買い合わせや外食料理を記録対象にしない", () => {
+ const food=build();
+ assert.equal(food.action_cards.some(c=>["buy","eat_out","no_cook"].includes(c.key)),false);
+ for(const c of food.action_cards.filter(c=>["choice","alternative"].includes(c.key)))for(const d of c.item_details){
+  assert.equal(d.consumed_name,d.label);
+  assert.deepEqual(d.focus_ingredients,[d.label]);
+  assert.ok(d.meal_example.includes(d.label),d.meal_example);
+ }
 });
 
-test("食事候補は体調との相性を先、栄養面を補足として表示する", () => {
+test("食事候補は食材に対応した食養生の理由を表示する", () => {
   const food = build();
   for (const card of food.action_cards.filter((item) => ["choice", "no_cook", "alternative", "night"].includes(item.key))) {
     for (const detail of card.item_details || []) {
-      assert.deepEqual(detail.reasons.map((reason) => reason.label), ["体調との相性", "栄養面"]);
+      assert.deepEqual(detail.reasons.map((reason) => reason.label), ["選んだ理由"]);
       assert.ok(detail.reasons.every((reason) => reason.text.length >= 20));
       assert.ok(detail.focus_ingredients.length >= 1);
       assert.equal(detail.meal_example.length > 0, true);
