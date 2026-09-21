@@ -11,7 +11,8 @@ const snapshots=await load('lib/radar_v1/displayedCareSnapshot.js');
 const analysis=await load('lib/records/analysis.js');
 const api=await fs.readFile(new URL('../app/api/radar/care-actions/route.js',import.meta.url),'utf8');
 const block=api.slice(api.indexOf('function cleanSnapshot('),api.indexOf('\nasync function ',api.indexOf('function cleanSnapshot(')));
-const clean=new Function('compact',block+';return cleanSnapshot;')((v,n)=>String(v||'').trim().slice(0,n));
+const {cleanDrinkSelectionBasis}=await load('lib/radar_v1/drinkSelectionSnapshot.js');
+const clean=new Function('compact','cleanDrinkSelectionBasis',block+';return cleanSnapshot;')((v,n)=>String(v||'').trim().slice(0,n),cleanDrinkSelectionBasis);
 function food(mode='today',more={}){return rules.buildIngredientFoodContext({mode,triggerKey:'damp',secondaryKey:'heat',subLabels:['fluid_damp','qi_deficiency'],symptomFocus:'digestion',targetDate:'2026-09-22',...more});}
 function option(trigger='none',labels=[]){return {targetDate:'2026-09-22',theme:{trigger_key:trigger,policies:[]},subLabels:labels};}
 
@@ -148,6 +149,6 @@ test('compatibility ingredient suggestions match the actual TCM cards',()=>{
   const p=food(mode);
   assert.deepEqual(p.ingredient_suggestions,p.selected_foods.map(x=>x.name));
   assert.equal(p.ingredient_count,81);
-  assert.equal(p.drink_model_version,'v7.79.71-drink-personality');
+  assert.equal(p.drink_model_version,'v7.79.72-drink-continuity');
  }
 });
