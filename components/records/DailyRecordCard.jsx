@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
@@ -311,7 +312,7 @@ export default function DailyRecordCard({
         : `${editWindowLabel}を過ぎた日は、保存済みの記録だけ見返せます。`;
 
   return (
-    <section className="overflow-hidden rounded-[30px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.38)]">
+    <section data-experience-form className="overflow-hidden rounded-[30px] bg-white ring-1 ring-[#DCE8DD] shadow-[0_18px_42px_-34px_rgba(15,23,42,0.38)]">
       <div className="bg-[#F4FAF7] px-4 pb-4 pt-5">
         <div className="flex items-end gap-3">
           <GuideBotAvatar mood={botMood} className="h-[82px] w-[82px] shrink-0" />

@@ -1,5 +1,7 @@
 "use client";
 
+import {experienceSignal} from '@/lib/experience/client';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
@@ -71,6 +73,7 @@ function FeedbackButtons({ requestId, surface, authedFetch, feedbackByRequest, s
         method: "POST",
         body: JSON.stringify({ request_id: requestId, feedback, reason, surface }),
       });
+      experienceSignal('feedback');
     } catch {
       setFeedbackByRequest((current) => {
         const next = { ...current };

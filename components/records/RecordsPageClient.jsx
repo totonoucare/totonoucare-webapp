@@ -1,5 +1,7 @@
 "use client";
 
+import {experienceSignal} from '@/lib/experience/client';
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
@@ -92,6 +94,7 @@ export default function RecordsPageClient({
 
   const [tab, setTab] = useState(normalizeTab(initialTab));
   const [session, setSession] = useState(null);
+  useEffect(() => {if(session?.access_token && ['analysis','consult'].includes(tab)) experienceSignal(tab);},[session?.access_token,tab]);
   const [authLoading, setAuthLoading] = useState(true);
 
   const [month, setMonth] = useState(today.slice(0, 7));
@@ -368,6 +371,7 @@ export default function RecordsPageClient({
       };
       setSelectedRow(nextRow);
       setRecentlySavedDate(payload.date);
+      experienceSignal('record');
       setMonthRows((current) => {
         const without = current.filter((row) => row.date !== payload.date);
         return [...without, nextRow].sort((a, b) => a.date.localeCompare(b.date));

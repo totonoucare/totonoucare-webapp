@@ -1,5 +1,7 @@
 "use client";
 
+import {experienceSignal} from '@/lib/experience/client';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/components/ui/Button";
 import CheckoutButton from "@/components/billing/CheckoutButton";
@@ -120,6 +122,7 @@ function LiveFeedbackButtons({ requestId, authedFetch, feedbackByRequest, setFee
         method: "POST",
         body: JSON.stringify({ request_id: requestId, feedback, reason, surface: "live_support" }),
       });
+      experienceSignal('feedback');
     } catch {
       setFeedbackByRequest((current) => {
         const next = { ...current };
