@@ -1,0 +1,168 @@
+{
+  "contexts": 28500,
+  "profiles": 25,
+  "exposure": {
+    "水": 719,
+    "白湯": 5776,
+    "麦茶": 2411,
+    "ほうじ茶": 6155,
+    "緑茶": 4811,
+    "コーヒー": 2621,
+    "デカフェコーヒー": 3680,
+    "ルイボスティー": 2374,
+    "はとむぎ茶": 5087,
+    "とうもろこし茶": 6472,
+    "小豆茶": 4538,
+    "黒豆茶": 9243,
+    "生姜湯": 3113,
+    "葛湯": 0
+  },
+  "maxPublic": 64,
+  "maxBody": 61,
+  "violations": [],
+  "samples": {
+    "コーヒー": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "苦味と香りを楽しむ朝〜昼の一杯に。いつもの量を目安にします。",
+      "component": "カフェインを含みます。朝〜昼に、濃さと量を調整して飲みます。"
+    },
+    "小豆茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "小豆の風味を、砂糖を加えず取り入れるお茶です。",
+      "component": "カフェインを含みません。"
+    },
+    "デカフェコーヒー": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "tomorrow"
+      },
+      "public_reason": "コーヒーの香りを楽しみながら、カフェインを控えたいときに。",
+      "component": "カフェインを減らした飲み物です。含有量は製品によって異なります。"
+    },
+    "黒豆茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": null,
+        "mode": "tomorrow"
+      },
+      "public_reason": "黒豆の香ばしい風味を、甘くせず楽しめます。",
+      "component": "カフェインを含みません。"
+    },
+    "はとむぎ茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "heat",
+        "mode": "today"
+      },
+      "public_reason": "今日の暑さへの備えに選びました。食養生では熱を落ち着ける方向の一杯です。",
+      "component": "カフェインを含みません。"
+    },
+    "緑茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "heat",
+        "mode": "today"
+      },
+      "public_reason": "今日の暑さへの備えに選びました。食養生では熱を落ち着ける方向の一杯です。",
+      "component": "カフェインを含みます。朝〜昼に、濃さと量を調整して飲みます。"
+    },
+    "生姜湯": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "今日の冷えに備える一杯です。食養生で温める方向に使う生姜を、薄めで取り入れます。",
+      "component": "カフェインを含みません。生姜の量と甘さを控えめにして飲みます。"
+    },
+    "ほうじ茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "cold",
+        "mode": "today"
+      },
+      "public_reason": "今日の冷えに備え、香ばしいほうじ茶を。食養生では穏やかに温める方向の一杯です。",
+      "component": "カフェインを含みます。朝〜昼に、濃さと量を調整して飲みます。"
+    },
+    "とうもろこし茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "damp",
+        "mode": "today"
+      },
+      "public_reason": "今日の湿気への備えに、胃腸の働きを支える一杯を。穀物の香ばしさを、砂糖を加えず楽しめます。",
+      "component": "カフェインを含みません。"
+    },
+    "水": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "secondaryKey": "dry",
+        "mode": "tomorrow"
+      },
+      "public_reason": "明日の乾燥に備え、水分補給に取り入れる一杯です。喉の渇きに合わせ、飲みやすい温度で飲みます。",
+      "component": "カフェインを含みません。"
+    },
+    "麦茶": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "heat",
+        "secondaryKey": null,
+        "mode": "today"
+      },
+      "public_reason": "今日の暑さへの備えに選びました。食養生では熱を落ち着ける方向の一杯です。",
+      "component": "カフェインを含みません。"
+    },
+    "白湯": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "cold",
+        "secondaryKey": null,
+        "mode": "tomorrow"
+      },
+      "public_reason": "明日の冷えに備え、温かい飲み物を選びました。熱すぎない温度で、少しずつ飲みます。",
+      "component": "カフェインを含みません。"
+    },
+    "ルイボスティー": {
+      "ctx": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "dry",
+        "secondaryKey": "damp",
+        "mode": "tomorrow"
+      },
+      "public_reason": "明日の乾燥に備え、水分補給に取り入れる一杯です。ノンカフェインで、食事にも休憩にも合わせやすいお茶です。",
+      "component": "カフェインを含みません。"
+    }
+  }
+}
