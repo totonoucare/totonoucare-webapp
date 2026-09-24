@@ -8,6 +8,7 @@ import {
   getPendingDiagnosisAttach,
 } from "@/lib/pendingDiagnosisAttach";
 import { safeLocalPath } from "@/lib/safeReturnPath";
+import { trackCompleteRegistrationIfNew } from "@/lib/metaPixel";
 
 function decodeMaybe(v) {
   if (!v) return "";
@@ -137,6 +138,12 @@ export default function AuthCallbackClient() {
           throw new Error("セッションを確立できませんでした");
         }
 
+        // OAuthコード、結果ID、nextパスをMetaイベントのURLへ含めない。
+        try {
+          window.history.replaceState({}, "", "/auth/callback");
+        } catch {}
+
+
         if (resultId) {
           setMsg("体質チェック結果を保存しています…");
           await attachResultIfNeeded(resultId, session.access_token);
@@ -145,6 +152,7 @@ export default function AuthCallbackClient() {
 
         if (!active || finishedRef.current) return;
         finishedRef.current = true;
+        await trackCompleteRegistrationIfNew(session.user, session.access_token);
         window.location.replace(nextPath || "/radar");
       } catch (e) {
         console.error("Auth callback failed:", e);
