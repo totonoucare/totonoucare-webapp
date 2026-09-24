@@ -54,10 +54,29 @@ test('callback awaits bounded tracking, completed check leaves pixel document',a
  assert.match(callback,/await trackCompleteRegistrationIfNew\(session.user, session.access_token\)/);
  const run=await readFile(new URL('../app/check/run/page.js',import.meta.url),'utf8');assert.match(run,/await trackCheckComplete\(\)/);assert.match(run,/window.location.assign\(`/);
 });
-test('delayed pixel is awaited before sending; blocked pixel times out without claim',async()=>{
+test('events enqueue before transport readiness; registration still avoids a blocked claim',async()=>{
  const b=browser();delete b.window.fbq.callMethod;
- const promise=b.trackCheckStart();assert.equal(b.calls.filter(x=>x[1]==='CheckStart').length,0);
+ const promise=b.trackCheckStart();assert.equal(b.calls.filter(x=>x[1]==='CheckStart').length,1);
  setTimeout(()=>{b.window.fbq.callMethod=()=>{}},70);assert.equal(await promise,true);
  const c=browser({path:'/auth/callback'});delete c.window.fbq.callMethod;
  assert.equal(await c.trackCompleteRegistrationIfNew(fresh,'token'),false);assert.equal(c.requests,0);
+});
+
+test('standard stub retains PageView and CheckStart beyond the old timeout, then flushes once',async()=>{
+ const storage=new Map(),scripts=[],delivered=[];
+ const window={location:{pathname:'/check',href:'https://mibyo-radar.totonoucare.com/check'},crypto:{randomUUID:()=> 'attempt'},sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)}};
+ const document={querySelector:()=>scripts[0]||null,createElement:()=>({}),head:{appendChild:s=>scripts.push(s)}};
+ const api=new Function('window','document','isLikelyNewSupabaseUser','fetch',clean+';return {trackCheckStart,trackMetaPageViewOnce};')(window,document,()=>true,async()=>({ok:false}));
+ await api.trackMetaPageViewOnce('check-landing');await api.trackMetaPageViewOnce('check-landing');
+ window.location.pathname='/check/run';await api.trackCheckStart();await api.trackCheckStart();
+ assert.equal(scripts.length,1);
+ assert.deepEqual(window.fbq.queue.map(x=>Array.from(x).slice(0,2)),[['set','autoConfig'],['init','1506940704023332'],['track','PageView'],['trackCustom','CheckStart']]);
+ await new Promise(r=>setTimeout(r,1700));
+ window.fbq.callMethod=(...args)=>delivered.push(args);
+ for(const args of window.fbq.queue.splice(0))window.fbq.callMethod(...args);
+ assert.equal(delivered.filter(x=>x[1]==='PageView').length,1);assert.equal(delivered.filter(x=>x[1]==='CheckStart').length,1);
+ // Reloading /check can be measured again despite shared sessionStorage.
+ const again=new Function('window','document','isLikelyNewSupabaseUser','fetch',clean+';return {trackMetaPageViewOnce};')(window,document,()=>true,async()=>({ok:false}));
+ window.location.pathname='/check';await again.trackMetaPageViewOnce('check-landing');
+ assert.equal(delivered.filter(x=>x[1]==='PageView').length,2);
 });
