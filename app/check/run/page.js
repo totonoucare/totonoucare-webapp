@@ -7,6 +7,7 @@ import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { getQuestions } from "@/lib/diagnosis/v2/questions";
 import { IconCheck } from "@/components/illust/icons/check";
+import { trackCheckStart, trackCheckComplete, finishCheckAttempt } from "@/lib/metaPixel";
 
 function ProgressBar({ current, total }) {
   const safeTotal = Math.max(1, total || 1);
@@ -113,6 +114,8 @@ export default function CheckRunPage() {
   function pick(value) {
     if (!ansKey || !q) return;
 
+    void trackCheckStart();
+
     setAnswers((prev) => {
       let next = { ...prev };
 
@@ -178,13 +181,16 @@ export default function CheckRunPage() {
       const eventId = json?.data?.eventId || json?.data?.id;
       if (!eventId) throw new Error("eventId が返りませんでした");
 
+      await trackCheckComplete();
+      finishCheckAttempt();
+
       try {
         sessionStorage.removeItem(PENDING_KEY);
       } catch {
         // noop
       }
 
-      router.push(`/result/${encodeURIComponent(eventId)}`);
+      window.location.assign(`/result/${encodeURIComponent(eventId)}`);
     } catch (e) {
       setError(e?.message || String(e));
     } finally {
