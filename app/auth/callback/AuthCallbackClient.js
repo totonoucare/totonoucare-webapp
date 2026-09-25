@@ -8,7 +8,6 @@ import {
   getPendingDiagnosisAttach,
 } from "@/lib/pendingDiagnosisAttach";
 import { safeLocalPath } from "@/lib/safeReturnPath";
-import { trackCompleteRegistrationIfNew } from "@/lib/metaPixel";
 
 function decodeMaybe(v) {
   if (!v) return "";
@@ -138,9 +137,10 @@ export default function AuthCallbackClient() {
           throw new Error("セッションを確立できませんでした");
         }
 
-        // OAuthコード、結果ID、nextパスをMetaイベントのURLへ含めない。
+        // 認証情報を処理したあとURLを整理し、共通の初回PageViewを許可する。
         try {
           window.history.replaceState({}, "", "/auth/callback");
+          window.dispatchEvent(new Event("mibyo-auth-url-ready"));
         } catch {}
 
 
@@ -152,9 +152,12 @@ export default function AuthCallbackClient() {
 
         if (!active || finishedRef.current) return;
         finishedRef.current = true;
-        await trackCompleteRegistrationIfNew(session.user, session.access_token);
         window.location.replace(nextPath || "/radar");
       } catch (e) {
+        try {
+          window.history.replaceState({}, "", "/auth/callback");
+          window.dispatchEvent(new Event("mibyo-auth-url-ready"));
+        } catch {}
         console.error("Auth callback failed:", e);
         if (!active || finishedRef.current) return;
 
