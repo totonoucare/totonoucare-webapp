@@ -12,7 +12,6 @@ import {
   CONSTITUTION_CHECK_DURATION_LABEL,
   CONSTITUTION_CHECK_INTRO,
 } from "@/lib/diagnosis/v2/uiCopy";
-import { captureCampaignAttribution, trackMetaPageViewOnce } from "@/lib/metaPixel";
 
 function MiniBadge({ children }) {
   return (
@@ -43,10 +42,6 @@ export default function CheckLandingPage() {
   const [latestResult, setLatestResult] = useState(null);
   const [loadingLatest, setLoadingLatest] = useState(false);
 
-  useEffect(() => {
-    captureCampaignAttribution();
-    trackMetaPageViewOnce("check-landing");
-  }, []);
 
   useEffect(() => {
     let unsub = null;
@@ -109,7 +104,6 @@ export default function CheckLandingPage() {
 
   return (
     <AppShell title="体質トリセツ">
-      <span hidden data-meta-tracking-version="v7.79.76" />
       <Module className="mb-8">
         <ModuleHeader
           icon={<IconCheck />}
