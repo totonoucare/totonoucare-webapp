@@ -128,6 +128,14 @@ async function postSettings(settings) {
 export default function PushNotificationPrompt() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [authRevision, setAuthRevision] = useState(0);
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      setAuthRevision(value => value + 1);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
 
@@ -142,6 +150,7 @@ export default function PushNotificationPrompt() {
 
   useEffect(() => {
     let cancelled = false;
+    setVisible(false);
 
     async function init() {
       if (!supported) return;
@@ -175,7 +184,7 @@ export default function PushNotificationPrompt() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, supported]);
+  }, [pathname, supported, authRevision]);
 
   const {allowed,finish} = useExperienceSlot("push",visible,10);
   const handleDismiss = useCallback(() => {
