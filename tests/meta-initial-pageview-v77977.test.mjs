@@ -4,7 +4,7 @@ import {readFile,access} from 'node:fs/promises';
 const source=await readFile(new URL('../lib/metaPixel.js',import.meta.url),'utf8');
 function load(window,document){return new Function('window','document',source.replace(/export /g,'')+';return {trackAppInitialPageView,captureCampaignAttribution};')(window,document);}
 function browser(path,storage=new Map()){
- const scripts=[],w={location:{pathname:path,href:'https://mibyo-radar.totonoucare.com'+path,search:'',hash:''},sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
+ const scripts=[],w={location:{hostname:'mibyo-radar.totonoucare.com',pathname:path,href:'https://mibyo-radar.totonoucare.com'+path,search:'',hash:''},sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
  const d={querySelector:()=>scripts[0],createElement:()=>({}),head:{appendChild:s=>scripts.push(s)}};
  return {w,d,scripts,storage,api:load(w,d)};
 }
@@ -48,4 +48,18 @@ test('only common root calls tracker; obsolete registration endpoint removed',as
  }
  await assert.rejects(access(new URL('../app/api/tracking/registration/route.js',import.meta.url)));
  assert.doesNotMatch(source,/CheckStart|CheckComplete|CompleteRegistration|trackCustom/);
+});
+
+test('non-production hosts neither load nor call Meta, while attribution survives',()=>{
+ for(const host of ['totonoucare-webapp.vercel.app','preview-123.vercel.app','localhost','127.0.0.1','totonoucare.com','mibyo-radar.totonoucare.com.example.org']){
+  const b=browser('/check');b.w.location.hostname=host;
+  b.w.location.href='https://'+host+'/check?utm_source=meta&fbclid=dev-click';
+  let calls=0;b.w.fbq=()=>{calls++};
+  assert.equal(b.api.trackAppInitialPageView(),false,host);
+  assert.equal(calls,0,host);assert.equal(b.scripts.length,0,host);
+  assert.equal(b.w.__mibyoInitialPageViewQueued,undefined);
+  const a=b.api.captureCampaignAttribution();assert.equal(a.utm_source,'meta');assert.equal(a.fbclid,'dev-click');
+ }
+ const b=browser('/radar');b.w.location.hostname='totonoucare-webapp.vercel.app';
+ b.api.trackAppInitialPageView();assert.equal(b.w.fbq,undefined);
 });
