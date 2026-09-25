@@ -1,3 +1,4 @@
+import MetaInitialPageView from '@/components/analytics/MetaInitialPageView';
 // app/layout.js
 import ExperienceProvider from '@/components/experience/ExperienceProvider';
 import "./globals.css";
@@ -90,6 +91,7 @@ export default function RootLayout({ children }) {
     <html lang="ja" className={zen.variable}>
       <body className="min-h-screen bg-app text-slate-900 font-app antialiased">
         <RegisterServiceWorker />
+        <MetaInitialPageView />
         <ExperienceProvider>
         {children}
         <PwaInstallPrompt />
