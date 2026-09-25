@@ -207,17 +207,16 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
 }
 
 function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) {
-  if (isAttached) return null;
+  const [dismissed, setDismissed] = useState(false);
+  if (isAttached || dismissed) return null;
   const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して予報へ") : "無料で保存して予報へ";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
-      <div className="mx-auto flex w-full max-w-[440px] items-center gap-3 rounded-[24px] border border-[#d7e6df] bg-white/96 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
-        <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-black tracking-[0.14em] text-[var(--accent-ink)]">SAVE GUIDE</div>
-          <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">保存すると、今日・明日の体調予報に反映できます。</div>
-        </div>
-        <Button onClick={onClick} disabled={isLoggedIn && attaching} className="h-11 shrink-0 rounded-full px-5 text-[13px] shadow-md">
+      <div className="relative mx-auto w-full max-w-[440px] rounded-[24px] border border-[#d7e6df] bg-white/95 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
+        <button type="button" aria-label="保存の案内を閉じる" onClick={() => setDismissed(true)} className="absolute right-1 top-1 grid h-11 w-11 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
+        <p className="mb-3 pr-9 text-[13px] font-bold leading-5 text-slate-600">体質を保存して、あなたの予報へ</p>
+        <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-h-[44px] w-full rounded-full px-3 text-[13px] shadow-md">
           {ctaLabel}
         </Button>
       </div>
@@ -426,6 +425,26 @@ function ResultPage({ params }) {
   const { id } = params;
 
   const [tab, setTab] = useState("overview");
+  const tabStartRef = useRef(null);
+  const tabScrollPending = useRef(false);
+  const changeTab = (nextTab) => {
+    if (nextTab === tab) return;
+    tabScrollPending.current = true;
+    setTab(nextTab);
+  };
+  useEffect(() => {
+    if (!tabScrollPending.current) return;
+    tabScrollPending.current = false;
+    const frame = requestAnimationFrame(() => {
+      const anchor = tabStartRef.current;
+      if (!anchor) return;
+      // Match the sticky tab strip offset; keep the new panel's first line visible.
+      const strip = anchor.nextElementSibling;
+      const offset = strip ? parseFloat(getComputedStyle(strip).top) || 60 : 60;
+      window.scrollTo({ top: Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - offset), behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [tab]);
 
   const [event, setEvent] = useState(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
@@ -783,7 +802,8 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
-      <SegmentedTabs value={tab} onChange={setTab} />
+      <div ref={tabStartRef} aria-hidden="true" />
+      <SegmentedTabs value={tab} onChange={changeTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="space-y-6 pb-28 mt-3">
@@ -921,7 +941,7 @@ function ResultPage({ params }) {
                               disabled={bodyLineSaving}
                               className="flex-[1.5] rounded-[16px] bg-[var(--accent)] px-3 py-3 text-[12px] font-black text-white disabled:opacity-50"
                             >
-                              {bodyLineSaving ? "保存中…" : "このラインを使う"}
+                              {bodyLineSaving ? "保存中…" : "選択内容を保存"}
                             </button>
                           </div>
                         </div>
@@ -1019,7 +1039,7 @@ function ResultPage({ params }) {
                     <h3 className="text-[16px] font-black text-slate-900">未病レーダーで分かること</h3>
                   </div>
                   <div className="text-[13px] leading-relaxed font-bold text-slate-700 mb-6">{weatherCompat.radarBridge}</div>
-                  <Button onClick={() => setTab("care")} className="w-full shadow-md py-4">整え方を見る</Button>
+                  <Button onClick={() => changeTab("care")} className="w-full shadow-md py-4">整え方を見る</Button>
                 </div>
 
 
