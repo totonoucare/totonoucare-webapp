@@ -78,7 +78,7 @@ export default function ExperienceProvider({children}){
   return()=>{clearInterval(timer);document.removeEventListener('pointerdown',pointer);document.removeEventListener('focusin',update);document.removeEventListener('visibilitychange',update);};
  },[]);
  const summary=useMemo(()=>summarizeExperience(data?.rows||[]),[data]);
- const hardwareReady=Boolean(data&&summary.map['milestone:care_viewed']&&summary.activeDays>=2);
+ const hardwareReady=Boolean(data&&summary.map['milestone:care_viewed']);
  const register=useCallback((id,eligible,priority)=>setRequests(old=>old[id]?.eligible===eligible&&old[id]?.priority===priority?old:{...old,[id]:{eligible,priority}}),[]);
  const finish=useCallback(()=>{const current=slotRef.current;cooldown.current=Date.now()+120000;closedBoundary.current=boundary.current;if(current?.kind==='hardware')send({type:'hardware',id:current.id}).catch(()=>{});setSlot(null);setError('');},[send]);
  useEffect(()=>{
