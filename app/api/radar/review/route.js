@@ -375,7 +375,12 @@ export async function POST(req) {
     }
 
     const written = await write(extendedPayload);
-    if (written.error) throw written.error;
+    if (written.error) {
+      if (written.error.code === "23514" && written.error.message?.includes("radar_reviews_care_timing_check")) {
+        return NextResponse.json({ error: "記録の保存設定を更新中です。入力内容を残したまま、少し時間をおいて再度保存してください。", code: "care_timing_schema_update_required" }, { status: 503 });
+      }
+      throw written.error;
+    }
 
     const { error: eventError } = await supabaseServer.from("records_feature_events").insert({
       user_id: user.id,
