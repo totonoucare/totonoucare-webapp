@@ -11,6 +11,7 @@ import {
 } from "@/lib/pendingDiagnosisAttach";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
+import { trackFunnel } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
 
 function IconMail() {
@@ -82,6 +83,12 @@ export default function SignupClient() {
   }, [sp, fallbackPending]);
 
   const [email, setEmail] = useState("");
+  const [sentEmail, setSentEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [resendAt, setResendAt] = useState(0);
+  const [clock, setClock] = useState(Date.now());
+  const verifyingRef = useRef(false);
+  useEffect(() => { trackFunnel("signup_view"); const t = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(t); }, []);
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -101,6 +108,12 @@ export default function SignupClient() {
 
   useEffect(() => {
     setFallbackPending(getPendingDiagnosisAttach());
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("mibyo_email_pending") || "null");
+      if (saved?.email && Date.now() - saved.at < 3600000) {
+        setEmail(saved.email); setSentEmail(saved.email); setResendAt(saved.at + 60000);
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -213,6 +226,7 @@ export default function SignupClient() {
   }
 
   async function handleGoogleLogin() {
+    trackFunnel("signup_google_start");
     setStatus({ state: "loading_oauth", message: "Googleログインへ移動しています…" });
 
     if (!supabase) {
@@ -238,6 +252,7 @@ export default function SignupClient() {
 
       if (error) throw error;
     } catch (err) {
+      trackFunnel("auth_error", "google");
       console.error(err);
       setStatus({
         state: "error",
@@ -246,9 +261,11 @@ export default function SignupClient() {
     }
   }
 
-  async function handleSendLink(e) {
+  async function handleSendCode(e) {
     e.preventDefault();
-    setStatus({ state: "loading", message: "ログインリンクを送信しています…" });
+    if (Date.now() < resendAt) return;
+    trackFunnel("signup_email_start");
+    setStatus({ state: "loading", message: "確認コードを送信しています…" });
 
     if (!supabase) {
       setStatus({
@@ -265,23 +282,48 @@ export default function SignupClient() {
       });
 
       const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: buildCallbackUrl() },
+        email: email.trim(),
       });
       if (error) throw error;
 
+      try { sessionStorage.setItem("mibyo_email_pending", JSON.stringify({ email: email.trim(), at: Date.now() })); } catch {}
+      setSentEmail(email.trim());
+      setOtp("");
+      setResendAt(Date.now() + 60000);
+      trackFunnel("email_code_sent");
       setStatus({
         state: "sent",
         message:
-          "メールを送信しました！\n受信箱（迷惑メールフォルダ含む）のリンクを開いてログインしてください。",
+          "メールの確認コードを、この画面に戻って入力してください。",
       });
     } catch (err) {
-      console.error(err);
+      trackFunnel("auth_error", "email");
       setStatus({
         state: "error",
-        message: "送信に失敗しました: " + (err?.message || "時間を置いて再度お試しください。"),
+        message: "確認コードを送信できませんでした。メールアドレスを確認し、少し待ってから再試行してください。",
       });
     }
+  }
+
+  async function handleVerify(e) {
+    e.preventDefault();
+    if (verifyingRef.current || !/^\d{6}$/.test(otp)) return;
+    verifyingRef.current = true;
+    setStatus({ state: "loading", message: "確認しています…" });
+    trackFunnel("email_verify_start");
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ email: sentEmail, token: otp, type: "email" });
+      if (error || !data?.session) throw error || new Error("session missing");
+      try { sessionStorage.removeItem("mibyo_email_pending"); } catch {}
+      trackFunnel("auth_success", "email");
+      // The session effect owns attachment; avoid a second concurrent save.
+      setSession(data.session);
+      setStatus({ state: "idle", message: "ログインできました。" });
+      if (!params.resultId) window.location.replace(params.nextPath || "/radar");
+    } catch {
+      trackFunnel("auth_error", "email");
+      setStatus({ state: "error", message: "確認コードが正しくないか、有効期限が切れています。コードを確認するか、再送してください。" });
+    } finally { verifyingRef.current = false; }
   }
 
   async function attachNowIfNeeded(currentSession = session) {
@@ -305,14 +347,16 @@ export default function SignupClient() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
 
+      trackFunnel("result_save_success");
       clearPendingDiagnosisAttach();
       setStatus({ state: "idle", message: "" });
       return true;
     } catch (e) {
+      trackFunnel("result_save_error");
       console.error(e);
       setStatus({
         state: "error",
-        message: "保存に失敗しました: " + (e?.message || String(e)),
+        message: "ログインは完了しましたが、体質結果を保存できませんでした。もう一度「このままアプリへ進む」を押してください。",
       });
       return false;
     }
@@ -393,7 +437,7 @@ export default function SignupClient() {
 
             <div className="mt-6 flex flex-col gap-3">
               <Button
-                onClick={goNext}
+                onClick={() => goNext()}
                 disabled={status.state === "loading"}
                 className="w-full py-3.5 shadow-md"
               >
@@ -416,40 +460,16 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-[20px] bg-[#F4FAF7] px-4 py-3 ring-1 ring-[#CFE7DE]">
-              <div className="text-[13px] font-black text-[#2F816E]">登録から14日間、全機能を無料体験</div>
-              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">カード登録は不要です。体調予報・記録・AI相談まで試してから、続けるか選べます。</div>
-            </div>
-            <div className="mb-6 text-[14px] font-bold leading-6 text-slate-600">
-              Google アカウントですぐ始めるか、メールアドレスに届くログインリンクでも登録できます。
-            </div>
-
-            {params.resultId ? (
-              <div className="mb-6 rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="flex items-center gap-2 text-[12px] font-extrabold text-[var(--accent-ink)]">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="h-4 w-4"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  ログイン後、体質チェックの結果が保存されます
-                </div>
-              </div>
-            ) : null}
+            <h1 className="text-xl font-black leading-relaxed text-slate-900">{params.resultId ? "体質結果を保存して、今日・明日の体調予報とセルフケアを見る" : "ログイン / 新規登録"}</h1>
+            <p className="text-sm leading-6 text-slate-600">あなたの体質と天気に合わせて、体調警戒度や気をつけたい時間帯、セルフケア方法を確認できます。</p>
+            <p className="text-xs leading-5 text-slate-500">新規登録から14日間無料体験。カード登録は不要です。続けるかは体験後に選べます。</p>
 
             <button
   type="button"
   onClick={handleGoogleLogin}
   disabled={
     status.state === "loading" ||
-    status.state === "loading_oauth" ||
-    status.state === "sent"
+    status.state === "loading_oauth"
   }
   className="w-full rounded-[18px] border border-slate-200 bg-white px-5 py-4 shadow-md transition hover:bg-slate-50 disabled:opacity-60"
 >
@@ -466,21 +486,21 @@ export default function SignupClient() {
               </div>
             </div>
 
-            <form onSubmit={handleSendLink} className="space-y-5">
+            <form onSubmit={handleSendCode} className="space-y-5">
               <div>
                 <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
                   メールアドレス
                 </label>
                 <input
                   className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)]"
+                  type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setSentEmail(""); setOtp(""); }}
                   required
                   placeholder="例）mail@example.com"
                   disabled={
                     status.state === "loading" ||
-                    status.state === "loading_oauth" ||
-                    status.state === "sent"
+                    status.state === "loading_oauth"
                   }
                   inputMode="email"
                   autoComplete="email"
@@ -492,13 +512,20 @@ export default function SignupClient() {
                 disabled={
                   status.state === "loading" ||
                   status.state === "loading_oauth" ||
-                  status.state === "sent"
+                  clock < resendAt
                 }
                 className="w-full py-3.5 shadow-md"
               >
-                {status.state === "loading" ? "送信中…" : "ログインリンクを送る"}
+                {status.state === "loading" ? "送信中…" : (clock < resendAt ? `${Math.ceil((resendAt-clock)/1000)}秒後に再送できます` : sentEmail ? "確認コードを再送する" : "確認コードを送る")}
               </Button>
             </form>
+            {sentEmail ? <form onSubmit={handleVerify} className="space-y-3">
+              <p className="text-sm leading-6">メールを確認し、この画面に戻って6桁のコードを入力してください。</p>
+              <label htmlFor="email-otp" className="block text-sm font-bold">確認コード</label>
+              <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
+              <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
+            </form> : null}
+            {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} className="block text-center text-sm underline">結果に戻る</a> : null}
 
             {status.message ? (
               <div
