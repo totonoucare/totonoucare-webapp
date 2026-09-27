@@ -1,5 +1,6 @@
 "use client";
 // app/radar/page.js
+import { trackFunnel } from "@/lib/funnelClient";
 import {experienceSignal} from '@/lib/experience/client';
 
 
@@ -352,6 +353,7 @@ export default function RadarPage() {
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
 
   const [bundle, setBundle] = useState(null);
+  useEffect(() => { if (session?.user?.id && bundle) trackFunnel("radar_view"); }, [session?.user?.id, bundle]);
   const [lifestyleScene, setLifestyleScene] = useState("general");
   const [todayComparisonBundle, setTodayComparisonBundle] = useState(null);
   const [error, setError] = useState("");
