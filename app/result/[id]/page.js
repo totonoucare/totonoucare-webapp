@@ -1052,7 +1052,7 @@ function ResultPage({ params }) {
                   <div className="rounded-[24px] bg-slate-50 p-6 ring-1 ring-slate-100 text-[14px] leading-relaxed font-bold text-slate-700">
                     {carePreferences.summary}
                     <div className="mt-3 text-[14px] font-bold leading-6 text-slate-500">
-                      これは体質チェックの結果から見た、ふだんの整え方です。その日に優先する方針は、天気と今気になる不調を重ねて体調予報で調整します。
+                      体質チェックをもとに、あなたに合いやすいケア方針を3つ選びました。
                     </div>
                   </div>
 
@@ -1067,6 +1067,10 @@ function ResultPage({ params }) {
                       ))}
                     </div>
                   </div>
+
+                  <p className="text-[14px] font-bold leading-6 text-slate-600">
+                    日々の対策ケアでは、これらの方針をもとに、あなたの体質・その日の天気・気になる不調に合わせた具体的なセルフケアを提案します。
+                  </p>
 
                   {carePreferences.reasons?.length ? (
                     <div>
@@ -1087,7 +1091,7 @@ function ResultPage({ params }) {
                   <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-5">
                     <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">この先につながること</div>
                     <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">
-                      7つの整え方は、日々の対策ケア、パーソナルケアショップの商品選び、ミモルへの相談で共通して使う目印です。
+                      これらの整え方は、日々の対策ケア提案、AIミモルとの会話、パーソナルケアショップでのアイテム選びに共通する基本方針です。
                     </div>
                   </div>
 
@@ -1100,8 +1104,8 @@ function ResultPage({ params }) {
                     onSignup={goSignupToRadar}
                     onLogin={goLoginToRadar}
                     compact={true}
-                    title="保存すると、天気に合わせた今日・明日の整え方が見られます"
-                    body="体調予報では、その日の天気と今気になる不調を重ね、7つから優先する整え方を提案します。"
+                    title="体質結果を保存して、今日・明日の体調予報とセルフケアを見る"
+                    body="あなたの体質と天気に合わせて、体調警戒度や気をつけたい時間帯、セルフケア方法を確認できます。"
                   />
                 </div>
               </Card>
