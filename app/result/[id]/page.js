@@ -1,5 +1,6 @@
 "use client";
 // app/result/[id]/page.js
+import { trackFunnel } from "@/lib/funnelClient";
 import {ResultFeedback} from '@/components/experience/ExperienceProvider';
 
 
@@ -200,13 +201,14 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
         <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
         <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の体調予報と対策ケアを確認できます。"}</div>
       </div>
-      <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">無料で保存して予報を見る</Button>
+      <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">体質結果を保存して、今日の予報を見る</Button>
       <Button variant="secondary" onClick={onLogin} className="w-full bg-white shadow-sm py-4">ログインはこちら</Button>
     </div>
   );
 }
 
 function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) {
+  useEffect(() => { if (!isLoggedIn && !isAttached) trackFunnel("signup_cta_view"); }, [isLoggedIn, isAttached]);
   const [dismissed, setDismissed] = useState(false);
   if (isAttached || dismissed) return null;
   const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して予報へ") : "無料で保存して予報へ";
@@ -425,6 +427,7 @@ function ResultPage({ params }) {
   const { id } = params;
 
   const [tab, setTab] = useState("overview");
+  useEffect(() => { trackFunnel({ overview: "result_view", compat: "compat_view", care: "care_view" }[tab], tab); }, [tab]);
   const tabStartRef = useRef(null);
   const tabScrollPending = useRef(false);
   const changeTab = (nextTab) => {
@@ -613,10 +616,12 @@ function ResultPage({ params }) {
   }
 
   function goSignupToRadar() {
+    trackFunnel("signup_cta_click", tab);
     router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
   function goLoginToRadar() {
+    trackFunnel("signup_cta_click", tab);
     router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
@@ -955,19 +960,8 @@ function ResultPage({ params }) {
               <Card>
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の体調予報に反映されます" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
-                  <SavePromptCard
-                    isLoggedIn={isLoggedIn}
-                    isAttached={isAttached}
-                    session={session}
-                    attaching={attaching}
-                    onSave={() => attachToAccount(false)}
-                    onSignup={goSignupToRadar}
-                    onLogin={goLoginToRadar}
-                    title={isLoggedIn ? "このトリセツを保存して予報につなげましょう" : "無料で保存して予報を見ましょう"}
-                    body={isLoggedIn
-                      ? "保存すると、今日・明日の体調予報や暮らす・食べる・ほぐす提案に反映できます。"
-                      : "アカウント作成後、今日・明日の崩れやすさと先回りケアを見られるようになります。"}
-                  />
+                  <Button onClick={() => changeTab("compat")} className="w-full py-4">天気との相性を見る</Button>
+                  {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : goSignupToRadar} className="block mx-auto text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
                   {isAttached ? (
                     <Button onClick={() => router.push("/radar")} className="w-full shadow-md py-4">今日の予報と対策へ</Button>
                   ) : null}
@@ -1045,18 +1039,7 @@ function ResultPage({ params }) {
 
                 <div className="h-px w-full bg-slate-100" />
 
-                <SavePromptCard
-                  isLoggedIn={isLoggedIn}
-                  isAttached={isAttached}
-                  session={session}
-                  attaching={attaching}
-                  onSave={() => attachToAccount(false)}
-                  onSignup={goSignupToRadar}
-                  onLogin={goLoginToRadar}
-                  compact={true}
-                  title="このトリセツを保存すると、予報で使えます"
-                  body="保存すると、今日・明日の体調予報や対策ケアにこのトリセツが反映されます。"
-                />
+                {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : goSignupToRadar} className="block mx-auto py-5 text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
               </div>
             </Card>
           ) : null}
