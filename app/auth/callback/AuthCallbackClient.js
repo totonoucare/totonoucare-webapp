@@ -7,6 +7,7 @@ import {
   clearPendingDiagnosisAttach,
   getPendingDiagnosisAttach,
 } from "@/lib/pendingDiagnosisAttach";
+import { trackFunnel } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
 
 function decodeMaybe(v) {
@@ -86,6 +87,7 @@ export default function AuthCallbackClient() {
     }
 
     async function run() {
+      let stage = "auth";
       try {
         if (!supabase) {
           throw new Error("Supabase client が初期化されていません");
@@ -144,9 +146,12 @@ export default function AuthCallbackClient() {
         } catch {}
 
 
+        trackFunnel("auth_success", "google");
         if (resultId) {
+          stage = "save";
           setMsg("体質チェック結果を保存しています…");
           await attachResultIfNeeded(resultId, session.access_token);
+          trackFunnel("result_save_success");
           clearPendingDiagnosisAttach();
         }
 
@@ -161,11 +166,8 @@ export default function AuthCallbackClient() {
         console.error("Auth callback failed:", e);
         if (!active || finishedRef.current) return;
 
-        setFatalError(
-          e?.message
-            ? `ログインに失敗しました: ${e.message}`
-            : "ログインの期限が切れているか、失敗しました。"
-        );
+        trackFunnel(stage === "save" ? "result_save_error" : "auth_error", stage === "save" ? "" : "google");
+        setFatalError(stage === "save" ? "ログインは完了しましたが、体質結果を保存できませんでした。ログイン画面へ戻り、保存を再試行してください。" : "ログインを完了できませんでした。ログイン画面へ戻って、もう一度お試しください。");
         setMsg("ログイン画面へ戻って、もう一度お試しください。");
       }
     }
