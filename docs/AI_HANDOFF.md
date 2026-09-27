@@ -1,188 +1,123 @@
 # AI開発引き継ぎメモ
 
-この資料は、AIが未病レーダーのコードを読むときの前提をまとめたものです。  
-現在の進行状況や作業予定ではなく、変わりにくい設計・運用ルールだけを扱います。
+この資料は、未病レーダーの変わりにくい設計・運用ルールをまとめた補助資料です。現在の入口は `README_AI_HANDOFF.md` です。
 
 ---
 
-## 開発体制
+## プロダクトの軸
 
-```text
-開発者:
-  iPad上でGitHubを編集する。
+> 明日の崩れやすさを、今夜の整え方に変える。
 
-AI:
-  コード理解、設計判断、修正ファイル作成、SQL作成を行う。
+体質と天気から体調が崩れやすいタイミングを示し、`暮らす / 食べる / ほぐす` の具体的なセルフケアへつなげます。
 
-AIができないこと:
-  GitHubコミット
-  ビルド実行
-  デプロイ実行
-  Supabase SQL Editorの実行
-  Vercel / Netlify / Stripe / Google Cloud の設定変更
-```
-
-長い修正や複数ファイル変更は、原則ZIPで渡します。
-
----
-
-## プロダクトの基本方針
-
-未病レーダーの軸は以下です。
-
-```text
-明日の未病予報を見て、
-今夜の整え方を
-ほぐす・食べる・暮らす
-の3方向から先回りするアプリ
-```
-
-詳細は以下を参照してください。
-
-```text
-docs/PRODUCT_DIRECTION.md
-```
+詳細: `docs/PRODUCT_DIRECTION.md`
 
 ---
 
 ## 実装の大枠
 
 ```text
-app/
-  画面とAPI Routes。
-
-components/
-  UIコンポーネント。
-
-lib/
-  診断、レーダー予報、AI生成、通知、Stripe、Supabase補助などの主要ロジック。
-
-public/
-  画像、PWA、service worker。
-
-.github/workflows/
-  GitHub Actions cron。
-
-supabase/
-  DB関連のsnapshot、確認SQL、migration、seed関連。
+app/              画面とAPI Routes
+components/       UI
+lib/diagnosis/    体質チェック
+lib/radar_v1/     予報・天気・ケア
+lib/records/      記録・AIミモル・アクセス制御
+lib/care-navi/    ケアナビ
+lib/care-shop/    ケアショップ
+lib/push/         通知
+public/           画像・PWA
+supabase/         DB関連
+docs/             設計・運用資料
 ```
 
 ---
 
-## レーダー予報の考え方
+## 体調予報
+
+現行の予報V2は、体質と天気からコード側で予報構造を決定します。
 
 ```text
-ルールベース:
-  スコア
-  signal
-  main_trigger
-  peak
-  響きやすい要素
-  ツボ候補の選定
-
-AI生成:
-  読み解き文
-  食養生文
-  表現の自然化
+点数
+天気ストレス
+主因・副因
+signal
+表示ケア
 ```
 
-GPTに、スコアや主因を自由に再診断させない。  
-AIは「決定済みの構造を、ユーザーに伝わる文章へ整える」役割に寄せます。
+OpenAI APIにこれらを自由に再計算・上書きさせません。
+
+予報ロジック変更時は、`lib/radar_v1/` と関連テストを先に確認してください。
 
 ---
 
-## ケア提案の軸
+## AIミモル
+
+OpenAI APIの主用途は以下です。
 
 ```text
-ほぐす:
-  ツボ・身体ケア。
-
-食べる:
-  食養生。
-  一般的な健康アドバイスではなく、身体の読み解きと具体的な食べ方の作戦に寄せる。
-
-暮らす:
-  寝室、照明、音、湿気、冷え、乾燥、入浴、衣類など、身の回りでできる工夫。
+記録のAI分析
+期間振り返りチャット
+今の体調相談
 ```
+
+モデル・利用上限・公開期間などの非機密運用値は `lib/records/policy.js` が正本です。
+
+ユーザー向け表示名は「AIミモル」が基本です。内部コードに残るEkken系名称は、意図を確認してから変更します。
 
 ---
 
 ## DB管理
 
-Supabase関連の資料は以下にあります。
+```text
+supabase/schema/      現状把握用snapshot
+supabase/migrations/  実変更SQL
+supabase/checks/      確認用SELECT
+supabase/seeds/       マスターデータ
+```
+
+`schema/` は原則そのまま実行しません。
+
+DB変更時はRLS、制約、index、trigger/function、既存データを確認します。
+
+詳細:
 
 ```text
 docs/DB_SCHEMA_MANAGEMENT.md
 docs/DB_CURRENT_STATUS_20260508.md
-docs/RADAR_TSUBO_POINTS_MASTER_20260508.md
-supabase/
 ```
-
-注意:
-
-```text
-supabase/schema/
-  snapshot。原則そのまま実行しない。
-
-supabase/checks/
-  確認用SELECT。
-
-supabase/migrations/
-  実際にSupabase SQL Editorで実行する変更SQL。
-
-supabase/seeds/
-  マスターデータのseed / export関連。
-```
-
-DB関連の変更を作る場合は、RLS、制約、index、trigger/function、既存データを確認してから作る。
 
 ---
 
-## 環境変数・外部サービス
+## 外部サービス・Secret
+
+主な外部サービス:
 
 ```text
-docs/ENVIRONMENT_AND_EXTERNAL_SERVICES.md
-docs/AUTH_AND_DEPLOY_URLS_20260508.md
-.env.example
+Supabase
+Stripe
+OpenAI
+MET Norway
+Google OAuth
+Web Push / VAPID
+Vercel
+Netlify
+GitHub Actions
 ```
 
-Supabase AuthのSite URLは固定ではありません。
+環境変数名は `.env.example` を参照します。Secret実値はGitHubへ保存しません。
 
-```text
-テスト時:
-  Vercelへ向ける。
-
-本番時:
-  Netlify / app.totonoucare.com へ向ける。
-```
-
-Redirect URLsにはテスト用・本番用を同時に残せます。
+詳細: `docs/ENVIRONMENT_AND_EXTERNAL_SERVICES.md`
 
 ---
 
-## 注意する表現
+## AI開発時の原則
 
-未病レーダーは医療行為や治療効果を断定しません。
+- コードを読む前に大きな変更を決めない
+- 古いリリースメモを現在の仕様より優先しない
+- DB状態が不明なら確認SQLから始める
+- 保存済みデータとの互換性を確認する
+- 医療効果を断定する表現を避ける
+- 複数ファイル変更は原則ZIPで返す
+- テスト・ビルド・実機確認の実施状況を明記する
 
-避ける表現:
-
-```text
-治る
-改善する
-効く
-痛みを和らげる
-病気を防ぐ
-```
-
-使いやすい表現:
-
-```text
-整えやすい
-備える
-支度する
-重さが出やすい
-巡りが滞りやすい
-今夜の一手
-この日の備え
-```
-
+現在の詳細な引き継ぎ入口は `README_AI_HANDOFF.md` を参照してください。
