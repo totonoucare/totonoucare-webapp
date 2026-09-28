@@ -1,6 +1,6 @@
 # 未病レーダー AI開発引き継ぎ
 
-**対象ソース: v7.79.83**
+**対象ソース: v7.79.86**
 
 このファイルは、新しいAI開発担当が最初に読むための入口です。過去のバージョン履歴はここへ積み上げません。
 
@@ -43,6 +43,7 @@ supabase/
 
 ```text
 RELEASE-v7.79.81.md
+RELEASE-v7.79.86.md
 deploy/email-otp.html
 lib/funnelClient.js
 lib/funnelEvents.js
