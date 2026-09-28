@@ -130,6 +130,6 @@ test("予報カードは警戒度を先に示し、リードとサインを一�
   assert.match(gauge, /caption: "無理せず守りたい日"/);
   assert.doesNotMatch(gauge, /体調ゆらぎ度|早めに整える日|無理を重ねない日/);
 
-  assert.match(home, /体調警戒度 \{indexLabel\}/);
+  assert.match(await source("components/forecast/HomeForecastStrip.jsx"), /体調警戒度 \{indexLabel\}/);
   assert.match(guide, /体調警戒度は、気圧・気温・湿度/);
 });
