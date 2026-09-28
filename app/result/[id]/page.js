@@ -207,7 +207,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
   );
 }
 
-function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) {
+function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup, onClose }) {
   useEffect(() => { if (!isLoggedIn && !isAttached) trackFunnel("signup_cta_view"); }, [isLoggedIn, isAttached]);
   const [dismissed, setDismissed] = useState(false);
   if (isAttached || dismissed) return null;
@@ -216,7 +216,7 @@ function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup }) 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
       <div className="relative mx-auto w-full max-w-[440px] rounded-[24px] border border-[#d7e6df] bg-white/95 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
-        <button type="button" aria-label="保存の案内を閉じる" onClick={() => setDismissed(true)} className="absolute right-1 top-1 grid h-11 w-11 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
+        <button type="button" aria-label="保存の案内を閉じる" onClick={() => { onClose?.(); setDismissed(true); }} className="absolute right-1 top-1 grid h-11 w-11 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
         <p className="mb-3 pr-9 text-[13px] font-bold leading-5 text-slate-600">体質を保存して、あなたの予報へ</p>
         <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-h-[44px] w-full rounded-full px-3 text-[13px] shadow-md">
           {ctaLabel}
@@ -615,14 +615,13 @@ function ResultPage({ params }) {
     }
   }
 
-  function goSignupToRadar() {
-    trackFunnel("signup_cta_click", tab);
+  function goSignupToRadar(ctaLocation) {
+    trackFunnel("signup_cta_click", tab, ctaLocation);
     router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
   }
 
-  function goLoginToRadar() {
-    trackFunnel("signup_cta_click", tab);
-    router.push(`/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`)}`);
+  function goLoginToRadar(ctaLocation) {
+    goSignupToRadar(ctaLocation);
   }
 
   const headerLeft = (
@@ -710,7 +709,8 @@ function ResultPage({ params }) {
         isAttached={isAttached}
         attaching={attaching}
         onSave={() => attachToAccount(false)}
-        onSignup={goSignupToRadar}
+        onSignup={() => goSignupToRadar("floating_save")}
+        onClose={() => { if (!isLoggedIn) trackFunnel("floating_save_close", tab); }}
       />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
@@ -961,7 +961,7 @@ function ResultPage({ params }) {
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の体調予報に反映されます" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   <Button onClick={() => changeTab("compat")} className="w-full py-4">天気との相性を見る</Button>
-                  {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : goSignupToRadar} className="block mx-auto text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
+                  {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("overview_footer")} className="block mx-auto text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
                   {isAttached ? (
                     <Button onClick={() => router.push("/radar")} className="w-full shadow-md py-4">今日の予報と対策へ</Button>
                   ) : null}
@@ -1039,7 +1039,7 @@ function ResultPage({ params }) {
 
                 <div className="h-px w-full bg-slate-100" />
 
-                {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : goSignupToRadar} className="block mx-auto py-5 text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
+                {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("compat_footer")} className="block mx-auto py-5 text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
               </div>
             </Card>
           ) : null}
@@ -1101,8 +1101,8 @@ function ResultPage({ params }) {
                     session={session}
                     attaching={attaching}
                     onSave={() => attachToAccount(false)}
-                    onSignup={goSignupToRadar}
-                    onLogin={goLoginToRadar}
+                    onSignup={() => goSignupToRadar("care_footer")}
+                    onLogin={() => goLoginToRadar("care_footer")}
                     compact={true}
                     title="体質結果を保存して、今日・明日の体調予報とセルフケアを見る"
                     body="あなたの体質と天気に合わせて、体調警戒度や気をつけたい時間帯、セルフケア方法を確認できます。"
