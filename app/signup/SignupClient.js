@@ -10,8 +10,9 @@ import {
   setPendingDiagnosisAttach,
 } from "@/lib/pendingDiagnosisAttach";
 import AppShell, { Module } from "@/components/layout/AppShell";
+import SignupForecastPreview from "@/components/forecast/SignupForecastPreview";
 import Button from "@/components/ui/Button";
-import { trackFunnel } from "@/lib/funnelClient";
+import { trackFunnel, trackSignupEntry } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
 
 function IconMail() {
@@ -88,7 +89,17 @@ export default function SignupClient() {
   const [resendAt, setResendAt] = useState(0);
   const [clock, setClock] = useState(Date.now());
   const verifyingRef = useRef(false);
-  useEffect(() => { trackFunnel("signup_view"); const t = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const signupEntryTracked = useRef(false);
+  useEffect(() => {
+    if (!signupEntryTracked.current) {
+      signupEntryTracked.current = true;
+      trackSignupEntry();
+    }
+    const onPageShow = (event) => { if (event.persisted) trackSignupEntry(); };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+  useEffect(() => { const t = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(t); }, []);
   const [status, setStatus] = useState({ state: "idle", message: "" });
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -478,6 +489,8 @@ export default function SignupClient() {
     {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleでログイン"}
   </span>
 </button>
+
+            <SignupForecastPreview />
 
             <div className="relative py-1">
               <div className="h-px w-full bg-slate-200" />
