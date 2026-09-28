@@ -490,7 +490,7 @@ export default function SignupClient() {
   </span>
 </button>
 
-            <SignupForecastPreview />
+
 
             <div className="relative py-1">
               <div className="h-px w-full bg-slate-200" />
@@ -538,6 +538,7 @@ export default function SignupClient() {
               <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
               <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
             </form> : null}
+            {params.resultId ? <SignupForecastPreview resultId={params.resultId} /> : null}
             {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a> : null}
 
             {status.message ? (
