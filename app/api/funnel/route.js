@@ -9,7 +9,7 @@ export async function POST(request) {
     if (raw.length > 600) return new NextResponse(null, { status: 413 });
     const body = JSON.parse(raw);
     if (!validFunnelEvent(body)) return new NextResponse(null, { status: 400 });
-    await createServerClient().rpc('record_signup_funnel', { p_visit: body.visit_id, p_id: body.event_id, p_event: body.event, p_source: body.source || '' });
+    await createServerClient().rpc('record_signup_funnel_v2', { p_visit: body.visit_id, p_id: body.event_id, p_event: body.event, p_source: body.source || '', p_cta_location: body.cta_location || '' });
   } catch { /* Telemetry is optional. */ }
   return new NextResponse(null, { status: 204 });
 }
