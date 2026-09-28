@@ -395,7 +395,7 @@ export default function SignupClient() {
       headerLeft={
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => { trackFunnel("signup_header_back_click"); router.back(); }}
           className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
           ← 戻る
@@ -525,7 +525,7 @@ export default function SignupClient() {
               <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
               <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
             </form> : null}
-            {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} className="block text-center text-sm underline">結果に戻る</a> : null}
+            {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a> : null}
 
             {status.message ? (
               <div
