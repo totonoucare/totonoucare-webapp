@@ -86,7 +86,7 @@ test("ショップUIはおすすめ・悩み・保存を分け、AIは明示ボ�
   const aiFunction = guided.slice(guided.indexOf("async function organizeWithAi"), guided.indexOf("const oralSelected"));
   assert.match(aiFunction, /fetch\("\/api\/care-shop\/interpret"/);
   assert.doesNotMatch(guided.slice(0, guided.indexOf("async function organizeWithAi")), /\/api\/care-shop\/interpret/);
-  assert.match(route, /model: "gpt-5\.6-luna"/);
+  assert.match(route, /model: "gpt-6\-luna"/);
   assert.match(route, /診断、原因推定、重症度判定、受診判断、商品・成分・漢方処方の推薦は絶対にしません/);
 });
 

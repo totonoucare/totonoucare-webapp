@@ -57,9 +57,9 @@ test("v7.72.7 operational values are centralized with the intended launch policy
   assert.equal(RECORDS_AI_MONTHLY_CHAT_LIMIT, 100);
   assert.equal(RECORDS_AI_DAILY_ANALYSIS_LIMIT, 1);
   assert.equal(RECORDS_AI_PER_MINUTE_LIMIT, 6);
-  assert.equal(OPENAI_RECORDS_ANALYSIS_MODEL, "gpt-5.6-luna");
-  assert.equal(OPENAI_RECORDS_CHAT_MODEL, "gpt-5.6-luna");
-  assert.equal(OPENAI_RECORDS_LIVE_CHAT_MODEL, "gpt-5.6-luna");
+  assert.equal(OPENAI_RECORDS_ANALYSIS_MODEL, "gpt-6-luna");
+  assert.equal(OPENAI_RECORDS_CHAT_MODEL, "gpt-6-luna");
+  assert.equal(OPENAI_RECORDS_LIVE_CHAT_MODEL, "gpt-6-luna");
   assert.equal(OPENAI_RECORDS_INPUT_USD_PER_MTOK, 1);
   assert.equal(OPENAI_RECORDS_OUTPUT_USD_PER_MTOK, 6);
 });
