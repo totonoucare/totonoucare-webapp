@@ -46,7 +46,7 @@ export async function POST(req) {
     if (text.length < 2) return NextResponse.json({ error: "入力内容が短すぎます。" }, { status: 400 });
 
     const result = await generateStructured({
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       reasoning: { effort: "low" },
       max_output_tokens: 260,
       safety_identifier: safetyIdentifier(user.id),
