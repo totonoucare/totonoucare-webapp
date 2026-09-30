@@ -15,6 +15,15 @@ import Button from "@/components/ui/Button";
 import { trackFunnel, trackSignupEntry } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
 
+function IconSave() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      <path d="m9 9 2 2 4-4" />
+    </svg>
+  );
+}
+
 function IconGoogle() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -430,14 +439,19 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <h1 className="text-xl font-black leading-snug text-slate-900">{params.resultId ? "体質結果を保存して、今日・明日の体調予報とセルフケアを見る" : "今日・明日の体調予報とセルフケアを見る"}</h1>
-              <p className="text-sm leading-6 text-slate-600">{params.resultId ? "無料登録して体質チェック結果を保存できます。保存後は、あなたの体質に合わせた今日・明日の体調予報とセルフケアを確認できます。" : "ログインして、あなたの体質に合わせた今日・明日の体調予報とセルフケアを確認できます。初めての方は無料で登録できます。"}</p>
-              {params.resultId ? <p className="text-xs leading-5 text-slate-500">※未登録のまま終了すると、今回の体質チェック結果は保存されません。</p> : null}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[15px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] shadow-sm ring-1 ring-[var(--ring)]">
+                  <IconSave />
+                </div>
+                <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">{params.resultId ? "登録して体質結果を保存" : "ログインして予報を見る"}</h1>
+              </div>
+              <p className="text-base font-medium leading-7 text-slate-700">{params.resultId ? "体質結果を保存すると、あなたに合わせた体調予報とセルフケアが見られます。" : "あなたに合わせた体調予報とセルフケアが見られます。初めての方は無料で登録できます。"}</p>
+              {params.resultId ? <p className="text-[13px] font-medium leading-6 text-slate-600">※未登録のまま終了すると、今回の体質チェック結果は保存されません。</p> : null}
             </div>
-            <div className="text-sm leading-6 text-slate-700">
+            <div className="text-sm leading-6 text-slate-800">
               <p className="font-bold">{params.resultId ? "14日間、全機能を無料で利用できます。" : "新規登録から14日間、全機能を無料で利用できます。"}</p>
-              <p>体験終了後に自動で料金が発生することはありません。</p>
+              <p className="font-medium">体験終了後に自動で料金が発生することはありません。</p>
             </div>
 
             <button
@@ -459,18 +473,18 @@ export default function SignupClient() {
 
             <div className="relative py-1">
               <div className="h-px w-full bg-slate-200" />
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-3 text-[12px] font-extrabold text-slate-400">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-3 text-[12px] font-bold text-slate-600">
                 または
               </div>
             </div>
 
             <form onSubmit={handleSendCode} className="space-y-5">
               <div>
-                <label className="mb-2 block text-[12px] font-extrabold text-slate-500">
+                <label className="mb-2 block text-sm font-bold text-slate-700">
                   メールアドレス
                 </label>
                 <input
-                  className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)]"
+                  className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)] placeholder:font-medium placeholder:text-slate-500"
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setSentEmail(""); setOtp(""); }}
@@ -504,7 +518,7 @@ export default function SignupClient() {
               <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
             </form> : null}
             <SignupForecastPreview />
-            <p className="text-xs leading-5 text-slate-500">ホーム画面に追加してアプリのように使え、警戒度が高い日の通知も設定できます。</p>
+            <p className="text-[13px] font-medium leading-6 text-slate-600">ホーム画面に追加してアプリのように使え、警戒度が高い日の通知も設定できます。</p>
             {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a> : null}
 
             {status.message ? (
