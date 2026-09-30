@@ -15,33 +15,6 @@ import Button from "@/components/ui/Button";
 import { trackFunnel, trackSignupEntry } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
 
-function IconMail() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-6 w-6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect
-        x="3"
-        y="5"
-        width="18"
-        height="14"
-        rx="3"
-        fill="currentColor"
-        fillOpacity="0.15"
-        stroke="none"
-      />
-      <rect x="3" y="5" width="18" height="14" rx="3" />
-      <path d="M3 7l9 6 9-6" strokeWidth="2.5" />
-    </svg>
-  );
-}
-
 function IconGoogle() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -414,20 +387,6 @@ export default function SignupClient() {
       }
     >
       <Module className="p-6">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="grid h-12 w-12 place-items-center rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_40%)] text-[var(--accent-ink)] ring-1 ring-[var(--ring)] shadow-sm">
-            <IconMail />
-          </div>
-          <div>
-            <div className="text-[18px] font-black tracking-tight text-slate-900">
-              ログイン / 登録
-            </div>
-            <div className="mt-1 text-[12px] font-extrabold text-slate-500">
-              Google またはメールでログイン
-            </div>
-          </div>
-        </div>
-
         {session ? (
           <div className="space-y-4">
             <div className="rounded-[24px] bg-slate-50 p-5 ring-1 ring-inset ring-[var(--ring)] text-center">
@@ -471,9 +430,15 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <h1 className="text-xl font-black leading-relaxed text-slate-900">{params.resultId ? "体質結果を保存して、今日・明日の体調予報とセルフケアを見る" : "ログイン / 新規登録"}</h1>
-            <p className="text-sm leading-6 text-slate-600">あなたの体質と天気に合わせて、体調警戒度や気をつけたい時間帯、セルフケア方法を確認できます。</p>
-            <p className="text-xs leading-5 text-slate-500">新規登録から14日間無料体験。カード登録は不要です。続けるかは体験後に選べます。</p>
+            <div className="space-y-2">
+              <h1 className="text-xl font-black leading-snug text-slate-900">{params.resultId ? "体質結果を保存して、今日・明日の体調予報とセルフケアを見る" : "今日・明日の体調予報とセルフケアを見る"}</h1>
+              <p className="text-sm leading-6 text-slate-600">{params.resultId ? "無料登録して体質チェック結果を保存できます。保存後は、あなたの体質に合わせた今日・明日の体調予報とセルフケアを確認できます。" : "ログインして、あなたの体質に合わせた今日・明日の体調予報とセルフケアを確認できます。初めての方は無料で登録できます。"}</p>
+              {params.resultId ? <p className="text-xs leading-5 text-slate-500">※未登録のまま終了すると、今回の体質チェック結果は保存されません。</p> : null}
+            </div>
+            <div className="text-sm leading-6 text-slate-700">
+              <p className="font-bold">{params.resultId ? "14日間、全機能を無料で利用できます。" : "新規登録から14日間、全機能を無料で利用できます。"}</p>
+              <p>体験終了後に自動で料金が発生することはありません。</p>
+            </div>
 
             <button
   type="button"
@@ -486,7 +451,7 @@ export default function SignupClient() {
 >
   <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
     <IconGoogle />
-    {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleでログイン"}
+    {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleで続ける"}
   </span>
 </button>
 
@@ -494,8 +459,8 @@ export default function SignupClient() {
 
             <div className="relative py-1">
               <div className="h-px w-full bg-slate-200" />
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-3 text-[12px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
-                or
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white px-3 text-[12px] font-extrabold text-slate-400">
+                または
               </div>
             </div>
 
@@ -538,7 +503,8 @@ export default function SignupClient() {
               <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
               <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
             </form> : null}
-            {params.resultId ? <SignupForecastPreview resultId={params.resultId} /> : null}
+            <SignupForecastPreview />
+            <p className="text-xs leading-5 text-slate-500">ホーム画面に追加してアプリのように使え、警戒度が高い日の通知も設定できます。</p>
             {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a> : null}
 
             {status.message ? (
