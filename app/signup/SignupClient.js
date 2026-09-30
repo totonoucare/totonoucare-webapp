@@ -450,7 +450,7 @@ export default function SignupClient() {
               {params.resultId ? <p className="text-[13px] font-medium leading-6 text-slate-600">※未登録のまま終了すると、今回の体質チェック結果は保存されません。</p> : null}
             </div>
             <div className="text-sm leading-6 text-slate-800">
-              <p className="font-bold">{params.resultId ? "14日間、全機能を無料で利用できます。" : "新規登録から14日間、全機能を無料で利用できます。"}</p>
+              <p className="font-bold">新規登録から14日間、全機能を無料で利用できます。</p>
               <p className="font-medium">体験終了後に自動で料金が発生することはありません。</p>
             </div>
 
