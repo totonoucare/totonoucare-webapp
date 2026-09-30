@@ -446,7 +446,7 @@ export default function SignupClient() {
                 </div>
                 <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">{params.resultId ? "登録して体質結果を保存" : "ログインして予報を見る"}</h1>
               </div>
-              <p className="text-base font-bold leading-7 text-slate-800">{params.resultId ? "体質結果を保存すると、あなたに合わせた体調予報とセルフケアが見られます。" : "あなたに合わせた体調予報とセルフケアが見られます。初めての方は無料で登録できます。"}</p>
+              <p className="text-base font-bold leading-7 text-slate-800">{params.resultId ? "体質結果を保存すると、あなたに合わせた体調予報と対策ケアが見られます。" : "あなたに合わせた体調予報と対策ケアが見られます。初めての方は無料で登録できます。"}</p>
               {params.resultId ? <p className="text-[13px] font-medium leading-6 text-slate-600">※未登録のまま終了すると、今回の体質チェック結果は保存されません。</p> : null}
             </div>
             <div className="text-sm leading-6 text-slate-800">
