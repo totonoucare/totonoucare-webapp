@@ -25,14 +25,14 @@ export default function SignupForecastPreview() {
     return observeForecastPreview(cardRef.current, () => trackFunnel("signup_forecast_preview_view"));
   }, [bundle]);
   return (
-    <section aria-label="登録後に見られる予報の例" className="rounded-[22px] bg-[#F4FAF7] p-3">
-      <p className="mb-2 text-sm font-bold text-slate-700">登録すると、こんな予報が見られます</p>
-      {loading ? <p className="py-3 text-xs text-slate-500">明日の予報例を読み込み中…</p> : bundle ? (
+    <section aria-label="登録後に見られる予報の例" className="rounded-[22px] bg-[#F4FAF7] p-3 [&_.text-slate-400]:text-slate-600 [&_.text-slate-500]:text-slate-700">
+      <p className="mb-2 text-sm font-bold text-slate-800">登録すると、こんな予報が見られます</p>
+      {loading ? <p className="py-3 text-[13px] font-medium text-slate-600">明日の予報例を読み込み中…</p> : bundle ? (
         <div ref={cardRef}>
           <ForecastDayStrip label="東京の明日の予報例" dateLabel={forecastExampleDateLabel(bundle.target_date)} bundle={bundle} />
         </div>
-      ) : <p className="py-2 text-xs text-slate-500">予報例を読み込めませんでした。登録はそのまま進められます。</p>}
-      <p className="mt-2 text-xs leading-5 text-slate-500">参考体質での予報例です。登録後は、あなたの体質と選んだ地域に合わせた今日・明日の予報とセルフケアを確認できます。</p>
+      ) : <p className="py-2 text-[13px] font-medium text-slate-600">予報例を読み込めませんでした。登録はそのまま進められます。</p>}
+      <p className="mt-3 text-[13px] font-medium leading-6 text-slate-600">参考体質での予報例です。登録後は、あなたの体質と選んだ地域に合わせた今日・明日の予報とセルフケアを確認できます。</p>
     </section>
   );
 }
