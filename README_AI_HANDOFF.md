@@ -1,6 +1,6 @@
 # 未病レーダー AI開発引き継ぎ
 
-**対象ソース: v7.79.86**
+**対象ソース: v7.79.89**
 
 このファイルは、新しいAI開発担当が最初に読むための入口です。過去のバージョン履歴はここへ積み上げません。
 
@@ -43,7 +43,7 @@ supabase/
 
 ```text
 RELEASE-v7.79.81.md
-RELEASE-v7.79.86.md
+RELEASE-v7.79.89.md
 deploy/email-otp.html
 lib/funnelClient.js
 lib/funnelEvents.js
@@ -145,7 +145,7 @@ lib/records/policy.js
 lib/records/accessPolicy.js
 ```
 
-v7.79.83時点:
+v7.79.89時点:
 
 - AI先行公開: 2026-09-30まで
 - 登録14日体験: 2026-10-01開始
@@ -171,6 +171,10 @@ lib/funnelEvents.js
 deploy/email-otp.html
 supabase/migrations/20260927_signup_funnel_v77981.sql
 ```
+
+登録画面の予報プレビューは、東京・明日の参考体質予報です。`lib/signupForecastPreview.js` が未ログインホームと同じ公開予報APIを呼び、`SignupForecastPreview.jsx` がミモルのアイコンで表示します。本人の体質チェック結果はプレビューには使いません。認証フォームの下に置く仕様です。登録カードは保存アイコン＋短い見出しで始め、本文と注意文・無料体験説明を分けています。登録画面内の中・小文字は薄すぎない濃度を使います。
+
+CTA位置・閉じる・戻る・登録再訪・プレビュー露出計測を維持してください。計測の追加SQLは `supabase/migrations/20260928_signup_preview_v77985.sql`（v84の変更を包含）です。
 
 Email OTPの本番設定はコードだけでは完結しません。変更時は `RELEASE-v7.79.81.md` の適用手順を確認してください。
 
