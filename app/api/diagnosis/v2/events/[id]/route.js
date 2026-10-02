@@ -163,7 +163,7 @@ export async function PATCH(req, { params }) {
 
     const { data: current, error: loadError } = await supabaseServer
       .from("diagnosis_events")
-      .select("id,user_id,answers")
+      .select("id,user_id,answers,computed")
       .eq("id", id)
       .single();
     if (loadError) throw loadError;
@@ -186,44 +186,32 @@ export async function PATCH(req, { params }) {
         { status: 409 }
       );
     }
-    const answers = {
-      ...currentValidation.answers,
-      body_line_primary: primary,
-      body_line_secondary: secondary,
-    };
-    const computed = scoreDiagnosis(answers);
-
-    const { error: updateError } = await supabaseServer
-      .from("diagnosis_events")
-      .update({ answers, computed })
-      .eq("id", id);
-    if (updateError) throw updateError;
-
-    if (current.user_id) {
-      const { error: profileError } = await supabaseServer
-        .from("constitution_profiles")
-        .update({
-          answers,
-          computed,
-          primary_meridian: computed.primary_meridian,
-          secondary_meridian: computed.secondary_meridian,
-        })
-        .eq("user_id", current.user_id);
-      if (profileError) throw profileError;
-
-      const { error: eventError } = await supabaseServer
-        .from("constitution_events")
-        .update({
-          answers,
-          primary_meridian: computed.primary_meridian,
-          secondary_meridian: computed.secondary_meridian,
-        })
-        .eq("source_event_id", id)
-        .eq("user_id", current.user_id);
-      if (eventError) throw eventError;
+    // Keep existing scores/revision intact; the RPC patches line fields only.
+    const { data: saved, error: saveError } = await supabaseServer.rpc(
+      "save_diagnosis_body_lines_v77990",
+      {
+        p_event_id: id,
+        p_expected_user_id: current.user_id || null,
+        p_expected_answers: current.answers,
+        p_expected_computed: current.computed,
+        p_primary: primary,
+        p_secondary: secondary,
+      }
+    );
+    if (saveError?.code === "40001") {
+      return NextResponse.json(
+        { error: "診断情報が更新されました。ページを読み直してから保存してください。", code: "DIAGNOSIS_CHANGED" },
+        { status: 409 }
+      );
     }
-
-    return NextResponse.json({ data: { answers, computed } });
+    if (saveError?.code === "22023") {
+      return NextResponse.json(
+        { error: "診断情報の確認が必要です。ページを読み直してからお試しください。", code: "DIAGNOSIS_REVIEW_REQUIRED" },
+        { status: 409 }
+      );
+    }
+    if (saveError) throw saveError;
+    return NextResponse.json({ data: saved });
   } catch (error) {
     console.error(error);
     return NextResponse.json(
