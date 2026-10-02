@@ -466,21 +466,23 @@ export default function SignupClient() {
                     </>
                   ) : (
                     <>
-                      無料登録で
+                      ログインして、
                       <br />
-                      あなたの体調予報へ
+                      あなたの予報へ
                     </>
                   )}
                 </h1>
                 <p className="mx-auto max-w-[31rem] text-center text-[14px] font-medium leading-7 text-slate-600">
                   {params.resultId
-                    ? "無料登録すると今回の体質結果が保存され、今日・明日の体調予報とセルフケアを見られます。"
-                    : "無料登録すると、あなた向けの今日・明日の体調予報とセルフケアを見られます。"}
+                    ? "無料登録すると今回の体質結果が保存され、今日・明日の体調予報と対策ケアを見られます。"
+                    : "体調予報や記録を、続きから利用できます。"}
                 </p>
-                <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
-                  <AssuranceBadge>支払い情報不要</AssuranceBadge>
-                  <AssuranceBadge>自動課金なし</AssuranceBadge>
-                </div>
+                {params.resultId ? (
+                  <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
+                    <AssuranceBadge>支払い情報不要</AssuranceBadge>
+                    <AssuranceBadge>自動課金なし</AssuranceBadge>
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -493,7 +495,11 @@ export default function SignupClient() {
             >
               <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
                 <IconGoogle />
-                {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleで無料登録"}
+                {status.state === "loading_oauth"
+                  ? "Googleへ移動中…"
+                  : params.resultId
+                    ? "Googleで無料登録"
+                    : "Googleで続ける"}
               </span>
             </button>
 
@@ -514,11 +520,13 @@ export default function SignupClient() {
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <path d="m4 7 8 6 8-6" />
               </svg>
-              メールアドレスで無料登録
+              {params.resultId ? "メールアドレスで無料登録" : "メールアドレスで続ける"}
             </button>
-            <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
-              14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
-            </p>
+            {params.resultId ? (
+              <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
+                14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
+              </p>
+            ) : null}
 
             {emailFormOpen || sentEmail ? (
               <div id="signup-email-form" className="space-y-4">
