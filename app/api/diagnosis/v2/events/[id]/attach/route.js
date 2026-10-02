@@ -23,9 +23,8 @@ function getBearer(req) {
  * 1) validate bearer -> user
  * 2) validate guest token cookie
  * 3) load diagnosis_events
- * 4) upsert constitution_events by source_event_id
- * 5) upsert constitution_profiles (latest cache)
- * 6) finally set diagnosis_events.user_id
+ * 4) atomically persist event, profile, diagnosis ownership and guest claim
+ *    using the same diagnosis-row lock as the body-line save RPC
  */
 export async function POST(req, { params }) {
   try {
@@ -131,75 +130,28 @@ export async function POST(req, { params }) {
       ai_explain_created_at: ev.ai_explain_created_at || null,
     };
 
-    const { data: ceExisting, error: eFind } = await supabaseServer
-      .from("constitution_events")
-      .select("id, user_id, source_event_id, created_at")
-      .eq("source_event_id", id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (eFind) throw eFind;
-
-    let ceId = null;
-
-    if (ceExisting?.id) {
-      if (ceExisting.user_id && ceExisting.user_id !== user.id) {
-        return NextResponse.json(
-          { error: "This result is already attached to another account." },
-          { status: 403 }
-        );
-      }
-
-      ceId = ceExisting.id;
-
-      const { error: eUpd } = await supabaseServer
-        .from("constitution_events")
-        .update(eventRow)
-        .eq("id", ceId)
-        .eq("user_id", user.id);
-
-      if (eUpd) throw eUpd;
-    } else {
-      const { data: ceNew, error: eIns } = await supabaseServer
-        .from("constitution_events")
-        .insert([eventRow])
-        .select("id")
-        .single();
-
-      if (eIns) throw eIns;
-      ceId = ceNew?.id || null;
-    }
-
-    if (!ceId) throw new Error("constitution_events の作成に失敗しました（idが取得できません）");
-
-    // --- Upsert constitution_profiles (latest cache)
+    // One transaction shares the diagnosis lock with body-line saves.
     const profilePayload = buildConstitutionProfilePayload(user.id, answers);
-    profilePayload.latest_event_id = ceId;
-
-    const { error: eProf } = await supabaseServer
-      .from("constitution_profiles")
-      .upsert([profilePayload], { onConflict: "user_id" });
-
-    if (eProf) throw eProf;
-
-    // --- Finally attach diagnosis_events.user_id
-    if (!ev.user_id) {
-      const { error: eAttach } = await supabaseServer
-        .from("diagnosis_events")
-        .update({ user_id: user.id })
-        .eq("id", id)
-        .is("user_id", null);
-
-      if (eAttach) throw eAttach;
+    const { data: ceId, error: attachError } = await supabaseServer.rpc(
+      "attach_diagnosis_v77990",
+      {
+        p_event_id: id,
+        p_user_id: user.id,
+        p_expected_user_id: ev.user_id || null,
+        p_expected_answers: ev.answers,
+        p_expected_computed: ev.computed,
+        p_event_payload: eventRow,
+        p_profile_payload: profilePayload,
+      }
+    );
+    if (attachError?.code === "40001") {
+      return NextResponse.json(
+        { error: "診断情報が更新されました。ページを読み直してからお試しください。", code: "DIAGNOSIS_CHANGED" },
+        { status: 409 }
+      );
     }
-
-    const { error: eGuest } = await supabaseServer
-      .from("diagnosis_guest_access")
-      .update({ claimed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq("event_id", id);
-
-    if (eGuest) throw eGuest;
+    if (attachError) throw attachError;
+    if (!ceId) throw new Error("constitution_events の作成に失敗しました");
 
     const res = NextResponse.json({
       data: {
