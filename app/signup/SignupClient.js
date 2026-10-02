@@ -23,6 +23,17 @@ function IconSavedResult() {
   );
 }
 
+function IconLoginUser() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="8" cy="7" r="3" />
+      <path d="M3.5 18.5c.7-3.2 2.4-5 4.5-5s3.8 1.8 4.5 5" />
+      <path d="M14 12h7" />
+      <path d="m18 8 4 4-4 4" />
+    </svg>
+  );
+}
+
 function AssuranceBadge({ children }) {
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#DCEBE3] bg-white px-2.5 py-1.5 text-[11px] font-bold leading-4 text-[#365F50] shadow-[0_2px_5px_rgba(36,86,76,0.03)]">
@@ -68,7 +79,7 @@ export default function SignupClient() {
     const urlNextRaw = sp?.get("next") || "";
 
     const resultId = urlResultId || fallbackPending?.resultId || "";
-    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
+    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/";
     const nextPathSource = urlNextRaw || fallbackPending?.nextPath || "";
     const nextPath = safeLocalPath(nextPathSource, fallbackNext);
 
@@ -324,7 +335,7 @@ export default function SignupClient() {
       // The session effect owns attachment; avoid a second concurrent save.
       setSession(data.session);
       setStatus({ state: "idle", message: "ログインできました。" });
-      if (!params.resultId) window.location.replace(params.nextPath || "/radar");
+      if (!params.resultId) window.location.replace(params.nextPath || "/");
     } catch {
       trackFunnel("auth_error", "email");
       setStatus({ state: "error", message: "確認コードが正しくないか、有効期限が切れています。コードを確認するか、再送してください。" });
@@ -370,7 +381,7 @@ export default function SignupClient() {
   async function goNext(currentSession = session) {
     const ok = await attachNowIfNeeded(currentSession);
     if (!ok) return;
-    window.location.replace(params.nextPath || "/radar");
+    window.location.replace(params.nextPath || "/");
   }
 
   async function logout() {
@@ -455,7 +466,7 @@ export default function SignupClient() {
               <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
               <div className="relative space-y-3 text-center">
                 <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
-                  <IconSavedResult />
+                  {params.resultId ? <IconSavedResult /> : <IconLoginUser />}
                 </div>
                 <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
                   {params.resultId ? (
