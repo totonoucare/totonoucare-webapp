@@ -14,6 +14,26 @@ import Button from "@/components/ui/Button";
 import { trackFunnel, trackSignupEntry } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
 
+function IconSavedResult() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2Z" />
+      <path d="m9 9 2 2 4-4" />
+    </svg>
+  );
+}
+
+function AssuranceBadge({ children }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#DCEBE3] bg-white px-2.5 py-1.5 text-[11px] font-bold leading-4 text-[#365F50] shadow-[0_2px_5px_rgba(36,86,76,0.03)]">
+      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0 text-[#349B83]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m3.5 8 3 3 6-6" />
+      </svg>
+      {children}
+    </span>
+  );
+}
+
 function IconGoogle() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -431,39 +451,58 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-3">
-              <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
-                {params.resultId ? "体質を保存して、あなたの予報へ" : "あなたの体調予報へ"}
-              </h1>
-              <p className="text-[15px] font-medium leading-7 text-slate-700">
-                {params.resultId ? "今回の体質結果を保存すると、" : "無料登録すると、"}
-                <br />
-                あなた向けの今日・明日の体調予報とセルフケアを見られます。
-              </p>
+            <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
+              <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
+              <div className="relative space-y-3 text-center">
+                <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
+                  <IconSavedResult />
+                </div>
+                <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
+                  {params.resultId ? "体質を保存して、あなたの予報へ" : "あなたの体調予報へ"}
+                </h1>
+                <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
+                  {params.resultId ? "今回の体質結果を保存すると、" : "無料登録すると、"}
+                  <br />
+                  あなた向けの今日・明日の体調予報とセルフケアを見られます。
+                </p>
+                <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
+                  <AssuranceBadge>無料登録</AssuranceBadge>
+                  <AssuranceBadge>支払い情報不要</AssuranceBadge>
+                  <AssuranceBadge>自動課金なし</AssuranceBadge>
+                </div>
+              </div>
             </div>
-            <p className="text-center text-[12px] font-bold leading-6 text-slate-700 sm:text-sm">
-              無料登録　｜　支払い情報不要　｜　自動課金なし
-            </p>
 
             <button
               type="button"
               onClick={handleGoogleLogin}
+              aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : "Googleアカウントで続ける"}
               disabled={status.state === "loading" || status.state === "loading_oauth"}
-              className="w-full rounded-[18px] border border-slate-200 bg-white px-5 py-4 shadow-md transition hover:bg-slate-50 disabled:opacity-60"
+              className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-5 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
             >
               <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
                 <IconGoogle />
-                {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleで続ける"}
+                {status.state === "loading_oauth" ? "Googleへ移動中…" : "アカウントで続ける"}
               </span>
             </button>
+
+            <div className="flex items-center gap-3 py-1 text-[11px] font-medium text-slate-400">
+              <span className="h-px flex-1 bg-slate-200" />
+              <span>または</span>
+              <span className="h-px flex-1 bg-slate-200" />
+            </div>
 
             <button
               type="button"
               onClick={() => setEmailFormOpen((open) => !open)}
               aria-expanded={emailFormOpen || Boolean(sentEmail)}
               aria-controls="signup-email-form"
-              className="block w-full rounded-lg py-2 text-center text-sm font-bold text-slate-700 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+              className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-slate-200 bg-slate-50/70 px-3 py-3.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
+              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="3" />
+                <path d="m4 7 8 6 8-6" />
+              </svg>
               メールアドレスで登録する
             </button>
             <p className="text-[12px] font-medium leading-6 text-slate-500">
