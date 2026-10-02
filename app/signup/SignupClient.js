@@ -23,6 +23,16 @@ function IconSavedResult() {
   );
 }
 
+function IconLogin() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 5H7.5A2.5 2.5 0 0 0 5 7.5v9A2.5 2.5 0 0 0 7.5 19H10" />
+      <path d="M13 8l4 4-4 4" />
+      <path d="M17 12H9" />
+    </svg>
+  );
+}
+
 function AssuranceBadge({ children }) {
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#DCEBE3] bg-white px-2.5 py-1.5 text-[11px] font-bold leading-4 text-[#365F50] shadow-[0_2px_5px_rgba(36,86,76,0.03)]">
@@ -68,9 +78,10 @@ export default function SignupClient() {
     const urlNextRaw = sp?.get("next") || "";
 
     const resultId = urlResultId || fallbackPending?.resultId || "";
-    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
+    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/";
     const nextPathSource = urlNextRaw || fallbackPending?.nextPath || "";
-    const nextPath = safeLocalPath(nextPathSource, fallbackNext);
+    // 体質チェック経由は指定された保存後導線を維持。通常ログインはホーム（ダッシュボード）へ。
+    const nextPath = resultId ? safeLocalPath(nextPathSource, fallbackNext) : "/";
 
     return { resultId, nextPath };
   }, [sp, fallbackPending]);
@@ -324,7 +335,7 @@ export default function SignupClient() {
       // The session effect owns attachment; avoid a second concurrent save.
       setSession(data.session);
       setStatus({ state: "idle", message: "ログインできました。" });
-      if (!params.resultId) window.location.replace(params.nextPath || "/radar");
+      if (!params.resultId) window.location.replace(params.nextPath || "/");
     } catch {
       trackFunnel("auth_error", "email");
       setStatus({ state: "error", message: "確認コードが正しくないか、有効期限が切れています。コードを確認するか、再送してください。" });
@@ -370,7 +381,7 @@ export default function SignupClient() {
   async function goNext(currentSession = session) {
     const ok = await attachNowIfNeeded(currentSession);
     if (!ok) return;
-    window.location.replace(params.nextPath || "/radar");
+    window.location.replace(params.nextPath || "/");
   }
 
   async function logout() {
@@ -451,128 +462,184 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
-              <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
-              <div className="relative space-y-3 text-center">
-                <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
-                  <IconSavedResult />
-                </div>
-                <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
-                  {params.resultId ? (
-                    <>
+            {params.resultId ? (
+              <>
+                <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
+                  <div className="relative space-y-3 text-center">
+                    <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
+                      <IconSavedResult />
+                    </div>
+                    <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
                       無料登録で体質を保存
                       <br />
                       あなたの予報へ
-                    </>
-                  ) : (
-                    <>
-                      ログインして、
-                      <br />
-                      あなたの予報へ
-                    </>
-                  )}
-                </h1>
-                <p className="mx-auto max-w-[31rem] text-center text-[14px] font-medium leading-7 text-slate-600">
-                  {params.resultId
-                    ? "無料登録すると今回の体質結果が保存され、今日・明日の体調予報と対策ケアを見られます。"
-                    : "体調予報や記録を、続きから利用できます。"}
+                    </h1>
+                    <p className="mx-auto max-w-[31rem] text-center text-[14px] font-medium leading-7 text-slate-600">
+                      無料登録すると今回の体質結果が保存され、今日・明日の体調予報と対策ケアを見られます。
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
+                      <AssuranceBadge>支払い情報不要</AssuranceBadge>
+                      <AssuranceBadge>自動課金なし</AssuranceBadge>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : "Googleで無料登録"}
+                  disabled={status.state === "loading" || status.state === "loading_oauth"}
+                  className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-5 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
+                >
+                  <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
+                    <IconGoogle />
+                    {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleで無料登録"}
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-3 py-1 text-[11px] font-medium text-slate-400">
+                  <span className="h-px flex-1 bg-slate-200" />
+                  <span>または</span>
+                  <span className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setEmailFormOpen((open) => !open)}
+                  aria-expanded={emailFormOpen || Boolean(sentEmail)}
+                  aria-controls="signup-email-form"
+                  className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-slate-200 bg-slate-50/70 px-3 py-3.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="5" width="18" height="14" rx="3" />
+                    <path d="m4 7 8 6 8-6" />
+                  </svg>
+                  メールアドレスで無料登録
+                </button>
+
+                <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
+                  14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
                 </p>
-                {params.resultId ? (
-                  <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
-                    <AssuranceBadge>支払い情報不要</AssuranceBadge>
-                    <AssuranceBadge>自動課金なし</AssuranceBadge>
+
+                {emailFormOpen || sentEmail ? (
+                  <div id="signup-email-form" className="space-y-4">
+                    <form onSubmit={handleSendCode} className="space-y-5">
+                      <div>
+                        <label htmlFor="signup-email" className="mb-2 block text-sm font-bold text-slate-700">
+                          メールアドレス
+                        </label>
+                        <input
+                          className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)] placeholder:font-medium placeholder:text-slate-500"
+                          id="signup-email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => { setEmail(e.target.value); setSentEmail(""); setOtp(""); }}
+                          required
+                          placeholder="例）mail@example.com"
+                          disabled={status.state === "loading" || status.state === "loading_oauth"}
+                          inputMode="email"
+                          autoComplete="email"
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={status.state === "loading" || status.state === "loading_oauth" || clock < resendAt}
+                        className="w-full py-3.5 shadow-md"
+                      >
+                        {status.state === "loading" ? "送信中…" : (clock < resendAt ? `${Math.ceil((resendAt-clock)/1000)}秒後に再送できます` : sentEmail ? "確認コードを再送する" : "確認コードを送る")}
+                      </Button>
+                    </form>
+                    {sentEmail ? (
+                      <form onSubmit={handleVerify} className="space-y-3">
+                        <p className="text-sm leading-6">メールを確認し、この画面に戻って6桁のコードを入力してください。</p>
+                        <label htmlFor="email-otp" className="block text-sm font-bold">確認コード</label>
+                        <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
+                        <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
+                      </form>
+                    ) : null}
                   </div>
                 ) : null}
-              </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : "Googleアカウントで続ける"}
-              disabled={status.state === "loading" || status.state === "loading_oauth"}
-              className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-5 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
-            >
-              <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
-                <IconGoogle />
-                {status.state === "loading_oauth"
-                  ? "Googleへ移動中…"
-                  : params.resultId
-                    ? "Googleで無料登録"
-                    : "Googleで続ける"}
-              </span>
-            </button>
+                <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a>
+              </>
+            ) : (
+              <>
+                <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-6 pt-7">
+                  <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
+                  <div className="relative space-y-3 text-center">
+                    <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
+                      <IconLogin />
+                    </div>
+                    <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
+                      ログイン / 登録
+                    </h1>
+                    <p className="text-center text-[14px] font-medium leading-7 text-slate-600">
+                      Googleまたはメールで続ける
+                    </p>
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-3 py-1 text-[11px] font-medium text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" />
-              <span>または</span>
-              <span className="h-px flex-1 bg-slate-200" />
-            </div>
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : "Googleで続ける"}
+                  disabled={status.state === "loading" || status.state === "loading_oauth"}
+                  className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-5 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
+                >
+                  <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
+                    <IconGoogle />
+                    {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleで続ける"}
+                  </span>
+                </button>
 
-            <button
-              type="button"
-              onClick={() => setEmailFormOpen((open) => !open)}
-              aria-expanded={emailFormOpen || Boolean(sentEmail)}
-              aria-controls="signup-email-form"
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-slate-200 bg-slate-50/70 px-3 py-3.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="5" width="18" height="14" rx="3" />
-                <path d="m4 7 8 6 8-6" />
-              </svg>
-              {params.resultId ? "メールアドレスで無料登録" : "メールアドレスで続ける"}
-            </button>
-            {params.resultId ? (
-              <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
-                14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
-              </p>
-            ) : null}
+                <div className="flex items-center gap-3 py-1 text-[11px] font-medium text-slate-400">
+                  <span className="h-px flex-1 bg-slate-200" />
+                  <span>または</span>
+                  <span className="h-px flex-1 bg-slate-200" />
+                </div>
 
-            {emailFormOpen || sentEmail ? (
-              <div id="signup-email-form" className="space-y-4">
                 <form onSubmit={handleSendCode} className="space-y-5">
                   <div>
-                    <label htmlFor="signup-email" className="mb-2 block text-sm font-bold text-slate-700">
+                    <label htmlFor="login-email" className="mb-2 block text-sm font-bold text-slate-700">
                       メールアドレス
                     </label>
                     <input
                       className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)] placeholder:font-medium placeholder:text-slate-500"
-                      id="signup-email"
+                      id="login-email"
                       type="email"
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setSentEmail(""); setOtp(""); }}
                       required
                       placeholder="例）mail@example.com"
-                      disabled={
-                        status.state === "loading" ||
-                        status.state === "loading_oauth"
-                      }
+                      disabled={status.state === "loading" || status.state === "loading_oauth"}
                       inputMode="email"
                       autoComplete="email"
                     />
                   </div>
-
                   <Button
                     type="submit"
-                    disabled={
-                      status.state === "loading" ||
-                      status.state === "loading_oauth" ||
-                      clock < resendAt
-                    }
+                    disabled={status.state === "loading" || status.state === "loading_oauth" || clock < resendAt}
                     className="w-full py-3.5 shadow-md"
                   >
                     {status.state === "loading" ? "送信中…" : (clock < resendAt ? `${Math.ceil((resendAt-clock)/1000)}秒後に再送できます` : sentEmail ? "確認コードを再送する" : "確認コードを送る")}
                   </Button>
                 </form>
-                {sentEmail ? <form onSubmit={handleVerify} className="space-y-3">
-                  <p className="text-sm leading-6">メールを確認し、この画面に戻って6桁のコードを入力してください。</p>
-                  <label htmlFor="email-otp" className="block text-sm font-bold">確認コード</label>
-                  <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
-                  <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
-                </form> : null}
-              </div>
-            ) : null}
-            {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a> : null}
+
+                {sentEmail ? (
+                  <form onSubmit={handleVerify} className="space-y-3">
+                    <p className="text-sm leading-6">メールを確認し、この画面に戻って6桁のコードを入力してください。</p>
+                    <label htmlFor="email-otp" className="block text-sm font-bold">確認コード</label>
+                    <input id="email-otp" value={otp} onChange={e => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="w-full rounded-xl border p-4 text-xl tracking-widest" />
+                    <Button type="submit" disabled={status.state === "loading" || status.state === "loading_oauth" || otp.length !== 6} className="w-full">確認して進む</Button>
+                  </form>
+                ) : null}
+
+                <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
+                  初めての方はそのまま無料登録できます。14日間無料・支払い情報の登録は不要です。
+                </p>
+              </>
+            )}
 
             {status.message ? (
               <div
