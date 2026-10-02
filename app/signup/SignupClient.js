@@ -458,15 +458,26 @@ export default function SignupClient() {
                   <IconSavedResult />
                 </div>
                 <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
-                  {params.resultId ? "体質を保存して、あなたの予報へ" : "あなたの体調予報へ"}
+                  {params.resultId ? (
+                    <>
+                      無料登録で体質を保存
+                      <br />
+                      あなたの予報へ
+                    </>
+                  ) : (
+                    <>
+                      無料登録で
+                      <br />
+                      あなたの体調予報へ
+                    </>
+                  )}
                 </h1>
-                <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
-                  {params.resultId ? "今回の体質結果を保存すると、" : "無料登録すると、"}
-                  <br />
-                  あなた向けの今日・明日の体調予報とセルフケアを見られます。
+                <p className="mx-auto max-w-[31rem] text-center text-[14px] font-medium leading-7 text-slate-600">
+                  {params.resultId
+                    ? "無料登録すると今回の体質結果が保存され、今日・明日の体調予報とセルフケアを見られます。"
+                    : "無料登録すると、あなた向けの今日・明日の体調予報とセルフケアを見られます。"}
                 </p>
                 <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
-                  <AssuranceBadge>無料登録</AssuranceBadge>
                   <AssuranceBadge>支払い情報不要</AssuranceBadge>
                   <AssuranceBadge>自動課金なし</AssuranceBadge>
                 </div>
@@ -482,7 +493,7 @@ export default function SignupClient() {
             >
               <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
                 <IconGoogle />
-                {status.state === "loading_oauth" ? "Googleへ移動中…" : "アカウントで続ける"}
+                {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleで無料登録"}
               </span>
             </button>
 
@@ -503,9 +514,9 @@ export default function SignupClient() {
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <path d="m4 7 8 6 8-6" />
               </svg>
-              メールアドレスで登録する
+              メールアドレスで無料登録
             </button>
-            <p className="text-[12px] font-medium leading-6 text-slate-500">
+            <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
               14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
             </p>
 
