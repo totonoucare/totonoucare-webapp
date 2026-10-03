@@ -1,0 +1,22 @@
+{
+  "base": "v7.79.89",
+  "release": "v7.79.90",
+  "changed": [
+    "CHANGELOG.md",
+    "README.md",
+    "README_AI_HANDOFF.md",
+    "app/api/diagnosis/v2/events/[id]/attach/route.js",
+    "app/api/diagnosis/v2/events/[id]/route.js"
+  ],
+  "added": [
+    "RELEASE-v7.79.90.md",
+    "maintenance/repair_organs_two_users_v77990.sql",
+    "supabase/migrations/20261001_atomic_body_lines_v77990.sql",
+    "tests/body-lines-v77990.integration.mjs",
+    "verification/body-lines-db-tests.txt",
+    "verification/diagnosis-line-regression.txt",
+    "verification/organs-selection-test.txt",
+    "verification/targeted-repair-test.txt"
+  ],
+  "scoring_questions_forecast_care_unchanged": true
+}

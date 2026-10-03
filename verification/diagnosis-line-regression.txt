@@ -1,0 +1,26 @@
+✔ unchecked profiles receive relevant daily line care with recorded selection provenance (34.427619ms)
+✔ both checked lines receive their bonuses and stronger daily fit can choose another line (1.077365ms)
+✔ completed history changes only near-best choices; same-day and unchecked rows do not affect selection (1.04057ms)
+✔ daily trigger, symptom and constitution change the ranking; Japanese legacy labels agree (1.065529ms)
+✔ 30-day sequences use more than a fixed three motions while preserving forecast and point selection (127.269546ms)
+(node:13) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/scratch/a16a90e4f125/source/mibyo-radar-v7.79.90/lib/diagnosis/v2/scoring.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/scratch/a16a90e4f125/source/mibyo-radar-v7.79.90/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ all-low answers require an explicit reaction tiebreak instead of silently defaulting (3.226676ms)
+✔ pure qi stagnation is accelerator-led and pure dampness is brake-led (0.643173ms)
+✔ qi deficiency with cold lowers reserve and assists the brake side (0.29429ms)
+✔ fluid deficiency with heat assists accelerator while blood deficiency with cold only weakly assists brake (0.545706ms)
+✔ blood stasis raises obstruction but never directly supplies reaction direction (0.494952ms)
+✔ cold and heat are retained independently when both are present (0.819974ms)
+✔ the same displayed animal can retain meaningfully different continuous values (3.517117ms)
+✔ symptom, environment and optional body lines do not corrupt the six baseline scores (1.785648ms)
+✔ reserve uses each fixed input once and does not re-add the qi-deficiency aggregate (0.4296ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 409.299759
