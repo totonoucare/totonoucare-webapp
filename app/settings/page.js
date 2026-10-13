@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
+import { DEFAULT_NOTIFICATION_MIN_SCORE } from "@/lib/push/notificationPolicy";
 import {
   RADAR_LOCATION_PRESETS,
   flattenRadarLocationPresets,
@@ -339,14 +340,14 @@ export default function SettingsPage() {
         enabled: true,
         night_enabled: notificationSettings?.night_enabled ?? true,
         morning_enabled: notificationSettings?.morning_enabled ?? true,
-        min_score: notificationSettings?.min_score ?? 6,
+        min_score: notificationSettings?.min_score ?? DEFAULT_NOTIFICATION_MIN_SCORE,
       };
       const json = await authedFetch("/api/push/settings", {
         method: "POST",
         body: JSON.stringify(next),
       });
       setNotificationSettings(json.settings);
-      setNotificationMessage("通知をオンにしました。天気の影響が強めの日を、前日夜・当日朝にお知らせします。");
+      setNotificationMessage("通知をオンにしました。体調警戒度が4点以上の日を、前日夜・当日朝にお知らせします。");
     } catch (e) {
       setNotificationMessage(e?.message || "通知をオンにできませんでした。");
     } finally {
@@ -363,7 +364,7 @@ export default function SettingsPage() {
       enabled: false,
       night_enabled: notificationSettings?.night_enabled ?? true,
       morning_enabled: notificationSettings?.morning_enabled ?? true,
-      min_score: notificationSettings?.min_score ?? 6,
+      min_score: notificationSettings?.min_score ?? DEFAULT_NOTIFICATION_MIN_SCORE,
     });
   }
 
@@ -437,7 +438,7 @@ export default function SettingsPage() {
   }
 
   const notificationEnabled = Boolean(notificationSettings?.enabled);
-  const minScore = notificationSettings?.min_score ?? 6;
+  const minScore = notificationSettings?.min_score ?? DEFAULT_NOTIFICATION_MIN_SCORE;
   const locationLabel = useMemo(() => {
     if (!location) return "未設定";
     return location.display_name || location.region_name || location.label || "設定済み";
@@ -583,7 +584,7 @@ export default function SettingsPage() {
         <div className="px-5 py-4 border-b border-slate-100">
           <div className="text-[16px] font-black tracking-tight text-slate-900">通知設定</div>
           <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
-            天気の影響が強めの日を、前日夜・当日朝に短くお知らせします。
+            体調警戒度が{minScore}点以上の日を、前日夜・当日朝に短くお知らせします。
           </div>
           {!loading && !notificationsAvailable ? (
             <div className="mt-3 rounded-[16px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">通知は14日体験中またはプレミアム利用中に使えます。</div>
@@ -601,7 +602,7 @@ export default function SettingsPage() {
         </div>
         <ToggleRow
           label="通知を受け取る"
-          description={notificationEnabled ? "オン：影響が強めの日だけ通知します" : "オフ：通知は送信されません"}
+          description={notificationEnabled ? `オン：体調警戒度が${minScore}点以上の日に通知します` : "オフ：通知は送信されません"}
           checked={notificationEnabled}
           disabled={!user || savingNotifications || loading || !notificationsAvailable}
           onChange={handleToggleNotifications}
