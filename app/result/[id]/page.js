@@ -34,6 +34,9 @@ import {
 } from "@/components/illust/icons/app";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
+import { buildResultCareExample } from "@/lib/diagnosis/v2/resultCareExample";
+import ResultCareExample from "@/components/diagnosis/ResultCareExample";
+import CarePolicyCard from "@/components/diagnosis/ResultCarePolicyCard";
 
 const BODY_LINE_OPTIONS = [
   { value: "A", label: "前屈する" },
@@ -166,43 +169,35 @@ function SegmentedTabs({ value, onChange }) {
   );
 }
 
-function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, onSignup, onLogin, compact = false, title, body }) {
-  if (isAttached) {
-    return (
-      <div className={compact ? "rounded-[24px] bg-emerald-50 p-5 ring-1 ring-emerald-200 text-center shadow-sm" : "rounded-[28px] bg-emerald-50 p-6 ring-1 ring-emerald-200 text-center shadow-sm"}>
-        <div className="text-[16px] font-black text-emerald-800">保存済み ✅</div>
-        <div className="mt-2 text-[13px] font-bold leading-relaxed text-emerald-700">このトリセツは保存されています。今日・明日の体調予報に反映できます。</div>
-      </div>
-    );
-  }
-
-  if (isLoggedIn) {
-    return (
-      <div className="space-y-4">
-        <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
-          <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
-          <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "保存すると、今日・明日の体調予報と対策ケアに反映できます。"}</div>
-          {session?.user?.email ? (
-            <div className="mt-3 rounded-[18px] bg-white/80 px-4 py-3 text-[12px] font-bold text-slate-600 ring-1 ring-black/5">
-              ログイン中：{session.user.email}
-            </div>
-          ) : null}
-        </div>
-        <Button onClick={onSave} disabled={attaching} className="w-full shadow-md py-4 text-[15px]">
-          {attaching ? "保存中…" : "結果を保存して予報を見る（無料）"}
-        </Button>
-      </div>
-    );
-  }
-
+function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, onSignup, onLogin, onRadar }) {
+  const onContinue = isAttached ? onRadar : isLoggedIn ? onSave : onSignup;
+  const ctaLabel = isAttached
+    ? "今日・明日の予報とケアを見る"
+    : isLoggedIn
+      ? attaching ? "保存中…" : "結果を保存して、予報とケアへ"
+      : "無料登録して、予報とケアへ";
   return (
-    <div className="space-y-4">
-      <div className={compact ? "rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_42%)] p-5 ring-1 ring-[var(--ring)] shadow-sm" : "rounded-[28px] bg-[color-mix(in_srgb,var(--mint),white_40%)] p-6 ring-1 ring-[var(--ring)] shadow-sm"}>
-        <div className="text-[16px] font-black tracking-tight text-slate-900">{title || "このトリセツはまだ保存されていません"}</div>
-        <div className="mt-2 text-[13px] font-bold text-slate-600 leading-relaxed">{body || "無料で保存すると、今日・明日の体調予報と対策ケアを確認できます。"}</div>
+    <div className="rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_50%)] p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_74%)]">
+      <h3 className="text-[17px] font-black leading-7 tracking-tight text-slate-900">この体質で、毎日の備えを</h3>
+      <p className="mt-2 text-[13px] font-bold leading-6 text-slate-600">毎日の天気に合わせて、あなたの体質に合う予報と具体的なケアを見られます。</p>
+      <div className="mt-4 space-y-3">
+        <div className="flex items-center gap-3">
+          <div aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-white/85 text-[var(--accent-ink)]"><IconRadar className="h-5 w-5" /></div>
+          <div className="text-[13px] font-bold leading-5 text-slate-700">今日・明日の体調予報<span className="mt-0.5 block text-[12px] font-medium text-slate-500">警戒度と、気をつけたい時間帯</span></div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-[12px] bg-white/85 text-[var(--accent-ink)]"><IconCompass className="h-5 w-5" /></div>
+          <div className="text-[13px] font-bold leading-5 text-slate-700">その日に合うセルフケア<span className="mt-0.5 block text-[12px] font-medium text-slate-500">食材・飲み物・ツボ・過ごし方</span></div>
+        </div>
       </div>
-      <Button onClick={onSignup} className="w-full shadow-md py-4 text-[15px]">体質結果を保存して、今日の予報を見る</Button>
-      <Button variant="secondary" onClick={onLogin} className="w-full bg-white shadow-sm py-4">ログインはこちら</Button>
+      {!isLoggedIn && !isAttached ? (
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {["無料登録", "支払い情報不要", "自動課金なし"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
+        </div>
+      ) : null}
+      {isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">この体質結果は保存済みです。</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
+      <Button onClick={onContinue} disabled={!isAttached && isLoggedIn && attaching} className="mt-4 w-full text-[13px] shadow-md">{ctaLabel}</Button>
+      {!isLoggedIn && !isAttached ? <button type="button" onClick={onLogin} className="mx-auto mt-2 block min-h-[44px] px-3 text-[12px] font-bold text-slate-500 underline underline-offset-4">登録済みの方はこちら</button> : null}
     </div>
   );
 }
@@ -211,37 +206,16 @@ function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup, on
   useEffect(() => { if (!isLoggedIn && !isAttached) trackFunnel("signup_cta_view"); }, [isLoggedIn, isAttached]);
   const [dismissed, setDismissed] = useState(false);
   if (isAttached || dismissed) return null;
-  const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して予報へ") : "無料で保存して予報へ";
+  const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して、予報とケアへ") : "無料登録して、予報とケアへ";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-3">
-      <div className="relative mx-auto w-full max-w-[440px] rounded-[24px] border border-[#d7e6df] bg-white/95 px-4 py-3 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
-        <button type="button" aria-label="保存の案内を閉じる" onClick={() => { onClose?.(); setDismissed(true); }} className="absolute right-1 top-1 grid h-11 w-11 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
-        <p className="mb-3 pr-9 text-[13px] font-bold leading-5 text-slate-600">体質を保存して、あなたの予報へ</p>
-        <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-h-[44px] w-full rounded-full px-3 text-[13px] shadow-md">
-          {ctaLabel}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function CarePolicyCard({ item }) {
-  if (!item) return null;
-  return (
-    <div className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
-      <div className="flex items-start gap-4">
-        <div className="grid h-[68px] w-[68px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white ring-1 ring-slate-200 shadow-sm p-2">
-          <img src={item.icon} alt={item.label} className="h-full w-full object-contain" />
+    <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2">
+      <div className="mx-auto w-full max-w-[440px] rounded-[20px] border border-[#d7e6df] bg-white/95 p-2.5 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
+        <div className="flex items-center gap-1.5">
+          <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-w-0 flex-1 rounded-full px-2 text-[13px] shadow-md">{ctaLabel}</Button>
+          <button type="button" aria-label="保存の案内を閉じる" onClick={() => { onClose?.(); setDismissed(true); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black tracking-wide text-[var(--accent-ink)] ring-1 ring-inset ring-slate-200 shadow-sm">
-            {item.rankLabel}
-          </div>
-          <div className="mt-3 text-[18px] font-black tracking-tight text-slate-900">{item.label}</div>
-          <div className="mt-1 text-[12px] font-black uppercase tracking-wider text-slate-500">{item.guide}</div>
-          <div className="mt-3 text-[13px] font-bold leading-relaxed text-slate-600">{item.body}</div>
-        </div>
+        <p className="mt-1 text-center text-[10px] font-bold leading-4 text-slate-500">{isLoggedIn ? "この体質結果を、毎日の予報とケアに" : "無料登録・支払い情報不要・自動課金なし"}</p>
       </div>
     </div>
   );
@@ -556,6 +530,14 @@ function ResultPage({ params }) {
     return buildBaseCarePreferences({ answers, computed, symptomKey });
   }, [answers, computed, symptomKey]);
 
+  const careExample = useMemo(() => buildResultCareExample({
+    answers,
+    computed,
+    symptomKey,
+    createdAt: event?.created_at,
+    carePreferences,
+  }), [answers, computed, symptomKey, event?.created_at, carePreferences]);
+
   async function attachToAccount(silent = false) {
     if (attaching) return;
     setAttaching(true);
@@ -801,8 +783,9 @@ function ResultPage({ params }) {
       {!isAttached ? (
         <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
           <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
-            <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">まだ保存されていません</div>
-            <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">このトリセツは一時結果です。保存すると、今日・明日の体調予報や対策ケアに反映できます。</div>
+            <div className="flex items-center gap-2.5 text-[var(--accent-ink)]"><IconRadar className="h-5 w-5 shrink-0" /><div className="text-[15px] font-black leading-6">この体質を、今日・明日の備えに</div></div>
+            <p className="mt-2 text-[13px] font-bold leading-6 text-slate-600">結果を保存すると、毎日の天気に合わせた体調予報と、食材・飲み物・ツボなどのケアを見られます。</p>
+            {tab !== "care" ? <button type="button" onClick={() => changeTab("care")} className="mt-1 inline-flex min-h-[44px] items-center text-[12px] font-black text-[var(--accent-ink)] underline underline-offset-4">あなたに合うケアの例を見る →</button> : null}
           </div>
         </div>
       ) : null}
@@ -811,7 +794,7 @@ function ResultPage({ params }) {
       <SegmentedTabs value={tab} onChange={changeTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="space-y-6 pb-28 mt-3">
+        <div className="mt-3 space-y-6 pb-[calc(env(safe-area-inset-bottom)+128px)]">
           {tab === "overview" ? (
             <>
               <Card>
@@ -961,9 +944,9 @@ function ResultPage({ params }) {
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の体調予報に反映されます" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   <Button onClick={() => changeTab("compat")} className="w-full py-4">天気との相性を見る</Button>
-                  {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("overview_footer")} className="block mx-auto text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
+                  {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("overview_footer")} className="block mx-auto min-h-[44px] px-2 text-sm underline text-slate-500">結果を保存して、予報とケアへ</button> : null}
                   {isAttached ? (
-                    <Button onClick={() => router.push("/radar")} className="w-full shadow-md py-4">今日の予報と対策へ</Button>
+                    <Button onClick={() => router.push("/radar")} className="w-full shadow-md py-4">今日・明日の予報とケアへ</Button>
                   ) : null}
                 </div>
               </Card>
@@ -985,27 +968,28 @@ function ResultPage({ params }) {
                     <IconRadar className="h-5 w-5 text-teal-600" />
                     <h3 className="text-[16px] font-black text-slate-900">影響を受けやすい天気変化</h3>
                   </div>
-                  <div className="space-y-3">
-                    {weatherCompat.items.map((item) => (
-                      <div key={item.key} className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
+                  <p className="mb-3 text-[12px] font-bold text-slate-500">影響を受けやすい順に並べています。</p>
+                  <ol className="space-y-3">
+                    {weatherCompat.items.map((item, index) => (
+                      <li key={item.key} className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-[16px] bg-white ring-1 ring-slate-200 text-[var(--accent-ink)] shadow-sm">
                                <WeatherIcon triggerKey={item.key} className="h-7 w-7" />
                             </div>
                             <div className="min-w-0">
+                              <div className="mb-1 flex flex-wrap items-center gap-2"><span className="inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-[var(--accent-ink)] ring-1 ring-slate-200">{index + 1}位</span><span className="text-[11px] font-bold text-[var(--accent-ink)]/80">{item.rankLabel}</span></div>
                               {/* 見切れ防止のため truncate なし */}
                               <div className="text-[16px] font-black tracking-tight text-slate-900 leading-snug">{item.label}</div>
-                              <div className="mt-1 text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">{item.rankLabel}</div>
                             </div>
                           </div>
                         </div>
                         <div className="mt-4 text-[13px] leading-relaxed font-bold text-slate-600">
                           {item.body}
                         </div>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ol>
                 </div>
 
                 <div className="h-px w-full bg-slate-100" />
@@ -1039,7 +1023,7 @@ function ResultPage({ params }) {
 
                 <div className="h-px w-full bg-slate-100" />
 
-                {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("compat_footer")} className="block mx-auto py-5 text-sm underline text-slate-500">今すぐ結果を保存する</button> : null}
+                {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("compat_footer")} className="block mx-auto min-h-[44px] px-2 py-4 text-sm underline text-slate-500">結果を保存して、予報とケアへ</button> : null}
               </div>
             </Card>
           ) : null}
@@ -1047,53 +1031,13 @@ function ResultPage({ params }) {
           {tab === "care" ? (
             <>
               <Card>
-                <CardHeader icon={<IconCompass />} title="整え方" sub="体質チェックから見た、合いやすいケア方針" />
-                <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
-                  <div className="rounded-[24px] bg-slate-50 p-6 ring-1 ring-slate-100 text-[14px] leading-relaxed font-bold text-slate-700">
+                <CardHeader icon={<IconCompass />} title="整え方" sub="あなたに合う方針と、取り入れ方の例" />
+                <div className="space-y-6 px-5 pb-8 pt-6 sm:px-6">
+                  <p className="text-[14px] font-bold leading-7 text-slate-700">
                     {carePreferences.summary}
-                    <div className="mt-3 text-[14px] font-bold leading-6 text-slate-500">
-                      体質チェックをもとに、あなたに合いやすいケア方針を3つ選びました。
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2.5 mb-4">
-                      <IconBolt className="h-5 w-5 text-[#e2aa3b]" />
-                      <h3 className="text-[16px] font-black text-slate-900">体質チェックから見た3つの整え方</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {carePreferences.items.map((item) => (
-                        <CarePolicyCard key={item.key} item={item} />
-                      ))}
-                    </div>
-                  </div>
-
-                  <p className="text-[14px] font-bold leading-6 text-slate-600">
-                    日々の対策ケアでは、これらの方針をもとに、あなたの体質・その日の天気・気になる不調に合わせた具体的なセルフケアを提案します。
                   </p>
 
-                  {carePreferences.reasons?.length ? (
-                    <div>
-                      <div className="flex items-center gap-2.5 mb-4">
-                        <IconMemo className="h-5 w-5 text-amber-600" />
-                        <h3 className="text-[16px] font-black text-slate-900">この整え方が合いやすい理由</h3>
-                      </div>
-                      <div className="grid gap-2">
-                        {carePreferences.reasons.map((reason, idx) => (
-                          <div key={idx} className="rounded-[18px] bg-white px-5 py-4 text-[14px] font-bold leading-6 text-slate-700 ring-1 ring-slate-200 shadow-sm">
-                            {reason}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_55%)] p-5">
-                    <div className="text-[12px] font-black tracking-[0.16em] text-[var(--accent-ink)]">この先につながること</div>
-                    <div className="mt-2 text-[14px] font-bold leading-6 text-slate-700">
-                      これらの整え方は、日々の対策ケア提案、AIミモルとの会話、パーソナルケアショップでのアイテム選びに共通する基本方針です。
-                    </div>
-                  </div>
+                  <ResultCareExample example={careExample} />
 
                   <SavePromptCard
                     isLoggedIn={isLoggedIn}
@@ -1103,10 +1047,33 @@ function ResultPage({ params }) {
                     onSave={() => attachToAccount(false)}
                     onSignup={() => goSignupToRadar("care_footer")}
                     onLogin={() => goLoginToRadar("care_footer")}
-                    compact={true}
-                    title="体質結果を保存して、今日・明日の体調予報とセルフケアを見る"
-                    body="あなたの体質と天気に合わせて、体調警戒度や気をつけたい時間帯、セルフケア方法を確認できます。"
+                    onRadar={() => router.push("/radar")}
                   />
+
+                  <div>
+                    <div className="flex items-center gap-2.5 mb-4">
+                      <IconBolt className="h-5 w-5 text-[#e2aa3b]" />
+                      <h3 className="text-[16px] font-black text-slate-900">あなたに合う{carePreferences.items.length}つの方針</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {carePreferences.items.map((item) => (
+                        <CarePolicyCard key={item.key} item={item} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {carePreferences.reasons?.length ? (
+                    <details className="border-t border-slate-100 pt-3">
+                      <summary className="cursor-pointer py-2 text-[13px] font-bold text-[var(--accent-ink)]">この整え方が合いやすい理由</summary>
+                      <div className="mt-3 grid gap-2">
+                        {carePreferences.reasons.map((reason, idx) => (
+                          <div key={idx} className="rounded-[18px] bg-white px-5 py-4 text-[14px] font-bold leading-6 text-slate-700 ring-1 ring-slate-200 shadow-sm">
+                            {reason}
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
                 </div>
               </Card>
 
