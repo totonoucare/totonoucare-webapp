@@ -7,9 +7,12 @@ export * from 'node:fs/promises';
 export async function readFile(file,options){
  let source=await fs.readFile(file,options);
  const name=file instanceof URL?fileURLToPath(file):String(file);
- if(typeof source==='string'&&path.basename(name)==='dailyCareV2.js'){
-  const dependency=await fs.readFile(path.join(path.dirname(name),'foodTcm.js'),'utf8');
-  source=source.replace('from "./foodTcm"','from "data:text/javascript;base64,'+Buffer.from(dependency).toString('base64')+'"');
+ if(typeof source==='string'&&['dailyCareV2.js','foodIngredientRules.js','foodTcm.js'].includes(path.basename(name))){
+  for(const file of ['foodCombinationRecipes','foodTcm','drinkRules']){
+   if(!source.includes('from "./'+file+'"'))continue;
+   const dependency=await readFile(path.join(path.dirname(name),file+'.js'),'utf8');
+   source=source.replaceAll('from "./'+file+'"','from "data:text/javascript;base64,'+Buffer.from(dependency).toString('base64')+'"');
+  }
  }
  return source;
 }
