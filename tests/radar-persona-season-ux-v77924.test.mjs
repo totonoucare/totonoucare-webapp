@@ -157,8 +157,8 @@ test("秋冬の主献立へ、季節外れの夏料理と料理名内の飲み�
 test("今日と明日は主献立を変え、飲み物は同名でも用途と時間帯を書き分ける", () => {
   for (const item of ALL_CASES) {
     const key = `${item.persona.id}/${item.seasonName}`;
-    const todayMeal = item.foodToday.action_cards.find((card) => card.key === "choice")?.items?.[0];
-    const tomorrowMeal = item.foodTomorrow.action_cards.find((card) => card.key === "choice")?.items?.[0];
+    const todayMeal = item.foodToday.action_cards.find((card) => card.key === "choice")?.proposal?.id;
+    const tomorrowMeal = item.foodTomorrow.action_cards.find((card) => card.key === "choice")?.proposal?.id;
     const todayDrink = item.foodToday.action_cards.find((card) => card.key === "drink");
     const tomorrowDrink = item.foodTomorrow.action_cards.find((card) => card.key === "drink");
     assert.notEqual(todayMeal, tomorrowMeal, `${key}/meal`);

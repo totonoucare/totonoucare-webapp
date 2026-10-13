@@ -45,7 +45,8 @@ test("food main area keeps the concrete meal and drink visible before secondary 
   const food = buildFood();
   const prominent = food.action_cards.filter((card) => card.prominent);
   assert.deepEqual(prominent.map((card) => card.key), ["choice", "drink"]);
-  assert.equal(prominent[0].items.length, 1);
+  assert.equal(prominent[0].items.length, 2);
+  assert.equal(prominent[0].proposal.focus_ingredients.length, 2);
   assert.equal(prominent[1].label, "今日、食事と合わせる飲み物");
   assert.equal(prominent[1].items.length, 2);
   assert.ok(food.action_cards.find((card) => card.key === "caution"));
@@ -101,7 +102,7 @@ test("damp caution remains relevant across different constitutions under damp we
 test("the disclosure label describes its actual contents", () => {
   const food = buildFood();
   assert.equal(food.detail_eyebrow, "ほかの選び方");
-  assert.equal(food.detail_title, "別の食材・控えめにしたいもの");
+  assert.equal(food.detail_title, "別の組み合わせ・控えめにしたいもの");
   assert.match(pageSource, /visiblePrimaryFoodCards/);
   assert.match(pageSource, /food\.detail_eyebrow \|\| "ほかの選び方"/);
   assert.match(pageSource, /food\.detail_title/);

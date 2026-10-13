@@ -142,7 +142,8 @@ test("献立ローテーションは再読込で安定し、既存食材の安�
     const first = build(args).night_food.primary_action.id;
     const second = build(args).night_food.primary_action.id;
     assert.equal(first, second, trigger);
-    assert.match(first, /^food-\d{3}$/, `${trigger}/${first}`);
+    assert.match(first, /^pair-[a-z0-9]+$/, `${trigger}/${first}`);
+    assert.ok(build(args).night_food.selected_foods.every(f => /^food-\d{3}$/.test(f.id)));
     assert.doesNotMatch(first, /^(damp|heat|dry|cold|pd|pu|base)-/, `${trigger}/${first}`);
   }
 });

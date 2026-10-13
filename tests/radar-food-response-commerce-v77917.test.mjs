@@ -69,7 +69,9 @@ test("今日の食材には実名・個別の料理例・選定根拠がある",
   const food=build({trigger,symptomFocus});
   const main=food.action_cards.find(c=>c.key==="choice").item_details[0];
   assert.ok(main.consumed_id);assert.ok(main.meal_example.includes(main.label));
-  assert.ok(main.selection_basis.matched_functions.length,`${trigger}/${symptomFocus}/${main.label}`);
+  const pair=food.action_cards.find(c=>c.key==="choice").proposal;
+  assert.ok(pair.selection_basis.evidence.length,`${trigger}/${symptomFocus}/${pair.label}`);
+  if(!main.selection_basis.matched_functions.length)assert.ok(main.selection_basis.evidence.some(e=>e.nature_match)||main.selection_basis.matched_context==="料理としての組み合わせ");
   assert.equal(main.recordable,true);
  }
 });
@@ -83,7 +85,8 @@ test("明日は控えたいものを先頭に置き、任意の夜食と翌朝�
  assert.equal(night.item_details[0].consumption_slot,"tonight");
  assert.equal(night.item_details[0].recordable,true);
  const breakfast=tomorrow.action_cards.find(c=>c.key==="choice");
- assert.match(breakfast.label,/明日の朝/);
+ assert.match(breakfast.label,/明日の食事/);
+ assert.equal(breakfast.item_details[0].consumption_slot,"next_day");
  assert.equal(breakfast.item_details[0].recordable,false);
  assert.equal(tomorrow.recommendation,null);
 });

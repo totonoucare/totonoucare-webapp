@@ -142,7 +142,8 @@ test("the main display is concise and presents the second care as a numbered car
   const plan = build("2026-07-18");
   const food = plan.tomorrow_food_context;
   assert.equal(food.action_cards.filter((card) => card.primary).length, 1);
-  assert.equal(food.action_cards[0].items.length, 1);
+  assert.equal(food.action_cards[0].items.length, 2);
+  assert.equal(food.action_cards[0].proposal.focus_ingredients.length, 2);
   assert.ok(food.alternatives.length <= 2);
   assert.equal(food.caution_items.length, 1);
   assert.ok(plan.lifestyle_plan.steps.length >= 1 && plan.lifestyle_plan.steps.length <= 2);
