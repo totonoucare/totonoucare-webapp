@@ -80,7 +80,10 @@ jobs:
 
             response="$(curl "${args[@]}" "${APP_BASE_URL}/api/cron/radar-forecast-snapshots")"
             echo "$response" | jq -e '.ok == true' >/dev/null
-            echo "$response" | jq '{user_count, processed, generated, cached, skipped, failed, has_more, next_cursor}'
+            echo "$response" | jq '{user_count, processed, generated, cached, skipped, skipped_no_profile, failed, has_more, next_cursor}'
+
+            # Keep operational failure details; missing profiles are normal skips.
+            echo "$response" | jq -c '.details[]? | select(.status == "failed") | {user_id, target_date, status, error}'
 
             failed="$(echo "$response" | jq -r '.failed // 0')"
             total_failed=$((total_failed + failed))
