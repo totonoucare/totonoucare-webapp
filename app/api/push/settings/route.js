@@ -4,6 +4,7 @@ import {
   upsertNotificationSettings,
 } from "@/lib/push/pushRepo";
 import { getRecordsAccess } from "@/lib/records/access";
+import { DEFAULT_NOTIFICATION_MIN_SCORE } from "@/lib/push/notificationPolicy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,7 @@ export async function GET(req) {
         enabled: false,
         night_enabled: true,
         morning_enabled: true,
-        min_score: 6,
+        min_score: DEFAULT_NOTIFICATION_MIN_SCORE,
       },
     });
   } catch (error) {
