@@ -92,7 +92,7 @@ function cleanSnapshot(value, fallback) {
       record_semantics: ["ingredients_or_eating_pattern","ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? meta.record_semantics : null,
       consumed_id: compact(meta.consumed_id,80)||null,
       consumed_name: compact(meta.consumed_name,60)||null,
-      consumption_slot: ["today","tonight","breakfast"].includes(meta.consumption_slot)?meta.consumption_slot:null,
+      consumption_slot: ["today","tonight","breakfast","next_day"].includes(meta.consumption_slot)?meta.consumption_slot:null,
       suggested_ingredients: (Array.isArray(meta.suggested_ingredients) ? meta.suggested_ingredients : []).map((item) => compact(item, 60)).filter(Boolean).slice(0, 8),
       meal_example: compact(meta.meal_example, 120) || null,
       card_label: compact(meta.card_label, 120) || null,
@@ -111,6 +111,15 @@ function cleanSnapshot(value, fallback) {
         functions:(Array.isArray(meta.selection_basis.functions)?meta.selection_basis.functions:[]).map(x=>compact(x,20)).slice(0,8),
         matched_functions:(Array.isArray(meta.selection_basis.matched_functions)?meta.selection_basis.matched_functions:[]).map(x=>compact(x,20)).slice(0,8),
         matched_context:compact(meta.selection_basis.matched_context,60)||null,
+        combination_id:compact(meta.selection_basis.combination_id,80)||null,
+        evidence:(Array.isArray(meta.selection_basis.evidence)?meta.selection_basis.evidence:[])
+          .filter(e=>e&&["constitution","weather","symptom","policy"].includes(e.source)).slice(0,8)
+          .map(e=>({source:e.source,key:compact(e.key,40),reason:compact(e.reason,100),
+            via:["care_policy","food_nature"].includes(e.via)?e.via:"ingredient",
+            nature_match:["寒","涼","平","温","熱"].includes(e.nature_match)?e.nature_match:null,
+            weight:Number.isFinite(Number(e.weight))?Math.min(10,Math.max(0,Number(e.weight))):0,
+            score:Number.isFinite(Number(e.score))?Math.min(12,Math.max(0,Number(e.score))):0,
+            matched_functions:(Array.isArray(e.matched_functions)?e.matched_functions:[]).map(f=>compact(f,20)).slice(0,8)})),
         review:compact(meta.selection_basis.review,30)||null,
         thermal:compact(meta.selection_basis.thermal,20)||null,
         served_warm:meta.selection_basis.served_warm===true,
@@ -284,8 +293,8 @@ export async function POST(req) {
     const label = compact(body?.label, 160);
     const detail = compact(body?.detail, 240);
     const checked = body?.checked !== false;
-    if (checked && sourceMode === "tomorrow" && body?.item_snapshot?.meta?.consumption_slot === "breakfast") {
-      return NextResponse.json({error:"明日の朝の飲食は、実際に取り入れてから当日のカードで記録できます"},{status:400});
+    if (checked && sourceMode === "tomorrow" && ["breakfast","next_day"].includes(body?.item_snapshot?.meta?.consumption_slot)) {
+      return NextResponse.json({error:"明日の飲食は、実際に取り入れてから当日のカードで記録できます"},{status:400});
     }
     const entryOrigin = body?.entry_origin === "record_page" ? "record_page" : "daily_care_card";
     const isRecordPageEntry = entryOrigin === "record_page";
