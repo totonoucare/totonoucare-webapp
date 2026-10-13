@@ -5,6 +5,7 @@ import {experienceSignal} from '@/lib/experience/client';
 
 
 import CareStepCard from "./CareStepCard";
+import FoodCombinationCard from "./FoodCombinationCard";
 import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { LIFESTYLE_SCENES } from "@/lib/radar_v1/careRules/dailyCareV2";
@@ -2171,7 +2172,9 @@ export default function RadarPage() {
                               </div>
                             </div>
 
-                            {safeArray(card.items).length > 0 ? (
+                            {card.proposal ? (
+                              <FoodCombinationCard card={card} actions={careItemsByKind.get(`food_${card.key || "card"}_item`) || []} renderAction={actionButtonFor} />
+                            ) : safeArray(card.items).length > 0 ? (
                               <div className="mt-3 space-y-2">
                                 {safeArray(card.items).map((item, itemIdx) => {
                                   const itemDetail = safeArray(card.item_details)?.[itemIdx] || null;
@@ -2317,14 +2320,16 @@ export default function RadarPage() {
                             </div>
                           ) : null}
 
-                          {!selectedIsToday ? <p className="text-[12px] leading-6 text-slate-500">今夜食べたものは、この画面で記録できます。明日の朝の飲食は、明日の「今日」タブから記録できます。</p> : null}
+                          {!selectedIsToday ? <p className="text-[12px] leading-6 text-slate-500">今夜食べたものは、この画面で記録できます。明日の飲食は、明日の「今日」タブから記録できます。</p> : null}
                           {secondaryFoodCards.length > 0 ? (
                             <div className="space-y-2.5">
                               {secondaryFoodCards.map((card, cardIndex) => (
                                 <div key={`${card.key || "detail"}-${cardIndex}`} className="rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#F0E2CA] shadow-sm">
                                   <div className="text-[12px] font-black text-[#A56C18]">{card.label}</div>
                                   {card.body ? <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">{card.body}</div> : null}
-                                  {safeArray(card.items).length > 0 ? (
+                                  {card.proposal ? (
+                              <FoodCombinationCard card={card} actions={careItemsByKind.get(`food_${card.key || "card"}_item`) || []} renderAction={actionButtonFor} />
+                            ) : safeArray(card.items).length > 0 ? (
                                     <div className="mt-2 space-y-2">
                                       {safeArray(card.items).map((item, itemIndex) => {
                                         const itemDetail = safeArray(card.item_details)?.[itemIndex] || null;
