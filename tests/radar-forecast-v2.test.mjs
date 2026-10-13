@@ -874,10 +874,12 @@ test("constitution care tab states the seven care goals in plain current languag
   assert.deepEqual(preferences.items.map((item) => item.key), ["sasaeru", "nagasu", "nukumeru"]);
   assert.deepEqual(preferences.items.map((item) => item.rankLabel), ["基本にしたい", "次に意識したい", "補助として取り入れたい"]);
   assert.equal(preferences.summary, "重だるさをためず、疲れを増やさない整え方が合いやすいです。");
-  assert.equal(constitutionCare.getCarePolicyDefinition("meguraseru").guide, "滞りをほどき、巡りを保つ");
-  assert.equal(constitutionCare.getCarePolicyDefinition("sasaeru").guide, "胃腸をいたわり、疲れを増やさない");
+  assert.equal(constitutionCare.getCarePolicyDefinition("meguraseru").guide, "気・血の滞りを整え、巡りを促す");
+  assert.equal(constitutionCare.getCarePolicyDefinition("sasaeru").guide, "体を働かせる力を補う");
   assert.match(resultPageSource, /この整え方が合いやすい理由/);
-  assert.match(resultPageSource, /パーソナルケアショップの商品選び、ミモルへの相談/);
+  assert.match(resultPageSource, /<ResultCareExample example=\{careExample\}/);
+  assert.match(resultPageSource, /食材・飲み物・ツボ・過ごし方/);
+  assert.doesNotMatch(resultPageSource, /パーソナルケアショップでのアイテム選び/);
   assert.doesNotMatch(constitutionCareSource, /巡りの逃げ道|回復しやすい余白|まず合いやすい/);
   assert.doesNotMatch(resultPageSource, /今後の整うアイテム検索|見立ての補足/);
 });

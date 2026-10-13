@@ -93,7 +93,7 @@ test("14日体験と終了後の無料範囲を主要画面とAPIの両方で案
   assert.match(radar, /personalized_forecast_enabled[\s\S]*SubscriptionPaywall/);
   assert.match(records, /records_write_enabled/);
   assert.match(guide, /登録後14日間は、全部試せます/);
-  assert.match(signup, /カード登録は不要/);
+  assert.match(signup, /カード登録は不要|支払い情報不要/);
   assert.match(forecastRoute, /personalized_forecast_access_required/);
   assert.match(reviewRoute, /records_write_access_required/);
   assert.match(careRoute, /records_write_access_required/);
