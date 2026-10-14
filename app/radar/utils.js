@@ -2431,7 +2431,7 @@ export function getPointCautions(point) {
 }
 
 
-export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explicitSymptomFocus = null } = {}) {
+export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explicitSymptomFocus = null, completedCare = [] } = {}) {
   if (!forecast) return null;
   const triggerFactors = getForecastTriggerFactors(forecast);
   const triggerKey = triggerFactors[0]?.careKey || getLegacyCareTriggerKey(
@@ -2445,7 +2445,7 @@ export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explic
   );
   const signal = Number(forecast?.signal ?? 0);
   const symptomFocus = explicitSymptomFocus || riskContext?.constitution_context?.symptom_focus || null;
-  const fallbackTriggerKey = getForecastTriggerKey({ main_trigger: triggerKey });
+  const fallbackTriggerKey = secondaryKey && secondaryKey !== triggerKey ? secondaryKey : null;
 
   const plan = buildTodayCarePlanCore({
     forecast,
@@ -2456,6 +2456,7 @@ export function buildTodayCarePlan({ forecast, riskContext, symptomFocus: explic
     subLabels: riskContext?.constitution_context?.sub_labels || [],
     fallbackTriggerKey,
     riskContext,
+    completedCare,
   });
   return rewritePressureBodyCopyDeep(plan, riskContext || triggerFactors[0] || null);
 }
@@ -2481,6 +2482,7 @@ export function resolveDisplayedCarePlan({
         forecast,
         riskContext: completeRiskContext,
         symptomFocus: resolvedSymptomFocus,
+        completedCare,
       })
     : storedCarePlan;
 

@@ -9,6 +9,7 @@ import FoodCombinationCard from "./FoodCombinationCard";
 import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { LIFESTYLE_SCENES } from "@/lib/radar_v1/careRules/dailyCareV2";
+import { readLifestyleScenePreference, saveLifestyleScenePreference } from "@/lib/radar_v1/lifestyleScenePreference";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -356,6 +357,17 @@ export default function RadarPage() {
   const [bundle, setBundle] = useState(null);
   useEffect(() => { if (session?.user?.id && bundle) trackFunnel("radar_view"); }, [session?.user?.id, bundle]);
   const [lifestyleScene, setLifestyleScene] = useState("general");
+  useEffect(() => {
+    if (loadingAuth) return;
+    try { setLifestyleScene(readLifestyleScenePreference(window.localStorage, session?.user?.id)); }
+    catch { setLifestyleScene("general"); }
+  }, [loadingAuth, session?.user?.id]);
+  function changeLifestyleScene(value) {
+    if (!LIFESTYLE_SCENES.some(scene => scene.key === value)) return;
+    setLifestyleScene(value);
+    try { saveLifestyleScenePreference(window.localStorage, session?.user?.id, value); }
+    catch { /* The selected scene still works without local storage. */ }
+  }
   const [todayComparisonBundle, setTodayComparisonBundle] = useState(null);
   const [error, setError] = useState("");
 
@@ -2425,7 +2437,7 @@ export default function RadarPage() {
               <div className="mt-4 space-y-3">
                 <label className="flex items-center justify-between gap-3 text-[13px] font-bold text-slate-600">
                   場面に合わせる
-                  <select className="min-w-0 rounded-xl bg-white px-3 py-2 ring-1 ring-[#DCE8DD]" value={lifestyleScene} onChange={(event) => setLifestyleScene(event.target.value)}>
+                  <select className="min-w-0 rounded-xl bg-white px-3 py-2 ring-1 ring-[#DCE8DD]" value={lifestyleScene} onChange={(event) => changeLifestyleScene(event.target.value)}>
                     {LIFESTYLE_SCENES.map((scene) => <option key={scene.key} value={scene.key}>{scene.label}</option>)}
                   </select>
                 </label>
