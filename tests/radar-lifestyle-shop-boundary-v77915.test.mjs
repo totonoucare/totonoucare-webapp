@@ -73,15 +73,20 @@ test("身体の使い方は全条件で商品へ直結せず、ショップ文�
     }
   }
 
-  const bodyFirst = build({
-    date: "2026-08-01",
+  const plans = Array.from({length:14}, (_,i) => build({
+    date: `2026-08-${String(i+1).padStart(2,"0")}`,
     symptomFocus: "neck_shoulder",
-    trigger: "heat",
-    coreCode: "accel_batt_large",
-  }).lifestyle_plan;
-  assert.equal(bodyFirst.primary_action.care_kind, "body");
-  assert.equal(bodyFirst.alternatives[0].care_kind, "environment");
-  assert.equal(bodyFirst.shop_context.action_id, bodyFirst.alternatives[0].id);
+    trigger: "damp",
+    coreCode: "brake_batt_small",
+  }).lifestyle_plan);
+  const visibleShop = plans.filter(plan => plan.shop_context);
+  assert.ok(visibleShop.length > 0);
+  for (const plan of visibleShop) {
+    const action = shown(plan).find(row => row.id === plan.shop_context.action_id);
+    assert.equal(action.care_kind, "environment");
+    assert.equal(action.shop_eligible, true);
+    assert.ok(action.equipment);
+  }
 });
 
 test("胃腸の前かがみケアは、商品検索でも画面・読み物用スタンドへ限定する", () => {

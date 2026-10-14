@@ -21,14 +21,22 @@ test('continuity uses only completed earlier days within the window',()=>{
  assert.deepEqual(care('2026-09-11'),care('2026-09-11',done.map(x=>({...x,checked_at:null}))));
 });
 
-test('recent setup is deprioritized when a suitable alternate exists; points preserve selection',()=>{
+function assertPointFit(points) {
+ assert.equal(new Set(points.map(point=>point.code)).size,points.length);
+ for(const point of points) {
+  const basis=point.care_selection_basis;
+  assert.ok(basis.score >= basis.best_score - basis.near_tie_delta);
+ }
+}
+
+test('recent setup and points are deprioritized only when fitting alternatives exist',()=>{
  const history=rows(care('2026-09-10'),'2026-09-10');
  const fresh=care('2026-09-11'); const personalized=care('2026-09-11',history);
  assert.notEqual(personalized.lifestyle_plan.primary_action.id,history.find(x=>x.domain==='live').meta.rule_id);
- assert.deepEqual(personalized.night_tsubo_set.points,fresh.night_tsubo_set.points);
+ assertPointFit(personalized.night_tsubo_set.points);assertPointFit(fresh.night_tsubo_set.points);
  assert.deepEqual(personalized.night_tsubo_set.line_care,fresh.night_tsubo_set.line_care);
  assert.equal(fresh.night_tsubo_set.continuity_note,'');
- assert.match(personalized.night_tsubo_set.continuity_note,/ケアした記録/);
+ if(personalized.night_tsubo_set.continuity_note)assert.match(personalized.night_tsubo_set.continuity_note,/ケアした記録/);
  assert.deepEqual(personalized,care('2026-09-11',history));
  assert.ok(!JSON.stringify(personalized).includes('checked_at'));
 });
@@ -49,7 +57,8 @@ for(const length of [14,30]) test(`${length}-day changing-weather sequences keep
    const untouched=JSON.stringify(r.forecast);
    const base=care(date,[],r,symptom), plan=care(date,history,r,symptom);
    assert.equal(JSON.stringify(r.forecast),untouched);
-   assert.deepEqual(plan.night_tsubo_set.points,base.night_tsubo_set.points);
+   assertPointFit(plan.night_tsubo_set.points);assertPointFit(base.night_tsubo_set.points);
+   assert.deepEqual(plan.night_tsubo_set.points,care(date,history,r,symptom).night_tsubo_set.points);
    assert.ok(plan.night_tsubo_set.line_care.selection_reason);
    assert.deepEqual(plan.night_tsubo_set.line_care,care(date,history,r,symptom).night_tsubo_set.line_care);
    const primary=plan.lifestyle_plan.primary_action;

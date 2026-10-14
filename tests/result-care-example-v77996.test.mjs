@@ -6,8 +6,8 @@ import { createScenarioRunner } from "./helpers/forecast-scenarios.mjs";
 const { load, profiles } = await createScenarioRunner();
 const { buildResultCareExample, resultCareExampleDate } = await load("lib/diagnosis/v2/resultCareExample.js");
 const care = await load("lib/diagnosis/v2/carePreferences.js");
-const tcm = await load("lib/radar_v1/careRules/foodTcm.js");
-const recipes = await load("lib/radar_v1/careRules/foodCombinationRecipes.js");
+const daily = await load("lib/radar_v1/careRules/dailyCareV2.js");
+const images = await load("lib/radar_v1/careMovementImages.js");
 const symptoms = ["fatigue", "sleep", "digestion", "neck_shoulder", "low_back_pain", "swelling", "headache", "dizziness", "mood"];
 const options = (profile = profiles[1], symptomKey = "fatigue") => ({
   answers: profile.answer,
@@ -28,18 +28,25 @@ test("diagnosis time uses JST and missing timestamps use a fixed date", () => {
   for (const value of [null, undefined, "", "not-a-date"]) assert.equal(resultCareExampleDate(value), "2026-08-31");
 });
 
-test("all 36 constitution/symptom cases use a genuine two-food recipe without changing the diagnosis", () => {
+test("all 36 constitution/symptom cases reuse the genuine line-care selector without changing the diagnosis", () => {
   for (const profile of profiles) for (const symptom of symptoms) {
     const input = options(profile, symptom);
     const before = JSON.stringify(input);
     const example = buildResultCareExample(input);
     assert.equal(JSON.stringify(input), before, profile.name + "/" + symptom);
-    assert.equal(example.focus_ingredients.length, 2);
-    assert.equal(new Set(example.focus_ingredients).size, 2);
-    assert.ok(recipes.FOOD_COMBINATION_RECIPES.some((recipe) => recipe.title === example.meal_example && recipe.foods.every((name) => example.focus_ingredients.includes(name))));
-    assert.ok(example.preparation.length > 8);
-    assert.ok(example.short_reason.length > 8 && example.short_reason.length < 100);
-    assert.ok(example.selection_basis.evidence.length);
+    const preferences = care.buildBaseCarePreferences(input);
+    const selected = daily.buildMeridianLineCare({theme:{
+      mode:"today", target_date:resultCareExampleDate(input.createdAt), trigger_key:"none",
+      secondary_trigger_key:null, signal:0,
+      stimulus:input.computed.core_code.includes("batt_small")?"弱め・短め":"軽く一度",
+      sub_labels:input.computed.sub_labels, symptom_focus:symptom, policies:preferences.items,
+      primary_meridian:input.computed.primary_meridian, secondary_meridian:input.computed.secondary_meridian,
+    }});
+    assert.equal(example.id,selected.id);assert.equal(example.title,selected.title);
+    assert.equal(example.action,selected.action);assert.equal(example.public_reason,selected.reason);
+    assert.deepEqual(example.image,images.getCareMovementImage(selected.id));
+    assert.equal(example.kind,"line_care");assert.equal(example.selection_basis.symptom,symptom);
+    assert.ok(example.check_prompt.length>8);assert.ok(example.guidance.includes("痛み"));
   }
 });
 
@@ -48,9 +55,9 @@ test("weather sensitivity answers never become actual weather evidence or a fore
   input.answers = { ...input.answers, env_sensitivity: "almost_always", env_vectors: ["humidity_up", "dryness_up"], trigger_key: "damp" };
   const example = buildResultCareExample(input);
   assert.equal(example.selection_basis.signal, 0);
-  assert.equal(example.selection_basis.source_scores.weather, 0);
-  assert.ok(example.selection_basis.evidence.every((evidence) => evidence.source !== "weather"));
-  assert.ok(example.reasons.every((reason) => reason.label !== "天気"));
+  assert.equal(example.selection_basis.weather, null);
+  assert.equal(example.selection_basis.trigger_key, null);
+  assert.equal(example.selection_basis.secondary_trigger_key, null);
   assert.doesNotMatch(example.public_reason, /今日の|明日の|気圧|湿気への備え/);
   assert.match(example.basis_label, /体質チェック/);
 });
@@ -69,16 +76,12 @@ test("the same result stays stable across viewing days and explicit preferences 
   assert.deepEqual(buildResultCareExample({ ...input, carePreferences }), before);
 });
 
-test("cold, heat and mixed constitution keep the catalog's food-nature exclusions", () => {
-  for (const thermal of ["cold", "heat", "mixed"]) {
-    const input = options(profiles[2]);
-    input.computed = { ...input.computed, axes: { ...input.computed.axes, thermo_answer: thermal } };
-    const example = buildResultCareExample(input);
-    for (const ingredient of example.selection_basis.ingredients) {
-      if (thermal === "cold") assert.ok(!["寒", "涼"].includes(ingredient.nature));
-      if (thermal === "heat") assert.ok(!["温", "熱"].includes(ingredient.nature));
-      if (thermal === "mixed") assert.equal(ingredient.nature, "平");
-    }
+test("small-reserve constitution gets gentle guidance without assuming weather or heat load", () => {
+  for (const profile of profiles) {
+    const example=buildResultCareExample(options(profile));
+    if(profile.constitution.core_code.includes("batt_small"))assert.match(example.guidance,/弱め・短め/);
+    else assert.match(example.guidance,/軽く1セット/);
+    assert.doesNotMatch(example.guidance,/今日は|今夜|汗ばむ|乾燥/);
   }
 });
 
@@ -89,7 +92,7 @@ test("split-score profiles and missing timestamps remain supported", () => {
   input.createdAt = null;
   const example = buildResultCareExample(input);
   assert.equal(example.selection_basis.target_date, "2026-08-31");
-  assert.ok(example.selection_basis.evidence.some((evidence) => evidence.source === "constitution"));
+  assert.equal(example.selection_basis.constitution, true);
 });
 
 test("changing the current symptom can change the example without altering the saved constitution", () => {
@@ -100,39 +103,53 @@ test("changing the current symptom can change the example without altering the s
   assert.equal(JSON.stringify(profile.constitution), before);
 });
 
-test("every ingredient's cited function is present in the shared food catalog", () => {
+test("all selected action images exist in the shared collection", async () => {
+  const seen=new Set();
   for (const profile of profiles) for (const symptom of symptoms) {
-    const example = buildResultCareExample(options(profile, symptom));
-    for (const evidence of example.selection_basis.evidence) for (const match of evidence.matched_foods) {
-      const food = tcm.FOOD_ITEMS.find((item) => item.id === match.id);
-      assert.ok(food);
-      for (const functionName of match.functions) assert.ok(food.tcm.functions.includes(functionName));
-    }
+    const example=buildResultCareExample(options(profile,symptom));
+    assert.match(example.image.src,/^\/care-movements\/line-[a-z-]+\.webp$/);
+    if(!seen.has(example.image.src))await fs.access(new URL("../public"+example.image.src,import.meta.url));
+    seen.add(example.image.src);
   }
+  assert.ok(seen.size>=4);
+});
+
+test("answered burden lines participate in selection; unanswered lines stay unasserted",()=>{
+  const input=options(profiles[1],"digestion");
+  input.computed={...input.computed,primary_meridian:"spleen_st",secondary_meridian:null};
+  const checked=buildResultCareExample(input);
+  assert.equal(checked.meridian_code,"spleen_st");assert.equal(checked.selection_basis.checked_rank,1);
+  assert.match(checked.short_reason,/選んだ負担ライン/);
+  input.computed={...input.computed,primary_meridian:null};
+  const unchecked=buildResultCareExample(input);assert.equal(unchecked.selection_basis.checked_rank,null);
+  assert.doesNotMatch(unchecked.short_reason,/選んだ負担ライン/);
+  assert.equal(buildResultCareExample({...input,symptomKey:"obsolete_unknown"}),null);
 });
 
 const h = (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity).filter((child) => child !== null && child !== false) });
 async function loadComponent(name) {
   const source = await fs.readFile(new URL(`../components/diagnosis/${name}.jsx`, import.meta.url), "utf8");
-  return new Function("h", "IconFood", source.replace(/^import[^\n]+\n/gm, "").replace("export default function", "function") + `\nreturn ${name};`)(h, () => null);
+  return new Function("h", "IconBody", source.replace(/^import[^\n]+\n/gm, "").replace("export default function", "function") + `\nreturn ${name};`)(h, () => null);
 }
 const ExampleCard = await loadComponent("ResultCareExample");
 const PolicyCard = await loadComponent("ResultCarePolicyCard");
 function nodes(tree) { return !tree || typeof tree !== "object" ? [] : [tree, ...tree.children.flatMap(nodes)]; }
 function textContent(tree) { return tree == null ? "" : typeof tree === "object" ? tree.children.map(textContent).join("") : String(tree); }
 
-test("the concrete example shows the real recipe and reasoning without recording controls", () => {
+test("the concrete example shows one illustrated action and its own guidance without recording controls", () => {
   const example = buildResultCareExample(options());
   const tree = ExampleCard({ example });
   const text = textContent(tree);
-  for (const name of example.focus_ingredients) assert.ok(text.includes(name));
-  assert.ok(text.includes(example.meal_example));
-  assert.ok(text.includes(example.preparation));
-  assert.ok(text.includes(example.short_reason));
+  for(const value of [example.title,example.action,example.short_reason,example.check_prompt,example.guidance])assert.ok(text.includes(value));
   assert.equal(nodes(tree).filter((node) => node.type === "button" || node.type === "input").length, 0);
+  assert.equal(nodes(tree).filter((node) => node.type === "img").length,1);
+  const image=nodes(tree).find(node=>node.type==="img");
+  assert.equal(image.props.src,example.image.src);assert.match(image.props.alt,/動作図/);
+  assert.equal(tree.props["aria-label"],"あなたに合うほぐすケアの例");
+  assert.doesNotMatch(text,/料理例|食材を選んだ理由|食事で取り入れるなら/);
   const details = nodes(tree).filter((node) => node.type === "details");
-  assert.equal(details.length, 1);
-  assert.ok(!details[0].props.open);
+  assert.equal(details.length, 1);assert.ok(!details[0].props.open);
+  assert.ok(textContent(details[0]).includes(example.public_reason));
   assert.equal(ExampleCard({ example: null }), null);
 });
 

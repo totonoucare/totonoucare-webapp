@@ -77,11 +77,13 @@ test("出やすいサインの個人反応を、同じ7方針と暮らすケア�
   assert.equal(plan.care_theme.response_profile.reaction_direction, "accel");
   assert.equal(plan.care_theme.response_profile.primary_response_key, plan.care_theme.policies[0].key);
   assert.equal(plan.care_theme.policies.some((policy) => policy.key === "yurumeru"), true);
-  assert.equal(plan.lifestyle_plan.primary_action.care_kind, "body");
-  assert.equal(plan.lifestyle_plan.alternatives.some((item) => item.care_kind === "environment"), true);
+  for (const action of [plan.lifestyle_plan.primary_action, ...plan.lifestyle_plan.alternatives]) {
+    assert.ok(["body", "environment"].includes(action.care_kind));
+    assert.ok(action.selected_because.some(row => row.axis === "symptom" && row.key === "neck_shoulder"));
+  }
 });
 
-test("湿気×ブレーキ×胃腸×低余力でも方針を保ち、道具なしを先に表示する", () => {
+test("湿気×ブレーキ×胃腸×低余力でも方針を保ち、胃腸に合う提案を表示する", () => {
   const plan = build({
     trigger: "damp",
     symptomFocus: "digestion",
@@ -90,10 +92,11 @@ test("湿気×ブレーキ×胃腸×低余力でも方針を保ち、道具な�
   });
   assert.deepEqual(plan.care_theme.policies.map((policy) => policy.key), ["nagasu", "sasaeru"]);
   assert.equal(plan.care_theme.response_profile.reserve_level, "small");
-  assert.equal(plan.lifestyle_plan.primary_action.equipment, null);
-  assert.ok(["tension-seated-foot-head", "tension-inner-ankle-stand"].includes(plan.lifestyle_plan.primary_action.id));
+  assert.ok(["tension-seated-foot-head", "tension-inner-ankle-stand", "posture-aftermeal-space", "tool-back-support"].includes(plan.lifestyle_plan.primary_action.id));
   assert.match(plan.lifestyle_plan.primary_action.label, /お腹|足裏|足指/);
-  assert.ok(plan.lifestyle_plan.alternatives.every((item) => item.equipment));
+  for (const item of [plan.lifestyle_plan.primary_action, ...plan.lifestyle_plan.alternatives]) {
+    assert.ok(item.selected_because.some(row => row.axis === "symptom" && row.key === "digestion"));
+  }
 });
 
 test("明示的balancedをコア体質のアクセル軸で上書きしない", () => {

@@ -6,7 +6,7 @@ const dailySource = await readFile(new URL("../lib/radar_v1/careRules/dailyCareV
 const daily = await import(`data:text/javascript;base64,${Buffer.from(dailySource).toString("base64")}`);
 const radarPageSource = await readFile(new URL("../app/radar/page.js", import.meta.url), "utf8");
 
-const BROAD_SCENES = new Set(["軽いコップなどを持つ時", "荷物を両手で持つ時", "スマホを操作する時", "立っている時", "座り直す時", "椅子から立つ時", "あお向けから寝返る時"]);
+const BROAD_SCENES = new Set(["軽いコップなどを持つ時", "荷物を両手で持つ時", "スマホを操作する時", "立っている時", "座り直す時", "椅子から立つ時", "あお向けから寝返る時", "椅子に座っている時", "座ってひと息つく時", "食後に座る時"]);
 
 function build({
   date = "2026-08-02",

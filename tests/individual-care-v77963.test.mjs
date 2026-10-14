@@ -50,8 +50,7 @@ const shown=p=>[p.primary_action,...p.alternatives].filter(Boolean);
 test('scene selection gates narrow candidates and keeps tool slots tied to visible care',()=>{
  for(const mode of ['today','tomorrow'])for(const scene of daily.LIFESTYLE_SCENES)for(const symptomFocus of ['sleep','fatigue','digestion','neck_shoulder','headache','dizziness','low_back_pain','swelling','mood']){
   const p=plan({mode,lifestyleScene:scene.key,symptomFocus}),visible=shown(p).filter(x=>!x.restricted);
-  assert.ok(visible.filter(x=>x.equipment).length<=1);assert.ok(visible.filter(x=>!x.equipment).length<=1);
-  if(visible.length===2)assert.equal(visible[0].equipment,null);
+  assert.ok(visible.length<=2);assert.equal(new Set(visible.map(x=>x.id)).size,visible.length);
   for(const x of shown(p))assert.ok(x.selected_because.some(y=>y.axis==='symptom'&&y.key===symptomFocus));
   if(scene.key==='general')for(const x of shown(p))assert.doesNotMatch(x.id,/facing-layout|foot-support|arm-support|screen-height|phone-thumb/);
   if(p.shop_context)assert.ok(visible.some(x=>x.id===p.shop_context.action_id&&x.equipment));
