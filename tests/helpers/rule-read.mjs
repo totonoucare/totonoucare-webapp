@@ -8,7 +8,7 @@ export async function readFile(file,options){
  let source=await fs.readFile(file,options);
  const name=file instanceof URL?fileURLToPath(file):String(file);
  if(typeof source==='string'&&['dailyCareV2.js','foodIngredientRules.js','foodTcm.js'].includes(path.basename(name))){
-  for(const file of ['foodCombinationRecipes','foodTcm','drinkRules']){
+  for(const file of ['foodCombinationRecipes','foodTcm','drinkRules','lifestyleCandidatesV97']){
    if(!source.includes('from "./'+file+'"'))continue;
    const dependency=await readFile(path.join(path.dirname(name),file+'.js'),'utf8');
    source=source.replaceAll('from "./'+file+'"','from "data:text/javascript;base64,'+Buffer.from(dependency).toString('base64')+'"');
