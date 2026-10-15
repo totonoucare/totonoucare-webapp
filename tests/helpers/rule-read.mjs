@@ -7,11 +7,14 @@ export * from 'node:fs/promises';
 export async function readFile(file,options){
  let source=await fs.readFile(file,options);
  const name=file instanceof URL?fileURLToPath(file):String(file);
- if(typeof source==='string'&&['dailyCareV2.js','foodIngredientRules.js','foodTcm.js'].includes(path.basename(name))){
-  for(const file of ['foodCombinationRecipes','foodTcm','drinkRules','lifestyleCandidatesV97']){
-   if(!source.includes('from "./'+file+'"'))continue;
-   const dependency=await readFile(path.join(path.dirname(name),file+'.js'),'utf8');
-   source=source.replaceAll('from "./'+file+'"','from "data:text/javascript;base64,'+Buffer.from(dependency).toString('base64')+'"');
+ if(typeof source==='string'&&['dailyCareV2.js','foodIngredientRules.js','foodTcm.js','drinkRules.js'].includes(path.basename(name))){
+  for(const file of ['foodCombinationRecipes','foodExplanations','foodTcm','drinkExplanations','drinkRules','lifestyleCandidatesV97']){
+   for(const quote of ['"',"'"]){
+    const specifier='from '+quote+'./'+file+quote;
+    if(!source.includes(specifier))continue;
+    const dependency=await readFile(path.join(path.dirname(name),file+'.js'),'utf8');
+    source=source.replaceAll(specifier,'from "data:text/javascript;base64,'+Buffer.from(dependency).toString('base64')+'"');
+   }
   }
  }
  return source;
