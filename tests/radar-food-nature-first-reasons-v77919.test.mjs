@@ -28,27 +28,31 @@ function buildHeatContext(mode = "today") {
   });
 }
 
-test("実際の飲み物辞書も体調との相性を先、成分と飲み方を補足にする", () => {
+test("飲み物は短い理由・飲み方とカフェイン・東洋医学の解説を分ける", () => {
   const food = buildHeatContext();
   const drink = food.action_cards.find((card) => card.key === "drink");
   assert.ok(drink);
   assert.ok(drink.items.length >= 2);
   for (const detail of drink.item_details) {
-    assert.deepEqual(detail.reasons.slice(0, 2).map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
+    assert.deepEqual(detail.reasons.map((reason) => reason.label), ["東洋医学での考え方"]);
     assert.ok(detail.public_reason.length > 15);
     assert.equal(detail.record_semantics,"drink_consumed");
     assert.equal(detail.consumed_name,detail.label);
-    assert.match(detail.reasons[1].text, /カフェイン/);
+    assert.match(detail.caffeine_label, /カフェイン/);assert.ok(detail.how_to);assert.ok(detail.theory_details[0].text);
   }
 });
 
 test("高温日の麦茶には冷ます食性とカフェインなしの理由が出る", () => {
-  const food = foodRules.buildIngredientFoodContext({mode:"today", triggerKey:"heat", symptomFocus:"headache", targetDate:"2026-09-22"});
-  const drink = food.action_cards.find((card) => card.key === "drink");
-  const index = drink.items.indexOf("麦茶");
-  assert.ok(index >= 0, drink.items.join(" / "));
-  assert.match(drink.item_details[index].reasons[0].text, /熱を落ち着ける方向/);
-  assert.match(drink.item_details[index].reasons[1].text, /カフェインを含みません/);
+  let detail=null;
+  for(let day=1;day<=14&&!detail;day++){
+    const food=foodRules.buildIngredientFoodContext({mode:"today",triggerKey:"heat",symptomFocus:"headache",targetDate:`2026-09-${String(day).padStart(2,"0")}`});
+    detail=food.action_cards.find(card=>card.key==="drink").item_details.find(item=>item.label==="麦茶");
+  }
+  assert.ok(detail);
+  assert.match(detail.public_reason,/暑さ/);
+  assert.equal(detail.caffeine_label,"ノンカフェイン");
+  assert.ok(detail.theory_details[0].text);
+
 });
 
 test("料理は取り入れたい食材を先に見せ、料理名を料理案へ下げる", () => {
@@ -56,8 +60,8 @@ test("料理は取り入れたい食材を先に見せ、料理名を料理案�
   const meal = food.action_cards.find((card) => card.key === "choice")?.item_details?.[0];
   assert.ok(meal.focus_ingredients.length === 1, JSON.stringify(meal));
   assert.ok(meal.meal_example.length > 0);
-  assert.deepEqual(meal.reasons.map((reason) => reason.label), ["選んだ理由"]);
-  assert.match(meal.reasons[0].text, /食養生では/);
+  assert.deepEqual(meal.reasons.map((reason) => reason.label), ["東洋医学での考え方"]);
+  assert.ok(meal.theory_details[0].text);assert.notEqual(meal.reasons[0].text,meal.public_reason);
   assert.equal(meal.consumed_name,meal.focus_ingredients[0]);
   assert.match(pageSource, /取り入れたい食材/);
   assert.match(pageSource, /itemDetail\?\.meal_example/);

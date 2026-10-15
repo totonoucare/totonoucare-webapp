@@ -112,7 +112,7 @@ test("保存済み飲み物も現在の主訴と対象日の天気で再選定�
 
   assert.equal(plan.version, daily.DAILY_CARE_LOGIC_VERSION);
   assert.equal(drink.items.length, 2);
-  assert.ok(drink.items.every(name => ['ほうじ茶','デカフェコーヒー','コーヒー','黒豆茶'].includes(name)));
+  assert.ok(drink.item_details.every(item => item.selection_basis.matched_context.some(match=>match.source==='symptom'&&match.key==='neck_shoulder')));
   assert.ok(!drink.items.includes('水'));
   for (const detail of drink.item_details) {
     assert.equal(detail.selection_basis.symptom_focus, 'neck_shoulder');

@@ -12,7 +12,7 @@ test('pressure and damp constitution do not invent humid weather or digestive co
  for(const f of tcm.rankTcmFoods(options).filter(x=>x.matches[0]?.key==='健脾')){
   const d=tcm.tcmFoodDetail(f,{targetDate:'2026-09-22'});
   assert.doesNotMatch(d.public_reason,/食後の重さ|胃腸の不調/);
-  assert.match(d.public_reason,/消化・吸収.*重だるさ/);
+  assert.match(d.public_reason,/重だるさ/);assert.match(d.public_reason,/消化・吸収/);
   assert.ok(d.public_reason.length<=100);
  }
 });

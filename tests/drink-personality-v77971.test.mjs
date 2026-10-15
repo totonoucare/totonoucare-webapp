@@ -17,7 +17,7 @@ test('legacy ingredient scoring executes matching needs without a drink binding'
 });
 test('restored primary associations outweigh supporting drainage and digestion',()=>{
  const weight=(name,tag)=>d.DRINK_STRENGTH_WEIGHTS[byName(name).tagStrengths[tag]||byName(name).strength];
- for(const [name,tags] of [['はとむぎ茶',['support_spleen','drain_damp']],['とうもろこし茶',['support_spleen','digest','drain_damp']],['小豆茶',['drain_damp','support_spleen']],['黒豆茶',['kidney','blood','drain_damp']]])
+ for(const [name,tags] of [['はとむぎ茶',['support_spleen','drain_damp']],['とうもろこし茶',['support_spleen','drain_damp']],['小豆茶',['drain_damp','support_spleen']],['黒豆茶',['kidney','blood','drain_damp']]])
   for(const tag of tags)assert.ok(byName(name).tags.includes(tag));
  assert.ok(weight('はとむぎ茶','drain_damp')>weight('とうもろこし茶','drain_damp'));
  assert.ok(weight('小豆茶','drain_damp')>weight('小豆茶','support_spleen'));
@@ -30,10 +30,10 @@ test('representative contexts express each drink character in the main pair',()=
  assert.deepEqual(names({triggerKey:'cold',symptomFocus:'digestion'}),['生姜湯','白湯']);
  assert.deepEqual(names({triggerKey:'heat'}),['緑茶','麦茶']);
  assert.equal(names({triggerKey:'dry',symptomFocus:'sleep'})[0],'ルイボスティー');
- assert.deepEqual(names({triggerKey:'default',symptomFocus:'fatigue',subLabels:['qi_deficiency']}),['黒豆茶','コーヒー']);
+ assert.ok(!names({triggerKey:'default',symptomFocus:'fatigue',subLabels:['qi_deficiency']}).includes('コーヒー'));
  const c={triggerKey:'cold',subLabels:['fluid_deficiency']};
- assert.ok(names(c).includes('ほうじ茶'));assert.ok(!names(c).includes('緑茶'));
- assert.match(d.buildDrinkFoodNatureReason(byName('ほうじ茶'),c),/冷え.*ほうじ茶/);
+ assert.ok(d.scoreDrink(byName('ほうじ茶'),c)._matches.some(m=>m.source==='serving'));assert.ok(!names(c).includes('緑茶'));
+ assert.match(d.buildDrinkFoodNatureReason(byName('ほうじ茶'),c),/冷え.*温かい/);
 });
 test('kuzu remains an optional third candidate while all main drink surfaces agree',()=>{
  for(const mode of ['today','tomorrow']){

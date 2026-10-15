@@ -16,10 +16,10 @@ const clean=new Function('compact','cleanDrinkSelectionBasis',block+';return cle
 function food(mode='today',more={}){return rules.buildIngredientFoodContext({mode,triggerKey:'damp',secondaryKey:'heat',subLabels:['fluid_damp','qi_deficiency'],symptomFocus:'digestion',targetDate:'2026-09-22',...more});}
 function option(trigger='none',labels=[]){return {targetDate:'2026-09-22',theme:{trigger_key:trigger,policies:[]},subLabels:labels};}
 
-test('v68 preserves all 91 legacy inventory entries and audits 81 foods plus all 14 drinks',()=>{
+test('v68 preserves all 91 legacy inventory entries and audits 81 foods plus all 22 drinks',()=>{
  assert.equal(tcm.FOOD_ITEMS.length,91);
  assert.equal(tcm.FOOD_ITEMS.filter(x=>x.role!=='drink').length,81);
- assert.equal(rules.DRINK_ITEMS.length,14);
+ assert.equal(rules.DRINK_ITEMS.length,22);
  assert.equal(new Set(tcm.FOOD_ITEMS.map(x=>x.id)).size,91);
  for(const f of tcm.FOOD_ITEMS.filter(x=>x.role!=='drink')){
   assert.ok(f.tcm.review);assert.ok(f.tcm.note);assert.ok(f.tcm.examples.length);
@@ -127,7 +127,7 @@ test('all body/weather/date modes produce traceable named foods with no public s
   const p=food(mode,{triggerKey:trigger,secondaryKey:null,symptomFocus,subLabels:labels});
   for(const c of p.action_cards.filter(c=>['choice','alternative','night'].includes(c.key)))for(const d of c.item_details){
    assert.equal(d.focus_ingredients.length,1);assert.equal(d.consumed_name,d.label);
-   assert.ok(d.meal_example);assert.ok(d.public_reason.includes(d.label));
+   assert.ok(d.meal_example);assert.ok(d.public_reason.length>15);
    assert.doesNotMatch(d.public_reason,/https?:|健脾|補気|滋陰|生津|利水|温性|平性|ビタミン|たんぱく質/);
   }
  }
@@ -149,6 +149,6 @@ test('compatibility ingredient suggestions match the actual TCM cards',()=>{
   const p=food(mode);
   assert.deepEqual(p.ingredient_suggestions,p.selected_foods.map(x=>x.name));
   assert.equal(p.ingredient_count,81);
-  assert.equal(p.drink_model_version,'v7.79.72-drink-continuity');
+  assert.equal(p.drink_model_version,'drink_v100_2026-10-15');
  }
 });

@@ -7,8 +7,8 @@ const tcm=await load('lib/radar_v1/careRules/foodTcm.js');
 const ui=await load('app/radar/utils.js');
 const byName=name=>drink.DRINK_ITEMS.find(d=>d.name===name);
 
-test('all 14 drinks have an explicit reviewed contract; modern tea is not a sedative and corn grain is not corn silk',()=>{
- assert.equal(drink.DRINK_ITEMS.length,14);
+test('all 22 drinks have an explicit reviewed contract; modern tea is not a sedative and corn grain is not corn silk',()=>{
+ assert.equal(drink.DRINK_ITEMS.length,22);
  for(const d of drink.DRINK_ITEMS){
   assert.ok(d.review&&d.note);assert.ok(Array.isArray(d.goodFor)&&Array.isArray(d.cautionFor));
   assert.ok(!d.goodFor.includes('pressure_up')&&!d.goodFor.includes('pressure_down'));
@@ -21,7 +21,7 @@ test('all 14 drinks have an explicit reviewed contract; modern tea is not a seda
  assert.equal(byName('白湯').nature,'平');assert.equal(byName('生姜湯').nature,'温');
  assert.equal(byName('葛湯').nature,null);assert.ok(byName('葛湯').tags.includes('snack'));
 });
-test('all 14 explanations stay at two short sentences without asserting unselected symptoms',()=>{
+test('all 22 explanations stay at two short sentences without asserting unselected symptoms',()=>{
  for(const triggerKey of ['default','cold','heat','damp','dry','pressure_up','pressure_down','temp_shift'])
  for(const symptomFocus of [null,'fatigue','sleep','digestion','headache','dizziness','neck_shoulder','low_back_pain','mood','swelling'])
  for(const subLabels of [[],['fluid_damp'],['blood_deficiency'],['qi_stagnation'],['fluid_deficiency'],['cold_pattern','heat_pattern']])
@@ -51,7 +51,7 @@ test('decaf and hojicha do not claim zero or uniformly low caffeine',()=>{
  for(const mode of ['today','tomorrow'])assert.ok(drink.buildDrinkRecommendationRows({mode,symptomFocus:'sleep'}).every(d=>!d.caffeine));
  const breakfast=drink.buildDrinkActionCard({mode:'tomorrow',triggerKey:'heat'});
  const tea=breakfast.item_details.find(d=>d.label==='緑茶');
- assert.ok(tea);assert.match(tea.reasons[1].text,/明日の朝/);assert.equal(tea.recordable,false);
+ assert.ok(tea);assert.match(tea.how_to,/明日の朝/);assert.equal(tea.recordable,false);
 });
 test('saved stale drink cards are rebuilt for current symptom and selected forecast date',()=>{
  const stale={tomorrow_food_context:{action_cards:[{key:'drink',items:['古い生姜湯'],item_details:[{label:'古い生姜湯',record_semantics:'drink_consumed',public_reason:'今日は冷えます。'}]}]}};
@@ -69,7 +69,7 @@ test('food reasons cover qi deficiency, stagnation, blood deficiency, dryness an
    const d=tcm.tcmFoodDetail(f,{targetDate:'2026-09-22'});
    assert.doesNotMatch(d.public_reason,/食後の重さが気になる|乾きと消耗が重なるとき|口や喉の乾きに合わせ|ほてりが気になる|便が硬くなり/);
    assert.ok(d.public_reason.length<=110,d.public_reason);
-   if(f.matches[0]?.key==='和胃')assert.match(d.public_reason,/食養生.*胃腸.*緊張/);
+   if(f.matches[0]?.key==='和胃')assert.match(d.public_reason,/胃腸の働きを整える/);
   }
  }
 });

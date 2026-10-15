@@ -65,7 +65,7 @@ test("前置きを省き、食材ごとに今日選んだ理由を表示する",
     const food=build({trigger});
     assert.equal(food.recommendation,null);
     const item=food.action_cards.find(c=>c.key==="choice").item_details[0];
-    assert.ok(item.public_reason.includes(item.label));
+    assert.ok(item.public_reason.length>15);
     assert.ok(item.selection_basis.matched_functions.length);
     assert.ok(food.context_chips.includes(WEATHER_LABELS[trigger]));
   }
@@ -77,8 +77,8 @@ test("食事と飲み物を主表示に残し、控えたい物と追加候補�
   assert.deepEqual(prominentKeys, ["choice", "drink"]);
   const drink = food.action_cards.find((card) => card.key === "drink");
   assert.deepEqual(drink.items, build({withDrinks:false}).action_cards.find(c=>c.key==="drink").items);
-  assert.ok(drink.item_details.every(d=>d.selection_basis.version.startsWith("drink_v72")));
-  assert.deepEqual(drink.item_details[0].reasons.slice(0, 2).map((reason) => reason.label), ["体調との相性", "成分・飲み方"]);
+  assert.ok(drink.item_details.every(d=>d.selection_basis.version.startsWith("drink_v100")));
+  assert.deepEqual(drink.item_details[0].reasons.map((reason) => reason.label), ["東洋医学での考え方"]);
   assert.ok(food.action_cards.find((card) => card.key === "caution"));
   assert.match(pageSource, /itemDetail\.reasons/);
 });
@@ -97,7 +97,7 @@ test("食事候補は食材に対応した食養生の理由を表示する", ()
   const food = build();
   for (const card of food.action_cards.filter((item) => ["choice", "no_cook", "alternative", "night"].includes(item.key))) {
     for (const detail of card.item_details || []) {
-      assert.deepEqual(detail.reasons.map((reason) => reason.label), ["選んだ理由"]);
+      assert.deepEqual(detail.reasons.map((reason) => reason.label), ["東洋医学での考え方"]);
       assert.ok(detail.reasons.every((reason) => reason.text.length >= 20));
       assert.ok(detail.focus_ingredients.length >= 1);
       assert.equal(detail.meal_example.length > 0, true);

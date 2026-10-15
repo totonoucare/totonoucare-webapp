@@ -144,7 +144,9 @@ test('API rejects both old breakfast and new next-day food records before any DB
 test('actual food component shows two independent controls and no future-consumption buttons',async()=>{
  const source=await fs.readFile(new URL('../app/radar/FoodCombinationCard.jsx',import.meta.url),'utf8');
  const h=(type,props,...children)=>({type,props:props||{},children:children.flat(Infinity).filter(x=>x!==null&&x!==false&&x!==undefined)});
- const Component=new Function('h',source.replace(/^import .*;\r?\n/gm,'').replace('export default function','function')+'\nreturn FoodCombinationCard;')(h);
+ const theorySource=await fs.readFile(new URL('../app/radar/CareTheoryDetails.jsx',import.meta.url),'utf8');
+ const CareTheoryDetails=new Function('h',theorySource.replace(/^import .*;\r?\n/gm,'').replace('export default function','function')+'\nreturn CareTheoryDetails;')(h);
+ const Component=new Function('h','CareTheoryDetails',source.replace(/^import .*;\r?\n/gm,'').replace('export default function','function')+'\nreturn FoodCombinationCard;')(h,CareTheoryDetails);
  const p=plan(options()),card=p.action_cards.find(c=>c.key==='choice');
  const records=actions.buildDisplayedCareItems({food:p}).filter(i=>i.kind==='food_choice_item'),clicked=[];
  const renderAction=item=>h('button',{'data-id':item.canonical_key,onClick:()=>clicked.push(item.meta.consumed_id)},'食べた');
