@@ -1,0 +1,6 @@
+PASS: actual sticky component — hidden initially, 100px reveal, one view event, signup/save routing, close persists through parent/tab changes, attached result hidden, saving disabled
+PASS: actual signup component — correct animal, unknown type fallback, generic entry, header return, badges/Google/email separator/trial note, email accordion opens
+PASS: JSX syntax and bindings — app/result/[id]/page.js
+PASS: JSX syntax and bindings — app/signup/SignupClient.js
+PASS: all 9 authentication/save function bodies byte-identical to v100
+PASS: all 4 result save/body-line/navigation function bodies byte-identical to v100

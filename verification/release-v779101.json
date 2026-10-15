@@ -1,0 +1,170 @@
+{
+  "release": "v7.79.101",
+  "base": "v7.79.100",
+  "runtime_files": [
+    "app/result/[id]/page.js",
+    "app/signup/SignupClient.js",
+    "app/globals.css",
+    "lib/resultSaveCta.js",
+    "lib/signupResultIdentity.js"
+  ],
+  "regression": {
+    "passed": 581,
+    "failed": 0,
+    "related_tests_passed": 42,
+    "excluded_environment_tests": [
+      "tests/point-care-tools-v77958.test.mjs",
+      "tests/radar-client-bindings-v77964.test.mjs"
+    ],
+    "exclusion_reason": "Next.js is not installed; both unchanged Next-dependent test files are excluded."
+  },
+  "ui_behavior": {
+    "method": "Actual component source transformed with bundled Babel and executed with mock React hooks, navigation and network. No browser layout verification.",
+    "checks_passed": 6,
+    "log": "verification/ui-behavior-v779101.txt"
+  },
+  "preserved_function_bodies": {
+    "signup": [
+      "getStableAccessToken",
+      "buildCallbackUrl",
+      "cleanupOAuthParams",
+      "handleGoogleLogin",
+      "handleSendCode",
+      "handleVerify",
+      "attachNowIfNeeded",
+      "goNext",
+      "logout"
+    ],
+    "result": [
+      "attachToAccount",
+      "saveBodyLines",
+      "goSignupToRadar",
+      "goLoginToRadar"
+    ],
+    "byte_identical_to_v100": true
+  },
+  "build": {
+    "completed": false,
+    "reason": "Next.js executable is not installed"
+  },
+  "browser_visual_check": {
+    "completed": false,
+    "reason": "Chromium executable is not installed"
+  },
+  "live_authentication_check": {
+    "completed": false
+  },
+  "database_migration_required": false,
+  "existing_rows_updated": false,
+  "new_image_files": 0,
+  "behavior": {
+    "floating_cta_initially_hidden": true,
+    "scroll_threshold_px": 100,
+    "wait_for_scroll_event": true,
+    "close_persists_across_tabs": true,
+    "new_result_resets_state": true,
+    "motion_reduction_supported": true,
+    "signup_cta_view_after_reveal": true,
+    "signup_identity_uses_existing_authorized_result_api": true,
+    "identity_failure_allows_signup": true,
+    "signup_forecast_preview": false
+  },
+  "protected_paths": [
+    {
+      "path": "lib/diagnosis",
+      "file_count": 8,
+      "unchanged": true,
+      "manifest_sha256": "bf70c1f233f3607b698ed4c4e45b002cd56a66e5a3468f8b05f3c06762519aad"
+    },
+    {
+      "path": "lib/radar_v1",
+      "file_count": 53,
+      "unchanged": true,
+      "manifest_sha256": "47a886e7c6f60c37d408a8654141b6dba063074e0f1ac6cfe8c16b1f5c03505e"
+    },
+    {
+      "path": "lib/push",
+      "file_count": 5,
+      "unchanged": true,
+      "manifest_sha256": "927ce03ab76d4127603b2039ad7120c9bd00f8c165db947a2af1a09a6b29ef0a"
+    },
+    {
+      "path": "app/api",
+      "file_count": 40,
+      "unchanged": true,
+      "manifest_sha256": "705d8a59e7bf46a6a9a279b996aece5e874162fc7bd64ed637e5e2555556654c"
+    },
+    {
+      "path": "app/auth",
+      "file_count": 2,
+      "unchanged": true,
+      "manifest_sha256": "8d4da8596575cf1e405a29ed1f448bf20734a98511a8b532313ea1016a196974"
+    },
+    {
+      "path": "app/radar",
+      "file_count": 9,
+      "unchanged": true,
+      "manifest_sha256": "3e7bc0b908b7be0bdb0de324b2bfe25586e61c2bfa946d25b81a5b52b3471482"
+    },
+    {
+      "path": "components/diagnosis",
+      "file_count": 2,
+      "unchanged": true,
+      "manifest_sha256": "713e184c598465c9b2cafde82e8ac7add0d0dd46cd07e08d3fc6b2ea5380196d"
+    },
+    {
+      "path": "supabase",
+      "file_count": 37,
+      "unchanged": true,
+      "manifest_sha256": "a09ac9b83cdb2eba61147260918cb4da0f9a91caa51b5e1fa0d77836c3c3d658"
+    },
+    {
+      "path": "public",
+      "file_count": 65,
+      "unchanged": true,
+      "manifest_sha256": "9b5d437d3b68f9a7e1e4336b586bb73f6be7443ba6d7eacd0f2055af8dbba759"
+    },
+    {
+      "path": ".github",
+      "file_count": 3,
+      "unchanged": true,
+      "manifest_sha256": "942de1623e74ddebf8ae391d90c806ff4cd277e494005a4abc4a82338e87bef0"
+    },
+    {
+      "path": "package.json",
+      "file_count": 1,
+      "unchanged": true,
+      "sha256": "2581de9c3c9ed574cff6a6f3c2764f97d73f0c1e9e76acf7bf8d5e8586526e08"
+    },
+    {
+      "path": "package-lock.json",
+      "file_count": 1,
+      "unchanged": true,
+      "sha256": "2086c2052770c26b40a8bf95bb87dd1a596da2bd6f1ce39478759b5bd2c2f3c3"
+    },
+    {
+      "path": "lib/pendingDiagnosisAttach.js",
+      "file_count": 1,
+      "unchanged": true,
+      "sha256": "0d2648365a1dffa58424fb657f443ac4be0d4b7d5ca39138c04a1fce3d1fdc63"
+    },
+    {
+      "path": "lib/funnelClient.js",
+      "file_count": 1,
+      "unchanged": true,
+      "sha256": "ba8168bc2100c6f31ae784c1dc6bd027ee346d4249dab487b36e80269320700c"
+    },
+    {
+      "path": "lib/funnelEvents.js",
+      "file_count": 1,
+      "unchanged": true,
+      "sha256": "a3aeb2e07c2c1b21341277529274a662db3c4d22250ef5422fe98f3408a69ee3"
+    },
+    {
+      "path": "lib/safeReturnPath.js",
+      "file_count": 1,
+      "unchanged": true,
+      "sha256": "62a7e15431f529dfb4312b0f05f59b8ea129fad6a9529974d57cdf6f97a6c70d"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+✔ loading and obsolete results do not get a neutral care example (1.05799ms)
+✔ diagnosis time uses JST and missing timestamps use a fixed date (1.848501ms)
+✔ all 36 constitution/symptom cases reuse the genuine line-care selector without changing the diagnosis (22.172685ms)
+✔ weather sensitivity answers never become actual weather evidence or a forecast (0.832371ms)
+✔ the same result stays stable across viewing days and explicit preferences preserve its choice (1.484561ms)
+✔ small-reserve constitution gets gentle guidance without assuming weather or heat load (0.798938ms)
+✔ split-score profiles and missing timestamps remain supported (0.422118ms)
+✔ changing the current symptom can change the example without altering the saved constitution (1.113853ms)
+✔ all selected action images exist in the shared collection (14.356872ms)
+✔ answered burden lines participate in selection; unanswered lines stay unasserted (0.828428ms)
+✔ the concrete example shows one illustrated action and its own guidance without recording controls (0.997389ms)
+✔ all seven policy cards retain the full explanation in a closed detail and use a full-width short paragraph (0.372437ms)
+✔ CTA starts hidden, reveals after 100px and stays revealed while scrolling back (1.923223ms)
+✔ restored page position waits for the next scroll instead of opening on mount (0.257423ms)
+✔ leaving the result before scrolling removes the pending listener (0.418208ms)
+✔ effect cleanup and re-subscription do not cause duplicate reveals (0.253079ms)
+✔ signup identity uses the exact result and all six existing animal labels (1.305932ms)
+✔ unknown types, old results and another result never get a fallback animal (0.357849ms)
+✔ guest identity uses the existing cookie-protected GET without saving or generating forecasts (0.612824ms)
+✔ signed-in identity sends the bearer token to the same result API (0.368926ms)
+✔ result id is encoded as one path segment (0.371158ms)
+✔ denied access, missing results, offline and malformed responses allow the generic signup identity (0.805342ms)
+✔ empty ids and already-aborted loads make no request (0.346913ms)
+✔ leaving signup during the request or JSON read discards the decoration (0.323053ms)
+✔ telemetry is disabled on development host (3.020514ms)
+✔ view events deduplicate, retries remain observable and arbitrary data is rejected (2.182925ms)
+✔ denied storage does not affect caller (0.968568ms)
+✔ request validator rejects unknown event and source (1.357259ms)
+personal preview fixture scores /100: 58 42
+✔ guest access denial stops before weather loading or personal computation (7.24415ms)
+✔ invalid ID and rate limiting do not compute a forecast (2.884758ms)
+✔ actual computed constitution and matching animal flow through, private response and no answers exposed (4.598216ms)
+✔ missing or outdated check result never falls back to neutral constitution (2.061859ms)
+✔ reference preview module retained for compatibility; signup no longer mounts it (1.219959ms)
+✔ same weather produces constitution-dependent scores with the existing production model (13.806215ms)
+✔ signup revisits preserve visit and chronological auth/save events (5.712646ms)
+✔ v83 first view marker recognized and preview deduplicates (1.955383ms)
+✔ v84 CTA location and current tab remain independent; development excluded (3.609094ms)
+✔ denied storage does not interrupt authentication (1.643994ms)
+✔ JST tomorrow handles midnight and month boundary (1.773266ms)
+✔ Reference preview API uses Tokyo tomorrow and rejects stale or failed forecasts (1.781814ms)
+✔ exposure only for visible card in foreground, once (1.323584ms)
+✔ signup preview retired; shared home strip, entry replay guard and v84 CTA handlers retained (3.93035ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 263.85405
