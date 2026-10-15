@@ -107,6 +107,8 @@ function cleanSnapshot(value, fallback) {
       selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? meta.record_semantics === "drink_consumed" ? cleanDrinkSelectionBasis(meta.selection_basis) : {
         ...(["ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? {
         version:compact(meta.selection_basis.version,60)||null,
+        content_version:compact(meta.selection_basis.content_version,80)||null,
+        theory:compact(meta.selection_basis.theory,480)||null,
         nature:compact(meta.selection_basis.nature,10)||null,
         functions:(Array.isArray(meta.selection_basis.functions)?meta.selection_basis.functions:[]).map(x=>compact(x,20)).slice(0,8),
         matched_functions:(Array.isArray(meta.selection_basis.matched_functions)?meta.selection_basis.matched_functions:[]).map(x=>compact(x,20)).slice(0,8),
