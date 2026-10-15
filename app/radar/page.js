@@ -6,6 +6,8 @@ import {experienceSignal} from '@/lib/experience/client';
 
 import CareStepCard from "./CareStepCard";
 import FoodCombinationCard from "./FoodCombinationCard";
+import CareTheoryDetails from "./CareTheoryDetails";
+import DrinkCareCard from "./DrinkCareCard";
 import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { LIFESTYLE_SCENES } from "@/lib/radar_v1/careRules/dailyCareV2";
@@ -2193,6 +2195,7 @@ export default function RadarPage() {
                                   const itemAction = card.key === "caution"
                                     ? null
                                     : careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIdx];
+                                  if (card.key === "drink") return <DrinkCareCard key={`${card.key}-${item}-${itemIdx}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true }) : null} />;
                                   return (
                                     <div
                                       key={`${card.key}-${item}-${itemIdx}`}
@@ -2219,7 +2222,11 @@ export default function RadarPage() {
                                       </div>
                                       {itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.public_reason}</p> : null}
                                       {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
-                                      {safeArray(itemDetail?.reasons).filter(r => r.text !== itemDetail?.public_reason).length ? (
+                                      {itemDetail?.how_to ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.how_to}</p> : null}
+                                      {itemDetail?.caffeine_label ? <span className="mt-2 inline-flex rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-[#EEDFC7]">{itemDetail.caffeine_label}</span> : null}
+                                      {safeArray(itemDetail?.theory_details).length ? (
+                                        <CareTheoryDetails details={itemDetail.theory_details} />
+                                      ) : safeArray(itemDetail?.reasons).filter(r => r.text !== itemDetail?.public_reason).length ? (
                                         <details className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                           <summary className="cursor-pointer text-[#9A6B20]">{itemDetail.preparation ? "作り方と選んだ理由" : "選んだ理由"}</summary>
                                           {itemDetail.preparation ? <p className="mt-2 font-bold leading-6">{itemDetail.preparation}</p> : null}
@@ -2345,6 +2352,10 @@ export default function RadarPage() {
                                     <div className="mt-2 space-y-2">
                                       {safeArray(card.items).map((item, itemIndex) => {
                                         const itemDetail = safeArray(card.item_details)?.[itemIndex] || null;
+                                        if (card.key === "drink") {
+                                          const itemAction = careItemsByKind.get(`food_${card.key}_item`)?.[itemIndex];
+                                          return <DrinkCareCard key={`${card.key}-${itemIndex}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true }) : null} />;
+                                        }
                                         return (
                                           <div key={`${card.key}-${itemIndex}`} className="rounded-[14px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">
                                             <div className="flex items-center justify-between gap-2">
@@ -2370,7 +2381,11 @@ export default function RadarPage() {
                                             </div>
                                             {itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.public_reason}</p> : null}
                                       {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
-                                      {safeArray(itemDetail?.reasons).filter(r => r.text !== itemDetail?.public_reason).length ? (
+                                      {itemDetail?.how_to ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.how_to}</p> : null}
+                                      {itemDetail?.caffeine_label ? <span className="mt-2 inline-flex rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-[#EEDFC7]">{itemDetail.caffeine_label}</span> : null}
+                                      {safeArray(itemDetail?.theory_details).length ? (
+                                        <CareTheoryDetails details={itemDetail.theory_details} />
+                                      ) : safeArray(itemDetail?.reasons).filter(r => r.text !== itemDetail?.public_reason).length ? (
                                               <div className="mt-2 space-y-1.5 border-t border-[#EEDFC7] pt-2">
                                                 {safeArray(itemDetail.reasons).filter(r => r.text !== itemDetail.public_reason).map((reason, reasonIndex) => (
                                                   <div key={`${reason?.label || "reason"}-${reasonIndex}`} className="text-[12px] font-bold leading-5 text-slate-500">
