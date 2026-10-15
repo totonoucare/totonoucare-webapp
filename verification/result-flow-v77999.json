@@ -1,0 +1,71 @@
+{
+  "actual_jsx_checks": [
+    {
+      "state": "unregistered",
+      "order": "policy > example > CTA",
+      "button": "無料登録して予報へ",
+      "disabled": false,
+      "callbacks": "passed"
+    },
+    {
+      "state": "logged_in_unsaved",
+      "order": "policy > example > CTA",
+      "button": "保存して予報へ",
+      "disabled": false,
+      "callbacks": "passed"
+    },
+    {
+      "state": "saving",
+      "order": "policy > example > CTA",
+      "button": "保存中…",
+      "disabled": true,
+      "callbacks": "passed"
+    },
+    {
+      "state": "saved",
+      "order": "policy > example > CTA",
+      "button": "予報とケアを見る",
+      "disabled": false,
+      "callbacks": "passed"
+    }
+  ],
+  "sticky_bar_checks": [
+    {
+      "state": "unregistered",
+      "button": "無料登録して予報へ",
+      "close": "passed"
+    },
+    {
+      "state": "logged_in_unsaved",
+      "button": "保存して予報へ",
+      "close": "passed"
+    },
+    {
+      "state": "saving",
+      "button": "保存中…",
+      "close": "passed"
+    },
+    {
+      "state": "saved",
+      "hidden": true
+    }
+  ],
+  "unbound_page_references": [],
+  "unchanged_from_v98": [
+    "components/diagnosis/ResultCarePolicyCard.jsx",
+    "lib/diagnosis/v2/carePreferences.js",
+    "lib/diagnosis/v2/resultCareExample.js",
+    "lib/diagnosis/v2/scoring.js",
+    "app/signup/SignupClient.js",
+    "app/radar/page.js",
+    "lib/radar_v1/careRules/dailyCareV2.js",
+    "lib/radar_v1/pickTcmPoints.js",
+    "app/api/diagnosis/v2/events/[id]/attach/route.js"
+  ],
+  "compact_example": {
+    "visible": "title, action, image, guidance",
+    "details": "selection reasons and before/after check"
+  },
+  "next_build": "not available: Next.js is not installed",
+  "browser_layout": "not available: Chromium executable is not installed"
+}

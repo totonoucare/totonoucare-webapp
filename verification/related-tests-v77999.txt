@@ -1,0 +1,20 @@
+✔ loading and obsolete results do not get a neutral care example (1.508568ms)
+✔ diagnosis time uses JST and missing timestamps use a fixed date (2.710052ms)
+✔ all 36 constitution/symptom cases reuse the genuine line-care selector without changing the diagnosis (26.118814ms)
+✔ weather sensitivity answers never become actual weather evidence or a forecast (0.545684ms)
+✔ the same result stays stable across viewing days and explicit preferences preserve its choice (0.929163ms)
+✔ small-reserve constitution gets gentle guidance without assuming weather or heat load (0.507166ms)
+✔ split-score profiles and missing timestamps remain supported (0.223477ms)
+✔ changing the current symptom can change the example without altering the saved constitution (0.50346ms)
+✔ all selected action images exist in the shared collection (13.850347ms)
+✔ answered burden lines participate in selection; unanswered lines stay unasserted (1.144428ms)
+✔ the concrete example shows one illustrated action and its own guidance without recording controls (1.267764ms)
+✔ all seven policy cards retain the full explanation in a closed detail and use a full-width short paragraph (0.786898ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 264.529931
