@@ -1,0 +1,251 @@
+{
+  "scope": "Synthetic context coverage; counts are generated proposals, not user counts or clinical outcomes.",
+  "food_version": "food_tcm_v100_2026-10-15",
+  "drink_version": "drink_v100_2026-10-15",
+  "contexts": 8064,
+  "food_count": 81,
+  "drink_count": 22,
+  "normal_drink_count": 21,
+  "recipe_count": 106,
+  "recipes_with_explicit_additional_foods": 12,
+  "food_explanations": 81,
+  "missingFoods": [],
+  "maximum_short_reason_length": 35,
+  "exposure": {
+    "水": 282,
+    "白湯": 1252,
+    "麦茶": 562,
+    "ほうじ茶": 150,
+    "緑茶": 318,
+    "コーヒー": 172,
+    "デカフェコーヒー": 710,
+    "ルイボスティー": 936,
+    "はとむぎ茶": 1134,
+    "とうもろこし茶": 1670,
+    "小豆茶": 1226,
+    "黒豆茶": 964,
+    "生姜湯": 372,
+    "葛湯": 0,
+    "マイカイ花茶": 496,
+    "陳皮しょうが茶": 1080,
+    "ジャスミン花茶": 748,
+    "菊花クコ茶": 858,
+    "なつめ龍眼茶": 1388,
+    "しょうがなつめ茶": 588,
+    "はとむぎ小豆茶": 754,
+    "ルイボス＋マイカイ花": 468
+  },
+  "examples": {
+    "ほうじ茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-01"
+      },
+      "reason": "焙煎した茶葉の香ばしさを、温かい一杯で楽しめます。"
+    },
+    "コーヒー": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-01"
+      },
+      "reason": "苦味と香りを楽しむ、朝〜昼の休憩に添える一杯です。"
+    },
+    "緑茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-02"
+      },
+      "reason": "すっきりした苦味で、暑さや渇きに備える一杯です。"
+    },
+    "デカフェコーヒー": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-02"
+      },
+      "reason": "カフェインを控えながら、コーヒーの苦味と香りを楽しむ一杯です。"
+    },
+    "水": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-03"
+      },
+      "reason": "喉の渇きに合わせ、毎日の水分補給に取り入れる一杯です。"
+    },
+    "白湯": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-04"
+      },
+      "reason": "冷たい飲み物を避け、温かい水を少しずつ飲みたいときの一杯です。"
+    },
+    "ルイボスティー": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-05"
+      },
+      "reason": "カフェインを控えたいときに、穏やかな風味で水分を補える一杯です。"
+    },
+    "とうもろこし茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-05"
+      },
+      "reason": "胃腸を支えるとうもろこしの実を、香ばしく取り入れる一杯です。"
+    },
+    "はとむぎ茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-06"
+      },
+      "reason": "胃腸の働きと水分の偏りに着目する、香ばしい穀物茶です。"
+    },
+    "小豆茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-06"
+      },
+      "reason": "余分な水分の偏りに着目する小豆を、甘くせず取り入れる一杯です。"
+    },
+    "黒豆茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-07"
+      },
+      "reason": "体を養う黒豆の風味を、香ばしい一杯で取り入れます。"
+    },
+    "生姜湯": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "cold",
+        "mode": "today",
+        "targetDate": "2026-10-01"
+      },
+      "reason": "今日の冷えに備えて、温める方向の一杯を選びました。"
+    },
+    "麦茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "heat",
+        "mode": "today",
+        "targetDate": "2026-10-01"
+      },
+      "reason": "今日の暑さに備えて、こもる熱を落ち着ける一杯を選びました。"
+    },
+    "菊花クコ茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "heat",
+        "mode": "today",
+        "targetDate": "2026-10-02"
+      },
+      "reason": "今日の暑さに備えて、こもる熱を落ち着ける一杯を選びました。"
+    },
+    "はとむぎ小豆茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "heat",
+        "mode": "today",
+        "targetDate": "2026-10-04"
+      },
+      "reason": "今日の暑さに備えて、熱を冷ます方向の一杯を選びました。"
+    },
+    "陳皮しょうが茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": null,
+        "triggerKey": "damp",
+        "mode": "today",
+        "targetDate": "2026-10-03"
+      },
+      "reason": "今日の湿気に備えて、水分の偏りを整える一杯を選びました。"
+    },
+    "なつめ龍眼茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": "fatigue",
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-02"
+      },
+      "reason": "疲れが気になるため、日々の元気を補う一杯を選びました。"
+    },
+    "しょうがなつめ茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": "fatigue",
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-04"
+      },
+      "reason": "疲れが気になるため、日々の元気を補う一杯を選びました。"
+    },
+    "ルイボス＋マイカイ花": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": "sleep",
+        "triggerKey": "cold",
+        "mode": "today",
+        "targetDate": "2026-10-02"
+      },
+      "reason": "今日の冷えに備えて、温める方向の一杯を選びました。"
+    },
+    "ジャスミン花茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": "digestion",
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-04"
+      },
+      "reason": "胃腸の調子に配慮して、胃の働きを整える一杯を選びました。"
+    },
+    "マイカイ花茶": {
+      "context": {
+        "subLabels": [],
+        "symptomFocus": "mood",
+        "triggerKey": "default",
+        "mode": "today",
+        "targetDate": "2026-10-03"
+      },
+      "reason": "気分の波に配慮して、気の巡りを整える一杯を選びました。"
+    }
+  },
+  "violations": []
+}

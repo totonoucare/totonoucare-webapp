@@ -1,0 +1,95 @@
+{
+  "release": "v7.79.100",
+  "base": "v7.79.99",
+  "regression": {
+    "passed": 569,
+    "failed": 0,
+    "excluded_environment_tests": [
+      "tests/point-care-tools-v77958.test.mjs",
+      "tests/radar-client-bindings-v77964.test.mjs"
+    ],
+    "exclusion_reason": "Next.js is not installed in this workspace; unchanged Next-dependent test files could not load.",
+    "related_tests_passed": 92
+  },
+  "jsx_and_bindings": {
+    "passed_files": 6,
+    "parser": "Babel bundled with the installed Playwright runtime"
+  },
+  "build": {
+    "completed": false,
+    "reason": "next executable is not installed"
+  },
+  "browser_visual_check": {
+    "completed": false,
+    "reason": "Chromium executable is not installed"
+  },
+  "database_migration_required": false,
+  "existing_rows_updated": false,
+  "protected_files": [
+    {
+      "file": "lib/diagnosis/v2/uiCopy.js",
+      "unchanged": true,
+      "sha256": "0752f4b890406bb15b41c1ba5cad9d7ad02856353c6bd8f7aa74f5abea434293"
+    },
+    {
+      "file": "lib/diagnosis/v2/labels.js",
+      "unchanged": true,
+      "sha256": "dcf8f5d3e5daad3f27417b35760231a55346c275d590119720380f312b804c28"
+    },
+    {
+      "file": "lib/diagnosis/v2/engine.js",
+      "unchanged": true,
+      "sha256": "48d0557fb0ca3fa7bdfed444e20e106ae8232253ced2e320607678956b5f078a"
+    },
+    {
+      "file": "lib/diagnosis/v2/resultCareExample.js",
+      "unchanged": true,
+      "sha256": "9306e5f3b7fe7b1b8ac880e287497c5944f2d0c238524425cd9aaaa0c549037d"
+    },
+    {
+      "file": "lib/diagnosis/v2/validateAnswers.js",
+      "unchanged": true,
+      "sha256": "23de1e77c8f38a4d89735741576ddc2d72ea9f5382998463ead4b642b9131d1a"
+    },
+    {
+      "file": "lib/diagnosis/v2/scoring.js",
+      "unchanged": true,
+      "sha256": "b2fd77ddab23132b9d34ffd39401c627fd448ca6a90fcff3c468e3b9dbefbd02"
+    },
+    {
+      "file": "lib/diagnosis/v2/carePreferences.js",
+      "unchanged": true,
+      "sha256": "aa5b7ecde47ef05b7c36cd51488d36834bf9d2cea9479d7e1b7b68cf0b7777b5"
+    },
+    {
+      "file": "lib/diagnosis/v2/questions.js",
+      "unchanged": true,
+      "sha256": "9b59b2dfff6606648b6af118825f5ed743d8b4fc2565420c31ba4ebdd95c31dd"
+    },
+    {
+      "file": "lib/radar_v1/personalizeForecastV2.js",
+      "unchanged": true,
+      "sha256": "8714c820eb41a5c1477a5220eeee667953c276ac7c681d38365d98abcf0f5a24"
+    },
+    {
+      "file": "lib/radar_v1/weatherStressV2.js",
+      "unchanged": true,
+      "sha256": "c50c407b8ba58b94d4d1be1fa77168178a6d217325ace2e8bf8099e60a981159"
+    },
+    {
+      "file": "lib/push/runRadarNotificationCron.js",
+      "unchanged": true,
+      "sha256": "b4df0a36be3c2b1dc869361e9cdc117534020cdd59b5b56c0bd28ed41f1909d4"
+    },
+    {
+      "file": "lib/push/pushRepo.js",
+      "unchanged": true,
+      "sha256": "fba2a2d54f892324b5c6115ffde93f50822763f8cbde5caff23c1942f98573ba"
+    },
+    {
+      "file": "lib/push/notificationText.js",
+      "unchanged": true,
+      "sha256": "1eee5b7c2796d1c064113b1f24100d4eef1a344b828c6def035021b43bd54423"
+    }
+  ]
+}

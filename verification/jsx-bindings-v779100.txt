@@ -1,0 +1,6 @@
+PASS JSX + bindings: app/radar/page.js
+PASS JSX + bindings: app/radar/FoodCombinationCard.jsx
+PASS JSX + bindings: app/radar/DrinkCareCard.jsx
+PASS JSX + bindings: app/radar/CareTheoryDetails.jsx
+PASS JSX + bindings: app/settings/page.js
+PASS JSX + bindings: components/pwa/PushNotificationPrompt.jsx
