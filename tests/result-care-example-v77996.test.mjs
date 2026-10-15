@@ -150,6 +150,12 @@ test("the concrete example shows one illustrated action and its own guidance wit
   const details = nodes(tree).filter((node) => node.type === "details");
   assert.equal(details.length, 1);assert.ok(!details[0].props.open);
   assert.ok(textContent(details[0]).includes(example.public_reason));
+  for(const value of [example.short_reason,example.public_reason,example.check_prompt])assert.ok(textContent(details[0]).includes(value));
+  const alwaysVisible={...tree,children:tree.children.filter(node=>node.type!=="details")};
+  assert.ok(textContent(alwaysVisible).includes(example.guidance));
+  assert.ok(!textContent(alwaysVisible).includes(example.short_reason));
+  assert.ok(!textContent(alwaysVisible).includes(example.check_prompt));
+  assert.equal(nodes(tree).filter(node=>node.type==="h3"&&textContent(node)===example.title).length,1);
   assert.equal(ExampleCard({ example: null }), null);
 });
 
