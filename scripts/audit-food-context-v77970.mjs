@@ -46,7 +46,7 @@ for(const subLabels of profiles)for(const symptomFocus of symptoms)for(const tri
     const model=drinks.DRINK_ITEMS.find(x=>x.name===d.label);
     if((flags.hasCold&&['涼','寒'].includes(model.nature))||(flags.hasHeat&&['温','熱'].includes(model.nature)))fail('thermal');
     if(symptomFocus==='sleep'&&model.caffeine)fail('caffeine');
-    if(!samples[d.label])samples[d.label]={ctx,public_reason:text,component:d.reasons[1].text};
+    if(!samples[d.label])samples[d.label]={ctx,public_reason:text,component:d.caffeine_label,how_to:d.how_to,theory:d.theory_details};
    }
   }
  }
