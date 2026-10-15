@@ -8,6 +8,19 @@ body {
   height: 100%;
 }
 
+@keyframes result-save-cta-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-save-cta-enter {
+  animation: result-save-cta-in 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-save-cta-enter { animation: none; }
+}
+
 /*
   Design tokens
   v13: app-readable brand tone refined
