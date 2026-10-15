@@ -37,6 +37,7 @@ import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 import { buildResultCareExample } from "@/lib/diagnosis/v2/resultCareExample";
 import ResultCareExample from "@/components/diagnosis/ResultCareExample";
 import CarePolicyCard from "@/components/diagnosis/ResultCarePolicyCard";
+import { observeResultSaveCtaScroll } from "@/lib/resultSaveCta";
 
 const BODY_LINE_OPTIONS = [
   { value: "A", label: "前屈する" },
@@ -203,16 +204,26 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
 }
 
 function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup, onClose }) {
-  useEffect(() => { if (!isLoggedIn && !isAttached) trackFunnel("signup_cta_view"); }, [isLoggedIn, isAttached]);
+  const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  if (isAttached || dismissed) return null;
-  const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して予報へ") : "無料登録して予報へ";
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (isAttached || dismissed || visible) return;
+    return observeResultSaveCtaScroll(window, () => setVisible(true));
+  }, [isAttached, dismissed, visible]);
+  useEffect(() => {
+    if (!visible || dismissed || isLoggedIn || isAttached || viewTracked.current) return;
+    viewTracked.current = true;
+    trackFunnel("signup_cta_view");
+  }, [visible, dismissed, isLoggedIn, isAttached]);
+  if (isAttached || dismissed || !visible) return null;
+  const ctaLabel = isLoggedIn && attaching ? "保存中…" : "体質を保存して予報へ";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2">
+    <div className="result-save-cta-enter fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2">
       <div className="mx-auto w-full max-w-[440px] rounded-[20px] border border-[#d7e6df] bg-white/95 p-2.5 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="flex items-center gap-1.5">
-          <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-w-0 flex-1 whitespace-nowrap rounded-full !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
+          <Button onClick={onClick} disabled={isLoggedIn && attaching} className="!h-11 min-w-0 flex-1 whitespace-nowrap rounded-full !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
           <button type="button" aria-label="保存の案内を閉じる" onClick={() => { onClose?.(); setDismissed(true); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
         </div>
         <p className="mt-1 text-center text-[10px] font-bold leading-4 text-slate-500">{isLoggedIn ? "この体質結果を、毎日の予報とケアに" : "無料登録・支払い情報不要・自動課金なし"}</p>
@@ -687,6 +698,7 @@ function ResultPage({ params }) {
       ) : null}
 
       <SaveStickyBar
+        key={id}
         isLoggedIn={isLoggedIn}
         isAttached={isAttached}
         attaching={attaching}
@@ -779,16 +791,6 @@ function ResultPage({ params }) {
           </div>
         </div>
       </div>
-
-      {!isAttached ? (
-        <div className="mx-auto w-full max-w-[440px] px-4 pb-1">
-          <div className="rounded-[24px] border border-[#d7e6df] bg-[color-mix(in_srgb,var(--mint),white_50%)] px-5 py-4 shadow-sm">
-            <div className="flex items-center gap-2.5 text-[var(--accent-ink)]"><IconRadar className="h-5 w-5 shrink-0" /><div className="text-[15px] font-black leading-6">この体質を、今日・明日の備えに</div></div>
-            <p className="mt-2 text-[13px] font-bold leading-6 text-slate-600">結果を保存すると、毎日の天気に合わせた体調予報と、食材・飲み物・ツボなどのケアを見られます。</p>
-            {tab !== "care" ? <button type="button" onClick={() => changeTab("care")} className="mt-1 inline-flex min-h-[44px] items-center text-[12px] font-black text-[var(--accent-ink)] underline underline-offset-4">あなたに合うケアの例を見る →</button> : null}
-          </div>
-        </div>
-      ) : null}
 
       <div ref={tabStartRef} aria-hidden="true" />
       <SegmentedTabs value={tab} onChange={changeTab} />
