@@ -5,7 +5,7 @@ import {useExperienceSlot} from '@/components/experience/ExperienceProvider';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { DEFAULT_NOTIFICATION_MIN_SCORE } from "@/lib/push/notificationPolicy";
+import { DEFAULT_NOTIFICATION_MIN_SCORE, notificationThresholdLabel } from "@/lib/push/notificationPolicy";
 
 const DISMISS_KEY = "mibyo-radar-push-dismissed-at";
 const DISMISS_DAYS = 14;
@@ -236,7 +236,7 @@ export default function PushNotificationPrompt() {
       });
 
       setStatus("done");
-      setMessage("通知をオンにしました。体調警戒度が4点以上の日にお知らせします。");
+      setMessage(`通知をオンにしました。${notificationThresholdLabel()}の日にお知らせします。`);
       setTimeout(() => setVisible(false), 2800);
     } catch (error) {
       setStatus("error");
@@ -256,7 +256,7 @@ export default function PushNotificationPrompt() {
           <div className="min-w-0 flex-1">
             <p className="text-sm font-black text-[#101827]">体調予報の通知を受け取る</p>
             <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#536477]">
-              体調警戒度が4点以上の日に、前日夜と当日朝にお知らせします。通知文は短く、主因と時間帯を中心に作ります。
+              {notificationThresholdLabel()}の日に、前日夜と当日朝にお知らせします。
             </p>
             {message ? (
               <p className={`mt-2 text-xs font-black ${status === "error" ? "text-rose-600" : "text-[#2F7668]"}`}>
