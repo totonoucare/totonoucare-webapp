@@ -13,6 +13,8 @@ import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { trackFunnel, trackSignupEntry } from "@/lib/funnelClient";
 import { safeLocalPath } from "@/lib/safeReturnPath";
+import { CoreIllust } from "@/components/illust/core";
+import { loadSignupResultIdentity } from "@/lib/signupResultIdentity";
 
 function IconSavedResult() {
   return (
@@ -23,25 +25,28 @@ function IconSavedResult() {
   );
 }
 
-function IconLoginUser() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="8" cy="7" r="3" />
-      <path d="M3.5 18.5c.7-3.2 2.4-5 4.5-5s3.8 1.8 4.5 5" />
-      <path d="M14 12h7" />
-      <path d="m18 8 4 4-4 4" />
-    </svg>
-  );
-}
-
 function AssuranceBadge({ children }) {
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[#DCEBE3] bg-white px-2.5 py-1.5 text-[11px] font-bold leading-4 text-[#365F50] shadow-[0_2px_5px_rgba(36,86,76,0.03)]">
-      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0 text-[#349B83]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-[#DCEBE3] bg-white px-1.5 py-1.5 text-[11px] font-bold leading-4 text-[#365F50] shadow-[0_2px_5px_rgba(36,86,76,0.03)]">
+      <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-[#349B83]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m3.5 8 3 3 6-6" />
       </svg>
       {children}
     </span>
+  );
+}
+
+function SavedResultIdentity({ identity }) {
+  return (
+    <div className="mx-auto flex w-fit max-w-full items-center gap-3 rounded-[22px] border border-white bg-white/85 py-2 pl-2 pr-4 text-left shadow-[0_5px_15px_rgba(36,86,76,0.06)]">
+      <div aria-hidden="true" className="grid h-14 w-14 shrink-0 place-items-center rounded-[16px] bg-[#F4F9F3] p-1 text-[var(--accent-ink)]">
+        {identity ? <CoreIllust code={identity.coreCode} title={identity.title} className="h-full w-full" /> : <IconSavedResult />}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold leading-5 text-slate-500">保存する体質</p>
+        <p className="text-[16px] font-black leading-6 tracking-tight text-[var(--accent-ink)]">{identity?.title || "今回の体質結果"}</p>
+      </div>
+    </div>
   );
 }
 
@@ -79,7 +84,7 @@ export default function SignupClient() {
     const urlNextRaw = sp?.get("next") || "";
 
     const resultId = urlResultId || fallbackPending?.resultId || "";
-    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/";
+    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
     const nextPathSource = urlNextRaw || fallbackPending?.nextPath || "";
     const nextPath = safeLocalPath(nextPathSource, fallbackNext);
 
@@ -108,6 +113,21 @@ export default function SignupClient() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const autoAttachKeyRef = useRef("");
+  const [resultIdentity, setResultIdentity] = useState(null);
+  const currentResultIdentity = resultIdentity?.resultId === params.resultId ? resultIdentity : null;
+
+  useEffect(() => {
+    if (loadingSession || !params.resultId) return;
+    const controller = new AbortController();
+    loadSignupResultIdentity({
+      resultId: params.resultId,
+      accessToken: session?.access_token || "",
+      signal: controller.signal,
+    }).then((identity) => {
+      if (!controller.signal.aborted) setResultIdentity(identity);
+    });
+    return () => controller.abort();
+  }, [loadingSession, params.resultId, session?.access_token]);
 
   async function getStableAccessToken(currentSession) {
     if (currentSession?.access_token) return currentSession.access_token;
@@ -335,7 +355,7 @@ export default function SignupClient() {
       // The session effect owns attachment; avoid a second concurrent save.
       setSession(data.session);
       setStatus({ state: "idle", message: "ログインできました。" });
-      if (!params.resultId) window.location.replace(params.nextPath || "/");
+      if (!params.resultId) window.location.replace(params.nextPath || "/radar");
     } catch {
       trackFunnel("auth_error", "email");
       setStatus({ state: "error", message: "確認コードが正しくないか、有効期限が切れています。コードを確認するか、再送してください。" });
@@ -381,7 +401,7 @@ export default function SignupClient() {
   async function goNext(currentSession = session) {
     const ok = await attachNowIfNeeded(currentSession);
     if (!ok) return;
-    window.location.replace(params.nextPath || "/");
+    window.location.replace(params.nextPath || "/radar");
   }
 
   async function logout() {
@@ -406,15 +426,22 @@ export default function SignupClient() {
 
   return (
     <AppShell
-      title="ログイン / 登録"
+      title={params.resultId ? "体質を保存" : "ログイン / 登録"}
       noTabs={true}
       headerLeft={
         <button
           type="button"
-          onClick={() => { trackFunnel("signup_header_back_click"); router.back(); }}
-          className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
+          aria-label={params.resultId ? "体質チェックの結果に戻る" : "前の画面に戻る"}
+          onClick={() => {
+            trackFunnel("signup_header_back_click");
+            if (params.resultId) {
+              trackFunnel("signup_result_return_click");
+              router.push(`/result/${encodeURIComponent(params.resultId)}`);
+            } else router.back();
+          }}
+          className="inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
-          ← 戻る
+          {params.resultId ? "← 結果へ" : "← 戻る"}
         </button>
       }
     >
@@ -430,10 +457,7 @@ export default function SignupClient() {
 
             {params.resultId ? (
               <div className="rounded-[16px] bg-[color-mix(in_srgb,var(--mint),white_70%)] p-4 ring-1 ring-inset ring-[var(--ring)]">
-                <div className="text-[12px] font-extrabold text-slate-600">引き継ぎ予定のデータ</div>
-                <div className="mt-1 font-mono break-all text-[12px] text-slate-500">
-                  {params.resultId}
-                </div>
+                <SavedResultIdentity identity={currentResultIdentity} />
               </div>
             ) : null}
 
@@ -464,36 +488,21 @@ export default function SignupClient() {
           <div className="space-y-4">
             <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
               <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
-              <div className="relative space-y-3 text-center">
-                <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
-                  {params.resultId ? <IconSavedResult /> : <IconLoginUser />}
-                </div>
+              <div className="relative space-y-4 text-center">
+                {params.resultId ? <SavedResultIdentity identity={currentResultIdentity} /> : <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
+                  <IconSavedResult />
+                </div>}
                 <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
-                  {params.resultId ? (
-                    <>
-                      無料登録で体質を保存
-                      <br />
-                      あなたの予報へ
-                    </>
-                  ) : (
-                    <>
-                      ログインして、
-                      <br />
-                      あなたの予報へ
-                    </>
-                  )}
+                  {params.resultId ? <><span className="block">体質を保存して、</span><span className="block">あなたの予報へ</span></> : "あなたの体調予報へ"}
                 </h1>
-                <p className="mx-auto max-w-[31rem] text-center text-[14px] font-medium leading-7 text-slate-600">
-                  {params.resultId
-                    ? "無料登録すると今回の体質結果が保存され、今日・明日の体調予報と対策ケアを見られます。"
-                    : "体調予報や記録を、続きから利用できます。"}
+                <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
+                  {params.resultId ? "" : "無料登録すると、"}今日・明日の体調予報と、その日に合う具体的なケアを見られます。
                 </p>
-                {params.resultId ? (
-                  <div className="flex flex-wrap justify-center gap-2 pt-1" aria-label="登録について">
-                    <AssuranceBadge>支払い情報不要</AssuranceBadge>
-                    <AssuranceBadge>自動課金なし</AssuranceBadge>
-                  </div>
-                ) : null}
+                <div className="flex flex-wrap justify-center gap-1 pt-1" aria-label="登録について">
+                  <AssuranceBadge>無料登録</AssuranceBadge>
+                  <AssuranceBadge>支払い情報不要</AssuranceBadge>
+                  <AssuranceBadge>自動課金なし</AssuranceBadge>
+                </div>
               </div>
             </div>
 
@@ -506,11 +515,7 @@ export default function SignupClient() {
             >
               <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
                 <IconGoogle />
-                {status.state === "loading_oauth"
-                  ? "Googleへ移動中…"
-                  : params.resultId
-                    ? "Googleで無料登録"
-                    : "Googleで続ける"}
+                {status.state === "loading_oauth" ? "Googleへ移動中…" : "アカウントで続ける"}
               </span>
             </button>
 
@@ -531,13 +536,14 @@ export default function SignupClient() {
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <path d="m4 7 8 6 8-6" />
               </svg>
-              {params.resultId ? "メールアドレスで無料登録" : "メールアドレスで続ける"}
+              メールアドレスで登録する
             </button>
-            {params.resultId ? (
-              <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
-                14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
-              </p>
-            ) : null}
+            <p className="text-center text-[11px] font-medium leading-5 text-slate-500">
+              登録済みの方も、同じ方法でログインできます。
+            </p>
+            <p className="text-[12px] font-medium leading-6 text-slate-500">
+              14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
+            </p>
 
             {emailFormOpen || sentEmail ? (
               <div id="signup-email-form" className="space-y-4">
@@ -583,8 +589,6 @@ export default function SignupClient() {
                 </form> : null}
               </div>
             ) : null}
-            {params.resultId ? <a href={`/result/${encodeURIComponent(params.resultId)}`} onClick={() => trackFunnel("signup_result_return_click")} className="block text-center text-sm underline">結果に戻る</a> : null}
-
             {status.message ? (
               <div
                 className={`mt-5 rounded-[16px] px-4 py-3 text-[14px] font-bold leading-6 ring-1 ring-inset ${
