@@ -172,10 +172,10 @@ function SegmentedTabs({ value, onChange }) {
 function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, onSignup, onLogin, onRadar }) {
   const onContinue = isAttached ? onRadar : isLoggedIn ? onSave : onSignup;
   const ctaLabel = isAttached
-    ? "今日・明日の予報とケアを見る"
+    ? "予報とケアを見る"
     : isLoggedIn
-      ? attaching ? "保存中…" : "結果を保存して、予報とケアへ"
-      : "無料登録して、予報とケアへ";
+      ? attaching ? "保存中…" : "保存して予報へ"
+      : "無料登録して予報へ";
   return (
     <div className="rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_50%)] p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_74%)]">
       <h3 className="text-[17px] font-black leading-7 tracking-tight text-slate-900">この体質で、毎日の備えを</h3>
@@ -196,7 +196,7 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
         </div>
       ) : null}
       {isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">この体質結果は保存済みです。</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
-      <Button onClick={onContinue} disabled={!isAttached && isLoggedIn && attaching} className="mt-4 w-full text-[13px] shadow-md">{ctaLabel}</Button>
+      <Button onClick={onContinue} disabled={!isAttached && isLoggedIn && attaching} className="mt-4 w-full whitespace-nowrap !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
       {!isLoggedIn && !isAttached ? <button type="button" onClick={onLogin} className="mx-auto mt-2 block min-h-[44px] px-3 text-[12px] font-bold text-slate-500 underline underline-offset-4">登録済みの方はこちら</button> : null}
     </div>
   );
@@ -206,13 +206,13 @@ function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup, on
   useEffect(() => { if (!isLoggedIn && !isAttached) trackFunnel("signup_cta_view"); }, [isLoggedIn, isAttached]);
   const [dismissed, setDismissed] = useState(false);
   if (isAttached || dismissed) return null;
-  const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して、予報とケアへ") : "無料登録して、予報とケアへ";
+  const ctaLabel = isLoggedIn ? (attaching ? "保存中…" : "保存して予報へ") : "無料登録して予報へ";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2">
       <div className="mx-auto w-full max-w-[440px] rounded-[20px] border border-[#d7e6df] bg-white/95 p-2.5 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="flex items-center gap-1.5">
-          <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-w-0 flex-1 rounded-full px-2 text-[13px] shadow-md">{ctaLabel}</Button>
+          <Button onClick={onClick} disabled={isLoggedIn && attaching} className="min-w-0 flex-1 whitespace-nowrap rounded-full !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
           <button type="button" aria-label="保存の案内を閉じる" onClick={() => { onClose?.(); setDismissed(true); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
         </div>
         <p className="mt-1 text-center text-[10px] font-bold leading-4 text-slate-500">{isLoggedIn ? "この体質結果を、毎日の予報とケアに" : "無料登録・支払い情報不要・自動課金なし"}</p>
@@ -1037,19 +1037,6 @@ function ResultPage({ params }) {
                     {carePreferences.summary}
                   </p>
 
-                  <ResultCareExample example={careExample} />
-
-                  <SavePromptCard
-                    isLoggedIn={isLoggedIn}
-                    isAttached={isAttached}
-                    session={session}
-                    attaching={attaching}
-                    onSave={() => attachToAccount(false)}
-                    onSignup={() => goSignupToRadar("care_footer")}
-                    onLogin={() => goLoginToRadar("care_footer")}
-                    onRadar={() => router.push("/radar")}
-                  />
-
                   <div>
                     <div className="flex items-center gap-2.5 mb-4">
                       <IconBolt className="h-5 w-5 text-[#e2aa3b]" />
@@ -1074,6 +1061,20 @@ function ResultPage({ params }) {
                       </div>
                     </details>
                   ) : null}
+
+                  <ResultCareExample example={careExample} />
+
+                  <SavePromptCard
+                    isLoggedIn={isLoggedIn}
+                    isAttached={isAttached}
+                    session={session}
+                    attaching={attaching}
+                    onSave={() => attachToAccount(false)}
+                    onSignup={() => goSignupToRadar("care_footer")}
+                    onLogin={() => goLoginToRadar("care_footer")}
+                    onRadar={() => router.push("/radar")}
+                  />
+
                 </div>
               </Card>
 
