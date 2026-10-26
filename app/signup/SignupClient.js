@@ -16,6 +16,7 @@ import { resolveSignupFlow, clearCheckDraft } from "@/lib/checkRegistration";
 import { CoreIllust } from "@/components/illust/core";
 import { loadSignupResultIdentity } from "@/lib/signupResultIdentity";
 import CheckLoginWelcome from "@/components/auth/CheckLoginWelcome";
+import AppLoginWelcome from "@/components/auth/AppLoginWelcome";
 
 function IconSavedResult() {
   return (
@@ -84,7 +85,9 @@ export default function SignupClient() {
     const urlResultId = sp?.get("result") || "";
     const urlNextRaw = sp?.get("next") || "";
 
-    return resolveSignupFlow({ resultId: urlResultId, nextPath: urlNextRaw, pending: fallbackPending });
+    // Bare /signup is an everyday login, even if a previous check was abandoned.
+    // A direct OAuth return with a code can still recover its original flow.
+    return resolveSignupFlow({ resultId: urlResultId, nextPath: urlNextRaw, pending: sp?.get("code") ? fallbackPending : null });
   }, [sp, fallbackPending]);
 
   const [email, setEmail] = useState("");
@@ -149,12 +152,15 @@ export default function SignupClient() {
   }, []);
 
   useEffect(() => {
-    if (!params.resultId && !params.isBeforeCheck) return;
+    if (!params.resultId && !params.isBeforeCheck) {
+      if (!sp?.get("code")) clearPendingDiagnosisAttach();
+      return;
+    }
     setPendingDiagnosisAttach({
       resultId: params.resultId,
       nextPath: params.nextPath,
     });
-  }, [params.resultId, params.nextPath, params.isBeforeCheck]);
+  }, [params.resultId, params.nextPath, params.isBeforeCheck, sp]);
 
   useEffect(() => {
     let mounted = true;
@@ -423,7 +429,7 @@ export default function SignupClient() {
 
   return (
     <AppShell
-      title={params.isBeforeCheck ? "体質チェック" : params.resultId ? "体質を保存" : "ログイン / 登録"}
+      title={params.isBeforeCheck ? "体質チェック" : params.resultId ? "体質を保存" : "ログイン"}
       noTabs={true}
       headerLeft={
         <button
@@ -484,36 +490,34 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            {params.isBeforeCheck ? <CheckLoginWelcome /> : <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
+            {params.isBeforeCheck ? <CheckLoginWelcome /> : !params.resultId ? <AppLoginWelcome /> : <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
               <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
               <div className="relative space-y-4 text-center">
-                {params.resultId ? <SavedResultIdentity identity={currentResultIdentity} /> : <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
-                  <IconSavedResult />
-                </div>}
+                <SavedResultIdentity identity={currentResultIdentity} />
                 <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
-                  {params.resultId ? <><span className="block">体質を保存して、</span><span className="block">あなたの予報へ</span></> : "あなたの体調予報へ"}
+                  <span className="block">体質を保存して、</span><span className="block">あなたの予報へ</span>
                 </h1>
-                {!params.isBeforeCheck ? <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
-                  {params.resultId ? "" : "無料登録すると、"}今日・明日の体調予報と、その日に合う具体的なケアを見られます。
-                </p> : null}
-                {!params.isBeforeCheck ? <div className="flex flex-wrap justify-center gap-1 pt-1" aria-label="登録について">
+                <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
+                  今日・明日の体調予報と、その日に合う具体的なケアを見られます。
+                </p>
+                <div className="flex flex-wrap justify-center gap-1 pt-1" aria-label="登録について">
                   <AssuranceBadge>無料登録</AssuranceBadge>
                   <AssuranceBadge>支払い情報不要</AssuranceBadge>
                   <AssuranceBadge>自動課金なし</AssuranceBadge>
-                </div> : null}
+                </div>
               </div>
             </div>}
 
             <button
               type="button"
               onClick={handleGoogleLogin}
-              aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : params.isBeforeCheck ? "Googleアカウントでログイン" : "Googleアカウントで続ける"}
+              aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : "Googleアカウントでログイン"}
               disabled={status.state === "loading" || status.state === "loading_oauth"}
               className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-3 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
             >
-              <span className={`inline-flex items-center justify-center gap-2 whitespace-nowrap font-bold text-slate-900 ${params.isBeforeCheck ? "text-[13px] min-[360px]:text-[14px] min-[375px]:text-[15px]" : "text-[16px]"}`}>
+              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-[13px] font-bold text-slate-900 min-[360px]:text-[14px] min-[375px]:text-[15px]">
                 <IconGoogle />
-                {status.state === "loading_oauth" ? "Googleへ移動中…" : params.isBeforeCheck ? "Googleアカウントでログイン" : "アカウントで続ける"}
+                {status.state === "loading_oauth" ? "Googleへ移動中…" : "Googleアカウントでログイン"}
               </span>
             </button>
 
@@ -534,12 +538,12 @@ export default function SignupClient() {
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <path d="m4 7 8 6 8-6" />
               </svg>
-              {params.isBeforeCheck ? "メールアドレスでログイン" : "メールアドレスで登録する"}
+              メールアドレスでログイン
             </button>
             <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
-              {params.isBeforeCheck ? "初めての方も、同じ操作で利用できます。" : "登録済みの方も、同じ方法でログインできます。"}
+              初めての方も、同じ操作で利用できます。
             </p>
-            {!params.isBeforeCheck ? <p className="text-[12px] font-medium leading-6 text-slate-500">
+            {params.resultId ? <p className="text-[12px] font-medium leading-6 text-slate-500">
               14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
             </p> : null}
 
