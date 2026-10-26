@@ -767,7 +767,7 @@ export default function SettingsPage() {
         {user ? (
           <Button variant="secondary" className="w-full bg-white" onClick={handleLogout}>ログアウト</Button>
         ) : (
-          <Button className="w-full" onClick={() => router.push("/signup")}>ログインする</Button>
+          <Button className="w-full" onClick={() => router.push("/signup?next=%2Fsettings")}>ログインする</Button>
         )}
       </Module>
 
