@@ -112,7 +112,7 @@ export default function HistoryPage() {
             未ログイン時の結果も、結果画面から「保存」を押せば履歴に残せます。
           </div>
           <div className="mt-6 flex flex-col gap-3">
-            <Button onClick={() => router.push("/signup")} className="w-full shadow-md">ログイン / 無料登録へ</Button>
+            <Button onClick={() => router.push("/signup?next=%2Fhistory")} className="w-full shadow-md">ログイン / 無料登録へ</Button>
             <Button variant="secondary" onClick={() => router.push("/check")} className="w-full bg-white">
               体質チェックへ
             </Button>
