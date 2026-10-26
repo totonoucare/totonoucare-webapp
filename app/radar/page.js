@@ -2,6 +2,7 @@
 // app/radar/page.js
 import { trackFunnel } from "@/lib/funnelClient";
 import {experienceSignal} from '@/lib/experience/client';
+import { TrialWelcomeTrigger } from '@/components/experience/ExperienceProvider';
 
 
 import CareStepCard from "./CareStepCard";
@@ -1543,6 +1544,7 @@ export default function RadarPage() {
         </button>
       }
     >
+      <TrialWelcomeTrigger />
       {locationNotice ? (
         <div className="rounded-[16px] bg-emerald-50 px-4 py-3 text-[12px] font-extrabold text-emerald-800 ring-1 ring-inset ring-emerald-200 shadow-sm">
           {locationNotice}
