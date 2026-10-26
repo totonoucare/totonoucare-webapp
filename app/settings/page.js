@@ -13,6 +13,7 @@ import {
 import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import BillingPortalButton from "@/components/billing/BillingPortalButton";
+import { formatTrialEnd } from "@/lib/trialWelcome";
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
@@ -532,6 +533,11 @@ export default function SettingsPage() {
                 ? `パーソナル体調予報からミモル相談まで、全機能をあと${billingStatus?.access?.trial_days_remaining || 0}日体験できます。カード登録は不要です。`
                 : "体質トリセツ、ケアショップ、過去の記録・AI回答は無料で見返せます。パーソナル体調予報から先は月額580円です。"}
         </div>
+
+        {trialActive ? <div className="mt-3 text-[12px] font-medium leading-6 text-slate-500">
+          <p>無料体験は{formatTrialEnd(billingStatus?.access?.trial_ends_at)}までです。</p>
+          <p>体験終了後の継続利用は月額580円です。自動で料金は発生しません。</p>
+        </div> : null}
 
         {billingError ? (
           <div className="mt-4 rounded-[18px] bg-[#FFF0EC] p-4 ring-1 ring-[#F1C8BA]">
