@@ -1368,7 +1368,7 @@ export default function RadarPage() {
             </div>
 
             <div className="mt-6 space-y-3">
-              <Button onClick={() => router.push("/signup")} className="w-full shadow-md">
+              <Button onClick={() => router.push("/signup?next=%2Fradar")} className="w-full shadow-md">
                 無料で登録・ログイン
               </Button>
               <Button variant="secondary" onClick={() => router.push("/check")} className="w-full bg-white">
