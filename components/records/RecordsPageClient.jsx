@@ -474,7 +474,7 @@ export default function RecordsPageClient({
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
             予報と実際の体調を保存し、記録の振り返りや今の体調相談につなげます。
           </div>
-          <Button onClick={() => router.push("/signup")} className="mt-5 w-full">
+          <Button onClick={() => router.push("/signup?next=%2Frecords")} className="mt-5 w-full">
             ログイン・無料登録へ
           </Button>
         </Module>
