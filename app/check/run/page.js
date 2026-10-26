@@ -1,12 +1,17 @@
 // app/check/run/page.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { getQuestions } from "@/lib/diagnosis/v2/questions";
 import { IconCheck } from "@/components/illust/icons/check";
+import { supabase } from "@/lib/supabaseClient";
+import { CHECK_SIGNUP_HREF, CHECK_DRAFT_KEY, clearCheckDraft } from "@/lib/checkRegistration";
+import { completeConstitutionCheck } from "@/lib/completeConstitutionCheck";
+import { clearPendingDiagnosisAttach, setPendingDiagnosisAttach } from "@/lib/pendingDiagnosisAttach";
+import { trackFunnel } from "@/lib/funnelClient";
 
 function ProgressBar({ current, total }) {
   const safeTotal = Math.max(1, total || 1);
@@ -32,7 +37,7 @@ function ProgressBar({ current, total }) {
   );
 }
 
-const PENDING_KEY = "pending_diagnosis_v2_rebuilt_answers";
+const PENDING_KEY = CHECK_DRAFT_KEY;
 
 export default function CheckRunPage() {
   const router = useRouter();
@@ -42,6 +47,45 @@ export default function CheckRunPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [session, setSession] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [authError, setAuthError] = useState("");
+  const submittingRef = useRef(false);
+  const createdResultRef = useRef("");
+
+  useEffect(() => {
+    let active = true;
+    let authChanged = false;
+    function acceptSession(currentSession) {
+      if (!active) return;
+      setSession(currentSession || null);
+      setLoadingAuth(false);
+      setAuthError("");
+      if (!currentSession?.access_token) router.replace(CHECK_SIGNUP_HREF);
+    }
+    if (!supabase) {
+      setAuthError("ログイン状態を確認できませんでした。もう一度お試しください。");
+      setLoadingAuth(false);
+      return;
+    }
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      authChanged = true;
+      acceptSession(currentSession);
+    });
+    supabase.auth.getSession().then(({ data, error: sessionError }) => {
+      if (!active || authChanged) return;
+      if (sessionError) throw sessionError;
+      acceptSession(data?.session);
+    }).catch(() => {
+      if (!active || authChanged) return;
+      setAuthError("ログイン状態を確認できませんでした。もう一度お試しください。");
+      setLoadingAuth(false);
+    });
+    return () => {
+      active = false;
+      subscription?.subscription?.unsubscribe?.();
+    };
+  }, [router]);
 
   const questions = useMemo(() => getQuestions(answers), [answers]);
   const total = questions.length;
@@ -111,7 +155,7 @@ export default function CheckRunPage() {
   const isLast = step === total - 1;
 
   function pick(value) {
-    if (!ansKey || !q) return;
+    if (!ansKey || !q || submittingRef.current || createdResultRef.current) return;
 
 
     setAnswers((prev) => {
@@ -152,53 +196,78 @@ export default function CheckRunPage() {
   }
 
   function next() {
-    if (!canGoNext) return;
+    if (!canGoNext || submittingRef.current || createdResultRef.current) return;
     setError("");
     setStep((s) => Math.min(s + 1, total - 1));
   }
 
   function back() {
+    if (submittingRef.current || createdResultRef.current) return;
     setError("");
     setStep((s) => Math.max(s - 1, 0));
   }
 
   async function submit() {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     setError("");
 
     try {
-      const res = await fetch("/api/diagnosis/v2/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      const eventId = await completeConstitutionCheck({
+        answers,
+        accessToken: token,
+        eventId: createdResultRef.current,
+        onCreated: (id) => {
+          createdResultRef.current = id;
+          setPendingDiagnosisAttach({ resultId: id, nextPath: `/result/${encodeURIComponent(id)}` });
+        },
       });
+      trackFunnel("result_save_success");
+      clearPendingDiagnosisAttach();
 
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "診断の保存に失敗しました");
-
-      const eventId = json?.data?.eventId || json?.data?.id;
-      if (!eventId) throw new Error("eventId が返りませんでした");
-
-
-      try {
-        sessionStorage.removeItem(PENDING_KEY);
-      } catch {
-        // noop
-      }
+      clearCheckDraft();
 
       router.push(`/result/${encodeURIComponent(eventId)}`);
     } catch (e) {
-      setError(e?.message || String(e));
+      if (e?.status === 401) {
+        const id = createdResultRef.current;
+        router.replace(id
+          ? `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/result/${encodeURIComponent(id)}`)}`
+          : CHECK_SIGNUP_HREF);
+        return;
+      }
+      if (createdResultRef.current) trackFunnel("result_save_error");
+      setError(createdResultRef.current
+        ? "体質結果は作成できましたが、アカウントへの保存に失敗しました。「保存を再試行」を押してください。"
+        : e?.message || String(e));
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
 
-  if (!hydrated) {
+  if (authError) {
     return (
       <AppShell title="体質チェック">
         <Module>
-          <ModuleHeader icon={<IconCheck />} title="読み込み中" sub="質問を準備しています" />
+          <ModuleHeader icon={<IconCheck />} title="接続を確認してください" />
+          <div className="space-y-4 px-5 pb-6 pt-4">
+            <p role="alert" className="text-sm font-bold leading-7 text-slate-700">{authError}</p>
+            <Button onClick={() => window.location.reload()} className="w-full">もう一度確認する</Button>
+          </div>
+        </Module>
+      </AppShell>
+    );
+  }
+
+  if (!hydrated || loadingAuth || !session?.access_token) {
+    return (
+      <AppShell title="体質チェック">
+        <Module>
+          <ModuleHeader icon={<IconCheck />} title="読み込み中" sub={loadingAuth || !session?.access_token ? "ログイン状態を確認しています" : "質問を準備しています"} />
           <div className="px-5 pb-6 pt-4">
             <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
               <div className="text-sm font-bold text-slate-700">読み込み中…</div>
@@ -273,6 +342,7 @@ export default function CheckRunPage() {
                     key={opt.value}
                     type="button"
                     onClick={() => pick(opt.value)}
+                    disabled={submitting || Boolean(createdResultRef.current)}
                     className={[
                       "w-full rounded-[20px] px-5 py-4 text-left transition-all duration-200",
                       isSel
@@ -358,7 +428,7 @@ export default function CheckRunPage() {
               <Button
                 variant="ghost"
                 onClick={back}
-                disabled={step === 0 || submitting}
+                disabled={step === 0 || submitting || Boolean(createdResultRef.current)}
                 className="flex-1 bg-slate-50 ring-1 ring-slate-200/50"
               >
                 戻る
@@ -378,7 +448,7 @@ export default function CheckRunPage() {
                   disabled={!canGoNext || submitting}
                   className="flex-[2] shadow-md"
                 >
-                  {submitting ? "作成中…" : "診断を確定"}
+                  {submitting ? "保存中…" : createdResultRef.current ? "保存を再試行" : "診断を確定"}
                 </Button>
               )}
             </div>
