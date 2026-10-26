@@ -188,7 +188,7 @@ export default function FeedbackPage() {
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
             報告の送信はログイン中のユーザーに限定しています。スパム防止のため、内部ではログインIDだけ保存します。
           </div>
-          <Button className="mt-4 w-full shadow-sm" onClick={() => router.push("/signup")}>
+          <Button className="mt-4 w-full shadow-sm" onClick={() => router.push("/signup?next=%2Ffeedback")}>
             ログインする
           </Button>
         </Module>
