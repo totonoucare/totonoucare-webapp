@@ -8,7 +8,7 @@ import {
   getPendingDiagnosisAttach,
 } from "@/lib/pendingDiagnosisAttach";
 import { trackFunnel } from "@/lib/funnelClient";
-import { safeLocalPath } from "@/lib/safeReturnPath";
+import { resolveSignupFlow, clearCheckDraft } from "@/lib/checkRegistration";
 
 function decodeMaybe(v) {
   if (!v) return "";
@@ -35,8 +35,7 @@ export default function AuthCallbackClient() {
     const url = new URL(window.location.href);
     const sp = url.searchParams;
     const pending = getPendingDiagnosisAttach();
-    const resultId = sp.get("result") || pending?.resultId || "";
-    const nextPath = safeLocalPath(sp.get("next") || pending?.nextPath, "/radar");
+    const { resultId, nextPath } = resolveSignupFlow({ resultId: sp.get("result") || "", nextPath: sp.get("next") || "", pending, fallbackPath: "/radar" });
 
     const signupUrl = new URL(`${window.location.origin}/signup`);
     if (resultId) signupUrl.searchParams.set("result", resultId);
@@ -98,8 +97,7 @@ export default function AuthCallbackClient() {
         const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
 
         const pending = getPendingDiagnosisAttach();
-        const nextPath = safeLocalPath(sp.get("next") || pending?.nextPath, "/radar");
-        const resultId = sp.get("result") || pending?.resultId || "";
+        const { resultId, nextPath } = resolveSignupFlow({ resultId: sp.get("result") || "", nextPath: sp.get("next") || "", pending, fallbackPath: "/radar" });
 
         const oauthError =
           sp.get("error_description") ||
@@ -153,6 +151,7 @@ export default function AuthCallbackClient() {
           await attachResultIfNeeded(resultId, session.access_token);
           trackFunnel("result_save_success");
           clearPendingDiagnosisAttach();
+          clearCheckDraft();
         }
 
         if (!active || finishedRef.current) return;
