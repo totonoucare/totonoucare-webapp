@@ -1,0 +1,28 @@
+v7.79.103 verification — 2026-10-26
+
+npm test
+tests: 623
+pass: 623
+fail: 0
+cancelled: 0
+skipped: 0
+todo: 0
+
+Includes all 613 preceding tests and 10 new cases:
+- Active trial eligibility, valid deadline, paid/beta/free exclusions.
+- Exact trial expiry boundary.
+- Cross-device suppression via account receipt.
+- Account-scoped local outage protection and storage failure tolerance.
+- Japanese time-zone rendering, including after midnight.
+- Existing authenticated experience API accepts the allowlisted guide id.
+- API writes the authenticated owner and ignores caller-supplied user_id.
+- Introduction is mounted only after the personalized forecast succeeds.
+- Check login has no payment/trial promotional text.
+- Accessible dismissal, scroll containment, and settings deadline.
+
+Real React component operation scenarios (external services mocked): 11 passed.
+Google initiation/callback recovery, email wrong/correct OTP, stale pending result,
+anonymous direct question access, automatic save, same-result retry, logout/draft
+recovery and legacy result-saving compatibility all passed.
+
+No production DB, Google, email, Stripe or OpenAI API request was made.

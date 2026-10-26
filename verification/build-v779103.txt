@@ -1,0 +1,14 @@
+v7.79.103 production build — 2026-10-26
+
+Command: npm run build
+Next.js: 14.2.35
+Result: success (exit 0)
+Compiled, lint/type validation, static page generation and build traces completed.
+Static pages: 18/18.
+
+The build used test-only placeholder environment values, not production keys.
+Google font retrieval uses the build environment's stub/cache; visual QA loaded
+the same Zen Kaku Gothic New font locally. No font configuration was changed.
+
+No real OAuth, email, DB, Stripe or OpenAI action was performed.
+The full-source archive excludes node_modules, .next, local QA assets and secrets.
