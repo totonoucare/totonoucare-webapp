@@ -3,6 +3,8 @@ import {createContext,useCallback,useContext,useEffect,useMemo,useRef,useState} 
 import {usePathname,useRouter} from 'next/navigation';
 import {supabase} from '@/lib/supabaseClient';
 import {SURVEYS,dayKey,summarizeExperience,surveyEligible,isQuietExperiencePath} from '@/lib/experience/policy';
+import TrialWelcomeDialog from '@/components/billing/TrialWelcomeDialog';
+import {TRIAL_WELCOME_ID,trialWelcomeActive,trialWelcomeEligible,readTrialWelcomeSeen,rememberTrialWelcome} from '@/lib/trialWelcome';
 const Context=createContext(null),pendingKey='mibyo-result-feedback-pending-v73';
 const readPending=()=>{try{return sessionStorage.getItem(pendingKey);}catch{return null;}};
 const writePending=value=>{try{value==null?sessionStorage.removeItem(pendingKey):sessionStorage.setItem(pendingKey,value);}catch{}};
@@ -11,6 +13,12 @@ export function useExperienceSlot(id,eligible,priority){
  const c=useExperience(),register=c?.register;
  useEffect(()=>{if(!register)return;register(id,eligible,priority);return()=>register(id,false,priority);},[register,id,eligible,priority]);
  return {allowed:c?.slot?.id===id&&!c?.blocked,finish:c?.finish,ready:c?.hardwareReady||false};
+}
+// Mounted only by the fully rendered, personalized forecast. Loading, errors,
+// location setup and expired-trial paywalls never request this introduction.
+export function TrialWelcomeTrigger(){
+ useExperienceSlot(TRIAL_WELCOME_ID,true,120);
+ return null;
 }
 function busyScreen(inputUntil){
  const editing=document.activeElement?.matches?.('input,textarea,select,[contenteditable="true"]');
@@ -23,7 +31,7 @@ export default function ExperienceProvider({children}){
  const [user,setUser]=useState(null),[data,setData]=useState(null),[slot,setSlot]=useState(null),[requests,setRequests]=useState({});
  const [pulse,setPulse]=useState(0),[blocked,setBlocked]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const session=useRef(null),queue=useRef(Promise.resolve()),pending=useRef([]),boundary=useRef(0),closedBoundary=useRef(-1),cooldown=useRef(0),epoch=useRef(0),sent=useRef(new Set());
- const inputUntil=useRef(0),lastKind=useRef(null),slotRef=useRef(null);slotRef.current=slot;
+ const inputUntil=useRef(0),lastKind=useRef(null),slotRef=useRef(null),trialSeen=useRef(new Set());slotRef.current=slot;
  const refresh=useCallback(async()=>{
   const s=session.current;if(!s)return;const n=++epoch.current;
   try{const res=await fetch('/api/experience',{headers:{Authorization:`Bearer ${s.access_token}`},cache:'no-store'});const json=await res.json();
@@ -80,25 +88,28 @@ export default function ExperienceProvider({children}){
  const summary=useMemo(()=>summarizeExperience(data?.rows||[]),[data]);
  const hardwareReady=Boolean(data&&summary.map['milestone:care_viewed']);
  const register=useCallback((id,eligible,priority)=>setRequests(old=>old[id]?.eligible===eligible&&old[id]?.priority===priority?old:{...old,[id]:{eligible,priority}}),[]);
- const finish=useCallback(()=>{const current=slotRef.current;cooldown.current=Date.now()+120000;closedBoundary.current=boundary.current;if(current?.kind==='hardware')send({type:'hardware',id:current.id}).catch(()=>{});setSlot(null);setError('');},[send]);
+ const finish=useCallback(()=>{const current=slotRef.current;cooldown.current=Date.now()+120000;closedBoundary.current=boundary.current;if(current?.kind==='hardware')send({type:'hardware',id:current.id}).catch(()=>{});if(current?.kind==='trial')send({type:'guide',id:TRIAL_WELCOME_ID}).catch(()=>{});setSlot(null);setError('');},[send]);
  useEffect(()=>{
   if(!user||!data||slot||blocked||isQuietExperiencePath(pathname)||Date.now()<cooldown.current||boundary.current<=closedBoundary.current)return;
   const map=summary.map,candidates=[];
+  if(pathname==='/radar'&&requests[TRIAL_WELCOME_ID]?.eligible&&trialWelcomeEligible({access:data.access,rows:data.rows,seen:trialSeen.current.has(user.id)||readTrialWelcomeSeen(user.id)}))candidates.push({id:TRIAL_WELCOME_ID,kind:'trial',priority:120});
   if(pathname==='/radar'&&map['milestone:forecast']&&!map['guide:forecast'])candidates.push({id:'forecast',kind:'guide',priority:100,title:'あなたの体調予報です',text:'体質と、この地域の天気を合わせた予報です。下の対策ケアで、食事や過ごし方を確認できます。',button:'ケアを見る'});
   if(pathname==='/radar'&&map['milestone:care_recorded']&&!map['guide:care']){const tomorrow=map['milestone:care_recorded'].payload?.mode==='tomorrow';candidates.push({id:'care',kind:'guide',priority:90,title:'ケアを記録しました',text:tomorrow?'今夜のケアを、明日に向けた記録として残しました。明日の体調と合わせて振り返れます。':'今日の体調も残すと、あとでケアと一緒に振り返れます。',button:tomorrow?null:'体調を記録する'});}
   if(data.access?.analysis_enabled&&data.recordDays>=3&&pathname==='/records'&&!map['guide:reflection']&&new URLSearchParams(window.location.search).get('tab')!=='analysis')candidates.push({id:'reflection',kind:'guide',priority:95,title:'3日分の体調記録がそろいました',text:'ミモルと、予報・体調・試したケアを振り返れます。',button:'振り返りを見る'});
   if(['care','care_recorded','record'].includes(lastKind.current))for(const id of ['barrier','value'])if(surveyEligible(id,data))candidates.push({id,kind:'survey',priority:id==='barrier'?75:70});
-  if(hardwareReady)for(const [id,r] of Object.entries(requests)){const prior=data.rows.some(row=>row.event_key.startsWith(`hardware:${id}:`)&&Date.now()-Date.parse(row.created_at)<14*86400000);if(r.eligible&&!prior)candidates.push({id,kind:'hardware',priority:r.priority});}
+  if(hardwareReady)for(const [id,r] of Object.entries(requests)){if(id===TRIAL_WELCOME_ID)continue;const prior=data.rows.some(row=>row.event_key.startsWith(`hardware:${id}:`)&&Date.now()-Date.parse(row.created_at)<14*86400000);if(r.eligible&&!prior)candidates.push({id,kind:'hardware',priority:r.priority});}
   const candidate=candidates.sort((a,b)=>b.priority-a.priority)[0];if(!candidate)return;
-  const timer=setTimeout(()=>{if(busyScreen(inputUntil.current))return;setSlot(candidate);if(candidate.kind==='guide')send({type:'guide',id:candidate.id}).catch(()=>{});},500);
+  const timer=setTimeout(()=>{if(busyScreen(inputUntil.current))return;if(candidate.kind==='trial'){trialSeen.current.add(user.id);rememberTrialWelcome(user.id);send({type:'guide',id:TRIAL_WELCOME_ID}).catch(()=>{});}setSlot(candidate);if(candidate.kind==='guide')send({type:'guide',id:candidate.id}).catch(()=>{});},500);
   return()=>clearTimeout(timer);
  },[pulse,user,data,slot,blocked,pathname,summary,requests,hardwareReady,send]);
  useEffect(()=>{if(slot?.kind==='hardware'&&!requests[slot.id]?.eligible)finish();},[slot,requests,finish]);
+ useEffect(()=>{if(slot?.kind==='trial'&&(!requests[TRIAL_WELCOME_ID]?.eligible||!trialWelcomeActive(data?.access)))finish();},[slot,requests,data,finish]);
  const answer=async(id,choice)=>{setBusy(true);setError('');try{await send({type:'survey',id,answer:choice});finish();}catch(e){setError(e.message);}finally{setBusy(false);}};
  const close=()=>slot?.kind==='survey'?answer(slot.id,'skip'):finish();
  const go=()=>{const id=slot?.id;finish();if(id==='forecast')document.getElementById('daily-care-section')?.scrollIntoView({behavior:'smooth',block:'start'});if(id==='care')router.push('/records');if(id==='reflection')router.push('/records?tab=analysis');};
  return <Context.Provider value={{user,data,slot,blocked,hardwareReady,register,finish,send,refresh}}>{children}
- {slot&&slot.kind!=='hardware'&&!blocked&&!isQuietExperiencePath(pathname)?<aside data-experience role="region" aria-label={slot.kind==='survey'?'使ってみた感想':'使い方の案内'} className="fixed inset-x-0 z-[85] mx-auto max-w-md px-4" style={{bottom:'calc(env(safe-area-inset-bottom, 0px) + 96px)'}}>
+ {slot?.kind==='trial'&&!isQuietExperiencePath(pathname)?<TrialWelcomeDialog access={data?.access} onClose={finish}/>:null}
+ {slot&&slot.kind!=='hardware'&&slot.kind!=='trial'&&!blocked&&!isQuietExperiencePath(pathname)?<aside data-experience role="region" aria-label={slot.kind==='survey'?'使ってみた感想':'使い方の案内'} className="fixed inset-x-0 z-[85] mx-auto max-w-md px-4" style={{bottom:'calc(env(safe-area-inset-bottom, 0px) + 96px)'}}>
  <div className="max-h-[65vh] overflow-y-auto rounded-3xl border border-[#CFE7DE] bg-white p-5 shadow-xl">
  <div className="flex items-start justify-between gap-3"><p className="text-sm font-bold text-[#24564C]">{slot.kind==='survey'?'使ってみて、教えてください':slot.title}</p><button type="button" disabled={busy} onClick={close} aria-label="案内を閉じる" className="px-2">×</button></div>
  {slot.kind==='survey'?<><p className="my-3 font-bold">{SURVEYS[slot.id].question}</p><div className="grid gap-2">{SURVEYS[slot.id].options.map(([key,label])=><button type="button" disabled={busy} key={key} onClick={()=>answer(slot.id,key)} className="rounded-xl border border-[#DCE7DE] px-3 py-2 text-left text-sm disabled:opacity-50">{label}</button>)}</div><button type="button" onClick={close} disabled={busy} className="mt-3 text-sm text-slate-500">スキップ</button></>:<><p className="my-3 text-sm leading-6">{slot.text}</p><div className="flex gap-3">{slot.button?<button type="button" onClick={go} className="rounded-full bg-[#2F816E] px-4 py-2 text-sm font-bold text-white">{slot.button}</button>:null}<button type="button" onClick={finish} className="px-3 py-2 text-sm text-slate-500">{slot.button?'あとで':'閉じる'}</button></div></>}
