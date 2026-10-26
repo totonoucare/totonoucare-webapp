@@ -12,9 +12,10 @@ import {
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { trackFunnel, trackSignupEntry } from "@/lib/funnelClient";
-import { safeLocalPath } from "@/lib/safeReturnPath";
+import { resolveSignupFlow, clearCheckDraft } from "@/lib/checkRegistration";
 import { CoreIllust } from "@/components/illust/core";
 import { loadSignupResultIdentity } from "@/lib/signupResultIdentity";
+import CheckLoginWelcome from "@/components/auth/CheckLoginWelcome";
 
 function IconSavedResult() {
   return (
@@ -52,7 +53,7 @@ function SavedResultIdentity({ identity }) {
 
 function IconGoogle() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" aria-hidden="true">
       <path
         fill="#EA4335"
         d="M12 10.2v3.9h5.5c-.2 1.3-.8 2.4-1.8 3.2l3 2.3c1.8-1.6 2.8-4 2.8-6.9 0-.7-.1-1.3-.2-1.9H12z"
@@ -83,12 +84,7 @@ export default function SignupClient() {
     const urlResultId = sp?.get("result") || "";
     const urlNextRaw = sp?.get("next") || "";
 
-    const resultId = urlResultId || fallbackPending?.resultId || "";
-    const fallbackNext = resultId ? `/result/${resultId}?attach=1` : "/radar";
-    const nextPathSource = urlNextRaw || fallbackPending?.nextPath || "";
-    const nextPath = safeLocalPath(nextPathSource, fallbackNext);
-
-    return { resultId, nextPath };
+    return resolveSignupFlow({ resultId: urlResultId, nextPath: urlNextRaw, pending: fallbackPending });
   }, [sp, fallbackPending]);
 
   const [email, setEmail] = useState("");
@@ -153,12 +149,12 @@ export default function SignupClient() {
   }, []);
 
   useEffect(() => {
-    if (!params.resultId) return;
+    if (!params.resultId && !params.isBeforeCheck) return;
     setPendingDiagnosisAttach({
       resultId: params.resultId,
       nextPath: params.nextPath,
     });
-  }, [params.resultId, params.nextPath]);
+  }, [params.resultId, params.nextPath, params.isBeforeCheck]);
 
   useEffect(() => {
     let mounted = true;
@@ -355,7 +351,7 @@ export default function SignupClient() {
       // The session effect owns attachment; avoid a second concurrent save.
       setSession(data.session);
       setStatus({ state: "idle", message: "ログインできました。" });
-      if (!params.resultId) window.location.replace(params.nextPath || "/radar");
+      if (!params.resultId && !params.isBeforeCheck) window.location.replace(params.nextPath || "/radar");
     } catch {
       trackFunnel("auth_error", "email");
       setStatus({ state: "error", message: "確認コードが正しくないか、有効期限が切れています。コードを確認するか、再送してください。" });
@@ -385,6 +381,7 @@ export default function SignupClient() {
 
       trackFunnel("result_save_success");
       clearPendingDiagnosisAttach();
+      clearCheckDraft();
       setStatus({ state: "idle", message: "" });
       return true;
     } catch (e) {
@@ -413,20 +410,20 @@ export default function SignupClient() {
   useEffect(() => {
     if (loadingSession) return;
     if (!session?.user?.id) return;
-    if (!params.resultId) return;
+    if (!params.resultId && !params.isBeforeCheck) return;
 
-    const key = `${session.user.id}:${params.resultId}`;
+    const key = `${session.user.id}:${params.resultId || params.nextPath}`;
     if (autoAttachKeyRef.current === key) return;
 
     autoAttachKeyRef.current = key;
     goNext(session);
-  }, [loadingSession, session?.user?.id, params.resultId]);
+  }, [loadingSession, session?.user?.id, params.resultId, params.nextPath, params.isBeforeCheck]);
 
   if (loadingSession) return null;
 
   return (
     <AppShell
-      title={params.resultId ? "体質を保存" : "ログイン / 登録"}
+      title={params.isBeforeCheck ? "体質チェック" : params.resultId ? "体質を保存" : "ログイン / 登録"}
       noTabs={true}
       headerLeft={
         <button
@@ -437,7 +434,8 @@ export default function SignupClient() {
             if (params.resultId) {
               trackFunnel("signup_result_return_click");
               router.push(`/result/${encodeURIComponent(params.resultId)}`);
-            } else router.back();
+            } else if (params.isBeforeCheck) router.push("/check");
+            else router.back();
           }}
           className="inline-flex min-h-[44px] items-center whitespace-nowrap rounded-full bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[var(--ring)] active:scale-[0.99]"
         >
@@ -486,7 +484,7 @@ export default function SignupClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
+            {params.isBeforeCheck ? <CheckLoginWelcome /> : <div className="relative -mx-6 -mt-6 overflow-hidden border-b border-[#E5EEE8] bg-gradient-to-br from-[#EFF8F2] via-[#F8FBF8] to-[#FFF9EF] px-6 pb-5 pt-6">
               <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/50" />
               <div className="relative space-y-4 text-center">
                 {params.resultId ? <SavedResultIdentity identity={currentResultIdentity} /> : <div className="mx-auto grid h-12 w-12 place-items-center rounded-[17px] border border-white bg-white/90 text-[var(--accent-ink)] shadow-[0_5px_15px_rgba(36,86,76,0.09)]">
@@ -495,27 +493,27 @@ export default function SignupClient() {
                 <h1 className="text-[22px] font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
                   {params.resultId ? <><span className="block">体質を保存して、</span><span className="block">あなたの予報へ</span></> : "あなたの体調予報へ"}
                 </h1>
-                <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
+                {!params.isBeforeCheck ? <p className="text-left text-[14px] font-medium leading-7 text-slate-600">
                   {params.resultId ? "" : "無料登録すると、"}今日・明日の体調予報と、その日に合う具体的なケアを見られます。
-                </p>
-                <div className="flex flex-wrap justify-center gap-1 pt-1" aria-label="登録について">
+                </p> : null}
+                {!params.isBeforeCheck ? <div className="flex flex-wrap justify-center gap-1 pt-1" aria-label="登録について">
                   <AssuranceBadge>無料登録</AssuranceBadge>
                   <AssuranceBadge>支払い情報不要</AssuranceBadge>
                   <AssuranceBadge>自動課金なし</AssuranceBadge>
-                </div>
+                </div> : null}
               </div>
-            </div>
+            </div>}
 
             <button
               type="button"
               onClick={handleGoogleLogin}
-              aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : "Googleアカウントで続ける"}
+              aria-label={status.state === "loading_oauth" ? "Googleへ移動中" : params.isBeforeCheck ? "Googleアカウントでログイン" : "Googleアカウントで続ける"}
               disabled={status.state === "loading" || status.state === "loading_oauth"}
-              className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-5 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
+              className="w-full rounded-[18px] border border-[#CBDDD4] bg-white px-3 py-4 shadow-[0_4px_12px_rgba(36,86,76,0.07)] transition hover:border-[var(--accent)] hover:bg-[#F8FBF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:opacity-60"
             >
-              <span className="inline-flex items-center justify-center gap-3 text-[16px] font-black text-slate-900">
+              <span className={`inline-flex items-center justify-center gap-2 whitespace-nowrap font-bold text-slate-900 ${params.isBeforeCheck ? "text-[13px] min-[360px]:text-[14px] min-[375px]:text-[15px]" : "text-[16px]"}`}>
                 <IconGoogle />
-                {status.state === "loading_oauth" ? "Googleへ移動中…" : "アカウントで続ける"}
+                {status.state === "loading_oauth" ? "Googleへ移動中…" : params.isBeforeCheck ? "Googleアカウントでログイン" : "アカウントで続ける"}
               </span>
             </button>
 
@@ -530,20 +528,20 @@ export default function SignupClient() {
               onClick={() => setEmailFormOpen((open) => !open)}
               aria-expanded={emailFormOpen || Boolean(sentEmail)}
               aria-controls="signup-email-form"
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-slate-200 bg-slate-50/70 px-3 py-3.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+              className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-[#DCE8DE] bg-[#F5F9F5] px-3 py-3.5 text-sm font-bold text-[#526E60] transition hover:bg-[#EDF5EE] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <path d="m4 7 8 6 8-6" />
               </svg>
-              メールアドレスで登録する
+              {params.isBeforeCheck ? "メールアドレスでログイン" : "メールアドレスで登録する"}
             </button>
-            <p className="text-center text-[11px] font-medium leading-5 text-slate-500">
-              登録済みの方も、同じ方法でログインできます。
+            <p className="text-center text-[12px] font-medium leading-6 text-slate-500">
+              {params.isBeforeCheck ? "初めての方も、同じ操作で利用できます。" : "登録済みの方も、同じ方法でログインできます。"}
             </p>
-            <p className="text-[12px] font-medium leading-6 text-slate-500">
+            {!params.isBeforeCheck ? <p className="text-[12px] font-medium leading-6 text-slate-500">
               14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
-            </p>
+            </p> : null}
 
             {emailFormOpen || sentEmail ? (
               <div id="signup-email-form" className="space-y-4">
