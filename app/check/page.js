@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
+import { CHECK_RUN_PATH, CHECK_SIGNUP_HREF } from "@/lib/checkRegistration";
+import { trackFunnel } from "@/lib/funnelClient";
 import { IconCheck, IconHistory, IconInfo } from "@/components/illust/icons/check";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
 import {
@@ -47,15 +49,20 @@ export default function CheckLandingPage() {
     let unsub = null;
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session || null);
-      setLoadingAuth(false);
+      try {
+        const { data } = supabase ? await supabase.auth.getSession() : {};
+        setSession(data?.session || null);
+      } catch {
+        setSession(null);
+      } finally {
+        setLoadingAuth(false);
+      }
     })();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_ev, s) => {
+    const sub = supabase?.auth.onAuthStateChange((_ev, s) => {
       setSession(s || null);
       setLoadingAuth(false);
-    });
+    })?.data;
 
     unsub = sub?.subscription;
 
@@ -181,11 +188,16 @@ export default function CheckLandingPage() {
 
               <div className="mt-6">
                 <Button
-                  onClick={() => router.push("/check/run")}
+                  onClick={() => {
+                    if (!isLoggedIn) trackFunnel("signup_cta_click");
+                    router.push(isLoggedIn ? CHECK_RUN_PATH : CHECK_SIGNUP_HREF);
+                  }}
+                  disabled={loadingAuth}
                   className="h-14 w-full rounded-[20px] text-[16px] shadow-[0_16px_28px_-16px_rgba(42,99,80,0.52)]"
                 >
-                  {latestResult ? "体質チェックを更新する" : "無料で体質チェックを始める"}
+                  {loadingAuth ? "確認中…" : !isLoggedIn ? "ログインして体質チェックへ" : latestResult ? "体質チェックを更新する" : "無料で体質チェックを始める"}
                 </Button>
+                {!loadingAuth && !isLoggedIn ? <p className="mt-3 text-center text-[13px] font-medium leading-6 text-slate-500">ログイン後、そのままチェックへ進みます。</p> : null}
               </div>
             </div>
           </section>
