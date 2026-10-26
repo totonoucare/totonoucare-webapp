@@ -1141,7 +1141,7 @@ export default function HomePage() {
         title="ホーム"
         subtitle="未病レーダー"
         headerLeft={<Button size="sm" variant="ghost" onClick={() => router.push("/guide")}>使い方</Button>}
-        headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/signup")}>ログイン</Button>}
+        headerRight={<Button size="sm" variant="ghost" onClick={() => router.push("/signup?next=%2F")}>ログイン</Button>}
       >
         {/* mb-8に広げてカードとの隙間を確保 */}
         <Module className="relative overflow-hidden rounded-[32px] bg-[#FBFCF8] px-8 pt-7 pb-6 ring-1 ring-[color:color-mix(in_srgb,var(--ring),white_14%)] shadow-[0_18px_36px_-22px_rgba(77,111,85,0.10)] mb-8">
@@ -1224,7 +1224,7 @@ export default function HomePage() {
 
           <GuestStartCta
             onCheck={() => router.push("/check")}
-            onLogin={() => router.push("/signup")}
+            onLogin={() => router.push("/signup?next=%2F")}
           />
 
           <ul className="mt-6 space-y-2.5">
