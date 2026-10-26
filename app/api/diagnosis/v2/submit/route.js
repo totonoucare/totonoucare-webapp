@@ -10,12 +10,21 @@ import {
 } from "@/lib/diagnosisGuestAccess";
 import { validateDiagnosisAnswers } from "@/lib/diagnosis/v2/validateAnswers";
 import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
+import { requireUser } from "@/lib/requireUser";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function POST(req) {
   try {
+    const { user } = await requireUser(req);
+    if (!user) {
+      return NextResponse.json(
+        { error: "無料登録・ログイン後に体質チェックを始めてください。", code: "AUTH_REQUIRED" },
+        { status: 401 }
+      );
+    }
+
     const limited = await enforcePublicApiRateLimit(req, {
       route: "diagnosis_v2_submit",
       limit: 20,
