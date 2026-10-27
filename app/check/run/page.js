@@ -224,8 +224,8 @@ export default function CheckRunPage() {
           createdResultRef.current = id;
           setPendingDiagnosisAttach({ resultId: id, nextPath: `/result/${encodeURIComponent(id)}` });
         },
+        onSaved: () => trackFunnel("result_save_success"),
       });
-      trackFunnel("result_save_success");
       clearPendingDiagnosisAttach();
 
       clearCheckDraft();
