@@ -37,7 +37,7 @@ import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 import { buildResultCareExample } from "@/lib/diagnosis/v2/resultCareExample";
 import ResultCareExample from "@/components/diagnosis/ResultCareExample";
 import CarePolicyCard from "@/components/diagnosis/ResultCarePolicyCard";
-import { observeResultSaveCtaScroll, resultCtaDismissed, dismissResultCta } from "@/lib/resultSaveCta";
+import { observeResultSaveCtaScroll, resultCtaDismissed, dismissResultCta, shouldShowResultIntroCta } from "@/lib/resultSaveCta";
 import ConstitutionUpdateDialog from "@/components/diagnosis/ConstitutionUpdateDialog";
 
 const BODY_LINE_OPTIONS = [
@@ -197,7 +197,7 @@ function SavePromptCard({ isLoggedIn, isAttached, isCurrent, needsConfirmation, 
           {["無料登録", "支払い情報不要", "自動課金なし"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
         </div>
       ) : null}
-      {needsConfirmation ? <p className="mt-3 text-[12px] font-bold leading-6 text-[#87662F]">今回の結果を使うかは、次の画面で選べます。</p> : isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">{isCurrent ? "この体質結果を予報とケアに使用しています。" : "この体質結果は保存済みです。"}</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
+      {needsConfirmation ? <p className="mt-3 text-[12px] font-bold leading-6 text-[#87662F]">{isAttached ? "この結果は履歴に保存済みです。" : "この結果をアカウントに保存できます。"}予報・ケアに反映するかは、次の画面で選べます。</p> : isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">{isCurrent ? "このトリセツを予報・ケアに反映中です。" : "この体質結果は保存済みです。"}</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
       <Button onClick={onContinue} disabled={attaching} className="mt-4 w-full whitespace-nowrap !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
       {!isLoggedIn && !isAttached ? <button type="button" onClick={onLogin} className="mx-auto mt-2 block min-h-[44px] px-3 text-[12px] font-bold text-slate-500 underline underline-offset-4">登録済みの方はこちら</button> : null}
     </div>
@@ -411,6 +411,8 @@ function ResultPage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { id } = params;
+  const activeResultIdRef = useRef(id);
+  activeResultIdRef.current = id;
 
   const [tab, setTab] = useState("overview");
   useEffect(() => { trackFunnel({ overview: "result_view", compat: "compat_view", care: "care_view" }[tab], tab); }, [tab]);
@@ -445,6 +447,7 @@ function ResultPage({ params }) {
   const attachingRef = useRef(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [updateError, setUpdateError] = useState("");
+  const [appliedHere, setAppliedHere] = useState(false);
   const [bodyLineOpen, setBodyLineOpen] = useState(false);
   const [bodyLinePrimary, setBodyLinePrimary] = useState("none");
   const [bodyLineSecondary, setBodyLineSecondary] = useState("none");
@@ -453,6 +456,13 @@ function ResultPage({ params }) {
 
   const attachAfterLogin = searchParams?.get("attach") === "1";
   const autoAttachRan = useRef(false);
+
+  useEffect(() => {
+    setAppliedHere(false);
+    setUpdateDialogOpen(false);
+    setUpdateError("");
+    autoAttachRan.current = false;
+  }, [id]);
 
   const from = (searchParams?.get("from") || "").toLowerCase();
   const backHref = useMemo(() => {
@@ -537,6 +547,7 @@ function ResultPage({ params }) {
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
   const needsConfirmation = isLoggedIn && !!event?.has_current_profile && !event?.is_current;
+  const showIntroCta = shouldShowResultIntroCta({ isLoggedIn, event, from });
 
   const weatherCompat = useMemo(() => {
     return buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels });
@@ -571,15 +582,38 @@ function ResultPage({ params }) {
         body: JSON.stringify({ confirm_update: confirmUpdate === true }),
       });
       const json = await res.json().catch(() => ({}));
+      if (activeResultIdRef.current !== id) return;
       if (res.status === 409 && json?.code === "PROFILE_UPDATE_CONFIRMATION_REQUIRED") {
         setEvent(current => ({ ...current, has_current_profile: true, is_current: false }));
         setUpdateDialogOpen(true);
         return;
       }
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
-      trackFunnel("result_save_success");
-      router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
+      if (!isAttached) trackFunnel("result_save_success");
+      const saved = json?.data;
+      if (typeof saved?.is_current !== "boolean") throw new Error("反映状態を確認できませんでした。ページを読み直してください。");
+      setEvent(current => ({
+        ...current,
+        is_attached: true,
+        has_current_profile: saved.has_current_profile === true,
+        is_current: saved.is_current,
+        current_core_code: saved.current_core_code || null,
+        ...(saved.is_current ? { active_symptom_focus: diagnosisSymptomKey } : {}),
+      }));
+      if (confirmUpdate) {
+        setUpdateDialogOpen(false);
+        setAppliedHere(true);
+        setToast("予報・ケアに反映しました。");
+        setTimeout(() => setToast(""), 2500);
+        // Applying a saved result never takes the reader away from this page.
+      } else if (saved.is_current) {
+        router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
+      } else {
+        // Legacy guest-save/auth recovery also archives without auto-adoption.
+        setUpdateDialogOpen(true);
+      }
     } catch (e) {
+      if (activeResultIdRef.current !== id) return;
       setUpdateError(e?.message || "更新できませんでした。もう一度お試しください。");
       setToast(e?.message || String(e));
       setTimeout(() => setToast(""), 2500);
@@ -599,6 +633,12 @@ function ResultPage({ params }) {
     }
     if (isAttached) { router.push("/radar"); return; }
     attachToAccount(false);
+  }
+
+  function requestResultAdoption() {
+    if (attachingRef.current) return;
+    setUpdateError("");
+    setUpdateDialogOpen(true);
   }
 
   async function saveBodyLines() {
@@ -725,7 +765,7 @@ function ResultPage({ params }) {
         </div>
       ) : null}
 
-      <SaveStickyBar
+      {showIntroCta ? <SaveStickyBar
         key={id}
         id={id}
         isLoggedIn={isLoggedIn}
@@ -734,7 +774,7 @@ function ResultPage({ params }) {
         onSave={() => continueToForecast("floating_save")}
         onSignup={() => goSignupToRadar("floating_save")}
         onClose={() => { if (!isLoggedIn) trackFunnel("floating_save_close", tab); }}
-      />
+      /> : null}
 
       {updateDialogOpen ? <ConstitutionUpdateDialog
         currentCode={event?.current_core_code}
@@ -742,7 +782,7 @@ function ResultPage({ params }) {
         busy={attaching}
         error={updateError}
         onUpdate={() => attachToAccount(true)}
-        onKeep={() => { if (!attachingRef.current) router.push("/radar"); }}
+        onKeep={() => { if (!attachingRef.current) setUpdateDialogOpen(false); }}
         onClose={() => { if (!attachingRef.current) setUpdateDialogOpen(false); }}
       /> : null}
 
@@ -789,7 +829,7 @@ function ResultPage({ params }) {
               <div className="mb-6 flex justify-center">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.86)] px-3.5 py-1.5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-sm backdrop-blur-md">
                   <span className="text-[12px] font-extrabold text-slate-500">
-                    現在の不調：{symptomLabel}{symptomChanged ? `（チェック時：${diagnosisSymptomLabel}）` : ""}
+                    {event?.is_current ? "現在の不調" : "チェック時の不調"}：{symptomLabel}{symptomChanged ? `（チェック時：${diagnosisSymptomLabel}）` : ""}
                   </span>
                 </div>
               </div>
@@ -832,7 +872,12 @@ function ResultPage({ params }) {
       </div>
 
       <div ref={tabStartRef} aria-hidden="true" />
-      {needsConfirmation ? <p className="mx-auto mb-3 w-full max-w-[408px] rounded-[18px] border border-[#E9DEC5] bg-[#FFFBF2] px-4 py-3 text-[13px] font-medium leading-6 text-[#806539]">今回の結果は、まだ予報・ケアに反映していません。今の体質を使い続けることもできます。</p> : null}
+      {needsConfirmation ? <section data-result-adoption-notice className="mx-auto mb-4 w-[calc(100%-2rem)] max-w-[408px] rounded-[22px] border border-[#E9DEC5] bg-[#FFFBF2] px-4 pb-3 pt-4 shadow-[0_10px_26px_-24px_rgba(102,80,40,0.28)]">
+        <p className="text-[13px] font-bold leading-6 text-[#806539]">{isAttached ? "この結果は履歴に保存済みです。" : "この結果をアカウントに保存できます。"}</p>
+        <p className="mt-1 text-[13px] font-medium leading-6 text-[#806539]">予報・ケアに反映するかを選べます。</p>
+        <Button disabled={attaching} onClick={requestResultAdoption} className="mt-3 w-full !rounded-[15px] !text-[14px]">この結果を反映する</Button>
+        <button type="button" disabled={attaching} onClick={() => router.push("/radar")} className="mx-auto mt-1 block min-h-[44px] px-2 text-[12px] font-bold text-[#6D7368] underline underline-offset-4 disabled:opacity-50">反映中のトリセツで予報へ</button>
+      </section> : event?.is_current ? <p role="status" className="mx-auto mb-3 w-[calc(100%-2rem)] max-w-[408px] rounded-[18px] bg-[#EEF7F1] px-4 py-3 text-[13px] font-bold leading-6 text-[#426758]">{appliedHere ? "この結果を予報・ケアに反映しました。" : "このトリセツを予報・ケアに反映中です。"}</p> : null}
       <SegmentedTabs value={tab} onChange={changeTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
