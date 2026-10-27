@@ -46,7 +46,7 @@ function SavedResultIdentity({ identity }) {
       </div>
       <div className="min-w-0">
         <p className="text-[11px] font-bold leading-5 text-slate-500">保存する体質</p>
-        <p className="text-[16px] font-black leading-6 tracking-tight text-[var(--accent-ink)]">{identity?.title || "今回の体質結果"}</p>
+        <p className="text-[16px] font-black leading-6 tracking-tight text-[var(--accent-ink)]">{identity?.title || "この体質結果"}</p>
       </div>
     </div>
   );
@@ -395,6 +395,10 @@ export default function SignupClient() {
       clearPendingDiagnosisAttach();
       clearCheckDraft();
       setStatus({ state: "idle", message: "" });
+      if (j?.data?.is_current === false) {
+        window.location.replace(`/result/${encodeURIComponent(params.resultId)}`);
+        return false;
+      }
       return true;
     } catch (e) {
       trackFunnel("result_save_error");
