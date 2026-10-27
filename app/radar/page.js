@@ -774,7 +774,7 @@ export default function RadarPage() {
     }
   }
 
-  async function openLatestResultDetail() {
+  async function openCurrentResultDetail() {
     try {
       setOpeningProfileDetail(true);
       setError("");
@@ -787,7 +787,7 @@ export default function RadarPage() {
         return;
       }
 
-      const res = await fetch("/api/diagnosis/v2/events/list?limit=1", {
+      const res = await fetch("/api/diagnosis/v2/events/list?limit=1&current=1", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -797,7 +797,7 @@ export default function RadarPage() {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(json?.error || "最新の体質履歴を取得できませんでした。");
+        throw new Error(json?.error || "反映中のトリセツを取得できませんでした。");
       }
 
       const row = Array.isArray(json?.data) ? json.data[0] : null;
@@ -810,7 +810,7 @@ export default function RadarPage() {
 
       router.push("/history");
     } catch (e) {
-      console.error("openLatestResultDetail failed:", e);
+      console.error("openCurrentResultDetail failed:", e);
       router.push("/history");
     } finally {
       setOpeningProfileDetail(false);
@@ -2563,7 +2563,7 @@ export default function RadarPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={openLatestResultDetail}
+                onClick={openCurrentResultDetail}
                 disabled={openingProfileDetail}
                 className="shrink-0 bg-white ring-1 ring-[#CFE0D3] shadow-sm text-slate-700"
               >
