@@ -66,7 +66,8 @@ export default function AuthCallbackClient() {
       if (!res.ok) {
         throw new Error(json?.error || "診断結果の保存に失敗しました");
       }
-      return true;
+      trackFunnel("result_save_success");
+      return json?.data?.is_current !== false;
     }
 
     async function getStableSession({ attempts = 20, delayMs = 300 } = {}) {
@@ -159,7 +160,6 @@ export default function AuthCallbackClient() {
             window.location.replace(`/result/${encodeURIComponent(resultId)}`);
             return;
           }
-          trackFunnel("result_save_success");
           clearPendingDiagnosisAttach();
           clearCheckDraft();
         }
