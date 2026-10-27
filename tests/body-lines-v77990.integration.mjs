@@ -26,7 +26,7 @@ async function setup(organsType='text[]'){
  qi int,blood int,fluid int,cold_heat int,resilience int,primary_meridian text,secondary_meridian text,organs ${organsType},
  answers jsonb,computed jsonb,thermo int,is_mixed boolean,core_code text,sub_labels text[],engine_version text,version text);
  CREATE TABLE diagnosis_guest_access(event_id uuid PRIMARY KEY,claimed_at timestamptz,updated_at timestamptz);
- `);await db.exec(migration);return db;
+ `);await db.exec(migration);await db.exec(await fs.readFile(path.join(root,'supabase/migrations/20261027_confirm_constitution_update_v779106.sql'),'utf8'));return db;
 }
 async function get(db,table,id,key='id'){return (await db.query(`SELECT to_jsonb(t) j FROM ${table} t WHERE ${key}=$1`,[id])).rows[0]?.j}
 async function seed(db,id=A){await db.query('INSERT INTO diagnosis_events VALUES ($1,null,$2,$3)',[id,JSON.stringify(answers),JSON.stringify(scoreDiagnosis(answers))]);await db.query('INSERT INTO diagnosis_guest_access(event_id) VALUES ($1)',[id]);}

@@ -95,7 +95,7 @@ test("check welcome contains no payment or trial promotion", async () => {
   assert.match(signup, /params\.isBeforeCheck \? <CheckLoginWelcome/);
   assert.match(signup, /Googleアカウントでログイン/);
   assert.match(signup, /メールアドレスでログイン/);
-  assert.match(signup, /!params\.isBeforeCheck \? <p[\s\S]*?14日間/);
+  assert.match(signup, /params\.resultId \? <p[\s\S]*?14日間/);
   const landing = await source("app/check/page.js");
   assert.match(landing, /ログインして体質チェックへ/);
   assert.doesNotMatch(landing, /無料登録して|支払い情報|自動課金/);
