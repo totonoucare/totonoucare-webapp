@@ -62,9 +62,11 @@ export default function AuthCallbackClient() {
       );
 
       const json = await res.json().catch(() => ({}));
+      if (res.status === 409 && json?.code === "PROFILE_UPDATE_CONFIRMATION_REQUIRED") return false;
       if (!res.ok) {
         throw new Error(json?.error || "診断結果の保存に失敗しました");
       }
+      return true;
     }
 
     async function getStableSession({ attempts = 20, delayMs = 300 } = {}) {
@@ -148,7 +150,15 @@ export default function AuthCallbackClient() {
         if (resultId) {
           stage = "save";
           setMsg("体質チェック結果を保存しています…");
-          await attachResultIfNeeded(resultId, session.access_token);
+          const saved = await attachResultIfNeeded(resultId, session.access_token);
+          if (saved === false) {
+            clearPendingDiagnosisAttach();
+            clearCheckDraft();
+            if (!active || finishedRef.current) return;
+            finishedRef.current = true;
+            window.location.replace(`/result/${encodeURIComponent(resultId)}`);
+            return;
+          }
           trackFunnel("result_save_success");
           clearPendingDiagnosisAttach();
           clearCheckDraft();
