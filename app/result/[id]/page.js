@@ -37,7 +37,8 @@ import { buildBaseCarePreferences } from "@/lib/diagnosis/v2/carePreferences";
 import { buildResultCareExample } from "@/lib/diagnosis/v2/resultCareExample";
 import ResultCareExample from "@/components/diagnosis/ResultCareExample";
 import CarePolicyCard from "@/components/diagnosis/ResultCarePolicyCard";
-import { observeResultSaveCtaScroll } from "@/lib/resultSaveCta";
+import { observeResultSaveCtaScroll, resultCtaDismissed, dismissResultCta } from "@/lib/resultSaveCta";
+import ConstitutionUpdateDialog from "@/components/diagnosis/ConstitutionUpdateDialog";
 
 const BODY_LINE_OPTIONS = [
   { value: "A", label: "前屈する" },
@@ -170,12 +171,12 @@ function SegmentedTabs({ value, onChange }) {
   );
 }
 
-function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, onSignup, onLogin, onRadar }) {
+function SavePromptCard({ isLoggedIn, isAttached, isCurrent, needsConfirmation, session, attaching, onSave, onSignup, onLogin, onRadar }) {
   const onContinue = isAttached ? onRadar : isLoggedIn ? onSave : onSignup;
   const ctaLabel = isAttached
-    ? "予報とケアを見る"
+    ? attaching ? "更新中…" : "予報とケアを見る"
     : isLoggedIn
-      ? attaching ? "保存中…" : "保存して予報へ"
+      ? attaching ? "保存中…" : "予報とケアを見る"
       : "無料登録して予報へ";
   return (
     <div className="rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_50%)] p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_74%)]">
@@ -196,37 +197,37 @@ function SavePromptCard({ isLoggedIn, isAttached, session, attaching, onSave, on
           {["無料登録", "支払い情報不要", "自動課金なし"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
         </div>
       ) : null}
-      {isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">この体質結果は保存済みです。</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
-      <Button onClick={onContinue} disabled={!isAttached && isLoggedIn && attaching} className="mt-4 w-full whitespace-nowrap !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
+      {needsConfirmation ? <p className="mt-3 text-[12px] font-bold leading-6 text-[#87662F]">今回の結果を使うかは、次の画面で選べます。</p> : isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">{isCurrent ? "この体質結果を予報とケアに使用しています。" : "この体質結果は保存済みです。"}</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
+      <Button onClick={onContinue} disabled={attaching} className="mt-4 w-full whitespace-nowrap !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
       {!isLoggedIn && !isAttached ? <button type="button" onClick={onLogin} className="mx-auto mt-2 block min-h-[44px] px-3 text-[12px] font-bold text-slate-500 underline underline-offset-4">登録済みの方はこちら</button> : null}
     </div>
   );
 }
 
-function SaveStickyBar({ isLoggedIn, isAttached, attaching, onSave, onSignup, onClose }) {
+function SaveStickyBar({ id, isLoggedIn, isAttached, attaching, onSave, onSignup, onClose }) {
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => resultCtaDismissed(id));
   const viewTracked = useRef(false);
   useEffect(() => {
-    if (isAttached || dismissed || visible) return;
+    if (dismissed || visible) return;
     return observeResultSaveCtaScroll(window, () => setVisible(true));
-  }, [isAttached, dismissed, visible]);
+  }, [dismissed, visible]);
   useEffect(() => {
     if (!visible || dismissed || isLoggedIn || isAttached || viewTracked.current) return;
     viewTracked.current = true;
     trackFunnel("signup_cta_view");
   }, [visible, dismissed, isLoggedIn, isAttached]);
-  if (isAttached || dismissed || !visible) return null;
-  const ctaLabel = isLoggedIn && attaching ? "保存中…" : "体質を保存して予報へ";
+  if (dismissed || !visible) return null;
+  const ctaLabel = attaching ? "処理中…" : isLoggedIn || isAttached ? "予報とケアを見る" : "ログインして予報とケアへ";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
     <div className="result-save-cta-enter fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2">
       <div className="mx-auto w-full max-w-[440px] rounded-[20px] border border-[#d7e6df] bg-white/95 p-2.5 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="flex items-center gap-1.5">
           <Button onClick={onClick} disabled={isLoggedIn && attaching} className="!h-11 min-w-0 flex-1 whitespace-nowrap rounded-full !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
-          <button type="button" aria-label="保存の案内を閉じる" onClick={() => { onClose?.(); setDismissed(true); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
+          <button type="button" aria-label="予報とケアの案内を閉じる" onClick={() => { dismissResultCta(id); onClose?.(); setDismissed(true); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
         </div>
-        <p className="mt-1 text-center text-[10px] font-bold leading-4 text-slate-500">{isLoggedIn ? "この体質結果を、毎日の予報とケアに" : "無料登録・支払い情報不要・自動課金なし"}</p>
+        <p className="mt-1 text-center text-[12px] font-medium leading-5 text-slate-500">今日・明日の体調予報と、あなたに合うケア</p>
       </div>
     </div>
   );
@@ -441,6 +442,9 @@ function ResultPage({ params }) {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   const [attaching, setAttaching] = useState(false);
+  const attachingRef = useRef(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [updateError, setUpdateError] = useState("");
   const [bodyLineOpen, setBodyLineOpen] = useState(false);
   const [bodyLinePrimary, setBodyLinePrimary] = useState("none");
   const [bodyLineSecondary, setBodyLineSecondary] = useState("none");
@@ -511,7 +515,7 @@ function ResultPage({ params }) {
   useEffect(() => {
     if (!attachAfterLogin || loadingAuth || !session || !event || event?.notFound || autoAttachRan.current) return;
     autoAttachRan.current = true;
-    attachToAccount(true);
+    continueToForecast();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attachAfterLogin, loadingAuth, session, event?.id]);
 
@@ -532,6 +536,7 @@ function ResultPage({ params }) {
 
   const isLoggedIn = !!session;
   const isAttached = !!event?.is_attached;
+  const needsConfirmation = isLoggedIn && !!event?.has_current_profile && !event?.is_current;
 
   const weatherCompat = useMemo(() => {
     return buildWeatherCompatibility({ answers, computed, symptomKey, core, subLabels });
@@ -549,28 +554,51 @@ function ResultPage({ params }) {
     carePreferences,
   }), [answers, computed, symptomKey, event?.created_at, carePreferences]);
 
-  async function attachToAccount(silent = false) {
-    if (attaching) return;
+  async function attachToAccount(confirmUpdate = false) {
+    if (attachingRef.current) return;
+    attachingRef.current = true;
     setAttaching(true);
+    setUpdateError("");
     try {
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) { if (!silent) setToast("先にログインが必要です"); return; }
+      if (!token) throw new Error("ログイン状態を確認できません。再度ログインしてからお試しください。");
 
       const res = await fetch(`/api/diagnosis/v2/events/${encodeURIComponent(id)}/attach`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ confirm_update: confirmUpdate === true }),
       });
       const json = await res.json().catch(() => ({}));
+      if (res.status === 409 && json?.code === "PROFILE_UPDATE_CONFIRMATION_REQUIRED") {
+        setEvent(current => ({ ...current, has_current_profile: true, is_current: false }));
+        setUpdateDialogOpen(true);
+        return;
+      }
       if (!res.ok) throw new Error(json?.error || "保存に失敗しました");
-
+      trackFunnel("result_save_success");
       router.push(`/radar?saved=1&from_result=1&result=${encodeURIComponent(id)}`);
     } catch (e) {
+      setUpdateError(e?.message || "更新できませんでした。もう一度お試しください。");
       setToast(e?.message || String(e));
       setTimeout(() => setToast(""), 2500);
     } finally {
+      attachingRef.current = false;
       setAttaching(false);
     }
+  }
+
+  function continueToForecast(ctaLocation = "") {
+    if (attachingRef.current) return;
+    if (!isLoggedIn) { goSignupToRadar(ctaLocation); return; }
+    if (needsConfirmation) {
+      setUpdateError("");
+      setUpdateDialogOpen(true);
+      return;
+    }
+    if (isAttached) { router.push("/radar"); return; }
+    attachToAccount(false);
   }
 
   async function saveBodyLines() {
@@ -699,13 +727,24 @@ function ResultPage({ params }) {
 
       <SaveStickyBar
         key={id}
+        id={id}
         isLoggedIn={isLoggedIn}
         isAttached={isAttached}
         attaching={attaching}
-        onSave={() => attachToAccount(false)}
+        onSave={() => continueToForecast("floating_save")}
         onSignup={() => goSignupToRadar("floating_save")}
         onClose={() => { if (!isLoggedIn) trackFunnel("floating_save_close", tab); }}
       />
+
+      {updateDialogOpen ? <ConstitutionUpdateDialog
+        currentCode={event?.current_core_code}
+        nextCode={computed?.core_code}
+        busy={attaching}
+        error={updateError}
+        onUpdate={() => attachToAccount(true)}
+        onKeep={() => { if (!attachingRef.current) router.push("/radar"); }}
+        onClose={() => { if (!attachingRef.current) setUpdateDialogOpen(false); }}
+      /> : null}
 
       <div className="mx-auto w-full max-w-[440px] px-4">
         <div className="pt-4 pb-3">
@@ -793,6 +832,7 @@ function ResultPage({ params }) {
       </div>
 
       <div ref={tabStartRef} aria-hidden="true" />
+      {needsConfirmation ? <p className="mx-auto mb-3 w-full max-w-[408px] rounded-[18px] border border-[#E9DEC5] bg-[#FFFBF2] px-4 py-3 text-[13px] font-medium leading-6 text-[#806539]">今回の結果は、まだ予報・ケアに反映していません。今の体質を使い続けることもできます。</p> : null}
       <SegmentedTabs value={tab} onChange={changeTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
@@ -943,13 +983,10 @@ function ResultPage({ params }) {
               </Card>
 
               <Card>
-                <CardHeader icon={<IconBolt />} title="次の一歩" sub="保存すると、今日・明日の体調予報に反映されます" />
+                <CardHeader icon={<IconBolt />} title="次の一歩" sub="今日・明日の予報と、その日に合うケアへ" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   <Button onClick={() => changeTab("compat")} className="w-full py-4">天気との相性を見る</Button>
-                  {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("overview_footer")} className="block mx-auto min-h-[44px] px-2 text-sm underline text-slate-500">結果を保存して、予報とケアへ</button> : null}
-                  {isAttached ? (
-                    <Button onClick={() => router.push("/radar")} className="w-full shadow-md py-4">今日・明日の予報とケアへ</Button>
-                  ) : null}
+                  <Button disabled={attaching} onClick={() => continueToForecast("overview_footer")} className="w-full shadow-md py-4">予報とケアを見る</Button>
                 </div>
               </Card>
             </>
@@ -1025,7 +1062,7 @@ function ResultPage({ params }) {
 
                 <div className="h-px w-full bg-slate-100" />
 
-                {!isAttached ? <button disabled={attaching} onClick={isLoggedIn ? () => attachToAccount(false) : () => goSignupToRadar("compat_footer")} className="block mx-auto min-h-[44px] px-2 py-4 text-sm underline text-slate-500">結果を保存して、予報とケアへ</button> : null}
+                <Button disabled={attaching} onClick={() => continueToForecast("compat_footer")} className="w-full shadow-md">予報とケアを見る</Button>
               </div>
             </Card>
           ) : null}
@@ -1069,12 +1106,14 @@ function ResultPage({ params }) {
                   <SavePromptCard
                     isLoggedIn={isLoggedIn}
                     isAttached={isAttached}
+                    isCurrent={!!event?.is_current}
+                    needsConfirmation={needsConfirmation}
                     session={session}
                     attaching={attaching}
-                    onSave={() => attachToAccount(false)}
+                    onSave={() => continueToForecast("care_footer")}
                     onSignup={() => goSignupToRadar("care_footer")}
                     onLogin={() => goLoginToRadar("care_footer")}
-                    onRadar={() => router.push("/radar")}
+                    onRadar={() => continueToForecast("care_footer")}
                   />
 
                 </div>
