@@ -4,6 +4,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
 import { validateDiagnosisAnswers } from "@/lib/diagnosis/v2/validateAnswers";
 import { hasValidGuestToken } from "@/lib/diagnosisGuestAccess";
+import { loadResultProfileState } from "@/lib/diagnosis/v2/profileState";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -124,6 +125,7 @@ export async function GET(req, { params }) {
       : diagnosisSymptomFocus;
 
     const safe = {
+      ...await loadResultProfileState(supabaseServer, authedUser?.id, id),
       id: data.id,
       created_at: data.created_at,
       symptom_focus: diagnosisSymptomFocus,
