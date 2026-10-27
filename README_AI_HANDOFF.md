@@ -1,6 +1,18 @@
 # 未病レーダー AI開発引き継ぎ
 
-**対象ソース: v7.79.103**
+**対象ソース: v7.79.106**
+
+v106の現行メモは `README-v779105-to-v779106.md`。公開前に `supabase/migrations/20261027_confirm_constitution_update_v779106.sql` を適用。`attach_diagnosis_v779106` がアカウント単位で保存を直列化し、既存プロフィールの置き換えは `confirm_update: true` を明示した操作だけに許可します。未適用時は503で停止し、旧RPCへフォールバックしません。古いv90関数は内部の原子的書き込みと動作ライン保存の互換性のため残します。
+
+`completeConstitutionCheck` は初回保存成功時だけ `onSaved` を呼びます。再チェックの409 `PROFILE_UPDATE_CONFIRMATION_REQUIRED` は結果プレビューへ進み、保存成功とは計測しません。結果GETは本人の現在プロフィールとsource_event_idを照合して `has_current_profile` / `is_current` / `current_core_code` を返します。動物タイプが同じでも別の結果なら確認が必要です。
+
+結果画面の全CTAは共通の `continueToForecast` を使用。再チェック時は `ConstitutionUpdateDialog` で更新・据え置きを選び、閉じても変更しません。更新しなかった結果はアカウント履歴には登録しません（既存guest cookieによる3日間のプレビュー）。保存済みの結果にも100pxスクロール後に固定CTAを表示し、×の状態を結果別にsessionStorageへ保持します。Google/メールの旧保存経路も確認要求を受けたら結果画面へ戻します。自動的にconfirm_updateを付けないこと。
+
+以下のv102〜105の説明は、その当時の仕様です。保存の挙動と追加SQLについては上記v106の説明を優先します。
+
+v105の現行メモは `README-v779104-to-v779105.md`。明示的な `/check/run` 行きのログインには `CheckLoginWelcome` を維持し、通常ログインには新しい `AppLoginWelcome` を使用します。ホーム・予報・記録・設定・履歴・ご意見のログインボタンへそれぞれの `next` を設定。明示的な戻り先は古いpending結果を引き継ぎません。パラメーターなしの `/signup` は通常ログインです。Google callbackのURL欠落時のpending回復と過去の未保存結果の保存経路は維持します。チェック完了履歴・回数の判定は追加していません。14日体験のポップアップ・価格・体験起点・予報や体質のロジックは変更していません。
+
+v104の変更は `components/auth/CheckLoginWelcome.jsx` の装飾SVGだけです。円の表示枠と座標を調整し、アンバーの点の見切れを修正。2色の円弧と点が見えるようにしました。文言・レイアウト・認証・料金・初回案内の処理には変更ありません。
 
 現行メモは `README-v779102-to-v779103.md`。チェック前の入口は「ログイン」に統一し、無料体験や料金の訴求を表示しません。6タイプの既存画像を使った専用ウェルカム `CheckLoginWelcome` を表示します。
 
