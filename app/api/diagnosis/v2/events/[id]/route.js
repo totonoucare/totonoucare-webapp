@@ -120,12 +120,15 @@ export async function GET(req, { params }) {
     }
     const computed = scoreDiagnosis(scoringAnswers); // always recompute from current v2 answers
     const diagnosisSymptomFocus = computed.symptom_focus || data.symptom_focus || "fatigue";
-    const activeSymptomFocus = data.user_id
+    const profileState = await loadResultProfileState(supabaseServer, authedUser?.id, id);
+    // Archived rechecks describe their own answers until explicitly adopted.
+    // Only the active result follows the separately editable current symptom.
+    const activeSymptomFocus = data.user_id && profileState.is_current
       ? await getActiveSymptomForUser(data.user_id) || diagnosisSymptomFocus
       : diagnosisSymptomFocus;
 
     const safe = {
-      ...await loadResultProfileState(supabaseServer, authedUser?.id, id),
+      ...profileState,
       id: data.id,
       created_at: data.created_at,
       symptom_focus: diagnosisSymptomFocus,
