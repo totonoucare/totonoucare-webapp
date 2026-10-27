@@ -21,10 +21,10 @@ function getBearer(req) {
 /**
  * Attach flow:
  * 1) validate bearer -> user
- * 2) validate guest token cookie
- * 3) load diagnosis_events
- * 4) atomically persist event, profile, diagnosis ownership and guest claim
- *    using the same diagnosis-row lock as the body-line save RPC
+ * 2) load diagnosis_events, require the owner or a valid pending-result cookie
+ * 3) require explicit consent before replacing an existing profile
+ * 4) atomically persist through the guarded RPC, which reuses the v90 transaction
+ *    and its diagnosis-row lock shared with body-line saves
  */
 export async function POST(req, { params }) {
   try {
@@ -43,14 +43,6 @@ export async function POST(req, { params }) {
       );
     }
     const user = userData.user;
-
-    const guestOk = await hasValidGuestToken({ req, supabase: supabaseServer, eventId: id });
-    if (!guestOk) {
-      return NextResponse.json(
-        { error: "この診断結果を引き継ぐ権限がありません。結果ページからもう一度お試しください。" },
-        { status: 403 }
-      );
-    }
 
     // --- Load diagnosis_events
     const { data: ev, error: e0 } = await supabaseServer
@@ -82,6 +74,17 @@ export async function POST(req, { params }) {
         { status: 403 }
       );
     }
+
+    // Saved results belong to their authenticated owner; pending rechecks still
+    // require their private guest cookie. Another account's result is never claimable.
+    if (!ev.user_id && !await hasValidGuestToken({ req, supabase: supabaseServer, eventId: id })) {
+      return NextResponse.json(
+        { error: "この体質結果を引き継ぐ権限がありません。結果ページからもう一度お試しください。" },
+        { status: 403 }
+      );
+    }
+    let body = {};
+    try { body = await req.json(); } catch { /* Initial automatic save has no body. */ }
 
     const validation = validateDiagnosisAnswers(ev.answers || {});
     if (!validation.ok) {
@@ -133,7 +136,7 @@ export async function POST(req, { params }) {
     // One transaction shares the diagnosis lock with body-line saves.
     const profilePayload = buildConstitutionProfilePayload(user.id, answers);
     const { data: ceId, error: attachError } = await supabaseServer.rpc(
-      "attach_diagnosis_v77990",
+      "attach_diagnosis_v779106",
       {
         p_event_id: id,
         p_user_id: user.id,
@@ -142,8 +145,21 @@ export async function POST(req, { params }) {
         p_expected_computed: ev.computed,
         p_event_payload: eventRow,
         p_profile_payload: profilePayload,
+        p_confirm_replace: body?.confirm_update === true,
       }
     );
+    if (attachError?.code === "P0106") {
+      return NextResponse.json(
+        { error: "今回の結果に更新するか選んでください。現在の体質は変更していません。", code: "PROFILE_UPDATE_CONFIRMATION_REQUIRED" },
+        { status: 409 }
+      );
+    }
+    if (attachError?.code === "PGRST202" || attachError?.code === "42883") {
+      return NextResponse.json(
+        { error: "保存機能の更新準備中です。少し時間をおいて再試行してください。", code: "PROFILE_UPDATE_SETUP_REQUIRED" },
+        { status: 503 }
+      );
+    }
     if (attachError?.code === "40001") {
       return NextResponse.json(
         { error: "診断情報が更新されました。ページを読み直してからお試しください。", code: "DIAGNOSIS_CHANGED" },
