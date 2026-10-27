@@ -684,7 +684,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
       ? `${core.short}。体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。`
       : "体質のクセ・天気との相性・ケアの方向性をいつでも確認できます。";
     primaryLabel = "体質トリセツを見る";
-    secondaryLabel = "体質チェックを更新する";
+    secondaryLabel = "もう一度体質チェックする";
   }
 
   return (
@@ -890,7 +890,7 @@ export default function HomePage() {
   const [todayBundle, setTodayBundle] = useState(null);
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
   const [todayReview, setTodayReview] = useState(null);
-  const [latestResult, setLatestResult] = useState(null);
+  const [currentResult, setCurrentResult] = useState(null);
   const [radarLocation, setRadarLocation] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -966,7 +966,7 @@ export default function HomePage() {
         setTodayBundle(null);
         setTomorrowBundle(null);
         setTodayReview(null);
-        setLatestResult(null);
+        setCurrentResult(null);
         setRadarLocation(null);
         setTodayLoading(false);
         setTomorrowLoading(false);
@@ -1037,11 +1037,11 @@ export default function HomePage() {
       }
       try {
         setDashboardLoading(true);
-        const historyRes = await authedFetch(`/api/diagnosis/v2/events/list?limit=1`).catch(() => null);
+        const historyRes = await authedFetch(`/api/diagnosis/v2/events/list?limit=1&current=1`).catch(() => null);
 
         if (cancelled) return;
 
-        setLatestResult(historyRes?.data?.[0] || null);
+        setCurrentResult(historyRes?.data?.[0] || null);
       } catch (e) {
         console.error(e);
       } finally {
@@ -1099,14 +1099,14 @@ export default function HomePage() {
 
   // ===== ===== =====
 
-  const latestResultHref = latestResult?.source_event_id
-    ? `/result/${encodeURIComponent(latestResult.source_event_id)}?from=history`
-    : latestResult?.notes?.source_event_id
-      ? `/result/${encodeURIComponent(latestResult.notes.source_event_id)}?from=history`
+  const currentResultHref = currentResult?.source_event_id
+    ? `/result/${encodeURIComponent(currentResult.source_event_id)}?from=history`
+    : currentResult?.notes?.source_event_id
+      ? `/result/${encodeURIComponent(currentResult.notes.source_event_id)}?from=history`
       : null;
 
-  const core = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
-  const subs = getSubLabels(latestResult?.sub_labels || []);
+  const core = currentResult?.core_code ? getCoreLabel(currentResult.core_code) : null;
+  const subs = getSubLabels(currentResult?.sub_labels || []);
 
   if (loadingSession || (isLoggedIn && accessLoading)) {
     return (
@@ -1259,7 +1259,7 @@ export default function HomePage() {
           <div className="mt-2 text-[19px] font-black leading-7 text-slate-900">体質トリセツと、これまでの記録は残っています</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">今日の参考予報は確認できます。あなたの体質を重ねた予報とケアは、プレミアムで続けられます。</div>
           <div className="mt-4 grid grid-cols-3 gap-2">
-            <Button size="sm" variant="secondary" onClick={() => router.push(latestResultHref || "/history")}>体質結果</Button>
+            <Button size="sm" variant="secondary" onClick={() => router.push(currentResultHref || "/history")}>体質結果</Button>
             <Button size="sm" variant="secondary" onClick={() => router.push("/records")}>記録</Button>
             <Button size="sm" variant="secondary" onClick={() => router.push("/care-navi")}>ショップ</Button>
           </div>
@@ -1356,7 +1356,7 @@ export default function HomePage() {
         onOpenRadar={() => router.push("/radar")}
         onOpenRecords={() => router.push("/records")}
         todayRecorded={Boolean(todayReview)}
-        coreCode={latestResult?.core_code || null}
+        coreCode={currentResult?.core_code || null}
         coreTitle={core?.title || ""}
       />
 
@@ -1366,32 +1366,32 @@ export default function HomePage() {
       />
 
       <MyCareSelectHomeCard
-        hasResult={Boolean(latestResult && core)}
+        hasResult={Boolean(currentResult && core)}
         onPrimary={() => {
-          if (!latestResult || !core) return router.push("/check");
+          if (!currentResult || !core) return router.push("/check");
           return router.push("/care-navi");
         }}
         onBrowseSingle={() => {
-          if (!latestResult || !core) return router.push("/check");
+          if (!currentResult || !core) return router.push("/check");
           return router.push("/care-navi?category=live");
         }}
       />
 
       <HomeStateCta
-        loading={dashboardLoading || (Boolean(latestResult && core) && locationLoading)}
-        hasResult={Boolean(latestResult && core)}
+        loading={dashboardLoading || (Boolean(currentResult && core) && locationLoading)}
+        hasResult={Boolean(currentResult && core)}
         hasLocation={Boolean(radarLocation)}
         core={core}
-        coreCode={latestResult?.core_code}
+        coreCode={currentResult?.core_code}
         subs={subs}
         onPrimary={() => {
-          if (!latestResult || !core) return router.push("/check");
+          if (!currentResult || !core) return router.push("/check");
           if (!radarLocation) return router.push("/radar");
-          return router.push(latestResultHref || "/history");
+          return router.push(currentResultHref || "/history");
         }}
         onSecondary={() => {
-          if (!latestResult || !core) return router.push("/guide");
-          if (!radarLocation) return router.push(latestResultHref || "/history");
+          if (!currentResult || !core) return router.push("/guide");
+          if (!radarLocation) return router.push(currentResultHref || "/history");
           return router.push("/check/run");
         }}
       />
