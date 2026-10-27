@@ -222,7 +222,7 @@ export default function CheckRunPage() {
         eventId: createdResultRef.current,
         onCreated: (id) => {
           createdResultRef.current = id;
-          setPendingDiagnosisAttach({ resultId: id, nextPath: `/result/${encodeURIComponent(id)}` });
+          setPendingDiagnosisAttach({ resultId: id, nextPath: `/result/${encodeURIComponent(id)}?from=check_complete` });
         },
         onSaved: () => trackFunnel("result_save_success"),
       });
@@ -230,12 +230,12 @@ export default function CheckRunPage() {
 
       clearCheckDraft();
 
-      router.push(`/result/${encodeURIComponent(eventId)}`);
+      router.push(`/result/${encodeURIComponent(eventId)}?from=check_complete`);
     } catch (e) {
       if (e?.status === 401) {
         const id = createdResultRef.current;
         router.replace(id
-          ? `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/result/${encodeURIComponent(id)}`)}`
+          ? `/signup?result=${encodeURIComponent(id)}&next=${encodeURIComponent(`/result/${encodeURIComponent(id)}?from=check_complete`)}`
           : CHECK_SIGNUP_HREF);
         return;
       }
