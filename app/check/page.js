@@ -41,8 +41,8 @@ export default function CheckLandingPage() {
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
-  const [latestResult, setLatestResult] = useState(null);
-  const [loadingLatest, setLoadingLatest] = useState(false);
+  const [currentResult, setCurrentResult] = useState(null);
+  const [loadingCurrent, setLoadingCurrent] = useState(false);
 
 
   useEffect(() => {
@@ -78,23 +78,23 @@ export default function CheckLandingPage() {
 
     (async () => {
       if (!session?.access_token) {
-        setLatestResult(null);
-        setLoadingLatest(false);
+        setCurrentResult(null);
+        setLoadingCurrent(false);
         return;
       }
       try {
-        setLoadingLatest(true);
-        const res = await fetch("/api/diagnosis/v2/events/list?limit=1", {
+        setLoadingCurrent(true);
+        const res = await fetch("/api/diagnosis/v2/events/list?limit=1&current=1", {
           headers: { Authorization: `Bearer ${session.access_token}` },
           cache: "no-store",
         });
         const json = await res.json().catch(() => ({}));
-        if (!cancelled) setLatestResult(json?.data?.[0] || null);
+        if (!cancelled) setCurrentResult(json?.data?.[0] || null);
       } catch (e) {
         console.error(e);
-        if (!cancelled) setLatestResult(null);
+        if (!cancelled) setCurrentResult(null);
       } finally {
-        if (!cancelled) setLoadingLatest(false);
+        if (!cancelled) setLoadingCurrent(false);
       }
     })();
 
@@ -104,10 +104,10 @@ export default function CheckLandingPage() {
   }, [session?.access_token]);
 
   const isLoggedIn = !!session;
-  const latestResultId = latestResult?.source_event_id || latestResult?.notes?.source_event_id || null;
-  const latestResultHref = latestResultId ? `/result/${encodeURIComponent(latestResultId)}?from=check` : null;
-  const latestCore = latestResult?.core_code ? getCoreLabel(latestResult.core_code) : null;
-  const latestSubs = getSubLabels(latestResult?.sub_labels || []);
+  const currentResultId = currentResult?.source_event_id || currentResult?.notes?.source_event_id || null;
+  const currentResultHref = currentResultId ? `/result/${encodeURIComponent(currentResultId)}?from=check` : null;
+  const currentCore = currentResult?.core_code ? getCoreLabel(currentResult.core_code) : null;
+  const currentSubs = getSubLabels(currentResult?.sub_labels || []);
 
   return (
     <AppShell title="体質トリセツ">
@@ -119,24 +119,24 @@ export default function CheckLandingPage() {
         />
 
         <div className="space-y-5 px-5 pb-8 pt-4">
-          {isLoggedIn && (loadingLatest || latestResult) ? (
+          {isLoggedIn && (loadingCurrent || currentResult) ? (
             <section className="relative overflow-hidden rounded-[28px] bg-white p-5 shadow-[0_18px_38px_-26px_rgba(40,55,48,0.22)] ring-1 ring-[color:var(--ring)]">
-              {loadingLatest ? (
+              {loadingCurrent ? (
                 <div className="h-24 animate-pulse rounded-[22px] bg-slate-100" />
               ) : (
                 <div className="relative z-10">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="text-[12px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">LATEST</div>
+                      <div className="text-[12px] font-black uppercase tracking-[0.18em] text-[var(--gold)]">IN USE</div>
                       <div className="mt-2 text-[22px] font-black leading-tight tracking-tight text-slate-950">
-                        最新のトリセツ
+                        反映中のトリセツ
                       </div>
                       <div className="mt-2 text-[14px] font-bold leading-6 text-[#536072]">
-                        {latestCore ? `${latestCore.title}：${latestCore.short}` : "保存済みのトリセツを確認できます。"}
+                        {currentCore ? `${currentCore.title}：${currentCore.short}` : "保存済みのトリセツを確認できます。"}
                       </div>
-                      {latestSubs.length ? (
+                      {currentSubs.length ? (
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          {latestSubs.slice(0, 3).map((sub) => (
+                          {currentSubs.slice(0, 3).map((sub) => (
                             <span key={sub.code} className="rounded-lg bg-[#F4F9F6] px-2.5 py-1 text-[12px] font-extrabold text-[#24564C] ring-1 ring-[#D3E1D5]">
                               {sub.short}
                             </span>
@@ -144,7 +144,7 @@ export default function CheckLandingPage() {
                         </div>
                       ) : null}
                     </div>
-                    <Button variant="secondary" size="sm" onClick={() => router.push(latestResultHref || "/history")} className="shrink-0 bg-white px-5 shadow-sm">
+                    <Button variant="secondary" size="sm" onClick={() => router.push(currentResultHref || "/history")} className="shrink-0 bg-white px-5 shadow-sm">
                       開く
                     </Button>
                   </div>
@@ -169,14 +169,14 @@ export default function CheckLandingPage() {
                   <h1 className="mt-1 text-[25px] font-black leading-[1.18] tracking-tight text-slate-950">
                     体質トリセツを
                     <br />
-                    {latestResult ? "更新する" : "作る"}
+                    {currentResult ? "作り直す" : "作る"}
                   </h1>
                 </div>
               </div>
 
               <p className="mt-5 text-[14px] font-bold leading-7 text-[#536072]">
-                {latestResult
-                  ? "体調や気になる不調が変わったら、再チェックしてトリセツを更新できます。"
+                {currentResult
+                  ? "体調や気になる不調が変わったら、再チェックできます。結果は履歴に保存され、予報・ケアに反映するかを選べます。"
                   : CONSTITUTION_CHECK_INTRO}
               </p>
 
@@ -195,7 +195,7 @@ export default function CheckLandingPage() {
                   disabled={loadingAuth}
                   className="h-14 w-full rounded-[20px] text-[16px] shadow-[0_16px_28px_-16px_rgba(42,99,80,0.52)]"
                 >
-                  {loadingAuth ? "確認中…" : !isLoggedIn ? "ログインして体質チェックへ" : latestResult ? "体質チェックを更新する" : "無料で体質チェックを始める"}
+                  {loadingAuth ? "確認中…" : !isLoggedIn ? "ログインして体質チェックへ" : currentResult ? "もう一度体質チェックする" : "無料で体質チェックを始める"}
                 </Button>
                 {!loadingAuth && !isLoggedIn ? <p className="mt-3 text-center text-[13px] font-medium leading-6 text-slate-500">ログイン後、そのままチェックへ進みます。</p> : null}
               </div>
