@@ -109,7 +109,7 @@ export default function HistoryPage() {
           </div>
           <div className="mt-2 text-[14px] leading-6 font-bold text-slate-600">
             履歴を見るにはログインしてください。<br/>
-            未ログイン時の結果も、結果画面から「保存」を押せば履歴に残せます。
+            保存済みの体質トリセツを確認できます。
           </div>
           <div className="mt-6 flex flex-col gap-3">
             <Button onClick={() => router.push("/signup?next=%2Fhistory")} className="w-full shadow-md">ログイン / 無料登録へ</Button>
@@ -142,7 +142,7 @@ export default function HistoryPage() {
             まだ履歴がありません
           </div>
           <div className="mt-2 text-[14px] leading-6 font-bold text-slate-500">
-            体質チェックを行い、結果画面で「保存」を押すとここに残ります。
+            体質チェックの結果を確定すると、自動でここに保存されます。
           </div>
           <div className="mt-6">
             <Button onClick={() => router.push("/check")} className="shadow-md">体質チェックをはじめる</Button>
@@ -173,7 +173,10 @@ export default function HistoryPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">{when}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[12px] font-black uppercase tracking-widest text-slate-400">{when}</div>
+                    {r.is_current ? <span className="rounded-full bg-[#E8F4ED] px-2.5 py-1 text-[11px] font-bold text-[#24564C]">反映中</span> : null}
+                  </div>
                   <div className="mt-1 text-[16px] font-black tracking-tight text-slate-900">{symptom}</div>
                 </div>
                 <div className="shrink-0 text-slate-300">
