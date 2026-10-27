@@ -22,9 +22,9 @@ function getBearer(req) {
  * Attach flow:
  * 1) validate bearer -> user
  * 2) load diagnosis_events, require the owner or a valid pending-result cookie
- * 3) require explicit consent before replacing an existing profile
- * 4) atomically persist through the guarded RPC, which reuses the v90 transaction
- *    and its diagnosis-row lock shared with body-line saves
+ * 3) always archive a completed result; only the initial result auto-adopts
+ * 4) require explicit consent before replacing an existing forecast profile
+ * 5) atomically persist with the diagnosis-row lock shared with body-line saves
  */
 export async function POST(req, { params }) {
   try {
@@ -135,8 +135,8 @@ export async function POST(req, { params }) {
 
     // One transaction shares the diagnosis lock with body-line saves.
     const profilePayload = buildConstitutionProfilePayload(user.id, answers);
-    const { data: ceId, error: attachError } = await supabaseServer.rpc(
-      "attach_diagnosis_v779106",
+    const { data: saved, error: attachError } = await supabaseServer.rpc(
+      "save_diagnosis_v779107",
       {
         p_event_id: id,
         p_user_id: user.id,
@@ -150,7 +150,7 @@ export async function POST(req, { params }) {
     );
     if (attachError?.code === "P0106") {
       return NextResponse.json(
-        { error: "今回の結果に更新するか選んでください。現在の体質は変更していません。", code: "PROFILE_UPDATE_CONFIRMATION_REQUIRED" },
+        { error: "この結果を予報・ケアに反映するか選んでください。反映中の体質は変更していません。", code: "PROFILE_UPDATE_CONFIRMATION_REQUIRED" },
         { status: 409 }
       );
     }
@@ -167,15 +167,21 @@ export async function POST(req, { params }) {
       );
     }
     if (attachError) throw attachError;
-    if (!ceId) throw new Error("constitution_events の作成に失敗しました");
+    if (!saved?.constitution_event_id) throw new Error("constitution_events の作成に失敗しました");
 
     const res = NextResponse.json({
       data: {
         ok: true,
+        saved: true,
         attached: true,
         eventId: id,
         userId: user.id,
-        latest_event_id: ceId,
+        constitution_event_id: saved.constitution_event_id,
+        current_event_id: saved.current_event_id,
+        latest_event_id: saved.current_event_id,
+        has_current_profile: saved.has_current_profile === true,
+        is_current: saved.is_current === true,
+        current_core_code: saved.current_core_code || null,
       },
     });
 
