@@ -383,6 +383,12 @@ export default function SignupClient() {
         }
       );
       const j = await res.json().catch(() => ({}));
+      if (res.status === 409 && j?.code === "PROFILE_UPDATE_CONFIRMATION_REQUIRED") {
+        clearPendingDiagnosisAttach();
+        clearCheckDraft();
+        window.location.replace(`/result/${encodeURIComponent(params.resultId)}`);
+        return false;
+      }
       if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
 
       trackFunnel("result_save_success");
