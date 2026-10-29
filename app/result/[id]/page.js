@@ -223,7 +223,10 @@ function SaveStickyBar({ id, isLoggedIn, isAttached, attaching, onSave, onSignup
   const ctaLabel = attaching ? "処理中…" : isLoggedIn || isAttached ? "予報とケアを見る" : "ログインして予報とケアへ";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
-    <div className="result-save-cta-enter fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2">
+    <div
+      className="result-save-cta-enter fixed inset-x-0 z-40 px-4 pb-2.5 pt-2"
+      style={{ bottom: "var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px)))" }}
+    >
       <div className="mx-auto w-full max-w-[440px] rounded-[20px] border border-[#d7e6df] bg-white/95 p-2.5 shadow-[0_18px_34px_-14px_rgba(15,23,42,0.24)] backdrop-blur-xl">
         <div className="flex items-center gap-1.5">
           <Button onClick={onClick} disabled={isLoggedIn && attaching} className="!h-11 min-w-0 flex-1 whitespace-nowrap rounded-full !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
@@ -710,7 +713,7 @@ function ResultPage({ params }) {
 
   if (loadingEvent) {
     return (
-      <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="体質トリセツ" headerLeft={headerLeft} headerRight={headerRight}>
         <Module className="border-none shadow-none">
           <ModuleHeader icon={<IconResult />} title="トリセツを読み込み中…" sub="少し待ってください" />
           <div className="px-5 pb-6 pt-4">
@@ -726,7 +729,7 @@ function ResultPage({ params }) {
 
   if (!event || event?.notFound) {
     return (
-      <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="体質トリセツ" headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
           <ModuleHeader icon={<IconResult />} title="トリセツが見つかりません" sub="期限切れ/削除、または保存失敗の可能性" />
           <div className="px-5 pb-6 pt-4 space-y-5">
@@ -744,7 +747,7 @@ function ResultPage({ params }) {
 
   if (event?.retake_required) {
     return (
-      <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+      <AppShell title="体質トリセツ" headerLeft={headerLeft} headerRight={headerRight}>
         <Module>
           <ModuleHeader icon={<IconResult />} title="体質チェックが新しくなりました" sub="新しい質問でトリセツを作り直せます" />
           <div className="space-y-5 px-5 pb-6 pt-4">
@@ -761,7 +764,7 @@ function ResultPage({ params }) {
   }
 
   return (
-    <AppShell title="体質トリセツ" noTabs={true} headerLeft={headerLeft} headerRight={headerRight}>
+    <AppShell title="体質トリセツ" headerLeft={headerLeft} headerRight={headerRight}>
       {toast ? (
         <div className="fixed left-1/2 top-4 z-[100] w-[92%] max-w-md -translate-x-1/2 rounded-full bg-slate-900/95 backdrop-blur-md px-5 py-3.5 text-[14px] font-extrabold text-white shadow-[0_16px_32px_-12px_rgba(0,0,0,0.3)] animate-in fade-in slide-in-from-top-4">
           {toast}
@@ -884,7 +887,7 @@ function ResultPage({ params }) {
       <SegmentedTabs value={tab} onChange={changeTab} />
 
       <div className="mx-auto w-full max-w-[440px] px-4">
-        <div className="mt-3 space-y-6 pb-[calc(env(safe-area-inset-bottom)+128px)]">
+        <div className="mt-3 space-y-6 pb-32">
           {tab === "overview" ? (
             <>
               <Card>
