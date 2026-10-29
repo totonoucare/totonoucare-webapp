@@ -1,6 +1,7 @@
 "use client";
 // app/result/[id]/page.js
 import { trackFunnel } from "@/lib/funnelClient";
+import { trackJourney } from "@/lib/journeyClient";
 import {ResultFeedback} from '@/components/experience/ExperienceProvider';
 
 
@@ -213,9 +214,10 @@ function SaveStickyBar({ id, isLoggedIn, isAttached, attaching, onSave, onSignup
     return observeResultSaveCtaScroll(window, () => setVisible(true));
   }, [dismissed, visible]);
   useEffect(() => {
-    if (!visible || dismissed || isLoggedIn || isAttached || viewTracked.current) return;
+    if (!visible || dismissed || viewTracked.current) return;
     viewTracked.current = true;
-    trackFunnel("signup_cta_view");
+    if (isLoggedIn) trackJourney("forecast_cta_view", { position: "floating_save" });
+    else if (!isAttached) trackFunnel("signup_cta_view");
   }, [visible, dismissed, isLoggedIn, isAttached]);
   if (dismissed || !visible) return null;
   const ctaLabel = attaching ? "処理中…" : isLoggedIn || isAttached ? "予報とケアを見る" : "ログインして予報とケアへ";
@@ -626,6 +628,7 @@ function ResultPage({ params }) {
   function continueToForecast(ctaLocation = "") {
     if (attachingRef.current) return;
     if (!isLoggedIn) { goSignupToRadar(ctaLocation); return; }
+    if (ctaLocation) trackJourney("forecast_cta_click", { position: ctaLocation, tab, state: event?.is_current ? "current" : isAttached ? "history" : "unsaved" });
     if (needsConfirmation) {
       setUpdateError("");
       setUpdateDialogOpen(true);
@@ -773,7 +776,7 @@ function ResultPage({ params }) {
         attaching={attaching}
         onSave={() => continueToForecast("floating_save")}
         onSignup={() => goSignupToRadar("floating_save")}
-        onClose={() => { if (!isLoggedIn) trackFunnel("floating_save_close", tab); }}
+        onClose={() => { if (!isLoggedIn) trackFunnel("floating_save_close", tab); else trackJourney("forecast_cta_close", { position: "floating_save", tab }); }}
       /> : null}
 
       {updateDialogOpen ? <ConstitutionUpdateDialog
@@ -876,7 +879,7 @@ function ResultPage({ params }) {
         <p className="text-[13px] font-bold leading-6 text-[#806539]">{isAttached ? "この結果は履歴に保存済みです。" : "この結果をアカウントに保存できます。"}</p>
         <p className="mt-1 text-[13px] font-medium leading-6 text-[#806539]">予報・ケアに反映するかを選べます。</p>
         <Button disabled={attaching} onClick={requestResultAdoption} className="mt-3 w-full !rounded-[15px] !text-[14px]">この結果を反映する</Button>
-        <button type="button" disabled={attaching} onClick={() => router.push("/radar")} className="mx-auto mt-1 block min-h-[44px] px-2 text-[12px] font-bold text-[#6D7368] underline underline-offset-4 disabled:opacity-50">反映中のトリセツで予報へ</button>
+        <button type="button" disabled={attaching} onClick={() => { trackJourney("forecast_cta_click", { position: "reflected_profile_link", tab, state: "history" }); router.push("/radar"); }} className="mx-auto mt-1 block min-h-[44px] px-2 text-[12px] font-bold text-[#6D7368] underline underline-offset-4 disabled:opacity-50">反映中のトリセツで予報へ</button>
       </section> : event?.is_current ? <p role="status" className="mx-auto mb-3 w-[calc(100%-2rem)] max-w-[408px] rounded-[18px] bg-[#EEF7F1] px-4 py-3 text-[13px] font-bold leading-6 text-[#426758]">{appliedHere ? "この結果を予報・ケアに反映しました。" : "このトリセツを予報・ケアに反映中です。"}</p> : null}
       <SegmentedTabs value={tab} onChange={changeTab} />
 
