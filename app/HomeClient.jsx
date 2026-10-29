@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { withTimeout } from "@/lib/withTimeout";
 import { getCoreLabel, getSubLabels } from "@/lib/diagnosis/v2/labels";
-import { CONSTITUTION_CHECK_INTRO } from "@/lib/diagnosis/v2/uiCopy";
+import { HOME_CHECK_TITLE, HOME_CHECK_CTA, HOME_CHECK_INTRO } from "@/lib/homeEntryCopy";
 import {
   HeroTitleMark,
   HomeHeaderMenu,
@@ -411,6 +411,7 @@ function GuestStartCta({ onCheck, onLogin }) {
     {
       key: "type",
       title: "体質トリセツ",
+      titleLines: ["体質", "トリセツ"],
       sub: "崩れ方のクセ",
       icon: <IconCheckCard />,
       tone: "text-[#24564C] bg-white ring-[#CFE0D3]",
@@ -423,10 +424,11 @@ function GuestStartCta({ onCheck, onLogin }) {
       tone: "text-[#8B640C] bg-white ring-[#E9D8A9]",
     },
     {
-      key: "care",
-      title: "ショップ",
-      sub: "ケア用品・食品",
-      icon: <AppIcon name="care" className="h-[22px] w-[22px]" />,
+      key: "records",
+      title: "記録・AI相談",
+      titleLines: ["記録・", "AI相談"],
+      sub: "体調の記録と相談",
+      icon: <AppIcon name="chat" className="h-[22px] w-[22px]" />,
       tone: "text-[#2F8F79] bg-white ring-[#CFE0D3]",
     },
   ];
@@ -445,29 +447,29 @@ function GuestStartCta({ onCheck, onLogin }) {
             START GUIDE
           </div>
           <h2 className="mt-2 text-[17px] font-black tracking-tight text-[#24564C] leading-[1.35]">
-            体質トリセツを作って、体調予報とパーソナルケアショップへ
+            {HOME_CHECK_TITLE}
           </h2>
           <p className="mt-2 text-[14px] font-bold leading-6 text-[#5b6674]">
-            {CONSTITUTION_CHECK_INTRO}
+            {HOME_CHECK_INTRO}
           </p>
         </div>
       </div>
 
       <div className="relative z-10 mt-4 grid grid-cols-3 gap-2">
         {steps.map((step) => (
-          <div key={step.key} className="rounded-[18px] bg-white/85 p-3 text-center ring-1 ring-[#D3E1D5] shadow-sm">
+          <div key={step.key} className="rounded-[18px] bg-white/85 p-2 text-center ring-1 ring-[#D3E1D5] shadow-sm">
             <div className={["mx-auto grid h-10 w-10 place-items-center rounded-[14px] ring-1", step.tone].join(" ")}>
               {step.icon}
             </div>
-            <div className="mt-2 text-[12px] font-black text-slate-900 leading-4">{step.title}</div>
-            <div className="mt-0.5 text-[12px] font-bold leading-4 text-slate-500">{step.sub}</div>
+            <div className="mt-2 text-[11px] font-black text-slate-900 leading-4">{(step.titleLines || [step.title]).map(line => <span key={line} className="block">{line}</span>)}</div>
+            <div className="mt-0.5 text-[11px] font-bold leading-4 text-slate-500">{step.sub}</div>
           </div>
         ))}
       </div>
 
       <div className="relative z-10 mt-5 grid gap-3">
         <Button onClick={onCheck} className="py-4 shadow-md text-[14px] w-full">
-          無料で体質チェックを始める
+          {HOME_CHECK_CTA}
         </Button>
         <Button variant="secondary" onClick={onLogin} className="py-4 shadow-sm text-[14px] w-full bg-white">
           ログインする
@@ -665,8 +667,8 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   let icon = <IconCheckCard />;
   let eyebrow = "TYPE GUIDE";
   let title = "体質トリセツを作る";
-  let body = CONSTITUTION_CHECK_INTRO;
-  let primaryLabel = "無料で体質チェックを始める";
+  let body = HOME_CHECK_INTRO;
+  let primaryLabel = HOME_CHECK_CTA;
   let secondaryLabel = "使い方を見る";
 
   if (hasResult && !hasLocation) {
@@ -1163,6 +1165,9 @@ export default function HomePage() {
               <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
             </div>
           </div>
+          <Button onClick={() => router.push("/check")} className="relative z-[3] mt-5 w-full py-4 text-[14px] shadow-md">
+            {HOME_CHECK_CTA}
+          </Button>
         </Module>
 
         <Module className="px-6 pt-6 pb-12 sm:max-w-[400px] sm:mx-auto">
@@ -1227,15 +1232,6 @@ export default function HomePage() {
             onLogin={() => router.push("/signup?next=%2F")}
           />
 
-          <ul className="mt-6 space-y-2.5">
-            <li className="flex items-center gap-2 text-[12px] font-bold text-slate-500 justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 text-[var(--accent)]" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-              登録後14日間、体調予報・記録・AI相談まで
-              <span className="font-extrabold text-slate-700">無料体験</span>
-            </li>
-          </ul>
         </Module>
       </AppShell>
     );
