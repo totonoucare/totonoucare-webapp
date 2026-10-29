@@ -4,6 +4,7 @@ import {useExperienceSlot} from '@/components/experience/ExperienceProvider';
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { iosInstallGuide } from "@/lib/pwa/installGuide";
 
 const DISMISS_UNTIL_KEY = "mibyo-radar-pwa-install-dismiss-until";
 const DISMISS_DAYS = 14;
@@ -17,25 +18,6 @@ function isStandaloneMode() {
     window.matchMedia?.("(display-mode: fullscreen)")?.matches ||
     window.navigator?.standalone === true
   );
-}
-
-function isProbablyIos() {
-  if (typeof window === "undefined") return false;
-
-  const ua = window.navigator.userAgent || "";
-  const platform = window.navigator.platform || "";
-
-  return (
-    /iPhone|iPad|iPod/i.test(ua) ||
-    (platform === "MacIntel" && Number(window.navigator.maxTouchPoints || 0) > 1)
-  );
-}
-
-function isProbablySafari() {
-  if (typeof window === "undefined") return false;
-
-  const ua = window.navigator.userAgent || "";
-  return /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|Chrome|Chromium|Android/i.test(ua);
 }
 
 function getDismissUntil() {
@@ -69,10 +51,10 @@ export default function PwaInstallPrompt() {
   const deferredPromptRef = useRef(null);
 
   const [canPrompt, setCanPrompt] = useState(false);
-  const [isIosSafari, setIsIosSafari] = useState(false);
+  const [iosGuide, setIosGuide] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
-  const {allowed,finish} = useExperienceSlot("pwa",isVisible && (canPrompt || isIosSafari),20);
+  const {allowed,finish} = useExperienceSlot("pwa",isVisible && (canPrompt || Boolean(iosGuide)),20);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -80,11 +62,11 @@ export default function PwaInstallPrompt() {
     if (isStandaloneMode()) return;
     if (getDismissUntil() > Date.now()) return;
 
-    const shouldShowIosGuide = isProbablyIos() && isProbablySafari();
-    setIsIosSafari(shouldShowIosGuide);
+    const guide = iosInstallGuide(window.navigator);
+    setIosGuide(guide);
 
     const showTimer = window.setTimeout(() => {
-      if (shouldShowIosGuide) setIsVisible(true);
+      if (guide || deferredPromptRef.current) setIsVisible(true);
     }, 1200);
 
     const handleBeforeInstallPrompt = (event) => {
@@ -145,7 +127,7 @@ export default function PwaInstallPrompt() {
     }
   };
 
-  if (!allowed || !isVisible || (!canPrompt && !isIosSafari)) return null;
+  if (!allowed || !isVisible || (!canPrompt && !iosGuide)) return null;
 
   return (
     <>
@@ -193,7 +175,7 @@ export default function PwaInstallPrompt() {
               <div>
                 <p className="text-sm font-black text-[#101827]">ホーム画面に追加する手順</p>
                 <p className="mt-1 text-xs font-extrabold leading-relaxed text-[#647386]">
-                  iPhone / iPad では、Safari の共有メニューから追加します。
+                  iPhone / iPad では、{iosGuide?.browser || "Safari または Chrome"} の共有メニューから追加できます。
                 </p>
               </div>
               <button
@@ -211,21 +193,22 @@ export default function PwaInstallPrompt() {
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#EAF6EF] text-xs font-black text-[#3F7668] ring-1 ring-[#C9DED4]">
                   1
                 </span>
-                <span>Safari で未病レーダーを開く</span>
+                <span>{iosGuide?.firstStep || "共有ボタンを押す"}</span>
               </li>
               <li className="flex gap-3">
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#EAF6EF] text-xs font-black text-[#3F7668] ring-1 ring-[#C9DED4]">
                   2
                 </span>
-                <span>共有ボタンを押す</span>
+                <span>{iosGuide?.secondStep || "「ホーム画面に追加」を選ぶ"}</span>
               </li>
               <li className="flex gap-3">
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#EAF6EF] text-xs font-black text-[#3F7668] ring-1 ring-[#C9DED4]">
                   3
                 </span>
-                <span>「ホーム画面に追加」を選ぶ</span>
+                <span>{iosGuide?.lastStep || "「追加」を押し、ホーム画面のアイコンから開く"}</span>
               </li>
             </ol>
+            <p className="mt-3 text-xs font-bold leading-relaxed text-[#647386]">共有メニューに項目がない場合は、Safari または Chrome で開き直してください。追加後のアプリでログインを求められる場合があります。</p>
 
             <button
               type="button"
