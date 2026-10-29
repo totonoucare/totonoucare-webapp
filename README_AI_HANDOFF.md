@@ -1,14 +1,28 @@
 # 未病レーダー AI開発引き継ぎ
 
-**対象ソース: v7.79.106**
+**対象ソース: v7.79.110**
 
-v106の現行メモは `README-v779105-to-v779106.md`。公開前に `supabase/migrations/20261027_confirm_constitution_update_v779106.sql` を適用。`attach_diagnosis_v779106` がアカウント単位で保存を直列化し、既存プロフィールの置き換えは `confirm_update: true` を明示した操作だけに許可します。未適用時は503で停止し、旧RPCへフォールバックしません。古いv90関数は内部の原子的書き込みと動作ライン保存の互換性のため残します。
+最新変更は README-v779109-to-v779110.md。ホームCTAは「体質チェックして体調予報へ」。結果ページの全AppShell状態で共通下部タブを表示し、トリセツを選択中にします。BottomTabsが実測高さ（safe-area込み）を、そのAppShellだけの --app-bottom-tabs-height に設定。AppShellの本文余白と結果固定CTAのbottomが同じ値を使用します。ResizeObserver/resizeで再計測し、アンマウント時に解除。固定CTAへsafe-areaを二重に加算しないこと。
 
-`completeConstitutionCheck` は初回保存成功時だけ `onSaved` を呼びます。再チェックの409 `PROFILE_UPDATE_CONFIRMATION_REQUIRED` は結果プレビューへ進み、保存成功とは計測しません。結果GETは本人の現在プロフィールとsource_event_idを照合して `has_current_profile` / `is_current` / `current_core_code` を返します。動物タイプが同じでも別の結果なら確認が必要です。
+固定CTAの初回条件・スクロール出現・結果別の閉じる状態、既存の保存・反映確認・計測処理はv109と同じです。下部タブの体調予報は /radar 行きで、現在反映中の体質を使います。履歴で見ている結果を自動採用しません。新SQL・環境変数・依存関係変更なし。再訪ログインは未ログイントップ右上とSTART GUIDE下の2入口を維持し、いずれも /signup?next=%2F へ進みます。
 
-結果画面の全CTAは共通の `continueToForecast` を使用。再チェック時は `ConstitutionUpdateDialog` で更新・据え置きを選び、閉じても変更しません。更新しなかった結果はアカウント履歴には登録しません（既存guest cookieによる3日間のプレビュー）。保存済みの結果にも100pxスクロール後に固定CTAを表示し、×の状態を結果別にsessionStorageへ保持します。Google/メールの旧保存経路も確認要求を受けたら結果画面へ戻します。自動的にconfirm_updateを付けないこと。
+最新の入口・案内仕様は README-v779108-to-v779109.md。ホーム専用コピーを lib/homeEntryCopy.js に分離し、共通のチェック紹介文や課金・14日体験の条件は変更していません。トップCTAは /check 行きのままです。
 
-以下のv102〜105の説明は、その当時の仕様です。保存の挙動と追加SQLについては上記v106の説明を優先します。
+「ケアを見る」のforecastガイドは廃止。過去の guide:forecast 行とAPIの旧ID受付は互換性のため残します。PWA/通知は本人向け予報の表示後に解禁し、/radarではTrialWelcomeTriggerのマウントを利用して読み込み・地域設定・エラー・期限切れ中を抑制します。案内後30秒でハードウェア案内は追加操作なしでも出せます。他のガイド・アンケートの連鎖抑制は維持。PWAのiOS手順はSafariだけでなくChrome/外部ブラウザへの案内にも対応。既存の14日抑制・通知拒否・購読・インストール済み判定は維持します。
+
+新規 /api/journey は requireUser で本人を確定し、既存 app_experience_events の自由文字列キーに journey:イベント:UUID を記録。追加SQL不要。lib/journeyEvents.js の許可リスト以外の値・自由文・座標・回答を記録しません。匿名ファネルとMetaは変更していません。app/api/experience の案内用履歴取得では journey: を除外します。予報入口・地域設定表示は予報本体の閲覧数へ混ぜないこと。計測はベストエフォートであり、無記録を未操作の証明にしないこと。
+
+以下のv108の保存・反映ルールを維持しています。
+
+現行メモは `README-v779107-to-v779108.md`。アプリ本体は受領したGitHubのv107実装を維持しています。APIは `save_diagnosis_v779107` を呼び、履歴保存と反映先の変更を分離します。v108の追加SQLは既存 `sync_constitution_profile_from_event()` のON CONFLICTをDO NOTHINGへ変更します。初回プロフィールの作成を保ち、履歴INSERTによる既存プロフィールの上書きを防ぎます。v90とv107の保存関数・その権限・既存トリガー登録は変更しません。
+
+`completeConstitutionCheck` は初回・再チェックとも履歴保存成功後に結果へ進みます。自動保存にconfirm_updateを付けないこと。初回だけ自動反映し、既存プロフィールの切り替えにはリテラルの `confirm_update: true` が必要です。結果GETはプロフィールのlatest_event_idからconstitution_events.source_event_idを照合して `is_current` を返します。動物タイプが同じでも別の結果なら確認が必要です。
+
+再チェックは履歴へ保存済みの状態で表示し、ページ内ボタンから `ConstitutionUpdateDialog` を開きます。閉じる・据え置き・失敗では反映先を変えません。承認後も結果ページにとどまります。固定CTAは `from=check_complete` かつ `is_current && is_first_result` の初回導線だけ。反映中の履歴の見返しにも再表示しません。古い保存済み結果も同じ確認で反映できます。履歴保存と現在プロフィールの切り替えを再び一体化しないこと。
+
+本番には `constitution_events AFTER INSERT` の自動同期処理があることが、2026-10-27の所有者によるSELECTで確認済みです。元の関数とトリガー定義は `tests/fixtures/profile-sync-trigger-before-v779108.sql` にテスト用として記録しました。このfixtureを本番へ適用してはいけません。今後の保存処理のテストでは、このトリガーを含めて検証してください。プロフィールのupdated_atを更新する別トリガーには触れません。
+
+以下のv102〜105の説明は、その当時の仕様です。保存の挙動と追加SQLについては上記v108の説明を優先します。
 
 v105の現行メモは `README-v779104-to-v779105.md`。明示的な `/check/run` 行きのログインには `CheckLoginWelcome` を維持し、通常ログインには新しい `AppLoginWelcome` を使用します。ホーム・予報・記録・設定・履歴・ご意見のログインボタンへそれぞれの `next` を設定。明示的な戻り先は古いpending結果を引き継ぎません。パラメーターなしの `/signup` は通常ログインです。Google callbackのURL欠落時のpending回復と過去の未保存結果の保存経路は維持します。チェック完了履歴・回数の判定は追加していません。14日体験のポップアップ・価格・体験起点・予報や体質のロジックは変更していません。
 
