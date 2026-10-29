@@ -99,7 +99,10 @@ export default function AppShell({
   noTabs = false,
 }) {
   return (
-    <div className={`min-h-screen bg-app ${noTabs ? "" : "pb-24"}`}>
+    <div
+      className="min-h-screen bg-app"
+      style={noTabs ? undefined : { paddingBottom: "var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px)))" }}
+    >
       {noHeader ? null : (
         <AppHeader
           title={title}
