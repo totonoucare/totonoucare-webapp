@@ -8,7 +8,7 @@ export const runtime='nodejs';
 const reply=(data,status=200)=>NextResponse.json(data,{status,headers:{'Cache-Control':'no-store'}});
 async function context(user){
  const [events,access,records]=await Promise.all([
-  supabaseServer.from('app_experience_events').select('event_key,payload,created_at').eq('user_id',user.id).or(`event_key.not.like.use:%,created_at.gte.${new Date(Date.now()-30*86400000).toISOString()}`).order('created_at',{ascending:false}).limit(3000),
+  supabaseServer.from('app_experience_events').select('event_key,payload,created_at').eq('user_id',user.id).not('event_key','like','journey:%').or(`event_key.not.like.use:%,created_at.gte.${new Date(Date.now()-30*86400000).toISOString()}`).order('created_at',{ascending:false}).limit(3000),
   getRecordsAccess(user.id,{userCreatedAt:user.created_at}),
   supabaseServer.from('radar_reviews').select('target_date').eq('user_id',user.id).not('condition_level','is',null).gte('target_date',dayKey(Date.now()-6*86400000)).lte('target_date',dayKey()).limit(7),
  ]);
