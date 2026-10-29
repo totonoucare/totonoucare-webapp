@@ -468,7 +468,7 @@ function GuestStartCta({ onCheck, onLogin }) {
       </div>
 
       <div className="relative z-10 mt-5 grid gap-3">
-        <Button onClick={onCheck} className="py-4 shadow-md text-[14px] w-full">
+        <Button onClick={onCheck} className="py-4 shadow-md !px-3 !text-[12px] min-[375px]:!text-[14px] whitespace-nowrap w-full">
           {HOME_CHECK_CTA}
         </Button>
         <Button variant="secondary" onClick={onLogin} className="py-4 shadow-sm text-[14px] w-full bg-white">
@@ -1165,7 +1165,7 @@ export default function HomePage() {
               <HeroGuideBot compact showBubble={false} signal={publicForecastLoading ? 0 : pfSignal} />
             </div>
           </div>
-          <Button onClick={() => router.push("/check")} className="relative z-[3] mt-5 w-full py-4 text-[14px] shadow-md">
+          <Button onClick={() => router.push("/check")} className="relative z-[3] mt-5 w-full py-4 !px-3 !text-[12px] min-[375px]:!text-[14px] whitespace-nowrap shadow-md">
             {HOME_CHECK_CTA}
           </Button>
         </Module>
