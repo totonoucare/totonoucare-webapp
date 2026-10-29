@@ -2,11 +2,34 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { IconHome, IconKarte, IconRadar, IconCare, IconChat } from "@/components/illust/icons/app";
 
 export default function BottomTabs() {
   const router = useRouter();
   const pathname = usePathname();
+  const tabsRef = useRef(null);
+
+  // Publish the actual height, including the device's safe area, to this shell.
+  // Result CTAs and content padding then stay above the same navigation edge.
+  useEffect(() => {
+    const tabs = tabsRef.current;
+    const shell = tabs?.parentElement;
+    if (!tabs || !shell) return;
+    const measure = () => {
+      const height = Math.ceil(tabs.getBoundingClientRect().height);
+      if (height > 0) shell.style.setProperty("--app-bottom-tabs-height", `${height}px`);
+    };
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(tabs, { box: "border-box" });
+    window.addEventListener("resize", measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+      shell.style.removeProperty("--app-bottom-tabs-height");
+    };
+  }, []);
 
   const active =
     pathname === "/" ? "home" :
@@ -21,6 +44,7 @@ export default function BottomTabs() {
     return (
       <button
         type="button"
+        aria-current={isActive ? "page" : undefined}
         onClick={() => router.push(href)}
         className={[
           "flex flex-1 flex-col items-center justify-center gap-1.5 rounded-[18px] py-2 transition-all duration-200 active:scale-[0.95]",
@@ -45,7 +69,7 @@ export default function BottomTabs() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]">
+    <div ref={tabsRef} role="navigation" aria-label="アプリのメニュー" className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)]">
       <div className="absolute inset-0 bg-white/90 backdrop-blur-xl supports-[backdrop-filter]:bg-white/72" />
       <div className="absolute top-0 inset-x-0 h-px bg-[#D3E1D5]" />
 
