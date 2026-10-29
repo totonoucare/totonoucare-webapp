@@ -9,7 +9,7 @@ const install = await load("lib/pwa/installGuide.js");
 const forecast = [{ event_key: "milestone:forecast" }];
 
 test("home copy names the body, regional weather and useful forecast/care without free/trial promotion", () => {
-  assert.equal(copy.HOME_CHECK_CTA, "体質チェックして予報へ");
+  assert.equal(copy.HOME_CHECK_CTA, "体質チェックして体調予報へ");
   for (const phrase of ["約5分", "お体の崩れやすさ", "お住まいの地域の天気", "体調警戒予報", "食事・ツボ・過ごし方"]) assert.ok(copy.HOME_CHECK_INTRO.includes(phrase));
   assert.doesNotMatch(Object.values(copy).join(""), /無料|14日/);
 });
