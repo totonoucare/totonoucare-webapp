@@ -1,6 +1,7 @@
 "use client";
 // app/radar/page.js
 import { trackFunnel } from "@/lib/funnelClient";
+import { trackJourney } from "@/lib/journeyClient";
 import {experienceSignal} from '@/lib/experience/client';
 import { TrialWelcomeTrigger } from '@/components/experience/ExperienceProvider';
 
@@ -401,8 +402,24 @@ export default function RadarPage() {
   const [purchasedShopItems, setPurchasedShopItems] = useState([]);
 
   const requestSeqRef = useRef(0);
+  const journeyViewsRef = useRef(new Set());
   const slowLoadingTimerRef = useRef(null);
   const loadingHintIntervalRef = useRef(null);
+
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    const pageKey = uid + ":page";
+    if (!journeyViewsRef.current.has(pageKey)) {
+      journeyViewsRef.current.add(pageKey);
+      trackJourney("forecast_page_view");
+    }
+    const locationKey = uid + ":location";
+    if (needsLocation && !loadingAuth && !loadingAccess && !loading && !journeyViewsRef.current.has(locationKey)) {
+      journeyViewsRef.current.add(locationKey);
+      trackJourney("location_setup_view");
+    }
+  }, [session?.user?.id, needsLocation, loadingAuth, loadingAccess, loading]);
 
   useEffect(() => {
     let mounted = true;
@@ -493,21 +510,27 @@ export default function RadarPage() {
     );
   }
 
-  async function saveLocationOverrideIfNeeded({ lat, lon, label }) {
+  async function saveLocationOverrideIfNeeded({ lat, lon, label, method }) {
     const nextLat = parseCoordinateInput(lat);
     const nextLon = parseCoordinateInput(lon);
     if (!isValidLatLon(nextLat, nextLon)) return null;
 
-    const json = await authedFetch("/api/radar/location", {
-      method: "POST",
-      body: JSON.stringify({
-        lat: nextLat,
-        lon: nextLon,
-        label: String(label || "現在地付近").trim() || "現在地付近",
-      }),
-    });
+    try {
+      const json = await authedFetch("/api/radar/location", {
+        method: "POST",
+        body: JSON.stringify({
+          lat: nextLat,
+          lon: nextLon,
+          label: String(label || "現在地付近").trim() || "現在地付近",
+        }),
+      });
 
-    return json?.location || null;
+      if (json?.location) trackJourney("location_save_success", method ? { method } : {});
+      return json?.location || null;
+    } catch (error) {
+      trackJourney("location_save_error", { ...(method ? { method } : {}), code: "save_failed" });
+      throw error;
+    }
   }
 
   function clearLoadingHintTimers() {
@@ -572,6 +595,7 @@ export default function RadarPage() {
     locationChanged = false,
     targetDate: requestedTargetDate = null,
     locationLabel = null,
+    locationMethod = null,
     showRefreshNotice = true,
   } = {}) {
     if (!session) return;
@@ -605,7 +629,7 @@ export default function RadarPage() {
       const token = data?.session?.access_token;
       if (!token) throw new Error("No token");
 
-      const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel });
+      const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel, method: locationMethod });
       const shouldForceSnapshot = recompute || locationChanged || !!savedLocation;
       const shouldRefreshBothDates = isLocationRefresh || !!savedLocation;
 
@@ -701,7 +725,9 @@ export default function RadarPage() {
 
 
   async function useCurrentLocation() {
+    trackJourney("location_save_start", { method: "gps" });
     if (!navigator.geolocation) {
+      trackJourney("location_save_error", { method: "gps", code: "unsupported" });
       setError("この端末では位置情報が使えません。");
       return;
     }
@@ -722,6 +748,7 @@ export default function RadarPage() {
           recompute: true,
           locationChanged: !needsLocation,
           locationLabel: "現在地付近",
+          locationMethod: "gps",
         });
 
         setLocating(false);
@@ -730,6 +757,7 @@ export default function RadarPage() {
         }
       },
       (geoErr) => {
+        trackJourney("location_save_error", { method: "gps", code: ({ 1: "permission_denied", 2: "unavailable", 3: "timeout" })[geoErr?.code] || "unavailable" });
         setLocating(false);
         if (geoErr?.code === 1) {
           setError("位置情報の使用が拒否されました。下の「地域を選んで設定する」を使ってください。");
@@ -754,6 +782,7 @@ export default function RadarPage() {
 
     try {
       setSavingPreset(true);
+      trackJourney("location_save_start", { method: "preset" });
       setError("");
       setLocationNotice("");
 
@@ -764,6 +793,7 @@ export default function RadarPage() {
         recompute: true,
         locationChanged: !needsLocation,
         locationLabel: preset.label,
+        locationMethod: "preset",
       });
 
       if (!needsLocation) {
