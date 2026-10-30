@@ -20,6 +20,7 @@ import { WeatherIcon } from "@/components/illust/icons/weather";
 import { getDisplayableLocationName } from "@/lib/radar_v1/locationDisplay";
 import { EKIKEN_DISPLAY_NAME } from "@/lib/records/liveSupport";
 import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
+import GuestForecastDemo from "@/components/forecast/GuestForecastDemo";
 
 import { signalText, triggerLabel, exactTriggerKey, compatFromExact, getForecastSnapshot, getRiskSummaryFromForecast, getForecastTriggerKey, getForecastTriggerFactors, modeStyle, scoreToPercent, ForecastBar, ForecastDayStrip } from "@/components/forecast/HomeForecastStrip";
 
@@ -113,10 +114,11 @@ function getJstDateString(offsetDays = 0) {
 
 function formatYmdJP(ymd) {
   if (!ymd) return "—";
-  const d = new Date(`${ymd}T00:00:00+09:00`);
+  // The input is a JST calendar date; formatting must not shift it in other timezones.
+  const d = new Date(`${ymd}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return ymd;
-  const weekday = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-  return `${d.getMonth() + 1}/${d.getDate()}(${weekday})`;
+  const weekday = ["日", "月", "火", "水", "木", "金", "土"][d.getUTCDay()];
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}(${weekday})`;
 }
 
 function signalBadge(signal) {
@@ -745,7 +747,7 @@ function HomeStateCta({ loading, hasResult, hasLocation, core, coreCode, subs = 
   );
 }
 
-function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", memo = null, ctaLabel = "体調予報を開く", scoreVariant = "score" }) {
+function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onClick, eyebrow = "気になりやすい変化", scoreLabel = "目安スコア", modeDescription = "今日の崩れやすさ", memo = null, ctaLabel = "体調予報を開く", scoreVariant = "score" }) {
   if (loading) {
     return (
       <div className="rounded-[24px] bg-white p-5 ring-1 ring-inset ring-[#CFE0D3] shadow-[0_16px_32px_-24px_rgba(37,95,79,0.30)]">
@@ -846,7 +848,7 @@ function ForecastMiniCard({ title, bundle, loading, onClick, errorOnClick = onCl
           {scoreVariant === "mode" ? (
             <div className="leading-tight">
               <div className={["text-[18px] font-black tracking-tight", signalScoreTextClass(forecast.signal)].join(" ")}>{modeActionLabel(forecast.signal)}</div>
-              <div className="mt-1 text-[12px] font-extrabold text-slate-400">今日の崩れやすさ</div>
+              <div className="mt-1 text-[12px] font-extrabold text-slate-400">{modeDescription}</div>
             </div>
           ) : (
             <div className="flex items-end justify-end gap-1 leading-none">
@@ -1072,21 +1074,25 @@ export default function HomePage() {
   const [publicForecast, setPublicForecast] = useState(null);
   const [publicForecastLoading, setPublicForecastLoading] = useState(false);
   const [publicLocation, setPublicLocation] = useState({ key: "tokyo", label: "東京", lat: 35.68944, lon: 139.69167 });
+  // Guest acquisition demo: tomorrow. The signed-in public fallback remains today.
+  // Always specify the date: the public API's implicit date switches at 18:00 JST.
+  const publicForecastDate = getJstDateString(isLoggedIn ? 0 : 1);
 
   useEffect(() => {
     const needsPublicForecast = !isLoggedIn || featureAccess?.personalized_forecast_enabled === false;
     if (!needsPublicForecast) return;
     let cancelled = false;
     setPublicForecastLoading(true);
+    setPublicForecast(null);
 
     (async () => {
       try {
         const { lat, lon } = publicLocation;
-        const res = await fetch(`/api/radar/v1/forecast/public?lat=${lat}&lon=${lon}`);
+        const res = await fetch(`/api/radar/v1/forecast/public?lat=${lat}&lon=${lon}&date=${publicForecastDate}`);
         const json = await res.json().catch(() => ({}));
         if (!cancelled) {
-          setPublicForecast(json?.ok
-            ? { ...json.forecast, target_date: json.target_date || getJstDateString(0) }
+          setPublicForecast(res.ok && json?.ok && json?.forecast && json.target_date === publicForecastDate
+            ? { ...json.forecast, target_date: json.target_date }
             : null);
         }
       } catch {
@@ -1097,7 +1103,7 @@ export default function HomePage() {
     })();
 
     return () => { cancelled = true; };
-  }, [isLoggedIn, featureAccess?.personalized_forecast_enabled, publicLocation.key]);
+  }, [isLoggedIn, featureAccess?.personalized_forecast_enabled, publicLocation.key, publicForecastDate]);
 
   // ===== ===== =====
 
@@ -1125,17 +1131,17 @@ export default function HomePage() {
     const pf = publicForecast;
     const pfSignal = pf?.signal ?? 0;
 
-    // ★ 未ログイン時のテキストもダッシュボードと統一
+    // The hero and every demo label refer to the same explicit tomorrow forecast.
     const botMessages = {
-      2: `今日は守りモード。無理を重ねず、休憩を先に入れようね。`,
-      1: `今日はいたわりモード。少し早めに整えておこう。`,
-      0: `今日は安定モード。自分のペースで進んでいこう！`,
+      2: "明日は守りモード。予定に余裕を持って備えようね。",
+      1: "明日はいたわりモード。今から少しずつ整えておこう。",
+      0: "明日は安定モード。いつものペースで過ごせそう。",
     };
     const botMessage = publicForecastLoading
-      ? "今日の体調予報デモを確認中…"
-      : (pf ? botMessages[pfSignal] : "今日の気象を読み込めませんでした。");
+      ? "明日の体調予報デモを確認中…"
+      : (pf ? botMessages[pfSignal] : "明日の気象を読み込めませんでした。");
     const guestSignHints = pf
-      ? buildGuestSignHints(pf, pf?.target_date || getJstDateString(0))
+      ? buildGuestSignHints(pf, pf.target_date)
       : [];
 
     return (
@@ -1198,20 +1204,16 @@ export default function HomePage() {
             </div>
           </div>
 
-          <ForecastMiniCard
-            title={`今日 ${formatYmdJP(getJstDateString(0))}`}
+          <GuestForecastDemo
+            title={`明日 ${formatYmdJP(pf?.target_date || publicForecastDate)}`}
             loading={publicForecastLoading}
             bundle={{
-              ok: true,
+              ok: Boolean(pf),
               forecast: publicForecast,
-              location: { display_name: publicLocation.label }
+              location: { display_name: publicLocation.label },
+              error: "明日の予報を読み込めませんでした。時間をおいてお試しください。",
             }}
-            onClick={() => router.push("/check")}
-            eyebrow="気になりやすい天気変化"
-            scoreLabel="今日のモード"
-            scoreVariant="mode"
-            memo="体質チェックをすると、ここにあなたの崩れやすいサインとケア方針が重なります。"
-            ctaLabel="体質チェックを始める"
+            onStart={() => router.push("/check")}
           />
 
           {guestSignHints.length ? (
