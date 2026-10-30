@@ -1,8 +1,12 @@
 # 未病レーダー AI開発引き継ぎ
 
-**対象ソース: v7.79.110**
+**対象ソース: v7.79.112**
 
-最新変更は README-v779109-to-v779110.md。ホームCTAは「体質チェックして体調予報へ」。結果ページの全AppShell状態で共通下部タブを表示し、トリセツを選択中にします。BottomTabsが実測高さ（safe-area込み）を、そのAppShellだけの --app-bottom-tabs-height に設定。AppShellの本文余白と結果固定CTAのbottomが同じ値を使用します。ResizeObserver/resizeで再計測し、アンマウント時に解除。固定CTAへsafe-areaを二重に加算しないこと。
+最新変更は README-v779110-to-v779112.md。未ログイントップはヒーロー（ミモル・CTA）を維持し、その下にGuestForecastDemoを表示します。ForecastGaugeは予報本体と同じ実装を使用し、体質未確認のためcoreCodeはnull。JST翌日の公開予報の表示用スコア（display→precise→raw）と天気ストレスを使用し、広告例の点数や動物を固定しません。forecastPresentation.jsへ従来の色・天気ストレス表示関数を移動し、app/radar/utils.jsは互換のexportを維持します。モデルの計算・API・保存・料金・Meta・journey・PWA/通知は変更していません。表示結果はv111と528ケース一致。v110向け累積差分にv111の明日化を含めます。新SQLなし。
+
+v111の変更は README-v779110-to-v779111.md。未ログイントップの公開参考予報はpublicForecastDate（JST翌日）をAPIのdateへ明示します。日付指定なしの公開APIは18時以降に翌日へ切り替わるため、表示ラベルだけで対象日を決めないこと。成功応答のtarget_date一致を確認し、ヒーロー・カード・サインを同じ明日データへ統一します。失敗時に安定モードで代用しません。体験終了後の参考予報はJST今日を明示し、個人向け今日/明日のcache_onlyカードは維持。CTA文言・配置、地域プリセット、Meta/計測、認証、保存・反映、料金、PWA/通知は変更していません。追加SQLなし。
+
+v110の変更は README-v779109-to-v779110.md。ホームCTAは「体質チェックして体調予報へ」。結果ページの全AppShell状態で共通下部タブを表示し、トリセツを選択中にします。BottomTabsが実測高さ（safe-area込み）を、そのAppShellだけの --app-bottom-tabs-height に設定。AppShellの本文余白と結果固定CTAのbottomが同じ値を使用します。ResizeObserver/resizeで再計測し、アンマウント時に解除。固定CTAへsafe-areaを二重に加算しないこと。
 
 固定CTAの初回条件・スクロール出現・結果別の閉じる状態、既存の保存・反映確認・計測処理はv109と同じです。下部タブの体調予報は /radar 行きで、現在反映中の体質を使います。履歴で見ている結果を自動採用しません。新SQL・環境変数・依存関係変更なし。再訪ログインは未ログイントップ右上とSTART GUIDE下の2入口を維持し、いずれも /signup?next=%2F へ進みます。
 
