@@ -1,3 +1,4 @@
+import { createScenarioRunner } from "./helpers/forecast-scenarios.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -11,32 +12,9 @@ async function importText(source) {
 }
 
 async function importRadarUtils() {
-  const pressureSource = await readSource("../lib/radar_v1/pressureResponse.js");
-  const bodySignSource = await readSource("../lib/radar_v1/bodySignInsights.js");
-  let source = await readSource("../app/radar/utils.js");
-  source = source
-    .replace(
-      'import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";',
-      "const flattenRadarLocationPresets = () => [];",
-    )
-    .replace(
-      'import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";',
-      "const getLifestylePlanFromRules = () => ({});",
-    )
-    .replace(
-      'import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";',
-      "const buildTodayCarePlanCore = () => null;",
-    )
-    .replace(
-      'import { buildGroundedBodySignDetails } from "@/lib/radar_v1/bodySignInsights";',
-      "",
-    )
-    .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
-  return importText(
-    `${pressureSource.replaceAll("export ", "")}\n${bodySignSource.replaceAll("export ", "")}\n${source}`
-  );
+  const { load } = await createScenarioRunner();
+  return load("app/radar/utils.js");
 }
-
 const radarUtils = await importRadarUtils();
 const homeSource = await readSource("../app/HomeClient.jsx");
 const publicRouteSource = await readSource("../app/api/radar/v1/forecast/public/route.js");
@@ -114,7 +92,7 @@ test("public demo discloses its neutral reference constitution instead of claimi
   assert.match(homeSource, /今日は守りモード/);
   assert.doesNotMatch(homeSource, /今日は警戒の日/);
   assert.match(homeSource, /target_date: json\.target_date/);
-  assert.match(homeSource, /buildGuestSignHints\(pf, pf\?\.target_date/);
+  assert.match(homeSource, /buildGuestSignHints\(pf, pf\??\.target_date/);
   assert.match(publicRouteSource, /reference_profile: publicForecast\.reference_profile/);
   assert.match(personalizeSource, /kind: "neutral_reference"/);
   assert.match(personalizeSource, /reserve_level: "standard"/);

@@ -1,3 +1,4 @@
+import { createScenarioRunner } from "./helpers/forecast-scenarios.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "./helpers/rule-read.mjs";
 import path from "node:path";
@@ -8,35 +9,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 
 async function importRadarUtils() {
-  const pressureSource = await readFile(path.join(root, "lib/radar_v1/pressureResponse.js"), "utf8");
-  let source = await readFile(path.join(root, "app/radar/utils.js"), "utf8");
-  source = source
-    .replace(
-      'import { flattenRadarLocationPresets } from "@/lib/radar_v1/locationPresets";',
-      "const flattenRadarLocationPresets = () => [];",
-    )
-    .replace(
-      'import { getLifestylePlan as getLifestylePlanFromRules } from "@/lib/radar_v1/careRules/lifestyleRules";',
-      "const getLifestylePlanFromRules = () => ({});",
-    )
-    .replace(
-      'import { buildTodayCarePlanCore } from "@/lib/radar_v1/careRules/todayCarePlan";',
-      "const buildTodayCarePlanCore = () => null;",
-    )
-    .replace(
-      'import { buildDailyCareTheme } from "@/lib/radar_v1/careRules/dailyCareV2";',
-      "const buildDailyCareTheme = () => ({});",
-    )
-    .replace(
-      /import \{[\s\S]*?\} from "@\/lib\/radar_v1\/bodySignInsights";/,
-      "const buildGroundedBodySignDetails = () => []; const selectDistinctBodySigns = (items) => items.filter(Boolean);",
-    )
-    .replace(/import \{[\s\S]*?\} from "@\/lib\/radar_v1\/pressureResponse";/, "");
-
-  const prepared = `${pressureSource.replaceAll("export ", "")}\n${source}`;
-  return import(`data:text/javascript;base64,${Buffer.from(prepared).toString("base64")}`);
+  const { load } = await createScenarioRunner();
+  return load("app/radar/utils.js");
 }
-
 const radarUtils = await importRadarUtils();
 
 function dampFactor() {
