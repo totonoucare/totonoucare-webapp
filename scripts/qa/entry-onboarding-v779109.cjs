@@ -1,6 +1,8 @@
 // Production-build browser QA. All auth/API data is synthetic. External requests
 // are intercepted; this script never reaches production DB, Meta or OAuth.
 // v7.79.110 also covers result navigation, safe-area/resize and return login.
+// v7.79.111 adds tomorrow-demo date/region/error and signed-in fallback checks.
+// v7.79.112 checks the shared circular gauge, public weather groups and hero preservation.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -32,12 +34,13 @@ function getLocal(url, headers = {}) {
   });
 }
 
-async function fixture(launchOptions, { signedIn = true, location = true, width = 390, ios = true, standalone = false, trialSeen = false, resultKind = "first" } = {}) {
+async function fixture(launchOptions, { signedIn = true, location = true, width = 390, ios = true, standalone = false, trialSeen = false, resultKind = "first", publicState = "ok", expired = false, timezoneId = "Asia/Tokyo" } = {}) {
   const browser = await chromium.launch(launchOptions);
   launched.push(browser);
-  const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: "block",
+  const context = await browser.newContext({ viewport: { width, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: "block", timezoneId,
     userAgent: ios ? "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 CriOS/140.0 Mobile/15E148 Safari/604.1" : undefined });
-  const page = await context.newPage(), errors = [], metrics = [], diagnosisWrites = [];
+  const page = await context.newPage(), errors = [], metrics = [], diagnosisWrites = [], publicRequests = [];
+  const fixtureAccess = expired ? { ...access, mode: "free", trial_enabled: false, trial_expired: true, personalized_forecast_enabled: false } : access;
   page.setDefaultTimeout(10000);
   let hasLocation = location, rows = trialSeen ? [{ event_key: "guide:trial_intro", payload: {}, created_at: new Date().toISOString() }] : [];
   page.on("pageerror", error => errors.push(error.message));
@@ -67,7 +70,7 @@ async function fixture(launchOptions, { signedIn = true, location = true, width 
     if (!url.pathname.startsWith("/api/")) {
       return route.fulfill(await getLocal(base + url.pathname + url.search, req.headers()));
     }
-    if (url.pathname === "/api/records/access") return json({ data: { access } });
+    if (url.pathname === "/api/records/access") return json({ data: { access: fixtureAccess } });
     if (url.pathname.startsWith("/api/diagnosis/v2/events/") && req.method() !== "GET") {
       diagnosisWrites.push({ path: url.pathname, method: req.method(), body: req.postDataJSON() });
       return json({ error: "Unexpected diagnosis write in navigation QA" }, 409);
@@ -92,7 +95,7 @@ async function fixture(launchOptions, { signedIn = true, location = true, width 
         if (!rows.some(r => r.event_key === key)) rows.push({ event_key: key, payload: {}, created_at: new Date().toISOString() });
         return json({ data: { saved: true } });
       }
-      return json({ data: { rows, access, recordDays: 0 } });
+      return json({ data: { rows, access: fixtureAccess, recordDays: 0 } });
     }
     if (url.pathname === "/api/journey") { metrics.push(req.postDataJSON()); return json({ ok: true }); }
     if (url.pathname === "/api/funnel") return route.fulfill({ status: 204 });
@@ -101,6 +104,23 @@ async function fixture(launchOptions, { signedIn = true, location = true, width 
       return json({ ok: true, location: hasLocation ? { id: "qa-location", display_name: "東京", label: "東京", lat: 35.68, lon: 139.69 } : null });
     }
     if (url.pathname === "/api/radar/v1/forecast" && !hasLocation) return json({ error: "No radar location found." }, 400);
+    if (url.pathname === "/api/radar/v1/forecast/public") {
+      publicRequests.push(Object.fromEntries(url.searchParams));
+      if (publicState === "error") return json({ ok: false, error: "QA unavailable" }, 503);
+      if (publicState === "network") return route.abort();
+      const date = publicState === "wrong-date" ? "2026-10-30" : url.searchParams.get("date");
+      const osaka = url.searchParams.get("lon") === "135.52";
+      return json({ ok: true, target_date: date, forecast: {
+        score_0_10: osaka ? 7 : 4, score_display_0_10: osaka ? 7.2 : 4.4, signal: osaka ? 2 : 1,
+        main_trigger: osaka ? "moisture" : "pressure", trigger_dir: osaka ? "damp" : "down",
+        personal_main_trigger_exact: osaka ? "damp" : "pressure_down",
+        weather_load_groups: {
+          temperature: { exact: "cold", personal_load: osaka ? 0.18 : 0.8, personalized: false },
+          moisture: { exact: "dry", personal_load: osaka ? 0.82 : 0.45, personalized: false },
+          pressure: { exact: "pressure_up", personal_load: osaka ? 0.44 : 0.12, personalized: false },
+        },
+      } });
+    }
     if (url.pathname.startsWith("/api/radar/v1/forecast")) {
       const date = url.searchParams.get("date") || new Date(Date.now() + 9 * 3600000).toISOString().slice(0,10);
       return json({ ok: true, target_date: date, location: { display_name: "東京", label: "東京" }, forecast: {
@@ -115,7 +135,7 @@ async function fixture(launchOptions, { signedIn = true, location = true, width 
     if (url.pathname === "/api/care-shop/items") return json({ data: { items: [] } });
     return json({ data: [] });
   });
-  return { context, page, errors, metrics, diagnosisWrites, close: async () => { await context.close(); await browser.close(); } };
+  return { context, page, errors, metrics, diagnosisWrites, publicRequests, close: async () => { await context.close(); await browser.close(); } };
 }
 
 async function verifyResultStack(page) {
@@ -153,10 +173,27 @@ async function verifyResultStack(page) {
   try {
     for (const width of [320, 390, 820]) {
       const f = await fixture(browser, { signedIn: false, width });
+      await f.page.clock.setFixedTime(new Date("2026-10-30T02:00:00Z"));
       await f.page.goto(origin);
       await f.page.getByText("記録・AI相談", { exact: true }).waitFor();
+      await f.page.getByText("明日はいたわりモード。今から少しずつ整えておこう。", { exact: true }).waitFor();
+      await f.page.getByText("明日 10/31(土)", { exact: true }).waitFor();
+      assert.equal(f.publicRequests.at(-1).date, "2026-10-31");
+      const circular = f.page.getByRole("img", { name: "参考体質の明日の体調警戒度 44／100、いたわりモード", exact: true });
+      await circular.waitFor();
+      await circular.getByText("いたわりたい日", { exact: true }).waitFor();
+      assert.equal(await circular.getByText("いたわりたい日", { exact: true }).evaluate(el => getComputedStyle(el).whiteSpace), "nowrap");
+      assert.equal(await circular.locator('svg[viewBox="0 0 340 300"]').count(), 1);
+      assert.equal(await circular.locator('svg text tspan').first().textContent(), "44");
+      assert.equal(await f.page.getByLabel("低温 ストレス 高", { exact: true }).count(), 1);
+      assert.equal(await f.page.getByLabel("乾燥 ストレス 中", { exact: true }).count(), 1);
+      assert.equal(await f.page.getByLabel("気圧上昇 ストレス 低", { exact: true }).count(), 1);
+      assert.equal(await f.page.getByText("今日のモード", { exact: true }).count(), 0);
       const cta = f.page.getByRole("button", { name: "体質チェックして体調予報へ", exact: true }).first();
       assert.ok((await cta.boundingBox()).y < 844, "CTA is visible without scrolling");
+      const demo = f.page.getByRole("button", { name: "体質チェックして自分の体調予報を見る", exact: true });
+      assert.ok((await cta.boundingBox()).y < (await demo.boundingBox()).y, "hero CTA stays before demo");
+      assert.ok((await demo.boundingBox()).y < (await f.page.getByText("START GUIDE", { exact: true }).boundingBox()).y, "start guide stays after demo");
       for (const button of await f.page.getByRole("button", { name: "体質チェックして体調予報へ", exact: true }).all()) {
         assert.equal(await button.evaluate(el => getComputedStyle(el).whiteSpace), "nowrap");
         assert.equal(await button.evaluate(el => el.scrollWidth <= el.clientWidth), true, "CTA fits on one line");
@@ -164,11 +201,26 @@ async function verifyResultStack(page) {
       assert.equal(await f.page.locator("body").evaluate(el => el.scrollWidth <= window.innerWidth), true);
       assert.equal(await f.page.getByText("無料体験", { exact: true }).count(), 0);
       await f.page.screenshot({ path: path.join(output, "home-" + width + ".png"), fullPage: true });
+      await demo.scrollIntoViewIfNeeded();
+      await f.page.screenshot({ path: path.join(output, "home-demo-" + width + ".png"), fullPage: false });
       await cta.click();
       await f.page.waitForURL("**/check");
       assert.equal(f.errors.length, 0, f.errors.join("\n"));
-      report.push("home " + width + "px: CTA, records/AI, no trial promotion, no overflow, check destination");
+      report.push("home " + width + "px: hero/CTA retained, shared circular 44/100 gauge, three real weather levels, tomorrow date/copy, no overflow, check destination");
       if (width === 390) {
+        await f.page.goto(origin);
+        await f.page.locator("select").selectOption("osaka");
+        await f.page.getByText("明日は守りモード。予定に余裕を持って備えようね。", { exact: true }).waitFor();
+        await f.page.getByRole("img", { name: "参考体質の明日の体調警戒度 72／100、守りモード", exact: true }).waitFor();
+        assert.equal(await f.page.getByLabel("低温 ストレス 低", { exact: true }).count(), 1);
+        assert.equal(await f.page.getByLabel("乾燥 ストレス 高", { exact: true }).count(), 1);
+        assert.equal(await f.page.getByLabel("気圧上昇 ストレス 中", { exact: true }).count(), 1);
+        assert.deepEqual(f.publicRequests.at(-1), { lat: "34.68639", lon: "135.52", date: "2026-10-31" });
+        assert.equal(await f.page.getByText("明日 10/31(土)", { exact: true }).count(), 1);
+        report.push("guest region change: Osaka weather response updates signal and keeps tomorrow");
+        await f.page.getByRole("button", { name: "体質チェックして自分の体調予報を見る", exact: true }).click();
+        await f.page.waitForURL("**/check");
+        report.push("circular demo card: click still opens the check entry");
         await f.page.goto(origin);
         await f.page.getByRole("button", { name: "ログイン", exact: true }).click();
         await f.page.waitForURL(url => url.pathname === "/signup" && url.searchParams.get("next") === "/");
@@ -180,6 +232,45 @@ async function verifyResultStack(page) {
       }
       await f.close();
     }
+    for (const [time, timezoneId, expectedDate, expectedTitle] of [
+      ["2026-10-30T12:00:00Z", "Asia/Tokyo", "2026-10-31", "明日 10/31(土)"],
+      ["2026-10-30T14:59:59Z", "UTC", "2026-10-31", "明日 10/31(土)"],
+      ["2026-10-30T15:00:01Z", "America/Los_Angeles", "2026-11-01", "明日 11/1(日)"],
+      ["2026-12-31T12:00:00Z", "Asia/Tokyo", "2027-01-01", "明日 1/1(金)"],
+    ]) {
+      const f = await fixture(browser, { signedIn: false, timezoneId });
+      await f.page.clock.setFixedTime(new Date(time));
+      await f.page.goto(origin);
+      await f.page.getByText(expectedTitle, { exact: true }).waitFor();
+      await f.page.getByText("明日はいたわりモード。今から少しずつ整えておこう。", { exact: true }).waitFor();
+      assert.equal(f.publicRequests.at(-1).date, expectedDate);
+      assert.deepEqual(f.errors, []);
+      report.push("tomorrow boundary: " + time + " in " + timezoneId + " => " + expectedDate);
+      await f.close();
+    }
+    for (const publicState of ["error", "network", "wrong-date"]) {
+      const f = await fixture(browser, { signedIn: false, publicState });
+      await f.page.clock.setFixedTime(new Date("2026-10-30T02:00:00Z"));
+      await f.page.goto(origin);
+      await f.page.getByText("明日の予報を読み込めませんでした。時間をおいてお試しください。", { exact: true }).waitFor();
+      assert.equal(await f.page.getByRole("img", { name: /^参考体質の明日の体調警戒度/ }).count(), 0);
+      assert.equal(await f.page.getByText("出やすいサイン", { exact: true }).count(), 0);
+      await f.page.getByRole("button", { name: "体質チェックして体調予報へ", exact: true }).first().click();
+      await f.page.waitForURL("**/check");
+      assert.deepEqual(f.errors, []);
+      report.push("tomorrow " + publicState + ": explicit error, no fake stable score/signs, CTA stays usable");
+      await f.close();
+    }
+    const expiredHome = await fixture(browser, { expired: true });
+    await expiredHome.page.clock.setFixedTime(new Date("2026-10-30T12:00:00Z"));
+    await expiredHome.page.goto(origin);
+    await expiredHome.page.getByText("今日 10/30(金)", { exact: true }).waitFor();
+    await expiredHome.page.getByText("今日のモード", { exact: true }).waitFor();
+    assert.equal(expiredHome.publicRequests.at(-1).date, "2026-10-30");
+    await expiredHome.page.getByText("あなた向けの予報を続ける", { exact: true }).waitFor();
+    assert.deepEqual(expiredHome.errors, []);
+    report.push("signed-in expired home: explicit today even after 18:00, existing paywall retained");
+    await expiredHome.close();
     if (process.env.QA_HOME_ONLY === "1") {
       console.log(JSON.stringify({ passed: report.length, checks: report }, null, 2));
       return;
