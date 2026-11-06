@@ -1,4 +1,6 @@
 "use client";
+import InsightPanel, { useMimoruInsight } from "@/components/mimoru/InsightPanel";
+import CareQuestion from "@/components/mimoru/CareQuestion";
 // app/radar/page.js
 import { trackFunnel } from "@/lib/funnelClient";
 import { trackJourney } from "@/lib/journeyClient";
@@ -386,7 +388,7 @@ export default function RadarPage() {
   const [savingSymptom, setSavingSymptom] = useState(false);
 
   const [tab, setTab] = useState("forecast");
-  const [careTab, setCareTab] = useState("eat");
+  const [careTab, setCareTab] = useState("");
   const [dateMode, setDateMode] = useState("today");
   const [selectedTargetDate, setSelectedTargetDate] = useState("");
   const [openingProfileDetail, setOpeningProfileDetail] = useState(false);
@@ -672,8 +674,7 @@ export default function RadarPage() {
         setTodayComparisonBundle(siblingJson);
       }
 
-      // AI補完ルートは一時停止中。
-      // ページ表示・地域変更・欠損時生成のいずれでも、ここからGPT生成は呼ばない。
+      // 旧ケア補完APIは呼ばず、共通の見立てはuseMimoruInsightで取得する。
 
       const returnedMode = inferModeFromSelectedDate(json?.target_date) || inferModeFromTargetDate(json?.target_date);
       if (returnedMode) {
@@ -1242,6 +1243,16 @@ export default function RadarPage() {
   }, [purchasedShopItems]);
 
 
+  const dailyInsight = useMimoruInsight({ kind: "forecast", forecast_id: forecast?.id || null,
+    mode: careSourceMode, symptom_focus: symptomFocus, lifestyle_scene: lifestyleScene,
+    expected_revision: forecast?.updated_at || forecast?.created_at || null,
+    revision: String(forecast?.updated_at || forecast?.created_at || currentForecastScore || "") },
+    Boolean(forecast?.id && completedCareReady && featureAccess?.personalized_forecast_enabled));
+  const forecastQuestionContext = { label: activeTargetDate + "の予報", request: { kind: "forecast", forecast_id: forecast?.id,
+    target_date: activeTargetDate, mode: careSourceMode, symptom_focus: symptomFocus, lifestyle_scene: lifestyleScene,
+    ...(forecast?.updated_at || forecast?.created_at ? { forecast_revision: forecast.updated_at || forecast.created_at } : {}) } };
+  useEffect(() => { setCareTab(""); }, [activeTargetDate, symptomFocus]);
+
   async function toggleCareAction(item) {
     const actionKey = item?.canonical_key || item?.item_key;
     if (!actionKey || careActionSavingKey) return;
@@ -1266,7 +1277,7 @@ export default function RadarPage() {
       });
       const nextActions = json?.data?.actions || json?.actions || [];
       setCareActions(Array.isArray(nextActions) ? nextActions : []);
-      if (!checked) experienceSignal('care_recorded', {mode: careSourceMode});
+      if (!checked) { experienceSignal('care_recorded', {mode: careSourceMode}); trackJourney('care_recorded', {category: item.domain}); }
       setCareActionsSchemaReady(json?.data?.schema_ready !== false && json?.schema_ready !== false);
     } catch (actionError) {
       setCareActionError(actionError?.message || "ケアを記録できませんでした。");
@@ -1278,6 +1289,7 @@ export default function RadarPage() {
   function actionButtonFor(item, { compact = false, stopPropagation = false, uncheckedLabel = "" } = {}) {
     if (!item) return null;
     return (
+      <div className="w-full min-w-0">
       <CareActionButton
         checked={currentCareActionKeys.has(item.canonical_key || item.item_key)}
         saving={careActionSavingKey === (item.canonical_key || item.item_key)}
@@ -1289,6 +1301,9 @@ export default function RadarPage() {
           toggleCareAction(item);
         }}
       />
+      <CareQuestion item={item} forecastId={forecast?.id} forecastRevision={forecast?.updated_at || forecast?.created_at || null} targetDate={activeTargetDate} mode={careSourceMode}
+        symptomFocus={symptomFocus} lifestyleScene={lifestyleScene} />
+      </div>
     );
   }
 
@@ -1880,9 +1895,10 @@ export default function RadarPage() {
                         </span>
                       </div>
 
-                      <div className="mt-2.5 rounded-[18px] bg-white px-3.5 py-3 text-[14px] font-extrabold leading-6 text-slate-800 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]">
+                      {!dailyInsight.data ? <div className="mt-2.5 rounded-[18px] bg-white px-3.5 py-3 text-[14px] font-extrabold leading-6 text-slate-800 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]">
                         {forecastModeLead}
-                      </div>
+                      </div> : null}
+                      <InsightPanel insight={dailyInsight} part="forecast" title={`${symptomLabel || "気になる不調"}への備え`} context={forecastQuestionContext} />
                     </div>
                   </div>
                 </div>
@@ -1970,7 +1986,7 @@ export default function RadarPage() {
               </div>
 
               <div className="mt-3 text-[14px] font-bold leading-6 text-slate-700">
-                {completedCareReady ? carePlan?.care_theme?.selection_reason : "ケア方針を確認しています…"}
+                {completedCareReady ? dailyInsight.data?.care_rationale || carePlan?.care_theme?.selection_reason : "ケア方針を確認しています…"}
               </div>
             </div>
 
@@ -1982,8 +1998,9 @@ export default function RadarPage() {
                   { key: "live", label: "暮らす", icon: IconLifestyle },
                 ]}
                 value={careTab}
-                onChange={setCareTab}
+                onChange={next => { setCareTab(next); trackJourney("care_category_view", { category: next }); }}
               />
+              {!careTab && completedCareReady ? <p className="mt-3 text-[13px] font-bold leading-6 text-[#2F816E]">どのケアから見てみる？ 分野を選んでね。</p> : null}
               {!completedCareReady ? <p className="mt-3 text-sm text-slate-500" role="status">ケアを準備しています…</p> : null}
             </div>
 
