@@ -1,16 +1,22 @@
 import MetaInitialPageView from '@/components/analytics/MetaInitialPageView';
 // app/layout.js
+import MimoruProvider from "@/components/mimoru/MimoruProvider";
 import ExperienceProvider from '@/components/experience/ExperienceProvider';
 import "./globals.css";
-import { Zen_Kaku_Gothic_New } from "next/font/google";
+import localFont from "next/font/local";
 import RegisterServiceWorker from "@/components/pwa/RegisterServiceWorker";
 import PwaInstallPrompt from "@/components/pwa/PwaInstallPrompt";
 import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
 
-const zen = Zen_Kaku_Gothic_New({
-  weight: ["400", "500", "700", "900"],
-  subsets: ["latin"],
+const zen = localFont({
+  src: [
+    { path: "./fonts/ZenKakuGothicNew-Regular.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/ZenKakuGothicNew-Medium.woff2", weight: "500", style: "normal" },
+    { path: "./fonts/ZenKakuGothicNew-Bold.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/ZenKakuGothicNew-Black.woff2", weight: "900", style: "normal" },
+  ],
   display: "swap",
+  preload: false,
   variable: "--font-zenkaku",
 });
 
@@ -93,7 +99,7 @@ export default function RootLayout({ children }) {
         <RegisterServiceWorker />
         <MetaInitialPageView />
         <ExperienceProvider>
-        {children}
+        <MimoruProvider>{children}</MimoruProvider>
         <PwaInstallPrompt />
         <PushNotificationPrompt />
         </ExperienceProvider>
