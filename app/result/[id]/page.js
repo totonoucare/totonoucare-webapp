@@ -1,5 +1,6 @@
 "use client";
 // app/result/[id]/page.js
+import InsightPanel, { useMimoruInsight } from "@/components/mimoru/InsightPanel";
 import { trackFunnel } from "@/lib/funnelClient";
 import { trackJourney } from "@/lib/journeyClient";
 import {ResultFeedback} from '@/components/experience/ExperienceProvider';
@@ -570,6 +571,11 @@ function ResultPage({ params }) {
     carePreferences,
   }), [answers, computed, symptomKey, event?.created_at, carePreferences]);
 
+  const resultInsight = useMimoruInsight({ kind: "result", result_id: id, symptom_focus: symptomKey,
+    revision: JSON.stringify([computed?.core_code, computed?.axes, computed?.sub_labels]) },
+    Boolean(isLoggedIn && event?.id && !loadingEvent && !event?.retake_required));
+  const insightQuestionContext = { label: symptomLabel + "と体質の見立て", request: { kind: "result", result_id: id, symptom_focus: symptomKey } };
+
   async function attachToAccount(confirmUpdate = false) {
     if (attachingRef.current) return;
     attachingRef.current = true;
@@ -890,6 +896,7 @@ function ResultPage({ params }) {
         <div className="mt-3 space-y-6 pb-32">
           {tab === "overview" ? (
             <>
+              <InsightPanel insight={resultInsight} title={`この体質と、${symptomLabel}のお悩みの関係`} context={insightQuestionContext} />
               <Card>
                 <CardHeader icon={<IconAnalysis />} title="見立ての要点" sub="整えポイント・張りやすい場所" />
                 
@@ -1050,6 +1057,7 @@ function ResultPage({ params }) {
               {/* ★ 相性タブ：SoftPanelの入れ子を廃止し、フラットな構成へ */}
               <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
                 <div className="text-[14px] leading-relaxed font-bold text-slate-700 bg-slate-50 p-6 rounded-[24px] ring-1 ring-slate-100">
+                  <InsightPanel insight={resultInsight} part="weather" statusOnly title={`${symptomLabel}と天気のつながり`} context={insightQuestionContext} />
                   {weatherCompat.intro}
                 </div>
 
@@ -1075,7 +1083,7 @@ function ResultPage({ params }) {
                           </div>
                         </div>
                         <div className="mt-4 text-[13px] leading-relaxed font-bold text-slate-600">
-                          {item.body}
+                          {resultInsight.data?.weather_connections?.find(row => row.key === item.key)?.explanation || item.body}
                         </div>
                       </li>
                     ))}
@@ -1123,6 +1131,7 @@ function ResultPage({ params }) {
               <Card>
                 <CardHeader icon={<IconCompass />} title="整え方" sub="あなたに合う方針と、取り入れ方の例" />
                 <div className="space-y-6 px-5 pb-8 pt-6 sm:px-6">
+                  <InsightPanel insight={resultInsight} part="care" statusOnly title={`${symptomLabel}に対するケアの狙い`} context={insightQuestionContext} />
                   <p className="text-[14px] font-bold leading-7 text-slate-700">
                     {carePreferences.summary}
                   </p>
@@ -1134,7 +1143,7 @@ function ResultPage({ params }) {
                     </div>
                     <div className="space-y-3">
                       {carePreferences.items.map((item) => (
-                        <CarePolicyCard key={item.key} item={item} />
+                        <CarePolicyCard key={item.key} item={{ ...item, body: resultInsight.data?.care_connections?.find(row => row.key === item.key)?.explanation || item.body }} />
                       ))}
                     </div>
                   </div>
