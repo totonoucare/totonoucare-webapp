@@ -13,13 +13,12 @@ import DailyRecordCard from "@/components/records/DailyRecordCard";
 import RecordsCalendar from "@/components/records/RecordsCalendar";
 import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
 import ExpertConsultPreview from "@/components/records/ExpertConsultPreview";
-import LiveSupportPanel from "@/components/records/LiveSupportPanel";
+import { useMimoru } from "@/components/mimoru/MimoruProvider";
 import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 
 const TAB_OPTIONS = [
   { key: "record", label: "記録カレンダー", short: "記録" },
-  { key: "analysis", label: "振り返り", short: "振り返り" },
-  { key: "consult", label: "相談", short: "相談" },
+  { key: "analysis", label: "振り返り・分析", short: "分析" },
 ];
 
 function normalizeTab(value) {
@@ -48,7 +47,7 @@ function IconLockSmall() {
 function RecordsTabs({ value, onChange, access }) {
   return (
     <div className="sticky top-[66px] z-30 -mx-1 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
-      <div className="grid grid-cols-3 gap-1 rounded-[22px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
+      <div className="grid grid-cols-2 gap-1 rounded-[22px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
         {TAB_OPTIONS.map((item) => {
           const active = value === item.key;
           const locked = Boolean(
@@ -93,6 +92,16 @@ export default function RecordsPageClient({
   const earliestEditableDate = useMemo(() => addDaysYmd(today, -6), [today]);
 
   const [tab, setTab] = useState(normalizeTab(initialTab));
+  const mimoru = useMimoru();
+  const openMimoru = mimoru?.openChat;
+  useEffect(() => {
+    if (!["consult", "expert"].includes(initialTab) || !mimoru?.userId || !openMimoru) return;
+    openMimoru({ prompt: initialLivePrompt || "" });
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tab"); url.searchParams.delete("prompt");
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [initialTab, initialLivePrompt, mimoru?.userId, openMimoru, router]);
+
   const [session, setSession] = useState(null);
   useEffect(() => {if(session?.access_token && ['analysis','consult'].includes(tab)) experienceSignal(tab);},[session?.access_token,tab]);
   const [authLoading, setAuthLoading] = useState(true);
@@ -446,7 +455,7 @@ export default function RecordsPageClient({
 
   if (authLoading) {
     return (
-      <AppShell title="記録・相談" subtitle="読み込み中">
+      <AppShell title="記録・分析" subtitle="読み込み中">
         <Module className="p-6">
           <div className="h-48 animate-pulse rounded-[24px] bg-[#F4FAF7]" />
         </Module>
@@ -457,7 +466,7 @@ export default function RecordsPageClient({
   if (!session) {
     return (
       <AppShell
-        title="記録・相談"
+        title="記録・分析"
         subtitle="ログインして利用"
         headerRight={
           <button
@@ -472,7 +481,7 @@ export default function RecordsPageClient({
         <Module className="p-6 text-center">
           <div className="text-[18px] font-black text-slate-900">記録にはログインが必要です</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
-            予報と実際の体調を保存し、記録の振り返りや今の体調相談につなげます。
+            予報と実際の体調を保存し、日々のケアを振り返ります。ミモルへの相談は右下から開けます。
           </div>
           <Button onClick={() => router.push("/signup?next=%2Frecords")} className="mt-5 w-full">
             ログイン・無料登録へ
@@ -484,8 +493,8 @@ export default function RecordsPageClient({
 
   return (
     <AppShell
-      title="記録・相談"
-      subtitle="記録・振り返り・今の相談"
+      title="記録・分析"
+      subtitle="日々の記録と振り返り"
       headerRight={
         <button
           type="button"
@@ -596,24 +605,10 @@ export default function RecordsPageClient({
         )
       ) : null}
 
-      {tab === "consult" ? (
-        <div className="space-y-5">
-          {accessLoading ? (
-            <div className="h-56 animate-pulse rounded-[30px] bg-[#F4FAF7] ring-1 ring-[#CFE7DE]" />
-          ) : featureAccess?.consult_enabled || featureAccess?.consult_history_enabled ? (
-            <LiveSupportPanel
-              active
-              authedFetch={authedFetch}
-              initialPrompt={livePrompt}
-              onConsumePrompt={() => setLivePrompt("")}
-              onAccessChange={setFeatureAccess}
-            />
-          ) : (
-            <SubscriptionPaywall feature="consult" returnPath="/records?tab=consult" access={featureAccess} />
-          )}
-          <ExpertConsultPreview authedFetch={authedFetch} />
-        </div>
-      ) : null}
+      <details className="rounded-[20px] bg-white p-4 text-[12px] text-slate-500 ring-1 ring-[#DCE8DD]">
+        <summary className="cursor-pointer font-bold">専門家への相談について</summary>
+        <div className="mt-3"><ExpertConsultPreview authedFetch={authedFetch} /></div>
+      </details>
     </AppShell>
   );
 }
