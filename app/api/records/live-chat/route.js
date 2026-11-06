@@ -1,3 +1,4 @@
+import { resolveConsultContext, sharedConstitutionContext } from "@/lib/mimoru/consultContextServer";
 import { NextResponse } from "next/server";
 import { OPENAI_RECORDS_LIVE_CHAT_MODEL } from "@/lib/records/policy";
 import { requireUser } from "@/lib/requireUser";
@@ -57,7 +58,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v20_care_provenance_complete_2026-09-05";
+const PROMPT_VERSION = "records_live_support_v21_shared_symptom_care_context_2026-11-05";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -89,9 +90,15 @@ function publicMessage(row) {
     suggested_questions: Array.isArray(row.suggested_questions) ? row.suggested_questions : [],
     follow_up: row.follow_up && typeof row.follow_up === "object" ? row.follow_up : null,
     reply_to_follow_up: replyToFollowUpFromMetadata(row.metadata),
+    consult_context: row.metadata?.consult_context ? { ...row.metadata.consult_context, label: row.metadata.consult_context_label || "" } : null,
     safety_level: row.safety_level || "routine",
     created_at: row.created_at,
   };
+}
+
+function lastConsultContext(messages) {
+  const last = [...messages].reverse().find(row => row.role === "user");
+  return last?.metadata?.consult_context ? { request: last.metadata.consult_context, label: last.metadata.consult_context_label || "前回の相談対象" } : null;
 }
 
 async function findLiveThread(userId) {
@@ -187,6 +194,7 @@ async function loadConversation(threadId, userId) {
   return rows.map((row) => ({
     ...conversationMessageForAi(row),
     safety_level: row.safety_level || "routine",
+    selected_context: row.metadata?.consult_context_label || null,
   }));
 }
 
@@ -268,6 +276,7 @@ export async function GET(req) {
             thread,
             consultation_status: consultationStatusFromThread(thread),
             messages: messages.map(publicMessage),
+            last_consult_context: lastConsultContext(messages),
           },
         });
       }
@@ -299,6 +308,7 @@ export async function GET(req) {
         thread,
         consultation_status: consultationStatusFromThread(thread),
         messages: messages.map(publicMessage),
+            last_consult_context: lastConsultContext(messages),
       },
     });
   } catch (error) {
@@ -345,6 +355,7 @@ export async function POST(req) {
       }
     }
 
+    const selectedContext = urgentMessage ? null : await resolveConsultContext({ req, user, requested: body.consult_context });
     const today = jstDateString(new Date());
     let thread = threadId ? await findLiveThread(user.id) : null;
     if (threadId && thread?.id !== threadId) {
@@ -362,6 +373,8 @@ export async function POST(req) {
       content: message,
       metadata: {
         surface: "live_support",
+        consult_context: selectedContext?.request || null,
+        consult_context_label: selectedContext?.label || null,
         ...(replyToFollowUp ? { reply_to_follow_up: replyToFollowUp } : {}),
       },
     });
@@ -421,7 +434,10 @@ export async function POST(req) {
     const tomorrowRow = bundle.rows.find((row) => row.date === tomorrow) || null;
     const recentDetails = selectLiveDetailRows(recentRows, today).map((row) => buildAiRecordContext(row, profile, { mode: "today" }));
 
+    const commonInsight = await sharedConstitutionContext(user.id, profile);
     const context = {
+      selected_context: selectedContext,
+      shared_constitution_insight: commonInsight,
       mode: "live_health_support",
       assistant: { name: "ミモル", reading: "ミモル", role: "ケアナビAI" },
       product_context: RECORDS_AI_PRODUCT_CONTEXT,
@@ -493,7 +509,7 @@ export async function POST(req) {
       requestId,
       output,
       model: result.model || MODEL,
-      metadata: { source: "ai", surface: "live_support", response_id: result.response_id, prompt_version: PROMPT_VERSION },
+      metadata: { consult_context: selectedContext?.request || null, consult_context_label: selectedContext?.label || null, source: "ai", surface: "live_support", response_id: result.response_id, prompt_version: PROMPT_VERSION },
     });
     const responseEventType = output.safety_level === "urgent"
       ? "safety_response"
