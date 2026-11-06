@@ -186,7 +186,7 @@ export default function GuidePage() {
     () => [
       { key: "flow", label: "基本の流れ" },
       { key: "radar", label: "予報・ケア" },
-      { key: "records", label: "記録・相談" },
+      { key: "records", label: "記録・分析" },
       { key: "care", label: "ショップ" },
     ],
     []
@@ -230,7 +230,7 @@ export default function GuidePage() {
                 { label: "トリセツ", sub: "自分の体質を知る", Icon: IconConstitution, num: "01" },
                 { label: "体調予報", sub: "今日・明日のゆらぎを見る", Icon: IconRadar, num: "02" },
                 { label: "対策ケア", sub: "先回りして整える", Icon: IconCare, num: "03" },
-                { label: "記録・相談", sub: "実感を残し、AIや人に相談", Icon: IconPencil, num: "04" },
+                { label: "記録・分析", sub: "実感を残し、予報やケアを振り返る", Icon: IconPencil, num: "04" },
               ].map(({ label, sub, Icon, num }) => (
                 <div key={label} className="rounded-[18px] bg-white/80 p-3 ring-1 ring-white shadow-sm">
                   <div className="flex items-center justify-between gap-2">
@@ -304,7 +304,7 @@ export default function GuidePage() {
             <div className="grid gap-3 pt-2">
               <Button onClick={() => router.push("/check")} className="w-full shadow-md">体質トリセツを作る</Button>
               <Button variant="secondary" onClick={() => router.push("/radar")} className="w-full">体調予報を見る</Button>
-              <Button variant="secondary" onClick={() => router.push("/records?tab=consult")} className="w-full">記録・相談を見る</Button>
+              <Button variant="secondary" onClick={() => router.push("/records")} className="w-full">記録・分析を見る</Button>
             </div>
           </div>
         </Module>
@@ -419,7 +419,7 @@ export default function GuidePage() {
             </GuideCard>
 
             <GuideCard tone="mint" title="今の調子をミモルに相談" icon={<IconSpark />}>
-              体調が気になった瞬間は、相談タブからケアナビAI ミモルへ一言から話せます。今日・明日の予報、今日行ったケア、直近の記録を見ながら、今できることを一緒に整理します。
+              体調が気になった瞬間は、右下の「ミモルに相談」から一言で話せます。予報内のケアからも質問できます。今日・明日の予報、今日行ったケア、直近の記録を見ながら、今できることを一緒に整理します。
               <CheckList
                 items={[
                   "期間の振り返りチャットとは別の会話として保存します。",
@@ -445,7 +445,7 @@ export default function GuidePage() {
             </MiniNote>
 
             <div className="pt-2">
-              <Button onClick={() => router.push("/records")} className="w-full shadow-md">記録・相談へ</Button>
+              <Button onClick={() => router.push("/records")} className="w-full shadow-md">記録・分析へ</Button>
             </div>
           </div>
         </Module>
