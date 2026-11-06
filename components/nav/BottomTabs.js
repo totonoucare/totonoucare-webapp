@@ -78,7 +78,7 @@ export default function BottomTabs() {
           {item("home", "ホーム", IconHome, "/")}
           {item("check", "トリセツ", IconKarte, "/check")}
           {item("radar", "体調予報", IconRadar, "/radar")}
-          {item("records", "記録・相談", IconChat, "/records")}
+          {item("records", "記録・分析", IconChat, "/records")}
           {item("care", "ショップ", IconCare, "/care-navi")}
         </div>
       </div>
