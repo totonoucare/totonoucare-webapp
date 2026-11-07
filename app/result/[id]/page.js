@@ -896,7 +896,6 @@ function ResultPage({ params }) {
         <div className="mt-3 space-y-6 pb-32">
           {tab === "overview" ? (
             <>
-              <InsightPanel insight={resultInsight} title={`この体質と、${symptomLabel}のお悩みの関係`} context={insightQuestionContext} />
               <Card>
                 <CardHeader icon={<IconAnalysis />} title="見立ての要点" sub="整えポイント・張りやすい場所" />
                 
@@ -930,6 +929,10 @@ function ResultPage({ params }) {
                       <div className="text-[13px] font-bold text-slate-500">良好なバランスです。</div>
                     )}
                   </div>
+
+                  <div className="h-px w-full bg-slate-100" />
+
+                  <InsightPanel insight={resultInsight} title={`${symptomLabel}と体質のつながり`} context={insightQuestionContext} />
 
                   <div className="h-px w-full bg-slate-100" />
 
@@ -1056,8 +1059,8 @@ function ResultPage({ params }) {
               
               {/* ★ 相性タブ：SoftPanelの入れ子を廃止し、フラットな構成へ */}
               <div className="px-5 sm:px-6 pb-8 pt-6 space-y-8">
-                <div className="text-[14px] leading-relaxed font-bold text-slate-700 bg-slate-50 p-6 rounded-[24px] ring-1 ring-slate-100">
-                  <InsightPanel insight={resultInsight} part="weather" statusOnly title={`${symptomLabel}と天気のつながり`} context={insightQuestionContext} />
+                <InsightPanel insight={resultInsight} part="weather" statusOnly />
+                <div className="text-[14px] leading-relaxed font-bold text-slate-700">
                   {weatherCompat.intro}
                 </div>
 
@@ -1067,7 +1070,7 @@ function ResultPage({ params }) {
                     <h3 className="text-[16px] font-black text-slate-900">影響を受けやすい天気変化</h3>
                   </div>
                   <p className="mb-3 text-[12px] font-bold text-slate-500">影響を受けやすい順に並べています。</p>
-                  <ol className="space-y-3">
+                  <ol className="space-y-3" data-mimoru-weather-connections>
                     {weatherCompat.items.map((item, index) => (
                       <li key={item.key} className="rounded-[24px] bg-slate-50 ring-1 ring-slate-100 p-5">
                         <div className="flex items-start justify-between gap-4 mb-3">
@@ -1131,7 +1134,7 @@ function ResultPage({ params }) {
               <Card>
                 <CardHeader icon={<IconCompass />} title="整え方" sub="あなたに合う方針と、取り入れ方の例" />
                 <div className="space-y-6 px-5 pb-8 pt-6 sm:px-6">
-                  <InsightPanel insight={resultInsight} part="care" statusOnly title={`${symptomLabel}に対するケアの狙い`} context={insightQuestionContext} />
+                  <InsightPanel insight={resultInsight} part="care" statusOnly />
                   <p className="text-[14px] font-bold leading-7 text-slate-700">
                     {carePreferences.summary}
                   </p>
@@ -1141,9 +1144,9 @@ function ResultPage({ params }) {
                       <IconBolt className="h-5 w-5 text-[#e2aa3b]" />
                       <h3 className="text-[16px] font-black text-slate-900">あなたに合う{carePreferences.items.length}つの方針</h3>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-3" data-mimoru-care-connections>
                       {carePreferences.items.map((item) => (
-                        <CarePolicyCard key={item.key} item={{ ...item, body: resultInsight.data?.care_connections?.find(row => row.key === item.key)?.explanation || item.body }} />
+                        <CarePolicyCard key={item.key} item={item} explanation={resultInsight.data?.care_connections?.find(row => row.key === item.key)?.explanation} />
                       ))}
                     </div>
                   </div>
