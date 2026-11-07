@@ -1286,11 +1286,19 @@ export default function RadarPage() {
     }
   }
 
-  function actionButtonFor(item, { compact = false, stopPropagation = false, uncheckedLabel = "" } = {}) {
+  function careReasonFor(item) {
+    return item ? dailyInsight.data?.item_reasons?.find(row => row.item_key === item.item_key)?.reason || "" : "";
+  }
+
+  function careQuestionFor(item, { showReason = true } = {}) {
     if (!item) return null;
-    return (
-      <div className="w-full min-w-0">
-      <CareActionButton
+    return <CareQuestion item={item} forecastId={forecast?.id} forecastRevision={forecast?.updated_at || forecast?.created_at || null} targetDate={activeTargetDate} mode={careSourceMode}
+      symptomFocus={symptomFocus} lifestyleScene={lifestyleScene} reason={showReason ? careReasonFor(item) : ""} />;
+  }
+
+  function actionButtonFor(item, { compact = false, stopPropagation = false, uncheckedLabel = "", withQuestion = true } = {}) {
+    if (!item) return null;
+    const button = <CareActionButton
         checked={currentCareActionKeys.has(item.canonical_key || item.item_key)}
         saving={careActionSavingKey === (item.canonical_key || item.item_key)}
         disabled={!careActionsSchemaReady || !completedCareReady}
@@ -1300,11 +1308,9 @@ export default function RadarPage() {
           if (stopPropagation) event?.stopPropagation?.();
           toggleCareAction(item);
         }}
-      />
-      <CareQuestion item={item} forecastId={forecast?.id} forecastRevision={forecast?.updated_at || forecast?.created_at || null} targetDate={activeTargetDate} mode={careSourceMode}
-        symptomFocus={symptomFocus} lifestyleScene={lifestyleScene} />
-      </div>
-    );
+      />;
+    if (!withQuestion) return <div className="shrink-0">{button}</div>;
+    return <div className="w-full min-w-0"><div className="flex justify-end">{button}</div>{careQuestionFor(item)}</div>;
   }
 
   useEffect(() => {
@@ -1895,10 +1901,10 @@ export default function RadarPage() {
                         </span>
                       </div>
 
-                      {!dailyInsight.data ? <div className="mt-2.5 rounded-[18px] bg-white px-3.5 py-3 text-[14px] font-extrabold leading-6 text-slate-800 ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)]">
-                        {forecastModeLead}
-                      </div> : null}
-                      <InsightPanel insight={dailyInsight} part="forecast" title={`${symptomLabel || "気になる不調"}への備え`} context={forecastQuestionContext} />
+                      <div className="mt-2.5 rounded-[18px] bg-white px-3.5 py-3 ring-1 ring-[#E4ECE4]">
+                        {dailyInsight.available ? <InsightPanel insight={dailyInsight} part="forecast" title={`${symptomLabel || "気になる不調"}への備え`} context={forecastQuestionContext} fallback={forecastModeLead} />
+                          : <p className="text-[14px] font-medium leading-7 text-slate-700">{forecastModeLead}</p>}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1943,9 +1949,9 @@ export default function RadarPage() {
               <GuideBotAvatar mood={checkedCareCount > 0 ? "complete" : "normal"} className="h-12 w-12 shrink-0" />
               <div className="text-[13px] font-bold leading-5 text-slate-600">
                 <span className="text-[#2F816E]">ミモル　</span>
-                {checkedCareCount > 0 ? `${selectedIsToday ? "今日に向けた" : "明日に向けた"}ケアを${checkedCareCount}件記録しました。`
-                  : selectedIsToday ? "実際に取り入れたケアは「やってみた」で記録できます。"
-                  : "今夜取り入れたケアを、明日に向けた記録として残せます。"}
+                {checkedCareCount > 0 ? `${selectedIsToday ? "今日に向けた" : "明日に向けた"}ケアを${checkedCareCount}件記録したよ。ほかにも気になるケアを見てみてね。`
+                  : dailyInsight.data?.care_invitation || (selectedIsToday ? `${symptomLabel || "今の体調"}をいたわるケアを用意したよ。どれから見てみる？`
+                  : `明日の${symptomLabel || "体調"}に備えて、今夜できるケアを用意したよ。どれから見てみる？`)}
               </div>
             </div>
 
@@ -2236,7 +2242,7 @@ export default function RadarPage() {
                             </div>
 
                             {card.proposal ? (
-                              <FoodCombinationCard card={card} actions={careItemsByKind.get(`food_${card.key || "card"}_item`) || []} renderAction={actionButtonFor} />
+                              <FoodCombinationCard card={card} actions={careItemsByKind.get(`food_${card.key || "card"}_item`) || []} renderAction={actionButtonFor} renderQuestion={careQuestionFor} />
                             ) : safeArray(card.items).length > 0 ? (
                               <div className="mt-3 space-y-2">
                                 {safeArray(card.items).map((item, itemIdx) => {
@@ -2244,7 +2250,7 @@ export default function RadarPage() {
                                   const itemAction = card.key === "caution"
                                     ? null
                                     : careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIdx];
-                                  if (card.key === "drink") return <DrinkCareCard key={`${card.key}-${item}-${itemIdx}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true }) : null} />;
+                                  if (card.key === "drink") return <DrinkCareCard key={`${card.key}-${item}-${itemIdx}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null} question={careQuestionFor(itemAction, { showReason: false })} reason={careReasonFor(itemAction)} />;
                                   return (
                                     <div
                                       key={`${card.key}-${item}-${itemIdx}`}
@@ -2267,9 +2273,9 @@ export default function RadarPage() {
                                             <span>{item}</span>
                                           )}
                                         </div>
-                                        {itemAction ? actionButtonFor(itemAction, { compact: true }) : null}
+                                        {itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null}
                                       </div>
-                                      {itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.public_reason}</p> : null}
+                                      {careReasonFor(itemAction) || itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600" data-mimoru-care-reason={Boolean(careReasonFor(itemAction))}>{careReasonFor(itemAction) || itemDetail.public_reason}</p> : null}
                                       {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
                                       {itemDetail?.how_to ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.how_to}</p> : null}
                                       {itemDetail?.caffeine_label ? <span className="mt-2 inline-flex rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-[#EEDFC7]">{itemDetail.caffeine_label}</span> : null}
@@ -2287,6 +2293,7 @@ export default function RadarPage() {
                                           ))}
                                         </details>
                                       ) : null}
+                                      {careQuestionFor(itemAction, { showReason: false })}
                                     </div>
                                   );
                                 })}
@@ -2317,10 +2324,13 @@ export default function RadarPage() {
                         {foodExamples.map((x, idx) => (
                           <div
                             key={`${x}-${idx}`}
-                            className="flex items-center justify-between gap-2 rounded-[15px] bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#F1E5D1]"
+                            className="rounded-[15px] bg-white px-3 py-2 text-[12px] font-extrabold text-slate-700 shadow-sm ring-1 ring-[#F1E5D1]"
                           >
-                            <span className="min-w-0 flex-1 leading-5">{x}</span>
-                            {actionButtonFor(careItemsByKind.get("food_example_item")?.[idx], { compact: true })}
+                            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                              <span className="min-w-0 flex-1 basis-[8em] leading-5">{x}</span>
+                              {actionButtonFor(careItemsByKind.get("food_example_item")?.[idx], { compact: true, withQuestion: false })}
+                            </div>
+                            {careQuestionFor(careItemsByKind.get("food_example_item")?.[idx])}
                           </div>
                         ))}
                       </div>
@@ -2396,14 +2406,14 @@ export default function RadarPage() {
                                   <div className="text-[12px] font-black text-[#A56C18]">{card.label}</div>
                                   {card.body ? <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">{card.body}</div> : null}
                                   {card.proposal ? (
-                              <FoodCombinationCard card={card} actions={careItemsByKind.get(`food_${card.key || "card"}_item`) || []} renderAction={actionButtonFor} />
+                              <FoodCombinationCard card={card} actions={careItemsByKind.get(`food_${card.key || "card"}_item`) || []} renderAction={actionButtonFor} renderQuestion={careQuestionFor} />
                             ) : safeArray(card.items).length > 0 ? (
                                     <div className="mt-2 space-y-2">
                                       {safeArray(card.items).map((item, itemIndex) => {
                                         const itemDetail = safeArray(card.item_details)?.[itemIndex] || null;
+                                        const itemAction = card.key === "caution" ? null : careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIndex];
                                         if (card.key === "drink") {
-                                          const itemAction = careItemsByKind.get(`food_${card.key}_item`)?.[itemIndex];
-                                          return <DrinkCareCard key={`${card.key}-${itemIndex}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true }) : null} />;
+                                          return <DrinkCareCard key={`${card.key}-${itemIndex}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null} question={careQuestionFor(itemAction, { showReason: false })} reason={careReasonFor(itemAction)} />;
                                         }
                                         return (
                                           <div key={`${card.key}-${itemIndex}`} className="rounded-[14px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">
@@ -2424,11 +2434,9 @@ export default function RadarPage() {
                                                   <span>{item}</span>
                                                 )}
                                               </div>
-                                              {card.key !== "caution"
-                                                ? actionButtonFor(careItemsByKind.get(`food_${card.key || "card"}_item`)?.[itemIndex], { compact: true })
-                                                : null}
+                                              {itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null}
                                             </div>
-                                            {itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.public_reason}</p> : null}
+                                            {careReasonFor(itemAction) || itemDetail?.public_reason ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600" data-mimoru-care-reason={Boolean(careReasonFor(itemAction))}>{careReasonFor(itemAction) || itemDetail.public_reason}</p> : null}
                                       {itemDetail?.record_semantics === "ingredients_or_eating_pattern" ? <p className="mt-2 text-[12px] font-medium leading-5 text-slate-500">食材や食べ方を取り入れたら「やってみた」。料理は一例です。</p> : null}
                                       {itemDetail?.how_to ? <p className="mt-2 text-[12px] font-medium leading-6 text-slate-600">{itemDetail.how_to}</p> : null}
                                       {itemDetail?.caffeine_label ? <span className="mt-2 inline-flex rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-[#EEDFC7]">{itemDetail.caffeine_label}</span> : null}
@@ -2444,6 +2452,7 @@ export default function RadarPage() {
                                                 ))}
                                               </div>
                                             ) : null}
+                                            {careQuestionFor(itemAction, { showReason: false })}
                                           </div>
                                         );
                                       })}
