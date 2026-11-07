@@ -1,4 +1,6 @@
 import { resolveConsultContext, sharedConstitutionContext } from "@/lib/mimoru/consultContextServer";
+import { buildMimoruProfileContext, MIMORU_PRODUCT_CONTEXT } from "@/lib/mimoru/explanationContext";
+import { buildConnectionReference, MIMORU_WRITING_GUIDE } from "@/lib/mimoru/explanationKnowledge";
 import { NextResponse } from "next/server";
 import { OPENAI_RECORDS_LIVE_CHAT_MODEL } from "@/lib/records/policy";
 import { requireUser } from "@/lib/requireUser";
@@ -8,9 +10,7 @@ import { jstDateString } from "@/lib/dateJST";
 import { getRecordsAccess } from "@/lib/records/access";
 import { addDaysYmd } from "@/lib/records/analysis";
 import {
-  RECORDS_AI_PRODUCT_CONTEXT,
   buildAiRecordContext,
-  buildInterpretedProfileContext,
 } from "@/lib/records/aiContext";
 import {
   buildSafetyIdentifier,
@@ -58,7 +58,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v21_shared_symptom_care_context_2026-11-05";
+const PROMPT_VERSION = "records_live_support_v22_shared_explanation_2026-11-07";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -440,8 +440,10 @@ export async function POST(req) {
       shared_constitution_insight: commonInsight,
       mode: "live_health_support",
       assistant: { name: "ミモル", reading: "ミモル", role: "ケアナビAI" },
-      product_context: RECORDS_AI_PRODUCT_CONTEXT,
-      constitution: buildInterpretedProfileContext(profile),
+      product_context: MIMORU_PRODUCT_CONTEXT,
+      writing_guide: MIMORU_WRITING_GUIDE,
+      explanation_reference: buildConnectionReference(selectedContext?.constitution?.symptom_focus?.code || profile?.symptom_focus),
+      constitution: buildMimoruProfileContext(profile),
       current_context: {
         local_datetime_jst: jstDateTime(),
         today: todayRow ? buildAiRecordContext(todayRow, profile, { mode: "today" }) : null,
@@ -466,7 +468,7 @@ export async function POST(req) {
       data_boundaries: {
         app_facts: "アプリが計算・保存した体質、予報、表示ケア、実行ケア、記録",
         user_facts: "ユーザーが会話または記録で伝えた内容",
-        ai_hypotheses: "ミモルが可能性として述べる解釈。事実や診断ではない",
+        ai_interpretations: "体質や天気の働きと、今回の相談を結びつけたミモルの見立て",
       },
     };
 
