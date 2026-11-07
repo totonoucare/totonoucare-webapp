@@ -122,7 +122,7 @@ function ChatHeader({ onClose, inline = false, onExpand }) {
   return <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[#DCE8DD] bg-white px-3 py-2">
     <div className="flex min-w-0 items-center gap-1.5"><GuideBotAvatar mood="listening" className="h-10 w-10 shrink-0" />
       <div><div id={inline ? undefined : "mimoru-title"} className="text-[15px] font-black text-[#24564C]">ミモル</div>
-        <div className="text-[10px] font-bold text-slate-500">GPTによるAI相談</div></div></div>
+        <div className="text-[10px] font-bold text-slate-500">体質と毎日のケアを相談</div></div></div>
     <div className="flex items-center gap-2">{onExpand ? <button type="button" onClick={onExpand} className="min-h-10 px-2 text-[12px] font-bold text-[#2F816E]">大きく開く</button> : null}
       <button data-chat-close type="button" aria-label="相談を閉じる" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full text-xl text-slate-500 hover:bg-[#EAF7F1]">×</button></div>
   </header>;
