@@ -10,9 +10,9 @@ const SHORT_POLICY_COPY = {
   sasaeru: "食事と休息で体を働かせる力を補い、疲れを増やさないことを大切にします。",
 };
 
-export default function ResultCarePolicyCard({ item }) {
+export default function ResultCarePolicyCard({ item, explanation = "" }) {
   if (!item) return null;
-  return h("div", { className: "rounded-[24px] bg-slate-50 p-5 ring-1 ring-slate-100" },
+  return h("div", { className: "rounded-[24px] bg-slate-50 p-5 ring-1 ring-slate-100", "data-result-care-policy": item.key },
     h("div", { className: "flex items-center gap-3" },
       h("div", { className: "grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-[16px] bg-white p-2 shadow-sm ring-1 ring-slate-200" },
         h("img", { src: item.icon, alt: "", className: "h-full w-full object-contain" }),
@@ -22,7 +22,7 @@ export default function ResultCarePolicyCard({ item }) {
         h("div", { className: "mt-1 text-[11px] font-bold text-[var(--accent-ink)]" }, item.rankLabel),
       ),
     ),
-    h("p", { className: "mt-3 text-[13px] font-bold leading-6 text-slate-600" }, SHORT_POLICY_COPY[item.key] || item.guide),
+    h("p", { className: "mt-3 text-[13px] font-bold leading-6 text-slate-600" }, explanation || SHORT_POLICY_COPY[item.key] || item.guide),
     h("details", { className: "mt-3 border-t border-slate-200/70 pt-2.5 text-[12px] text-slate-600" },
       h("summary", { className: "cursor-pointer py-1.5 font-bold text-[var(--accent-ink)]" }, "東洋医学での考え方"),
       h("p", { className: "pt-2 font-medium leading-6" }, item.body),
