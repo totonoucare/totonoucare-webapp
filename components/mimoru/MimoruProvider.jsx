@@ -31,6 +31,8 @@ function MimoruSession({ userId, children }) {
   const restoreContext = useCallback(value => { if (restoreAllowed.current && value) setSelected(value); restoreAllowed.current = false; }, []);
   const panelRef = useRef(null);
   const launcherRef = useRef(null);
+  // Scoped to this signed-in session; auth changes remount MimoruSession.
+  const insightCache = useRef(new Map());
   const aliveRef = useRef(true);
   useEffect(() => { aliveRef.current = true; return () => { aliveRef.current = false; }; }, []);
   const consumePrompt = useCallback(() => setInitialPrompt(""), []);
@@ -96,15 +98,15 @@ function MimoruSession({ userId, children }) {
   }, [floating, closeChat]);
   const visible = userId && !/^\/(login|signup|auth|check\/run|checkout)(\/|$)/.test(pathname);
   const panelHeight = viewport ? Math.min(700, Math.max(160, viewport.height - 28)) : 600;
-  const value = { userId, open, inlineId, selected, chat, fetchData, openChat, closeChat, viewportHeight: viewport?.height,
+  const value = { userId, open, inlineId, selected, chat, fetchData, insightCache: insightCache.current, openChat, closeChat, viewportHeight: viewport?.height,
     releaseInline, expandChat: () => setInlineId(null), clearContext: () => { restoreAllowed.current = false; setSelected(null); } };
   return <Context.Provider value={value}>
     {children}
     {visible && !open ? <button ref={launcherRef} type="button" onClick={() => openChat()}
-      aria-label="ミモルに相談する" aria-haspopup="dialog"
+      aria-label="ミモルに質問する" aria-haspopup="dialog"
       className="fixed right-4 z-[65] flex items-center gap-1 rounded-full bg-white py-1 pl-1 pr-4 text-[12px] font-black text-[#24564C] shadow-[0_8px_28px_rgba(36,86,76,0.22)] ring-1 ring-[#B6D8CF]"
       style={{ bottom: "calc(var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px))) + 12px)" }}>
-      <GuideBotAvatar mood="listening" className="h-12 w-12" /><span>ミモルに相談</span>
+      <GuideBotAvatar mood="listening" className="h-12 w-12" /><span>ミモルに質問</span>
     </button> : null}
     {floating ? <>
       <div className="fixed inset-0 z-[110] bg-[#183E35]/15" onClick={closeChat} aria-hidden="true" />
@@ -122,9 +124,9 @@ function ChatHeader({ onClose, inline = false, onExpand }) {
   return <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[#DCE8DD] bg-white px-3 py-2">
     <div className="flex min-w-0 items-center gap-1.5"><GuideBotAvatar mood="listening" className="h-10 w-10 shrink-0" />
       <div><div id={inline ? undefined : "mimoru-title"} className="text-[15px] font-black text-[#24564C]">ミモル</div>
-        <div className="text-[10px] font-bold text-slate-500">体質と毎日のケアを相談</div></div></div>
+        <div className="text-[10px] font-bold text-slate-500">体質や毎日のケアについて</div></div></div>
     <div className="flex items-center gap-2">{onExpand ? <button type="button" onClick={onExpand} className="min-h-10 px-2 text-[12px] font-bold text-[#2F816E]">大きく開く</button> : null}
-      <button data-chat-close type="button" aria-label="相談を閉じる" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full text-xl text-slate-500 hover:bg-[#EAF7F1]">×</button></div>
+      <button data-chat-close type="button" aria-label="質問を閉じる" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-full text-xl text-slate-500 hover:bg-[#EAF7F1]">×</button></div>
   </header>;
 }
 function ChatTarget() {
@@ -137,7 +139,7 @@ export function InlineMimoruChat({ id }) {
   const m = useMimoru();
   useEffect(() => () => m?.releaseInline(id), [id, m?.releaseInline]);
   if (!m?.open || m.inlineId !== id) return null;
-  return <section aria-label="このケアについてミモルに相談" className="mt-3 flex h-[440px] w-full min-w-0 flex-col overflow-hidden rounded-[22px] bg-[#F7FAF6] text-left ring-1 ring-[#CFE7DE]"
+  return <section aria-label="このケアについてミモルに質問" className="mt-3 flex h-[440px] w-full min-w-0 flex-col overflow-hidden rounded-[22px] bg-[#F7FAF6] text-left ring-1 ring-[#CFE7DE]"
     style={{ height: Math.min(440, Math.max(160, (m.viewportHeight || 468) - 28)) }} onClick={e => e.stopPropagation()}>
     <ChatHeader inline onClose={m.closeChat} onExpand={m.expandChat} /><ChatTarget /><LiveSupportView chat={m.chat} inline />
   </section>;

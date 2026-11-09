@@ -11,11 +11,12 @@ export function useMimoruInsight(request, enabled = true) {
   const [state, setState] = useState({ key: "", loading: false, data: null, error: "", code: "" });
   const fetchData = mimoru?.fetchData;
   const userId = mimoru?.userId;
+  const cache = mimoru?.insightCache;
   useEffect(() => {
     if (!enabled || !userId || !fetchData) return;
     const abort = new AbortController();
     let disposed = false, timer, count = 0;
-    setState({ key, loading: true, data: null, error: "", code: "" });
+    setState({ key, loading: true, data: cache?.get(key) || null, error: "", code: "" });
     const run = async () => {
       try {
         const response = await fetchData("/api/mimoru/insights", { method: "POST", body: key, signal: abort.signal });
@@ -25,16 +26,28 @@ export function useMimoruInsight(request, enabled = true) {
           timer = setTimeout(run, 2000);
           return;
         }
+        if (response.insight && cache) {
+          cache.delete(key);
+          cache.set(key, response.insight);
+          if (cache.size > 48) cache.delete(cache.keys().next().value);
+        }
         setState({ key, loading: false, data: response.insight, error: "", code: "" });
       } catch (error) {
-        if (!disposed && error.name !== "AbortError") setState({ key, loading: false, data: null, error: error.message, code: error.code || "" });
+        if (!disposed && error.name !== "AbortError") {
+          cache?.delete(key);
+          setState({ key, loading: false, data: null, error: error.message, code: error.code || "" });
+        }
       }
     };
     run();
-    const refresh = () => setAttempt(x => x + 1);
+    const refresh = () => {
+      cache?.clear();
+      setState({ key, loading: true, data: null, error: "", code: "" });
+      setAttempt(x => x + 1);
+    };
     window.addEventListener("mimoru:consent-changed", refresh);
     return () => { disposed = true; abort.abort(); clearTimeout(timer); window.removeEventListener("mimoru:consent-changed", refresh); };
-  }, [key, enabled, userId, fetchData, attempt]);
+  }, [key, enabled, userId, fetchData, cache, attempt]);
   const acceptConsent = useCallback(async () => {
     setState(s => ({ ...s, loading: true, error: "" }));
     try {
@@ -42,7 +55,7 @@ export function useMimoruInsight(request, enabled = true) {
       window.dispatchEvent(new Event("mimoru:consent-changed"));
     } catch (e) { setState(s => ({ ...s, loading: false, error: e.message })); }
   }, [fetchData]);
-  const current = state.key === key ? state : { loading: Boolean(enabled && userId), data: null, error: "", code: "" };
+  const current = state.key === key ? state : { loading: Boolean(enabled && userId), data: cache?.get(key) || null, error: "", code: "" };
   return { ...current, available: Boolean(userId && enabled), acceptConsent, retry: () => setAttempt(x => x + 1) };
 }
 
@@ -69,7 +82,7 @@ export default function InsightPanel({ insight, part = "overview", title, contex
     {!statusOnly ? <div className="mb-2 flex min-w-0 items-center gap-2"><GuideBotAvatar mood={insight.loading ? "thinking" : "insight"} className="h-9 w-9 shrink-0" />
       <h3 className="min-w-0 text-[14px] font-black leading-6 text-[#24564C]">{title}</h3></div> : null}
     {fallback && !data ? <p className="whitespace-pre-wrap text-[14px] font-medium leading-7 text-slate-700">{fallback}</p> : null}
-    {insight.loading ? <div role="status" className="mt-2 text-[12px] leading-6 text-slate-500">ミモルが解説を準備しています…</div>
+    {insight.loading && !data ? <div role="status" className="mt-2 text-[12px] leading-6 text-slate-500">ミモルが解説を準備しています…</div>
       : insight.code === "ai_consent_required" ? <div className="text-[12px] leading-6 text-slate-600">
         体質・選んだ不調・天気・ケアの情報をOpenAIに送り、関連の見立てを説明します。
         氏名・メール・住所・体質チェックの生回答は自動送信しません。相談時の入力や記録メモは送信対象です。
