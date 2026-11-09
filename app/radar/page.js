@@ -1296,7 +1296,7 @@ export default function RadarPage() {
       symptomFocus={symptomFocus} lifestyleScene={lifestyleScene} reason={showReason ? careReasonFor(item) : ""} />;
   }
 
-  function actionButtonFor(item, { compact = false, stopPropagation = false, uncheckedLabel = "", withQuestion = true } = {}) {
+  function actionButtonFor(item, { compact = false, stopPropagation = false, uncheckedLabel = "", withQuestion = true, showQuestionReason = true } = {}) {
     if (!item) return null;
     const button = <CareActionButton
         checked={currentCareActionKeys.has(item.canonical_key || item.item_key)}
@@ -1310,7 +1310,7 @@ export default function RadarPage() {
         }}
       />;
     if (!withQuestion) return <div className="shrink-0">{button}</div>;
-    return <div className="w-full min-w-0"><div className="flex justify-end">{button}</div>{careQuestionFor(item)}</div>;
+    return <div className="w-full min-w-0"><div className="flex justify-end">{button}</div>{careQuestionFor(item, { showReason: showQuestionReason })}</div>;
   }
 
   useEffect(() => {
@@ -2024,17 +2024,17 @@ export default function RadarPage() {
                       {lineCare.label || lineCare.action}
                     </div>
                     <img {...getCareMovementImage(lineCare.id)} alt={`${lineCare.title}の動作図。${lineCare.label || lineCare.action}`} className="mt-3 h-auto w-full rounded-[18px]" loading="lazy" />
-                    {lineCare.selection_reason ? <p className="mt-2 text-[13px] font-bold leading-6 text-[#7B6588]">{lineCare.selection_reason}</p> : null}
+                    {careReasonFor(careItemsByKind.get("tsubo_line_care")?.[0]) || lineCare.selection_reason ? <p className="mt-2 text-[13px] font-bold leading-6 text-[#7B6588]" data-mimoru-care-reason={Boolean(careReasonFor(careItemsByKind.get("tsubo_line_care")?.[0]))}>{careReasonFor(careItemsByKind.get("tsubo_line_care")?.[0]) || lineCare.selection_reason}</p> : null}
                     {lineCare.reason ? (
                       <details className="mt-2 text-[14px] font-bold leading-5 text-slate-600">
-                        <summary className="cursor-pointer">選んだ理由と加減</summary>
+                        <summary className="cursor-pointer">動作の特徴と加減</summary>
                         {[lineCare.reason, lineCare.guidance_note]
                           .filter(Boolean)
                           .join(" ")}
                       </details>
                     ) : null}
                     <div className="mt-3 flex justify-end">
-                      {actionButtonFor(careItemsByKind.get("tsubo_line_care")?.[0], { compact: true })}
+                      {actionButtonFor(careItemsByKind.get("tsubo_line_care")?.[0], { compact: true, showQuestionReason: false })}
                     </div>
                   </div>
                 ) : null}
@@ -2072,7 +2072,7 @@ export default function RadarPage() {
                           ) : null}
                         </div>
                         <div className="mt-2 text-[14px] font-extrabold leading-6 text-slate-700">
-                          {getPointRoleSummary(primaryTsubo)}
+                          {careReasonFor(careItemsByKind.get("tsubo_point")?.[0]) || getPointRoleSummary(primaryTsubo)}
                         </div>
                       </div>
 
@@ -2082,7 +2082,7 @@ export default function RadarPage() {
                     </div>
 
                     <div className="mt-3 flex justify-end">
-                      {actionButtonFor(careItemsByKind.get("tsubo_point")?.[0], { stopPropagation: true })}
+                      {actionButtonFor(careItemsByKind.get("tsubo_point")?.[0], { stopPropagation: true, showQuestionReason: false })}
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-2">
