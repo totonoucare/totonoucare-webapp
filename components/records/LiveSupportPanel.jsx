@@ -19,7 +19,7 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   if (!access?.consult_enabled) {
     return (
       <div className="rounded-[22px] bg-[#F7FAF8] px-4 py-4 text-[14px] font-bold leading-6 text-slate-500 ring-1 ring-[#DCE8DD]">
-        ミモル相談は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
+        ミモルへの質問は現在準備中です。記録とオンライン相談の案内は引き続き利用できます。
       </div>
     );
   }
@@ -35,13 +35,13 @@ function AiConsent({ access, consent, saving, onAccept, onRevoke }) {
   return (
     <div className="rounded-[22px] bg-[#FFF8EC] p-4 ring-1 ring-[#EED8B4]">
       <div className="text-[12px] font-black tracking-[0.12em] text-[#A56C18]">AI利用前の確認</div>
-      <div className="mt-1 text-[14px] font-black text-slate-900">予報と最近の記録を引き継いで相談します</div>
+      <div className="mt-1 text-[14px] font-black text-slate-900">体質・予報・最近の記録を使って質問に答えます</div>
       <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">氏名・メールアドレス・住所と、体質チェックの生回答は自動送信しません。</div>
       <details className="mt-3 rounded-[16px] bg-white/70 px-3 py-2.5 text-[12px] font-bold leading-5 text-slate-500 ring-1 ring-[#EED8B4]">
         <summary className="cursor-pointer font-black text-[#8F651E]">送信内容とAIの範囲</summary>
         <div className="mt-2">送信するのは、解釈済み体質トリセツ、今日・明日の予報とケア、直近14日の記録要約、直近3日の詳細、任意の受診・相談状況、この会話です。結果画面・予報のAI解説にも解釈済みの体質と選択中の不調を使います。入力したメモや会話は送信対象になります。AIは診断や薬の個別判断を行いません。</div>
       </details>
-      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "ミモルに相談する"}</Button>
+      <Button disabled={saving} onClick={onAccept} className="mt-3 w-full">{saving ? "保存中…" : "ミモルに質問する"}</Button>
     </div>
   );
 }
@@ -454,7 +454,7 @@ export function LiveSupportView({ chat, inline = false }) {
     saveConsultationStatus, acceptConsent, revokeConsent, sendMessage, clearConversation,
     setConsultationStatusEditing, setFeedbackByRequest, setNegativeReasonFor } = chat;
   return <div className="flex min-h-0 flex-1 flex-col">
-    <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-3" aria-label="相談の会話" role="log" aria-live="polite" aria-busy={sending}>
+    <div ref={chatScrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-3" aria-label="ミモルとの会話" role="log" aria-live="polite" aria-busy={sending}>
       {loading ? <div role="status" className="py-6 text-center text-[13px] text-slate-500">会話を読み込んでいます…</div> : null}
       {!loading && !historyOnly && !consent?.active ? <AiConsent access={access} consent={consent} saving={consentSaving} onAccept={acceptConsent} onRevoke={revokeConsent} /> : null}
       {!loading && consent?.active && access?.consult_enabled ? <details className="rounded-xl bg-white px-3 py-2 text-[11px] text-slate-500 ring-1 ring-[#E1EBE4]">
@@ -490,7 +490,6 @@ export function LiveSupportView({ chat, inline = false }) {
       <div className="flex items-end gap-2 rounded-[20px] bg-[#F2F7F1] p-2 ring-1 ring-[#DCE8DD]">
         <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={inline ? 2 : 2} maxLength={1200}
           aria-label="ミモルへのメッセージ" placeholder={urgentMessage ? "安全を確保できたことなどを伝えてください" : "気になることを、そのままどうぞ"}
-          onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); sendMessage(); } }}
           className="max-h-28 min-h-12 min-w-0 flex-1 resize-none bg-transparent px-1 py-1 text-[16px] leading-6 text-slate-700 outline-none" />
         <button type="button" aria-label="メッセージを送る" disabled={!input.trim() || sending} onClick={() => sendMessage()}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#349B83] text-white disabled:opacity-40"><svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg></button>
