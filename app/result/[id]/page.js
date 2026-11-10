@@ -1164,7 +1164,7 @@ function ResultPage({ params }) {
                     </details>
                   ) : null}
 
-                  <ResultCareExample example={careExample} />
+                  <ResultCareExample example={careExample} explanation={resultInsight.data?.care_example} />
 
                   <SavePromptCard
                     isLoggedIn={isLoggedIn}
