@@ -73,6 +73,13 @@ function withinEditWindow(targetDate) {
 }
 
 function cleanSnapshot(value, fallback) {
+  const CARE_POLICY_VALUES = new Set(["sasaeru", "meguraseru", "nagasu", "nukumeru", "uruosu", "shizumeru", "yurumeru"]);
+  function cleanCarePolicy(policy) {
+    if (!policy || typeof policy !== "object" || Array.isArray(policy) || !CARE_POLICY_VALUES.has(policy.key)) return null;
+    return { key: policy.key, label: compact(policy.label, 24),
+      rank: [1, 2, 3].includes(policy.rank) ? policy.rank : null,
+      mechanism: compact(policy.mechanism, 240), version: compact(policy.version, 80) };
+  }
   const input = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const meta = input.meta && typeof input.meta === "object" && !Array.isArray(input.meta)
     ? input.meta
@@ -104,6 +111,7 @@ function cleanSnapshot(value, fallback) {
       line_group_id: compact(meta.line_group_id, 80) || null,
       selection_source: ["check", "daily", "combined"].includes(meta.selection_source) ? meta.selection_source : null,
       selection_reason: compact(meta.selection_reason, 240) || null,
+      care_policy: cleanCarePolicy(meta.care_policy),
       selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? meta.record_semantics === "drink_consumed" ? cleanDrinkSelectionBasis(meta.selection_basis) : {
         ...(["ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? {
         version:compact(meta.selection_basis.version,60)||null,
@@ -130,6 +138,10 @@ function cleanSnapshot(value, fallback) {
         symptom: compact(meta.selection_basis.symptom, 40) || null,
         weather: compact(meta.selection_basis.weather, 40) || null,
         constitution: meta.selection_basis.constitution === true,
+        policy_key: CARE_POLICY_VALUES.has(meta.selection_basis.policy_key) ? meta.selection_basis.policy_key : null,
+        policy_rank: [1, 2, 3].includes(meta.selection_basis.policy_rank) ? meta.selection_basis.policy_rank : null,
+        relevance_source: ["direct_concern", "constitution_path"].includes(meta.selection_basis.relevance_source) ? meta.selection_basis.relevance_source : null,
+        supporting_pattern: ["qi_deficiency", "fluid_damp"].includes(meta.selection_basis.supporting_pattern) ? meta.selection_basis.supporting_pattern : null,
         rule_version: compact(meta.selection_basis.rule_version, 80) || null,
       } : null,
       order: Number.isFinite(Number(meta.order)) ? Number(meta.order) : null,
