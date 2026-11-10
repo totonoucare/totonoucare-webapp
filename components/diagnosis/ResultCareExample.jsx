@@ -1,8 +1,10 @@
 import { createElement as h } from "react";
 import { IconBody } from "../illust/icons/app";
+import CareExplanationDetails from "../mimoru/CareExplanationDetails";
 
-export default function ResultCareExample({ example }) {
+export default function ResultCareExample({ example, explanation = null }) {
   if (!example) return null;
+  const copy = explanation?.item_key === example.id ? explanation : null;
   return h("section", { "aria-label": "あなたに合うほぐすケアの例", className: "rounded-[24px] bg-[#F6EFF8] p-4 ring-1 ring-[#E2D6E7]" },
     h("div", { className: "flex items-center gap-2.5" },
       h("div", { "aria-hidden": true, className: "grid h-10 w-10 shrink-0 place-items-center rounded-[14px] bg-white/85 text-[#7B6588]" },
@@ -21,11 +23,7 @@ export default function ResultCareExample({ example }) {
       loading: "lazy",
     }),
     h("p", { className: "mt-2 text-[12px] font-medium leading-5 text-slate-500" }, example.guidance),
-    h("details", { className: "mt-2 text-[12px] text-slate-600" },
-      h("summary", { className: "cursor-pointer py-1.5 font-bold text-[#7B6588]" }, "選んだ理由と確かめ方"),
-      h("p", { className: "pt-2 font-bold leading-6 text-[#7B6588]" }, example.short_reason),
-      h("p", { className: "pt-2 leading-6" }, example.public_reason),
-      h("p", { className: "pt-2 leading-6" }, example.check_prompt),
-    ),
+    copy?.reason ? h("p", { className: "mt-3 text-[13px] font-bold leading-6 text-[#7B6588]", "data-mimoru-care-reason": true }, copy.reason) : null,
+    h(CareExplanationDetails, { explanation: copy, title: "選んだ理由と取り入れ方" }),
   );
 }
