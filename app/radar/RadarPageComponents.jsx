@@ -13,8 +13,6 @@ import {
   getPointPressGuide,
   getPointReading,
   getPointRegionLabel,
-  getPointRoleSummary,
-  getPointSelectionReason,
   sourceLabel,
 } from "./utils";
 
@@ -413,7 +411,7 @@ export function LocationEditor({
   );
 }
 
-export function PointDetailSheet({ point, onClose, reasonLoading = false, warming = false, onTools }) {
+export function PointDetailSheet({ point, onClose, reasonLoading = false, warming = false, onTools, explanation = null }) {
   if (!point) return null;
 
   const cautions = getPointCautions(point);
@@ -467,12 +465,13 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false, warmin
 
         <PointVisualPanel point={point} />
 
+        {explanation || reasonLoading ? <>
         <div className="mt-5 rounded-[20px] bg-[color-mix(in_srgb,var(--mint),white_70%)] px-5 py-4 ring-1 ring-[var(--ring)]">
           <div className="text-[12px] font-black uppercase tracking-widest text-[var(--accent-ink)]/80">
-            どんなとき向き？
+            このツボの狙い
           </div>
           <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-[var(--accent-ink)]">
-            {getPointRoleSummary(point)}
+            {explanation?.reason || (reasonLoading ? "ミモルが解説を準備しています…" : "")}
           </div>
         </div>
 
@@ -494,12 +493,14 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false, warmin
               <PointReasonLoadingBlock />
             ) : (
               <div className="text-[14px] font-bold leading-6 text-slate-700">
-                {getPointSelectionReason(point)}
+                {explanation?.theory}
               </div>
             )}
           </div>
 
         </div>
+
+        </> : null}
 
         <div className="mt-4 rounded-[20px] bg-[#FFF9ED] px-5 py-4 ring-1 ring-[#EAD8A6]/60 shadow-sm">
           <div className="text-[12px] font-black uppercase tracking-widest text-[#AD7A18]/85">
@@ -508,6 +509,8 @@ export function PointDetailSheet({ point, onClose, reasonLoading = false, warmin
           <div className="mt-1.5 text-[14px] font-extrabold leading-6 text-[#7B5619]">
             {getPointPressGuide(point)}
           </div>
+          {explanation?.guidance ? <p className="mt-2 text-[13px] font-medium leading-6 text-[#7B5619]">{explanation.guidance}</p> : null}
+          {explanation?.check ? <p className="mt-2 text-[13px] font-medium leading-6 text-[#7B5619]">確かめること：{explanation.check}</p> : null}
         </div>
 
         {toolGuides.length > 0 ? (
