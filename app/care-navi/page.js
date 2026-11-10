@@ -3848,7 +3848,7 @@ export default function CareNaviPage() {
 
         {viewMode === "single" && singleCategory === "live" && linkedLifestyle ? (
           <Module className="!bg-[#F4F9F6] p-4 ring-1 ring-[#D5E5DB]">
-            <div className="text-[12px] font-black text-[#2F816E]">暮らすケアから引き継いだ条件</div>
+            <div className="text-[12px] font-black text-[#2F816E]">体質・天気に合わせた条件</div>
             <p className="mt-2 text-[14px] font-bold text-slate-700">{linkedLifestyle.reason}</p>
             <div className="mt-2 flex flex-wrap gap-2">{linkedLifestyle.tags.map(tag => <span key={tag} className="rounded-full bg-white px-3 py-1 text-[12px] font-bold text-[#24564C]">{tag}</span>)}</div>
             <p className="mt-2 text-[12px] text-slate-500">この用途に合う道具を優先して探します。</p>
