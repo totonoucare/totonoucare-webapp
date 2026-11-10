@@ -2030,6 +2030,7 @@ export default function RadarPage() {
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
                       {lineCare.timing_label || (selectedIsToday ? "今日の一手" : "今夜〜明朝の一手")}
                     </div>
+                    {lineCare.care_policy ? <p className="mt-2 text-[12px] font-bold text-[#7B6588]" data-care-policy={lineCare.care_policy.key}>「{lineCare.care_policy.label}」のケア</p> : null}
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lineCare.title || "体質ラインを軽くゆるめる"}
                     </div>
