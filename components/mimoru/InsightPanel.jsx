@@ -22,7 +22,7 @@ export function useMimoruInsight(request, enabled = true) {
         const response = await fetchData("/api/mimoru/insights", { method: "POST", body: key, signal: abort.signal });
         if (disposed) return;
         if (response.state === "pending") {
-          if (++count > 60) throw new Error("AI解説を準備しています。しばらくしてからお試しください。");
+          if (++count > 90) throw new Error("AI解説を準備しています。しばらくしてからお試しください。");
           timer = setTimeout(run, 2000);
           return;
         }
