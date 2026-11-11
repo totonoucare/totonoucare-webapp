@@ -1675,9 +1675,9 @@ function getNarrativeCareLead(triggerFactors, signal = 0, mode = "today", sympto
 
   if (mode === "today") {
     if (level <= 0) {
-      return `今日は${joined}の影響は小さめ。${feel}だけ軽く見ながら、暮らす・食べる・ほぐすを“足しすぎないケア”にします。`;
+      return `今日は${joined}の影響は小さめ。${feel}を確かめながら、食べる・ほぐすで無理なく備えます。`;
     }
-    return `今日は${joined}で、${feel}が出やすい日。${symptom}に合わせて、暮らす・食べる・ほぐすで負担を増やさない方針です。`;
+    return `今日は${joined}で、${feel}が出やすい日。${symptom}に合わせて、食べる・ほぐすで備えます。`;
   }
 
   if (level <= 0) {
@@ -2077,7 +2077,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", s
 
   if (mode === "today") {
     if (signal === 0) return `今日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い一手にします。`;
-    if (signal === 2) return `${joined}による天気ストレスがこのあと強まる時間帯があります。症状が出る時刻ではなく、天気の変化を目安に、ほぐす・食べる・暮らすを少し早めに調整します。`;
+    if (signal === 2) return `${joined}による天気ストレスがこのあと強まる時間帯があります。天気の変化を目安に、ほぐす・食べるで少し早めに備えましょう。`;
     return `${joined}が少し響きやすい見込みです。今からできる範囲で、こもり・冷え・重さを残さないようにします。`;
   }
 

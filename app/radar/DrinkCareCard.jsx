@@ -7,6 +7,7 @@ export default function DrinkCareCard({ label, detail = {}, action = null, quest
       h("h3", { className: "min-w-0 flex-1 basis-[9em] break-words text-[13px] font-black leading-6 text-slate-800" }, label),
       action,
     ),
+    detail.care_policy ? h("p", { className: "mt-2 text-[11px] font-bold text-[#9A6B20]", "data-care-policy": detail.care_policy.key }, `「${detail.care_policy.label}」の飲み物`) : null,
     explanation?.reason ? h("p", { className: "mt-2 text-[12px] font-medium leading-6 text-slate-600", "data-mimoru-care-reason": true }, explanation.reason) : null,
     detail.how_to ? h("p", { className: "mt-2 text-[12px] font-medium leading-6 text-slate-600" }, detail.how_to) : null,
     detail.caffeine_label ? h("span", { className: "mt-2 inline-flex rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-[#EEDFC7]" }, detail.caffeine_label) : null,
