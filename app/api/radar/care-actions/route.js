@@ -112,6 +112,8 @@ function cleanSnapshot(value, fallback) {
       selection_source: ["check", "daily", "combined"].includes(meta.selection_source) ? meta.selection_source : null,
       selection_reason: compact(meta.selection_reason, 240) || null,
       care_policy: cleanCarePolicy(meta.care_policy),
+      care_policies: (Array.isArray(meta.care_policies) ? meta.care_policies : meta.care_policy ? [meta.care_policy] : [])
+        .map(cleanCarePolicy).filter(Boolean).filter((policy, index, all) => all.findIndex(item => item.key === policy.key) === index).slice(0, 3),
       selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? meta.record_semantics === "drink_consumed" ? cleanDrinkSelectionBasis(meta.selection_basis) : {
         ...(["ingredient_consumed","drink_consumed"].includes(meta.record_semantics) ? {
         version:compact(meta.selection_basis.version,60)||null,
