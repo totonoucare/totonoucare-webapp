@@ -3,7 +3,7 @@
 import { ForecastGauge } from "@/app/radar/ForecastGauge";
 import { buildForecastWeatherLoadGroups, getHeroDecorClass, getHeroPanelClass, signalBadgeClass, signalDotClass } from "@/lib/radar_v1/forecastPresentation";
 import { IconRadar } from "@/components/illust/icons/app";
-import { WeatherIcon } from "@/components/illust/icons/weather";
+import WeatherInfluences from "./WeatherInfluences";
 import Button from "@/components/ui/Button";
 import { getForecastTriggerFactors, signalText, scoreToPercent } from "./HomeForecastStrip";
 
@@ -77,26 +77,7 @@ export default function GuestForecastDemo({ title, bundle, loading, onStart }) {
           />
         </div>
 
-        <div aria-label="天気ストレスの目安" className="mt-2 rounded-[22px] bg-white/30 px-2 py-3 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06)] ring-1 ring-white/70 sm:px-3">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-            <div className="text-[11px] font-black tracking-[0.1em] text-slate-500">天気ストレス</div>
-            <div className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-slate-500 ring-1 ring-black/5">高・中・低の目安</div>
-          </div>
-          <div className="grid grid-cols-3 gap-1.5">
-            {weatherGroups.map(factor => {
-              const tone = factor.loadLevelTone === "high" ? "text-[#B86430]" : factor.loadLevelTone === "middle" ? "text-[#9A6A16]" : factor.loadLevelTone === "low" ? "text-[#2F816E]" : "text-slate-400";
-              return (
-                <div key={factor.group} aria-label={`${factor.detailLabel} ストレス ${factor.loadLevelLabel}`} className="grid min-w-0 content-start gap-2 rounded-[17px] bg-white px-1 py-3 text-center shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)] ring-1 ring-[#E4ECE4]">
-                  <div className="grid min-h-[40px] min-w-0 content-center place-items-center gap-1">
-                    <WeatherIcon triggerKey={factor.key} direction={factor.direction} className="h-[18px] w-[18px] shrink-0" />
-                    <span className="max-w-full whitespace-nowrap text-[10px] font-black leading-none text-slate-600 min-[375px]:text-[11px]">{factor.detailLabel}</span>
-                  </div>
-                  <span className={["text-[24px] font-black leading-none tracking-tight", tone].join(" ")}>{factor.loadLevelLabel}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <WeatherInfluences groups={weatherGroups} dayLabel="明日" signal={forecast.signal} compact />
 
         <div className="mt-4 rounded-[18px] bg-white/70 px-3 py-3 text-[12px] font-bold leading-6 text-slate-600 ring-1 ring-black/5">
           体質チェックをすると、あなたに合わせた明日の体調予報とケアを確認できます。
