@@ -916,6 +916,7 @@ export default function RadarPage() {
     () => resolveDisplayedCarePlan({
       lifestyleScene,
       avoidLifestyleIds: comparisonCare?.lifestyle_plan?.step_ids || [],
+      avoidLineCareIds: [comparisonCare?.night_tsubo_set?.line_care?.id].filter(Boolean),
       completedCare: completedCare || [],
       forecast,
       storedCarePlan: bundle?.care_plan || null,
