@@ -15,7 +15,7 @@ export default function WeatherInfluences({ groups = [], dayLabel = "今日", si
       h("div", { className: "flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2" },
         h("span", { className: "flex min-w-0 flex-1 items-center gap-2.5" },
           h(WeatherIcon, { triggerKey: primary.key, direction: primary.direction, className: "h-7 w-7 shrink-0", "aria-hidden": true }),
-          h("span", { className: `${compact ? "text-[18px]" : "text-[21px]"} min-w-0 font-black leading-7 tracking-tight text-slate-800` }, primary.detailLabel),
+          h("span", { className: "text-[18px] min-w-0 font-black leading-7 tracking-tight text-slate-800" }, primary.detailLabel),
         ),
         time ? h("span", { "data-weather-time": true, className: "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-[#FFF7E6] px-2.5 py-1.5 text-[12px] font-black text-[#9A6A16] ring-1 ring-[#EED8B4]" },
           h(IconBolt, { className: "h-3.5 w-3.5 shrink-0", "aria-hidden": true }), time,
