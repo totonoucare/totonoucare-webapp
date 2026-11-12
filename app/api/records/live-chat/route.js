@@ -58,7 +58,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_LIVE_CHAT_MODEL;
-const PROMPT_VERSION = "records_live_support_v23_care_evidence_2026-11-07";
+const PROMPT_VERSION = "records_live_support_v24_care_links_low_2026-11-12";
 
 function jstHour(now = new Date()) {
   return Number(new Intl.DateTimeFormat("ja-JP", {
@@ -479,7 +479,7 @@ export async function POST(req) {
       schema: CHAT_SCHEMA,
       schemaName: "mibyo_live_support_chat",
       max_output_tokens: 1800,
-      reasoning: { effort: "medium" },
+      reasoning: { effort: "low" },
       safety_identifier: buildSafetyIdentifier(user.id),
       store: false,
     });
