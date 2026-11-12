@@ -12,6 +12,7 @@ import FoodCombinationCard from "./FoodCombinationCard";
 import CareExplanationDetails from "@/components/mimoru/CareExplanationDetails";
 import { buildCareExplanationTargets, foodExplanationTarget } from "@/lib/radar_v1/careExplanationTargets";
 import DrinkCareCard from "./DrinkCareCard";
+import WeatherInfluences from "@/components/forecast/WeatherInfluences";
 import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -79,34 +80,6 @@ import {
 } from "./utils";
 
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
-
-function compactClockLabel(value) {
-  const match = String(value || "").match(/^(\d{1,2}):(\d{2})/);
-  if (!match) return "";
-  const hour = String(Number(match[1]));
-  return match[2] === "00" ? hour : `${hour}:${match[2]}`;
-}
-
-function compactPeakLabel(start, end) {
-  const startLabel = compactClockLabel(start);
-  const endLabel = compactClockLabel(end);
-  if (!startLabel || !endLabel) return "—";
-
-  const startHour = Number(String(start || "").slice(0, 2));
-  const endHour = Number(String(end || "").slice(0, 2));
-  const crossesMidnight =
-    Number.isFinite(startHour) &&
-    Number.isFinite(endHour) &&
-    endHour < startHour;
-
-  if (crossesMidnight) {
-    const startWithUnit = startLabel.includes(":") ? startLabel : `${startLabel}時`;
-    const endWithUnit = endLabel.includes(":") ? endLabel : `${endLabel}時`;
-    return `${startWithUnit}–翌${endWithUnit}`;
-  }
-
-  return `${startLabel}–${endLabel}時`;
-}
 
 function getPolicyIconPath(policyKey) {
   return `/illust/policy/policy-${policyKey}.svg`;
@@ -1265,7 +1238,6 @@ export default function RadarPage() {
   function careCardFooterFor(item) {
     if (!item) return null;
     return <div className="mt-3">
-      {item.meta?.care_policy ? <p className="mb-1 text-[11px] font-bold text-[#9A6B20]" data-care-policy={item.meta.care_policy.key}>「{item.meta.care_policy.label}」の食べるケア</p> : null}
       {careReasonFor(item) ? <p className="text-[12px] font-medium leading-6 text-slate-600" data-mimoru-care-reason>{careReasonFor(item)}</p> : null}
       <CareExplanationDetails explanation={careExplanationFor(item)} tone="#9A6B20" />
       <div className="mt-2 flex justify-end">{actionButtonFor(item, { compact: true, withQuestion: false })}</div>
@@ -1762,67 +1734,7 @@ export default function RadarPage() {
                       coreLabel={coreLabel?.title || ""}
                     />
 
-                    {weatherLoadGroups.length > 0 ? (
-                      <div className="mt-4 rounded-[24px] bg-white/30 px-4 py-3.5 ring-1 ring-white/70 shadow-[inset_0_2px_8px_rgba(15,23,42,0.06),inset_0_-18px_28px_rgba(255,255,255,0.20)] backdrop-blur-sm">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="text-[12px] font-black tracking-[0.14em] text-slate-400">天気ストレス</div>
-                          <div className="rounded-full bg-white px-2.5 py-1 text-[12px] font-black text-slate-500 ring-1 ring-black/5">
-                            高・中・低の目安
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-1.5 min-[430px]:gap-2">
-                          {weatherLoadGroups.map((factor, index) => {
-                            const loadToneClass = factor.loadLevelTone === "high"
-                              ? "text-[#B86430]"
-                              : factor.loadLevelTone === "middle"
-                                ? "text-[#9A6A16]"
-                                : factor.loadLevelTone === "low"
-                                  ? "text-[#2F816E]"
-                                  : "text-slate-400";
-                            const showFactorPeak =
-                              factor?.load != null &&
-                              factor.load >= 0.34 &&
-                              factor.peakStart &&
-                              factor.peakEnd;
-
-                            return (
-                              <div
-                                key={`${factor.group}-${index}`}
-                                className="grid min-w-0 content-start gap-2 rounded-[18px] bg-white px-1 py-2.5 text-center ring-1 ring-[#E4ECE4] shadow-[0_12px_26px_-20px_rgba(15,23,42,0.34)] min-[430px]:px-1.5"
-                                title={`${factor.detailLabel} ストレス ${factor.loadLevelLabel}`}
-                              >
-                                <div className="grid min-h-[40px] min-w-0 content-center place-items-center gap-1 min-[430px]:flex min-[430px]:min-h-[24px]">
-                                  <WeatherIcon
-                                    triggerKey={factor.key}
-                                    direction={factor.direction}
-                                    className="h-[18px] w-[18px] shrink-0 min-[430px]:h-5 min-[430px]:w-5"
-                                  />
-                                  <span className="max-w-full whitespace-nowrap text-[11px] font-black leading-none text-slate-600 min-[430px]:text-[12px]">
-                                    {factor.detailLabel}
-                                  </span>
-                                </div>
-
-                                <div className="flex items-baseline justify-center leading-none text-slate-800">
-                                  <span className={`text-[22px] font-black tracking-tight ${loadToneClass}`}>
-                                    {factor.loadLevelLabel}
-                                  </span>
-                                </div>
-
-                                <div className="flex min-h-[22px] items-center justify-center">
-                                  {showFactorPeak ? (
-                                    <span className="inline-flex max-w-full items-center justify-center gap-1 whitespace-nowrap rounded-full bg-[#FFF7E6] px-2 py-1 text-[11px] font-black text-[#A56C18] ring-1 ring-[#EED8B4]">
-                                      <IconBolt className="h-3 w-3 shrink-0 text-[#D79A2B]" />
-                                      {compactPeakLabel(factor.peakStart, factor.peakEnd)}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : null}
+                    <WeatherInfluences groups={weatherLoadGroups} dayLabel={displayDateMode === "tomorrow" ? "明日" : "今日"} signal={forecast.signal} />
 
                     {environmentalCautions.length > 0 ? (
                       <div className="mt-3 grid gap-2">
@@ -1997,7 +1909,6 @@ export default function RadarPage() {
                     <div className="inline-flex rounded-full bg-white px-3 py-1 text-[12px] font-black text-[#7B6588] ring-1 ring-[#E2D6E7]">
                       {lineCare.timing_label || (selectedIsToday ? "今日の一手" : "今夜〜明朝の一手")}
                     </div>
-                    {lineCare.care_policy ? <p className="mt-2 text-[12px] font-bold text-[#7B6588]" data-care-policy={lineCare.care_policy.key}>「{lineCare.care_policy.label}」のケア</p> : null}
                     <div className="mt-3 text-[17px] font-black tracking-tight text-slate-900">
                       {lineCare.title || "体質ラインを軽くゆるめる"}
                     </div>

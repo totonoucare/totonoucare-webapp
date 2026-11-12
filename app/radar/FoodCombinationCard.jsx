@@ -9,7 +9,6 @@ export default function FoodCombinationCard({ card, actions = [], targets = acti
   const names = proposal.focus_ingredients || card.items || [];
   return h("div", { className: "mt-3 rounded-[18px] bg-[#FFF5E6] p-3.5 ring-1 ring-[#F1E5D1]" },
     h("h3", { className: "text-[17px] font-black leading-7 text-slate-800" }, names.join(" ＋ ")),
-    proposal.care_policy ? h("p", { className: "mt-1 text-[11px] font-bold text-[#9A6B20]", "data-care-policy": proposal.care_policy.key }, `「${proposal.care_policy.label}」の食事例`) : null,
     explanation?.reason ? h("p", { className: "mt-2 text-[12px] font-medium leading-6 text-slate-600", "data-mimoru-care-reason": true }, explanation.reason) : null,
     h("div", { className: "mt-3 border-l-2 border-[#E8C990] pl-3" },
       h("div", { className: "text-[11px] font-bold text-[#9A6B20]" }, "料理の一例"),
@@ -27,7 +26,6 @@ export default function FoodCombinationCard({ card, actions = [], targets = acti
             h("span", { className: "min-w-0 flex-1 basis-[7em] text-[13px] font-bold text-slate-700" }, name),
             renderAction(actionFor(index), { compact: true, withQuestion: false }),
           ),
-          card.item_details?.[index]?.care_policy ? h("p", { className: "mt-1 text-[11px] font-bold text-[#9A6B20]", "data-care-policy": card.item_details[index].care_policy.key }, `「${card.item_details[index].care_policy.label}」ための食材`) : null,
           explanationFor?.(targets[index])?.reason ? h("p", { className: "mt-2 text-[12px] font-medium leading-6 text-slate-600", "data-mimoru-care-reason": true }, explanationFor(targets[index]).reason) : null,
           h(CareExplanationDetails, { explanation: explanationFor?.(targets[index]), tone: "#9A6B20" }),
           renderQuestion?.(targets[index], { showReason: false }),
