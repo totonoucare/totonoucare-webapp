@@ -43,7 +43,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const MODEL = OPENAI_RECORDS_CHAT_MODEL;
-const PROMPT_VERSION = "records_chat_v20_care_provenance_complete_2026-09-05";
+const PROMPT_VERSION = "records_chat_v21_care_links_low_2026-11-12";
 
 function cleanPeriodKey(value) {
   return String(value || "30d").replace(/[^a-z0-9_-]/gi, "").slice(0, 30) || "30d";
@@ -331,7 +331,7 @@ export async function POST(req) {
       schema: CHAT_SCHEMA,
       schemaName: "mibyo_records_chat",
       max_output_tokens: 1700,
-      reasoning: { effort: "medium" },
+      reasoning: { effort: "low" },
       safety_identifier: buildSafetyIdentifier(user.id),
       store: false,
     });
