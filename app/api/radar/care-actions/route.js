@@ -74,11 +74,27 @@ function withinEditWindow(targetDate) {
 
 function cleanSnapshot(value, fallback) {
   const CARE_POLICY_VALUES = new Set(["sasaeru", "meguraseru", "nagasu", "nukumeru", "uruosu", "shizumeru", "yurumeru"]);
+  const PATTERNS = new Set(["qi_deficiency", "qi_stagnation", "blood_deficiency", "blood_stasis", "fluid_deficiency", "fluid_damp"]);
+  const cleanPatterns = value => [...new Set((Array.isArray(value) ? value : []).filter(key => PATTERNS.has(key)))].slice(0, 6);
+  const bounded = (value, max) => typeof value === "number" && Number.isFinite(value) ? Math.min(max, Math.max(0, value)) : null;
   function cleanCarePolicy(policy) {
     if (!policy || typeof policy !== "object" || Array.isArray(policy) || !CARE_POLICY_VALUES.has(policy.key)) return null;
     return { key: policy.key, label: compact(policy.label, 24),
       rank: [1, 2, 3].includes(policy.rank) ? policy.rank : null,
-      mechanism: compact(policy.mechanism, 240), version: compact(policy.version, 80) };
+      mechanism: compact(policy.mechanism, 240), version: compact(policy.version, 80),
+      ...(Array.isArray(policy.supporting_patterns) ? { supporting_patterns: cleanPatterns(policy.supporting_patterns) } : {}) };
+  }
+  function cleanCareMethod(method) {
+    if (!method || typeof method !== "object" || Array.isArray(method)) return null;
+    if (!["stroke", "knead", "hand_contact", "breath", "movement"].includes(method.kind)) return null;
+    const dose = method.dose && typeof method.dose === "object" ? method.dose : {};
+    const scope = ["per_side", "total", "both_sides_together", "per_side_two_hollows_total", "each_direction_per_side"].includes(dose.scope) ? dose.scope : null;
+    return { version: compact(method.version, 80), action: compact(method.action, 400), kind: method.kind,
+      dose: { ...(Array.isArray(dose.seconds) && dose.seconds.length === 2 && dose.seconds.every(value => bounded(value, 300) === value)
+        ? { seconds: [...dose.seconds] } : {}),
+        ...(bounded(dose.repetitions, 60) !== null ? { repetitions: bounded(dose.repetitions, 60) } : {}),
+        ...(bounded(dose.breaths, 60) !== null ? { breaths: bounded(dose.breaths, 60) } : {}), scope },
+      pressure: compact(method.pressure, 240), precaution: compact(method.precaution, 240) || null };
   }
   const input = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const meta = input.meta && typeof input.meta === "object" && !Array.isArray(input.meta)
@@ -112,6 +128,7 @@ function cleanSnapshot(value, fallback) {
       selection_source: ["check", "daily", "combined"].includes(meta.selection_source) ? meta.selection_source : null,
       selection_reason: compact(meta.selection_reason, 240) || null,
       care_policy: cleanCarePolicy(meta.care_policy),
+      care_method: cleanCareMethod(meta.care_method),
       care_policies: (Array.isArray(meta.care_policies) ? meta.care_policies : meta.care_policy ? [meta.care_policy] : [])
         .map(cleanCarePolicy).filter(Boolean).filter((policy, index, all) => all.findIndex(item => item.key === policy.key) === index).slice(0, 3),
       selection_basis: meta.selection_basis && typeof meta.selection_basis === "object" && !Array.isArray(meta.selection_basis) ? meta.record_semantics === "drink_consumed" ? cleanDrinkSelectionBasis(meta.selection_basis) : {
@@ -142,8 +159,17 @@ function cleanSnapshot(value, fallback) {
         constitution: meta.selection_basis.constitution === true,
         policy_key: CARE_POLICY_VALUES.has(meta.selection_basis.policy_key) ? meta.selection_basis.policy_key : null,
         policy_rank: [1, 2, 3].includes(meta.selection_basis.policy_rank) ? meta.selection_basis.policy_rank : null,
-        relevance_source: ["direct_concern", "constitution_path"].includes(meta.selection_basis.relevance_source) ? meta.selection_basis.relevance_source : null,
-        supporting_pattern: ["qi_deficiency", "fluid_damp"].includes(meta.selection_basis.supporting_pattern) ? meta.selection_basis.supporting_pattern : null,
+        relevance_source: ["direct_concern", "constitution_path", "context"].includes(meta.selection_basis.relevance_source) ? meta.selection_basis.relevance_source : null,
+        supporting_pattern: PATTERNS.has(meta.selection_basis.supporting_pattern) ? meta.selection_basis.supporting_pattern : null,
+        ...(Array.isArray(meta.selection_basis.supporting_patterns) ? { supporting_patterns: cleanPatterns(meta.selection_basis.supporting_patterns) } : {}),
+        ...(Array.isArray(meta.selection_basis.policy_evidence) ? { policy_evidence: meta.selection_basis.policy_evidence.slice(0, 3)
+          .filter(row => row && CARE_POLICY_VALUES.has(row.key)).map(row => ({ key: row.key,
+            rank: [1, 2, 3].includes(row.rank) ? row.rank : null, mechanism: compact(row.mechanism, 240),
+            supporting_patterns: cleanPatterns(row.supporting_patterns) })) } : {}),
+        ...(bounded(meta.selection_basis.selection_score, 30) !== null ? { selection_score: bounded(meta.selection_basis.selection_score, 30) } : {}),
+        ...(meta.selection_basis.fit_scores && typeof meta.selection_basis.fit_scores === "object" ? {
+          fit_scores: Object.fromEntries(["checked", "concern", "weather", "constitution", "policy"].map(key => [key, bounded(meta.selection_basis.fit_scores[key], 6)])),
+        } : {}),
         rule_version: compact(meta.selection_basis.rule_version, 80) || null,
       } : null,
       order: Number.isFinite(Number(meta.order)) ? Number(meta.order) : null,
