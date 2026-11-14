@@ -228,7 +228,7 @@ export function inferPointTouchArea(pointOrRegion, codeMaybe = null) {
 
   // point_region/body_region を優先する。GV20のように、経脈コードだけでは
   // 体幹扱いできないツボが今後増えても崩れにくくするため。
-  if (region === "head_neck" || /head|neck|face|temple|scalp/.test(bodyRegion)) {
+  if (["GV20", "GB20"].includes(String(point?.code || "").toUpperCase()) || region === "head_neck" || /head|neck|face|temple|scalp/.test(bodyRegion)) {
     return "head_neck";
   }
 
@@ -2076,7 +2076,7 @@ export function getCareStrategyLead(triggerFactors, signal, mode = "tomorrow", s
   const joined = labels.length >= 2 ? `${labels[0]}と${labels[1]}` : labels[0] || "気象変化";
 
   if (mode === "today") {
-    if (signal === 0) return `今日の天気では、${joined}の影響が少しだけある見込みです。強い対策より、いつもの調子を崩さない軽い一手にします。`;
+    if (signal === 0) return `今日の天気では、${joined}の影響が少しだけある見込みです。いつもの調子を保つために、案内の手順でケアを取り入れましょう。`;
     if (signal === 2) return `${joined}による天気ストレスがこのあと強まる時間帯があります。天気の変化を目安に、ほぐす・食べるで少し早めに備えましょう。`;
     return `${joined}が少し響きやすい見込みです。今からできる範囲で、こもり・冷え・重さを残さないようにします。`;
   }
@@ -2165,27 +2165,28 @@ export function getPointMatchTags(point) {
 
 export function getPointPressGuide(point) {
   const area = inferPointTouchArea(point);
+  const code = String(point?.code || "").trim().toUpperCase();
+  const region = String(point?.body_region || point?.point_region || "").toLowerCase();
   const name = String(point?.name_ja || point?.code || "このツボ").trim();
-
   if (area === "head_neck") {
-    return `${name}は頭・首まわりのツボです。人差し指か中指の腹で、押し込まずに軽く触ります。息を吐きながら、小さく円を描くくらいで十分です。20〜30秒を1〜2回。痛みを探して強く押さないでください。`;
+    const neck = code === "GB20" || /neck/.test(region);
+    return `${name}は指の腹で位置を確かめ、小さく円を描いて20〜30秒揉みます。${neck
+      ? "首の後ろの筋肉へ心地よい圧を伝え、頭と首を楽に保ちます。"
+      : "頭の表面に沿って指を当て、心地よい圧で行います。"}`;
   }
-
-  if (area === "abdomen_trunk") {
-    return `${name}はお腹・体幹まわりのツボです。親指で押し込まず、手のひらか2〜3本の指の腹を置くように触ります。息を吐きながら、お腹が軽く動くくらいのやさしい圧で小さく円を描きます。20〜30秒を1〜2回。苦しさや痛みがあればやめてください。`;
+  // 胸・背中のツボに、お腹用の手順や食後の注意を流用しない。
+  if (code === "CV17" || /chest/.test(region) && !/abdomen/.test(region)) {
+    return `${name}は2〜3本の指の腹を当て、小さく円を描いて20〜30秒揉みます。胸を締めつけず、自然な呼吸を続けられる圧で行います。`;
   }
-
-  if (area === "hand_arm") {
-    return `${name}は手・腕まわりのツボです。反対の手の親指の腹で、痛くない強さでゆっくり触ります。押し込むより、息を吐きながら小さく円を描くくらいで十分です。左右ある場所は片側20〜30秒を1〜2回。`;
+  if (/back|waist|lumbar|sacrum/.test(region)) {
+    return `${name}は届く範囲で指の腹や手のひらを当て、筋肉へ心地よい圧を伝えながら約1分揉みます。体を無理にひねらず、骨を直接押さえない位置で行います。`;
   }
-
-  if (area === "leg_foot") {
-    return `${name}は脚・足まわりのツボです。親指の腹で、冷えやこわばりを確認するように軽く触ります。強く押し込まず、息を吐きながら小さく円を描くくらいで十分です。左右ある場所は片側20〜30秒を1〜2回。`;
+  if (area === "abdomen_trunk" && (/abdomen|belly/.test(region) || /^CV(?:[2-9]|1[0-5])$/.test(code))) {
+    return `${name}は手のひらか2〜3本の指の腹を密着させ、呼吸を続けながら20〜30秒、小さく円を描いて揉みます。お腹が苦しくなる圧は避けます。腹痛時や食後すぐは行いません。`;
   }
-
-  return `${name}は指の腹で軽く触ります。息を吐きながら、痛くない範囲で小さく円を描くくらいで十分です。20〜30秒を1〜2回。強く押し込まないでください。`;
+  const hand = area === "hand_arm" ? "反対の手の親指の腹" : "親指や2〜3本の指の腹";
+  return `${name}は${hand}で、ゆっくり圧をかけて戻すか、小さく円を描いて約1分揉みます。左右ある場所は片側ずつ行います。心地よい圧を目安にし、鋭い痛みやしびれが出る圧は避けます。`;
 }
-
 
 function buildPointImageSearchQuery(point) {
   // Programmable Search Engine側でツボ図鑑系サイトに絞っているため、
