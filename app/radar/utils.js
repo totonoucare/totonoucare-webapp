@@ -2124,6 +2124,7 @@ export function deriveCarePolicies({ forecast, triggerFactors, riskContext, mode
     signal,
     symptomFocus: symptomFocus || riskContext?.constitution_context?.symptom_focus || null,
     riskContext,
+    forecast,
   });
   return {
     policies: theme.policies,
