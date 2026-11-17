@@ -1,4 +1,5 @@
 "use client";
+import { trackV126 } from "@/lib/experienceFunnelV126";
 
 import {experienceSignal} from '@/lib/experience/client';
 
@@ -185,6 +186,7 @@ export default function AiAnalysisPanel({
   const chatScrollRef = useRef(null);
   const inputRef = useRef(null);
 
+  useEffect(() => { trackV126("analysis_open"); }, []);
   const range = useMemo(() => getPeriodRange(today, periodKey), [today, periodKey]);
   const summary = useMemo(() => bundle?.summary || buildRecordsSummary(bundle?.rows || []), [bundle]);
   const fallbackAnalysis = useMemo(() => deterministicAnalysis(summary), [summary]);
@@ -701,8 +703,8 @@ export default function AiAnalysisPanel({
         <button type="button" aria-expanded={periodChatOpen} onClick={() => setPeriodChatOpen((current) => !current)} className="flex w-full items-center gap-3 text-left">
           <div className="grid h-11 w-11 place-items-center rounded-[16px] bg-[#EFF8F4] ring-1 ring-[#CFE7DE]"><GuideBotAvatar mood={chatMood} className="h-11 w-11" /></div>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-black text-slate-900">ケアナビAI ミモルに聞く</div>
-            <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-400">選択期間の記録と分析を引き継ぎます</div>
+            <div className="text-[15px] font-black text-slate-900">この期間の分析について質問</div>
+            <div className="mt-0.5 text-[12px] font-bold leading-5 text-slate-400">選んだ期間の記録をもとにミモルが答えます</div>
           </div>
           <span className={["text-[22px] font-black text-[#2F816E] transition-transform", periodChatOpen ? "rotate-90" : ""].join(" ")}>›</span>
         </button>
@@ -751,7 +753,7 @@ export default function AiAnalysisPanel({
 
                 <div className="mt-3 rounded-[22px] bg-white p-2 ring-1 ring-[#DCE8DD] shadow-sm">
                   {replyToFollowUp?.question ? <div className="mx-1 mt-1 rounded-[14px] bg-[#FFF8EC] px-3 py-2 text-[12px] font-bold leading-4 text-[#9A6A27] ring-1 ring-[#EED8B4]">{replyToFollowUp.question}</div> : null}
-                  <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[14px] font-bold leading-6 text-slate-700 outline-none" />
+                  <textarea ref={inputRef} value={input} onChange={handleInputChange} rows={3} maxLength={1200} placeholder="例）湿気が主な日のケアと実感を整理して" className="w-full resize-none bg-transparent px-2 py-2 text-[16px] font-bold leading-6 text-slate-700 outline-none" />
                   <div className="flex items-center justify-between gap-3 px-1 pb-1"><button type="button" onClick={clearConversation} className="text-[12px] font-black text-slate-400">会話を削除</button><Button size="sm" disabled={!input.trim() || sending} onClick={() => sendMessage()}>{sending ? "送信中…" : "ミモルに聞く"}</Button></div>
                 </div>
               </>

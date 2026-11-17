@@ -3,7 +3,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { IconHome, IconKarte, IconRadar, IconCare, IconChat } from "@/components/illust/icons/app";
+import { IconHome, IconKarte, IconRadar, IconCare, IconAnalysis } from "@/components/illust/icons/app";
 
 export default function BottomTabs() {
   const router = useRouter();
@@ -76,9 +76,9 @@ export default function BottomTabs() {
       <div className="relative mx-auto w-full max-w-[440px] px-4 py-2">
         <div className="flex items-stretch justify-between gap-1">
           {item("home", "ホーム", IconHome, "/")}
-          {item("check", "トリセツ", IconKarte, "/check")}
+          {item("check", "トリセツ", IconKarte, "/check?open=current")}
           {item("radar", "体調予報", IconRadar, "/radar")}
-          {item("records", "記録・分析", IconChat, "/records")}
+          {item("records", "記録・分析", IconAnalysis, "/records")}
           {item("care", "ショップ", IconCare, "/care-navi")}
         </div>
       </div>

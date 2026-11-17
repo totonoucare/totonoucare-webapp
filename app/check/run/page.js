@@ -11,6 +11,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { CHECK_SIGNUP_HREF, CHECK_DRAFT_KEY, clearCheckDraft } from "@/lib/checkRegistration";
 import { completeConstitutionCheck } from "@/lib/completeConstitutionCheck";
 import { clearPendingDiagnosisAttach, setPendingDiagnosisAttach } from "@/lib/pendingDiagnosisAttach";
+import { setTemporaryResult } from "@/lib/guestExperienceClient";
+import { trackV126 } from "@/lib/experienceFunnelV126";
 import { trackFunnel } from "@/lib/funnelClient";
 
 function ProgressBar({ current, total }) {
@@ -41,6 +43,7 @@ const PENDING_KEY = CHECK_DRAFT_KEY;
 
 export default function CheckRunPage() {
   const router = useRouter();
+  useEffect(() => { trackV126("check_start"); }, []);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -61,7 +64,7 @@ export default function CheckRunPage() {
       setSession(currentSession || null);
       setLoadingAuth(false);
       setAuthError("");
-      if (!currentSession?.access_token) router.replace(CHECK_SIGNUP_HREF);
+
     }
     if (!supabase) {
       setAuthError("ログイン状態を確認できませんでした。もう一度お試しください。");
@@ -222,11 +225,13 @@ export default function CheckRunPage() {
         eventId: createdResultRef.current,
         onCreated: (id) => {
           createdResultRef.current = id;
+          if (!token) setTemporaryResult(id);
+          trackV126("check_completed");
           setPendingDiagnosisAttach({ resultId: id, nextPath: `/result/${encodeURIComponent(id)}?from=check_complete` });
         },
         onSaved: () => trackFunnel("result_save_success"),
       });
-      clearPendingDiagnosisAttach();
+      if (token) clearPendingDiagnosisAttach();
 
       clearCheckDraft();
 
@@ -263,11 +268,11 @@ export default function CheckRunPage() {
     );
   }
 
-  if (!hydrated || loadingAuth || !session?.access_token) {
+  if (!hydrated || loadingAuth) {
     return (
       <AppShell title="体質チェック">
         <Module>
-          <ModuleHeader icon={<IconCheck />} title="読み込み中" sub={loadingAuth || !session?.access_token ? "ログイン状態を確認しています" : "質問を準備しています"} />
+          <ModuleHeader icon={<IconCheck />} title="読み込み中" sub={"質問を準備しています"} />
           <div className="px-5 pb-6 pt-4">
             <div className="rounded-[20px] bg-white p-5 ring-1 ring-[var(--ring)]">
               <div className="text-sm font-bold text-slate-700">読み込み中…</div>

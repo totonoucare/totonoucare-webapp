@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { summarizeCareActions } from "@/lib/radar_v1/careActionItems";
@@ -187,6 +187,11 @@ export default function DailyRecordCard({
   const [factors, setFactors] = useState([]);
   const [factorsOpen, setFactorsOpen] = useState(false);
   const [note, setNote] = useState("");
+  const saveHintId = useId();
+  const saveHint = condition == null ? "体調を選んでください。"
+    : care == null ? "ケアをしたかどうかを選んでください。"
+    : care > 0 && domains.length === 0 ? "やったケアの種類を選んでください。"
+    : care > 0 && !timing ? "ケアした時間帯を選んでください。" : "";
   const [editing, setEditing] = useState(editable && !review);
 
   useEffect(() => {
@@ -273,7 +278,7 @@ export default function DailyRecordCard({
   }
 
   async function submit() {
-    if (condition == null || care == null) return;
+    if (saving || saveHint) return;
     const savedFactors = factors;
     await onSave?.({
       date,
@@ -539,18 +544,19 @@ export default function DailyRecordCard({
               rows={3}
               maxLength={500}
               placeholder="仕事が忙しかった、よく眠れた、夕方から重かった など"
-              className="w-full resize-none rounded-[20px] bg-[#F7FAF8] px-4 py-3 text-[14px] font-bold leading-6 text-slate-700 outline-none ring-1 ring-[#DCE8DD] focus:ring-2 focus:ring-[#66B9A3]"
+              className="w-full resize-none rounded-[20px] bg-[#F7FAF8] px-4 py-3 text-[16px] font-bold leading-6 text-slate-700 outline-none ring-1 ring-[#DCE8DD] focus:ring-2 focus:ring-[#66B9A3]"
             />
           </div>
 
           <Button
-            disabled={saving || condition == null || care == null || (care > 0 && (domains.length === 0 || !timing))}
+            disabled={saving || Boolean(saveHint)}
+            aria-describedby={saveHint ? saveHintId : undefined}
             onClick={submit}
             className="mt-5 w-full py-4"
           >
             {saving ? "記録しています…" : review ? "変更を保存する" : isToday ? "今日を記録する" : "この日を記録する"}
           </Button>
-          {careActionSummary.count === 0 && care > 0 && !timing ? <div className="mt-2 text-center text-[12px] font-bold text-slate-400">ケアした時間も選ぶと保存できます</div> : null}
+          {saveHint ? <p id={saveHintId} role="status" className="mt-2 text-center text-[12px] font-bold leading-5 text-slate-500">{saveHint}</p> : null}
           {review ? (
             <button type="button" onClick={() => setEditing(false)} className="mt-3 w-full text-center text-[12px] font-black text-slate-400">編集をやめる</button>
           ) : null}

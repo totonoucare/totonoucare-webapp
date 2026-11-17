@@ -325,7 +325,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     if (!access.records_write_enabled) {
-      return NextResponse.json({ error: "ケア記録にはプレミアム登録が必要です", code: "records_write_access_required", access }, { status: 403 });
+      return NextResponse.json({ error: "記録機能を現在利用できません。", code: "records_write_access_required", access }, { status: 403 });
     }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);
@@ -442,7 +442,7 @@ export async function PATCH(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     if (!access.records_write_enabled) {
-      return NextResponse.json({ error: "ケア記録の変更にはプレミアム登録が必要です", code: "records_write_access_required", access }, { status: 403 });
+      return NextResponse.json({ error: "記録機能を現在利用できません。", code: "records_write_access_required", access }, { status: 403 });
     }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);
@@ -486,7 +486,7 @@ export async function DELETE(req) {
     if (!user) return NextResponse.json({ error }, { status: 401 });
     const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     if (!access.records_write_enabled) {
-      return NextResponse.json({ error: "ケア記録の変更にはプレミアム登録が必要です", code: "records_write_access_required", access }, { status: 403 });
+      return NextResponse.json({ error: "記録機能を現在利用できません。", code: "records_write_access_required", access }, { status: 403 });
     }
     const body = await req.json().catch(() => ({}));
     const targetDate = normalizeDate(body?.target_date);

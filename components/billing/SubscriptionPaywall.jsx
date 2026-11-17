@@ -1,4 +1,6 @@
 "use client";
+import { useEffect } from "react";
+import { trackV126 } from "@/lib/experienceFunnelV126";
 
 import CheckoutButton from "@/components/billing/CheckoutButton";
 
@@ -6,7 +8,7 @@ const FEATURE_COPY = {
   forecast: {
     eyebrow: "体調予報・対策ケア",
     title: "あなた向けの予報を続ける",
-    body: "体質と天気を重ねた今日・明日の体調予報と、暮らす・食べる・ほぐすの対策ケアを利用できます。",
+    body: "体質と天気に合わせた今日・明日の体調予報と、食べる・ほぐすの対策ケアを利用できます。",
   },
   analysis: {
     eyebrow: "振り返り",
@@ -35,6 +37,7 @@ export default function SubscriptionPaywall({
   returnPath = "/records",
   access = null,
 }) {
+  useEffect(() => { trackV126("analysis_paywall_view"); }, []);
   const copy = FEATURE_COPY[feature] || FEATURE_COPY.analysis;
   return (
     <div className="space-y-4">
@@ -50,18 +53,13 @@ export default function SubscriptionPaywall({
             </div>
           </div>
           <div className="mt-4 text-[14px] font-bold leading-6 text-slate-600">{copy.body}</div>
-          {access?.trial_expired ? (
-            <div className="mt-4 rounded-[18px] bg-white px-4 py-3 ring-1 ring-[#DCE8DD]">
-              <div className="text-[12px] font-black tracking-[0.1em] text-slate-400">14日間の体験は終了しました</div>
-              <div className="mt-1 text-[14px] font-bold leading-5 text-slate-600">体質結果、ケアショップ、これまでの記録とAI回答は引き続き見返せます。</div>
-            </div>
-          ) : null}
+
 
           <div className="mt-4 grid gap-2">
             {[
               ["自分の傾向を振り返る", "予報と実感、ケアの記録を同じ条件で見比べます。"],
-              ["次に試すことを一つ決める", "情報を並べるだけでなく、次の行動まで整理します。"],
-              ["自分を把握したミモルへ相談", "体質や最近の調子を、毎回最初から説明する必要がありません。"],
+              ["次に試すことを一つ決める", "記録をもとに、これから試すケアを整理します。"],
+              ["分析について質問する", "振り返った期間の内容について、続けて確認できます。"],
             ].map(([title, lead]) => (
               <div key={title} className="rounded-[18px] bg-white/85 px-4 py-3 ring-1 ring-white">
                 <div className="text-[13px] font-black text-slate-900">{title}</div>
@@ -73,11 +71,9 @@ export default function SubscriptionPaywall({
           <details className="mt-4 rounded-[16px] bg-white/70 px-3.5 py-3 text-[12px] font-bold leading-5 text-slate-600 ring-1 ring-[#DCE8DD]">
             <summary className="cursor-pointer font-black text-[#2F816E]">利用できる内容</summary>
             <div className="mt-2 space-y-1">
-              <div>・体調予報と対策ケア</div>
-              <div>・新しい体調・ケア記録</div>
-              <div>・AI振り返りとミモル相談</div>
-              <div>・体調予報のプッシュ通知</div>
-              <div>・過去の記録とAI回答は契約後もそのまま継続</div>
+              <div>・体調・天気・ケアの記録を使ったAI分析</div>
+              <div>・期間ごとの振り返りと、分析についての質問</div>
+              <div>・解約後も過去の記録と分析結果は見返せます</div>
             </div>
           </details>
           <CheckoutButton returnPath={returnPath} className="mt-4 w-full">

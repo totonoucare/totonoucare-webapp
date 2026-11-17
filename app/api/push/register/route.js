@@ -29,7 +29,7 @@ export async function POST(req) {
     if (!user?.id) return jsonUtf8({ ok: false, error: error || "Unauthorized" }, 401);
     const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     if (!access.notifications_enabled) {
-      return jsonUtf8({ ok: false, error: "体調予報の通知にはプレミアム登録が必要です", code: "notifications_access_required", access }, 403);
+      return jsonUtf8({ ok: false, error: "通知設定を確認できませんでした。", code: "notifications_access_required", access }, 403);
     }
 
     const body = await req.json().catch(() => ({}));

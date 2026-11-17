@@ -2,6 +2,7 @@
 "use client";
 
 import BottomTabs from "@/components/nav/BottomTabs";
+import { useEffect, useRef } from "react";
 
 /**
  * 共通アプリヘッダー
@@ -9,9 +10,25 @@ import BottomTabs from "@/components/nav/BottomTabs";
  * - 中：title
  * - 右：文脈アクション1つ（推奨）
  */
-export function AppHeader({ title, left, right, subtitle }) {
+export function AppHeader({ title, left, right, subtitle, controls }) {
+  const headerRef = useRef(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    const shell = header?.parentElement;
+    if (!header || !shell) return;
+    const measure = () => shell.style.setProperty("--app-header-height", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(header);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+      shell.style.removeProperty("--app-header-height");
+    };
+  }, []);
   return (
-    <div className="sticky top-0 z-40 bg-[var(--bg)]/92 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--bg)]/76 transition-all">
+    <div ref={headerRef} data-app-header className="sticky top-0 z-40 bg-[var(--bg)]/92 backdrop-blur-xl supports-[backdrop-filter]:bg-[var(--bg)]/76 transition-all">
       <div className="mx-auto w-full max-w-[440px] px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="w-[88px] shrink-0">{left || null}</div>
@@ -29,6 +46,7 @@ export function AppHeader({ title, left, right, subtitle }) {
 
           <div className="w-[88px] shrink-0 flex justify-end">{right || null}</div>
         </div>
+        {controls ? <div className="mt-2.5">{controls}</div> : null}
       </div>
       {/* コンテンツとの境界を上品に区切る、消えるグラデーションライン */}
       <div className="absolute bottom-0 left-0 right-0 h-px bg-[#DDE8E0]" />
@@ -39,9 +57,10 @@ export function AppHeader({ title, left, right, subtitle }) {
 /**
  * 汎用カードモジュール
  */
-export function Module({ children, className = "" }) {
+export function Module({ children, className = "", ...props }) {
   return (
     <section
+      {...props}
       className={[
         "rounded-[32px] bg-white shadow-[0_12px_32px_-12px_rgba(0,0,0,0.06)] ring-1 ring-[var(--ring)] overflow-hidden",
         className,
@@ -94,12 +113,14 @@ export default function AppShell({
   subtitle,
   headerLeft,
   headerRight,
+  headerControls,
   children,
   noHeader = false,
   noTabs = false,
 }) {
   return (
     <div
+      data-app-shell
       className="min-h-screen bg-app"
       style={noTabs ? undefined : { paddingBottom: "var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px)))" }}
     >
@@ -109,6 +130,7 @@ export default function AppShell({
           subtitle={subtitle}
           left={headerLeft}
           right={headerRight}
+          controls={headerControls}
         />
       )}
 

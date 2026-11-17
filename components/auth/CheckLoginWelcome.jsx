@@ -22,7 +22,7 @@ export default function CheckLoginWelcome() {
           <img src={`/illust/core/${animal}.webp`} alt="" width="72" height="68" loading="eager" className="aspect-square w-full object-contain" />
         </div>)}
       </div>
-      <p className="text-[14px] font-medium leading-7 text-[#536B5E]">体質チェックを始めるには、<br />ログインしてください。</p>
+      <p className="text-[14px] font-medium leading-7 text-[#536B5E]">体質結果を保存すると、<br />次回も続きから使えます。</p>
     </div>
   );
 }

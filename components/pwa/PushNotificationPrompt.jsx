@@ -207,7 +207,7 @@ export default function PushNotificationPrompt() {
       const token = await getAccessToken();
       if (!token) throw new Error("ログイン後に通知を設定できます");
       if (!(await fetchNotificationAccess(token))) {
-        throw new Error("体調予報の通知にはプレミアム登録が必要です");
+        throw new Error("通知設定を確認できませんでした。もう一度お試しください。");
       }
 
       const permission = await window.Notification.requestPermission();

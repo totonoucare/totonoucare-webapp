@@ -182,7 +182,7 @@ export default function ReviewFormSheet({
               onChange={(e) => setNote(e.target.value)}
               rows={4}
               placeholder="例）夕方から頭が重かった、雨前はだるさが出やすかった など"
-              className="w-full rounded-[16px] bg-white px-4 py-3 text-[14px] font-bold text-slate-800 outline-none ring-1 ring-inset ring-[var(--ring)] focus:ring-2 focus:ring-[var(--accent)]"
+              className="w-full rounded-[16px] bg-white px-4 py-3 text-[16px] font-bold text-slate-800 outline-none ring-1 ring-inset ring-[var(--ring)] focus:ring-2 focus:ring-[var(--accent)]"
             />
           </div>
         </div>

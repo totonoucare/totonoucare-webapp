@@ -18,12 +18,7 @@ export const revalidate = 0;
 export async function POST(req) {
   try {
     const { user } = await requireUser(req);
-    if (!user) {
-      return NextResponse.json(
-        { error: "無料登録・ログイン後に体質チェックを始めてください。", code: "AUTH_REQUIRED" },
-        { status: 401 }
-      );
-    }
+
 
     const limited = await enforcePublicApiRateLimit(req, {
       route: "diagnosis_v2_submit",
@@ -79,6 +74,17 @@ export async function POST(req) {
 
     if (guestErr) throw guestErr;
 
+    if (!user) {
+      const { error: experienceError } = await supabaseServer.from("guest_experiences_v126").insert({
+        result_id: data.id, expires_at: expiresAt.toISOString(),
+      });
+      if (experienceError) {
+        await supabaseServer.from("diagnosis_events").delete().eq("id", data.id).is("user_id", null);
+        return NextResponse.json({ error: "体験機能の更新準備中です。少し待ってからお試しください。", code: "guest_schema_required" }, { status: 503 });
+      }
+      // Bounded maintenance; it never removes a result attached to an account.
+      await supabaseServer.rpc("prune_guest_experiences_v126");
+    }
     const res = NextResponse.json({
       data: {
         id: data.id,

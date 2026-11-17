@@ -236,7 +236,7 @@ export async function POST(req) {
     const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
     if (!access.records_write_enabled) {
       return NextResponse.json(
-        { error: "新しい体調記録にはプレミアム登録が必要です", code: "records_write_access_required", access },
+        { error: "記録機能を現在利用できません。", code: "records_write_access_required", access },
         { status: 403 }
       );
     }
