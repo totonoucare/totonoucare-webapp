@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import { lifestyleShopQuery } from "@/lib/care-navi/lifestyleShopQueries";
+import { getTemporaryResult, temporaryHeaders } from "@/lib/guestExperienceClient";
 import CareShelf from "@/components/care-shop/CareShelf";
 import { trackV126 } from "@/lib/experienceFunnelV126";
 import GuidedCareSearch from "@/components/care-shop/GuidedCareSearch";
@@ -3038,6 +3039,8 @@ export default function CareNaviPage() {
   const [profile, setProfile] = useState(null);
   const [profileError, setProfileError] = useState("");
   const [tomorrowBundle, setTomorrowBundle] = useState(null);
+  const [todayBundle, setTodayBundle] = useState(null);
+  const [shelfLoading, setShelfLoading] = useState(true);
   const [urlContextReady, setUrlContextReady] = useState(false);
 
   const basis = "shelf";
@@ -3161,20 +3164,6 @@ export default function CareNaviPage() {
           setProfileError(json?.error || "体質トリセツがまだありません。");
         }
 
-        try {
-          const { tomorrow } = getJstTodayTomorrow();
-          const qs = new URLSearchParams({ date: tomorrow });
-          const forecastRes = await fetch(`/api/radar/v1/forecast?${qs.toString()}`, {
-            headers: { Authorization: `Bearer ${token}` },
-            cache: "no-store",
-          });
-          const forecastJson = await forecastRes.json().catch(() => ({}));
-          if (!cancelled && forecastRes.ok) {
-            setTomorrowBundle(forecastJson);
-          }
-        } catch {
-          if (!cancelled) setTomorrowBundle(null);
-        }
       } catch (error) {
         if (!cancelled) {
           setProfile(null);
@@ -3191,6 +3180,32 @@ export default function CareNaviPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadShelfForecasts() {
+      const session = await supabase?.auth.getSession();
+      const token = session?.data?.session?.access_token;
+      if (!token && !getTemporaryResult()) return;
+      const endpoint = token ? "/api/radar/v1/forecast" : "/api/guest/forecast";
+      const headers = token ? { Authorization: "Bearer " + token } : temporaryHeaders();
+      const { today, tomorrow } = getJstTodayTomorrow();
+      async function load(date, store) {
+        const response = await fetch(endpoint + "?date=" + date, { headers, signal: controller.signal, cache: "no-store" });
+        if (!response.ok) return;
+        const bundle = await response.json();
+        if (!controller.signal.aborted && bundle.target_date === date) store(bundle);
+      }
+      const requests = [load(tomorrow, setTomorrowBundle), load(today, setTodayBundle)];
+      await Promise.allSettled(requests);
+    }
+    if (!urlContextReady) return;
+    setShelfLoading(true);
+    loadShelfForecasts().catch(() => {}).finally(() => {
+      if (!controller.signal.aborted) setShelfLoading(false);
+    });
+    return () => controller.abort();
+  }, [urlContextReady]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -3769,7 +3784,7 @@ export default function CareNaviPage() {
             />
           </Module>
         ) : primaryTab === "shelf" ? (
-          urlContextReady && <CareShelf recipe={shopEntry.recipe} mode={shopEntry.mode} from={shopEntry.source}
+          urlContextReady && <CareShelf todayBundle={todayBundle} tomorrowBundle={tomorrowBundle} loading={shelfLoading} recipe={shopEntry.recipe} mode={shopEntry.mode} from={shopEntry.source}
             saved={item=>shopEntryMap.has(getSetItemKey(item))} saving={Boolean(shopSavingKey)} onSave={toggleInterestedItem}
             onBrowse={category=>{if(category==="guided")selectPrimaryTab("guided");else{setSingleCategory(category);setViewMode("single");selectPrimaryTab("recommend");trackV126("shop_shelf_view",{category:category==="point"?"loosen":category,source:shopEntry.source,mode:shopEntry.mode});}window.scrollTo(0,0);}} />
         ) : primaryTab === "guided" ? (

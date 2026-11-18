@@ -6,7 +6,13 @@ export const revalidate = 0;
 
 export default function RecordsPage({ searchParams }) {
   const rawTab = String(searchParams?.tab || "record");
-  if (rawTab === "expert") redirect("/expert");
+  if (rawTab === "expert") {
+    const query = new URLSearchParams();
+    for (const key of ["thread", "checkout", "session_id"]) {
+      if (typeof searchParams[key] === "string") query.set(key, searchParams[key]);
+    }
+    redirect(query.size ? "/expert?" + query : "/expert");
+  }
   const tab = ["record", "analysis", "consult"].includes(rawTab)
     ? rawTab
     : "record";

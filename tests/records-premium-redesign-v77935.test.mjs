@@ -71,7 +71,7 @@ test("9月登録者は10月1日から14日間、新規登録者は登録時刻�
   assert.equal(expired.expired, true);
 });
 
-test("14日体験中は全機能、終了後は体質・ショップ・履歴だけ残す", () => {
+test("旧試用状態にかかわらず基本機能は無料、分析は有料権限を確認する", () => {
   const active = resolveRecordsAccess({
     beta: { active: false },
     trial: { active: true, eligible: true, days: 14, days_remaining: 7 },
@@ -88,8 +88,8 @@ test("14日体験中は全機能、終了後は体質・ショップ・履歴だ
     entitlement: null,
   });
   assert.equal(expired.mode, "free");
-  assert.equal(expired.personalized_forecast_enabled, false);
-  assert.equal(expired.records_write_enabled, false);
+  assert.equal(expired.personalized_forecast_enabled, true);
+  assert.equal(expired.records_write_enabled, true);
   assert.equal(expired.analysis_enabled, false);
   assert.equal(expired.records_history_enabled, true);
   assert.equal(expired.analysis_history_enabled, true);
@@ -121,8 +121,8 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
     source("app/api/records/live-chat/route.js"),
   ]);
 
-  assert.match(records, /key: "analysis", label: "振り返り"/);
-  assert.match(records, /normalized === "consult"[\s\S]*loadFeatureAccess\(\)/);
+  assert.match(await source("components/records/RecordsTabs.jsx"), /key: "analysis", label: "AI分析"/);
+  assert.match(records, /openMimoru/);
   assert.match(records, /setMonthRows[\s\S]*loadFeatureAccess\(\)[\s\S]*return nextRow/);
   assert.match(analysis, /この期間の手がかり[\s\S]*ミモルの見立て[\s\S]*次に一つだけ[\s\S]*ミモルと詳しく振り返る[\s\S]*RecordsSimpleTrendChart/);
   assert.match(analysis, /ミモルの見立てを詳しく見る/);
@@ -131,8 +131,10 @@ test("記録・振り返り・相談の情報階層と課金価値を画面へ�
   assert.match(analysisSource, /label: "ケアあり"[\s\S]*label: "ケアなし"/);
   assert.doesNotMatch(analysis, /詳しい根拠を見る/);
   assert.doesNotMatch(analysis, /AIを使わない基本集計/);
-  assert.match(paywall, /自分を把握したミモルへ相談/);
-  assert.match(live, /今回ミモルが把握していること[\s\S]*今日・明日の予報[\s\S]*直近14日の記録/);
+  assert.match(paywall, /分析について質問する/);
+  assert.match(live, /参照情報・相談設定/);
+  assert.match(live, /今日・明日の予報/);
+  assert.match(live, /直近14日の記録/);
   assert.match(daily, /天気以外に気になったこと[\s\S]*（任意）/);
   assert.doesNotMatch(route, /free_chat_response|freeTrial/);
   assert.match(route, /assertQuota\(usageBefore, "chat"\)/);
@@ -205,7 +207,7 @@ test("機能名を体調予報・体調警戒度・振り返りへ統一する",
     "lib/records/forecastReasoning.js",
   ].map(source));
   const joined = functionalSources.join("\n");
-  assert.doesNotMatch(joined, /体調ゆらぎ予報|体調ゆらぎ度|AI分析/);
+  assert.doesNotMatch(joined, /体調ゆらぎ予報|体調ゆらぎ度/);
   assert.match(joined, /体調予報/);
   assert.match(joined, /体調警戒度/);
   assert.match(joined, /振り返り/);

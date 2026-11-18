@@ -309,7 +309,7 @@ export function SegmentedTabs({ tabs, value, onChange }) {
                   : "text-slate-500 hover:bg-white/70 hover:text-slate-800",
               ].join(" ")}
             >
-              {Icon ? <Icon className="h-4 w-4" /> : null}
+              {Icon ? <Icon className="h-5 w-5 shrink-0" /> : null}
               {t.label}
             </button>
           );

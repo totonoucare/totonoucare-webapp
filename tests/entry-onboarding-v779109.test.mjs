@@ -10,14 +10,14 @@ const forecast = [{ event_key: "milestone:forecast" }];
 
 test("home copy names the body, regional weather and useful forecast/care without free/trial promotion", () => {
   assert.equal(copy.HOME_CHECK_CTA, "体質チェックして体調予報へ");
-  for (const phrase of ["約5分", "お体の崩れやすさ", "お住まいの地域の天気", "体調警戒予報", "食事・ツボ・過ごし方"]) assert.ok(copy.HOME_CHECK_INTRO.includes(phrase));
+  for (const phrase of ["約5分", "お体の崩れやすさ", "お住まいの地域の天気", "体調警戒予報", "食べる・ほぐす"]) assert.ok(copy.HOME_CHECK_INTRO.includes(phrase));
   assert.doesNotMatch(Object.values(copy).join(""), /無料|14日/);
 });
 test("home keeps the check destination, adds the early CTA, and replaces only the third feature", async () => {
   const home = await source("app/HomeClient.jsx");
-  const start = home.slice(home.indexOf("function GuestStartCta"), home.indexOf("function MyCareScopeBadge"));
-  assert.match(start, /title: "記録・AI相談"/);
-  assert.match(start, /AppIcon name="chat"/);
+  const start = home.slice(home.indexOf("function GuestStartCta"), home.indexOf("function MyCareSelectHomeCard"));
+  assert.match(start, /title: "記録・相談"/);
+  assert.match(start, /AppIcon name="analysis"/);
   assert.doesNotMatch(start, /title: "ショップ"|パーソナルケアショップへ/);
   assert.equal((home.match(/\{HOME_CHECK_CTA\}/g) || []).length, 2);
   assert.ok(home.lastIndexOf("{HOME_CHECK_CTA}") < home.indexOf("参考体質で見る体調予報デモ"));

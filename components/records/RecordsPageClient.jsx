@@ -12,18 +12,12 @@ import { addDaysYmd } from "@/lib/records/analysis";
 import DailyRecordCard from "@/components/records/DailyRecordCard";
 import RecordsCalendar from "@/components/records/RecordsCalendar";
 import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
-import { ExpertEntry } from "@/components/expert/ExpertDesk";
+import RecordsTabs from "./RecordsTabs";
 import { useMimoru } from "@/components/mimoru/MimoruProvider";
 import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 
-const TAB_OPTIONS = [
-  { key: "record", label: "記録カレンダー", short: "記録" },
-  { key: "analysis", label: "振り返り・分析", short: "分析" },
-];
-
 function normalizeTab(value) {
-  const normalized = value === "expert" ? "consult" : value;
-  return TAB_OPTIONS.some((item) => item.key === normalized) ? normalized : "record";
+  return value === "analysis" ? "analysis" : "record";
 }
 
 function monthRange(month) {
@@ -33,52 +27,6 @@ function monthRange(month) {
     start: `${year}-${String(monthNumber).padStart(2, "0")}-01`,
     end: `${year}-${String(monthNumber).padStart(2, "0")}-${String(last).padStart(2, "0")}`,
   };
-}
-
-function IconLockSmall() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" className="h-3 w-3 shrink-0" aria-hidden="true">
-      <rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function RecordsTabs({ value, onChange, access }) {
-  return (
-    <div style={{ top: "var(--app-header-height, 66px)" }} className="sticky z-30 -mx-1 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
-      <div className="grid grid-cols-2 gap-1 rounded-[22px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
-        {TAB_OPTIONS.map((item) => {
-          const active = value === item.key;
-          const locked = Boolean(
-            access &&
-            ((item.key === "analysis" && !access.analysis_enabled) ||
-              (item.key === "consult" && !access.consult_enabled))
-          );
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => onChange(item.key)}
-              className={[
-                "min-h-[42px] rounded-[18px] px-2 text-[12px] font-black leading-4 transition-all",
-                active
-                  ? "bg-[#EAF7F1] text-[#1F7D67] ring-1 ring-[#66B9A3] shadow-[0_10px_22px_-16px_rgba(47,129,110,0.54)]"
-                  : "text-slate-500 hover:bg-white/70",
-              ].join(" ")}
-            >
-              <span className="inline-flex items-center justify-center gap-1 sm:hidden">
-                {item.short}{locked ? <IconLockSmall /> : null}
-              </span>
-              <span className="hidden items-center justify-center gap-1 sm:inline-flex">
-                {item.label}{locked ? <IconLockSmall /> : null}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 export default function RecordsPageClient({
@@ -455,7 +403,7 @@ export default function RecordsPageClient({
 
   if (authLoading) {
     return (
-      <AppShell title="記録・分析" subtitle="読み込み中">
+      <AppShell title="記録・相談" subtitle="読み込み中">
         <Module className="p-6">
           <div className="h-48 animate-pulse rounded-[24px] bg-[#F4FAF7]" />
         </Module>
@@ -466,7 +414,7 @@ export default function RecordsPageClient({
   if (!session) {
     return (
       <AppShell
-        title="記録・分析"
+        title="記録・相談"
         subtitle="ログインして利用"
         headerRight={
           <button
@@ -478,6 +426,7 @@ export default function RecordsPageClient({
           </button>
         }
       >
+        <RecordsTabs value={tab} onSelect={changeTab} />
         <Module className="p-6 text-center">
           <div className="text-[18px] font-black text-slate-900">記録にはログインが必要です</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
@@ -493,7 +442,7 @@ export default function RecordsPageClient({
 
   return (
     <AppShell
-      title="記録・分析"
+      title="記録・相談"
       subtitle="日々の記録と振り返り"
       headerRight={
         <button
@@ -505,7 +454,7 @@ export default function RecordsPageClient({
         </button>
       }
     >
-      <RecordsTabs value={tab} onChange={changeTab} access={featureAccess} />
+      <RecordsTabs value={tab} onSelect={changeTab} />
 
       {initialCheckoutStatus === "success" ? (
         <div className="rounded-[20px] bg-[#EAF7F1] px-4 py-3 text-[13px] font-black leading-5 text-[#2F816E] ring-1 ring-[#CFE7DE]">
@@ -605,7 +554,7 @@ export default function RecordsPageClient({
         )
       ) : null}
 
-      <ExpertEntry />
+
     </AppShell>
   );
 }

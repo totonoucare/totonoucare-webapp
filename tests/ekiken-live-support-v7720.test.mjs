@@ -18,14 +18,14 @@ test("ミモル is named consistently as the care navigation AI", async () => {
 test("bottom navigation exposes records and analysis as a primary destination", async () => {
   const nav = await source("components/nav/BottomTabs.js");
   assert.match(nav, /pathname\.startsWith\("\/records"\)/);
-  assert.match(nav, /"記録・分析"/);
+  assert.match(nav, /"記録・相談"/);
   assert.match(nav, /IconAnalysis, "\/records"/);
 });
 
 test("consultation tab keeps live Ekiken support and professional consultation separate", async () => {
   const records = await source("components/records/RecordsPageClient.jsx");
   assert.match(records, /useMimoru/);
-  assert.match(records, /ExpertEntry/);
+  assert.match(await source("components/records/RecordsTabs.jsx"), /専門家に聞く/);
   assert.match(records, /openMimoru/);
   assert.doesNotMatch(records, /key: "consult"/);
 });

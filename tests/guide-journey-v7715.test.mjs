@@ -11,14 +11,14 @@ test("使い方ガイドはトリセツ・予報・対策ケア・記録分析�
   assert.match(text, /label: "トリセツ", sub: "自分の体質を知る"/);
   assert.match(text, /label: "体調予報", sub: "今日・明日のゆらぎを見る"/);
   assert.match(text, /label: "対策ケア", sub: "先回りして整える"/);
-  assert.match(text, /label: "記録・相談", sub: "実感を残し、AIや人に相談", Icon: IconPencil/);
+  assert.match(text, /label: "記録・相談", sub: "実感を残し、予報やケアを振り返る", Icon: IconPencil/);
 });
 
 test("使い方ガイドのユーザー表示は対策ケアへ統一する", async () => {
   const guide = await source("app/guide/GuideClient.jsx");
   const page = await source("app/guide/page.js");
   assert.match(guide, /対策ケアのカード/);
-  assert.match(guide, /その場で「やってみた」/);
+  assert.match(guide, /カードのボタンから記録できます/);
   assert.match(guide, /体調予報と対策ケア/);
   assert.match(page, /対策ケアで先回りする/);
   assert.doesNotMatch(guide, /Daily Care/);

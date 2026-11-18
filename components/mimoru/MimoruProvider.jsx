@@ -151,10 +151,10 @@ function MimoruSession({ userId, guestId, children }) {
   return <Context.Provider value={value}>
     {children}
     {visible && !open ? <button ref={launcherRef} type="button" onClick={() => openChat()}
-      aria-label="ミモルに質問する" aria-haspopup="dialog"
+      aria-label="ミモルに聞く" aria-haspopup="dialog"
       className="fixed right-4 z-[65] flex items-center gap-1 rounded-full bg-white py-1 pl-1 pr-4 text-[12px] font-black text-[#24564C] shadow-[0_8px_28px_rgba(36,86,76,0.22)] ring-1 ring-[#B6D8CF]"
       style={{ bottom: `max(calc(var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px))) + 12px), ${launcherBottom + 12}px)` }}>
-      <GuideBotAvatar mood="listening" className="h-12 w-12" /><span>ミモルに質問</span>
+      <GuideBotAvatar mood="listening" className="h-12 w-12" /><span>ミモルに聞く</span>
     </button> : null}
     {floating ? <>
       <div className="fixed inset-0 z-[110] bg-[#183E35]/15" onClick={closeChat} aria-hidden="true" />

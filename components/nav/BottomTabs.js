@@ -36,7 +36,7 @@ export default function BottomTabs() {
     pathname.startsWith("/check") || pathname.startsWith("/result") ? "check" :
     pathname.startsWith("/radar") ? "radar" :
     pathname.startsWith("/care-navi") ? "care" :
-    pathname.startsWith("/records") ? "records" :
+    (pathname.startsWith("/records") || pathname === "/expert") ? "records" :
     "none";
 
   const item = (key, label, Icon, href) => {
@@ -78,7 +78,7 @@ export default function BottomTabs() {
           {item("home", "ホーム", IconHome, "/")}
           {item("check", "トリセツ", IconKarte, "/check?open=current")}
           {item("radar", "体調予報", IconRadar, "/radar")}
-          {item("records", "記録・分析", IconAnalysis, "/records")}
+          {item("records", "記録・相談", IconAnalysis, "/records")}
           {item("care", "ショップ", IconCare, "/care-navi")}
         </div>
       </div>
