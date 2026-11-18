@@ -12,7 +12,7 @@ import { addDaysYmd } from "@/lib/records/analysis";
 import DailyRecordCard from "@/components/records/DailyRecordCard";
 import RecordsCalendar from "@/components/records/RecordsCalendar";
 import AiAnalysisPanel from "@/components/records/AiAnalysisPanel";
-import ExpertConsultPreview from "@/components/records/ExpertConsultPreview";
+import { ExpertEntry } from "@/components/expert/ExpertDesk";
 import { useMimoru } from "@/components/mimoru/MimoruProvider";
 import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 
@@ -605,10 +605,7 @@ export default function RecordsPageClient({
         )
       ) : null}
 
-      <details className="rounded-[20px] bg-white p-4 text-[12px] text-slate-500 ring-1 ring-[#DCE8DD]">
-        <summary className="cursor-pointer font-bold">専門家への相談について</summary>
-        <div className="mt-3"><ExpertConsultPreview authedFetch={authedFetch} /></div>
-      </details>
+      <ExpertEntry />
     </AppShell>
   );
 }

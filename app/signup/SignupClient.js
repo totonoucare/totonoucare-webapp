@@ -556,7 +556,7 @@ export default function SignupClient() {
               初めての方も、同じ操作で利用できます。
             </p>
             {params.resultId ? <p className="text-[12px] font-medium leading-6 text-slate-500">
-              予報・ケア・基本の記録・通知は無料で使えます。記録のAI分析は月額580円です。
+              予報・ケア・基本の記録・通知は無料で使えます。月額580円で記録のAI分析と鍼灸師への質問を利用できます。
             </p> : null}
 
             {emailFormOpen || sentEmail ? (

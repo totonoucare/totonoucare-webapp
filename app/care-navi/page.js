@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import { lifestyleShopQuery } from "@/lib/care-navi/lifestyleShopQueries";
+import CareShelf from "@/components/care-shop/CareShelf";
+import { trackV126 } from "@/lib/experienceFunnelV126";
 import GuidedCareSearch from "@/components/care-shop/GuidedCareSearch";
 import { normalizePointToolContext, pointToolQueryRows, pointToolKinds, pointToolKind, pointToolName, pointToolTargetNames, pointToolScreeningText } from "@/lib/care-navi/pointTools";
 import { supabase } from "@/lib/supabaseClient";
@@ -2656,7 +2658,7 @@ function ShopItemCard({ item, itemPosition, setKey, trackingContext, shopEntry, 
   }
 
   return (
-    <div className={[
+    <div data-shop-category={item.category} className={[
       "rounded-[20px] bg-white p-3 ring-1 ring-[#D9EAE5]",
       featured ? "shadow-[0_16px_34px_-28px_rgba(15,23,42,0.38)]" : "",
     ].join(" ")}>
@@ -3062,7 +3064,8 @@ export default function CareNaviPage() {
   const [rakutenRetryNonce, setRakutenRetryNonce] = useState(0);
   const [visibleLimit, setVisibleLimit] = useState(CARE_SET_INITIAL_LIMIT);
   const [showConditions, setShowConditions] = useState(false);
-  const [primaryTab, setPrimaryTab] = useState("recommend");
+  const [shopEntry,setShopEntry]=useState({recipe:"",mode:"today",source:"shop_tab"});
+  const [primaryTab, setPrimaryTab] = useState("shelf");
   const [showSaved, setShowSaved] = useState(false);
   const [viewMode, setViewMode] = useState("single");
   const [singleCategory, setSingleCategory] = useState("eat");
@@ -3194,6 +3197,11 @@ export default function CareNaviPage() {
 
     const params = new URLSearchParams(window.location.search);
     const nextCategory = params.get("category");
+    const source=params.get("from")==="forecast" ? "forecast":"shop_tab";
+    const mode=params.get("mode")==="tomorrow" ? "tomorrow":"today";
+    setShopEntry({recipe:params.get("recipe") || "",source,mode});
+    if(CATEGORY_ORDER.includes(nextCategory)) setPrimaryTab("recommend");
+    trackV126("shop_entry_view",{source,mode,category:nextCategory==="point"?"loosen":nextCategory==="live"?"live":(nextCategory==="eat" || params.get("recipe"))?"eat":undefined});
     setPointContext(params.has("pointCodes") ? normalizePointToolContext({codes:params.get("pointCodes"),lineCodes:params.get("pointLines"),warming:params.get("pointWarming")}) : null);
     const nextSymptom = params.get("symptom");
     const nextLifestyleActionKey = String(params.get("liveAction") || "").trim();
@@ -3358,6 +3366,7 @@ export default function CareNaviPage() {
 
   useEffect(() => {
     // 初期値の「疲労」で先に検索せず、体質・URL条件・明日予報の読込を待つ。
+    if (primaryTab !== "recommend") return;
     if (loading || !urlContextReady) {
       setRakutenLoading(true);
       return;
@@ -3524,7 +3533,7 @@ export default function CareNaviPage() {
       window.clearTimeout(searchTimer);
       controller.abort();
     };
-  }, [loading, urlContextReady, rakutenSearchSignature, rakutenRetryNonce]);
+  }, [primaryTab, loading, urlContextReady, rakutenSearchSignature, rakutenRetryNonce]);
 
   const partnerItemsByCategory = useMemo(
     () =>
@@ -3726,13 +3735,19 @@ export default function CareNaviPage() {
   }
 
   return (
-    <div style={CARE_NAVI_THEME}>
+    <div style={CARE_NAVI_THEME} onClickCapture={event=>{
+      const link=event.target.closest?.("a[href]");
+      if(primaryTab!=="shelf" && link && /(^|\.)(rakuten\.co\.jp|rakuten\.ne\.jp|rakuten\.com)$/.test(link.hostname)){
+        const category=link.closest("[data-shop-category]")?.dataset.shopCategory || singleCategory;
+        trackV126("shop_outbound",{category:category==="point"?"loosen":category==="live"?"live":"eat",mode:shopEntry.mode,source:shopEntry.source});
+      }
+    }}>
       <AppShell
         title="ケアショップ"
         subtitle="体質と今の状態から選ぶ"
         headerRight={<SavedShopButton count={shopEntries.length} active={showSaved} onClick={() => setShowSaved((value) => !value)} />}
       >
-        <ShopPrimaryTabs value={primaryTab} onChange={selectPrimaryTab} />
+        {(primaryTab!=="shelf" || showSaved) && <button className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#356d59] ring-1 ring-[#cbdfd3]" onClick={()=>{selectPrimaryTab("shelf");setShopEntry({recipe:"",source:"shop_tab",mode:"today"});window.history.replaceState(window.history.state,"","/care-navi");}}>← ショップトップ</button>}
 
         {shopNotice ? <div role="status" className="rounded-[18px] bg-[#EAF7F1] px-4 py-3 text-[12px] font-black leading-5 text-[#2F816E] ring-1 ring-[#BFD8CC]">{shopNotice}</div> : null}
         {shopError ? <div role="alert" className="rounded-[18px] bg-[#FFF3EF] px-4 py-3 text-[12px] font-black leading-5 text-[#A14F3D] ring-1 ring-[#F0C6BC]">{shopError}</div> : null}
@@ -3753,6 +3768,10 @@ export default function CareNaviPage() {
               onRemove={removeShopEntry}
             />
           </Module>
+        ) : primaryTab === "shelf" ? (
+          urlContextReady && <CareShelf recipe={shopEntry.recipe} mode={shopEntry.mode} from={shopEntry.source}
+            saved={item=>shopEntryMap.has(getSetItemKey(item))} saving={Boolean(shopSavingKey)} onSave={toggleInterestedItem}
+            onBrowse={category=>{if(category==="guided")selectPrimaryTab("guided");else{setSingleCategory(category);setViewMode("single");selectPrimaryTab("recommend");trackV126("shop_shelf_view",{category:category==="point"?"loosen":category,source:shopEntry.source,mode:shopEntry.mode});}window.scrollTo(0,0);}} />
         ) : primaryTab === "guided" ? (
           <GuidedCareSearch
             profile={profile}
@@ -3763,6 +3782,7 @@ export default function CareNaviPage() {
           />
         ) : (
           <>
+        <details className="rounded-2xl bg-white px-4 py-3 ring-1 ring-[#d6e2d9]"><summary className="cursor-pointer text-sm font-bold">おすすめ条件を確認・変更</summary>
         <Module className="!overflow-visible !bg-transparent p-0 !shadow-none !ring-0">
           <div className="relative z-10">
             <PersonalCareShopHero
@@ -3846,6 +3866,7 @@ export default function CareNaviPage() {
           </div>
         </Module>
 
+        </details>
         {viewMode === "single" && singleCategory === "live" && linkedLifestyle ? (
           <Module className="!bg-[#F4F9F6] p-4 ring-1 ring-[#D5E5DB]">
             <div className="text-[12px] font-black text-[#2F816E]">体質・天気に合わせた条件</div>
@@ -3903,7 +3924,7 @@ export default function CareNaviPage() {
             <RakutenStatusCard error={rakutenError} onRetry={retryRakutenSearch} loading={rakutenLoading} />
             {rakutenLoading && !["cached", "live"].includes(rakutenResultSource) ? (
               <RakutenLoadingCards />
-            ) : careSetCards.length ? (
+            ) : (viewMode === "sets" ? careSetCards.length : singleItems.length) ? (
               viewMode === "sets" ? (
                 <>
                   <FeaturedCareSetCard card={featuredSet} trackingContext={trackingContext} shopEntryMap={shopEntryMap} savingKey={shopSavingKey} onToggleInterested={toggleInterestedItem} />

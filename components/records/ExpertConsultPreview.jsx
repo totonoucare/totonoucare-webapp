@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 
-function ExpertAvatar({ className = "h-[88px] w-[88px]" }) {
+export function ExpertAvatar({ className = "h-[88px] w-[88px]" }) {
   return (
     <svg viewBox="0 0 96 96" className={className} aria-hidden="true">
       <defs>

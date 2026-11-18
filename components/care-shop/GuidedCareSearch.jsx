@@ -135,7 +135,7 @@ function CandidateCard({ candidate, safety, saved, saving, onSave }) {
   const linkBlocked = oral && safety.level === "consult";
   const connections = ingredientConnections(candidate).slice(0, 3);
   return (
-    <article className="rounded-[22px] bg-white p-4 ring-1 ring-[#DCE7E0]">
+    <article data-shop-category={oral ? "eat" : candidate.productClass?.includes("ツボ") ? "point" : "live"} className="rounded-[22px] bg-white p-4 ring-1 ring-[#DCE7E0]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[12px] font-black tracking-[0.1em] text-[#608077]">{meta?.eyebrow}</div>

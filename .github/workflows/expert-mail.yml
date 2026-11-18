@@ -1,0 +1,17 @@
+name: Retry expert question mail
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    if: ${{ vars.EXPERT_MAIL_RETRY_ENABLED == 'true' }}
+    steps:
+      - name: Retry pending notices
+        env:
+          BASE: ${{ secrets.APP_BASE_URL }}
+          TOKEN: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS --max-time 90 -X POST -H "Authorization: Bearer $TOKEN" "$BASE/api/expert/notify"

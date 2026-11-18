@@ -261,7 +261,7 @@ export default function GuidePage() {
 
           <div className="space-y-4">
             <GuideCard tone="mint" title="予報・ケア・記録は基本無料" icon={<IconSpark />} compact>
-              今日・明日の予報とケア、基本の記録、通知は無料です。ミモルへの質問には回数上限があります。記録のAI分析は月額580円で利用できます。
+              今日・明日の予報とケア、基本の記録、通知は無料です。ミモルへの質問には回数上限があります。月額580円で記録のAI分析と鍼灸師への質問を利用できます。
               <CheckList
                 items={[
                   "無料で残る：体質トリセツ、ケアショップ、これまでの記録とAI回答、ホームの参考予報。",
@@ -298,7 +298,7 @@ export default function GuidePage() {
             </MiniNote>
 
             <GuideCard tone="teal" title="必要な時のサポート" icon={<IconCare />} compact>
-              パーソナルケアショップでは、体質・不調・使いどきに合う用品や食品を探せます。体質チェックや記録をもとに、鍼灸師とツボ・お灸・ストレッチのやり方を確かめるオンライン相談も準備しています。
+              パーソナルケアショップでは、体質・不調・使いどきに合う用品や食品を探せます。月額プランでは、ケアを試して気になったことを鍼灸師に質問できます。
             </GuideCard>
 
             <div className="grid gap-3 pt-2">
@@ -429,15 +429,9 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="teal" title="鍼灸師とのオンライン相談（準備中）" icon={<IconBodyLine />}>
-              自宅から鍼灸師（国家資格者）と相談し、自分に合うケアを具体的に確かめるサービスを準備しています。
-              <CheckList
-                items={[
-                  "共有したい体質チェック・記録・AIの振り返りをもとに整理し、説明を繰り返す負担を軽くします。",
-                  "ツボの位置と触れ方、お灸やシール鍼の使い方を画面越しに確認します。",
-                  "ラインのストレッチなどを一緒に確かめ、日々続けられるケアに整えます。",
-                ]}
-              />
+            <GuideCard tone="teal" title="専門家に質問" icon={<IconBodyLine />}>
+              鍼灸師の小川亮太が原則24時間以内に返信します。月額580円プランには、月2件の相談が含まれます。回答後に同じ件で1回追加質問できます。
+              <Button className="mt-3" onClick={() => router.push("/expert")}>質問・返信を見る</Button>
             </GuideCard>
 
             <MiniNote label="AIへ送る情報">

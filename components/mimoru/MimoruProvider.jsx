@@ -144,7 +144,7 @@ function MimoruSession({ userId, guestId, children }) {
     document.addEventListener("keydown", handleKey);
     return () => { cancelAnimationFrame(frame); document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", handleKey); };
   }, [floating, closeChat]);
-  const visible = (userId || guestId) && !/^\/(login|signup|auth|check\/run|checkout)(\/|$)/.test(pathname);
+  const visible = (userId || guestId) && !/^\/(login|signup|auth|check\/run|checkout|expert)(\/|$)/.test(pathname);
   const panelHeight = viewport ? Math.min(700, Math.max(160, viewport.height - 28)) : 600;
   const value = { userId: userId || guestId, guest: !userId && Boolean(guestId), open, inlineId, selected, chat, fetchData, insightCache: insightCache.current, openChat, closeChat, viewportHeight: viewport?.height,
     releaseInline, setLauncherClearance, expandChat: () => setInlineId(null), clearContext: () => { restoreAllowed.current = false; setSelected(null); } };

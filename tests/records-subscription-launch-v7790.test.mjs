@@ -36,21 +36,21 @@ test("history stays free while new records, analysis generation and consult requ
 
   assert.equal(access.records_enabled, true);
   assert.equal(access.records_history_enabled, true);
-  assert.equal(access.records_write_enabled, false);
+  assert.equal(access.records_write_enabled, true);
   assert.equal(access.mode, "free");
   assert.equal(access.analysis_enabled, false);
-  assert.equal(access.consult_enabled, false);
+  assert.equal(access.consult_enabled, true);
   assert.equal(access.analysis_requires_subscription, true);
-  assert.equal(access.consult_requires_subscription, true);
+  assert.equal(access.consult_requires_subscription, false);
 });
 
 test("settings and live checkout copy use the beta and registration-trial boundary", async () => {
   const settings = await source("app/settings/page.js");
   const checkout = await source("app/api/stripe/checkout/route.js");
 
-  assert.match(settings, /2026年9月30日まで/);
-  assert.match(settings, /10月1日からさらに14日間体験/);
-  assert.match(settings, /体質トリセツ、ケアショップ、過去の記録・AI回答は無料で見返せます/);
+  assert.match(settings, /予報・ケア・基本記録・通知は無料/);
+  assert.doesNotMatch(settings, /10月1日からさらに14日間体験/);
+  assert.match(settings, /月額580円で記録のAI分析と鍼灸師への質問/);
   assert.match(checkout, /プレミアムの申込みは2026年10月1日から開始します/);
 });
 
@@ -99,11 +99,11 @@ test("records UI gates the whole analysis and consult tabs while leaving expert 
   const paywall = await source("components/billing/SubscriptionPaywall.jsx");
 
   assert.match(page, /featureAccess\?\.analysis_enabled/);
-  assert.match(page, /featureAccess\?\.consult_enabled/);
+  assert.match(await source("components/records/LiveSupportPanel.jsx"), /access\?\.consult_enabled/);
   assert.match(page, /<SubscriptionPaywall feature="analysis"/);
-  assert.match(page, /<SubscriptionPaywall feature="consult"/);
-  assert.match(page, /<ExpertConsultPreview/);
-  assert.match(paywall, /これまでの記録とAI回答は引き続き見返せます/);
+  assert.match(await source("components/records/LiveSupportPanel.jsx"), /historyOnly/);
+  assert.match(page, /<ExpertEntry/);
+  assert.match(paywall, /解約後も過去の記録と分析結果は見返せます/);
 });
 
 test("paid APIs enforce analysis and consultation entitlements independently", async () => {

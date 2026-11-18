@@ -53,6 +53,7 @@ export default function SubscriptionPaywall({
             </div>
           </div>
           <div className="mt-4 text-[14px] font-bold leading-6 text-slate-600">{copy.body}</div>
+          <p className="mt-2 text-sm text-slate-600">月額プランには鍼灸師への質問も月2件含まれます。</p>
 
 
           <div className="mt-4 grid gap-2">
