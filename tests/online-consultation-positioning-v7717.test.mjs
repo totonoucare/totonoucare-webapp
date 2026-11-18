@@ -16,14 +16,12 @@ test("ガイドは振り返りの価値を自分に合う整え方として伝�
   assert.doesNotMatch(guide, /title="AIは似た予報条件を比べる"/);
 });
 
-test("鍼灸師との実践相談は準備中で、予約・料金を発生させない", async () => {
+test("ガイドの専門家相談は月額プランから人に質問できる", async () => {
   const guide = await source("app/guide/GuideClient.jsx");
-  const expert = await source("components/records/ExpertConsultPreview.jsx");
-  assert.match(guide, /鍼灸師（国家資格者）/);
-  assert.match(expert, /準備中/);
-  assert.match(expert, /予約や料金は発生しません/);
-  assert.match(expert, /expert-interest/);
-  assert.match(expert, /共有したい記録/);
+  assert.match(guide, /鍼灸師の小川亮太/);
+  assert.match(guide, /原則24時間以内/);
+  assert.match(guide, /月2件/);
+  assert.match(guide, /router.push\("\/expert"\)/);
 });
 
 test("オンライン相談の関心イベントは独立サービスとして保存する", async () => {

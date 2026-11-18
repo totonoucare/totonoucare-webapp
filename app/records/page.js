@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import RecordsPageClient from "@/components/records/RecordsPageClient";
 
 export const dynamic = "force-dynamic";
@@ -5,8 +6,9 @@ export const revalidate = 0;
 
 export default function RecordsPage({ searchParams }) {
   const rawTab = String(searchParams?.tab || "record");
-  const tab = ["record", "analysis", "consult", "expert"].includes(rawTab)
-    ? (rawTab === "expert" ? "consult" : rawTab)
+  if (rawTab === "expert") redirect("/expert");
+  const tab = ["record", "analysis", "consult"].includes(rawTab)
+    ? rawTab
     : "record";
   const initialLivePrompt = String(searchParams?.prompt || "").slice(0, 240);
   const checkout = ["success", "cancel"].includes(String(searchParams?.checkout || ""))

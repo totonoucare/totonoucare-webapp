@@ -11,6 +11,7 @@ import {
   flattenRadarLocationPresets,
 } from "@/lib/radar_v1/locationPresets";
 import { SYMPTOM_LABELS } from "@/lib/diagnosis/v2/labels";
+import { ManagementLink } from "@/components/expert/ExpertDesk";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import BillingPortalButton from "@/components/billing/BillingPortalButton";
 import { formatTrialEnd } from "@/lib/trialWelcome";
@@ -452,6 +453,7 @@ export default function SettingsPage() {
 
   return (
     <AppShell title="設定" subtitle="アカウントとアプリ設定">
+      <ManagementLink userId={user?.id} />
       <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="text-[22px] font-black tracking-tight text-slate-900">設定</div>
         <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
@@ -526,12 +528,12 @@ export default function SettingsPage() {
 
         <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">
           {premiumActive
-            ? "無料の予報・ケア・記録・通知に加えて、記録のAI分析と、その分析についての質問を利用できます。"
+            ? "無料の予報・ケア・記録・通知に加えて、記録のAI分析と、その分析についての質問、鍼灸師への質問（月2件）を利用できます。"
             : betaActive
               ? "予報・ケア・基本記録・通知は無料で使えます。"
               : trialActive
                 ? "予報・ケア・基本記録・通知は無料で使えます。"
-                : "予報・ケア・基本記録・通知は無料です。ミモルへの質問には回数上限があります。記録のAI分析は月額580円です。"}
+                : "予報・ケア・基本記録・通知は無料です。ミモルへの質問には回数上限があります。月額580円で記録のAI分析と鍼灸師への質問（月2件）が利用できます。"}
         </div>
 
 

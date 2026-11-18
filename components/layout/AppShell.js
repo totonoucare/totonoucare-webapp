@@ -115,6 +115,7 @@ export default function AppShell({
   headerRight,
   headerControls,
   children,
+  wide = false,
   noHeader = false,
   noTabs = false,
 }) {
@@ -134,7 +135,7 @@ export default function AppShell({
         />
       )}
 
-      <div className="mx-auto w-full max-w-[440px] px-4 pt-2">
+      <div className={wide ? "mx-auto w-full max-w-[800px] px-4 pt-3" : "mx-auto w-full max-w-[440px] px-4 pt-2"}>
         {/* 全体の縦の余白感を調整 */}
         <div className="space-y-6 pb-4">{children}</div>
       </div>

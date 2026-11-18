@@ -1,3 +1,4 @@
+import { materialFor, materialMatch } from "@/lib/care-shop/recipeShelf";
 import { LIFESTYLE_ACTION_ROLE_QUERY_RULES, LIFESTYLE_ACTION_LIVE_QUERY_RULES } from "@/lib/care-navi/lifestyleShopQueries";
 import { matchesLifestyleProductRole } from "@/lib/care-navi/lifestyleProductFit";
 import { normalizePointToolContext, pointToolQueryRows, pointToolKind, pointToolScreeningText } from "@/lib/care-navi/pointTools";
@@ -2172,7 +2173,7 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   // orFlagは代替商品を一行で扱う既存辞書との互換のため維持し、複数語一致は
   // matchesPlanKeywordIntentで必ず再検証する。
   url.searchParams.set("field", "1");
-  url.searchParams.set("orFlag", "1");
+  url.searchParams.set("orFlag", plan.material ? "0" : "1");
   url.searchParams.set("sort", "standard");
 
   const minPrice = Number(priceRange?.min || 0);
@@ -2243,6 +2244,12 @@ async function searchRakutenForPlan(plan, planIndex, credentials, priceRange) {
   }
 
   const rawItems = asArray(json?.Items || json?.items);
+  if (plan.material) {
+    return rawItems.map(row => row?.Item || row).filter(item => materialMatch(plan.material,item?.itemName || "") && Number(item.itemPrice)>0 && /^https:\/\//.test(item.affiliateUrl || item.itemUrl || ""))
+      .slice(0,3).map(item=>({ title:item.itemName, displayTitle:buildRakutenDisplayTitle(item.itemName),
+        itemCode:item.itemCode, itemUrl:item.affiliateUrl || item.itemUrl, category:"eat", source:"rakuten",
+        price:Number(item.itemPrice), imageUrl:firstImageUrl(item), shopName:item.shopName, query:plan.keyword }));
+  }
   return rawItems
     .map((entry) => entry?.Item || entry)
     .filter(Boolean)
@@ -2299,6 +2306,17 @@ export async function POST(req) {
       });
     }
 
+    if (Object.hasOwn(body,"material")) {
+      const material = materialFor(body.material);
+      if (!material) return jsonUtf8({ error:"unknown_material" },400);
+      const key = "material:" + material.id;
+      const cached = readRakutenResultCache(key);
+      if (cached) return jsonUtf8(cached);
+      const items = await searchRakutenForPlan({keyword:material.query, material:material.id},0,credentials,{});
+      const result = {ok:true, items};
+      writeRakutenResultCache(key,result);
+      return jsonUtf8(result);
+    }
     const cacheKey = JSON.stringify({
       category,
       pointContext,

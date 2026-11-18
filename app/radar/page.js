@@ -1075,7 +1075,7 @@ export default function RadarPage() {
   const careNaviSymptomQuery = symptomFocus ? `&symptom=${encodeURIComponent(symptomFocus)}` : "";
   const pointWarming = carePolicies.policies.some(policy => (policy.key || policy.id || policy) === "nukumeru") && !careTriggerFactors.some(factor => ["heat", "temp_up"].includes(factor.key));
   const buildCareNaviUrl = (category, selectedToolPoint = null) => {
-    const base = `/care-navi?category=${category}${careNaviSymptomQuery}`;
+    const base = `/care-navi?category=${category}&from=forecast&mode=${selectedIsToday ? "today":"tomorrow"}${careNaviSymptomQuery}`;
     if (category === "point") {
       const context = pointToolContext(selectedToolPoint ? [selectedToolPoint] : tsuboPoints, pointWarming);
       const params = new URLSearchParams({ pointCodes:context.codes.join(","), pointLines:context.lineCodes.join(","), pointWarming:context.warming ? "1" : "0" });
@@ -2165,7 +2165,7 @@ export default function RadarPage() {
                                   const itemAction = card.key === "caution"
                                     ? null
                                     : foodActionFor(card, itemIdx);
-                                  if (card.key === "drink") return <DrinkCareCard key={`${card.key}-${item}-${itemIdx}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null} question={careQuestionFor(foodTarget(card, itemIdx), { showReason: false })} explanation={careExplanationFor(foodTarget(card, itemIdx))} />;
+                                  if (card.key === "drink") return <DrinkCareCard shopMode={selectedIsToday ? "today":"tomorrow"} key={`${card.key}-${item}-${itemIdx}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null} question={careQuestionFor(foodTarget(card, itemIdx), { showReason: false })} explanation={careExplanationFor(foodTarget(card, itemIdx))} />;
                                   return (
                                     <div
                                       key={`${card.key}-${item}-${itemIdx}`}
@@ -2313,7 +2313,7 @@ export default function RadarPage() {
                                         const itemDetail = safeArray(card.item_details)?.[itemIndex] || null;
                                         const itemAction = card.key === "caution" ? null : foodActionFor(card, itemIndex);
                                         if (card.key === "drink") {
-                                          return <DrinkCareCard key={`${card.key}-${itemIndex}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null} question={careQuestionFor(foodTarget(card, itemIndex), { showReason: false })} explanation={careExplanationFor(foodTarget(card, itemIndex))} />;
+                                          return <DrinkCareCard shopMode={selectedIsToday ? "today":"tomorrow"} key={`${card.key}-${itemIndex}`} label={item} detail={itemDetail || {}} action={itemAction ? actionButtonFor(itemAction, { compact: true, withQuestion: false }) : null} question={careQuestionFor(foodTarget(card, itemIndex), { showReason: false })} explanation={careExplanationFor(foodTarget(card, itemIndex))} />;
                                         }
                                         return (
                                           <div key={`${card.key}-${itemIndex}`} className="rounded-[14px] bg-[#FFF5E6] px-3 py-2 text-[12px] font-extrabold text-slate-700 ring-1 ring-[#F1E5D1]">

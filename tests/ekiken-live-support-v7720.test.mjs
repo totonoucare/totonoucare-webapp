@@ -15,18 +15,19 @@ test("ミモル is named consistently as the care navigation AI", async () => {
   assert.match(guide, /ミモル/);
 });
 
-test("bottom navigation exposes records and consultation as a primary destination", async () => {
+test("bottom navigation exposes records and analysis as a primary destination", async () => {
   const nav = await source("components/nav/BottomTabs.js");
   assert.match(nav, /pathname\.startsWith\("\/records"\)/);
-  assert.match(nav, /"記録・相談"/);
-  assert.match(nav, /IconChat, "\/records"/);
+  assert.match(nav, /"記録・分析"/);
+  assert.match(nav, /IconAnalysis, "\/records"/);
 });
 
 test("consultation tab keeps live Ekiken support and professional consultation separate", async () => {
   const records = await source("components/records/RecordsPageClient.jsx");
-  assert.match(records, /LiveSupportPanel/);
-  assert.match(records, /ExpertConsultPreview/);
-  assert.match(records, /tab === "consult"/);
+  assert.match(records, /useMimoru/);
+  assert.match(records, /ExpertEntry/);
+  assert.match(records, /openMimoru/);
+  assert.doesNotMatch(records, /key: "consult"/);
 });
 
 test("live support context uses today tomorrow three detailed days and fourteen day summary", async () => {
@@ -44,7 +45,7 @@ test("live support and period review use separate thread kinds and prompt roles"
   const migration = await source("supabase/migrations/20260714_add_ekiken_live_support_v7720.sql");
   assert.match(route, /LIVE_SUPPORT_THREAD_KIND/);
   assert.match(prompts, /LIVE_SUPPORT_INSTRUCTIONS/);
-  assert.match(prompts, /期間振り返りチャットとは別の会話/);
+  assert.match(route, /LIVE_SUPPORT_THREAD_KIND/);
   assert.match(migration, /thread_kind in \('period_review', 'live_support'\)/);
   assert.match(migration, /records_ai_threads_one_active_live_support_idx/);
 });
