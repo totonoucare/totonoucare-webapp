@@ -468,8 +468,8 @@ export function LiveSupportView({ chat, inline = false }) {
         <button type="button" onClick={clearConversation} className="mt-3 min-h-10 font-bold underline">会話を削除する</button>
       </details> : null}
       {!loading && historyOnly ? <div className="rounded-xl bg-[#FFF8EC] p-3 text-[12px] leading-6 text-[#87662F]">
-        体験期間が終了しました。これまでの会話は引き続き見返せます。
-        <CheckoutButton returnPath="/records?tab=consult" className="mt-2 w-full">月額580円の内容を確認する</CheckoutButton>
+        ミモルへの質問を現在利用できません。これまでの会話は見返せます。
+        <p className="mt-2">少し時間をおいて、ページを読み直してください。</p>
       </div> : null}
       {!loading && !messages.length && consent?.active && access?.consult_enabled ? <div className="py-4 text-[14px] leading-7 text-slate-600">今、気になっている体調を教えてね。体質や予報を踏まえて、一緒に整理するよ。</div> : null}
       {messages.map((message, index) => <div key={message.id || index}>

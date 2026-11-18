@@ -1,4 +1,5 @@
 "use client";
+import { trackV126 } from "@/lib/experienceFunnelV126";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -23,6 +24,7 @@ export default function CheckoutButton({
     setError("");
 
     try {
+      trackV126("checkout_start");
       onStart?.();
 
       if (!supabase) {

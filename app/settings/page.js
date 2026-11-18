@@ -504,9 +504,9 @@ export default function SettingsPage() {
                 : premiumActive
                   ? "プレミアム利用中"
                   : betaActive
-                    ? "全機能無料公開中"
+                    ? "基本無料"
                     : trialActive
-                      ? "14日間体験中"
+                      ? "無料プラン"
                     : "無料プラン"}
             </div>
           </div>
@@ -526,18 +526,15 @@ export default function SettingsPage() {
 
         <div className="mt-3 rounded-[18px] bg-[#F7FAF8] px-4 py-3 text-[13px] font-bold leading-6 text-slate-600 ring-1 ring-[#E8F0EB]">
           {premiumActive
-            ? "パーソナル体調予報、対策ケア、記録、通知、AI振り返り、ミモル相談を利用できます。"
+            ? "無料の予報・ケア・記録・通知に加えて、記録のAI分析と、その分析についての質問を利用できます。"
             : betaActive
-              ? "2026年9月30日まで全機能を無料公開中です。9月中の登録者は、10月1日からさらに14日間体験できます。"
+              ? "予報・ケア・基本記録・通知は無料で使えます。"
               : trialActive
-                ? `パーソナル体調予報からミモル相談まで、全機能をあと${billingStatus?.access?.trial_days_remaining || 0}日体験できます。カード登録は不要です。`
-                : "体質トリセツ、ケアショップ、過去の記録・AI回答は無料で見返せます。パーソナル体調予報から先は月額580円です。"}
+                ? "予報・ケア・基本記録・通知は無料で使えます。"
+                : "予報・ケア・基本記録・通知は無料です。ミモルへの質問には回数上限があります。記録のAI分析は月額580円です。"}
         </div>
 
-        {trialActive ? <div className="mt-3 text-[12px] font-medium leading-6 text-slate-500">
-          <p>無料体験は{formatTrialEnd(billingStatus?.access?.trial_ends_at)}までです。</p>
-          <p>体験終了後の継続利用は月額580円です。自動で料金は発生しません。</p>
-        </div> : null}
+
 
         {billingError ? (
           <div className="mt-4 rounded-[18px] bg-[#FFF0EC] p-4 ring-1 ring-[#F1C8BA]">
@@ -593,7 +590,7 @@ export default function SettingsPage() {
             {notificationThresholdLabel(minScore)}の日を、前日夜・当日朝に短くお知らせします。
           </div>
           {!loading && !notificationsAvailable ? (
-            <div className="mt-3 rounded-[16px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">通知は14日体験中またはプレミアム利用中に使えます。</div>
+            <div className="mt-3 rounded-[16px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">通知設定を読み込めませんでした。少し待ってからお試しください。</div>
           ) : null}
           <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[14px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
             iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。

@@ -260,12 +260,12 @@ export default function GuidePage() {
           </div>
 
           <div className="space-y-4">
-            <GuideCard tone="mint" title="登録後14日間は、全部試せます" icon={<IconSpark />} compact>
-              カード登録なしで、あなた向けの今日・明日の体調予報、対策ケア、記録、AI振り返り・ミモル相談、通知を14日間使えます。終了後は月額580円で継続できます。
+            <GuideCard tone="mint" title="予報・ケア・記録は基本無料" icon={<IconSpark />} compact>
+              今日・明日の予報とケア、基本の記録、通知は無料です。ミモルへの質問には回数上限があります。記録のAI分析は月額580円で利用できます。
               <CheckList
                 items={[
                   "無料で残る：体質トリセツ、ケアショップ、これまでの記録とAI回答、ホームの参考予報。",
-                  "プレミアム：あなた向けの予報とケア、新しい記録、AI、通知。",
+                  "プレミアム：記録のAI分析と、その分析についての質問。",
                 ]}
               />
             </GuideCard>
@@ -284,7 +284,7 @@ export default function GuidePage() {
               体調警戒度と、安定・いたわり・守りのモードから、その日にどのくらい備えるかを確認します。
             </FlowItem>
             <FlowItem num="2" title="対策ケアで先回りする" tone="amber">
-              暮らす・食べる・ほぐすの中から、無理なくできそうなものを一つ選びます。実際に試したら、その場で「やってみた」を押して記録します。
+              食べる・ほぐすから、その日に取り入れたいケアを選びます。試した項目は、カードのボタンから記録できます。
             </FlowItem>
             <FlowItem num="3" title="夜に実感を残す" tone="violet">
               記録ページで、その日の実感を○・△・×から選びます。予報ページでケアを記録済みなら、内容は自動で入り、当日ケアのタイミングだけ確認します。
@@ -325,6 +325,7 @@ export default function GuidePage() {
 
             <GuideCard tone="mint" title="今日と明日の役割" icon={<IconCalendar />}>
               「今日」は今日を整えるための予報、「明日」は今夜から先回りするための予報です。
+              <p className="mt-2">ヘッダーで今日・明日を切り替えられます。「今日のケア／明日のケア」から、対策ケアへ移動できます。</p>
               <CheckList
                 items={[
                   "今日のケア：今日の負担を増やしにくくする工夫。",
@@ -344,13 +345,12 @@ export default function GuidePage() {
               />
             </GuideCard>
 
-            <GuideCard tone="mint" title="暮らす・食べる・ほぐす" icon={<IconCare />}>
-              その日の方針を、実際に取り入れやすい3方向へ分けています。
+            <GuideCard tone="mint" title="食べる・ほぐす" icon={<IconCare />}>
+              その日の方針に合わせた2分野から選べます。
               <CheckList
                 items={[
-                  "暮らす：服装、予定、休み方、湿気・冷え対策など。",
-                  "食べる：主食・主菜・飲み物、足したいもの、控えたい重なりなど。",
-                  "ほぐす：その日の天気と不調に合わせたツボケア。",
+                  "食べる：料理や食材・飲み物、控えたい食べ物など。",
+                  "ほぐす：体質と不調・天気に合わせた一手とツボケア。",
                 ]}
               />
             </GuideCard>

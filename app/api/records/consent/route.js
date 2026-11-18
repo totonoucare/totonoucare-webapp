@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireGuestExperience, setGuestConsent, guestConsentIsActive } from "@/lib/guestExperienceServer";
 import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getRecordsAccess } from "@/lib/records/access";
@@ -32,7 +33,10 @@ function publicConsent(row) {
 export async function GET(req) {
   try {
     const { user, error } = await requireUser(req);
-    if (!user) return NextResponse.json({ error }, { status: 401 });
+    if (!user) {
+      const guest = await requireGuestExperience(req);
+      return NextResponse.json({ data: { consent: { active: guestConsentIsActive(guest) } } }, { headers: { "Cache-Control": "no-store" } });
+    }
     const [consent, access] = await Promise.all([
       loadConsent(user.id),
       getRecordsAccess(user.id, { userCreatedAt: user.created_at }),
@@ -50,7 +54,13 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const { user, error } = await requireUser(req);
-    if (!user) return NextResponse.json({ error }, { status: 401 });
+    if (!user) {
+      const guest = await requireGuestExperience(req);
+      const guestBody = await req.json().catch(() => ({}));
+      if (guestBody.consent !== true) return NextResponse.json({ error: "consent must be true" }, { status: 400 });
+      await setGuestConsent(guest, true);
+      return NextResponse.json({ data: { consent: { active: true } } }, { headers: { "Cache-Control": "no-store" } });
+    }
     const body = await req.json().catch(() => ({}));
     if (body?.consent !== true) {
       return NextResponse.json({ error: "consent must be true" }, { status: 400 });
@@ -89,7 +99,11 @@ export async function POST(req) {
 export async function DELETE(req) {
   try {
     const { user, error } = await requireUser(req);
-    if (!user) return NextResponse.json({ error }, { status: 401 });
+    if (!user) {
+      const guest = await requireGuestExperience(req);
+      await setGuestConsent(guest, false);
+      return NextResponse.json({ data: { consent: { active: false } } }, { headers: { "Cache-Control": "no-store" } });
+    }
     const now = new Date().toISOString();
     const { data, error: saveError } = await supabaseServer
       .from("records_ai_consents")

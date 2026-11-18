@@ -1,4 +1,5 @@
 // app/api/diagnosis/v2/events/[id]/attach/route.js
+import { saveGuestExperience } from "@/lib/saveGuestExperience";
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { buildConstitutionProfilePayload, scoreDiagnosis } from "@/lib/diagnosis/v2/scoring";
@@ -168,6 +169,8 @@ export async function POST(req, { params }) {
     }
     if (attachError) throw attachError;
     if (!saved?.constitution_event_id) throw new Error("constitution_events の作成に失敗しました");
+
+    await saveGuestExperience({ resultId: id, userId: user.id, isCurrent: saved.is_current === true });
 
     const res = NextResponse.json({
       data: {

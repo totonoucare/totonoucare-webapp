@@ -427,10 +427,10 @@ function GuestStartCta({ onCheck, onLogin }) {
     },
     {
       key: "records",
-      title: "記録・AI相談",
-      titleLines: ["記録・", "AI相談"],
-      sub: "体調の記録と相談",
-      icon: <AppIcon name="chat" className="h-[22px] w-[22px]" />,
+      title: "記録・分析",
+      titleLines: ["記録・", "分析"],
+      sub: "体調とケアを振り返る",
+      icon: <AppIcon name="analysis" className="h-[22px] w-[22px]" />,
       tone: "text-[#2F8F79] bg-white ring-[#CFE0D3]",
     },
   ];
@@ -1182,7 +1182,7 @@ export default function HomePage() {
             <div>
               <div className="text-[15px] font-black tracking-tight text-slate-900">参考体質で見る体調予報デモ</div>
               <div className="mt-0.5 text-[12px] font-extrabold leading-4 text-slate-500">
-                体質チェック前のため、反応の偏りと余力を中間に置いた仮の体質で試算しています
+                体質チェック前のサンプルです。チェック後は、あなたの体質に合わせた予報になります。
               </div>
             </div>
             <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl ring-1 ring-[#D3E1D5] shadow-sm relative z-20 hover:ring-[#CFE3DA]">
@@ -1255,7 +1255,7 @@ export default function HomePage() {
         <Module className="rounded-[30px] bg-[#F4FAF7] p-5 ring-1 ring-[#CFE7DE]">
           <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/70">無料で引き続き使えるもの</div>
           <div className="mt-2 text-[19px] font-black leading-7 text-slate-900">体質トリセツと、これまでの記録は残っています</div>
-          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">今日の参考予報は確認できます。あなたの体質を重ねた予報とケアは、プレミアムで続けられます。</div>
+          <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">予報とケアは無料で使えます。利用状況を確認できない場合はページを読み直してください。</div>
           <div className="mt-4 grid grid-cols-3 gap-2">
             <Button size="sm" variant="secondary" onClick={() => router.push(currentResultHref || "/history")}>体質結果</Button>
             <Button size="sm" variant="secondary" onClick={() => router.push("/records")}>記録</Button>

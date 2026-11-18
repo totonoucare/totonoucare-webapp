@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clearTemporaryResult } from "@/lib/guestExperienceClient";
 import { supabase } from "@/lib/supabaseClient";
 import {
   clearPendingDiagnosisAttach,
@@ -67,6 +68,7 @@ export default function AuthCallbackClient() {
         throw new Error(json?.error || "診断結果の保存に失敗しました");
       }
       trackFunnel("result_save_success");
+      clearTemporaryResult();
       return json?.data?.is_current !== false;
     }
 

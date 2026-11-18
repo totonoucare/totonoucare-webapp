@@ -1,11 +1,12 @@
 // app/check/page.js
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
+import { getTemporaryResult } from "@/lib/guestExperienceClient";
 import { CHECK_RUN_PATH, CHECK_SIGNUP_HREF } from "@/lib/checkRegistration";
 import { trackFunnel } from "@/lib/funnelClient";
 import { IconCheck, IconHistory, IconInfo } from "@/components/illust/icons/check";
@@ -37,12 +38,19 @@ function CheckOrbitMark() {
 }
 
 export default function CheckLandingPage() {
+  return <Suspense fallback={<AppShell title="体質トリセツ" subtitle="読み込み中…" />}><CheckLandingContent /></Suspense>;
+}
+
+function CheckLandingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const openCurrent = searchParams.get("open") === "current";
 
   const [session, setSession] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [currentResult, setCurrentResult] = useState(null);
   const [loadingCurrent, setLoadingCurrent] = useState(false);
+  const currentOwnerRef = useRef(null);
 
 
   useEffect(() => {
@@ -75,6 +83,7 @@ export default function CheckLandingPage() {
 
   useEffect(() => {
     let cancelled = false;
+    currentOwnerRef.current = null;
 
     (async () => {
       if (!session?.access_token) {
@@ -83,13 +92,18 @@ export default function CheckLandingPage() {
         return;
       }
       try {
+        setCurrentResult(null);
         setLoadingCurrent(true);
         const res = await fetch("/api/diagnosis/v2/events/list?limit=1&current=1", {
           headers: { Authorization: `Bearer ${session.access_token}` },
           cache: "no-store",
         });
         const json = await res.json().catch(() => ({}));
-        if (!cancelled) setCurrentResult(json?.data?.[0] || null);
+        if (!res.ok) throw new Error("現在のトリセツを読み込めませんでした。");
+        if (!cancelled) {
+          currentOwnerRef.current = session.user.id;
+          setCurrentResult(json?.data?.[0] || null);
+        }
       } catch (e) {
         console.error(e);
         if (!cancelled) setCurrentResult(null);
@@ -106,6 +120,17 @@ export default function CheckLandingPage() {
   const isLoggedIn = !!session;
   const currentResultId = currentResult?.source_event_id || currentResult?.notes?.source_event_id || null;
   const currentResultHref = currentResultId ? `/result/${encodeURIComponent(currentResultId)}?from=check` : null;
+  useEffect(() => {
+    if (openCurrent && !loadingAuth && !loadingCurrent && currentResultHref && currentOwnerRef.current === session?.user?.id) {
+      router.replace(currentResultHref);
+    }
+  }, [openCurrent, loadingAuth, loadingCurrent, currentResultHref, session?.user?.id, router]);
+  useEffect(() => {
+    if (openCurrent && !loadingAuth && !session) {
+      const temporary = getTemporaryResult();
+      if (temporary) router.replace(`/result/${encodeURIComponent(temporary)}?from=history`);
+    }
+  }, [openCurrent, loadingAuth, session, router]);
   const currentCore = currentResult?.core_code ? getCoreLabel(currentResult.core_code) : null;
   const currentSubs = getSubLabels(currentResult?.sub_labels || []);
 
@@ -189,15 +214,14 @@ export default function CheckLandingPage() {
               <div className="mt-6">
                 <Button
                   onClick={() => {
-                    if (!isLoggedIn) trackFunnel("signup_cta_click");
-                    router.push(isLoggedIn ? CHECK_RUN_PATH : CHECK_SIGNUP_HREF);
+                    router.push(CHECK_RUN_PATH);
                   }}
                   disabled={loadingAuth}
                   className="h-14 w-full rounded-[20px] text-[16px] shadow-[0_16px_28px_-16px_rgba(42,99,80,0.52)]"
                 >
-                  {loadingAuth ? "確認中…" : !isLoggedIn ? "ログインして体質チェックへ" : currentResult ? "もう一度体質チェックする" : "無料で体質チェックを始める"}
+                  {loadingAuth ? "確認中…" : currentResult ? "もう一度体質チェックする" : "無料で体質チェックを始める"}
                 </Button>
-                {!loadingAuth && !isLoggedIn ? <p className="mt-3 text-center text-[13px] font-medium leading-6 text-slate-500">ログイン後、そのままチェックへ進みます。</p> : null}
+                {!loadingAuth && !isLoggedIn ? <p className="mt-3 text-center text-[13px] font-medium leading-6 text-slate-500">ログインなしで、予報とケアまで試せます。</p> : null}
               </div>
             </div>
           </section>

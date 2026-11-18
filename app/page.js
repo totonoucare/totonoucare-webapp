@@ -3,7 +3,7 @@ import HomeClient from "./HomeClient";
 
 const pageTitle = "未病レーダー｜体質と天気で今日・明日の整え方を選ぶ";
 const pageDescription =
-  "未病レーダーは、体質チェックと天気変化から今日・明日の体調の崩れやすさを見て、暮らす・食べる・ほぐすのセルフケアを提案するWebアプリです。";
+  "未病レーダーは、体質チェックと天気変化から今日・明日の体調の崩れやすさを見て、食べる・ほぐすのセルフケアを提案するWebアプリです。";
 
 export const metadata = {
   title: pageTitle,

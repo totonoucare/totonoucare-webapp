@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getTemporaryResult, clearTemporaryResult } from "@/lib/guestExperienceClient";
 import { supabase } from "@/lib/supabaseClient";
 import {
   clearPendingDiagnosisAttach,
@@ -82,7 +83,7 @@ export default function SignupClient() {
   const [fallbackPending, setFallbackPending] = useState(null);
 
   const params = useMemo(() => {
-    const urlResultId = sp?.get("result") || "";
+    const urlResultId = sp?.get("result") || getTemporaryResult() || "";
     const urlNextRaw = sp?.get("next") || "";
 
     // Bare /signup is an everyday login, even if a previous check was abandoned.
@@ -392,6 +393,7 @@ export default function SignupClient() {
       if (!res.ok) throw new Error(j?.error || "保存に失敗しました");
 
       trackFunnel("result_save_success");
+      clearTemporaryResult();
       clearPendingDiagnosisAttach();
       clearCheckDraft();
       setStatus({ state: "idle", message: "" });
@@ -554,7 +556,7 @@ export default function SignupClient() {
               初めての方も、同じ操作で利用できます。
             </p>
             {params.resultId ? <p className="text-[12px] font-medium leading-6 text-slate-500">
-              14日間は全機能を無料で利用できます。体験終了後も自動で料金は発生しません。
+              予報・ケア・基本の記録・通知は無料で使えます。記録のAI分析は月額580円です。
             </p> : null}
 
             {emailFormOpen || sentEmail ? (
@@ -565,7 +567,7 @@ export default function SignupClient() {
                       メールアドレス
                     </label>
                     <input
-                      className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[15px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)] placeholder:font-medium placeholder:text-slate-500"
+                      className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[16px] font-bold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 transition-all focus:bg-white focus:ring-2 focus:ring-[var(--accent)] placeholder:font-medium placeholder:text-slate-500"
                       id="signup-email"
                       type="email"
                       value={email}

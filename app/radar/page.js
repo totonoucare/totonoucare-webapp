@@ -13,10 +13,15 @@ import CareExplanationDetails from "@/components/mimoru/CareExplanationDetails";
 import { buildCareExplanationTargets, foodExplanationTarget } from "@/lib/radar_v1/careExplanationTargets";
 import DrinkCareCard from "./DrinkCareCard";
 import WeatherInfluences from "@/components/forecast/WeatherInfluences";
+import ForecastHeaderControls from "@/components/forecast/ForecastHeaderControls";
+import useForecastCareNavigation from "@/components/forecast/useForecastCareNavigation";
 import { getCareMovementImage } from "@/lib/radar_v1/careMovementImages";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ForecastSavePrompt from "@/components/auth/ForecastSavePrompt";
+import { getTemporaryResult, setTemporaryResult, clearTemporaryResult, temporaryHeaders, temporarySignupHref } from "@/lib/guestExperienceClient";
+import { trackV126 } from "@/lib/experienceFunnelV126";
 import { supabase } from "@/lib/supabaseClient";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import { CoreIllust } from "@/components/illust/core";
@@ -41,7 +46,6 @@ import { ForecastGauge } from "./ForecastGauge";
 import { buildCareActionKey, buildDisplayedCareItems } from "@/lib/radar_v1/careActionItems";
 import SubscriptionPaywall from "@/components/billing/SubscriptionPaywall";
 import {
-  ForecastDateRail,
   LocationEditor,
   PointDetailSheet,
   SegmentedTabs,
@@ -120,18 +124,14 @@ const CARE_DOMAIN_TONES = {
  * ---------------------------- */
 
 
-function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorded = false, isToday = false }) {
+function ForecastRecordLink({ onOpenRecords, recorded = false, isToday = false }) {
   return (
-    <div className="flex items-stretch gap-2">
-      <div className="min-w-0 flex-1">
-        <ForecastDateRail tabs={tabs} activeDate={activeDate} onSelect={onSelect} />
-      </div>
       <button
         type="button"
         onClick={onOpenRecords}
-        className="my-1 flex w-[82px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-white px-2 py-2 text-center text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[#F4FAF7]"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-[18px] bg-white px-3 py-2 text-[12px] font-black text-[#2F816E] ring-1 ring-[#CFE7DE] shadow-sm hover:bg-[#F4FAF7]"
       >
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-[#EAF7F1] font-black leading-none ring-1 ring-[#CFE7DE]">
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EAF7F1] font-black leading-none">
           {recorded ? (
             <span className="text-[18px] leading-none">✓</span>
           ) : (
@@ -141,11 +141,10 @@ function ForecastRecordRail({ tabs, activeDate, onSelect, onOpenRecords, recorde
             </svg>
           )}
         </span>
-        <span className="mt-1 text-[12px] font-black leading-4">
+        <span>
           {isToday ? (recorded ? "記録済み ✓" : "今日を記録") : "記録・分析"}
         </span>
       </button>
-    </div>
   );
 }
 
@@ -318,6 +317,7 @@ export default function RadarPage() {
       : "";
 
   const [session, setSession] = useState(null);
+  const [guestId, setGuestId] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [featureAccess, setFeatureAccess] = useState(null);
   const [loadingAccess, setLoadingAccess] = useState(true);
@@ -388,6 +388,10 @@ export default function RadarPage() {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(data.session || null);
+      if (!data.session) {
+        const candidate = new URLSearchParams(window.location.search).get("result") || getTemporaryResult();
+        if (candidate && /^[0-9a-f-]{36}$/i.test(candidate)) { setTemporaryResult(candidate); setGuestId(candidate); }
+      }
       setLoadingAuth(false);
     })();
 
@@ -400,7 +404,7 @@ export default function RadarPage() {
     let cancelled = false;
     if (loadingAuth) return undefined;
     if (!session) {
-      setFeatureAccess(null);
+      setFeatureAccess(guestId ? { personalized_forecast_enabled: true, care_enabled: true, records_write_enabled: false } : null);
       setLoadingAccess(false);
       return undefined;
     }
@@ -420,7 +424,7 @@ export default function RadarPage() {
     return () => {
       cancelled = true;
     };
-  }, [session?.access_token, loadingAuth]);
+  }, [session?.access_token, guestId, loadingAuth]);
 
   useEffect(() => {
     return () => {
@@ -431,13 +435,17 @@ export default function RadarPage() {
   async function authedFetch(path, opts = {}) {
     const { data } = await supabase.auth.getSession();
     const token = data?.session?.access_token;
-    if (!token) throw new Error("No token");
-
+    if (!token && !guestId) throw new Error("体質チェックからお試しください。");
+    if (!token) {
+      if (path.startsWith("/api/radar/review")) return { data: { review: null } };
+      if (path.startsWith("/api/radar/care-actions") && !opts.method) return { data: { actions: [], completed_care: [], schema_ready: true } };
+      if (path.startsWith("/api/radar/location")) path = path.replace("/api/radar/location", "/api/guest/location");
+    }
     const res = await fetch(path, {
       ...opts,
       headers: {
         ...(opts.headers || {}),
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : temporaryHeaders()),
         ...(opts.body ? { "Content-Type": "application/json" } : {}),
       },
       cache: "no-store",
@@ -528,9 +536,9 @@ export default function RadarPage() {
     qs.set("date", targetDate);
     if (forceSnapshot) qs.set("force", "1");
 
-    const res = await fetch(`/api/radar/v1/forecast?${qs.toString()}`, {
+    const res = await fetch(`${token ? "/api/radar/v1/forecast" : "/api/guest/forecast"}?${qs.toString()}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : temporaryHeaders()),
       },
       cache: "no-store",
     });
@@ -558,7 +566,7 @@ export default function RadarPage() {
     locationMethod = null,
     showRefreshNotice = true,
   } = {}) {
-    if (!session) return;
+    if (!session && !guestId) return;
 
     const { today, tomorrow } = getJstTodayTomorrow();
     const targetDate = normalizeRadarTargetDate(requestedTargetDate || selectedTargetDate || today);
@@ -587,7 +595,7 @@ export default function RadarPage() {
 
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) throw new Error("No token");
+      if (!token && !guestId) throw new Error("体質チェックからお試しください。");
 
       const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel, method: locationMethod });
       const shouldForceSnapshot = recompute || locationChanged || !!savedLocation;
@@ -651,6 +659,10 @@ export default function RadarPage() {
       }
     } catch (e) {
       if (requestSeq !== requestSeqRef.current) return;
+      if (!session && e?.payload?.code === "guest_expired") {
+        clearTemporaryResult(); setGuestId(null); setBundle(null);
+        setError("体質チェックから、もう一度お試しください。"); return;
+      }
       if (e?.payload?.error?.includes("No radar location found")) {
         setNeedsLocation(true);
         setBundle(null);
@@ -669,7 +681,7 @@ export default function RadarPage() {
   }
 
   useEffect(() => {
-    if (!session || loadingAuth || loadingAccess) return;
+    if ((!session && !guestId) || loadingAuth || loadingAccess) return;
     if (featureAccess?.personalized_forecast_enabled === false) {
       setLoading(false);
       setBundle(null);
@@ -680,7 +692,7 @@ export default function RadarPage() {
     const firstTargetDate = normalizeRadarTargetDate(initialDateParam || today);
     fetchForecast({ targetDate: firstTargetDate });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, loadingAuth, loadingAccess, featureAccess?.personalized_forecast_enabled, initialDateParam]);
+  }, [session, guestId, loadingAuth, loadingAccess, featureAccess?.personalized_forecast_enabled, initialDateParam]);
 
 
   async function useCurrentLocation() {
@@ -764,6 +776,7 @@ export default function RadarPage() {
   }
 
   async function openCurrentResultDetail() {
+    if (!session && guestId) { router.push(`/result/${encodeURIComponent(guestId)}?from=radar`); return; }
     try {
       setOpeningProfileDetail(true);
       setError("");
@@ -812,6 +825,8 @@ export default function RadarPage() {
   const bundleTargetDate = bundle?.target_date || "";
   const bundleMatchesActiveTarget = !!bundle && (!bundleTargetDate || bundleTargetDate === activeTargetDate);
   const forecast = bundleMatchesActiveTarget ? bundle?.forecast || null : null;
+  useEffect(() => { if (forecast && !loading && !contentLoading && !needsLocation) trackV126("forecast_display", { mode: inferModeFromSelectedDate(activeTargetDate) || "today" }); }, [forecast, loading, contentLoading, needsLocation, activeTargetDate]);
+  useEffect(() => { if (guestId && needsLocation && !loading) trackV126("location_setup_view"); }, [guestId, needsLocation, loading]);
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
   useEffect(() => {
@@ -1194,9 +1209,14 @@ export default function RadarPage() {
   const forecastQuestionContext = { label: activeTargetDate + "の予報", request: { kind: "forecast", forecast_id: forecast?.id,
     target_date: activeTargetDate, mode: careSourceMode, symptom_focus: symptomFocus,
     ...(forecast?.updated_at || forecast?.created_at ? { forecast_revision: forecast.updated_at || forecast.created_at } : {}) } };
-  useEffect(() => { setCareTab(""); }, [activeTargetDate, symptomFocus]);
+  useEffect(() => { setCareTab(""); }, [symptomFocus]);
+  const careNavigation = useForecastCareNavigation({
+    activeDate: activeTargetDate,
+    ready: Boolean(forecast && !loading && !contentLoading && !needsLocation),
+  });
 
   async function toggleCareAction(item) {
+    if (!session && guestId) { router.push(temporarySignupHref(`/radar?date=${encodeURIComponent(activeTargetDate)}`)); return; }
     const actionKey = item?.canonical_key || item?.item_key;
     if (!actionKey || careActionSavingKey) return;
     const checked = currentCareActionKeys.has(actionKey);
@@ -1304,7 +1324,7 @@ export default function RadarPage() {
 
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) throw new Error("ログインが必要です。");
+      if (!token) { router.push(temporarySignupHref("/radar")); return; }
 
       const res = await fetch("/api/profile/active-symptom-focus", {
         method: "PATCH",
@@ -1337,6 +1357,8 @@ export default function RadarPage() {
 
   function selectTargetDate(nextDate) {
     const normalizedDate = normalizeRadarTargetDate(nextDate);
+    if (normalizedDate === activeTargetDate) return;
+    careNavigation.rememberDateChange(normalizedDate);
     const nextMode = inferModeFromSelectedDate(normalizedDate) || "tomorrow";
     setSelectedTargetDate(normalizedDate);
     setDateMode(nextMode);
@@ -1345,22 +1367,26 @@ export default function RadarPage() {
     fetchForecast({ targetDate: normalizedDate });
   }
 
-  if (!loadingAuth && !session) {
+  const headerControls = <ForecastHeaderControls tabs={dateTabs} activeDate={activeTargetDate}
+    dateLabel={targetDateLabel} onSelect={selectTargetDate} onCare={careNavigation.jumpToCare}
+    careAvailable={Boolean(forecast && !loading && !contentLoading && !needsLocation)} />;
+
+  if (!loadingAuth && !session && !guestId) {
     return (
-      <AppShell title="体調予報" subtitle="ログインが必要です">
+      <AppShell title="体調予報" subtitle="体質チェックから始める">
         <Module className="overflow-hidden p-0 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
           <div className="relative px-6 py-7 bg-[linear-gradient(135deg,#F5FBF7_0%,#FFF8E8_100%)]">
             <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/70 blur-2xl" />
             <div className="relative z-10 inline-flex rounded-full bg-white/85 px-3 py-1 text-[12px] font-black tracking-wide text-[#24564C] ring-1 ring-[#CFE0D3] shadow-sm">
-              ログイン後に使えます
+              ログインなしで試せます
             </div>
             <div className="relative z-10 mt-4 text-[22px] font-black tracking-tight text-slate-900 leading-snug">
               あなたの体質に合わせた
               <br />
-              明日の体調予報を表示します。
+              今日・明日の体調予報を表示します。
             </div>
             <div className="relative z-10 mt-3 text-[14px] font-bold leading-6 text-slate-600">
-              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、明日の体調予報と先回りケアを出します。
+              体調予報ページでは、体質チェックの結果と地域の気圧・気温・湿度を組み合わせて、今日・明日の体調予報と先回りケアを出します。
             </div>
           </div>
 
@@ -1370,16 +1396,16 @@ export default function RadarPage() {
                 ・体質チェック結果をもとにパーソナル予報を作成
               </div>
               <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
-                ・地域設定後、明日の天気負担を確認
+                ・地域設定後、今日・明日の気になる影響を確認
               </div>
             </div>
 
             <div className="mt-6 space-y-3">
-              <Button onClick={() => router.push("/signup?next=%2Fradar")} className="w-full shadow-md">
-                無料で登録・ログイン
+              <Button onClick={() => router.push("/check/run")} className="w-full shadow-md">
+                無料で体質チェックを始める
               </Button>
-              <Button variant="secondary" onClick={() => router.push("/check")} className="w-full bg-white">
-                体質チェックへ
+              <Button variant="secondary" onClick={() => router.push("/signup?next=%2Fradar")} className="w-full bg-white">
+                保存済みの体質でログイン
               </Button>
               <Button variant="ghost" onClick={() => router.push("/")} className="w-full">
                 ホームへ戻る
@@ -1393,10 +1419,10 @@ export default function RadarPage() {
 
   if (!loadingAuth && !loadingAccess && session && featureAccess?.personalized_forecast_enabled === false) {
     return (
-      <AppShell title="体調予報" subtitle="14日間の体験は終了しました">
+      <AppShell title="体調予報" subtitle="利用状況を確認してください">
         <Module className="rounded-[28px] bg-white p-5 ring-1 ring-[#D3E1D5]">
           <div className="text-[12px] font-black tracking-[0.14em] text-[#2F816E]/70">あなた向けの体調予報</div>
-          <div className="mt-2 text-[20px] font-black leading-8 text-slate-900">体質を重ねた今日・明日の予報はプレミアムで続けられます</div>
+          <div className="mt-2 text-[20px] font-black leading-8 text-slate-900">体調予報は無料で使えます</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">無料では、ホームの参考予報、体質トリセツ、ケアショップ、これまでの記録とAI回答を引き続き利用できます。</div>
           <Button variant="secondary" onClick={() => router.push("/")} className="mt-4 w-full bg-white">参考予報をホームで見る</Button>
         </Module>
@@ -1409,7 +1435,7 @@ export default function RadarPage() {
 
   if (loadingAuth || loadingAccess || loading) {
     return (
-      <AppShell title="体調予報" subtitle="読み込み中…" headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
+      <AppShell title="体調予報" headerControls={headerControls} headerRight={<div className="h-8 w-24 bg-slate-100 rounded-full animate-pulse" />}>
         <div className="space-y-6 pt-4">
           {showSlowLoadingMessage ? (
             <div className="rounded-[32px] border border-[var(--ring)] bg-[color-mix(in_srgb,var(--mint),white_74%)] px-6 py-7 shadow-sm">
@@ -1443,7 +1469,7 @@ export default function RadarPage() {
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900">位置情報の設定が必要です</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
-            予報を固定保存するために、最初に現在地か生活圏の代表地点を設定してください。
+            お住まいの地域を選ぶと、今日・明日の予報とケアが見られます。
           </div>
         </Module>
 
@@ -1474,13 +1500,15 @@ export default function RadarPage() {
     return (
       <AppShell
         title="体調予報"
-        subtitle={targetDateLabel}
+        headerControls={headerControls}
         headerRight={
           <button
             onClick={() => setShowLocationEditor(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
+            title={locationDisplayLabel}
+            aria-label={`地域を変更：${locationDisplayLabel}`}
+            className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
           >
-            <IconLocation className="h-4 w-4" /> {locationDisplayLabel}
+            <IconLocation className="h-4 w-4 shrink-0" /><span className="truncate">{locationDisplayLabel}</span>
           </button>
         }
       >
@@ -1501,13 +1529,10 @@ export default function RadarPage() {
           />
         ) : null}
 
-        <ForecastRecordRail
-          tabs={dateTabs}
-          activeDate={activeTargetDate}
-          onSelect={selectTargetDate}
+        <ForecastRecordLink
           recorded={Boolean(activeDateReview)}
           isToday={selectedIsToday}
-          onOpenRecords={() => router.push(`/records?tab=${selectedIsToday ? "record" : "analysis"}`)}
+          onOpenRecords={() => router.push(session ? `/records?tab=${selectedIsToday ? "record" : "analysis"}` : temporarySignupHref(`/records?tab=${selectedIsToday ? "record" : "analysis"}`))}
         />
 
         <RadarContentLoadingCards
@@ -1521,7 +1546,7 @@ export default function RadarPage() {
 
   if (!bundle || !forecast) {
     return (
-      <AppShell title="体調予報" subtitle="予報を読み込めませんでした">
+      <AppShell title="体調予報" headerControls={headerControls}>
         <Module className="p-6">
           <div className="text-[18px] font-black tracking-tight text-slate-900">予報を読み込めませんでした</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
@@ -1541,17 +1566,21 @@ export default function RadarPage() {
   return (
     <AppShell
       title="体調予報"
-      subtitle={targetDateLabel}
+      headerControls={headerControls}
       headerRight={
         <button
           onClick={() => setShowLocationEditor(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
+          title={locationDisplayLabel}
+          aria-label={`地域を変更：${locationDisplayLabel}`}
+          className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
         >
-          <IconLocation className="h-4 w-4" /> {locationDisplayLabel}
+          <IconLocation className="h-4 w-4 shrink-0" /><span className="truncate">{locationDisplayLabel}</span>
         </button>
       }
     >
       <TrialWelcomeTrigger />
+      {!session && guestId ? <ForecastSavePrompt resultId={guestId} targetDate={activeTargetDate}
+        ready={Boolean(forecast && !loading && !contentLoading && !needsLocation && !showLocationEditor)} /> : null}
       {locationNotice ? (
         <div className="rounded-[16px] bg-emerald-50 px-4 py-3 text-[12px] font-extrabold text-emerald-800 ring-1 ring-inset ring-emerald-200 shadow-sm">
           {locationNotice}
@@ -1575,13 +1604,10 @@ export default function RadarPage() {
         />
       ) : null}
 
-      <ForecastRecordRail
-        tabs={dateTabs}
-        activeDate={activeTargetDate}
-        onSelect={selectTargetDate}
+      <ForecastRecordLink
         recorded={Boolean(activeDateReview)}
         isToday={selectedIsToday}
-        onOpenRecords={() => router.push(`/records?tab=${selectedIsToday ? "record" : "analysis"}`)}
+        onOpenRecords={() => router.push(session ? `/records?tab=${selectedIsToday ? "record" : "analysis"}` : temporarySignupHref(`/records?tab=${selectedIsToday ? "record" : "analysis"}`))}
       />
 
       <div className="rounded-[20px] bg-white px-4 py-3.5 shadow-sm ring-1 ring-[#D3E1D5]">
@@ -1668,7 +1694,7 @@ export default function RadarPage() {
               {error}
             </div>
           ) : null}
-          <Module className="relative overflow-hidden p-3.5 sm:p-5">
+          <Module data-forecast-overview className="relative overflow-hidden p-3.5 sm:p-5">
             <div
               className={[
                 "relative overflow-hidden rounded-[30px] px-3.5 py-4 shadow-[0_18px_50px_-22px_rgba(15,23,42,0.28)] sm:px-5 sm:py-5",
@@ -1807,8 +1833,10 @@ export default function RadarPage() {
               </div>
             </div>
           </Module>
-          <div id="daily-care-section" className="h-px scroll-mt-24" />
           <Module
+            id="daily-care-section"
+            tabIndex={-1}
+            aria-label={selectedIsToday ? "今日のケア" : "明日のケア"}
             className={[
               "p-5 bg-white ring-1 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.24)]",
               careTone.ring,

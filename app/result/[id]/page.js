@@ -1,6 +1,7 @@
 "use client";
 // app/result/[id]/page.js
 import InsightPanel, { useMimoruInsight } from "@/components/mimoru/InsightPanel";
+import { useMimoruLauncherClearance } from "@/components/mimoru/MimoruProvider";
 import { trackFunnel } from "@/lib/funnelClient";
 import { trackJourney } from "@/lib/journeyClient";
 import {ResultFeedback} from '@/components/experience/ExperienceProvider';
@@ -10,6 +11,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/Button";
 import AppShell, { Module, ModuleHeader } from "@/components/layout/AppShell";
+import { setTemporaryResult } from "@/lib/guestExperienceClient";
 import { supabase } from "@/lib/supabaseClient";
 import {
   SYMPTOM_LABELS,
@@ -146,8 +148,8 @@ function SegmentedTabs({ value, onChange }) {
   ];
 
   return (
-    <div className="sticky top-[60px] z-30 bg-[#fdfefc]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#fdfefc]/60 py-3 transition-all">
-      <div className="mx-auto w-full max-w-[440px] px-4">
+    <div style={{ top: "var(--app-header-height, 60px)" }} className="sticky z-30 bg-[#fdfefc]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-[#fdfefc]/60 py-3 transition-all">
+      <div className="mx-auto w-full max-w-[440px]">
         <div className="flex rounded-full bg-slate-200/50 p-1 ring-1 ring-inset ring-slate-200/50">
           {tabs.map((t) => {
             const active = value === t.key;
@@ -179,7 +181,7 @@ function SavePromptCard({ isLoggedIn, isAttached, isCurrent, needsConfirmation, 
     ? attaching ? "更新中…" : "予報とケアを見る"
     : isLoggedIn
       ? attaching ? "保存中…" : "予報とケアを見る"
-      : "無料登録して予報へ";
+      : "予報とケアを見る";
   return (
     <div className="rounded-[24px] bg-[color-mix(in_srgb,var(--mint),white_50%)] p-5 ring-1 ring-[color-mix(in_srgb,var(--accent),white_74%)]">
       <h3 className="text-[17px] font-black leading-7 tracking-tight text-slate-900">この体質で、毎日の備えを</h3>
@@ -196,7 +198,7 @@ function SavePromptCard({ isLoggedIn, isAttached, isCurrent, needsConfirmation, 
       </div>
       {!isLoggedIn && !isAttached ? (
         <div className="mt-4 flex flex-wrap gap-1.5">
-          {["無料登録", "支払い情報不要", "自動課金なし"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
+          {["基本無料", "ログインなしで体験"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
         </div>
       ) : null}
       {needsConfirmation ? <p className="mt-3 text-[12px] font-bold leading-6 text-[#87662F]">{isAttached ? "この結果は履歴に保存済みです。" : "この結果をアカウントに保存できます。"}予報・ケアに反映するかは、次の画面で選べます。</p> : isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">{isCurrent ? "このトリセツを予報・ケアに反映中です。" : "この体質結果は保存済みです。"}</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
@@ -209,6 +211,8 @@ function SavePromptCard({ isLoggedIn, isAttached, isCurrent, needsConfirmation, 
 function SaveStickyBar({ id, isLoggedIn, isAttached, attaching, onSave, onSignup, onClose }) {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(() => resultCtaDismissed(id));
+  const placementRef = useRef(null);
+  useMimoruLauncherClearance(placementRef, visible && !dismissed);
   const viewTracked = useRef(false);
   useEffect(() => {
     if (dismissed || visible) return;
@@ -221,10 +225,12 @@ function SaveStickyBar({ id, isLoggedIn, isAttached, attaching, onSave, onSignup
     else if (!isAttached) trackFunnel("signup_cta_view");
   }, [visible, dismissed, isLoggedIn, isAttached]);
   if (dismissed || !visible) return null;
-  const ctaLabel = attaching ? "処理中…" : isLoggedIn || isAttached ? "予報とケアを見る" : "ログインして予報とケアへ";
+  const ctaLabel = attaching ? "処理中…" : isLoggedIn || isAttached ? "予報とケアを見る" : "予報とケアを見る";
   const onClick = isLoggedIn ? onSave : onSignup;
   return (
     <div
+      ref={placementRef}
+      data-result-forecast-cta
       className="result-save-cta-enter fixed inset-x-0 z-40 px-4 pb-2.5 pt-2"
       style={{ bottom: "var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px)))" }}
     >
@@ -551,6 +557,9 @@ function ResultPage({ params }) {
   const meridianSecondary = useMemo(() => getMeridianLine(computed?.secondary_meridian), [computed?.secondary_meridian]);
 
   const isLoggedIn = !!session;
+  useEffect(() => {
+    if (!loadingAuth && !session && event?.id && !event?.is_attached && !event?.notFound) setTemporaryResult(event.id);
+  }, [loadingAuth, session, event?.id, event?.is_attached, event?.notFound]);
   const isAttached = !!event?.is_attached;
   const needsConfirmation = isLoggedIn && !!event?.has_current_profile && !event?.is_current;
   const showIntroCta = shouldShowResultIntroCta({ isLoggedIn, event, from });
@@ -573,7 +582,7 @@ function ResultPage({ params }) {
 
   const resultInsight = useMimoruInsight({ kind: "result", result_id: id, symptom_focus: symptomKey,
     revision: JSON.stringify([computed?.core_code, computed?.axes, computed?.sub_labels]) },
-    Boolean(isLoggedIn && event?.id && !loadingEvent && !event?.retake_required));
+    Boolean(event?.id && !loadingEvent && !event?.retake_required));
   const insightQuestionContext = { label: symptomLabel + "と体質の見立て", request: { kind: "result", result_id: id, symptom_focus: symptomKey } };
 
   async function attachToAccount(confirmUpdate = false) {
@@ -636,7 +645,12 @@ function ResultPage({ params }) {
 
   function continueToForecast(ctaLocation = "") {
     if (attachingRef.current) return;
-    if (!isLoggedIn) { goSignupToRadar(ctaLocation); return; }
+    if (!isLoggedIn) {
+      setTemporaryResult(id);
+      trackJourney("forecast_cta_click", { position: ctaLocation || "unknown", tab, state: "unsaved" });
+      router.push(`/radar?result=${encodeURIComponent(id)}`);
+      return;
+    }
     if (ctaLocation) trackJourney("forecast_cta_click", { position: ctaLocation, tab, state: event?.is_current ? "current" : isAttached ? "history" : "unsaved" });
     if (needsConfirmation) {
       setUpdateError("");
@@ -784,7 +798,7 @@ function ResultPage({ params }) {
         isAttached={isAttached}
         attaching={attaching}
         onSave={() => continueToForecast("floating_save")}
-        onSignup={() => goSignupToRadar("floating_save")}
+        onSignup={() => continueToForecast("floating_save")}
         onClose={() => { if (!isLoggedIn) trackFunnel("floating_save_close", tab); else trackJourney("forecast_cta_close", { position: "floating_save", tab }); }}
       /> : null}
 
@@ -798,7 +812,7 @@ function ResultPage({ params }) {
         onClose={() => { if (!attachingRef.current) setUpdateDialogOpen(false); }}
       /> : null}
 
-      <div className="mx-auto w-full max-w-[440px] px-4">
+      <div className="mx-auto w-full max-w-[440px]">
         <div className="pt-4 pb-3">
           {/* ★ ヒーローカード：結果を受け取った感が出るよう、白ベース＋薄い軌道円で主役感を強化 */}
           <div className="relative overflow-hidden rounded-[36px] bg-white ring-1 ring-[color-mix(in_srgb,var(--accent),white_76%)] shadow-[0_24px_52px_-22px_rgba(36,86,76,0.20)]">
@@ -884,15 +898,15 @@ function ResultPage({ params }) {
       </div>
 
       <div ref={tabStartRef} aria-hidden="true" />
-      {needsConfirmation ? <section data-result-adoption-notice className="mx-auto mb-4 w-[calc(100%-2rem)] max-w-[408px] rounded-[22px] border border-[#E9DEC5] bg-[#FFFBF2] px-4 pb-3 pt-4 shadow-[0_10px_26px_-24px_rgba(102,80,40,0.28)]">
+      {needsConfirmation ? <section data-result-adoption-notice className="mx-auto mb-4 w-full max-w-[408px] rounded-[22px] border border-[#E9DEC5] bg-[#FFFBF2] px-4 pb-3 pt-4 shadow-[0_10px_26px_-24px_rgba(102,80,40,0.28)]">
         <p className="text-[13px] font-bold leading-6 text-[#806539]">{isAttached ? "この結果は履歴に保存済みです。" : "この結果をアカウントに保存できます。"}</p>
         <p className="mt-1 text-[13px] font-medium leading-6 text-[#806539]">予報・ケアに反映するかを選べます。</p>
         <Button disabled={attaching} onClick={requestResultAdoption} className="mt-3 w-full !rounded-[15px] !text-[14px]">この結果を反映する</Button>
         <button type="button" disabled={attaching} onClick={() => { trackJourney("forecast_cta_click", { position: "reflected_profile_link", tab, state: "history" }); router.push("/radar"); }} className="mx-auto mt-1 block min-h-[44px] px-2 text-[12px] font-bold text-[#6D7368] underline underline-offset-4 disabled:opacity-50">反映中のトリセツで予報へ</button>
-      </section> : event?.is_current ? <p role="status" className="mx-auto mb-3 w-[calc(100%-2rem)] max-w-[408px] rounded-[18px] bg-[#EEF7F1] px-4 py-3 text-[13px] font-bold leading-6 text-[#426758]">{appliedHere ? "この結果を予報・ケアに反映しました。" : "このトリセツを予報・ケアに反映中です。"}</p> : null}
+      </section> : event?.is_current ? <p role="status" className="mx-auto mb-3 w-full max-w-[408px] rounded-[18px] bg-[#EEF7F1] px-4 py-3 text-[13px] font-bold leading-6 text-[#426758]">{appliedHere ? "この結果を予報・ケアに反映しました。" : "このトリセツを予報・ケアに反映中です。"}</p> : null}
       <SegmentedTabs value={tab} onChange={changeTab} />
 
-      <div className="mx-auto w-full max-w-[440px] px-4">
+      <div className="mx-auto w-full max-w-[440px]">
         <div className="mt-3 space-y-6 pb-32">
           {tab === "overview" ? (
             <>
@@ -1174,7 +1188,7 @@ function ResultPage({ params }) {
                     session={session}
                     attaching={attaching}
                     onSave={() => continueToForecast("care_footer")}
-                    onSignup={() => goSignupToRadar("care_footer")}
+                    onSignup={() => continueToForecast("care_footer")}
                     onLogin={() => goLoginToRadar("care_footer")}
                     onRadar={() => continueToForecast("care_footer")}
                   />

@@ -46,7 +46,7 @@ function IconLockSmall() {
 
 function RecordsTabs({ value, onChange, access }) {
   return (
-    <div className="sticky top-[66px] z-30 -mx-1 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
+    <div style={{ top: "var(--app-header-height, 66px)" }} className="sticky z-30 -mx-1 bg-app/90 px-1 py-2 backdrop-blur supports-[backdrop-filter]:bg-app/80">
       <div className="grid grid-cols-2 gap-1 rounded-[22px] bg-[#EDF2EF] p-1 ring-1 ring-inset ring-[#DDE7E1] shadow-inner">
         {TAB_OPTIONS.map((item) => {
           const active = value === item.key;
@@ -481,7 +481,7 @@ export default function RecordsPageClient({
         <Module className="p-6 text-center">
           <div className="text-[18px] font-black text-slate-900">記録にはログインが必要です</div>
           <div className="mt-2 text-[14px] font-bold leading-6 text-slate-500">
-            予報と実際の体調を保存し、日々のケアを振り返ります。ミモルへの相談は右下から開けます。
+            予報と実際の体調を保存し、日々のケアを振り返ります。ログインすると、ミモルへの質問も利用できます。
           </div>
           <Button onClick={() => router.push("/signup?next=%2Frecords")} className="mt-5 w-full">
             ログイン・無料登録へ
@@ -529,8 +529,8 @@ export default function RecordsPageClient({
         <div className="space-y-5">
           {!accessLoading && featureAccess && !featureAccess.records_write_enabled ? (
             <div className="rounded-[22px] bg-[#FFF8EC] px-4 py-3 ring-1 ring-[#EED8B4]">
-              <div className="text-[13px] font-black text-[#A56C18]">14日間の体験は終了しました</div>
-              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">これまでの記録は見返せます。新しい記録はプレミアムで続けられます。</div>
+              <div className="text-[13px] font-black text-[#A56C18]">記録のAI分析は月額580円です</div>
+              <div className="mt-1 text-[12px] font-bold leading-5 text-slate-500">記録機能を読み込めませんでした。ページを読み直してお試しください。</div>
             </div>
           ) : null}
           <DailyRecordCard

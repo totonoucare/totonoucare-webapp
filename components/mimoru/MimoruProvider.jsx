@@ -1,32 +1,80 @@
 "use client";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { useLiveSupport, LiveSupportView } from "@/components/records/LiveSupportPanel";
+import { getTemporaryResult, temporaryHeaders, temporarySignupHref } from "@/lib/guestExperienceClient";
 import { trackJourney } from "@/lib/journeyClient";
 
 const Context = createContext(null);
 export const useMimoru = () => useContext(Context);
 
+// Reserve the actual bottom edge covered by a fixed action, including the
+// measured navigation below it. Unmounting/dismissing the action releases it.
+export function useMimoruLauncherClearance(ref, active) {
+  const id = useId();
+  const setClearance = useMimoru()?.setLauncherClearance;
+  useEffect(() => {
+    const node = ref.current;
+    if (!active || !node || !setClearance) return;
+    const measure = () => {
+      const box = node.getBoundingClientRect();
+      const bottom = Number.parseFloat(getComputedStyle(node).bottom);
+      // The intro animates with translateY; its final edge must be reserved
+      // from the first frame, rather than measuring the translated position.
+      setClearance(id, Math.ceil(Number.isFinite(bottom) ? bottom + box.height : window.innerHeight - box.top));
+    };
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(node);
+    const navigation = node.closest("[data-app-shell]")?.querySelector('[aria-label="アプリのメニュー"]');
+    if (navigation) observer?.observe(navigation);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", measure);
+      setClearance(id, 0);
+    };
+  }, [active, id, ref, setClearance]);
+}
+
 export default function MimoruProvider({ children }) {
   const [userId, setUserId] = useState(null);
+  const [guestId, setGuestId] = useState(null);
+  useEffect(() => {
+    const update = () => setGuestId(getTemporaryResult());
+    update(); window.addEventListener("mibyo:temporary-result", update);
+    return () => window.removeEventListener("mibyo:temporary-result", update);
+  }, []);
   useEffect(() => {
     let alive = true;
     supabase?.auth.getSession().then(({ data }) => { if (alive) setUserId(data?.session?.user?.id || null); });
     const { data } = supabase?.auth.onAuthStateChange((_event, session) => { if (alive) setUserId(session?.user?.id || null); }) || {};
     return () => { alive = false; data?.subscription?.unsubscribe(); };
   }, []);
-  return <MimoruSession key={userId || "signed-out"} userId={userId}>{children}</MimoruSession>;
+  return <MimoruSession key={userId || "signed-out"} userId={userId} guestId={userId ? null : guestId}>{children}</MimoruSession>;
 }
 
-function MimoruSession({ userId, children }) {
+function MimoruSession({ userId, guestId, children }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [inlineId, setInlineId] = useState(null);
   const [selected, setSelected] = useState(null);
   const [initialPrompt, setInitialPrompt] = useState("");
   const [viewport, setViewport] = useState(null);
+  const [launcherClearances, setLauncherClearances] = useState({});
+  const setLauncherClearance = useCallback((id, height) => {
+    setLauncherClearances(current => {
+      if (height <= 0) {
+        if (!current[id]) return current;
+        const next = { ...current }; delete next[id]; return next;
+      }
+      if (current[id]?.height === height && current[id]?.pathname === pathname) return current;
+      return { ...current, [id]: { height, pathname } };
+    });
+  }, [pathname]);
+  const launcherBottom = Math.max(0, ...Object.values(launcherClearances).filter(item => item.pathname === pathname).map(item => item.height));
   const restoreAllowed = useRef(true);
   const restoreContext = useCallback(value => { if (restoreAllowed.current && value) setSelected(value); restoreAllowed.current = false; }, []);
   const panelRef = useRef(null);
@@ -38,24 +86,24 @@ function MimoruSession({ userId, children }) {
   const consumePrompt = useCallback(() => setInitialPrompt(""), []);
   const fetchData = useCallback(async (path, options = {}) => {
     const { data } = await supabase.auth.getSession();
-    if (!userId || data?.session?.user?.id !== userId) throw new DOMException("Session changed", "AbortError");
+    if (userId ? data?.session?.user?.id !== userId : !guestId || getTemporaryResult() !== guestId || data?.session?.user) throw new DOMException("Session changed", "AbortError");
     const response = await fetch(path, { ...options, cache: "no-store",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + data.session.access_token, ...(options.headers || {}) } });
+      headers: { "Content-Type": "application/json", ...(userId ? { Authorization: "Bearer " + data.session.access_token } : temporaryHeaders()), ...(options.headers || {}) } });
     const json = await response.json().catch(() => ({}));
     if (!aliveRef.current) throw new DOMException("Session changed", "AbortError");
     if (!response.ok) throw Object.assign(new Error(json.error || "通信できませんでした。"), { code: json.code, status: response.status });
     return json.data ?? json;
-  }, [userId]);
+  }, [userId, guestId]);
   const chat = useLiveSupport({ active: Boolean(userId && open), authedFetch: fetchData,
     initialPrompt, onConsumePrompt: consumePrompt, onRestoreContext: restoreContext, selectedContext: selected?.request || null });
   const openChat = useCallback((options = {}) => {
-    if (!userId) return;
+    if (!userId) { if (guestId) window.location.assign(temporarySignupHref()); return; }
     if (options.context !== undefined) { restoreAllowed.current = false; setSelected(options.context); }
     if (options.prompt) setInitialPrompt(options.prompt);
     setInlineId(options.inlineId || null);
     setOpen(true);
     trackJourney("chat_open", { position: options.inlineId ? "care_inline" : "chat_bubble" });
-  }, [userId]);
+  }, [userId, guestId]);
   const releaseInline = useCallback(id => setInlineId(current => current === id ? null : current), []);
   const closeChat = useCallback(() => {
     setOpen(false); setInlineId(null);
@@ -96,16 +144,16 @@ function MimoruSession({ userId, children }) {
     document.addEventListener("keydown", handleKey);
     return () => { cancelAnimationFrame(frame); document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", handleKey); };
   }, [floating, closeChat]);
-  const visible = userId && !/^\/(login|signup|auth|check\/run|checkout)(\/|$)/.test(pathname);
+  const visible = (userId || guestId) && !/^\/(login|signup|auth|check\/run|checkout)(\/|$)/.test(pathname);
   const panelHeight = viewport ? Math.min(700, Math.max(160, viewport.height - 28)) : 600;
-  const value = { userId, open, inlineId, selected, chat, fetchData, insightCache: insightCache.current, openChat, closeChat, viewportHeight: viewport?.height,
-    releaseInline, expandChat: () => setInlineId(null), clearContext: () => { restoreAllowed.current = false; setSelected(null); } };
+  const value = { userId: userId || guestId, guest: !userId && Boolean(guestId), open, inlineId, selected, chat, fetchData, insightCache: insightCache.current, openChat, closeChat, viewportHeight: viewport?.height,
+    releaseInline, setLauncherClearance, expandChat: () => setInlineId(null), clearContext: () => { restoreAllowed.current = false; setSelected(null); } };
   return <Context.Provider value={value}>
     {children}
     {visible && !open ? <button ref={launcherRef} type="button" onClick={() => openChat()}
       aria-label="ミモルに質問する" aria-haspopup="dialog"
       className="fixed right-4 z-[65] flex items-center gap-1 rounded-full bg-white py-1 pl-1 pr-4 text-[12px] font-black text-[#24564C] shadow-[0_8px_28px_rgba(36,86,76,0.22)] ring-1 ring-[#B6D8CF]"
-      style={{ bottom: "calc(var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px))) + 12px)" }}>
+      style={{ bottom: `max(calc(var(--app-bottom-tabs-height, calc(96px + env(safe-area-inset-bottom, 0px))) + 12px), ${launcherBottom + 12}px)` }}>
       <GuideBotAvatar mood="listening" className="h-12 w-12" /><span>ミモルに質問</span>
     </button> : null}
     {floating ? <>

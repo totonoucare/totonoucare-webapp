@@ -34,7 +34,7 @@ function SelectField({ value, onChange, options, disabled }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
+      className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[16px] font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
@@ -219,7 +219,7 @@ export default function FeedbackPage() {
               disabled={!user || submitting || loading}
               rows={7}
               placeholder="例：体調予報の食べるタブで、文が少し長く感じた / ツボ詳細の説明が分かりにくかった など"
-              className="w-full resize-none rounded-[18px] bg-slate-50 px-4 py-3.5 text-sm font-bold leading-6 text-slate-900 outline-none ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
+              className="w-full resize-none rounded-[18px] bg-slate-50 px-4 py-3.5 text-[16px] font-bold leading-6 text-slate-900 outline-none ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
             />
             <div className="mt-1.5 text-right text-[12px] font-extrabold text-slate-400">
               {message.length}/1200
@@ -252,7 +252,7 @@ export default function FeedbackPage() {
                 inputMode="email"
                 autoComplete="email"
                 placeholder="example@example.com"
-                className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
+                className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-[16px] font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
               />
             </div>
           ) : null}
