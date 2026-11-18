@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ExpertAvatar } from "@/components/records/ExpertConsultPreview";
+import RecordsTabs from "@/components/records/RecordsTabs";
 import AppShell from "@/components/layout/AppShell";
 import CheckoutButton from "@/components/billing/CheckoutButton";
 import { supabase } from "@/lib/supabaseClient";
@@ -29,10 +30,6 @@ export function ManagementLink({ userId }) {
     return () => { active = false; };
   }, [userId]);
   return userId && allowed === userId ? <Link className={styles.portal} href="/expert/manage">相談管理を開く <span>→</span></Link> : null;
-}
-
-export function ExpertEntry() {
-  return <Link href="/expert" className={styles.portal}><span><small>鍼灸師に聞く</small><strong>専門家に質問</strong></span><span>質問・返信を見る →</span></Link>;
 }
 
 function Conversation({ manage, initial }) {
@@ -129,7 +126,8 @@ export default function ExpertDesk({manage=false}) {
     return ()=>data.subscription.unsubscribe();
   },[]);
   const url=(manage?"/expert/manage":"/expert")+(initial?"?thread="+encodeURIComponent(initial):"");
-  return <AppShell wide={manage} title={manage?"相談管理":"専門家に質問"} subtitle="未病レーダー">
+  return <AppShell wide={manage} title={manage?"相談管理":"記録・相談"} subtitle={manage?"未病レーダー":"日々の記録と振り返り"}>
+    {!manage && <RecordsTabs value="expert" />}
     {user ? <Conversation key={user} manage={manage} initial={initial}/> : user===null ?
       <Link className={styles.portal} href={"/signup?next="+encodeURIComponent(url)}>ログインして開く →</Link> : <p>ログイン状態を確認中…</p>}
   </AppShell>;

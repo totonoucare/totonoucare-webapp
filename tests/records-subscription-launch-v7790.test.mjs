@@ -102,7 +102,7 @@ test("records UI gates the whole analysis and consult tabs while leaving expert 
   assert.match(await source("components/records/LiveSupportPanel.jsx"), /access\?\.consult_enabled/);
   assert.match(page, /<SubscriptionPaywall feature="analysis"/);
   assert.match(await source("components/records/LiveSupportPanel.jsx"), /historyOnly/);
-  assert.match(page, /<ExpertEntry/);
+  assert.match(await source("components/records/RecordsTabs.jsx"), /href: "\/expert"/);
   assert.match(paywall, /解約後も過去の記録と分析結果は見返せます/);
 });
 

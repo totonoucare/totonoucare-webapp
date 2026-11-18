@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe";
+import { createAdminClient } from "@/lib/supabaseAdmin";
 import { requireUser } from "@/lib/requireUser";
 import { getBillingStatus } from "@/lib/billingStatus";
 import { RECORDS_SUBSCRIPTION_PRODUCT } from "@/lib/records/policy";
@@ -25,6 +26,15 @@ function checkoutReturnUrls(origin, returnPath) {
   };
 }
 
+async function checkoutAllowed(userId) {
+  const admin = createAdminClient();
+  const { data, error } = await admin.from("account_deletions_v129").select("user_id").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  if (data) return false;
+  const lookup = await admin.auth.admin.getUserById(userId);
+  return !lookup.error && lookup.data?.user?.id === userId;
+}
+
 async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
   const returnPath = safeLocalPath(body?.returnPath, "/records");
   const origin = getOrigin(req);
@@ -45,6 +55,9 @@ async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
   }
   const { successUrl, cancelUrl } = checkoutReturnUrls(origin, returnPath);
 
+  if (!await checkoutAllowed(user.id)) {
+    return NextResponse.json({ error: "退会手続き中のため申込みを開始できません。" }, { status: 409 });
+  }
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     payment_method_types: ["card"],
@@ -71,6 +84,11 @@ async function createRadarSubscriptionCheckout({ req, stripe, user, body }) {
     allow_promotion_codes: true,
   });
 
+  // A deletion may start while Stripe is creating the session.
+  if (!await checkoutAllowed(user.id)) {
+    await stripe.checkout.sessions.expire(session.id);
+    return NextResponse.json({ error: "アカウントの状態が変わりました。設定をご確認ください。" }, { status: 409 });
+  }
   return NextResponse.json({ url: session.url });
 }
 

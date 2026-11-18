@@ -19,3 +19,10 @@ test("shelf reads the displayed drink rows and distinguishes food from plants an
  assert.equal(materialMatch("longan","食品用 乾燥龍眼肉"),true);
  assert.equal(materialMatch("corn","とうもろこしのひげ茶"),false);
 });
+
+test("shared shelf shows both dates and all the recipes for a shared ingredient",async()=>{
+ const {materialsForDays}=await import("../lib/care-shop/recipeShelf.js");
+ const rows=materialsForDays([{day:"today",recipes:["なつめ龍眼茶"]},{day:"tomorrow",recipes:["しょうがなつめ茶"]}]);
+ assert.deepEqual(rows.map(r=>r.id),["jujube","longan","ginger"]);
+ assert.deepEqual(rows[0].uses,[{day:"today",recipe:"なつめ龍眼茶"},{day:"tomorrow",recipe:"しょうがなつめ茶"}]);
+});

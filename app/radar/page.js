@@ -29,6 +29,7 @@ import Button from "@/components/ui/Button";
 import { WeatherIcon } from "@/components/illust/icons/weather";
 import {
   IconAttention,
+  IconCare,
   IconBolt,
   IconRadar,
   IconRipple,
@@ -142,7 +143,7 @@ function ForecastRecordLink({ onOpenRecords, recorded = false, isToday = false }
           )}
         </span>
         <span>
-          {isToday ? (recorded ? "記録済み ✓" : "今日を記録") : "記録・分析"}
+          {isToday ? (recorded ? "記録済み ✓" : "今日を記録") : "記録・相談"}
         </span>
       </button>
   );
@@ -1853,8 +1854,10 @@ export default function RadarPage() {
               >
                 {completedCareReady && careTab === "eat" ? (
                   <IconBowl className="h-8 w-8" />
-                ) : (
+                ) : completedCareReady && careTab === "loosen" ? (
                   <IconRipple className="h-8 w-8" />
+                ) : (
+                  <IconCare className="h-8 w-8" />
                 )}
               </div>
               <div className="min-w-0 flex-1">

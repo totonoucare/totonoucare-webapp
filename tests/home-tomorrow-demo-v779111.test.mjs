@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 const home = await readFile(new URL("../app/HomeClient.jsx", import.meta.url), "utf8");
 const demo = await readFile(new URL("../components/forecast/GuestForecastDemo.jsx", import.meta.url), "utf8");
 const guest = home.slice(home.indexOf("  if (!isLoggedIn) {"), home.indexOf("  if (featureAccess?.personalized_forecast_enabled === false) {"));
+const sharedDate = (await readFile(new URL("../lib/dateJST.js", import.meta.url), "utf8")).replace("export function", "function");
 const dateFunctions = home.slice(home.indexOf("function getJstDateString"), home.indexOf("function signalBadge"));
 
 test("the guest demo explicitly requests tomorrow and the signed-in fallback requests today", () => {
@@ -45,6 +46,7 @@ for (const timezone of ["Asia/Tokyo", "UTC", "America/Los_Angeles", "Pacific/Auc
     const script = `
       const assert = require("node:assert/strict");
       const NativeDate = Date;
+      ${sharedDate}
       ${dateFunctions}
       for (const [now, today, tomorrow] of [
         ["2026-10-30T02:00:00Z", "2026-10-30", "2026-10-31"],
@@ -54,6 +56,7 @@ for (const timezone of ["Asia/Tokyo", "UTC", "America/Los_Angeles", "Pacific/Auc
         ["2024-02-28T15:00:00Z", "2024-02-29", "2024-03-01"]
       ]) {
         global.Date = class extends NativeDate {
+          static now() { return NativeDate.parse(now); }
           constructor(...args) { super(...(args.length ? args : [now])); }
         };
         assert.equal(getJstDateString(0), today);

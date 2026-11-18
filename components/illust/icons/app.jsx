@@ -87,35 +87,31 @@ export function IconCheck({ className = "h-6 w-6", ...props }) {
 
 export function IconLifestyle({ className = "h-6 w-6", ...props }) {
   return (
-    <IconShell className={className} {...props}>
-      <path d="M4.5 11.2 12 5l7.5 6.2" />
-      <path d="M6.2 10.5v9h11.6v-9" fill="currentColor" fillOpacity="0.08" />
-      <path d="M9.2 19.5v-5h5.6v5" />
-      <path d="M16.7 5.8h1.9v3.8" opacity="0.75" />
-      <path d="M8.4 8.4c1.4-.8 2.6-.8 3.6 0" opacity="0.6" />
+    <IconShell className={className} strokeWidth="1.7" {...props}>
+      <path d="M7.3 3.7h8.8L19.3 13H4.2l3.1-9.3Z" fill="currentColor" fillOpacity=".14" />
+      <path d="M11.8 13v7.3M7.8 20.3h8M16.6 13v3.5" />
+      <circle cx="16.6" cy="17" r="1" fill="currentColor" stroke="none" />
     </IconShell>
   );
 }
 
 export function IconFood({ className = "h-6 w-6", ...props }) {
   return (
-    <IconShell className={className} {...props}>
-      <path d="M4.5 11.5h15v2.2a7.5 7.5 0 0 1-15 0v-2.2Z" fill="currentColor" fillOpacity="0.12" stroke="none" />
-      <path d="M4.5 11.5h15v2.2a7.5 7.5 0 0 1-15 0v-2.2Z" />
-      <path d="M8.2 5.2c.9.9.9 1.8 0 2.7M12 4.5c.9 1 .9 2 0 3M15.8 5.2c-.9.9-.9 1.8 0 2.7" opacity="0.75" />
+    <IconShell className={className} strokeWidth="1.7" {...props}>
+      <path d="m12.5 10.5 7-7.8m-3.7 7.8 6.1-4.8" />
+      <path d="M3 10.7h18c-.5 4.7-3.9 8.1-9 8.1s-8.5-3.4-9-8.1Z" fill="currentColor" fillOpacity=".15" />
+      <path d="M8.8 18.5v1.9h6.4v-1.9" />
+      <path d="M5.5 8a3 3 0 0 1 3.1-2.4 2.6 2.6 0 0 1 2.5 1.3" />
     </IconShell>
   );
 }
 
 export function IconTsubo({ className = "h-6 w-6", ...props }) {
   return (
-    <IconShell className={className} {...props}>
-      <path d="M8.8 10.8V5.9a1.35 1.35 0 0 1 2.7 0v5.2" />
-      <path d="M11.5 10.7V4.9a1.35 1.35 0 0 1 2.7 0v6" />
-      <path d="M14.2 11.1V6.4a1.35 1.35 0 0 1 2.7 0v7.2" />
-      <path d="M8.8 11.8 7.5 10.7a1.35 1.35 0 0 0-1.9 1.9l4.1 5.1a5.2 5.2 0 0 0 4.1 2h1.1a4.4 4.4 0 0 0 4.4-4.4v-4.4a1.35 1.35 0 0 0-2.7 0v2.5" />
-      <circle cx="13.2" cy="14.2" r="1.45" fill="currentColor" stroke="none" />
-      <path d="M13.2 11.5v5.4M10.5 14.2h5.4" opacity="0.45" strokeWidth="1.65" />
+    <IconShell className={className} strokeWidth="1.7" {...props}>
+      <path d="m18.7 3.2-5.5.7a4 4 0 0 0-2.6 1.4l-5 5.8a1.8 1.8 0 0 0 2.6 2.4l4.1-3.8 1.4.9a4.1 4.1 0 0 0 4.2.2l3-1.6" fill="currentColor" fillOpacity=".14" />
+      <path d="M2.7 16.2c2.1 0 2.7 1.8 5.1 1.8s3.2-1.8 5.7-1.8h7.6" />
+      <path d="M4.3 20.3a7.8 7.8 0 0 0 7 0" opacity=".7" />
     </IconShell>
   );
 }
@@ -308,7 +304,17 @@ export const IconChecklist = IconCare;
 export const IconConstitution = IconKarte;
 export const IconSpark = IconCare;
 export const IconForecast = IconRadar;
-export const IconCalendar = IconLifestyle;
+export function IconCalendar({ className = "h-6 w-6", ...props }) {
+  return (
+    <IconShell className={className} {...props}>
+      <path d="M4.5 11.2 12 5l7.5 6.2" />
+      <path d="M6.2 10.5v9h11.6v-9" fill="currentColor" fillOpacity="0.08" />
+      <path d="M9.2 19.5v-5h5.6v5" />
+      <path d="M16.7 5.8h1.9v3.8" opacity="0.75" />
+      <path d="M8.4 8.4c1.4-.8 2.6-.8 3.6 0" opacity="0.6" />
+    </IconShell>
+  );
+}
 export const IconBodyLine = IconBody;
 export const IconBowl = IconFood;
 export const IconCloud = IconWeather;

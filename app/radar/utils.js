@@ -34,11 +34,11 @@ function rewriteBodyCopyForPressure(value, triggerFactors = []) {
 
 export function formatTargetDate(dateStr) {
   if (!dateStr) return "—";
-  const d = new Date(`${dateStr}T00:00:00+09:00`);
+  const d = new Date(`${dateStr}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return dateStr;
 
-  const weekday = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-  return `${d.getMonth() + 1}/${d.getDate()}(${weekday})`;
+  const weekday = ["日", "月", "火", "水", "木", "金", "土"][d.getUTCDay()];
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}(${weekday})`;
 }
 
 export function getJstTodayTomorrow() {
@@ -58,26 +58,14 @@ export function getJstTodayTomorrow() {
   const today = `${get("year")}-${get("month")}-${get("day")}`;
   const hour = Number(get("hour"));
 
-  const d = new Date(`${today}T00:00:00+09:00`);
-  d.setDate(d.getDate() + 1);
-
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const tomorrow = `${yyyy}-${mm}-${dd}`;
-
-  return { today, tomorrow, hour };
+  return { today, tomorrow: addDaysToIsoDate(today, 1), hour };
 }
 
-
 export function addDaysToIsoDate(dateStr, days) {
-  const d = new Date(`${dateStr}T00:00:00+09:00`);
+  const d = new Date(`${dateStr}T00:00:00Z`);
   if (Number.isNaN(d.getTime())) return dateStr;
-  d.setDate(d.getDate() + days);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 export function compareIsoDate(a, b) {

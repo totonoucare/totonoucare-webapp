@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
+import DeleteAccount from "@/components/settings/DeleteAccount";
+import { jstDateString } from "@/lib/dateJST";
 import Button from "@/components/ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 import { DEFAULT_NOTIFICATION_MIN_SCORE, notificationThresholdLabel } from "@/lib/push/notificationPolicy";
@@ -18,6 +20,17 @@ import { formatTrialEnd } from "@/lib/trialWelcome";
 
 const FLAT_PRESETS = flattenRadarLocationPresets();
 const SYMPTOM_OPTIONS = Object.entries(SYMPTOM_LABELS).map(([value, label]) => ({ value, label }));
+
+function SettingsGroup({ title, summary, children, open = false }) {
+  return <details open={open} className="group rounded-[20px] border border-[#D4E1D7] bg-white open:pb-2">
+    <summary className="flex min-h-[68px] cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
+      <span className="min-w-0"><strong className="block text-[16px] text-[#244537]">{title}</strong>
+        <span className="mt-1 block break-words text-[13px] text-[#5A7064]">{summary}</span></span>
+      <span aria-hidden="true" className="text-xl text-[#5A796B] transition-transform group-open:rotate-90">›</span>
+    </summary>
+    <div className="mx-2 border-t border-[#E4ECE6] [&>section]:rounded-xl [&>section]:shadow-none [&>section]:ring-0">{children}</div>
+  </details>;
+}
 
 function Row({ label, value, action }) {
   return (
@@ -46,6 +59,7 @@ function ToggleRow({ label, description, checked, disabled, onChange }) {
           "relative h-8 w-14 shrink-0 rounded-full transition-all disabled:opacity-50",
           checked ? "bg-[var(--accent)]" : "bg-slate-200",
         ].join(" ")}
+        aria-label={label}
         aria-pressed={checked}
       >
         <span
@@ -60,19 +74,7 @@ function ToggleRow({ label, description, checked, disabled, onChange }) {
 }
 
 function getJstDateString(offsetDays = 0) {
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
-
-  const get = (type) => parts.find((p) => p.type === type)?.value;
-  const base = new Date(`${get("year")}-${get("month")}-${get("day")}T00:00:00+09:00`);
-  base.setDate(base.getDate() + offsetDays);
-
-  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
+  return jstDateString(new Date(Date.now() + offsetDays * 86400000));
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -454,13 +456,6 @@ export default function SettingsPage() {
   return (
     <AppShell title="設定" subtitle="アカウントとアプリ設定">
       <ManagementLink userId={user?.id} />
-      <Module className="p-6 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="text-[22px] font-black tracking-tight text-slate-900">設定</div>
-        <div className="mt-2 text-[14px] font-bold leading-6 text-slate-600">
-          通知、地域、使い方、報告をここから確認できます。
-        </div>
-      </Module>
-
       {error ? (
         <Module className="p-5 bg-[#FFF9ED] ring-1 ring-[#EAD8A6]/60">
           <div className="text-[13px] font-black leading-6 text-orange-800">{error}</div>
@@ -486,16 +481,157 @@ export default function SettingsPage() {
         </Module>
       ) : null}
 
-      <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
-        <Row label="メールアドレス" value={user?.email || "未ログイン"} />
-        <Row
-          label="保存済みトリセツ"
-          value={loading ? "確認中…" : `${karteCount ?? 0}件`}
-          action={<Button size="sm" variant="secondary" onClick={() => router.push("/history")}>履歴へ</Button>}
-        />
-      </Module>
+      <SettingsGroup title="予報の設定" summary={[locationLabel, activeSymptomProfile?.active_symptom_label].filter(Boolean).join("・") || "地域と気になる不調"} >
+      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[16px] font-black tracking-tight text-slate-900">体調予報の地域</div>
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
+              現在の地域：{loading ? "確認中…" : locationLabel}
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => router.push("/radar")}>予報へ</Button>
+        </div>
 
+        <div className="mt-4">
+          <label className="mb-2 block text-[12px] font-extrabold text-slate-500">都道府県・地域</label>
+          <select
+            value={selectedPresetKey}
+            onChange={(e) => setSelectedPresetKey(e.target.value)}
+            disabled={!user || savingLocation}
+            className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
+          >
+            <option value="">選んでください</option>
+            {RADAR_LOCATION_PRESETS.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (
+                  <option key={opt.key} value={opt.key}>{opt.label}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <Button
+          onClick={handleSaveLocation}
+          disabled={!user || !selectedPresetKey || savingLocation}
+          className="mt-4 w-full shadow-sm"
+        >
+          {savingLocation ? "更新中…" : "この地域で設定する"}
+        </Button>
+        {locationMessage ? (
+          <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-[12px] font-black leading-5 text-slate-600 ring-1 ring-slate-100">
+            {locationMessage}
+          </div>
+        ) : null}
+      </Module>
+      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[16px] font-black tracking-tight text-slate-900">今気になる不調</div>
+            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
+              現在の不調：{loading ? "確認中…" : activeSymptomProfile?.active_symptom_label || "未設定"}
+              {activeSymptomProfile?.diagnosis_symptom_focus && activeSymptomProfile?.active_symptom_focus !== activeSymptomProfile?.diagnosis_symptom_focus
+                ? `（チェック時：${activeSymptomProfile?.diagnosis_symptom_label || "—"}）`
+                : ""}
+            </div>
+          </div>
+          <Button size="sm" variant="secondary" onClick={() => router.push("/radar")}>予報へ</Button>
+        </div>
+
+        <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
+          予報や体質トリセツの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
+        </div>
+
+        <div className="mt-4">
+          <label className="mb-2 block text-[12px] font-extrabold text-slate-500">不調の種類</label>
+          <select
+            value={selectedSymptomKey}
+            onChange={(e) => setSelectedSymptomKey(e.target.value)}
+            disabled={!user || savingSymptom || !activeSymptomProfile}
+            className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
+          >
+            <option value="">選んでください</option>
+            {SYMPTOM_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+        <Button
+          onClick={handleSaveSymptomFocus}
+          disabled={!user || !selectedSymptomKey || savingSymptom || !activeSymptomProfile}
+          className="mt-4 w-full shadow-sm"
+        >
+          {savingSymptom ? "反映中…" : "この不調で予報に反映する"}
+        </Button>
+        {symptomMessage ? (
+          <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-[12px] font-black leading-5 text-slate-600 ring-1 ring-slate-100">
+            {symptomMessage}
+          </div>
+        ) : null}
+      </Module>
+      </SettingsGroup>
+
+      <SettingsGroup title="通知" summary={notificationEnabled ? "通知オン" : "前日夜・当日朝のお知らせ"} >
+      <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <div className="text-[16px] font-black tracking-tight text-slate-900">通知設定</div>
+          <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
+            {notificationThresholdLabel(minScore)}の日を、前日夜・当日朝に短くお知らせします。
+          </div>
+          {!loading && !notificationsAvailable ? (
+            <div className="mt-3 rounded-[16px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">通知設定を読み込めませんでした。少し待ってからお試しください。</div>
+          ) : null}
+          <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[14px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
+            iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。
+            <button
+              type="button"
+              onClick={() => setPwaGuideOpen(true)}
+              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2.5 text-[12px] font-black text-[#24564C] shadow-sm ring-1 ring-[#CFE3DA] active:scale-[0.99]"
+            >
+              {standalone ? "ホーム画面追加済み" : "ホーム画面追加の手順を見る"}
+            </button>
+          </div>
+        </div>
+        <ToggleRow
+          label="通知を受け取る"
+          description={notificationEnabled ? `オン：${notificationThresholdLabel(minScore)}の日に通知します` : "オフ：通知は送信されません"}
+          checked={notificationEnabled}
+          disabled={!user || savingNotifications || loading || !notificationsAvailable}
+          onChange={handleToggleNotifications}
+        />
+        <ToggleRow
+          label="前日夜の通知"
+          description="明日に備えたい日の先回り通知"
+          checked={notificationSettings?.night_enabled ?? true}
+          disabled={!user || savingNotifications || !notificationEnabled || !notificationsAvailable}
+          onChange={(value) => saveNotificationSettings({
+            enabled: notificationEnabled,
+            night_enabled: value,
+            morning_enabled: notificationSettings?.morning_enabled ?? true,
+            min_score: minScore,
+          })}
+        />
+        <ToggleRow
+          label="当日朝の通知"
+          description="今日の注意点を朝に確認"
+          checked={notificationSettings?.morning_enabled ?? true}
+          disabled={!user || savingNotifications || !notificationEnabled || !notificationsAvailable}
+          onChange={(value) => saveNotificationSettings({
+            enabled: notificationEnabled,
+            night_enabled: notificationSettings?.night_enabled ?? true,
+            morning_enabled: value,
+            min_score: minScore,
+          })}
+        />
+        {notificationMessage ? (
+          <div className="px-5 pb-4 text-[12px] font-black leading-5 text-[#2F7668]">
+            {notificationMessage}
+          </div>
+        ) : null}
+      </Module>
+      </SettingsGroup>
+
+      <SettingsGroup title="お支払い" summary={loading ? "利用プラン" : premiumActive ? "プレミアム利用中" : "利用プラン・月額料金"} open={Boolean(checkoutStatus)}>
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -584,154 +720,18 @@ export default function SettingsPage() {
           </CheckoutButton>
         ) : null}
       </Module>
+      </SettingsGroup>
 
-      <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <div className="text-[16px] font-black tracking-tight text-slate-900">通知設定</div>
-          <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
-            {notificationThresholdLabel(minScore)}の日を、前日夜・当日朝に短くお知らせします。
-          </div>
-          {!loading && !notificationsAvailable ? (
-            <div className="mt-3 rounded-[16px] bg-[#FFF8EC] px-3.5 py-3 text-[12px] font-bold leading-5 text-[#A56C18] ring-1 ring-[#EED8B4]">通知設定を読み込めませんでした。少し待ってからお試しください。</div>
-          ) : null}
-          <div className="mt-3 rounded-[18px] bg-[#EAF5EF]/55 p-4 text-[14px] font-bold leading-6 text-[#24564C] ring-1 ring-[#CFE3DA]/70">
-            iPhoneで通知を使う場合は、先にホーム画面へ追加してから設定します。Androidではブラウザから通知を許可できますが、ホーム画面に追加しておくとアプリのように開きやすくなります。
-            <button
-              type="button"
-              onClick={() => setPwaGuideOpen(true)}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-white px-4 py-2.5 text-[12px] font-black text-[#24564C] shadow-sm ring-1 ring-[#CFE3DA] active:scale-[0.99]"
-            >
-              {standalone ? "ホーム画面追加済み" : "ホーム画面追加の手順を見る"}
-            </button>
-          </div>
-        </div>
-        <ToggleRow
-          label="通知を受け取る"
-          description={notificationEnabled ? `オン：${notificationThresholdLabel(minScore)}の日に通知します` : "オフ：通知は送信されません"}
-          checked={notificationEnabled}
-          disabled={!user || savingNotifications || loading || !notificationsAvailable}
-          onChange={handleToggleNotifications}
-        />
-        <ToggleRow
-          label="前日夜の通知"
-          description="明日に備えたい日の先回り通知"
-          checked={notificationSettings?.night_enabled ?? true}
-          disabled={!user || savingNotifications || !notificationEnabled || !notificationsAvailable}
-          onChange={(value) => saveNotificationSettings({
-            enabled: notificationEnabled,
-            night_enabled: value,
-            morning_enabled: notificationSettings?.morning_enabled ?? true,
-            min_score: minScore,
-          })}
-        />
-        <ToggleRow
-          label="当日朝の通知"
-          description="今日の注意点を朝に確認"
-          checked={notificationSettings?.morning_enabled ?? true}
-          disabled={!user || savingNotifications || !notificationEnabled || !notificationsAvailable}
-          onChange={(value) => saveNotificationSettings({
-            enabled: notificationEnabled,
-            night_enabled: notificationSettings?.night_enabled ?? true,
-            morning_enabled: value,
-            min_score: minScore,
-          })}
-        />
-        {notificationMessage ? (
-          <div className="px-5 pb-4 text-[12px] font-black leading-5 text-[#2F7668]">
-            {notificationMessage}
-          </div>
-        ) : null}
-      </Module>
-
+      <SettingsGroup title="使い方・お問い合わせ" summary={"ガイドと改善点の報告"} >
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[16px] font-black tracking-tight text-slate-900">体調予報の地域</div>
-            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
-              現在の地域：{loading ? "確認中…" : locationLabel}
-            </div>
-          </div>
-          <Button size="sm" variant="secondary" onClick={() => router.push("/radar")}>予報へ</Button>
+        <div className="text-[16px] font-black tracking-tight text-slate-900">使い方ガイド</div>
+        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
+          トリセツ、体調予報、対策ケアの見方に迷った時はこちらから確認できます。
         </div>
-
         <div className="mt-4">
-          <label className="mb-2 block text-[12px] font-extrabold text-slate-500">都道府県・地域</label>
-          <select
-            value={selectedPresetKey}
-            onChange={(e) => setSelectedPresetKey(e.target.value)}
-            disabled={!user || savingLocation}
-            className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
-          >
-            <option value="">選んでください</option>
-            {RADAR_LOCATION_PRESETS.map((group) => (
-              <optgroup key={group.group} label={group.group}>
-                {group.options.map((opt) => (
-                  <option key={opt.key} value={opt.key}>{opt.label}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <Button variant="secondary" className="w-full bg-white" onClick={() => router.push("/guide")}>使い方ガイドを開く</Button>
         </div>
-        <Button
-          onClick={handleSaveLocation}
-          disabled={!user || !selectedPresetKey || savingLocation}
-          className="mt-4 w-full shadow-sm"
-        >
-          {savingLocation ? "更新中…" : "この地域で設定する"}
-        </Button>
-        {locationMessage ? (
-          <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-[12px] font-black leading-5 text-slate-600 ring-1 ring-slate-100">
-            {locationMessage}
-          </div>
-        ) : null}
       </Module>
-
-      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="text-[16px] font-black tracking-tight text-slate-900">今気になる不調</div>
-            <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
-              現在の不調：{loading ? "確認中…" : activeSymptomProfile?.active_symptom_label || "未設定"}
-              {activeSymptomProfile?.diagnosis_symptom_focus && activeSymptomProfile?.active_symptom_focus !== activeSymptomProfile?.diagnosis_symptom_focus
-                ? `（チェック時：${activeSymptomProfile?.diagnosis_symptom_label || "—"}）`
-                : ""}
-            </div>
-          </div>
-          <Button size="sm" variant="secondary" onClick={() => router.push("/radar")}>予報へ</Button>
-        </div>
-
-        <div className="mt-4 rounded-[18px] bg-[#F7FAF6] p-4 text-[14px] font-bold leading-6 text-slate-600 ring-1 ring-[#E1ECE4]">
-          予報や体質トリセツの内容を、今気になる不調に合わせて反映し直します。体調傾向そのものが大きく変わった時は、体質チェックの更新がおすすめです。
-        </div>
-
-        <div className="mt-4">
-          <label className="mb-2 block text-[12px] font-extrabold text-slate-500">不調の種類</label>
-          <select
-            value={selectedSymptomKey}
-            onChange={(e) => setSelectedSymptomKey(e.target.value)}
-            disabled={!user || savingSymptom || !activeSymptomProfile}
-            className="w-full rounded-[16px] bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-900 outline-none ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-60"
-          >
-            <option value="">選んでください</option>
-            {SYMPTOM_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-        <Button
-          onClick={handleSaveSymptomFocus}
-          disabled={!user || !selectedSymptomKey || savingSymptom || !activeSymptomProfile}
-          className="mt-4 w-full shadow-sm"
-        >
-          {savingSymptom ? "反映中…" : "この不調で予報に反映する"}
-        </Button>
-        {symptomMessage ? (
-          <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-[12px] font-black leading-5 text-slate-600 ring-1 ring-slate-100">
-            {symptomMessage}
-          </div>
-        ) : null}
-      </Module>
-
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -751,24 +751,27 @@ export default function SettingsPage() {
           報告フォームを開く
         </Button>
       </Module>
+      </SettingsGroup>
 
-      <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
-        <div className="text-[16px] font-black tracking-tight text-slate-900">使い方ガイド</div>
-        <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
-          トリセツ、体調予報、対策ケアの見方に迷った時はこちらから確認できます。
-        </div>
-        <div className="mt-4">
-          <Button variant="secondary" className="w-full bg-white" onClick={() => router.push("/guide")}>使い方ガイドを開く</Button>
-        </div>
+      <SettingsGroup title="アカウント" summary={user?.email || "ログイン・アカウント管理"} >
+      <Module className="overflow-hidden bg-white ring-1 ring-[#D3E1D5] shadow-sm">
+        <Row label="ログイン状態" value={loading ? "確認中…" : user ? "ログイン中" : "未ログイン"} />
+        <Row label="メールアドレス" value={user?.email || "未ログイン"} />
+        <Row
+          label="保存済みトリセツ"
+          value={loading ? "確認中…" : `${karteCount ?? 0}件`}
+          action={<Button size="sm" variant="secondary" onClick={() => router.push("/history")}>履歴へ</Button>}
+        />
       </Module>
-
       <Module className="p-5 bg-white ring-1 ring-[#D3E1D5] shadow-sm">
         {user ? (
           <Button variant="secondary" className="w-full bg-white" onClick={handleLogout}>ログアウト</Button>
         ) : (
           <Button className="w-full" onClick={() => router.push("/signup?next=%2Fsettings")}>ログインする</Button>
         )}
+        {user && <DeleteAccount key={user.id} user={user} authedFetch={authedFetch} />}
       </Module>
+      </SettingsGroup>
 
       {pwaGuideOpen ? (
         <div className="fixed inset-0 z-[90] grid place-items-end bg-[#101827]/38 px-4 pb-4 backdrop-blur-[2px]">

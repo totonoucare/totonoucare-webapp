@@ -2,6 +2,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { jstDateString } from "@/lib/dateJST";
+import { IconSettings, IconFood } from "@/components/illust/icons/app";
 import { useRouter } from "next/navigation";
 import AppShell, { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
@@ -103,13 +106,7 @@ function IconReportCard() {
 }
 
 function getJstDateString(offsetDays = 0) {
-  const now = new Date();
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const jst = new Date(utc + 9 * 60 * 60000 + offsetDays * 24 * 60 * 60000);
-  const y = jst.getFullYear();
-  const m = String(jst.getMonth() + 1).padStart(2, "0");
-  const d = String(jst.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return jstDateString(new Date(Date.now() + offsetDays * 86400000));
 }
 
 function formatYmdJP(ymd) {
@@ -326,7 +323,7 @@ function ForecastOverviewCard({
             <div className="mt-0.5 text-[12px] font-extrabold text-slate-600">体質×天気から、今日と明日のゆらぎを確認</div>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onOpenRadar}>詳細へ</Button>
+        <Button variant="ghost" size="sm" onClick={() => onOpenRadar(getJstDateString(0))}>詳細へ</Button>
       </div>
 
       <div className="relative z-10 mt-5 grid gap-3 sm:grid-cols-2">
@@ -335,7 +332,7 @@ function ForecastOverviewCard({
           dateLabel={formatYmdJP(getJstDateString(0))}
           bundle={todayBundle}
           loading={todayLoading}
-          onClick={onOpenRadar}
+          onClick={() => onOpenRadar(getJstDateString(0))}
           coreCode={coreCode}
           coreTitle={coreTitle}
         />
@@ -344,7 +341,7 @@ function ForecastOverviewCard({
           dateLabel={formatYmdJP(getJstDateString(1))}
           bundle={tomorrowBundle}
           loading={tomorrowLoading}
-          onClick={onOpenRadar}
+          onClick={() => onOpenRadar(getJstDateString(1))}
           coreCode={coreCode}
           coreTitle={coreTitle}
         />
@@ -427,7 +424,7 @@ function GuestStartCta({ onCheck, onLogin }) {
     },
     {
       key: "records",
-      title: "記録・分析",
+      title: "記録・相談",
       titleLines: ["記録・", "分析"],
       sub: "体調とケアを振り返る",
       icon: <AppIcon name="analysis" className="h-[22px] w-[22px]" />,
@@ -481,76 +478,37 @@ function GuestStartCta({ onCheck, onLogin }) {
   );
 }
 
-function MyCareScopeBadge({ variant = "stack", className = "" }) {
-  const items = [
-    { label: "暮らす", sub: "環境", color: "text-[#2F8F79]" },
-    { label: "食べる", sub: "食品", color: "text-[#8B640C]" },
-    { label: "ほぐす", sub: "道具", color: "text-slate-600" },
-  ];
-
-  if (variant === "row") {
-    return (
-      <div className={["grid grid-cols-3 gap-2", className].join(" ")}>
-        {items.map((item) => (
-          <div key={item.label} className="rounded-[15px] bg-[#F8FBF9] px-2.5 py-2 text-center ring-1 ring-[#D3E1D5]">
-            <div className={["text-[12px] font-black", item.color].join(" ")}>{item.label}</div>
-            <div className="mt-0.5 text-[12px] font-extrabold text-slate-400">{item.sub}</div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
+function MyCareSelectHomeCard({ todayBundle, tomorrowBundle }) {
+  const [recipe, setRecipe] = useState("");
+  useEffect(() => {
+    let active = true;
+    setRecipe("");
+    if (todayBundle?.forecast || tomorrowBundle?.forecast) {
+      import("@/lib/care-shop/forecastRecipes").then(({ recipesForForecast }) => {
+        const name = recipesForForecast(todayBundle, "today", getJstDateString(0))[0]
+          || recipesForForecast(tomorrowBundle, "tomorrow", getJstDateString(1))[0];
+        if (active) setRecipe(name || "");
+      }).catch(() => {});
+    }
+    return () => { active = false; };
+  }, [todayBundle, tomorrowBundle]);
   return (
-    <div className={["shrink-0 rounded-[18px] bg-[#F8FBF9] px-3 py-2 text-center ring-1 ring-[#D3E1D5]", className].join(" ")}>
-      {items.map((item) => (
-        <div key={item.label} className={["text-[12px] font-black", item.color].join(" ")}>{item.label}</div>
-      ))}
-    </div>
+    <Link href="/care-navi" className="flex items-center gap-4 rounded-[24px] border border-[#E6D9BC] bg-[#FCF8EE] p-5 text-[#4D412B]">
+      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#F4E8CC]"><IconFood className="h-7 w-7" /></span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-bold text-[#796342]">ケアショップ</p>
+        <h2 className="mt-1 font-bold">ケアに使う食材・お茶を見る</h2>
+        {recipe && <p className="mt-1 text-sm">{recipe}の材料など</p>}
+      </div>
+      <span aria-hidden="true">›</span>
+    </Link>
   );
 }
 
-function MyCareSelectHomeCard({ hasResult, onPrimary, onBrowseSingle }) {
-  const title = hasResult ? "パーソナルケアショップ" : "体質チェック後に、あなた向けの商品選び";
-  const body = hasResult
-    ? "体質と気になる不調を土台に、暮らす・食べる・ほぐすの商品を提案します。季節と近いうちの天気も、商品の使いどきに反映します。"
-    : "体質チェックをすると、体質と気になる不調に合うケア商品を選びやすくなります。";
-  const primaryLabel = hasResult ? "おすすめ商品を見る" : "体質チェックして商品を見る";
-  const secondaryLabel = hasResult ? "カテゴリから探す" : "まずは体質チェックへ";
-
-  return (
-    <Module className="mt-5 relative overflow-hidden bg-white p-5 ring-1 ring-[#D3E1D5] shadow-[0_16px_36px_-28px_rgba(37,95,79,0.28)]">
-      <div className="pointer-events-none absolute -right-12 -top-16 h-36 w-36 rounded-full bg-[#CFEFE6]/34 blur-2xl" />
-      <div className="relative z-10 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex items-start gap-3">
-          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[16px] bg-[#DCEFEA] text-[#173F3A] ring-1 ring-[#B6D8CF] shadow-[0_12px_28px_-18px_rgba(19,138,115,0.42)]">
-            <AppIcon name="care" className="h-6 w-6" />
-          </div>
-          <div className="min-w-0">
-            <div className="inline-flex rounded-full bg-[#F4F9F6] px-3 py-1 text-[12px] font-black text-[#2F8F79] ring-1 ring-[#D3E1D5]">あなた向けに選ぶショップ</div>
-            <h2 className="mt-3 text-[19px] font-black tracking-tight text-slate-950">
-              {title}
-            </h2>
-            <p className="mt-2 text-[14px] font-extrabold leading-6 text-slate-600">
-              {body}
-            </p>
-          </div>
-        </div>
-        <MyCareScopeBadge className="hidden sm:block" />
-      </div>
-
-      <MyCareScopeBadge variant="row" className="relative z-10 mt-4 sm:hidden" />
-
-      <div className="relative z-10 mt-4 flex flex-col gap-3 sm:flex-row">
-        <Button onClick={onPrimary} className="w-full py-4 shadow-md sm:flex-1">
-          {primaryLabel}
-        </Button>
-        <Button variant="secondary" onClick={onBrowseSingle} className="w-full bg-white py-4 shadow-sm sm:flex-1">
-          {secondaryLabel}
-        </Button>
-      </div>
-    </Module>
-  );
+function HomeSettingsLink() {
+  return <Link href="/settings" className="flex min-h-[48px] items-center gap-3 border-t border-[#DCE7DF] px-2 py-3 text-sm font-bold text-[#466458]">
+    <IconSettings className="h-5 w-5" /><span className="flex-1">設定</span><span aria-hidden="true">›</span>
+  </Link>;
 }
 
 function ActionTile({ icon, title, sub, onClick }) {
@@ -1235,6 +1193,7 @@ export default function HomePage() {
           />
 
         </Module>
+        <HomeSettingsLink />
       </AppShell>
     );
   }
@@ -1298,6 +1257,7 @@ export default function HomePage() {
         <div className="mt-6">
           <SubscriptionPaywall feature="forecast" returnPath="/" access={featureAccess} />
         </div>
+        <HomeSettingsLink />
       </AppShell>
     );
   }
@@ -1351,7 +1311,7 @@ export default function HomePage() {
         tomorrowBundle={tomorrowBundle}
         todayLoading={Boolean(session) && (todayLoading || !todayBundle)}
         tomorrowLoading={Boolean(session) && (tomorrowLoading || !tomorrowBundle)}
-        onOpenRadar={() => router.push("/radar")}
+        onOpenRadar={date => router.push("/radar?date=" + date)}
         onOpenRecords={() => router.push("/records")}
         todayRecorded={Boolean(todayReview)}
         coreCode={currentResult?.core_code || null}
@@ -1363,17 +1323,7 @@ export default function HomePage() {
         onOpen={(prompt) => router.push(`/records?tab=consult${prompt ? `&prompt=${encodeURIComponent(prompt)}` : ""}`)}
       />
 
-      <MyCareSelectHomeCard
-        hasResult={Boolean(currentResult && core)}
-        onPrimary={() => {
-          if (!currentResult || !core) return router.push("/check");
-          return router.push("/care-navi");
-        }}
-        onBrowseSingle={() => {
-          if (!currentResult || !core) return router.push("/check");
-          return router.push("/care-navi?category=live");
-        }}
-      />
+      <MyCareSelectHomeCard todayBundle={todayBundle} tomorrowBundle={tomorrowBundle} />
 
       <HomeStateCta
         loading={dashboardLoading || (Boolean(currentResult && core) && locationLoading)}
@@ -1393,6 +1343,7 @@ export default function HomePage() {
           return router.push("/check/run");
         }}
       />
+      <HomeSettingsLink />
     </AppShell>
   );
 }
