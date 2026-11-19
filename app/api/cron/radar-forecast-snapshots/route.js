@@ -34,7 +34,7 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const result = await runRadarSnapshotCron({
       dates: searchParams.get("dates") || "today,tomorrow",
-      limit: searchParams.get("limit") || 10,
+      limit: searchParams.get("limit") || undefined,
       cursor: searchParams.get("cursor") || null,
       force: asBool(searchParams.get("force"), true),
       dryRun: searchParams.get("dry_run") === "1",
