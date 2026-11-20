@@ -25,8 +25,13 @@ export async function POST(req) {
     const meta = await resolveRadarLocationMeta({ lat, lon, labelHint });
     const location = { id: g.id, lat, lon, timezone: "Asia/Tokyo", label: meta.label || labelHint,
       display_name: meta.display_name || meta.label || labelHint, region_name: meta.region_name || null };
-    const saved = await supabaseServer.from("guest_experiences_v126").update({ location }).eq("result_id", g.id).is("claimed_by", null);
+    const saved = await supabaseServer.from("guest_experiences_v126").update({ location })
+      .eq("result_id", g.id).is("claimed_by", null).gt("expires_at", new Date().toISOString())
+      .select("location").maybeSingle();
     if (saved.error) throw saved.error;
-    return reply({ ok: true, location });
+    if (!saved.data?.location) {
+      return reply({ error: "地域の保存を確認できませんでした。体質チェックからもう一度お試しください。", code: "guest_location_not_saved" }, 409);
+    }
+    return reply({ ok: true, location: saved.data.location });
   } catch (e) { return reply({ error: e.status ? e.message : "地域を保存できませんでした。", code: e.code }, e.status || 503); }
 }

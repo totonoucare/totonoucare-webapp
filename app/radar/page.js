@@ -538,6 +538,7 @@ export default function RadarPage() {
     if (forceSnapshot) qs.set("force", "1");
 
     const res = await fetch(`${token ? "/api/radar/v1/forecast" : "/api/guest/forecast"}?${qs.toString()}`, {
+      method: token ? "GET" : "POST",
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : temporaryHeaders()),
       },
@@ -574,6 +575,7 @@ export default function RadarPage() {
     const targetDate = normalizeRadarTargetDate(requestedTargetDate || selectedTargetDate || today);
     const nextMode = inferModeFromSelectedDate(targetDate) || "tomorrow";
     const requestSeq = ++requestSeqRef.current;
+    let savedLocation = null;
 
     try {
       const hasExistingBundle = !!bundle;
@@ -599,7 +601,7 @@ export default function RadarPage() {
       const token = data?.session?.access_token;
       if (!token && !guestId) throw new Error("体質チェックからお試しください。");
 
-      const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel, method: locationMethod });
+      savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel, method: locationMethod });
       if (savedLocation && requestForecastExplanation && requestSeq === requestSeqRef.current) {
         // Save the explicit request while the basic forecast is loading.
         void dailyInsight.acceptConsent();
@@ -669,12 +671,14 @@ export default function RadarPage() {
         clearTemporaryResult(); setGuestId(null); setBundle(null);
         setError("体質チェックから、もう一度お試しください。"); return;
       }
-      if (e?.payload?.error?.includes("No radar location found")) {
+      const locationMissing = e?.payload?.code === "location_required" || e?.payload?.error?.includes("No radar location found");
+      if (locationMissing && !savedLocation) {
         setNeedsLocation(true);
         setBundle(null);
         return;
       }
-      setError(e?.message || "予報の取得に失敗しました。");
+      if (savedLocation) setNeedsLocation(false);
+      setError(locationMissing ? "地域は保存できました。予報を再読み込みしてください。" : e?.message || "予報の取得に失敗しました。");
     } finally {
       if (requestSeq === requestSeqRef.current) {
         clearLoadingHintTimers();
