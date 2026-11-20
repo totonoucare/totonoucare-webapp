@@ -101,10 +101,16 @@ export async function DELETE(req) {
     const { user, error } = await requireUser(req);
     if (!user) {
       const guest = await requireGuestExperience(req);
+      const { error: resetError } = await supabaseServer.from("diagnosis_events")
+        .update({ result_ai_requested_at: null }).eq("id", guest.id).is("user_id", null);
+      if (resetError) throw resetError;
       await setGuestConsent(guest, false);
       return NextResponse.json({ data: { consent: { active: false } } }, { headers: { "Cache-Control": "no-store" } });
     }
     const now = new Date().toISOString();
+    const { error: resetError } = await supabaseServer.from("diagnosis_events")
+      .update({ result_ai_requested_at: null }).eq("user_id", user.id).lte("result_ai_requested_at", now);
+    if (resetError) throw resetError;
     const { data, error: saveError } = await supabaseServer
       .from("records_ai_consents")
       .update({ revoked_at: now, updated_at: now })

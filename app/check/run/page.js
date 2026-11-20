@@ -221,6 +221,7 @@ export default function CheckRunPage() {
       const token = data?.session?.access_token;
       const eventId = await completeConstitutionCheck({
         answers,
+        requestResultExplanation: true,
         accessToken: token,
         eventId: createdResultRef.current,
         onCreated: (id) => {
@@ -429,7 +430,12 @@ export default function CheckRunPage() {
               </div>
             ) : null}
 
-            <div className="mt-8 flex items-center gap-3">
+            {isLast && (
+              <p id="result-ai-notice" className="mt-6 text-[13px] leading-6 text-slate-600">
+                ボタンを押すと、体質の傾向や選んだ不調をOpenAIに送り、結果の解説を作ります。
+              </p>
+            )}
+            <div className={`${isLast ? "mt-3" : "mt-8"} flex items-center gap-3`}>
               <Button
                 variant="ghost"
                 onClick={back}
@@ -450,10 +456,11 @@ export default function CheckRunPage() {
               ) : (
                 <Button
                   onClick={submit}
+                  aria-describedby="result-ai-notice"
                   disabled={!canGoNext || submitting}
                   className="flex-[2] shadow-md"
                 >
-                  {submitting ? "保存中…" : createdResultRef.current ? "保存を再試行" : "診断を確定"}
+                  {submitting ? "保存中…" : createdResultRef.current ? "保存を再試行" : "体質トリセツを見る"}
                 </Button>
               )}
             </div>

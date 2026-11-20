@@ -53,6 +53,7 @@ export async function POST(req) {
           answers,
           computed,
           version: "v2",
+          ...(body.request_result_explanation === true ? { result_ai_requested_at: new Date().toISOString() } : {}),
         },
       ])
       .select("id")

@@ -23,14 +23,23 @@ export async function POST(req) {
     const limited = await enforcePublicApiRateLimit(req, { route: "mimoru_insights", limit: 30, windowSeconds: 60 });
     if (limited) return limited;
     const guest = user ? null : await requireGuestExperience(req, body.kind === "result" ? body.result_id : null);
-    if (!(guest ? guestConsentIsActive(guest) : await hasActiveAiConsent(user.id))) return reply({ error: "AI解説の利用確認が必要です。", code: "ai_consent_required" }, 403);
-    if (!guest && body.kind === "forecast") {
-      const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
-      if (!access.personalized_forecast_enabled) return reply({ error: "予報の利用期間を確認してください。", code: "forecast_access_required" }, 403);
+    const consentRequired = () => reply({ error: "AI解説の利用確認が必要です。", code: "ai_consent_required" }, 403);
+    const hasGeneralConsent = () => guest ? guestConsentIsActive(guest) : hasActiveAiConsent(user.id);
+    let subject;
+    if (body.kind === "result") {
+      subject = guest ? await guestConstitution(req, guest) : await loadResultSubject({ req, user, eventId: body.result_id });
+      if (!subject.resultExplanationRequested && !await hasGeneralConsent()) return consentRequired();
+    } else {
+      if (!await hasGeneralConsent()) return consentRequired();
+      if (!guest) {
+        const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
+        if (!access.personalized_forecast_enabled) return reply({ error: "予報の利用期間を確認してください。", code: "forecast_access_required" }, 403);
+      }
+      subject = guest ? await guestForecastSubject(req, guest, body) : await loadForecastSubject({
+        user, forecastId: body.forecast_id, mode: body.mode, lifestyleScene: body.lifestyle_scene || "general",
+        forecastRevision: body.expected_revision || null,
+      });
     }
-    const subject = guest ? (body.kind === "result" ? await guestConstitution(req, guest) : await guestForecastSubject(req, guest, body)) : body.kind === "result"
-      ? await loadResultSubject({ req, user, eventId: body.result_id })
-      : await loadForecastSubject({ user, forecastId: body.forecast_id, mode: body.mode, lifestyleScene: body.lifestyle_scene || "general", forecastRevision: body.expected_revision || null });
     if (body.symptom_focus && body.symptom_focus !== subject.profile.symptom_focus) {
       throw insightError("不調が更新されました。画面を読み直してください。", "subject_changed", 409);
     }
