@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { requireGuestExperience, guestConstitution, guestForecastSubject, guestConsentIsActive } from "@/lib/guestExperienceServer";
+import { requireGuestExperience, guestConstitution, guestForecastSubject, guestAiConsentVersion } from "@/lib/guestExperienceServer";
 import { requireUser } from "@/lib/requireUser";
-import { hasActiveAiConsent } from "@/lib/records/aiEvents";
+import { FORECAST_AI_CONSENT_VERSION, RECORDS_AI_CONSENT_VERSION, loadActiveAiConsentVersion } from "@/lib/records/aiEvents";
 import { getRecordsAccess } from "@/lib/records/access";
 import { enforcePublicApiRateLimit } from "@/lib/publicApiRateLimit";
 import { loadResultSubject, loadForecastSubject, insightError } from "@/lib/mimoru/subjects";
@@ -24,13 +24,16 @@ export async function POST(req) {
     if (limited) return limited;
     const guest = user ? null : await requireGuestExperience(req, body.kind === "result" ? body.result_id : null);
     const consentRequired = () => reply({ error: "AI解説の利用確認が必要です。", code: "ai_consent_required" }, 403);
-    const hasGeneralConsent = () => guest ? guestConsentIsActive(guest) : hasActiveAiConsent(user.id);
+    const consentVersion = () => guest ? guestAiConsentVersion(guest) : loadActiveAiConsentVersion(user.id);
     let subject;
+    let forecastOnly = false;
     if (body.kind === "result") {
       subject = guest ? await guestConstitution(req, guest) : await loadResultSubject({ req, user, eventId: body.result_id });
-      if (!subject.resultExplanationRequested && !await hasGeneralConsent()) return consentRequired();
+      if (!subject.resultExplanationRequested && await consentVersion() !== RECORDS_AI_CONSENT_VERSION) return consentRequired();
     } else {
-      if (!await hasGeneralConsent()) return consentRequired();
+      const version = await consentVersion();
+      forecastOnly = version === FORECAST_AI_CONSENT_VERSION;
+      if (!forecastOnly && version !== RECORDS_AI_CONSENT_VERSION) return consentRequired();
       if (!guest) {
         const access = await getRecordsAccess(user.id, { userCreatedAt: user.created_at });
         if (!access.personalized_forecast_enabled) return reply({ error: "予報の利用期間を確認してください。", code: "forecast_access_required" }, 403);
@@ -47,7 +50,7 @@ export async function POST(req) {
     if (base.state !== "ready" || body.kind === "result") return reply({ data: base }, base.state === "pending" ? 202 : 200);
     const input = { ...subject.daily, constitution: subject.base.constitution, constitution_insight: base.insight };
     const daily = await ensureInsight({ userId: guest?.id || user.id, guest: Boolean(guest), guestRequest: guest ? req : null, kind: "forecast", input, forecastId: subject.forecastId, targetDate: subject.targetDate });
-    return reply({ data: daily }, daily.state === "pending" ? 202 : 200);
+    return reply({ data: { ...daily, forecast_only: forecastOnly } }, daily.state === "pending" ? 202 : 200);
   } catch (error) {
     return reply({ error: error?.status ? error.message : "AI解説を読み込めませんでした。", code: error?.code || "insight_unavailable" }, error?.status || 503);
   }

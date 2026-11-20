@@ -191,12 +191,19 @@ test('insight daily limit preserves ready explanations without spending chat quo
  const api=await service(db,async()=>{throw Error('must not generate')});await assert.rejects(api.ensureInsight(args),e=>e.code==='insight_daily_limit');
  db.rows[0]={...db.rows[0],cache_key:model.insightKey(args.kind,args.input,'test-model'),state:'ready',payload};assert.equal((await api.ensureInsight(args)).state,'ready');
 });
-async function route({userValue=user,consent=true,access=true,subjectError=null,guest=null,resultRequested=false}={}){let calls=0;
+const generalConsentVersion = "general";
+const forecastConsentVersion = "forecast";
+async function route({userValue=user,consent=true,forecastOnly=false,access=true,subjectError=null,guest=null,resultRequested=false}={}){let calls=0;
+ const consentVersion = forecastOnly ? forecastConsentVersion : consent ? generalConsentVersion : null;
  const f=await injected('app/api/mimoru/insights/route.js',{
  requireGuestExperience:async()=>{if(!guest)throw error("check required","guest_expired",401);return guest},
- guestConsentIsActive:()=>consent,
+ guestAiConsentVersion:()=>consentVersion,
+ loadActiveAiConsentVersion:async()=>consentVersion,
+ RECORDS_AI_CONSENT_VERSION:generalConsentVersion,
+ FORECAST_AI_CONSENT_VERSION:forecastConsentVersion,
  guestConstitution:async()=>({profile,base,eventId:E,resultExplanationRequested:resultRequested}),
- NextResponse:{json:(body,opts)=>({body,status:opts?.status||200})},requireUser:async()=>({user:userValue}),hasActiveAiConsent:async()=>consent,getRecordsAccess:async()=>({personalized_forecast_enabled:access}),enforcePublicApiRateLimit:async()=>null,insightError:error,
+ guestForecastSubject:async()=>({profile,base,daily:{mode:'today'},forecastId:F,targetDate:today}),
+ NextResponse:{json:(body,opts)=>({body,status:opts?.status||200})},requireUser:async()=>({user:userValue}),getRecordsAccess:async()=>({personalized_forecast_enabled:access}),enforcePublicApiRateLimit:async()=>null,insightError:error,
  loadResultSubject:async()=>{if(subjectError)throw subjectError;return {profile,base,eventId:E,resultExplanationRequested:resultRequested}},loadForecastSubject:async()=>({profile,base,daily:{mode:'today'},forecastId:F,targetDate:today}),
  ensureInsight:async()=>{calls++;return {state:'ready',insight:payload}},
  },['POST']);return {post:async body=>f.POST({text:async()=>typeof body==='string'?body:JSON.stringify(body)}),calls:()=>calls};}
@@ -218,6 +225,79 @@ test('the final check action enables only this result for a guest or authenticat
     assert.equal((await old.post({ kind: 'result', result_id: E, resultExplanationRequested: true })).status, 403);
     assert.equal(old.calls(), 0);
   }
+});
+
+test('forecast permission generates the forecast and care explanation without unlocking other AI use', async () => {
+  for (const identity of [{ userValue: null, guest: { id: E } }, { userValue: user }]) {
+    const api = await route({ ...identity, forecastOnly: true });
+    const result = await api.post({ kind: 'forecast', forecast_id: F });
+    assert.equal(result.status, 200);
+    assert.equal(result.body.data.forecast_only, true);
+    assert.equal(api.calls(), 2);
+    assert.equal((await api.post({ kind: 'result', result_id: E })).status, 403);
+    assert.equal(api.calls(), 2);
+  }
+  const general = await route();
+  assert.equal((await general.post({ kind: 'forecast', forecast_id: F })).body.data.forecast_only, false);
+});
+
+test('member forecast permission is stored separately in scope and cannot authorize chat or analysis', async () => {
+  let saved = null;
+  let updateFilter = null;
+  const db = {
+    from(table) {
+      assert.equal(table, 'records_ai_consents');
+      return {
+        upsert(row, options) {
+          assert.equal(options.ignoreDuplicates, true);
+          const inserted = !saved;
+          if (inserted) saved = row;
+          return { select: () => ({ maybeSingle: async () => ({ data: inserted ? { user_id: row.user_id } : null }) }) };
+        },
+        update(row) {
+          return {
+            eq: () => ({
+              async or(filter) {
+                updateFilter = filter;
+                return {};
+              },
+              async eq(key, version) {
+                if (saved[key] === version) saved = { ...saved, ...row };
+                return {};
+              },
+            }),
+          };
+        },
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: saved }) }) }),
+      };
+    },
+  };
+  const constants = {
+    RECORDS_AI_CONSENT_VERSION: generalConsentVersion,
+    FORECAST_AI_CONSENT_VERSION: forecastConsentVersion,
+    FORECAST_AI_CONSENT_SCOPE: { fields: ['displayed_care'] },
+  };
+  const api = await injected('app/api/records/consent/route.js', {
+    ...constants, requireUser: async () => ({ user }),
+    NextResponse: { json: (body, opts) => ({ body, status: opts?.status || 200 }) },
+    supabaseServer: db, getRecordsAccess: async () => ({}),
+  }, ['GET', 'POST', 'DELETE']);
+  const { hasActiveAiConsent, loadActiveAiConsentVersion } = await injected('lib/records/aiEvents.js', { supabaseServer: db }, ['hasActiveAiConsent', 'loadActiveAiConsentVersion']);
+  const request = { json: async () => ({ consent: true, scope: 'forecast' }) };
+  assert.equal((await api.POST(request)).status, 200);
+  assert.equal(saved.consent_version, forecastConsentVersion);
+  assert.equal((await api.GET({})).body.data.consent.active, false);
+  assert.equal((await api.GET({})).body.data.consent.requires_renewal, false);
+  assert.equal(await hasActiveAiConsent(U), false);
+  assert.equal(await loadActiveAiConsentVersion(U), forecastConsentVersion);
+  assert.equal((await api.DELETE({ url: 'https://example.invalid/api/records/consent?scope=forecast' })).status, 200);
+  assert.equal(await loadActiveAiConsentVersion(U), null);
+  saved = { ...saved, consent_version: generalConsentVersion, revoked_at: null };
+  assert.equal((await api.POST(request)).status, 200);
+  assert.match(updateFilter, /consent_version\.not\.in\.\(general,forecast\)/);
+  assert.equal(saved.consent_version, generalConsentVersion);
+  await api.DELETE({ url: 'https://example.invalid/api/records/consent?scope=forecast' });
+  assert.equal(saved.revoked_at, null);
 });
 
 test('check submission persists the explicit result request and the owned result reads it back', async () => {

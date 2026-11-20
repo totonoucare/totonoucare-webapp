@@ -565,6 +565,7 @@ export default function RadarPage() {
     targetDate: requestedTargetDate = null,
     locationLabel = null,
     locationMethod = null,
+    requestForecastExplanation = false,
     showRefreshNotice = true,
   } = {}) {
     if (!session && !guestId) return;
@@ -599,6 +600,10 @@ export default function RadarPage() {
       if (!token && !guestId) throw new Error("体質チェックからお試しください。");
 
       const savedLocation = await saveLocationOverrideIfNeeded({ lat, lon, label: locationLabel, method: locationMethod });
+      if (savedLocation && requestForecastExplanation && requestSeq === requestSeqRef.current) {
+        // Save the explicit request while the basic forecast is loading.
+        void dailyInsight.acceptConsent();
+      }
       const shouldForceSnapshot = recompute || locationChanged || !!savedLocation;
       const shouldRefreshBothDates = isLocationRefresh || !!savedLocation;
 
@@ -696,7 +701,7 @@ export default function RadarPage() {
   }, [session, guestId, loadingAuth, loadingAccess, featureAccess?.personalized_forecast_enabled, initialDateParam]);
 
 
-  async function useCurrentLocation() {
+  async function useCurrentLocation({ requestForecastExplanation = false } = {}) {
     trackJourney("location_save_start", { method: "gps" });
     if (!navigator.geolocation) {
       trackJourney("location_save_error", { method: "gps", code: "unsupported" });
@@ -721,6 +726,7 @@ export default function RadarPage() {
           locationChanged: !needsLocation,
           locationLabel: "現在地付近",
           locationMethod: "gps",
+          requestForecastExplanation,
         });
 
         setLocating(false);
@@ -745,7 +751,7 @@ export default function RadarPage() {
     );
   }
 
-  async function savePresetLocation() {
+  async function savePresetLocation({ requestForecastExplanation = false } = {}) {
     const preset = FLAT_PRESETS.find((p) => p.key === selectedPresetKey);
     if (!preset) {
       setError("地域を選んでください。");
@@ -766,6 +772,7 @@ export default function RadarPage() {
         locationChanged: !needsLocation,
         locationLabel: preset.label,
         locationMethod: "preset",
+        requestForecastExplanation,
       });
 
       if (!needsLocation) {
@@ -1484,6 +1491,7 @@ export default function RadarPage() {
           onSavePresetLocation={savePresetLocation}
           onClose={() => {}}
           showClose={false}
+          showForecastExplanation
         />
 
         <Button

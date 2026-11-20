@@ -3,7 +3,7 @@ import { requireGuestExperience, setGuestConsent, guestConsentIsActive } from "@
 import { requireUser } from "@/lib/requireUser";
 import { supabaseServer } from "@/lib/supabaseServer";
 import { getRecordsAccess } from "@/lib/records/access";
-import { RECORDS_AI_CONSENT_VERSION } from "@/lib/records/aiEvents";
+import { FORECAST_AI_CONSENT_SCOPE, FORECAST_AI_CONSENT_VERSION, RECORDS_AI_CONSENT_VERSION } from "@/lib/records/aiEvents";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ function publicConsent(row) {
   const currentVersion = row?.consent_version === RECORDS_AI_CONSENT_VERSION;
   return {
     active: Boolean(row?.consented_at && !row?.revoked_at && currentVersion),
-    requires_renewal: Boolean(row?.consented_at && !row?.revoked_at && !currentVersion),
+    requires_renewal: Boolean(row?.consented_at && !row?.revoked_at && !currentVersion && row?.consent_version !== FORECAST_AI_CONSENT_VERSION),
     consent_version: row?.consent_version || null,
     consented_at: row?.consented_at || null,
     revoked_at: row?.revoked_at || null,
@@ -51,19 +51,51 @@ export async function GET(req) {
   }
 }
 
+async function enableMemberForecastConsent(userId) {
+  const now = new Date().toISOString();
+  const consent = {
+    consent_version: FORECAST_AI_CONSENT_VERSION,
+    consent_scope: FORECAST_AI_CONSENT_SCOPE,
+    consented_at: now,
+    revoked_at: null,
+    updated_at: now,
+  };
+  const inserted = await supabaseServer.from("records_ai_consents")
+    .upsert({ user_id: userId, ...consent }, { onConflict: "user_id", ignoreDuplicates: true })
+    .select("user_id").maybeSingle();
+  if (inserted.error) throw inserted.error;
+  if (inserted.data) return;
+
+  // The conditional write preserves either active scope, including a concurrent broader grant.
+  const updated = await supabaseServer.from("records_ai_consents")
+    .update(consent).eq("user_id", userId)
+    .or(`revoked_at.not.is.null,consented_at.is.null,consent_version.not.in.(${RECORDS_AI_CONSENT_VERSION},${FORECAST_AI_CONSENT_VERSION})`);
+  if (updated.error) throw updated.error;
+}
+
 export async function POST(req) {
   try {
-    const { user, error } = await requireUser(req);
-    if (!user) {
-      const guest = await requireGuestExperience(req);
-      const guestBody = await req.json().catch(() => ({}));
-      if (guestBody.consent !== true) return NextResponse.json({ error: "consent must be true" }, { status: 400 });
-      await setGuestConsent(guest, true);
-      return NextResponse.json({ data: { consent: { active: true } } }, { headers: { "Cache-Control": "no-store" } });
-    }
+    const { user } = await requireUser(req);
     const body = await req.json().catch(() => ({}));
     if (body?.consent !== true) {
       return NextResponse.json({ error: "consent must be true" }, { status: 400 });
+    }
+    if (body.scope !== undefined && body.scope !== "forecast") {
+      return NextResponse.json({ error: "AI利用の範囲を確認してください" }, { status: 400 });
+    }
+    if (body.scope === "forecast") {
+      if (user) {
+        await enableMemberForecastConsent(user.id);
+      } else {
+        const guest = await requireGuestExperience(req);
+        await setGuestConsent(guest, true, { forecastOnly: true });
+      }
+      return NextResponse.json({ data: { forecast_enabled: true } }, { headers: { "Cache-Control": "no-store" } });
+    }
+    if (!user) {
+      const guest = await requireGuestExperience(req);
+      await setGuestConsent(guest, true);
+      return NextResponse.json({ data: { consent: { active: true } } }, { headers: { "Cache-Control": "no-store" } });
     }
     const now = new Date().toISOString();
     const { data, error: saveError } = await supabaseServer
@@ -98,7 +130,24 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
-    const { user, error } = await requireUser(req);
+    const { user } = await requireUser(req);
+    const scope = new URL(req.url).searchParams.get("scope");
+    if (scope !== null && scope !== "forecast") {
+      return NextResponse.json({ error: "AI利用の範囲を確認してください" }, { status: 400 });
+    }
+    if (scope === "forecast") {
+      if (user) {
+        const now = new Date().toISOString();
+        const { error } = await supabaseServer.from("records_ai_consents")
+          .update({ revoked_at: now, updated_at: now })
+          .eq("user_id", user.id).eq("consent_version", FORECAST_AI_CONSENT_VERSION);
+        if (error) throw error;
+      } else {
+        const guest = await requireGuestExperience(req);
+        await setGuestConsent(guest, false, { forecastOnly: true });
+      }
+      return NextResponse.json({ data: { forecast_enabled: false } }, { headers: { "Cache-Control": "no-store" } });
+    }
     if (!user) {
       const guest = await requireGuestExperience(req);
       const { error: resetError } = await supabaseServer.from("diagnosis_events")

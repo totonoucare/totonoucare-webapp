@@ -1,13 +1,18 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useMimoru } from "./MimoruProvider";
 import { GuideBotAvatar } from "@/components/illust/home/HeroGuideBot";
 import { trackJourney } from "@/lib/journeyClient";
+
+export const FORECAST_AI_NOTICE = "予報とケアの解説には、体質の傾向・不調・天気・提案するケアの情報をOpenAIに送ります。";
 
 export function useMimoruInsight(request, enabled = true) {
   const mimoru = useMimoru();
   const key = JSON.stringify(request);
   const [attempt, setAttempt] = useState(0);
+  const [consentSaving, setConsentSaving] = useState(false);
+  const [consentError, setConsentError] = useState("");
+  const forecast = request.kind === "forecast";
   const [state, setState] = useState({ key: "", loading: false, data: null, error: "", code: "" });
   const fetchData = mimoru?.fetchData;
   const userId = mimoru?.userId;
@@ -31,7 +36,7 @@ export function useMimoruInsight(request, enabled = true) {
           cache.set(key, response.insight);
           if (cache.size > 48) cache.delete(cache.keys().next().value);
         }
-        setState({ key, loading: false, data: response.insight, error: "", code: "" });
+        setState({ key, loading: false, data: response.insight, error: "", code: "", forecastOnly: response.forecast_only === true });
       } catch (error) {
         if (!disposed && error.name !== "AbortError") {
           cache?.delete(key);
@@ -48,20 +53,42 @@ export function useMimoruInsight(request, enabled = true) {
     window.addEventListener("mimoru:consent-changed", refresh);
     return () => { disposed = true; abort.abort(); clearTimeout(timer); window.removeEventListener("mimoru:consent-changed", refresh); };
   }, [key, enabled, userId, fetchData, cache, attempt]);
-  const acceptConsent = useCallback(async () => {
-    setState(s => ({ ...s, loading: true, error: "" }));
+  const updateConsent = useCallback(async (accept) => {
+    setConsentSaving(true);
+    setConsentError("");
     try {
-      await fetchData("/api/records/consent", { method: "POST", body: JSON.stringify({ consent: true }) });
+      if (accept) {
+        await fetchData("/api/records/consent", {
+          method: "POST",
+          body: JSON.stringify(forecast ? { consent: true, scope: "forecast" } : { consent: true }),
+        });
+      } else {
+        await fetchData("/api/records/consent?scope=forecast", { method: "DELETE" });
+      }
       window.dispatchEvent(new Event("mimoru:consent-changed"));
-    } catch (e) { setState(s => ({ ...s, loading: false, error: e.message })); }
-  }, [fetchData]);
+    } catch (error) {
+      if (error.name !== "AbortError") setConsentError(error.message);
+    } finally {
+      setConsentSaving(false);
+    }
+  }, [fetchData, forecast]);
   const current = state.key === key ? state : { loading: Boolean(enabled && userId), data: cache?.get(key) || null, error: "", code: "" };
-  return { ...current, available: Boolean(userId && enabled), acceptConsent, retry: () => setAttempt(x => x + 1) };
+  return {
+    ...current,
+    loading: current.loading || (consentSaving && !current.data),
+    available: Boolean(userId && enabled),
+    consentSaving,
+    consentError,
+    acceptConsent: () => updateConsent(true),
+    revokeForecastConsent: () => updateConsent(false),
+    retry: () => setAttempt(x => x + 1),
+  };
 }
 
 export default function InsightPanel({ insight, part = "overview", title, context = null, children, statusOnly = false, fallback = null }) {
   const m = useMimoru();
   const ref = useRef(null);
+  const noticeId = useId();
   const data = insight?.data;
   const text = part === "forecast" ? data?.daily_summary : data?.overview;
   useEffect(() => {
@@ -83,6 +110,11 @@ export default function InsightPanel({ insight, part = "overview", title, contex
       <h3 className="min-w-0 text-[14px] font-black leading-6 text-[#24564C]">{title}</h3></div> : null}
     {fallback && !data ? <p className="whitespace-pre-wrap text-[14px] font-medium leading-7 text-slate-700">{fallback}</p> : null}
     {insight.loading && !data ? <div role="status" className="mt-2 text-[12px] leading-6 text-slate-500">ミモルが解説を準備しています…</div>
+      : insight.code === "ai_consent_required" && part === "forecast" ? <div className="mt-2 text-[12px] leading-5 text-slate-600">
+        <p id={noticeId}>{FORECAST_AI_NOTICE}</p>
+        <button type="button" aria-describedby={noticeId} onClick={insight.acceptConsent}
+          className="min-h-10 font-bold text-[#2F816E] underline underline-offset-4">ミモルの解説を読む</button>
+      </div>
       : insight.code === "ai_consent_required" ? <div className="text-[12px] leading-6 text-slate-600">
         体質・選んだ不調・天気・ケアの情報をOpenAIに送り、関連の見立てを説明します。
         氏名・メール・住所・体質チェックの生回答は自動送信しません。相談時の入力や記録メモは送信対象です。
@@ -96,6 +128,14 @@ export default function InsightPanel({ insight, part = "overview", title, contex
         {context ? <button type="button" onClick={() => m.openChat({ context, prompt: "この見立てについて、もう少し詳しく教えて。" })}
           className="mt-3 min-h-10 text-[12px] font-bold text-[#2F816E] underline underline-offset-4">この見立てについて質問する</button> : null}
       </> : null}
+    {part === "forecast" && insight.forecastOnly && data ? (
+      <details className="mt-1 text-[12px] leading-6 text-slate-600">
+        <summary className="w-fit cursor-pointer">解説の設定</summary>
+        <button type="button" onClick={insight.revokeForecastConsent} disabled={insight.consentSaving}
+          className="min-h-10 font-bold text-[#2F816E] underline underline-offset-4">予報のAI解説をオフにする</button>
+      </details>
+    ) : null}
+    {insight.consentError ? <p role="status" className="mt-1 text-[12px] leading-6 text-slate-600">{insight.consentError}</p> : null}
   </section>;
 }
 

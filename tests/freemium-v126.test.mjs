@@ -21,8 +21,8 @@ function guestDb({owner=null,expired=false,claimed=null,error=null}={}) {
 }
 async function guestApi(db, valid=true) {
  return injected('lib/guestExperienceServer.js', {createHash,supabaseServer:db,hasValidGuestToken:async()=>valid,
-  RECORDS_AI_CONSENT_VERSION:'test', nowJstParts:()=>({isoDate:'2026-11-17'}),toJstISODate:d=>new Date(d.getTime()+9*3600000).toISOString().slice(0,10)},
- ['requireGuestExperience','guestForecastId','currentGuestDates','guestConsentIsActive']);
+  RECORDS_AI_CONSENT_VERSION:'test', FORECAST_AI_CONSENT_VERSION:'forecast-only', nowJstParts:()=>({isoDate:'2026-11-17'}),toJstISODate:d=>new Date(d.getTime()+9*3600000).toISOString().slice(0,10)},
+ ['requireGuestExperience','guestForecastId','currentGuestDates','guestConsentIsActive','guestAiConsentVersion','setGuestConsent']);
 }
 test('v126 basic features remain free after any registration date; analysis needs entitlement',()=>{
  assert.equal(RECORDS_POLICY.subscription.trial.enabled,false);
@@ -117,12 +117,36 @@ test('Trisetsu care-example logic and v124 care balance are retained',async()=>{
   }
  }
 });
+test('the temporary forecast permission is scoped and cannot overwrite broader guest consent', async () => {
+ const calls = [];
+ const db = { from: table => ({ update(row) {
+  calls.push({ table, row });
+  return {
+   eq(key, value) { calls.push({ key, value }); return this; },
+   is() { return this; },
+   gt() { return this; },
+   or(filter) { calls.push({ filter }); return this; },
+  };
+ } }) };
+ const api = await guestApi(db);
+ const guest = { id: ID, state: { ai_consented_at: '2026-11-20T00:00:00Z', ai_consent_version: 'forecast-only' } };
+ assert.equal(api.guestConsentIsActive(guest), false);
+ assert.equal(api.guestAiConsentVersion(guest), 'forecast-only');
+ await api.setGuestConsent(guest, true, { forecastOnly: true });
+ assert.equal(calls[0].row.ai_consent_version, 'forecast-only');
+ assert.ok(calls.some(call => call.filter?.includes('ai_consent_version.not.in.(test,forecast-only)')));
+ calls.length = 0;
+ await api.setGuestConsent(guest, false, { forecastOnly: true });
+ assert.equal(calls[0].row.ai_consent_version, null);
+ assert.ok(calls.some(call => call.key === 'ai_consent_version' && call.value === 'forecast-only'));
+});
+
 test('saving the temporary experience transfers only ready AI outputs and the adopted region; retry is idempotent',async()=>{
  const writes=[],locations=[];
  const guest={result_id:ID,claimed_by:null,location:{lat:34,lon:135,label:'大阪'},ai_consented_at:'2026-11-17T00:00:00Z',ai_consent_version:'test'};
  const ready={cache_key:'a'.repeat(64),kind:'constitution',target_date:null,symptom_focus:'neck_shoulder',prompt_version:'v',model:'test',payload:{overview:'cached'},generated_at:'2026-11-17T00:00:00Z'};
  const db={from(table){return {select(){return this},eq(){return this},is(){return this},async maybeSingle(){return {data:guest}},upsert(rows,options){writes.push({table,rows,options});return Promise.resolve({error:null})},update(row){guest.claimed_by=row.claimed_by;return this},then(resolve){resolve({data:table==='mimoru_guest_insights_v126'?[ready]:null,error:null})}}}};
- const api=await injected('lib/saveGuestExperience.js',{supabaseServer:db,randomUUID:()=>U,RECORDS_AI_CONSENT_VERSION:'test',upsertPrimaryRadarLocation:async x=>locations.push(x)},['saveGuestExperience']);
+ const api=await injected('lib/saveGuestExperience.js',{supabaseServer:db,randomUUID:()=>U,RECORDS_AI_CONSENT_VERSION:'test',FORECAST_AI_CONSENT_VERSION:'forecast-only',FORECAST_AI_CONSENT_SCOPE:{fields:['displayed_care']},upsertPrimaryRadarLocation:async x=>locations.push(x)},['saveGuestExperience']);
  await api.saveGuestExperience({resultId:ID,userId:U,isCurrent:true});
  assert.equal(locations.length,1);assert.equal(locations[0].userId,U);assert.equal(locations[0].lat,34);
  const output=writes.find(x=>x.table==='mimoru_insights');assert.equal(output.rows[0].user_id,U);assert.equal(output.rows[0].forecast_id,null);assert.equal(output.rows[0].input_tokens,0);assert.deepEqual(output.rows[0].payload,ready.payload);assert.equal(output.options.ignoreDuplicates,true);
@@ -132,7 +156,7 @@ test('saving the temporary experience transfers only ready AI outputs and the ad
 test('saving a historical result preserves the existing forecast region and rejects another claimant',async()=>{
  let locations=0;const guest={claimed_by:null,location:{lat:34,lon:135}};
  const db={from(table){return {select(){return this},eq(){return this},is(){return this},async maybeSingle(){return {data:guest}},update(row){guest.claimed_by=row.claimed_by;return this},then(resolve){resolve({data:table==='mimoru_guest_insights_v126'?[]:null,error:null})}}}};
- const api=await injected('lib/saveGuestExperience.js',{supabaseServer:db,randomUUID:()=>U,RECORDS_AI_CONSENT_VERSION:'test',upsertPrimaryRadarLocation:async()=>locations++},['saveGuestExperience']);
+ const api=await injected('lib/saveGuestExperience.js',{supabaseServer:db,randomUUID:()=>U,RECORDS_AI_CONSENT_VERSION:'test',FORECAST_AI_CONSENT_VERSION:'forecast-only',FORECAST_AI_CONSENT_SCOPE:{fields:['displayed_care']},upsertPrimaryRadarLocation:async()=>locations++},['saveGuestExperience']);
  await api.saveGuestExperience({resultId:ID,userId:U,isCurrent:false});assert.equal(locations,0);
  await assert.rejects(api.saveGuestExperience({resultId:ID,userId:ID,isCurrent:true}),/already_claimed/);
 });

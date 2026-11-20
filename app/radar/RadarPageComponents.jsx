@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { pointToolGuides } from "@/lib/care-navi/pointTools";
 import { Module } from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
+import { FORECAST_AI_NOTICE } from "@/components/mimoru/InsightPanel";
 import { RADAR_LOCATION_PRESETS } from "@/lib/radar_v1/locationPresets";
 import {
   getPointCautions,
@@ -329,7 +330,9 @@ export function LocationEditor({
   onSavePresetLocation,
   onClose,
   showClose = true,
+  showForecastExplanation = false,
 }) {
+  const explanationNoticeId = showForecastExplanation ? "location-forecast-ai-notice" : undefined;
   return (
     <Module className="p-6">
       <div className="flex items-start justify-between gap-3">
@@ -357,17 +360,22 @@ export function LocationEditor({
         </div>
       ) : null}
 
+      {showForecastExplanation ? (
+        <p id={explanationNoticeId} className="mt-3 text-[13px] leading-6 text-slate-600">{FORECAST_AI_NOTICE}</p>
+      ) : null}
+
       <div className="mt-6 rounded-[24px] bg-slate-50 ring-1 ring-inset ring-[var(--ring)] p-5">
         <div className="text-[14px] font-black text-slate-900">現在地を使う</div>
         <div className="mt-1 text-[14px] font-bold leading-5 text-slate-500">
           いまいる場所をそのまま保存します。
         </div>
         <Button
-          onClick={onUseCurrentLocation}
-          disabled={locating}
+          onClick={() => onUseCurrentLocation({ requestForecastExplanation: showForecastExplanation })}
+          aria-describedby={explanationNoticeId}
+          disabled={locating || savingPreset}
           className="mt-4 w-full bg-[var(--accent)] hover:bg-[var(--accent-ink)] text-white shadow-md"
         >
-          {locating ? "位置情報を取得中…" : "現在地を使う"}
+          {locating ? "位置情報を取得中…" : showForecastExplanation ? "現在地で予報を見る" : "現在地を使う"}
         </Button>
       </div>
 
@@ -400,11 +408,12 @@ export function LocationEditor({
         </div>
 
         <Button
-          onClick={onSavePresetLocation}
-          disabled={!selectedPresetKey || savingPreset}
+          onClick={() => onSavePresetLocation({ requestForecastExplanation: showForecastExplanation })}
+          aria-describedby={explanationNoticeId}
+          disabled={!selectedPresetKey || savingPreset || locating}
           className="mt-5 w-full shadow-sm"
         >
-          {savingPreset ? "設定中…" : "この地域で設定する"}
+          {savingPreset ? "設定中…" : showForecastExplanation ? "この地域の予報を見る" : "この地域で設定する"}
         </Button>
       </div>
     </Module>
