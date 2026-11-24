@@ -347,7 +347,8 @@ export function LocationEditor({
         {showClose ? (
           <button
             onClick={onClose}
-            className="shrink-0 rounded-full bg-slate-100 px-3.5 py-2 text-[12px] font-extrabold text-slate-600 hover:bg-slate-200 transition-colors"
+            disabled={locating || savingPreset}
+            className="shrink-0 rounded-full bg-slate-100 px-3.5 py-2 text-[12px] font-extrabold text-slate-600 hover:bg-slate-200 disabled:opacity-50 transition-colors"
           >
             閉じる
           </button>

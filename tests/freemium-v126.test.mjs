@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { RECORDS_POLICY } from '../lib/records/policy.js';
 import { resolveRecordsAccess, getRegistrationTrialWindow } from '../lib/records/accessPolicy.js';
 import { cleanV126Metric } from '../lib/experienceFunnelV126Policy.js';
+import { flattenRadarLocationPresets } from '../lib/radar_v1/locationPresets.js';
 const root = new URL('../', import.meta.url);
 const read = p => readFile(new URL(p, root), 'utf8');
 const ID='00000000-0000-4000-8000-000000000126';
@@ -19,10 +20,10 @@ function guestDb({owner=null,expired=false,claimed=null,error=null}={}) {
   select(){return this},eq(k,v){filters.push([k,v]);return this},async maybeSingle(){return {error,data:table==='diagnosis_events'?{id:ID,user_id:owner,created_at:'2026-11-17T00:00:00Z'}:{result_id:ID,expires_at:new Date(Date.now()+(expired?-1:1)*3600000).toISOString(),claimed_by:claimed}}}
  };}};
 }
-async function guestApi(db, valid=true) {
- return injected('lib/guestExperienceServer.js', {createHash,supabaseServer:db,hasValidGuestToken:async()=>valid,
-  RECORDS_AI_CONSENT_VERSION:'test', FORECAST_AI_CONSENT_VERSION:'forecast-only', nowJstParts:()=>({isoDate:'2026-11-17'}),toJstISODate:d=>new Date(d.getTime()+9*3600000).toISOString().slice(0,10)},
- ['requireGuestExperience','guestForecastId','currentGuestDates','guestConsentIsActive','guestAiConsentVersion','setGuestConsent']);
+async function guestApi(db, valid=true, overrides={}) {
+ return injected('lib/guestExperienceServer.js', {createHash,supabaseServer:db,hasValidGuestToken:async()=>valid,flattenRadarLocationPresets,
+  RECORDS_AI_CONSENT_VERSION:'test', FORECAST_AI_CONSENT_VERSION:'forecast-only', nowJstParts:()=>({isoDate:'2026-11-17'}),toJstISODate:d=>new Date(d.getTime()+9*3600000).toISOString().slice(0,10),
+  ...overrides}, ['requireGuestExperience','guestForecastId','currentGuestDates','guestConsentIsActive','guestAiConsentVersion','setGuestConsent','guestForecast','guestForecastSubject']);
 }
 test('v126 basic features remain free after any registration date; analysis needs entitlement',()=>{
  assert.equal(RECORDS_POLICY.subscription.trial.enabled,false);
@@ -61,6 +62,94 @@ test('concurrent temporary forecast requests use one deterministic id per result
  assert.notEqual(a,api.guestForecastId(U,'2026-11-17'));
  assert.deepEqual(api.currentGuestDates(),{today:'2026-11-17',tomorrow:'2026-11-18'});
 });
+
+function guestForecastDb() {
+ const forecasts = new Map();
+ const key = row => `${row.result_id}/${row.target_date}`;
+ return { from(table) {
+  assert.equal(table, 'guest_forecasts_v126');
+  const filters = {};
+  let snapshot;
+  let write;
+  return {
+   select() { return this; },
+   eq(field, value) { filters[field] = value; return this; },
+   update(row) { snapshot = row; write = 'update'; return this; },
+   upsert(row, options) { snapshot = row; write = options.ignoreDuplicates ? 'insert' : 'upsert'; return this; },
+   async maybeSingle() {
+    const current = forecasts.get(key(snapshot || filters));
+    if (!write) return {data: current && (!filters.id || current.id === filters.id) ? current : null};
+    if (write === 'insert' && current) return {data: null};
+    if (write === 'update' && (filters.id !== current?.id || filters.updated_at !== current?.updated_at ||
+      filters['forecast->>location_source'] !== current?.forecast.location_source)) return {data: null};
+    forecasts.set(key(snapshot), snapshot);
+    return {data: snapshot};
+   },
+  };
+ } };
+}
+
+test('Tokyo trial uses the guest profile and supports both days and AI context before saving a region', async () => {
+ const profile = {core_code: 'accel_batt_small', symptom_focus: 'fatigue'};
+ const guest = {id: ID, state: {location: null}};
+ const weatherCalls = [];
+ const api = await guestApi(guestForecastDb(), true, {
+  loadResultSubject: async () => ({profile, base: {}}),
+  fetchMetnoLocationForecast: async coords => { weatherCalls.push(coords); return {}; },
+  buildFastRadarBundle: async ({location, loadWeather, profileOverride}) => {
+   assert.equal(profileOverride, profile);
+   await loadWeather({lat: location.lat, lon: location.lon});
+   return {radarPlan: {forecast: {site: location.label}, tonight: {tsubo_set: {test: true}}}};
+  },
+  buildForecastInsightSubject: subject => subject,
+ });
+ const {today, tomorrow} = api.currentGuestDates();
+ const [first, next] = await Promise.all([today, tomorrow].map(targetDate => api.guestForecast({}, guest, {targetDate})));
+ assert.equal(first.location.label, '東京');
+ assert.equal(first.location_source, 'trial_tokyo');
+ assert.deepEqual(next.care_plan.night_tsubo_set, {test: true});
+ assert.equal(guest.state.location, null);
+ assert.deepEqual(weatherCalls, [{lat: 35.68944, lon: 139.69167}]);
+ const subject = await api.guestForecastSubject({}, guest, {mode: 'tomorrow', forecast_id: next.forecast.id});
+ assert.equal(subject.forecast.site, '東京');
+ assert.equal(subject.todayForecast.site, '東京');
+});
+
+test('an in-flight Tokyo trial cannot replace a saved region forecast for the same day', async () => {
+ for (const force of [false, true]) {
+  const profile = {core_code: 'accel_batt_small'};
+  const trial = {id: ID, state: {location: null}};
+  const local = {id: ID, state: {location: {lat: 34.68639, lon: 135.52, label: '大阪'}}};
+  let unblockTrial;
+  let signalStarted;
+  const started = new Promise(resolve => { signalStarted = resolve; });
+  const paused = new Promise(resolve => { unblockTrial = resolve; });
+  let holdTrial = false;
+  const api = await guestApi(guestForecastDb(), true, {
+   loadResultSubject: async () => ({profile}),
+   buildFastRadarBundle: async ({location}) => {
+    if (holdTrial && location.label === '東京') {
+     signalStarted();
+     await paused;
+    }
+    return {radarPlan: {forecast: {site: location.label}}};
+   },
+  });
+  const targetDate = api.currentGuestDates().today;
+  if (force) await api.guestForecast({}, trial, {targetDate});
+  holdTrial = true;
+  const lateTrial = api.guestForecast({}, trial, {targetDate, force});
+  await started;
+  const selected = await api.guestForecast({}, local, {targetDate});
+  assert.equal(selected.location_source, 'saved_region');
+  unblockTrial();
+  await assert.rejects(lateTrial, {code: 'guest_forecast_changed'});
+  const refreshed = await api.guestForecast({}, local, {targetDate, cacheOnly: true});
+  assert.equal(refreshed.forecast.site, '大阪');
+  assert.equal(refreshed.cached, true);
+ }
+});
+
 test('temporary client state survives storage denial in memory and never writes localStorage',async()=>{
  const sent=[];const events=[];
  const storage={getItem(){throw Error('denied')},setItem(){throw Error('denied')},removeItem(){throw Error('denied')}};
@@ -83,6 +172,8 @@ test('temporary result cookies are session cookies with bounded server validity'
 test('v126 analytics accept guests but discard health data and client-supplied identity',()=>{
  const input={event:'forecast_display',event_id:ID,visit_id:U,user_id:ID,email:'private@example.invalid',detail:{mode:'today',symptom:'headache',coordinates:[34,135]}};
  const clean=cleanV126Metric(input);assert.deepEqual(clean,{event:'forecast_display',event_id:ID,visit_id:U,detail:{mode:'today'}});
+ assert.equal(cleanV126Metric({...input,event:'forecast_trial_display'}).event,'forecast_trial_display');
+ assert.deepEqual(cleanV126Metric({...input,event:'location_setup_view',detail:{source:'trial_tokyo'}}).detail,{source:'trial_tokyo'});
  assert.equal(cleanV126Metric({...input,event:'arbitrary'}),null);
  assert.equal(cleanV126Metric({...input,detail:{mode:'yesterday'}}),null);
 });

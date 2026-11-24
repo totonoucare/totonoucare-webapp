@@ -242,7 +242,12 @@ function normalizeRadarTargetDate(date) {
   return date === today ? today : tomorrow;
 }
 
-function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationLabel = "" }) {
+function sameForecastLocation(first, second) {
+  return first?.location_source === second?.location_source &&
+    first?.location?.lat === second?.location?.lat && first?.location?.lon === second?.location?.lon;
+}
+
+function RadarContentLoadingCards({ mode = "today", kind = "forecast" }) {
   const isLocationRefresh = kind === "location";
   const title = isLocationRefresh
     ? "地域の予報を更新中"
@@ -250,7 +255,7 @@ function RadarContentLoadingCards({ mode = "today", kind = "forecast", locationL
       ? "今日の体調予報を確認中"
       : "明日の体調予報を確認中";
   const lead = isLocationRefresh
-    ? `${locationLabel || "新しい地域"}の天気と、体質への響き方を確認しています。`
+    ? "新しい地域の天気と、体質への響き方を確認しています。"
     : mode === "today"
       ? "今日の予報とケアを読み込んでいます。"
       : "明日の予報と今夜からのケアを読み込んでいます。";
@@ -331,6 +336,7 @@ export default function RadarPage() {
   const [loadingHintIndex, setLoadingHintIndex] = useState(0);
 
   const [bundle, setBundle] = useState(null);
+  const isTrialForecast = !session && bundle?.location_source === "trial_tokyo";
   useEffect(() => { if (session?.user?.id && bundle) trackFunnel("radar_view"); }, [session?.user?.id, bundle]);
   const lifestyleScene = "general";
   const [todayComparisonBundle, setTodayComparisonBundle] = useState(null);
@@ -621,7 +627,7 @@ export default function RadarPage() {
       let siblingJson = null;
       const needsTodayComparison =
         targetDate === tomorrow &&
-        (shouldRefreshBothDates || todayComparisonBundle?.target_date !== today);
+        (shouldRefreshBothDates || todayComparisonBundle?.target_date !== today || !sameForecastLocation(todayComparisonBundle, json));
       if (shouldRefreshBothDates || needsTodayComparison) {
         const siblingTargetDate = targetDate === today ? tomorrow : today;
         if (siblingTargetDate && siblingTargetDate !== targetDate) {
@@ -642,10 +648,13 @@ export default function RadarPage() {
 
       setNeedsLocation(false);
       setBundle(json);
+      if (savedLocation) setShowLocationEditor(false);
       if (json?.target_date === today) {
         setTodayComparisonBundle(json);
-      } else if (siblingJson?.target_date === today) {
+      } else if (siblingJson?.target_date === today && sameForecastLocation(siblingJson, json)) {
         setTodayComparisonBundle(siblingJson);
+      } else if (needsTodayComparison) {
+        setTodayComparisonBundle(null);
       }
 
       // 旧ケア補完APIは呼ばず、共通の見立てはuseMimoruInsightで取得する。
@@ -734,9 +743,6 @@ export default function RadarPage() {
         });
 
         setLocating(false);
-        if (!needsLocation) {
-          setShowLocationEditor(false);
-        }
       },
       (geoErr) => {
         trackJourney("location_save_error", { method: "gps", code: ({ 1: "permission_denied", 2: "unavailable", 3: "timeout" })[geoErr?.code] || "unavailable" });
@@ -778,10 +784,6 @@ export default function RadarPage() {
         locationMethod: "preset",
         requestForecastExplanation,
       });
-
-      if (!needsLocation) {
-        setShowLocationEditor(false);
-      }
     } finally {
       setSavingPreset(false);
     }
@@ -837,8 +839,18 @@ export default function RadarPage() {
   const bundleTargetDate = bundle?.target_date || "";
   const bundleMatchesActiveTarget = !!bundle && (!bundleTargetDate || bundleTargetDate === activeTargetDate);
   const forecast = bundleMatchesActiveTarget ? bundle?.forecast || null : null;
-  useEffect(() => { if (forecast && !loading && !contentLoading && !needsLocation) trackV126("forecast_display", { mode: inferModeFromSelectedDate(activeTargetDate) || "today" }); }, [forecast, loading, contentLoading, needsLocation, activeTargetDate]);
-  useEffect(() => { if (guestId && needsLocation && !loading) trackV126("location_setup_view"); }, [guestId, needsLocation, loading]);
+  useEffect(() => {
+    if (forecast && !loading && !contentLoading && !needsLocation) {
+      trackV126(isTrialForecast ? "forecast_trial_display" : "forecast_display", {
+        mode: inferModeFromSelectedDate(activeTargetDate) || "today",
+      });
+    }
+  }, [forecast, loading, contentLoading, needsLocation, activeTargetDate, isTrialForecast]);
+  useEffect(() => {
+    if (!guestId || loading) return;
+    if (needsLocation) trackV126("location_setup_view");
+    if (isTrialForecast && showLocationEditor) trackV126("location_setup_view", { source: "trial_tokyo" });
+  }, [guestId, needsLocation, loading, isTrialForecast, showLocationEditor]);
   const selectedDateMode = inferModeFromSelectedDate(activeTargetDate) || dateMode;
   const selectedIsToday = selectedDateMode === "today";
   useEffect(() => {
@@ -1368,6 +1380,7 @@ export default function RadarPage() {
 
 
   function selectTargetDate(nextDate) {
+    if (locating || savingPreset) return;
     const normalizedDate = normalizeRadarTargetDate(nextDate);
     if (normalizedDate === activeTargetDate) return;
     careNavigation.rememberDateChange(normalizedDate);
@@ -1381,7 +1394,43 @@ export default function RadarPage() {
 
   const headerControls = <ForecastHeaderControls tabs={dateTabs} activeDate={activeTargetDate}
     dateLabel={targetDateLabel} onSelect={selectTargetDate} onCare={careNavigation.jumpToCare}
-    careAvailable={Boolean(forecast && !loading && !contentLoading && !needsLocation)} />;
+    careAvailable={Boolean(forecast && !loading && !contentLoading && !needsLocation)}
+    dateSelectionDisabled={locating || savingPreset} />;
+
+  function openLocationEditor() {
+    setShowLocationEditor(true);
+    window.scrollTo({ top: 0 });
+  }
+
+  const locationButtonLabel = isTrialForecast ? "東京（お試し）" : locationDisplayLabel;
+  const locationButton = (
+    <button
+      type="button"
+      onClick={openLocationEditor}
+      disabled={locating || savingPreset}
+      title={locationButtonLabel}
+      aria-label={isTrialForecast ? "お試し予報から地域を変更" : `地域を変更：${locationButtonLabel}`}
+      className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
+    >
+      <IconLocation className="h-4 w-4 shrink-0" /><span className="truncate">{locationButtonLabel}</span>
+    </button>
+  );
+  const locationEditor = showLocationEditor ? (
+    <LocationEditor
+      error={error}
+      locating={locating}
+      savingPreset={savingPreset}
+      selectedPresetKey={selectedPresetKey}
+      setSelectedPresetKey={setSelectedPresetKey}
+      onUseCurrentLocation={useCurrentLocation}
+      onSavePresetLocation={savePresetLocation}
+      onClose={() => {
+        setShowLocationEditor(false);
+        setError("");
+      }}
+      showForecastExplanation={isTrialForecast}
+    />
+  ) : null;
 
   if (!loadingAuth && !session && !guestId) {
     return (
@@ -1408,7 +1457,7 @@ export default function RadarPage() {
                 ・体質チェック結果をもとにパーソナル予報を作成
               </div>
               <div className="rounded-[18px] bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
-                ・地域設定後、今日・明日の気になる影響を確認
+                ・地域設定なしで、今日・明日の予報とケアを体験
               </div>
             </div>
 
@@ -1511,36 +1560,8 @@ export default function RadarPage() {
 
   if (contentLoading) {
     return (
-      <AppShell
-        title="体調予報"
-        headerControls={headerControls}
-        headerRight={
-          <button
-            onClick={() => setShowLocationEditor(true)}
-            title={locationDisplayLabel}
-            aria-label={`地域を変更：${locationDisplayLabel}`}
-            className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
-          >
-            <IconLocation className="h-4 w-4 shrink-0" /><span className="truncate">{locationDisplayLabel}</span>
-          </button>
-        }
-      >
-        {showLocationEditor ? (
-          <LocationEditor
-            error={error}
-            locating={locating}
-            savingPreset={savingPreset}
-            selectedPresetKey={selectedPresetKey}
-            setSelectedPresetKey={setSelectedPresetKey}
-            onUseCurrentLocation={useCurrentLocation}
-            onSavePresetLocation={savePresetLocation}
-            onClose={() => {
-              setShowLocationEditor(false);
-              setError("");
-            }}
-            showClose
-          />
-        ) : null}
+      <AppShell title="体調予報" headerControls={headerControls} headerRight={locationButton}>
+        {locationEditor}
 
         <ForecastRecordLink
           recorded={Boolean(activeDateReview)}
@@ -1551,7 +1572,6 @@ export default function RadarPage() {
         <RadarContentLoadingCards
           mode={selectedIsToday ? "today" : "tomorrow"}
           kind={contentLoadingKind}
-          locationLabel={locationDisplayLabel}
         />
       </AppShell>
     );
@@ -1577,45 +1597,31 @@ export default function RadarPage() {
   }
 
   return (
-    <AppShell
-      title="体調予報"
-      headerControls={headerControls}
-      headerRight={
-        <button
-          onClick={() => setShowLocationEditor(true)}
-          title={locationDisplayLabel}
-          aria-label={`地域を変更：${locationDisplayLabel}`}
-          className="inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-black tracking-wider text-slate-700 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.24)] ring-1 ring-inset ring-slate-200 hover:bg-[#FBFCF8] transition-all active:scale-95"
-        >
-          <IconLocation className="h-4 w-4 shrink-0" /><span className="truncate">{locationDisplayLabel}</span>
-        </button>
-      }
-    >
+    <AppShell title="体調予報" headerControls={headerControls} headerRight={locationButton}>
       <TrialWelcomeTrigger />
       {!session && guestId ? <ForecastSavePrompt resultId={guestId} targetDate={activeTargetDate}
         ready={Boolean(forecast && !loading && !contentLoading && !needsLocation && !showLocationEditor)} /> : null}
+      {isTrialForecast && (
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-[20px] bg-[#EAF7F1] px-4 py-2 ring-1 ring-inset ring-[#CFE7DE]">
+          <div>
+            <p className="text-[12px] font-bold text-[#2F7668]">お試し予報</p>
+            <p className="text-[14px] font-black text-slate-900">東京の天気 × あなたの体質</p>
+          </div>
+          {!showLocationEditor && (
+            <button type="button" onClick={openLocationEditor}
+              className="min-h-11 text-[13px] font-bold text-[#24564C] underline underline-offset-4">
+              自分の地域に切り替える
+            </button>
+          )}
+        </div>
+      )}
       {locationNotice ? (
         <div className="rounded-[16px] bg-emerald-50 px-4 py-3 text-[12px] font-extrabold text-emerald-800 ring-1 ring-inset ring-emerald-200 shadow-sm">
           {locationNotice}
         </div>
       ) : null}
 
-      {showLocationEditor ? (
-        <LocationEditor
-          error={error}
-          locating={locating}
-          savingPreset={savingPreset}
-          selectedPresetKey={selectedPresetKey}
-          setSelectedPresetKey={setSelectedPresetKey}
-          onUseCurrentLocation={useCurrentLocation}
-          onSavePresetLocation={savePresetLocation}
-          onClose={() => {
-            setShowLocationEditor(false);
-            setError("");
-          }}
-          showClose
-        />
-      ) : null}
+      {locationEditor}
 
       <ForecastRecordLink
         recorded={Boolean(activeDateReview)}

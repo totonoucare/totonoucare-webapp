@@ -11,8 +11,15 @@ async function handleForecastRequest(req) {
     const limited = await enforcePublicApiRateLimit(req, { route: "guest_forecast_v126", limit: 40, windowSeconds: 60 });
     if (limited) return limited;
     const p = new URL(req.url).searchParams;
-    return reply(await guestForecast(req, guest, { targetDate: p.get("date") || currentGuestDates().today,
-      cacheOnly: p.get("cache_only") === "1", force: p.get("force") === "1" }));
+    const options = { targetDate: p.get("date") || currentGuestDates().today,
+      cacheOnly: p.get("cache_only") === "1", force: p.get("force") === "1" };
+    try {
+      return reply(await guestForecast(req, guest, options));
+    } catch (error) {
+      if (error.code !== "guest_forecast_changed") throw error;
+      const currentGuest = await requireGuestExperience(req);
+      return reply(await guestForecast(req, currentGuest, options));
+    }
   } catch (error) {
     if (error.status) return reply({ ok: false, error: error.message, code: error.code }, error.status);
     console.error("/api/guest/forecast error:", summarizeRadarServerError(error));

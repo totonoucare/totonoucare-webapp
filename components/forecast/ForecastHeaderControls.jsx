@@ -1,6 +1,6 @@
 "use client";
 
-export default function ForecastHeaderControls({ tabs, activeDate, dateLabel, onSelect, onCare, careAvailable = false }) {
+export default function ForecastHeaderControls({ tabs, activeDate, dateLabel, onSelect, onCare, careAvailable = false, dateSelectionDisabled = false }) {
   const active = tabs.find(item => item.date === activeDate);
   const dayLabel = active?.label || "今日";
   return (
@@ -8,7 +8,7 @@ export default function ForecastHeaderControls({ tabs, activeDate, dateLabel, on
       <div role="group" aria-label="予報の日付" className="flex shrink-0 rounded-full bg-[#E9F0EC] p-1 ring-1 ring-inset ring-[#DCE8DF]">
         {tabs.map(item => (
           <button key={item.date} type="button" aria-label={`${item.label}の予報`} aria-pressed={item.date === activeDate}
-            onClick={() => onSelect(item.date)}
+            onClick={() => onSelect(item.date)} disabled={dateSelectionDisabled}
             className={["min-h-9 min-w-11 rounded-full px-2.5 text-[12px] font-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2F816E]",
               item.date === activeDate ? "bg-white text-[#24564C] shadow-sm" : "text-slate-500 hover:text-[#24564C]"].join(" ")}>
             {item.label}

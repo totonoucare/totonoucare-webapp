@@ -198,7 +198,7 @@ function SavePromptCard({ isLoggedIn, isAttached, isCurrent, needsConfirmation, 
       </div>
       {!isLoggedIn && !isAttached ? (
         <div className="mt-4 flex flex-wrap gap-1.5">
-          {["基本無料", "ログインなしで体験"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
+          {["基本無料", "ログイン・地域設定なしで体験"].map((label) => <span key={label} className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-[var(--accent-ink)] ring-1 ring-black/5">{label}</span>)}
         </div>
       ) : null}
       {needsConfirmation ? <p className="mt-3 text-[12px] font-bold leading-6 text-[#87662F]">{isAttached ? "この結果は履歴に保存済みです。" : "この結果をアカウントに保存できます。"}予報・ケアに反映するかは、次の画面で選べます。</p> : isAttached ? <p className="mt-3 text-[12px] font-bold text-emerald-700">{isCurrent ? "このトリセツを予報・ケアに反映中です。" : "この体質結果は保存済みです。"}</p> : isLoggedIn && session?.user?.email ? <p className="mt-3 break-all text-[11px] font-medium text-slate-500">ログイン中：{session.user.email}</p> : null}
@@ -239,7 +239,9 @@ function SaveStickyBar({ id, isLoggedIn, isAttached, attaching, onSave, onSignup
           <Button onClick={onClick} disabled={isLoggedIn && attaching} className="!h-11 min-w-0 flex-1 whitespace-nowrap rounded-full !px-3 !text-[14px] shadow-md">{ctaLabel}</Button>
           <button type="button" aria-label="予報とケアの案内を閉じる" onClick={() => { dismissResultCta(id); onClose?.(); setDismissed(true); }} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-xl text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600">×</button>
         </div>
-        <p className="mt-1 text-center text-[12px] font-medium leading-5 text-slate-500">今日・明日の体調予報と、あなたに合うケア</p>
+        <p className="mt-1 text-center text-[12px] font-medium leading-5 text-slate-500">
+          {!isLoggedIn && !isAttached ? "地域設定なしですぐ見られます" : "今日・明日の体調予報と、あなたに合うケア"}
+        </p>
       </div>
     </div>
   );
@@ -1061,7 +1063,10 @@ function ResultPage({ params }) {
                 <CardHeader icon={<IconBolt />} title="次の一歩" sub="今日・明日の予報と、その日に合うケアへ" />
                 <div className="px-6 pb-8 pt-5 space-y-5">
                   <Button onClick={() => changeTab("compat")} className="w-full py-4">天気との相性を見る</Button>
-                  <Button disabled={attaching} onClick={() => continueToForecast("overview_footer")} className="w-full shadow-md py-4">予報とケアを見る</Button>
+                  <div>
+                    <Button disabled={attaching} onClick={() => continueToForecast("overview_footer")} className="w-full shadow-md py-4">予報とケアを見る</Button>
+                    {!isLoggedIn && <p className="mt-1 text-center text-[12px] leading-5 text-slate-500">地域設定なしですぐ見られます</p>}
+                  </div>
                 </div>
               </Card>
             </>
@@ -1138,7 +1143,10 @@ function ResultPage({ params }) {
 
                 <div className="h-px w-full bg-slate-100" />
 
-                <Button disabled={attaching} onClick={() => continueToForecast("compat_footer")} className="w-full shadow-md">予報とケアを見る</Button>
+                <div>
+                  <Button disabled={attaching} onClick={() => continueToForecast("compat_footer")} className="w-full shadow-md">予報とケアを見る</Button>
+                  {!isLoggedIn && <p className="mt-1 text-center text-[12px] leading-5 text-slate-500">地域設定なしですぐ見られます</p>}
+                </div>
               </div>
             </Card>
           ) : null}
